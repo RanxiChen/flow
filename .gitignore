@@ -1,1 +1,7 @@
 */.metals/*
+.vscode/
+*/.bloop/*
+design/target/
+design/project/*
+.metals/
+*/build/*
