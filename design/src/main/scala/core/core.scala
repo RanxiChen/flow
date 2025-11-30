@@ -46,8 +46,30 @@ class ImmGen(XLEN:Int=32) extends Module {
     )
 }
 
-class core extends Module{
+
+
+class core_in_order extends Module{
     //IO
+    val io = IO(new Bundle{
+        val itcm = new Bundle {
+            val addr = Output(UInt(64.W))
+            val data = Input(UInt(32.W))
+            val can_next = Input(Bool())
+        }
+        val dtcm = new Bundle {
+            val addr = Output(UInt(64.W))
+            val size = Output(UInt(2.W))
+            val rdata = Input(UInt(64.W))
+            val wt_rd = Output(Bool())
+            val wdata = Output(UInt(64.W))
+        }        
+    })
+    //initial IO
+    io.dtcm.addr := 0.U
+    io.dtcm.size := 0.U
+    io.dtcm.wt_rd := false.B
+    io.dtcm.wdata := 0.U
+    io.itcm.addr := 0.U
     //PC generate
     val pc = RegInit(0.U(64.W))
     val pc_error_predict = WireDefault(false.B)
@@ -58,14 +80,35 @@ class core extends Module{
             pc_error_predict -> pc_from_exe
         )
     )
+    when(io.itcm.can_next){
+        pc := next_pc
+    }
     //Fetch
-    
+    io.itcm.addr := pc 
+    class Inst_Buf extends  Bundle {
+        val inst = UInt(32.W)
+        val pc   = UInt(64.W)
+        val buble = Bool()
+    }
+    val inst_buf = Reg(new Inst_Buf)
+    val inst_buf_flush = WireDefault(false.B)
+    when(reset.asBool || inst_buf_flush){
+        //Reset or Flush
+        inst_buf.inst := "h00000013".U //nop
+        inst_buf.pc := 0.U
+        inst_buf.buble := true.B
+    }.elsewhen(io.itcm.can_next){
+        //Normal fetch
+        inst_buf.inst := io.itcm.data
+        inst_buf.pc := pc
+        inst_buf.buble := false.B
+    }        
 }
 
 import _root_.circt.stage.ChiselStage
 object GenerateCoreVerilogFile extends App {
     ChiselStage.emitSystemVerilogFile(
-        new RegFile(64),
+        new core_in_order,
         Array("--target-dir", "build"),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable")
     )
