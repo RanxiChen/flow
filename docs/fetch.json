@@ -1,0 +1,8 @@
+{ "signal" : [
+  {"name":"clk",     "wave":"P........"},
+  ["cpu",
+  {"name":"addr",    "wave":"x=.x.==.x","data":["addr1","addr2","addr3"]}],
+    ["mem",
+  {"name":"data",    "wave":"xx=x..==x","data":["data1","data2","data3"]},
+  {"name":"can_next","wave":"0.10...10"}]
+]}

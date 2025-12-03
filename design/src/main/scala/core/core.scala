@@ -2,6 +2,7 @@ package core
 
 import chisel3._
 import chisel3.util._
+import java.util.Base64
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
@@ -49,6 +50,7 @@ class ImmGen(XLEN:Int=32) extends Module {
 
 
 class core_in_order extends Module{
+    val XLEN = 64
     //IO
     val io = IO(new Bundle{
         val itcm = new Bundle {
@@ -58,15 +60,16 @@ class core_in_order extends Module{
         }
         val dtcm = new Bundle {
             val addr = Output(UInt(64.W))
-            val size = Output(UInt(2.W))
             val rdata = Input(UInt(64.W))
             val wt_rd = Output(Bool())
             val wdata = Output(UInt(64.W))
+            val wmask = Output(UInt(8.W))
+            val can_next = Output(Bool())
         }        
     })
     //initial IO
     io.dtcm.addr := 0.U
-    io.dtcm.size := 0.U
+    io.dtcm.can_next := false.B
     io.dtcm.wt_rd := false.B
     io.dtcm.wdata := 0.U
     io.itcm.addr := 0.U
@@ -103,6 +106,192 @@ class core_in_order extends Module{
         inst_buf.pc := pc
         inst_buf.buble := false.B
     }        
+    //decode
+    val id = Module(new Decoder())
+    id.io.inst := inst_buf.inst
+    val rf = Module(new RegFile(64))
+    rf.io.rs1_addr := inst_buf.inst(19,15)
+    rf.io.rs2_addr := inst_buf.inst(24,20)
+    val imm_gen = Module(new ImmGen(64))
+    imm_gen.io.inst := inst_buf.inst
+    imm_gen.io.type_sel := id.io.exe_ctrl.sel_imm
+    class EXE_Reg extends Bundle {
+        val ctrl = new EXE_Ctrl
+        val pc   = UInt(64.W)
+        val rs1_data = UInt(XLEN.W)
+        val rs2_data = UInt(XLEN.W)
+        val rd = UInt(5.W)
+        val imm = UInt(XLEN.W)
+        val buble = Bool()
+    }
+    val exe_reg_flush = WireDefault(false.B)
+    val exe_reg = Reg(new EXE_Reg)
+    when(reset.asBool || exe_reg_flush){
+        exe_reg.ctrl.alu_op := ALU_OP.XXX.U
+        exe_reg.ctrl.bru_op := BRU_OP.XXX.U
+        exe_reg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+        exe_reg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
+        exe_reg.ctrl.sel_alu2 := SEL_ALU2.XXX.U
+        exe_reg.ctrl.sel_imm := IMM_TYPE.I_Type.U
+        exe_reg.ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
+        exe_reg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
+        exe_reg.ctrl.sel_wb := SEL_WB.XXX.U
+        exe_reg.ctrl.wb_en := false.B
+        exe_reg.pc := 0.U
+        exe_reg.rs1_data := 0.U
+        exe_reg.rs2_data := 0.U
+        exe_reg.imm := 0.U
+        exe_reg.rd := 0.U
+        exe_reg.buble := true.B
+    }.otherwise{
+        exe_reg.ctrl := id.io.exe_ctrl
+        exe_reg.pc := inst_buf.pc
+        exe_reg.rs1_data := rf.io.rs1_data
+        exe_reg.rs2_data := rf.io.rs2_data
+        exe_reg.imm := imm_gen.io.imm
+        exe_reg.rd := inst_buf.inst(11,7)
+        exe_reg.buble := inst_buf.buble
+    }
+    //EXE stage
+    val alu = Module(new ALU(XLEN))
+    val bru = Module(new BRU(XLEN))
+    val jau = Module(new JAU(XLEN))
+    alu.io.alu_op := exe_reg.ctrl.alu_op
+    alu.io.alu_in1 := MuxLookup(
+        exe_reg.ctrl.sel_alu1,
+        0.U)(
+        Seq(
+            SEL_ALU1.RS1.U -> exe_reg.rs1_data,
+            SEL_ALU1.PC.U  -> exe_reg.pc,
+            SEL_ALU1.ZERO.U-> 0.U
+        )
+    )
+    alu.io.alu_in2 := MuxLookup(
+        exe_reg.ctrl.sel_alu2,
+        0.U)(
+        Seq(
+            SEL_ALU2.IMM.U -> exe_reg.imm,
+            SEL_ALU2.RS2.U -> exe_reg.rs2_data,
+            SEL_ALU2.CONST4.U -> 4.U
+        )
+    )
+    bru.io.bru_op := exe_reg.ctrl.bru_op
+    bru.io.rs1_data := exe_reg.rs1_data
+    bru.io.rs2_data := exe_reg.rs2_data
+    jau.io.sel_jpc_i := exe_reg.ctrl.sel_jpc_i
+    jau.io.sel_jpc_o := exe_reg.ctrl.sel_jpc_o
+    jau.io.pc := exe_reg.pc
+    jau.io.rs1_data := exe_reg.rs1_data
+    jau.io.imm := exe_reg.imm
+    pc_error_predict := (jau.io.jmp_addr =/= inst_buf.pc) && 
+         !inst_buf.buble && (exe_reg.ctrl.redir_inst || 
+            exe_reg.ctrl.bru_inst && bru.io.take_branch
+        )
+    //Mem Stage
+    class MEM_Reg extends Bundle {
+        val data = UInt(XLEN.W)
+        val rs2 = UInt(XLEN.W)
+        val mem_cmd = UInt(MEM_TYPE.width.W)
+        val rd = UInt(5.W)
+        val buble = Bool()
+    }
+    val mem_reg_flush = WireDefault(false.B)
+    val mem_reg = Reg(new MEM_Reg)
+    when(reset.asBool || mem_reg_flush){
+        mem_reg.data := 0.U
+        mem_reg.rs2 := 0.U
+        mem_reg.mem_cmd := MEM_TYPE.NOT_MEM.U
+        mem_reg.rd := 0.U
+        mem_reg.buble := true.B
+    }.otherwise{
+        mem_reg.data := alu.io.alu_out
+        mem_reg.rs2 := exe_reg.rs2_data
+        mem_reg.mem_cmd := exe_reg.ctrl.mem_cmd
+        mem_reg.rd := exe_reg.rd
+        mem_reg.buble := exe_reg.buble
+    }
+    io.dtcm.addr := mem_reg.data
+    when(!mem_reg.buble){
+        switch(mem_reg.mem_cmd){
+            is(MEM_TYPE.SB.U){
+                io.dtcm.wt_rd := true.B
+                io.dtcm.wdata := Fill(8, mem_reg.rs2(7,0))
+                io.dtcm.wmask := "b00000001".U
+            }
+            is(MEM_TYPE.SH.U){
+                io.dtcm.wt_rd := true.B
+                io.dtcm.wdata := Fill(4, mem_reg.rs2(15,0))
+                io.dtcm.wmask := "b00000011".U
+            }
+            is(MEM_TYPE.SW.U){
+                io.dtcm.wt_rd := true.B
+                io.dtcm.wdata := Fill(2, mem_reg.rs2(31,0))
+                io.dtcm.wmask := "b00001111".U
+            }
+            is(MEM_TYPE.LB.U, MEM_TYPE.LH.U, MEM_TYPE.LW.U,
+               MEM_TYPE.LBU.U, MEM_TYPE.LHU.U){
+                io.dtcm.wt_rd := false.B
+            }
+        }
+    }
+    val mem_data_loaded = Wire(UInt(XLEN.W))
+    mem_data_loaded := 0.U
+    when(!mem_reg.buble){
+
+
+
+        
+        switch(mem_reg.mem_cmd){
+            is(MEM_TYPE.LB.U){
+                mem_data_loaded := Fill(56, io.dtcm.rdata(7)) ## io.dtcm.rdata(7,0)
+            }
+            is(MEM_TYPE.LH.U){
+                mem_data_loaded := Fill(48, io.dtcm.rdata(15)) ## io.dtcm.rdata(15,0)
+            }
+            is(MEM_TYPE.LW.U){
+                mem_data_loaded := Fill(32, io.dtcm.rdata(31)) ## io.dtcm.rdata(31,0)
+            }
+            is(MEM_TYPE.LBU.U){
+                mem_data_loaded := Fill(56, false.B) ## io.dtcm.rdata(7,0)
+            }
+            is(MEM_TYPE.LHU.U){
+                mem_data_loaded := Fill(48, false.B) ## io.dtcm.rdata(15,0)
+            }
+            is(MEM_TYPE.LWU.U){
+                mem_data_loaded := Fill(32, false.B) ## io.dtcm.rdata(31,0)
+            }
+        }
+    }
+
+    //WB state
+    class WB_Reg extends Bundle {
+        val wb_en = Bool()
+        val sel_wb = UInt(SEL_WB.width.W)
+        val rd_addr = UInt(5.W)
+        val alu_out = UInt(XLEN.W)
+        val mem_data = UInt(XLEN.W)
+        val rd = UInt(5.W)
+        val buble = Bool()
+    }
+    val wb_reg_flush = WireDefault(false.B)
+    val wb_reg = Reg(new WB_Reg)
+    when(reset.asBool || wb_reg_flush){
+        wb_reg.wb_en := false.B
+        wb_reg.sel_wb := SEL_WB.XXX.U
+        wb_reg.rd_addr := 0.U
+        wb_reg.alu_out := 0.U
+        wb_reg.mem_data := 0.U
+        wb_reg.rd := 0.U
+        wb_reg.buble := true.B
+    }.elsewhen(io.dtcm.can_next){
+        wb_reg.wb_en := exe_reg.ctrl.wb_en
+        wb_reg.sel_wb := exe_reg.ctrl.sel_wb
+        wb_reg.rd_addr := mem_reg.rd
+        wb_reg.alu_out := mem_reg.data
+        wb_reg.mem_data := mem_data_loaded
+        wb_reg.rd := mem_reg.rd
+        wb_reg.buble := mem_reg.buble
+    }
 }
 
 import _root_.circt.stage.ChiselStage
