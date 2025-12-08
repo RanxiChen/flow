@@ -1,8 +1,9 @@
 { "signal" : [
   {"name":"clk",     "wave":"P........"},
-  ["cpu",
+  ["req",
   {"name":"addr",    "wave":"x=.x.==.x","data":["addr1","addr2","addr3"]}],
-    ["mem",
+    ["resp",
+     {"name":"addr", "wave":"xx=xxx==x","data":["addr1","addr2","addr3"]},
   {"name":"data",    "wave":"xx=x..==x","data":["data1","data2","data3"]},
-  {"name":"can_next","wave":"0.10...10"}]
+  {"name":"can_next","wave":"0.10..110"}]
 ]}

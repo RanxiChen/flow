@@ -1,0 +1,18 @@
+{
+  "signal":
+  [
+    {"name":"clk","wave":"P......"},
+    [
+      "req",
+      {"name": "addr","wave":"x=x.=x.","data":["addr1","addr2"]},
+      {"name":"wt_rd","wave":"010...."},
+      {"name":"wmask","wave":"x=x....","data":["mask1"]}
+    ],
+    [
+      "resp",
+      {"name":"addr","wave":"xx=x.=x","data":["addr1","addr2"]},
+      {"name":"rdata","wave":"xxxxx=x","data":["data2"]},
+      {"name":"can_next","wave":"0010.10"}
+    ]
+  ]
+}

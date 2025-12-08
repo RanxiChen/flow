@@ -7,3 +7,7 @@ The diagram are followed.
 ![fetch circuit](./fetch.svg)
 
 if addr not match data, mem will not pull up `can_next`.
+
+### mem
+
+![mem circuit](./mem.svg)
