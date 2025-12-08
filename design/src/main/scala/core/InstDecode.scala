@@ -24,6 +24,7 @@ class RV32IDecoder extends Module {
         val I_ctrl = Output(new EXE_Ctrl)
     })
     //default values
+    io.I_ctrl.alu_op := ALU_OP.XXX.U
     io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
     io.I_ctrl.wb_en := false.B
     io.I_ctrl.sel_wb := SEL_WB.XXX.U
