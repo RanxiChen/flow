@@ -1,2 +1,5 @@
 switch memif to reg array
 distinguish io to variable and function
+
+- [ ] 首先实现一个有复位功能的电路
+- [ ] 然后在verilator里面仿真

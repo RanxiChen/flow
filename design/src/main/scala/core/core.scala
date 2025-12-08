@@ -2,7 +2,6 @@ package core
 
 import chisel3._
 import chisel3.util._
-import java.util.Base64
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
@@ -23,6 +22,14 @@ class RegFile(XLEN:Int=64) extends Module {
     when(io.rd_en && (io.rd_addr =/= 0.U)){
         content(io.rd_addr) := io.rd_data
     }        
+    printf(cf"[RegFile]\n")
+    for(i <- 0 until 32){
+        printf(cf"x[${i}%2d]=0x${content(i)}%x    ")
+        if(i%4 == 3){
+            printf("\n")
+        }        
+    }
+    printf("\n")
 }
 class ImmGen(XLEN:Int=32) extends Module {
     val io = IO(new Bundle{
@@ -102,6 +109,8 @@ class core_in_order extends Module{
     }
     val inst_buf = Reg(new Inst_Buf)
     val inst_buf_flush = WireDefault(false.B)
+    val fetch_inst_valid = WireDefault(false.B)
+    fetch_inst_valid := io.itcm.data(1,0) === "b11".U
     when(reset.asBool || inst_buf_flush){
         //Reset or Flush
         inst_buf.inst := "h00000013".U //nop
@@ -113,7 +122,15 @@ class core_in_order extends Module{
         inst_buf.inst := io.itcm.data
         inst_buf.pc := pc
         inst_buf.buble := false.B
-        id_cnt := id_cnt + 1.U
+        when(
+            io.itcm.resp_addr === io.itcm.req_addr &&
+            (
+                (io.itcm.resp_addr =/= inst_buf.pc &&
+                    io.itcm.data =/= inst_buf.inst) || inst_buf.buble
+            )&& fetch_inst_valid
+        ){
+            id_cnt := id_cnt + 1.U
+        }
     }
  
     //decode
@@ -317,11 +334,42 @@ class core_in_order extends Module{
             SEL_WB.MEM.U -> wb_reg.mem_data
         )
     )
-    val timer = RegInit(0.U(64.W))
-    timer := timer + 1.U
+    val coretimer = RegInit(0.U(8.W))
+    coretimer := coretimer + 1.U
     //dump log
     //printf(cf"reset=${reset.asBool},timer=[0x$timer%4x],pc=[0x$pc%4x],[req_addr=0x${io.itcm.req_addr}%4x,resp_addr=0x${io.itcm.resp_addr}%4x,data=0x${io.itcm.data}%8x,can_next=${io.itcm.can_next}]\n")
-    printf(cf"timer=[0x$timer%4x],[ID]$id_cnt%4d,[EXE]$exe_cnt%4d,[MEM]$mem_cnt%4d,[WB]$wb_cnt%4d\n")    
+    //printf(cf"timer=[0x$coretimer%4x],[ID]$id_cnt%4d,[EXE]$exe_cnt%4d,[MEM]$mem_cnt%4d,[WB]$wb_cnt%4d\n")    
+    printf(cf"[InstStats]\n")
+    printf(cf"[${coretimer}%3d]")
+    printf(cf"[ID]${id_cnt}%4d")
+    printf(cf"[EXE]${exe_cnt}%4d")
+    printf(cf"[MEM]${mem_cnt}%4d")
+    printf(cf"[WB]${wb_cnt}%4d\n")
+    printf(cf"[PiPeLine]")
+    printf(cf"[${coretimer}%3d]")
+    printf(cf"[IF]pc=0x${io.itcm.req_addr}%4x")
+    when(io.itcm.can_next){
+        printf(cf",inst=0x${io.itcm.data}%8x")
+    }.otherwise{
+        printf(cf",XXXXX=XXXXXXXXX")
+    }
+    //printf(cf"[ID]pc=${inst_buf.pc}%4x,inst=${inst_buf.inst}%8x,buble=${inst_buf.buble}\n")
+    printf(cf"[ID]")
+    when(!inst_buf.buble){
+        //normal instruction in id stage
+        printf(cf"pc=0x${inst_buf.pc}%4x,inst=0x${inst_buf.inst}%8x")
+    }.otherwise{
+        //one buble
+        printf(cf"XXXXXXXXX=buble=XXXXXXXXX")
+    }
+    printf(cf"[EXE]")
+    when(!exe_reg.buble){
+        printf(cf"pc=0x${exe_reg.pc}%4x")
+    }.otherwise{
+        printf(cf"XXXXXXXXX=buble=XXXXXXX")
+    }
+    printf("\n")
+    printf("***************************************************************\n")
 }
 
 import _root_.circt.stage.ChiselStage

@@ -5,3 +5,10 @@ design/target/
 design/project/*
 .metals/
 */build/*
+*/obj_dir/*
+*.elf
+*/obj_dir/
+*/*.vcd
+*.log
+*.vcd
+obj_dir/
