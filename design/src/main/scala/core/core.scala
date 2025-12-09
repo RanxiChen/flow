@@ -137,8 +137,10 @@ class core_in_order extends Module{
     val id = Module(new Decoder())
     id.io.inst := inst_buf.inst
     val rf = Module(new RegFile(64))
-    rf.io.rs1_addr := inst_buf.inst(19,15)
-    rf.io.rs2_addr := inst_buf.inst(24,20)
+    val id_rs1_addr = inst_buf.inst(19,15)
+    val id_rs2_addr = inst_buf.inst(24,20)
+    rf.io.rs1_addr := id_rs1_addr
+    rf.io.rs2_addr := id_rs2_addr
     val imm_gen = Module(new ImmGen(64))
     imm_gen.io.inst := inst_buf.inst
     imm_gen.io.type_sel := id.io.exe_ctrl.sel_imm
@@ -147,12 +149,35 @@ class core_in_order extends Module{
         val pc   = UInt(64.W)
         val rs1_data = UInt(XLEN.W)
         val rs2_data = UInt(XLEN.W)
+        val rs1_addr = UInt(5.W)
+        val rs2_addr = UInt(5.W)
         val rd = UInt(5.W)
         val imm = UInt(XLEN.W)
         val buble = Bool()
     }
     val exe_reg_flush = WireDefault(false.B)
     val exe_reg = Reg(new EXE_Reg)
+    val rs2_data_id = WireDefault(0.U(XLEN.W))
+    val rs1_data_id = WireDefault(0.U(XLEN.W))
+    when(rf.io.rd_en){
+        when(id_rs1_addr === 0.U){
+            rs1_data_id := 0.U
+        }.elsewhen(id_rs1_addr === rf.io.rd_addr){
+            rs1_data_id := rf.io.rd_data            
+        }.otherwise{
+            rs1_data_id := rf.io.rs1_data
+        }
+        when(id_rs2_addr === 0.U){
+            rs2_data_id := 0.U
+        }.elsewhen(id_rs2_addr === rf.io.rd_addr){
+            rs2_data_id := rf.io.rd_data            
+        }.otherwise{
+            rs2_data_id := rf.io.rs2_data
+        }
+    }.otherwise{
+        rs1_data_id := rf.io.rs1_data
+        rs2_data_id := rf.io.rs2_data
+    }
     when(reset.asBool || exe_reg_flush){
         exe_reg.ctrl.alu_op := ALU_OP.XXX.U
         exe_reg.ctrl.bru_op := BRU_OP.XXX.U
@@ -167,6 +192,8 @@ class core_in_order extends Module{
         exe_reg.pc := 0.U
         exe_reg.rs1_data := 0.U
         exe_reg.rs2_data := 0.U
+        exe_reg.rs1_addr := 0.U
+        exe_reg.rs2_addr := 0.U
         exe_reg.imm := 0.U
         exe_reg.rd := 0.U
         exe_reg.buble := true.B
@@ -174,14 +201,18 @@ class core_in_order extends Module{
     }.otherwise{
         exe_reg.ctrl := id.io.exe_ctrl
         exe_reg.pc := inst_buf.pc
-        exe_reg.rs1_data := rf.io.rs1_data
-        exe_reg.rs2_data := rf.io.rs2_data
+        exe_reg.rs1_data := rs1_data_id
+        exe_reg.rs2_data := rs2_data_id
+        exe_reg.rs1_addr := inst_buf.inst(19,15)
+        exe_reg.rs2_addr := inst_buf.inst(24,20)
         exe_reg.imm := imm_gen.io.imm
         exe_reg.rd := inst_buf.inst(11,7)
         exe_reg.buble := inst_buf.buble
         exe_cnt := id_cnt
     }
     //EXE stage
+    val rs1_data_wire = WireDefault(0.U(XLEN.W))
+    val rs2_data_wire = WireDefault(0.U(XLEN.W))
     val alu = Module(new ALU(XLEN))
     val bru = Module(new BRU(XLEN))
     val jau = Module(new JAU(XLEN))
@@ -190,7 +221,7 @@ class core_in_order extends Module{
         exe_reg.ctrl.sel_alu1,
         0.U)(
         Seq(
-            SEL_ALU1.RS1.U -> exe_reg.rs1_data,
+            SEL_ALU1.RS1.U -> rs1_data_wire,
             SEL_ALU1.PC.U  -> exe_reg.pc,
             SEL_ALU1.ZERO.U-> 0.U
         )
@@ -200,17 +231,17 @@ class core_in_order extends Module{
         0.U)(
         Seq(
             SEL_ALU2.IMM.U -> exe_reg.imm,
-            SEL_ALU2.RS2.U -> exe_reg.rs2_data,
+            SEL_ALU2.RS2.U -> rs2_data_wire,
             SEL_ALU2.CONST4.U -> 4.U
         )
     )
     bru.io.bru_op := exe_reg.ctrl.bru_op
-    bru.io.rs1_data := exe_reg.rs1_data
-    bru.io.rs2_data := exe_reg.rs2_data
+    bru.io.rs1_data := rs1_data_wire
+    bru.io.rs2_data := rs2_data_wire
     jau.io.sel_jpc_i := exe_reg.ctrl.sel_jpc_i
     jau.io.sel_jpc_o := exe_reg.ctrl.sel_jpc_o
     jau.io.pc := exe_reg.pc
-    jau.io.rs1_data := exe_reg.rs1_data
+    jau.io.rs1_data := rs1_data_wire
     jau.io.imm := exe_reg.imm
     pc_error_predict := (jau.io.jmp_addr =/= inst_buf.pc) && 
          !inst_buf.buble && (exe_reg.ctrl.redir_inst || 
@@ -222,6 +253,8 @@ class core_in_order extends Module{
         val rs2 = UInt(XLEN.W)
         val mem_cmd = UInt(MEM_TYPE.width.W)
         val rd = UInt(5.W)
+        val wb_en = Bool()
+        val wb_sel = UInt(SEL_WB.width.W)
         val buble = Bool()
     }
     val mem_reg_flush = WireDefault(false.B)
@@ -231,13 +264,17 @@ class core_in_order extends Module{
         mem_reg.rs2 := 0.U
         mem_reg.mem_cmd := MEM_TYPE.NOT_MEM.U
         mem_reg.rd := 0.U
+        mem_reg.wb_en := false.B
+        mem_reg.wb_sel := SEL_WB.XXX.U
         mem_reg.buble := true.B
         mem_cnt := 0.U
     }.otherwise{
         mem_reg.data := alu.io.alu_out
-        mem_reg.rs2 := exe_reg.rs2_data
+        mem_reg.rs2 := rs2_data_wire
         mem_reg.mem_cmd := exe_reg.ctrl.mem_cmd
         mem_reg.rd := exe_reg.rd
+        mem_reg.wb_en := exe_reg.ctrl.wb_en
+        mem_reg.wb_sel := exe_reg.ctrl.sel_wb
         mem_reg.buble := exe_reg.buble
         mem_cnt := exe_cnt
     }
@@ -298,7 +335,6 @@ class core_in_order extends Module{
         val rd_addr = UInt(5.W)
         val alu_out = UInt(XLEN.W)
         val mem_data = UInt(XLEN.W)
-        val rd = UInt(5.W)
         val buble = Bool()
     }
     val wb_reg_flush = WireDefault(false.B)
@@ -309,24 +345,22 @@ class core_in_order extends Module{
         wb_reg.rd_addr := 0.U
         wb_reg.alu_out := 0.U
         wb_reg.mem_data := 0.U
-        wb_reg.rd := 0.U
         wb_reg.buble := true.B
         wb_cnt := 0.U
     }.elsewhen(io.dtcm.can_next && (mem_reg.data === io.dtcm.resp_addr) ||
         mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U
         ){
-        wb_reg.wb_en := exe_reg.ctrl.wb_en
-        wb_reg.sel_wb := exe_reg.ctrl.sel_wb
+        wb_reg.wb_en := mem_reg.wb_en
+        wb_reg.sel_wb := mem_reg.wb_sel
         wb_reg.rd_addr := mem_reg.rd
         wb_reg.alu_out := mem_reg.data
         wb_reg.mem_data := mem_data_loaded
-        wb_reg.rd := mem_reg.rd
         wb_reg.buble := mem_reg.buble
         wb_cnt := mem_cnt
     }
     rf.io.rd_en := wb_reg.wb_en && !wb_reg.buble
     rf.io.rd_addr := wb_reg.rd_addr
-    rf.io.rd_data := MuxLookup(
+    val wb_data_wire = MuxLookup(
         wb_reg.sel_wb,
         0.U)(
         Seq(
@@ -334,12 +368,55 @@ class core_in_order extends Module{
             SEL_WB.MEM.U -> wb_reg.mem_data
         )
     )
+    rf.io.rd_data := wb_data_wire
+    //bypass
+    when(!exe_reg.buble){
+        //default
+        rs1_data_wire := exe_reg.rs1_data
+        rs2_data_wire := exe_reg.rs2_data
+        //bypass from wb
+        when(wb_reg.wb_en && !wb_reg.buble){
+            when(exe_reg.rs1_addr === wb_reg.rd_addr){
+                rs1_data_wire := wb_data_wire 
+            }
+            when(exe_reg.rs2_addr === wb_reg.rd_addr){
+                rs2_data_wire := wb_data_wire
+            }
+        }
+        //bypass from mem 
+        when(!mem_reg.buble && mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U){
+            //bypass from mem
+            when(exe_reg.rs1_addr === mem_reg.rd){
+                rs1_data_wire := mem_reg.data
+            }
+            when(exe_reg.rs2_addr === mem_reg.rd){
+                rs2_data_wire := mem_reg.data
+            }
+        }.elsewhen(!mem_reg.buble && mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && io.dtcm.can_next){
+            //bypass from mem data
+            when(exe_reg.rs1_addr === mem_reg.rd){
+                rs1_data_wire := mem_data_loaded
+            }
+            when(exe_reg.rs2_addr === mem_reg.rd){
+                rs2_data_wire := mem_data_loaded
+            }
+        }
+        
+        
+        //bypass from zero
+        when(exe_reg.rs1_addr === 0.U){
+            rs1_data_wire := 0.U
+        }
+        when(exe_reg.rs2_addr === 0.U){
+            rs2_data_wire := 0.U
+        }
+    }
+    /**
+     *Debug Signal Dump
+     */
     val coretimer = RegInit(0.U(8.W))
     coretimer := coretimer + 1.U
-    //dump log
-    //printf(cf"reset=${reset.asBool},timer=[0x$timer%4x],pc=[0x$pc%4x],[req_addr=0x${io.itcm.req_addr}%4x,resp_addr=0x${io.itcm.resp_addr}%4x,data=0x${io.itcm.data}%8x,can_next=${io.itcm.can_next}]\n")
-    //printf(cf"timer=[0x$coretimer%4x],[ID]$id_cnt%4d,[EXE]$exe_cnt%4d,[MEM]$mem_cnt%4d,[WB]$wb_cnt%4d\n")    
-    printf(cf"[InstStats]\n")
+    printf(cf"[InstStats]\t")
     printf(cf"[${coretimer}%3d]")
     printf(cf"[ID]${id_cnt}%4d")
     printf(cf"[EXE]${exe_cnt}%4d")
@@ -365,6 +442,33 @@ class core_in_order extends Module{
     printf(cf"[EXE]")
     when(!exe_reg.buble){
         printf(cf"pc=0x${exe_reg.pc}%4x")
+    }.otherwise{
+        printf(cf"XXXXXXXXX=buble=XXXXXXX")
+    }
+    printf(cf"[MEM]")
+    when(!mem_reg.buble){
+        printf(cf"addr=0x${mem_reg.data}%4x")
+        switch(mem_reg.mem_cmd){
+            is(MEM_TYPE.NOT_MEM.U){
+                printf(cf",NOT MEM")
+            }
+            is(MEM_TYPE.LB.U, MEM_TYPE.LH.U, MEM_TYPE.LW.U){
+                printf(cf",LOAD   ")
+            }
+            is(MEM_TYPE.SB.U, MEM_TYPE.SH.U, MEM_TYPE.SW.U){
+                printf(cf",STORE  ")
+            }
+        }
+    }.otherwise{
+        printf(cf"XXXXXXXXX=buble=XXXXXXX")
+    }
+    printf(cf"[WB]")
+    when(!wb_reg.buble){
+        when(wb_reg.wb_en){
+            printf(cf"addr=0x${wb_reg.rd_addr}%4x,data=0x${wb_data_wire}%8x")
+        }.otherwise{
+            printf("NOT WB")
+        }
     }.otherwise{
         printf(cf"XXXXXXXXX=buble=XXXXXXX")
     }
