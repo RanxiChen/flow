@@ -45,6 +45,10 @@ class RV32IDecoder extends Module {
             //I-type ALU instructions
             io.I_ctrl.wb_en := true.B
             io.I_ctrl.sel_wb := SEL_WB.ALU.U
+            io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
+            io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
+            io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+            io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
             switch(funct3){
                 is("b000".U){io.I_ctrl.alu_op := ALU_OP.ADD.U} //ADDI
                 is("b010".U){io.I_ctrl.alu_op := ALU_OP.SLT.U} //SLTI

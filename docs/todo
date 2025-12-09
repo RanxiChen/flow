@@ -1,5 +1,5 @@
-switch memif to reg array
-distinguish io to variable and function
-
-- [ ] 首先实现一个有复位功能的电路
-- [ ] 然后在verilator里面仿真
+- [ ] 搞清楚内联汇编
+- [ ] 把goldenmodule可以对单独几条指令拉出结果
+- [ ] 除了gcc，尝试llvm编译出需要的指令
+- [ ] 添加存储与跳转进行测试
+- [ ] 完善stall跟not jump

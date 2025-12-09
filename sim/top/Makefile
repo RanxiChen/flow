@@ -19,7 +19,10 @@ exe:build
 	make -C obj_dir -f Vflow_top.mk Vflow_top
 
 run:exe
-	./obj_dir/Vflow_top 2>&1 | tee flow_top.log
+	@./obj_dir/Vflow_top 2>&1 | tee flow_top.log
+	@grep "Stats" flow_top.log > inst_stats.log
+	@grep -E "PiPe|Probe" flow_top.log > pipe_stats.log
+	@grep -v -E "Stats|PiPe|Probe" flow_top.log > rf_stats.log
 
 clean:
 	rm -rf $(V_FILES_DIR) obj_dir 
