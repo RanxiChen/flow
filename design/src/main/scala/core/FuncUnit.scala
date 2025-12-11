@@ -34,6 +34,8 @@ class ALU(XLEN:Int=64) extends Module {
                 io.alu_out := 0.U
             }
         }
+        is(ALU_OP.RS1.U){io.alu_out := io.alu_in1}
+        is(ALU_OP.RS2.U){io.alu_out := io.alu_in2}
     }
 }
 

@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 
     //mem interface
     auto mem_if = SimpleMemIF(1,dump_log);
-    while(sim_time < 200){
+    while(sim_time < 30){
         //reset
         if(sim_time>=1 && sim_time <=15){
             top -> reset =1 ;   
@@ -45,9 +45,14 @@ int main(int argc, char** argv) {
         top->io_itcm_resp_addr = mem_if.itcm.resp_addr();
         top->io_itcm_can_next = mem_if.itcm.can_next();
         //dtcm interface
-        top->io_dtcm_rdata = 0;
-        top->io_dtcm_resp_addr =0;
-        top->io_dtcm_can_next = 0;
+        mem_if.dmem.req_addr = top->io_dtcm_req_addr;
+        mem_if.dmem.wt_rd = top->io_dtcm_wt_rd;
+        mem_if.dmem.mem_valid = top->io_dtcm_mem_valid;
+        mem_if.dmem.wdata = top->io_dtcm_wdata;
+        mem_if.dmem.wmask = top->io_dtcm_wmask;
+        top->io_dtcm_rdata = mem_if.dmem.rdata();
+        top->io_dtcm_resp_addr = mem_if.dmem.resp_addr();
+        top->io_dtcm_can_next = mem_if.dmem.can_next();
         top->clock = 1;
         top->eval();
         mem_if.cycle();

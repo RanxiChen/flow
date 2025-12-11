@@ -2,11 +2,13 @@ package core
 
 import chisel3._
 import chisel3.util._
+import os.read
+import os.write
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
   */
-class RegFile(XLEN:Int=64) extends Module {
+class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val io = IO(new Bundle{
         val rs1_addr = Input(UInt(5.W))
         val rs2_addr = Input(UInt(5.W))
@@ -22,6 +24,7 @@ class RegFile(XLEN:Int=64) extends Module {
     when(io.rd_en && (io.rd_addr =/= 0.U)){
         content(io.rd_addr) := io.rd_data
     }        
+    if(dumplog){
     printf(cf"[RegFile]\n")
     for(i <- 0 until 32){
         printf(cf"x[${i}%2d]=0x${content(i)}%x    ")
@@ -30,6 +33,82 @@ class RegFile(XLEN:Int=64) extends Module {
         }        
     }
     printf("\n")
+    }
+}
+class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
+    val io = IO(new Bundle{
+        val csr_addr = Input(UInt(12.W))
+        val csr_cmd  = Input(UInt(CSR_CMD.width.W))
+        val csr_reg_data = Input(UInt(XLEN.W))
+        val csr_wdata = Output(UInt(XLEN.W))
+        val rs1_id = Input(UInt(5.W))
+        val rd_id = Input(UInt(5.W))
+    })
+    val printer = RegInit(0.U(XLEN.W))
+    val csrFile = Seq(
+        BitPat(CSRMAP.printer.U) -> printer
+    )
+    val old_csr_val = WireDefault(0.U(XLEN.W))
+    val new_csr_val = WireDefault(old_csr_val)
+    val read_csr = Wire(Bool())
+    val write_csr = Wire(Bool())
+    val uimm = io.csr_reg_data(4,0)
+    read_csr := false.B
+    write_csr := false.B
+    when(read_csr){
+        old_csr_val := Lookup(io.csr_addr, 0.U, csrFile)
+    }.otherwise{
+        old_csr_val := 0.U
+    }
+    switch(io.csr_cmd){
+        is(CSR_CMD.NOP.U){
+            //nop
+            read_csr := false.B
+            write_csr := false.B
+        }
+        is(CSR_CMD.RW.U){
+            read_csr := Mux(io.rd_id =/= 0.U, true.B, false.B)
+            write_csr := true.B
+            new_csr_val := io.csr_reg_data
+            //printf(cf"[CSR] rw = 0x${io.csr_reg_data}%x\n")
+        }
+        is(CSR_CMD.RS.U){
+            read_csr := true.B
+            write_csr := Mux(io.rs1_id =/= 0.U, true.B, false.B)
+            new_csr_val := old_csr_val | io.csr_reg_data
+        }
+        is(CSR_CMD.RC.U){
+            read_csr := true.B
+            write_csr := Mux(io.rs1_id =/= 0.U, true.B, false.B)
+            new_csr_val := old_csr_val & (~io.csr_reg_data)
+        }
+        is(CSR_CMD.RWI.U){
+           read_csr := Mux(io.rd_id =/= 0.U, true.B, false.B)
+           write_csr := true.B
+           new_csr_val := io.csr_reg_data 
+        }
+        is(CSR_CMD.RSI.U){
+            read_csr := true.B
+            write_csr := Mux(uimm =/= 0.U, true.B, false.B)
+            new_csr_val := old_csr_val | io.csr_reg_data
+        }
+        is(CSR_CMD.RCI.U){
+            read_csr := true.B
+            write_csr := Mux(uimm =/= 0.U, true.B, false.B)
+            new_csr_val := old_csr_val & (~io.csr_reg_data)
+        }
+    }
+    when(write_csr){
+        switch(io.csr_addr){
+            is(CSRMAP.printer.U){
+                printer := new_csr_val
+                if(dumplog){
+                    printf(cf"[INFO] printer = 0x${new_csr_val}%x\n")
+                }
+            }
+        }
+    }
+    io.csr_wdata := old_csr_val
 }
 class ImmGen(XLEN:Int=32) extends Module {
     val io = IO(new Bundle{
@@ -42,6 +121,7 @@ class ImmGen(XLEN:Int=32) extends Module {
     val immb = Fill(XLEN-12,io.inst(31)) ## io.inst(7) ## io.inst(30,25) ## io.inst(11,8) ## false.B
     val immj = Fill(XLEN-20,io.inst(31)) ## io.inst(19,12) ## io.inst(20) ## io.inst(30,21) ## false.B
     val immu = Fill(XLEN-32,io.inst(31)) ## io.inst(31,12) ## Fill(12,false.B)
+    val imm_csr = Fill(XLEN-5,0.U) ## io.inst(19,15)
     io.imm := 0.U
     io.imm := MuxLookup(io.type_sel, 0.U)(
         Seq(
@@ -49,7 +129,8 @@ class ImmGen(XLEN:Int=32) extends Module {
             IMM_TYPE.S_Type.U -> imms,
             IMM_TYPE.B_Type.U -> immb,
             IMM_TYPE.U_Type.U -> immu,
-            IMM_TYPE.J_Type.U -> immj
+            IMM_TYPE.J_Type.U -> immj,
+            IMM_TYPE.CSR_Type.U -> imm_csr
         )
     )
 }
@@ -58,6 +139,7 @@ class ImmGen(XLEN:Int=32) extends Module {
 
 class core_in_order extends Module{
     val XLEN = 64
+    val dumplog = true
     //IO
     val io = IO(new Bundle{
         val itcm = new Bundle {
@@ -136,7 +218,7 @@ class core_in_order extends Module{
     //decode
     val id = Module(new Decoder())
     id.io.inst := inst_buf.inst
-    val rf = Module(new RegFile(64))
+    val rf = Module(new RegFile(64,dumplog))
     val id_rs1_addr = inst_buf.inst(19,15)
     val id_rs2_addr = inst_buf.inst(24,20)
     rf.io.rs1_addr := id_rs1_addr
@@ -253,6 +335,9 @@ class core_in_order extends Module{
         val rs2 = UInt(XLEN.W)
         val mem_cmd = UInt(MEM_TYPE.width.W)
         val rd = UInt(5.W)
+        val rs1_addr = UInt(5.W)
+        val csr_addr = UInt(12.W)
+        val csr_cmd = UInt(CSR_CMD.width.W)
         val wb_en = Bool()
         val wb_sel = UInt(SEL_WB.width.W)
         val buble = Bool()
@@ -268,6 +353,9 @@ class core_in_order extends Module{
         mem_reg.wb_sel := SEL_WB.XXX.U
         mem_reg.buble := true.B
         mem_cnt := 0.U
+        mem_reg.rs1_addr := 0.U
+        mem_reg.csr_addr := 0.U
+        mem_reg.csr_cmd := CSR_CMD.XXX.U
     }.otherwise{
         mem_reg.data := alu.io.alu_out
         mem_reg.rs2 := rs2_data_wire
@@ -276,6 +364,9 @@ class core_in_order extends Module{
         mem_reg.wb_en := exe_reg.ctrl.wb_en
         mem_reg.wb_sel := exe_reg.ctrl.sel_wb
         mem_reg.buble := exe_reg.buble
+        mem_reg.rs1_addr := exe_reg.rs1_addr
+        mem_reg.csr_addr := exe_reg.ctrl.csr_addr
+        mem_reg.csr_cmd := exe_reg.ctrl.csr_cmd
         mem_cnt := exe_cnt
     }
     io.dtcm.req_addr := mem_reg.data
@@ -327,6 +418,13 @@ class core_in_order extends Module{
         }
     }
     io.dtcm.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble
+    val csr = Module(new CSRFile(XLEN,dumplog))
+    csr.io.csr_addr := mem_reg.csr_addr
+    csr.io.csr_cmd := mem_reg.csr_cmd
+    csr.io.csr_reg_data := mem_reg.data
+    csr.io.rs1_id := mem_reg.rs1_addr
+    csr.io.rd_id := mem_reg.rd
+
 
     //WB state
     class WB_Reg extends Bundle {
@@ -335,6 +433,7 @@ class core_in_order extends Module{
         val rd_addr = UInt(5.W)
         val alu_out = UInt(XLEN.W)
         val mem_data = UInt(XLEN.W)
+        val csr_data = UInt(XLEN.W)
         val buble = Bool()
     }
     val wb_reg_flush = WireDefault(false.B)
@@ -346,6 +445,7 @@ class core_in_order extends Module{
         wb_reg.alu_out := 0.U
         wb_reg.mem_data := 0.U
         wb_reg.buble := true.B
+        wb_reg.csr_data := 0.U
         wb_cnt := 0.U
     }.elsewhen(io.dtcm.can_next && (mem_reg.data === io.dtcm.resp_addr) ||
         mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U
@@ -356,6 +456,7 @@ class core_in_order extends Module{
         wb_reg.alu_out := mem_reg.data
         wb_reg.mem_data := mem_data_loaded
         wb_reg.buble := mem_reg.buble
+        wb_reg.csr_data := csr.io.csr_wdata
         wb_cnt := mem_cnt
     }
     rf.io.rd_en := wb_reg.wb_en && !wb_reg.buble
@@ -365,7 +466,8 @@ class core_in_order extends Module{
         0.U)(
         Seq(
             SEL_WB.ALU.U -> wb_reg.alu_out,
-            SEL_WB.MEM.U -> wb_reg.mem_data
+            SEL_WB.MEM.U -> wb_reg.mem_data,
+            SEL_WB.CSR.U -> wb_reg.csr_data
         )
     )
     rf.io.rd_data := wb_data_wire
@@ -416,6 +518,7 @@ class core_in_order extends Module{
      */
     val coretimer = RegInit(0.U(8.W))
     coretimer := coretimer + 1.U
+    if(dumplog){
     printf(cf"[InstStats]\t")
     printf(cf"[${coretimer}%3d]")
     printf(cf"[ID]${id_cnt}%4d")
@@ -442,15 +545,23 @@ class core_in_order extends Module{
     printf(cf"[EXE]")
     when(!exe_reg.buble){
         printf(cf"pc=0x${exe_reg.pc}%4x")
+        //printf(cf"alu_in1=0x${alu.io.alu_in1}%8x,alu_in2=0x${alu.io.alu_in2}%8x,alu_op=0x${alu.io.alu_op}%4x,alu_out=0x${alu.io.alu_out}%8x" )
     }.otherwise{
         printf(cf"XXXXXXXXX=buble=XXXXXXX")
     }
     printf(cf"[MEM]")
     when(!mem_reg.buble){
-        printf(cf"addr=0x${mem_reg.data}%4x")
+        printf(cf"addr=0x${mem_reg.csr_addr}%4x")
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.NOT_MEM.U){
-                printf(cf",NOT MEM")
+                switch(mem_reg.csr_cmd){
+                    is(CSR_CMD.NOP.U){
+                       printf(cf",NOT MEM") 
+                    }
+                    is(CSR_CMD.RW.U, CSR_CMD.RWI.U, CSR_CMD.RS.U, CSR_CMD.RC.U, CSR_CMD.RSI.U, CSR_CMD.RCI.U){
+                        printf(cf",CSR    ")
+                    }
+                }
             }
             is(MEM_TYPE.LB.U, MEM_TYPE.LH.U, MEM_TYPE.LW.U){
                 printf(cf",LOAD   ")
@@ -465,7 +576,9 @@ class core_in_order extends Module{
     printf(cf"[WB]")
     when(!wb_reg.buble){
         when(wb_reg.wb_en){
-            printf(cf"addr=0x${wb_reg.rd_addr}%4x,data=0x${wb_data_wire}%8x")
+            printf(cf"write x[${wb_reg.rd_addr}%2d],data=0x${wb_data_wire}%8x")
+            printf(cf",csr_data=0x${wb_reg.csr_data}%8x")
+            printf(cf",wb_sel=${wb_reg.sel_wb}%2d")
         }.otherwise{
             printf("NOT WB")
         }
@@ -474,6 +587,7 @@ class core_in_order extends Module{
     }
     printf("\n")
     printf("***************************************************************\n")
+    }
 }
 
 import _root_.circt.stage.ChiselStage

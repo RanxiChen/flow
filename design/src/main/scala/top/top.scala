@@ -16,6 +16,11 @@ class flow_top extends Module {
         mem(1) := "h40f80433_0107f8b3".U
         mem(2) := "h0057f313_10204293".U
         mem(3) := "h00500433_0027d393".U
+        mem(4) := "h00402103_00002083".U//load x1 from 0x0,x2 from 0x4
+        mem(5) := "h00002083_00002023".U//store 0 to addr0,and read to x1
+        mem(6) := "h00000013_0ff11073".U // write x2 to printer and nop
+        mem(7) := "h00000013_0ff8d073".U // write 0x3 to printer and nop
+        mem(8) := "h00000013_0ff011f3".U // write printer to x3 and nop
     }
     core.io.itcm.resp_addr := core.io.itcm.req_addr
     core.io.itcm.can_next := true.B
@@ -43,7 +48,12 @@ class flow_top extends Module {
             mem(core.io.dtcm.req_addr) := _buf.asUInt
         }.otherwise{
             //read data from mem
-            core.io.dtcm.rdata := mem(core.io.dtcm.req_addr >> 4.U )
+            val tail_head_dmem = core.io.dtcm.req_addr(2)
+            val head_dmem = Wire(UInt(32.W))
+            val tail_dmem = Wire(UInt(32.W))
+            head_dmem :=  mem(core.io.dtcm.req_addr >> 3.U )(31,0)
+            tail_dmem :=  mem(core.io.dtcm.req_addr >> 3.U )(63,32)
+            core.io.dtcm.rdata := Mux(!tail_head_dmem, head_dmem, tail_dmem)
         }
     }
 }

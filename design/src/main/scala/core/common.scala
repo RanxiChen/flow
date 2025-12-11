@@ -8,7 +8,19 @@ object IMM_TYPE {
    val B_Type = 2
    val U_Type = 3
    val J_Type = 4
+   val CSR_Type = 5
    val width = 3
+}
+object CSR_CMD{
+   val NOP = 0
+   val RW  = 1
+   val RS  = 2
+   val RC  = 3
+   val RWI = 4
+   val RSI = 5
+   val RCI = 6
+   val width = 3
+   val XXX = 0  
 }
 object ALU_OP {
    val ADD = 0
@@ -21,6 +33,8 @@ object ALU_OP {
    val SRA = 7
    val SLT = 8
    val SLTU= 9
+   val RS1 = 10
+   val RS2 = 11
    val width = 4
    val XXX = 0
 }
@@ -46,6 +60,7 @@ object SEL_ALU2 {
    val RS2 = 0
    val IMM = 1
    val CONST4 = 2
+   val CONST0 = 3
    val width = 2
    val XXX =0
 }
@@ -82,7 +97,8 @@ object MEM_TYPE {
 object SEL_WB {
    val ALU = 0
    val MEM = 1
-   val width = 1
+   val CSR = 2
+   val width = 2
    val XXX = 0
 }
 object OPCODE{
@@ -114,4 +130,7 @@ object OPCODE{
    val OP_32    = "b0111011".U
    val CUSTOM2  = "b1011011".U
    val CUSTOM3  = "b1111011".U
+}
+object CSRMAP{
+   val printer = 0xff
 }

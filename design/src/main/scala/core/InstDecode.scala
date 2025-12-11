@@ -1,6 +1,7 @@
 package core
 import chisel3._
 import chisel3.util._
+import core.IMM_TYPE.CSR_Type
 
 class EXE_Ctrl extends Bundle {
     val alu_op = Output(UInt(ALU_OP.width.W))
@@ -15,8 +16,9 @@ class EXE_Ctrl extends Bundle {
     val sel_wb = Output(UInt(SEL_WB.width.W))
     val wb_en = Output(Bool())
     val sel_imm = Output(UInt(IMM_TYPE.width.W))
+    val csr_addr = Output(UInt(12.W))
+    val csr_cmd = Output(UInt(CSR_CMD.width.W))
 }
-
 
 class RV32IDecoder extends Module {
     val io = IO(new Bundle{
@@ -36,6 +38,8 @@ class RV32IDecoder extends Module {
     io.I_ctrl.redir_inst := false.B
     io.I_ctrl.bru_inst := false.B
     io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+    io.I_ctrl.csr_addr := 0.U
+    io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
     //manual decode
     val opcode = io.inst(6,0)
     val funct3 = io.inst(14,12)
@@ -153,7 +157,7 @@ class RV32IDecoder extends Module {
         }
         is(OPCODE.LOAD){
             io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
-            io.I_ctrl.wb_en := false.B
+            io.I_ctrl.wb_en := true.B
             io.I_ctrl.sel_wb := SEL_WB.MEM.U
             io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
             io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
@@ -179,8 +183,35 @@ class RV32IDecoder extends Module {
                 is("b010".U){io.I_ctrl.mem_cmd := MEM_TYPE.SW.U} //SW
             }
         }
+        is(OPCODE.SYSTEM){
+            //CSR instructions
+            io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+            io.I_ctrl.wb_en := true.B
+            io.I_ctrl.sel_wb := SEL_WB.CSR.U
+            io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+            io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
+            io.I_ctrl.alu_op := ALU_OP.XXX.U
+            io.I_ctrl.csr_addr := io.inst(31,20)
+            switch(funct3){
+                is("b001".U){io.I_ctrl.csr_cmd := CSR_CMD.RW.U} //CSRRW
+                is("b010".U){io.I_ctrl.csr_cmd := CSR_CMD.RS.U} //CSRRS
+                is("b011".U){io.I_ctrl.csr_cmd := CSR_CMD.RC.U} //CSRRC
+                is("b101".U){io.I_ctrl.csr_cmd := CSR_CMD.RWI.U} //CSRRWI
+                is("b110".U){io.I_ctrl.csr_cmd := CSR_CMD.RSI.U} //CSRRSI
+                is("b111".U){io.I_ctrl.csr_cmd := CSR_CMD.RCI.U} //CSRRCI
+            }
+            switch(funct3){
+                is("b000".U, "b010".U, "b011".U){
+                    io.I_ctrl.alu_op := ALU_OP.RS1.U
+                }
+                is("b110".U, "b101".U,"b111".U){
+                    io.I_ctrl.alu_op := ALU_OP.RS2.U
+                }
+            }
+        }
     }
 }
+
 
 class Decoder extends Module {
     val io = IO(new Bundle{
