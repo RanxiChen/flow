@@ -12,3 +12,4 @@ design/project/*
 *.log
 *.vcd
 obj_dir/
+fpga/

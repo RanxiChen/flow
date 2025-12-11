@@ -10,7 +10,16 @@ struct FetchPort {
         std::function<uint32_t()> resp_data;
         std::function<bool()> can_next;//alias for mem_valid
 };
-
+struct MemPort {
+        uint64_t req_addr;
+        bool wt_rd;
+        bool mem_valid;
+        uint64_t wdata;
+        uint8_t wmask;
+        std::function<uint64_t()> resp_addr;
+        std::function<uint64_t()> rdata;
+        std::function<bool()> can_next;
+};
 class SimpleMemIF {
     private:
     Mem& mem;
@@ -18,7 +27,9 @@ class SimpleMemIF {
     bool dump_log;
     public:
     FetchPort itcm;
+    MemPort dmem;
     void binding2v1(){
+        //itcm port
         itcm.resp_addr = [this]() -> uint64_t {
             return this->itcm.req_addr;
         };
@@ -28,22 +39,78 @@ class SimpleMemIF {
         itcm.can_next = [this]() -> bool {
             return true;//can response in same cycle
         };
+        //mem port
+        dmem.resp_addr = [this]() -> uint64_t {
+            if(this->dmem.mem_valid){
+                return this->dmem.req_addr;
+            }else {
+                return 0; //no response address if not valid
+            }
+        };
+        dmem.rdata = [this]() -> uint64_t {
+            if(this->dmem.mem_valid ){
+            if(this->dmem.wt_rd){
+                return 0; //no read data for write operation
+            }else {
+                return this->mem.read(this->dmem.req_addr,8);
+            }
+            }else {
+                return 0; //no read data if not valid
+            }
+        };
+        dmem.can_next = [this]() -> bool {
+            if(this->dmem.mem_valid){
+                return true;
+            }else {
+                return false;
+            }
+        };
     }
     SimpleMemIF(int version=2,bool dumplog=false):mem(Mem::getInstance()){
         if_version = version;
         dump_log = dumplog;
         if(if_version == 1) binding2v1();
     }
-    struct {
-        uint64_t req_addr;
-        bool wt_rd;
-        bool mem_valid;
-        uint64_t wdata;
-        uint8_t wmask;
-        uint64_t resp_addr;
-        uint64_t rdata;
-        bool can_next;
-    } dtcm;
+    bool cyclev1(){
+        /*imem port, just read, don't need care*/
+        //mem port
+        //don't need to care read port, it can be processed when invoke get func
+        if(dmem.mem_valid){
+            if(dmem.wt_rd){
+                switch (dmem.wmask)
+                {
+                case 0x1:
+                    if(!mem.write(dmem.req_addr,1,dmem.wdata)) {
+                        if(dump_log) std::cout << "Write failed at addr: 0x" << std::hex << dmem.req_addr << std::endl;
+                        return false;
+                    }
+                    break;
+                case 0x3:
+                    if(!mem.write(dmem.req_addr,2,dmem.wdata)) {
+                        if(dump_log) std::cout << "Write failed at addr: 0x" << std::hex << dmem.req_addr << std::endl;
+                        return false;   
+                    }
+                    break;
+                case 0xf:
+                    if(!mem.write(dmem.req_addr,4,dmem.wdata)) {
+                        if(dump_log) std::cout << "Write failed at addr: 0x" << std::hex << dmem.req_addr << std::endl;
+                        return false;   
+                    }
+                    break;
+                case 0xff:
+                    if(!mem.write(dmem.req_addr,8,dmem.wdata)) {
+                        if(dump_log) std::cout << "Write failed at addr: 0x" << std::hex << dmem.req_addr << std::endl;
+                        return false;   
+                    }
+                    break;
+                default:
+                    std::cout << "Warning: unsupported wmask " << std::hex << (int)dmem.wmask << std::endl;
+                    break;
+                }
+            }
+        }
+        return true;
+    }
     /*
     bool cyclev2(){
         if(dump_log) std::cout << "SimpleMemIF cyclev2 called" << std::endl;
