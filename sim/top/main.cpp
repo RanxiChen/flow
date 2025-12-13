@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     top->trace(tfp, 99);
     tfp->open("flow_top.vcd");
     std::cout << "simulate flow_top module" << std::endl;
-    while(sim_time < 60){
+    while(sim_time < 70){
         if(sim_time <=10 && sim_time >= 3){
             top -> reset =1 ;
         }else {
