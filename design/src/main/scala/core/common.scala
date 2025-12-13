@@ -135,6 +135,7 @@ object CSRMAP{
    // self-defined CSR address
    val printer = 0x8ff
    val mport = 0x7ff
+   val coreinst = 0x8fe
    //manual
    val fflags = 0x001
    val frm    = 0x002

@@ -23,7 +23,7 @@ run:exe
 	@grep "Stats" flow_top.log > inst_stats.log
 	@grep -E "PiPe|Probe" flow_top.log > pipe_stats.log
 	@grep -v -E "Stats|PiPe|Probe|INFO" flow_top.log > rf_stats.log
-	true # @grep -E "INFO" flow_top.log > info.log
+	@awk '{print $$3,$$NF}' inst_stats.log | sed -E 's/\]\[ID\]/,/g' > cycle_inst.raw
 
 clean:
 	rm -rf $(V_FILES_DIR) obj_dir 
