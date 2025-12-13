@@ -21,6 +21,8 @@ class flow_top extends Module {
         mem(6) := "h00000013_0ff11073".U // write x2 to printer and nop
         mem(7) := "h00000013_0ff8d073".U // write 0x3 to printer and nop
         mem(8) := "h00000013_0ff011f3".U // write printer to x3 and nop
+        mem(9) := "h00000013_30101273".U // read misa
+        mem(10):= "h00000013_8ff21073".U // write x4 to printer
     }
     core.io.itcm.resp_addr := core.io.itcm.req_addr
     core.io.itcm.can_next := true.B

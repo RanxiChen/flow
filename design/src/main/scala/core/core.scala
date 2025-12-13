@@ -43,10 +43,23 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         val csr_wdata = Output(UInt(XLEN.W))
         val rs1_id = Input(UInt(5.W))
         val rd_id = Input(UInt(5.W))
+        //Privilege related
+        val priv = Output(UInt(2.W))
     })
+    // csr supported
     val printer = RegInit(0.U(XLEN.W))
+    val misa = RegInit(CoreParam.misa.U(64.W))
+    val mvendorid = RegInit(0.U(32.W))
+    val marchid = RegInit(0.U(XLEN.W))
+    val mimpid = RegInit(0.U(XLEN.W))
+    val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
     val csrFile = Seq(
-        BitPat(CSRMAP.printer.U) -> printer
+        BitPat(CSRMAP.printer.U) -> printer,
+        BitPat(CSRMAP.misa.U)    -> misa,
+        BitPat(CSRMAP.mvendorid.U)-> mvendorid,
+        BitPat(CSRMAP.marchid.U)  -> marchid,
+        BitPat(CSRMAP.mimpid.U)    -> mimpid,
+        BitPat(CSRMAP.mhartid.U)  -> mhartid
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -106,9 +119,32 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
                     printf(cf"[INFO] printer = 0x${new_csr_val}%x\n")
                 }
             }
+            is(CSRMAP.misa.U){
+                //currently misa is read only
+                if(dumplog){
+                    printf(cf"[INFO] misa = 0x${misa}%x\n")
+                }
+            }
+            is(CSRMAP.mvendorid.U, CSRMAP.marchid.U, CSRMAP.mimpid.U){
+                //currently mvendorid is read only
+                if(dumplog){
+                    printf(cf"[INFO] unimplemented csr\n")
+                }
+            }
+            is(CSRMAP.mhartid.U){
+                //currently mhartid is read only
+                if(dumplog){
+                    printf(cf"[INFO] mhartid = 0\n")
+                }
+            }
         }
     }
     io.csr_wdata := old_csr_val
+    val priv = RegInit(PrivConst.MACHINE)
+    io.priv := priv
+    val csr_err_priv = WireDefault(false.B)
+    csr_err_priv := ( io.csr_addr(9,8) > priv) || (io.csr_addr(11,10) === "b11".U && write_csr )
+
 }
 class ImmGen(XLEN:Int=32) extends Module {
     val io = IO(new Bundle{
@@ -544,8 +580,8 @@ class core_in_order extends Module{
     }
     printf(cf"[EXE]")
     when(!exe_reg.buble){
-        printf(cf"pc=0x${exe_reg.pc}%4x")
-        //printf(cf"alu_in1=0x${alu.io.alu_in1}%8x,alu_in2=0x${alu.io.alu_in2}%8x,alu_op=0x${alu.io.alu_op}%4x,alu_out=0x${alu.io.alu_out}%8x" )
+        //printf(cf"pc=0x${exe_reg.pc}%4x")
+        printf(cf"alu_in1=0x${alu.io.alu_in1}%8x,alu_in2=0x${alu.io.alu_in2}%8x,alu_op=0x${alu.io.alu_op}%4x,alu_out=0x${alu.io.alu_out}%8x" )
     }.otherwise{
         printf(cf"XXXXXXXXX=buble=XXXXXXX")
     }
@@ -559,7 +595,8 @@ class core_in_order extends Module{
                        printf(cf",NOT MEM") 
                     }
                     is(CSR_CMD.RW.U, CSR_CMD.RWI.U, CSR_CMD.RS.U, CSR_CMD.RC.U, CSR_CMD.RSI.U, CSR_CMD.RCI.U){
-                        printf(cf",CSR    ")
+                        //printf(cf",CSR    ")
+                        printf(cf",CSR,in_data=0x${mem_reg.data}%8x")
                     }
                 }
             }

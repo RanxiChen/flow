@@ -132,5 +132,176 @@ object OPCODE{
    val CUSTOM3  = "b1111011".U
 }
 object CSRMAP{
-   val printer = 0xff
+   // self-defined CSR address
+   val printer = 0x8ff
+   val mport = 0x7ff
+   //manual
+   val fflags = 0x001
+   val frm    = 0x002
+   val fcsr   = 0x003
+
+
+   val vstart = 0x008
+   val vxsat  = 0x009
+   val vxrm   = 0x00a
+   val vcsr   = 0x00f
+   val vl     = 0xc20
+   val vtype  = 0xc21
+   val vlenb  = 0xc22
+
+   val ssp    = 0x011
+   val sed    = 0x015
+   val jvt    = 0x017
+
+   val cycle  = 0xc00
+   val time   = 0xc01
+   val instret= 0xc02
+   val hpmcounter3 = 0xc03
+   val hpmcounter4 = 0xc04
+   val hpmcounter5 = 0xc05
+   val hpmcounter6 = 0xc06
+   val hpmcounter7 = 0xc07
+   val hpmcounter8 = 0xc08
+   val hpmcounter9 = 0xc09
+   val hpmcounter10= 0xc0a
+   val hpmcounter11= 0xc0b
+   val hpmcounter12= 0xc0c
+   val hpmcounter13= 0xc0d
+   val hpmcounter14= 0xc0e
+   val hpmcounter15= 0xc0f
+   val hpmcounter16= 0xc10
+   val hpmcounter17= 0xc11
+   val hpmcounter18= 0xc12
+   val hpmcounter19= 0xc13
+   val hpmcounter20= 0xc14
+   val hpmcounter21= 0xc15
+   val hpmcounter22= 0xc16
+   val hpmcounter23= 0xc17
+   val hpmcounter24= 0xc18
+   val hpmcounter25= 0xc19
+   val hpmcounter26= 0xc1a
+   val hpmcounter27= 0xc1b
+   val hpmcounter28= 0xc1c
+   val hpmcounter29= 0xc1d
+   val hpmcounter30= 0xc1e
+   val hpmcounter31= 0xc1f
+
+   val sstatus     = 0x100
+   val sie         = 0x104
+   val stvec       = 0x105
+   val scounteren  = 0x106
+   val senvcfg     = 0x10a
+   val scountinhibit =0x120
+
+   val sscratch    = 0x140
+   val sepc        = 0x141
+   val scause      = 0x142
+   val stval       = 0x143
+   val sip         = 0x144
+   val scountovf   = 0xDA0
+   val satp        = 0x180
+   val scontext    = 0x5A8
+
+   val sstateen0   = 0x10C
+   val sstateen1   = 0x10D
+   val sstateen2   = 0x10E
+   val sstateen3   = 0x10F
+
+   val mvendorid   = 0xf11
+   val marchid     = 0xf12
+   val mimpid      = 0xf13
+   val mhartid     = 0xf14
+   val mconfigptr  = 0xf15
+
+   val mstatus     = 0x300
+   val misa        = 0x301
+   val medeleg     = 0x302
+   val mideleg     = 0x303
+   val mie         = 0x304
+   val mtvec       = 0x305
+   val mcounteren  = 0x306
+
+   val mscratch    = 0x340
+   val mepc        = 0x341
+   val mcause      = 0x342
+   val mtval       = 0x343
+   val mip         = 0x344
+   val mtinst      = 0x34a
+   val mtval2      = 0x34b
+   val menvcfg     = 0x30a
+   val mseccfg     = 0x747
+   val pmpcfg0     = 0x3a0
+   //val pmpcfg1     = 0x3a1
+   val pmpcfg2     = 0x3a2
+   //val pmpcfg3     = 0x3a3
+   /*
+   val pmpcfg4     = 0x3a4
+   val pmpcfg5     = 0x3a5
+   val pmpcfg6     = 0x3a6
+   val pmpcfg7     = 0x3a7
+   val pmpcfg8     = 0x3a8
+   val pmpcfg9     = 0x3a9
+   val pmpcfg10    = 0x3aa
+   val pmpcfg11    = 0x3ab
+   val pmpcfg12    = 0x3ac
+   val pmpcfg13    = 0x3ad
+   */
+   val pmpcfg14    = 0x3ae
+   //val pmpcfg15    = 0x3af
+   val pmpaddr0    = 0x3b0
+   val pmpaddr1    = 0x3b1
+   val pmpaddr2    = 0x3b2
+   val pmpaddr3    = 0x3b3
+   val pmpaddr4    = 0x3b4
+   val pmpaddr5    = 0x3b5
+   val pmpaddr6    = 0x3b6
+
+   val mstateen0   = 0x30c
+   val mstateen1   = 0x30d
+   val mstateen2   = 0x30e
+   val mstateen3   = 0x30f
+
+   val mnscratch   = 0x740
+   val mnepc       = 0x741
+   val mncause     = 0x742
+   val mnstatus    = 0x744
+
+   val mcycle      = 0xb00
+   val minstret    = 0xb02
+   val mhpmcounter3= 0xb03
+   val mhpmcounter4= 0xb04
+   val mhpmcounter5= 0xb05
+   val mhpmcounter6= 0xb06
+   val mhpmcounter7= 0xb07
+   val mhpmcounter8= 0xb08
+   val mhpmcounter9= 0xb09
+   val mhpmcounter10=0xb0a
+   val mhpmcounter11=0xb0b 
+   val mhpmcounter12=0xb0c
+   val mhpmcounter13=0xb0d
+   val mhpmcounter14=0xb0e
+   val mhpmcounter15=0xb0f
+   val mhpmcounter16=0xb10
+   val mhpmcounter17=0xb11
+   val mhpmcounter18=0xb12
+   val mhpmcounter19=0xb13
+   val mhpmcounter20=0xb14
+   val mhpmcounter21=0xb15
+   val mhpmcounter22=0xb16
+   val mhpmcounter23=0xb17
+   val mhpmcounter24=0xb18
+   val mhpmcounter25=0xb19
+   val mhpmcounter26=0xb1a
+   val mhpmcounter27=0xb1b
+   val mhpmcounter28=0xb1c
+   val mhpmcounter29=0xb1d
+   val mhpmcounter30=0xb1e
+   val mhpmcounter31=0xb1f
+   val mcountinhibit=0x320
+}
+
+object PrivConst{
+   val USER       = 0.U(2.W)
+   val SUPERVISOR = 1.U(2.W)
+   val MACHINE    = 3.U(2.W)
 }

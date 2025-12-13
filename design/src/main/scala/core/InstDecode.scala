@@ -193,20 +193,30 @@ class RV32IDecoder extends Module {
             io.I_ctrl.alu_op := ALU_OP.XXX.U
             io.I_ctrl.csr_addr := io.inst(31,20)
             switch(funct3){
-                is("b001".U){io.I_ctrl.csr_cmd := CSR_CMD.RW.U} //CSRRW
-                is("b010".U){io.I_ctrl.csr_cmd := CSR_CMD.RS.U} //CSRRS
-                is("b011".U){io.I_ctrl.csr_cmd := CSR_CMD.RC.U} //CSRRC
-                is("b101".U){io.I_ctrl.csr_cmd := CSR_CMD.RWI.U} //CSRRWI
-                is("b110".U){io.I_ctrl.csr_cmd := CSR_CMD.RSI.U} //CSRRSI
-                is("b111".U){io.I_ctrl.csr_cmd := CSR_CMD.RCI.U} //CSRRCI
-            }
-            switch(funct3){
-                is("b000".U, "b010".U, "b011".U){
+                is("b001".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RW.U
+                    io.I_ctrl.alu_op := ALU_OP.RS1.U 
+                } //CSRRW
+                is("b010".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RS.U
                     io.I_ctrl.alu_op := ALU_OP.RS1.U
-                }
-                is("b110".U, "b101".U,"b111".U){
+                } //CSRRS
+                is("b011".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RC.U
+                    io.I_ctrl.alu_op := ALU_OP.RS1.U
+                } //CSRRC
+                is("b101".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RWI.U
                     io.I_ctrl.alu_op := ALU_OP.RS2.U
-                }
+                } //CSRRWI
+                is("b110".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RSI.U
+                    io.I_ctrl.alu_op := ALU_OP.RS2.U
+                } //CSRRSI
+                is("b111".U){
+                    io.I_ctrl.csr_cmd := CSR_CMD.RCI.U
+                    io.I_ctrl.alu_op := ALU_OP.RS2.U
+                } //CSRRCI
             }
         }
     }
