@@ -13,3 +13,4 @@ design/project/*
 *.vcd
 obj_dir/
 fpga/
+*raw
