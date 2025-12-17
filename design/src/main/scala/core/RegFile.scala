@@ -53,6 +53,34 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val marchid = RegInit(0.U(XLEN.W))
     val mimpid = RegInit(0.U(XLEN.W))
     val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
+    //mstatus
+    val __SIE = false.B
+    val __MIE = RegInit(false.B)
+    val __SPIE = false.B
+    val __UBE = RegInit(false.B)
+    val __MPIE = RegInit(false.B)
+    val __SPP = RegInit(false.B)
+    val __VS  = RegInit(0.U(2.W))
+    val __MPP = RegInit(0.U(2.W))
+    val __FS  = RegInit(0.U(2.W))
+    val __XS  = RegInit(0.U(2.W))
+    val __MPRV= RegInit(false.B)
+    val __SUM = RegInit(false.B)
+    val __MXR = RegInit(false.B)
+    val __TVM = RegInit(false.B)
+    val __TW  = RegInit(false.B)
+    val __TSR = RegInit(false.B)
+    val __SPELP= RegInit(false.B)
+    val __SDT  = RegInit(false.B)
+    val __UXL = RegInit(0.U(2.W))
+    val __SXL = RegInit(0.U(2.W))
+    val __SBE = RegInit(false.B)
+    val __MBE = RegInit(false.B)
+    val __GVA = RegInit(false.B)
+    val __MPV = RegInit(false.B)
+    val __MPELP = RegInit(false.B)
+    val __MDT = RegInit(false.B)
+    val __SD = RegInit(false.B) 
     //count retired instructions
     val retire_counter = RegInit(0.U(XLEN.W))
     when(io.core_retire){

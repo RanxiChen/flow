@@ -6,6 +6,8 @@ This file is about how cpu communicate with mem
 The diagram are followed.
 ![fetch circuit](./fetch.svg)
 
+
+
 if addr not match data, mem will not pull up `can_next`.
 
 ### mem
