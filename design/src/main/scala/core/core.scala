@@ -72,7 +72,9 @@ class core_in_order extends Module{
             pc_error_predict -> pc_from_exe
         )
     )
-    when(io.itcm.can_next && (io.itcm.resp_addr === io.itcm.req_addr)){
+    val instruction_address_misaligned = WireDefault(false.B)
+    val sucessful_fetch = WireDefault(false.B)
+   when(sucessful_fetch){
         pc := next_pc
     }
     //Fetch
@@ -85,6 +87,10 @@ class core_in_order extends Module{
     val inst_buf = Reg(new Inst_Buf)
     val inst_buf_flush = WireDefault(false.B)
     val fetch_inst_valid = WireDefault(false.B)
+    instruction_address_misaligned := (io.itcm.req_addr(1,0) =/= 0.U)
+    sucessful_fetch := io.itcm.can_next && 
+        (io.itcm.resp_addr === io.itcm.req_addr) && 
+        !instruction_address_misaligned 
     fetch_inst_valid := io.itcm.data(1,0) === "b11".U
     when(reset.asBool || inst_buf_flush){
         //Reset or Flush
@@ -92,7 +98,7 @@ class core_in_order extends Module{
         inst_buf.pc := 0.U
         inst_buf.buble := true.B
         id_cnt := 0.U
-    }.elsewhen(io.itcm.can_next){
+    }.elsewhen(sucessful_fetch){
         //Normal fetch
         inst_buf.inst := io.itcm.data
         inst_buf.pc := pc
@@ -262,23 +268,55 @@ class core_in_order extends Module{
         mem_reg.csr_cmd := exe_reg.ctrl.csr_cmd
         mem_cnt := exe_cnt
     }
-    io.dtcm.req_addr := mem_reg.data
+    val mem_base_addr = WireDefault(0.U(XLEN.W))
+    mem_base_addr := mem_reg.data >> 3.U << 3.U // align to 8 bytes
+    val mem_offset = WireDefault(0.U(3.W))
+    mem_offset := mem_reg.data(2,0)
+    io.dtcm.req_addr := mem_base_addr
+    val load_address_misaligned_xcpt = WireDefault(false.B)
+    val store_address_misaligned_xcpt = WireDefault(false.B)
     when(!mem_reg.buble){
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.SB.U){
                 io.dtcm.wt_rd := true.B
                 io.dtcm.wdata := Fill(8, mem_reg.rs2(7,0))
-                io.dtcm.wmask := "b00000001".U
+                io.dtcm.wmask := UIntToOH(mem_offset,8)
+                store_address_misaligned_xcpt := false.B
             }
             is(MEM_TYPE.SH.U){
                 io.dtcm.wt_rd := true.B
                 io.dtcm.wdata := Fill(4, mem_reg.rs2(15,0))
-                io.dtcm.wmask := "b00000011".U
+                store_address_misaligned_xcpt := mem_offset(0)
+                switch(mem_offset(2,1)){
+                    is("b00".U){
+                        io.dtcm.wmask := "b00000011".U
+                    }
+                    is("b01".U){
+                        io.dtcm.wmask := "b00001100".U
+                    }
+                    is("b10".U){
+                        io.dtcm.wmask := "b00110000".U
+                    }
+                    is("b11".U){
+                        io.dtcm.wmask := "b11000000".U
+                    }
+                }
             }
             is(MEM_TYPE.SW.U){
                 io.dtcm.wt_rd := true.B
                 io.dtcm.wdata := Fill(2, mem_reg.rs2(31,0))
-                io.dtcm.wmask := "b00001111".U
+                store_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
+                io.dtcm.wmask := Mux(
+                    mem_offset(2),//switch upper or lower 4 bytes
+                    "b11110000".U,
+                    "b00001111".U
+                )
+            }
+            is(MEM_TYPE.SD.U){
+                io.dtcm.wt_rd := true.B
+                io.dtcm.wdata := mem_reg.rs2
+                io.dtcm.wmask := "b11111111".U
+                store_address_misaligned_xcpt := mem_offset =/= 0.U
             }
             is(MEM_TYPE.LB.U, MEM_TYPE.LH.U, MEM_TYPE.LW.U,
                MEM_TYPE.LBU.U, MEM_TYPE.LHU.U){
@@ -288,29 +326,51 @@ class core_in_order extends Module{
     }
     val mem_data_loaded = Wire(UInt(XLEN.W))
     mem_data_loaded := 0.U
+    val align_load_buf = Wire(UInt(64.W))
     when(!mem_reg.buble){
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.LB.U){
-                mem_data_loaded := Fill(56, io.dtcm.rdata(7)) ## io.dtcm.rdata(7,0)
+                load_address_misaligned_xcpt := false.B
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hff".U 
+                mem_data_loaded := Fill(56, align_load_buf(7)) ## align_load_buf(7,0)
             }
             is(MEM_TYPE.LH.U){
-                mem_data_loaded := Fill(48, io.dtcm.rdata(15)) ## io.dtcm.rdata(15,0)
+                load_address_misaligned_xcpt := mem_offset(0)
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff".U
+                mem_data_loaded := Fill(48, align_load_buf(15)) ## align_load_buf(15,0)
             }
             is(MEM_TYPE.LW.U){
-                mem_data_loaded := Fill(32, io.dtcm.rdata(31)) ## io.dtcm.rdata(31,0)
+                load_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
+                mem_data_loaded := Fill(32, align_load_buf(31)) ## align_load_buf(31,0)
+            }
+            is(MEM_TYPE.LD.U){
+                load_address_misaligned_xcpt := mem_offset =/= 0.U
+                mem_data_loaded := io.dtcm.rdata
             }
             is(MEM_TYPE.LBU.U){
-                mem_data_loaded := Fill(56, false.B) ## io.dtcm.rdata(7,0)
+                load_address_misaligned_xcpt := false.B
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hff".U 
+                mem_data_loaded := Fill(56, false.B) ## align_load_buf(7,0)
             }
             is(MEM_TYPE.LHU.U){
-                mem_data_loaded := Fill(48, false.B) ## io.dtcm.rdata(15,0)
+                load_address_misaligned_xcpt := mem_offset(0)
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff".U
+                mem_data_loaded := Fill(48, false.B) ## align_load_buf(15,0)
             }
             is(MEM_TYPE.LWU.U){
-                mem_data_loaded := Fill(32, false.B) ## io.dtcm.rdata(31,0)
+                load_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
+                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
+                mem_data_loaded := Fill(32, false.B) ## align_load_buf(31,0)
+            }
+            is(MEM_TYPE.LD.U){
+                load_address_misaligned_xcpt := mem_offset =/= 0.U
+                mem_data_loaded := io.dtcm.rdata
             }
         }
     }
-    io.dtcm.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble
+    io.dtcm.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble && 
+        !load_address_misaligned_xcpt && !store_address_misaligned_xcpt
     val csr = Module(new CSRFile(XLEN,dumplog))
     csr.io.csr_addr := mem_reg.csr_addr
     csr.io.csr_cmd := mem_reg.csr_cmd
@@ -340,7 +400,7 @@ class core_in_order extends Module{
         wb_reg.buble := true.B
         wb_reg.csr_data := 0.U
         wb_cnt := 0.U
-    }.elsewhen(io.dtcm.can_next && (mem_reg.data === io.dtcm.resp_addr) ||
+    }.elsewhen(io.dtcm.can_next && (io.dtcm.req_addr === io.dtcm.resp_addr) ||
         mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U
         ){
         wb_reg.wb_en := mem_reg.wb_en
