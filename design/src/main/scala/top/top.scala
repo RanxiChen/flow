@@ -12,6 +12,7 @@ class flow_top extends Module {
     io.error := false.B
     val core = Module(new core_in_order())
     val mem = Module(new regarryMem(128))
+    //val mem = Module(new SRAMMemory(1024))
     //connect
     core.io.itcm <> mem.io.imem_port
     core.io.dtcm <> mem.io.dmem_port

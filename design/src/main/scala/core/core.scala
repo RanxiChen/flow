@@ -62,6 +62,7 @@ class core_in_order extends Module{
     val exe_cnt = RegInit(0.U(64.W))
     val mem_cnt = RegInit(0.U(64.W))
     val wb_cnt = RegInit(0.U(64.W)) 
+    val mem_stall = WireDefault(false.B)
     //PC generate
     val pc = RegInit(0.U(64.W))
     val pc_error_predict = WireDefault(false.B)
@@ -74,7 +75,7 @@ class core_in_order extends Module{
     )
     val instruction_address_misaligned = WireDefault(false.B)
     val sucessful_fetch = WireDefault(false.B)
-   when(sucessful_fetch){
+   when(sucessful_fetch && !mem_stall ){
         pc := next_pc
     }
     //Fetch
@@ -92,13 +93,13 @@ class core_in_order extends Module{
         (io.itcm.resp_addr === io.itcm.req_addr) && 
         !instruction_address_misaligned 
     fetch_inst_valid := io.itcm.data(1,0) === "b11".U
-    when(reset.asBool || inst_buf_flush){
+    when(reset.asBool || inst_buf_flush || !sucessful_fetch){
         //Reset or Flush
         inst_buf.inst := "h00000013".U //nop
         inst_buf.pc := 0.U
         inst_buf.buble := true.B
         id_cnt := 0.U
-    }.elsewhen(sucessful_fetch){
+    }.elsewhen(sucessful_fetch && !mem_stall){
         //Normal fetch
         inst_buf.inst := io.itcm.data
         inst_buf.pc := pc
@@ -179,7 +180,7 @@ class core_in_order extends Module{
         exe_reg.rd := 0.U
         exe_reg.buble := true.B
         exe_cnt := 0.U
-    }.otherwise{
+    }.elsewhen(!mem_stall){
         exe_reg.ctrl := id.io.exe_ctrl
         exe_reg.pc := inst_buf.pc
         exe_reg.rs1_data := rs1_data_id
@@ -228,6 +229,9 @@ class core_in_order extends Module{
          !inst_buf.buble && (exe_reg.ctrl.redir_inst || 
             exe_reg.ctrl.bru_inst && bru.io.take_branch
         )
+    inst_buf_flush := pc_error_predict
+    exe_reg_flush := pc_error_predict
+    pc_from_exe := jau.io.jmp_addr
     //Mem Stage
     class MEM_Reg extends Bundle {
         val data = UInt(XLEN.W)
@@ -255,7 +259,7 @@ class core_in_order extends Module{
         mem_reg.rs1_addr := 0.U
         mem_reg.csr_addr := 0.U
         mem_reg.csr_cmd := CSR_CMD.XXX.U
-    }.otherwise{
+    }.elsewhen(!mem_stall){
         mem_reg.data := alu.io.alu_out
         mem_reg.rs2 := rs2_data_wire
         mem_reg.mem_cmd := exe_reg.ctrl.mem_cmd
@@ -327,6 +331,7 @@ class core_in_order extends Module{
     val mem_data_loaded = Wire(UInt(XLEN.W))
     mem_data_loaded := 0.U
     val align_load_buf = Wire(UInt(64.W))
+    align_load_buf := 0.U
     when(!mem_reg.buble){
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.LB.U){
@@ -363,14 +368,11 @@ class core_in_order extends Module{
                 align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
                 mem_data_loaded := Fill(32, false.B) ## align_load_buf(31,0)
             }
-            is(MEM_TYPE.LD.U){
-                load_address_misaligned_xcpt := mem_offset =/= 0.U
-                mem_data_loaded := io.dtcm.rdata
-            }
         }
     }
     io.dtcm.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble && 
         !load_address_misaligned_xcpt && !store_address_misaligned_xcpt
+    mem_stall := io.dtcm.mem_valid && !io.dtcm.can_next
     val csr = Module(new CSRFile(XLEN,dumplog))
     csr.io.csr_addr := mem_reg.csr_addr
     csr.io.csr_cmd := mem_reg.csr_cmd
@@ -474,7 +476,7 @@ class core_in_order extends Module{
     /**
      *Debug Signal Dump
      */
-    val coretimer = RegInit(0.U(8.W))
+    val coretimer = RegInit(0.U(16.W))
     coretimer := coretimer + 1.U
     if(dumplog){
     printf(cf"[InstStats]\t")
@@ -485,6 +487,7 @@ class core_in_order extends Module{
     printf(cf"[WB]${wb_cnt}%4d\n")
     printf(cf"[PiPeLine]")
     printf(cf"[${coretimer}%3d]")
+    printf(cf"[PC]pc=0x${pc}%4x,npc=0x${next_pc}%4x")
     printf(cf"[IF]pc=0x${io.itcm.req_addr}%4x")
     when(io.itcm.can_next){
         printf(cf",inst=0x${io.itcm.data}%8x")
@@ -503,7 +506,15 @@ class core_in_order extends Module{
     printf(cf"[EXE]")
     when(!exe_reg.buble){
         //printf(cf"pc=0x${exe_reg.pc}%4x")
-        printf(cf"alu_in1=0x${alu.io.alu_in1}%8x,alu_in2=0x${alu.io.alu_in2}%8x,alu_op=0x${alu.io.alu_op}%4x,alu_out=0x${alu.io.alu_out}%8x" )
+        //printf(cf"alu_in1=0x${alu.io.alu_in1}%8x,alu_in2=0x${alu.io.alu_in2}%8x,alu_op=0x${alu.io.alu_op}%4x,alu_out=0x${alu.io.alu_out}%8x" )
+        when(exe_reg.ctrl.bru_inst){
+            printf(cf"br in1=0x${bru.io.rs1_data}%8x,in2=0x${bru.io.rs2_data}%8x,taken=${bru.io.take_branch},dest=0x${jau.io.jmp_addr}%4x")
+        }.elsewhen(exe_reg.ctrl.redir_inst){
+            printf(cf"jmp in1=0x${jau.io.rs1_data}%8x,imm=0x${jau.io.imm}%8x,jmp_addr=0x${jau.io.jmp_addr}%8x,dst=0x${jau.io.jmp_addr}%4x")
+        }.otherwise{
+            //printf(cf"alu in1=0x${alu.io.alu_in1}%8x,in2=0x${alu.io.alu_in2}%8x,alu_out=0x${alu.io.alu_out}%8x")
+            printf(cf"pc=0x${exe_reg.pc}%4x,alu_out=0x${alu.io.alu_out}%8x")
+        }
     }.otherwise{
         printf(cf"XXXXXXXXX=buble=XXXXXXX")
     }
@@ -536,8 +547,8 @@ class core_in_order extends Module{
     when(!wb_reg.buble){
         when(wb_reg.wb_en){
             printf(cf"write x[${wb_reg.rd_addr}%2d],data=0x${wb_data_wire}%8x")
-            printf(cf",csr_data=0x${wb_reg.csr_data}%8x")
-            printf(cf",wb_sel=${wb_reg.sel_wb}%2d")
+            //printf(cf",csr_data=0x${wb_reg.csr_data}%8x")
+            //printf(cf",wb_sel=${wb_reg.sel_wb}%2d")
         }.otherwise{
             printf("NOT WB")
         }

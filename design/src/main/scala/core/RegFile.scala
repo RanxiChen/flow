@@ -83,10 +83,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val __SD = RegInit(false.B) 
     //count retired instructions
     val retire_counter = RegInit(0.U(XLEN.W))
-    when(io.core_retire){
-        retire_counter := retire_counter + 1.U
-        if(dumplog && false){
-            printf(cf"[DEBUG] core retired instruction count = ${retire_counter}%d\n")
+    if(dumplog){
+        val inner_timer = RegInit(0.U(64.W))
+        inner_timer := inner_timer + 1.U
+        when(io.core_retire){
+            retire_counter := retire_counter + 1.U
+            printf(cf"[DEBUG] ${inner_timer}%0d core retired instruction count = ${retire_counter}%d\n")
         }
     }
     val csrFile = Seq(

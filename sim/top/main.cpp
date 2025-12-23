@@ -5,6 +5,23 @@
 #include <iostream>
 uint64_t sim_time = 0;
 
+
+void step(Vflow_top* top, VerilatedVcdC* tfp){
+    top ->clock = 0;
+    top ->eval();
+    tfp->dump(sim_time++);
+    top ->clock = 1;
+    top ->eval();
+    tfp->dump(sim_time++);
+    return;
+}
+void reset(Vflow_top* top, VerilatedVcdC* tfp){
+    top -> reset = 1;
+   step(top, tfp);
+    top -> reset = 0;
+    return;
+}
+
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
     Verilated::traceEverOn(true);
@@ -13,20 +30,9 @@ int main(int argc, char** argv) {
     top->trace(tfp, 99);
     tfp->open("flow_top.vcd");
     std::cout << "simulate flow_top module" << std::endl;
-    while(sim_time < 70){
-        if(sim_time <=10 && sim_time >= 3){
-            top -> reset =1 ;
-        }else {
-            top -> reset =0 ;
-        }
-        top -> clock =1 ;
-        top->eval();
-        tfp->dump(sim_time);
-        sim_time++;
-        top -> clock =0 ;
-        top->eval();
-        tfp->dump(sim_time);
-        sim_time++;
+    reset(top, tfp);
+    while(sim_time < 60){
+        step(top, tfp);
     }
     std::cout << "finish simulation" << std::endl;
     tfp->close();

@@ -1,7 +1,7 @@
 FLOW_ROOT ?= ../../..
 
 clean:
-	rm -rf $(FLOW_ROOT)/design/build obj_dir
+	rm -rf $(FLOW_ROOT)/design/build obj_dir *.vcd
 
 sram_v:
 	rm -rf $(FLOW_ROOT)/design/build

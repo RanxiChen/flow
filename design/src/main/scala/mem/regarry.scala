@@ -24,6 +24,7 @@ class regarryMem(val depth: Int =128 ) extends Module {
     val mem = Reg(Vec(depth, UInt(64.W)))
     //reset and load value
     when(reset.asBool){
+        /*
         mem(0) := "h00678813_00100793".U
         mem(1) := "h40f80433_0107f8b3".U
         mem(2) := "h0057f313_10204293".U
@@ -34,7 +35,12 @@ class regarryMem(val depth: Int =128 ) extends Module {
         mem(7) := "h00000013_0ff8d073".U // write 0x3 to printer and nop
         mem(8) := "h00000013_0ff011f3".U // write printer to x3 and nop
         mem(9) := "h00000013_30101273".U // read misa
-        mem(10):= "h00000013_8ff21073".U // write x4 to printer        
+        mem(10):= "h00000013_8ff21073".U // write x4 to printer 
+        */
+        mem(0) := "h0050031300000293".U
+        mem(1) := "hfe629ee300128293".U
+        mem(2) := "h001282938ff29073".U
+        mem(3) := "h00000013ff9ff06f".U       
     }
     //imem part
     io.imem_port.resp_addr := io.imem_port.req_addr

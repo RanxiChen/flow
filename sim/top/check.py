@@ -5,7 +5,7 @@ CycleInstMap ={}
 # read which cycle instruction retires
 with open("cycle_inst.raw","r") as f:
     for line in f:
-        content = line.split(',')
+        content = line.split(' ')
         cycle = int(content[0].strip())+ 1
         inst_count = int(content[1].strip())
         CycleInstMap[inst_count] = cycle
