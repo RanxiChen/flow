@@ -70,7 +70,7 @@ class SRAMMemCtrl extends Module {
     }
     val state = RegInit(MemCtrlState.sIDLE)
     val mem_state = RegInit(MemOP.reads)
-    val fetch_pending = RegInit(false.B)
+    val fetch_pending = WireInit(true.B)
     val addrReg = RegInit(0.U(64.W))
     val wdataReg = RegInit(0.U(64.W))
     val wmaskReg = RegInit(0.U(8.W))
@@ -105,7 +105,6 @@ class SRAMMemCtrl extends Module {
                 when(fetch_pending){
                     fetch_mem := false.B
                     addrReg := io.dmem_port.req_addr
-                    fetch_pending := false.B
                 }.otherwise{
                     fetch_mem := true.B
                     addrReg := io.imem_port.req_addr
@@ -200,7 +199,7 @@ class SRAMMemCtrl extends Module {
     }
     val dump=false
     if(dump){
-        printf(cf"MemCtrl State : ${state}\n")
+        printf(cf"[SRAM]MemCtrl State : ${state}\n")
     }
 }
 
@@ -261,11 +260,11 @@ class SRAMLayer(val depth: Int = 1024) extends Module {
     io.out.bits.resp_addr := addrReg
     io.out.bits.rdata := Mux(state === SRAMCtrlState.sFAIL, 0.U, dataReg)
     io.out.bits.sucess := Mux(state === SRAMCtrlState.sFAIL, false.B, true.B)
-    val dump=false
+    val dump=true
     if(dump){
-        printf(cf"State : ${state}\n")
+        printf(cf"[SRAM]State : ${state}\n")
         when(state === SRAMCtrlState.sDONE){
-            printf(cf"SRAM Access Done : Addr = 0x${Hexadecimal(io.out.bits.resp_addr)}, Data = 0x${io.out.bits.rdata}%0x\n")
+            printf(cf"[SRAM]Access Done : Addr = 0x${Hexadecimal(io.out.bits.resp_addr)}, Data = 0x${io.out.bits.rdata}%0x\n")
         }
     }
 }
