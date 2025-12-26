@@ -2,7 +2,6 @@ package mem
 
 import chisel3._
 import chisel3.util._
-import core.core_in_order
 import chisel3.experimental._
 import chisel3.util.experimental.loadMemoryFromFileInline
 class mem_req extends Bundle{
@@ -203,13 +202,13 @@ class SRAMMemCtrl extends Module {
     }
 }
 
-class SRAMLayer(val depth: Int = 1024) extends Module {
+class SRAMLayer(val depth: Int = 1024,val path: String = "mem.hex") extends Module {
     val io = IO(new Bundle{
         val in = Flipped(DecoupledIO(new mem_req))
         val out = DecoupledIO(new mem_resp)
     })
     val content = SyncReadMem(depth, UInt(64.W)) // SRAM
-    loadMemoryFromFileInline(content, "mem.hex")
+    loadMemoryFromFileInline(content, path)
     object SRAMCtrlState extends ChiselEnum {
         val sIDLE,sREAD,SREADNOP,sDONE,sWRITE,sFAIL = Value
     }
@@ -269,28 +268,9 @@ class SRAMLayer(val depth: Int = 1024) extends Module {
     }
 }
 
-class SRAMMemory(val depth: Int = 1024) extends Module {
-    val io = IO(new Bundle{
-        val imem_port = new Bundle {
-            val req_addr = Input(UInt(64.W))
-            val resp_addr = Output(UInt(64.W))
-            val data = Output(UInt(32.W))
-            val can_next = Output(Bool())
-        }
-        val dmem_port = new Bundle {
-            val req_addr = Input(UInt(64.W))
-            val resp_addr = Output(UInt(64.W))
-            val mem_valid = Input(Bool())
-            val wt_rd = Input(Bool()) // 1 for write, 0 for read
-            val wdata = Input(UInt(64.W))
-            val wmask = Input(UInt(8.W))
-            val rdata = Output(UInt(64.W))
-            val can_next = Output(Bool())
-        }
-    })
-
+class SRAMMemory(val depth: Int = 1024,val path: String = "mem.hex") extends MemModule {
     val ctrl = Module(new SRAMMemCtrl)
-    val sram = Module(new SRAMLayer(depth))
+    val sram = Module(new SRAMLayer(depth, path))
     //connect ctrl and sram
     ctrl.io.sram.mem_req <> sram.io.in
     ctrl.io.sram.mem_resp <> sram.io.out

@@ -2,90 +2,131 @@ package core
 
 import chisel3._
 import chisel3.util._
-class CoreIO extends Bundle{
-    val itcm = new IMemPort
-    val dtcm = new DMemPort           
+import top.DefaultConfig._
+class DMemPort extends Bundle {
+    val req_addr = Output(UInt(64.W))
+    val rdata = Input(UInt(64.W))
+    val wt_rd = Output(Bool())
+    val mem_valid = Output(Bool())
+    val wdata = Output(UInt(64.W))
+    val wmask = Output(UInt(8.W))
+    val resp_addr = Input(UInt(64.W))
+    val can_next = Input(Bool())
 }
-abstract class CoreModule extends Module{
-    val io = IO(new CoreIO)
+/*
+class IbufPackWithValid extends Bundle {
+    val valid = Bool()
+    val pack = new InstPack
 }
-class early_core extends CoreModule{
+class IBuf extends Module {
+    val io = IO(new Bundle {
+        val enq = Flipped(DecoupledIO(new InstPack))
+        val deq = DecoupledIO(new InstPack)
+        val flush = Input(Bool())
+    })
+    /**
+      * Instruction Buffer, will be flushed when flush is high
+      * the entry is 2, allow both enq and deq
+      * when flush happends,flush the whole buffer
+      * when impl, when flush happends, the enq are connected to buble
+      * the deq will output buble until the flush is done
+      */
+    val ibuf = Module(new Queue(new IbufPackWithValid, 2))
+    object State extends ChiselEnum {
+        val sNormal, sFlush = Value
+    }
+    val state = RegInit(State.sNormal)
+    //state transition
+    when(state === State.sNormal){
+        when(io.flush){
+            state := State.sFlush
+        }
+    }.elsewhen(state === State.sFlush){
+        when(!io.flush && ibuf.io.count === 0.U){
+            state := State.sNormal
+        }
+    }.otherwise{
+        state := State.sNormal
+    }
+    //work
+    when(state === State.sNormal){
+        io.enq.ready := ibuf.io.enq.ready
+        ibuf.io.enq.valid := io.enq.valid
+        ibuf.io.enq.bits.pack := io.enq.bits
+        ibuf.io.enq.bits.valid := true.B
+        io.deq.valid := ibuf.io.deq.valid
+        io.deq.bits := ibuf.io.deq.bits.pack
+        ibuf.io.deq.ready := io.deq.ready
+    }
+}
+*/
+
+
+class Backend extends Module{
     val XLEN = 64
     val dumplog = true
     //IO
-    //initial IO
-    io.dtcm.req_addr := 0.U
-    io.dtcm.wt_rd := false.B
-    io.dtcm.wdata := 0.U
-    io.dtcm.wmask := 0.U
+    val io = IO(new Bundle{
+        val imem = Flipped(DecoupledIO(new InstPack))
+        val dmem = new DMemPort
+        val fctl = new FrontendCtrl
+    })
     //counter instrctions    
     val id_cnt = RegInit(0.U(64.W))
     val exe_cnt = RegInit(0.U(64.W))
     val mem_cnt = RegInit(0.U(64.W))
     val wb_cnt = RegInit(0.U(64.W)) 
     val mem_stall = WireDefault(false.B)
-    //PC generate
-    val pc = RegInit(0.U(64.W))
     val pc_error_predict = WireDefault(false.B)
-    val pc_from_exe = WireDefault(0.U(64.W))
-    val next_pc = MuxCase(
-        pc + 4.U,
-        Seq(
-            pc_error_predict -> pc_from_exe
-        )
-    )
     val instruction_address_misaligned = WireDefault(false.B)
     val sucessful_fetch = WireDefault(false.B)
-   when(sucessful_fetch && !mem_stall ){
-        pc := next_pc
-    }
+
+    //initial IO
+    io.fctl.flush := false.B
+    io.fctl.pc_redir := ADDR_XXX.U(64.W)
+    io.fctl.pc_misfetch := false.B
+    io.dmem.req_addr := 0.U
+    io.dmem.wt_rd := false.B
+    io.dmem.mem_valid := false.B
+    io.dmem.wdata := 0.U
+    io.dmem.wmask := 0.U
+    //IBUF
+    val inst_buf_flush = WireDefault(false.B) //flush when mispredict
     //Fetch
-    io.itcm.req_addr := pc 
-    class Inst_Buf extends  Bundle {
-        val inst = UInt(32.W)
-        val pc   = UInt(64.W)
-        val buble = Bool()
-    }
-    val inst_buf = Reg(new Inst_Buf)
-    val inst_buf_flush = WireDefault(false.B)
-    val fetch_inst_valid = WireDefault(false.B)
-    instruction_address_misaligned := (io.itcm.req_addr(1,0) =/= 0.U)
-    sucessful_fetch := io.itcm.can_next && 
-        (io.itcm.resp_addr === io.itcm.req_addr) && 
-        !instruction_address_misaligned 
-    fetch_inst_valid := io.itcm.data(1,0) === "b11".U
-    when(reset.asBool || inst_buf_flush || !sucessful_fetch){
-        //Reset or Flush
-        inst_buf.inst := "h00000013".U //nop
-        inst_buf.pc := 0.U
-        inst_buf.buble := true.B
-        id_cnt := 0.U
-    }.elsewhen(sucessful_fetch && !mem_stall){
-        //Normal fetch
-        inst_buf.inst := io.itcm.data
-        inst_buf.pc := pc
-        inst_buf.buble := false.B
-        when(
-            io.itcm.resp_addr === io.itcm.req_addr &&
-            (
-                (io.itcm.resp_addr =/= inst_buf.pc &&
-                    io.itcm.data =/= inst_buf.inst) || inst_buf.buble
-            )&& fetch_inst_valid
-        ){
-            id_cnt := id_cnt + 1.U
-        }
-    }
+    //val ibuf = Module(new IBuf)
+    val ibuf = Module(new Queue(new InstPack, 2,hasFlush = true))
+    //ibuf.io.flush := inst_buf_flush
+    ibuf.io.flush.get := inst_buf_flush
+    //frontend feed inst to ibuf
+    ibuf.io.enq <> io.imem
+
+    val ibuf_pc = RegInit(0.U(64.W)) //ibuf content
+    val ibuf_inst = RegInit(0.U(32.W)) //ibuf content
+    val if_id_inst = WireDefault(0.U(32.W)) // used by id stage
+    val if_id_pc = WireDefault(0.U(64.W)) // used by id stage
+    
+    val inst_buf_buble = RegInit(true.B) //flag indicate buble
+    val inst_buf_stall = WireDefault(false.B) //stall when needed,such as mem take longer time
+    ibuf.io.deq.ready := !inst_buf_stall
+    //when ibuf is empty,or stall,or flush,then insert nop
+    ibuf_pc := ibuf.io.deq.bits.pc
+    ibuf_inst := ibuf.io.deq.bits.data
+    inst_buf_buble := !ibuf.io.deq.fire || inst_buf_flush
+    if_id_inst := Mux(inst_buf_buble, "h00000013".U, ibuf_inst) //nop if buble
+    if_id_pc := Mux(inst_buf_buble, ADDR_XXX.U(64.W), ibuf_pc)
+    id_cnt := Mux(inst_buf_buble, 0.U, id_cnt+1.U)
+    
  
     //decode
     val id = Module(new Decoder())
-    id.io.inst := inst_buf.inst
+    id.io.inst := if_id_inst
     val rf = Module(new RegFile(64,dumplog))
-    val id_rs1_addr = inst_buf.inst(19,15)
-    val id_rs2_addr = inst_buf.inst(24,20)
+    val id_rs1_addr = if_id_inst(19,15)
+    val id_rs2_addr = if_id_inst(24,20)
     rf.io.rs1_addr := id_rs1_addr
     rf.io.rs2_addr := id_rs2_addr
     val imm_gen = Module(new ImmGen(64))
-    imm_gen.io.inst := inst_buf.inst
+    imm_gen.io.inst := if_id_inst
     imm_gen.io.type_sel := id.io.exe_ctrl.sel_imm
     class EXE_Reg extends Bundle {
         val ctrl = new EXE_Ctrl
@@ -132,7 +173,7 @@ class early_core extends CoreModule{
         exe_reg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
         exe_reg.ctrl.sel_wb := SEL_WB.XXX.U
         exe_reg.ctrl.wb_en := false.B
-        exe_reg.pc := 0.U
+        exe_reg.pc := ADDR_XXX.U(64.W)
         exe_reg.rs1_data := 0.U
         exe_reg.rs2_data := 0.U
         exe_reg.rs1_addr := 0.U
@@ -143,14 +184,14 @@ class early_core extends CoreModule{
         exe_cnt := 0.U
     }.elsewhen(!mem_stall){
         exe_reg.ctrl := id.io.exe_ctrl
-        exe_reg.pc := inst_buf.pc
+        exe_reg.pc := if_id_pc
         exe_reg.rs1_data := rs1_data_id
         exe_reg.rs2_data := rs2_data_id
-        exe_reg.rs1_addr := inst_buf.inst(19,15)
-        exe_reg.rs2_addr := inst_buf.inst(24,20)
+        exe_reg.rs1_addr := if_id_inst(19,15)
+        exe_reg.rs2_addr := if_id_inst(24,20)
         exe_reg.imm := imm_gen.io.imm
-        exe_reg.rd := inst_buf.inst(11,7)
-        exe_reg.buble := inst_buf.buble
+        exe_reg.rd := if_id_inst(11,7)
+        exe_reg.buble := inst_buf_buble
         exe_cnt := id_cnt
     }
     //EXE stage
@@ -186,13 +227,15 @@ class early_core extends CoreModule{
     jau.io.pc := exe_reg.pc
     jau.io.rs1_data := rs1_data_wire
     jau.io.imm := exe_reg.imm
-    pc_error_predict := (jau.io.jmp_addr =/= inst_buf.pc) && 
-         !inst_buf.buble && (exe_reg.ctrl.redir_inst || 
+    pc_error_predict := (jau.io.jmp_addr =/= if_id_pc) && 
+         !inst_buf_buble && (exe_reg.ctrl.redir_inst || 
             exe_reg.ctrl.bru_inst && bru.io.take_branch
         )
     inst_buf_flush := pc_error_predict
     exe_reg_flush := pc_error_predict
-    pc_from_exe := jau.io.jmp_addr
+    io.fctl.pc_redir:= jau.io.jmp_addr
+    io.fctl.pc_misfetch := pc_error_predict
+    inst_buf_flush := pc_error_predict
     //Mem Stage
     class MEM_Reg extends Bundle {
         val data = UInt(XLEN.W)
@@ -237,55 +280,55 @@ class early_core extends CoreModule{
     mem_base_addr := mem_reg.data >> 3.U << 3.U // align to 8 bytes
     val mem_offset = WireDefault(0.U(3.W))
     mem_offset := mem_reg.data(2,0)
-    io.dtcm.req_addr := mem_base_addr
+    io.dmem.req_addr := mem_base_addr
     val load_address_misaligned_xcpt = WireDefault(false.B)
     val store_address_misaligned_xcpt = WireDefault(false.B)
     when(!mem_reg.buble){
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.SB.U){
-                io.dtcm.wt_rd := true.B
-                io.dtcm.wdata := Fill(8, mem_reg.rs2(7,0))
-                io.dtcm.wmask := UIntToOH(mem_offset,8)
+                io.dmem.wt_rd := true.B
+                io.dmem.wdata := Fill(8, mem_reg.rs2(7,0))
+                io.dmem.wmask := UIntToOH(mem_offset,8)
                 store_address_misaligned_xcpt := false.B
             }
             is(MEM_TYPE.SH.U){
-                io.dtcm.wt_rd := true.B
-                io.dtcm.wdata := Fill(4, mem_reg.rs2(15,0))
+                io.dmem.wt_rd := true.B
+                io.dmem.wdata := Fill(4, mem_reg.rs2(15,0))
                 store_address_misaligned_xcpt := mem_offset(0)
                 switch(mem_offset(2,1)){
                     is("b00".U){
-                        io.dtcm.wmask := "b00000011".U
+                        io.dmem.wmask := "b00000011".U
                     }
                     is("b01".U){
-                        io.dtcm.wmask := "b00001100".U
+                        io.dmem.wmask := "b00001100".U
                     }
                     is("b10".U){
-                        io.dtcm.wmask := "b00110000".U
+                        io.dmem.wmask := "b00110000".U
                     }
                     is("b11".U){
-                        io.dtcm.wmask := "b11000000".U
+                        io.dmem.wmask := "b11000000".U
                     }
                 }
             }
             is(MEM_TYPE.SW.U){
-                io.dtcm.wt_rd := true.B
-                io.dtcm.wdata := Fill(2, mem_reg.rs2(31,0))
+                io.dmem.wt_rd := true.B
+                io.dmem.wdata := Fill(2, mem_reg.rs2(31,0))
                 store_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
-                io.dtcm.wmask := Mux(
+                io.dmem.wmask := Mux(
                     mem_offset(2),//switch upper or lower 4 bytes
                     "b11110000".U,
                     "b00001111".U
                 )
             }
             is(MEM_TYPE.SD.U){
-                io.dtcm.wt_rd := true.B
-                io.dtcm.wdata := mem_reg.rs2
-                io.dtcm.wmask := "b11111111".U
+                io.dmem.wt_rd := true.B
+                io.dmem.wdata := mem_reg.rs2
+                io.dmem.wmask := "b11111111".U
                 store_address_misaligned_xcpt := mem_offset =/= 0.U
             }
             is(MEM_TYPE.LB.U, MEM_TYPE.LH.U, MEM_TYPE.LW.U,
                MEM_TYPE.LBU.U, MEM_TYPE.LHU.U){
-                io.dtcm.wt_rd := false.B
+                io.dmem.wt_rd := false.B
             }
         }
     }
@@ -297,43 +340,44 @@ class early_core extends CoreModule{
         switch(mem_reg.mem_cmd){
             is(MEM_TYPE.LB.U){
                 load_address_misaligned_xcpt := false.B
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hff".U 
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hff".U 
                 mem_data_loaded := Fill(56, align_load_buf(7)) ## align_load_buf(7,0)
             }
             is(MEM_TYPE.LH.U){
                 load_address_misaligned_xcpt := mem_offset(0)
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff".U
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hffff".U
                 mem_data_loaded := Fill(48, align_load_buf(15)) ## align_load_buf(15,0)
             }
             is(MEM_TYPE.LW.U){
                 load_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
                 mem_data_loaded := Fill(32, align_load_buf(31)) ## align_load_buf(31,0)
             }
             is(MEM_TYPE.LD.U){
                 load_address_misaligned_xcpt := mem_offset =/= 0.U
-                mem_data_loaded := io.dtcm.rdata
+                mem_data_loaded := io.dmem.rdata
             }
             is(MEM_TYPE.LBU.U){
                 load_address_misaligned_xcpt := false.B
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hff".U 
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hff".U 
                 mem_data_loaded := Fill(56, false.B) ## align_load_buf(7,0)
             }
             is(MEM_TYPE.LHU.U){
                 load_address_misaligned_xcpt := mem_offset(0)
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff".U
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hffff".U
                 mem_data_loaded := Fill(48, false.B) ## align_load_buf(15,0)
             }
             is(MEM_TYPE.LWU.U){
                 load_address_misaligned_xcpt := mem_offset(1,0) =/= 0.U
-                align_load_buf := (io.dtcm.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
+                align_load_buf := (io.dmem.rdata >> (mem_offset << 3.U) ) & "hffff_ffff".U
                 mem_data_loaded := Fill(32, false.B) ## align_load_buf(31,0)
             }
         }
     }
-    io.dtcm.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble && 
+    io.dmem.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble && 
         !load_address_misaligned_xcpt && !store_address_misaligned_xcpt
-    mem_stall := io.dtcm.mem_valid && !io.dtcm.can_next
+    mem_stall := io.dmem.mem_valid && !io.dmem.can_next
+    inst_buf_stall := mem_stall
     val csr = Module(new CSRFile(XLEN,dumplog))
     csr.io.csr_addr := mem_reg.csr_addr
     csr.io.csr_cmd := mem_reg.csr_cmd
@@ -363,7 +407,7 @@ class early_core extends CoreModule{
         wb_reg.buble := true.B
         wb_reg.csr_data := 0.U
         wb_cnt := 0.U
-    }.elsewhen(io.dtcm.can_next && (io.dtcm.req_addr === io.dtcm.resp_addr) ||
+    }.elsewhen(io.dmem.can_next && (io.dmem.req_addr === io.dmem.resp_addr) ||
         mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U
         ){
         wb_reg.wb_en := mem_reg.wb_en
@@ -410,7 +454,7 @@ class early_core extends CoreModule{
             when(exe_reg.rs2_addr === mem_reg.rd){
                 rs2_data_wire := mem_reg.data
             }
-        }.elsewhen(!mem_reg.buble && mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && io.dtcm.can_next){
+        }.elsewhen(!mem_reg.buble && mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && io.dmem.can_next){
             //bypass from mem data
             when(exe_reg.rs1_addr === mem_reg.rd){
                 rs1_data_wire := mem_data_loaded
@@ -448,22 +492,15 @@ class early_core extends CoreModule{
     printf(cf"[WB]${wb_cnt}%4d\n")
     printf(cf"[PiPeLine]")
     printf(cf"[${coretimer}%3d]")
-    printf(cf"[PC]pc=0x${pc}%4x,npc=0x${next_pc}%4x")
-    printf(cf"[IF]pc=0x${io.itcm.req_addr}%4x")
-    when(io.itcm.can_next){
-        printf(cf",inst=0x${io.itcm.data}%8x")
-    }.otherwise{
-        printf(cf",XXXXX=XXXXXXXXX")
-    }
-    //printf(cf"[ID]pc=${inst_buf.pc}%4x,inst=${inst_buf.inst}%8x,buble=${inst_buf.buble}\n")
-    printf(cf"[ID]")
-    when(!inst_buf.buble){
-        //normal instruction in id stage
-        printf(cf"pc=0x${inst_buf.pc}%4x,inst=0x${inst_buf.inst}%8x")
+    printf(cf"[ID]") 
+    when(!inst_buf_buble){
+        //normal instruction in ibuf
+        printf(cf"pc=0x${if_id_pc}%4x,inst=0x${if_id_inst}%8x")
     }.otherwise{
         //one buble
         printf(cf"XXXXXXXXX=buble=XXXXXXXXX")
     }
+    //printf(cf"[ID]pc=${inst_buf.pc}%4x,inst=${inst_buf.inst}%8x,buble=${inst_buf.buble}\n")
     printf(cf"[EXE]")
     when(!exe_reg.buble){
         //printf(cf"pc=0x${exe_reg.pc}%4x")
@@ -522,10 +559,11 @@ class early_core extends CoreModule{
 }
 
 import _root_.circt.stage.ChiselStage
-object GenerateCoreVerilogFile extends App {
+object GenerateFile extends App {
     ChiselStage.emitSystemVerilogFile(
-        new early_core,
+        new Backend,
         Array("--target-dir", "build"),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable")
     )
 }
+
