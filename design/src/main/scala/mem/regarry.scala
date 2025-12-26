@@ -1,46 +1,29 @@
 package mem
 import chisel3._
 import chisel3.util._
+import core.{IMemPort,DMemPort}
+class MemIO extends Bundle{
+    val imem_port = Flipped(new IMemPort)
+    val dmem_port = Flipped(new DMemPort)
+}
+abstract class MemModule extends Module {
+    val io = IO(new MemIO)
+} 
 
-class regarryMem(val depth: Int =128 ) extends Module {
-    val io = IO(new Bundle{
-        val imem_port = new Bundle {
-            val req_addr = Input(UInt(64.W))
-            val resp_addr = Output(UInt(64.W))
-            val data = Output(UInt(32.W))
-            val can_next = Output(Bool())
-        }
-        val dmem_port = new Bundle {
-            val req_addr = Input(UInt(64.W))
-            val resp_addr = Output(UInt(64.W))
-            val mem_valid = Input(Bool())
-            val wt_rd = Input(Bool()) // 1 for write, 0 for read
-            val wdata = Input(UInt(64.W))
-            val wmask = Input(UInt(8.W))
-            val rdata = Output(UInt(64.W))
-            val can_next = Output(Bool())
-        }
-    })
+class regarryMem(val depth: Int =128,val path: String = "mem.hex") extends MemModule {
     val mem = Reg(Vec(depth, UInt(64.W)))
     //reset and load value
-    when(reset.asBool){
-        /*
-        mem(0) := "h00678813_00100793".U
-        mem(1) := "h40f80433_0107f8b3".U
-        mem(2) := "h0057f313_10204293".U
-        mem(3) := "h00500433_0027d393".U
-        mem(4) := "h00402103_00002083".U//load x1 from 0x0,x2 from 0x4
-        mem(5) := "h00002083_00002023".U//store 0 to addr0,and read to x1
-        mem(6) := "h00000013_0ff11073".U // write x2 to printer and nop
-        mem(7) := "h00000013_0ff8d073".U // write 0x3 to printer and nop
-        mem(8) := "h00000013_0ff011f3".U // write printer to x3 and nop
-        mem(9) := "h00000013_30101273".U // read misa
-        mem(10):= "h00000013_8ff21073".U // write x4 to printer 
-        */
-        mem(0) := "h0050031300000293".U
-        mem(1) := "hfe629ee300128293".U
-        mem(2) := "h001282938ff29073".U
-        mem(3) := "h00000013ff9ff06f".U       
+    if(path != ""){
+        println(s"loading memory init file from $path")
+        val content = os.read.lines(os.Path(path))
+        for(item <- content){
+            println(s"mem init line: $item")
+        }
+        when(reset.asBool){
+            for((item, idx) <- content.zipWithIndex){
+                mem(idx) := ("h" + item).U
+            }
+        }
     }
     //imem part
     io.imem_port.resp_addr := io.imem_port.req_addr

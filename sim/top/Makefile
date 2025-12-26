@@ -1,6 +1,7 @@
 FLOW_ROOT ?= ../../
 DESIGN_PRJ := $(FLOW_ROOT)/design
 V_FILES_DIR := $(DESIGN_PRJ)/build
+MAX_SIM_TIME ?= 1000
 
 verilog:$(DESIGN_PRJ)/src/main/scala/top/top.scala
 	rm -rf $(DESIGN_PRJ)/build
@@ -13,13 +14,15 @@ build:
 	verilator --trace \
 	--cc -f $(V_FILES_DIR)/filelist.f --top-module flow_top  \
 	--exe main.cpp -DENABLE_INITIAL_MEM_ \
-	-CFLAGS  "-I$(FLOW_ROOT)/csrc -I$(FLOW_ROOT)/include -Iobj_dir" \
+	-CFLAGS  "-DMAX_SIM_TIME=$(MAX_SIM_TIME) -I$(FLOW_ROOT)/csrc -I$(FLOW_ROOT)/include -Iobj_dir" \
 	-I$(V_FILES_DIR)
 exe:build
 	make -C obj_dir -f Vflow_top.mk Vflow_top
 
 run:exe
 	@./obj_dir/Vflow_top 2>&1 | tee flow_top.log
+
+perf:flow_top.log
 	@grep "Stats" flow_top.log > inst_stats.log
 	@grep -E "PiPe|Probe|SRAM" flow_top.log > pipe_stats.log
 	@grep -v -E "Stats|PiPe|Probe|INFO|SRAM" flow_top.log > rf_stats.log

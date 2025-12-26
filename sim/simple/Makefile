@@ -1,4 +1,4 @@
-FLOW_ROOT ?= ../../..
+FLOW_ROOT ?= ../..
 run:sim_datapath
 	./sim_datapath.elf
 
@@ -19,6 +19,15 @@ sim_tinymem_v:
 sim_tinymem:
 	rm -rf $(FLOW_ROOT)/design/build
 	cd $(FLOW_ROOT)/design && sbt 'runMain hello.GenerateHellMemFile'
+	verilator --cc -f $(FLOW_ROOT)/design/build/filelist.f \
+	--top-module tinymem -I$(FLOW_ROOT)/design/build \
+	-I./misc/ --exe sim_hellomem.cpp --trace -DENABLE_INITIAL_MEM_
+	make -C obj_dir -f Vtinymem.mk Vtinymem
+	./obj_dir/Vtinymem
+
+sim_tinymem_new:
+	rm -rf $(FLOW_ROOT)/design/build
+	cd $(FLOW_ROOT)/design && sbt 'runMain hello.HelloMemMain /home/chen/FUN/flow/sim/simple/test01.hex'
 	verilator --cc -f $(FLOW_ROOT)/design/build/filelist.f \
 	--top-module tinymem -I$(FLOW_ROOT)/design/build \
 	-I./misc/ --exe sim_hellomem.cpp --trace -DENABLE_INITIAL_MEM_

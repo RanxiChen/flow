@@ -101,3 +101,29 @@ class JAU (XLEN:Int=64) extends Module{
     )
     io.jmp_addr := jpc_o
 }
+
+class ImmGen(XLEN:Int=32) extends Module {
+    val io = IO(new Bundle{
+        val inst = Input(UInt(32.W))
+        val imm    = Output(UInt(XLEN.W))
+        val type_sel = Input(UInt(IMM_TYPE.width.W))
+    })
+    val immi = Fill(XLEN-11,io.inst(31)) ## io.inst(30,20)
+    val imms = Fill(XLEN-11,io.inst(31)) ## io.inst(30,25) ## io.inst(11,7)
+    val immb = Fill(XLEN-12,io.inst(31)) ## io.inst(7) ## io.inst(30,25) ## io.inst(11,8) ## false.B
+    val immj = Fill(XLEN-20,io.inst(31)) ## io.inst(19,12) ## io.inst(20) ## io.inst(30,21) ## false.B
+    val immu = Fill(XLEN-32,io.inst(31)) ## io.inst(31,12) ## Fill(12,false.B)
+    val imm_csr = Fill(XLEN-5,0.U) ## io.inst(19,15)
+    io.imm := 0.U
+    io.imm := MuxLookup(io.type_sel, 0.U)(
+        Seq(
+            IMM_TYPE.I_Type.U -> immi,
+            IMM_TYPE.S_Type.U -> imms,
+            IMM_TYPE.B_Type.U -> immb,
+            IMM_TYPE.U_Type.U -> immu,
+            IMM_TYPE.J_Type.U -> immj,
+            IMM_TYPE.CSR_Type.U -> imm_csr
+        )
+    )
+}
+

@@ -2,7 +2,7 @@ package core
 
 import chisel3._
 import chisel3.util._
-
+import top._
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
