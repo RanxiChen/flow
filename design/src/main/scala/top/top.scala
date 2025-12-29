@@ -28,7 +28,7 @@ import _root_.circt.stage.ChiselStage
 
 object GenerateTop extends App {
     val flow_config = new FlowConfig(
-        memtype = "regarry",
+        memtype = "sram",
         memsize = 1024,
         mempath = "/home/chen/FUN/flow/sim/top/test02.hex",
         dumplog = true,
