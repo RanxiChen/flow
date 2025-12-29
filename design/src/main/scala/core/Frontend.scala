@@ -3,6 +3,8 @@ package core
 import chisel3._
 import chisel3.util._
 import top.DefaultConfig._
+import firtoolresolver.shaded.coursier.util.Sync
+import chisel3.util.experimental.loadMemoryFromFileInline
 class InstPack extends Bundle {
     val data = UInt(32.W)
     val pc   = UInt(64.W)
@@ -27,24 +29,17 @@ class Frontend extends Module {
         val memreq = new IMemPort
         val ctrl = Flipped(new FrontendCtrl)
     })
-    val sucessful_fetch = WireDefault(false.B)
-    val pc = RegInit(BOOT_ADDR.U(64.W))
-    val next_pc = Wire(UInt(64.W))
-    when(io.ctrl.pc_misfetch){
-        next_pc := io.ctrl.pc_redir
-    }.otherwise{
-        next_pc := pc + 4.U
+    // at this stage, we will not get data from memory
+    io.memreq <> DontCare
+    io.memreq.req_addr := 0.U
+    val pc = RegInit(START_ADDR.U(64.W))
+    val update_pc = WireDefault(false.B)
+    when(io.ctrl.flush){
+        pc := io.ctrl.pc_redir
+    }.elsewhen(update_pc){
+        pc := pc + 4.U
     }
-
-    when(sucessful_fetch){
-        pc := next_pc
-    }
-    io.memreq.req_addr := pc
-    sucessful_fetch := io.memreq.can_next && io.memreq.resp_addr === pc
-    io.fetch.bits.data := io.memreq.data
-    io.fetch.bits.pc := pc
-    io.fetch.valid := sucessful_fetch 
-    when(io.fetch.fire){
-        printf(cf"[FE] Fetch inst 0x${Hexadecimal(io.fetch.bits.data)} at PC=0x${Hexadecimal(io.fetch.bits.pc)}\n")
-    }
+    val itcm = SyncReadMem(128, UInt(32.W))
+    loadMemoryFromFileInline(itcm,"itcm_init.hex")
+    val inst = itcm.read(pc)
 }

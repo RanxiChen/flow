@@ -12,11 +12,40 @@ sealed trait memoryType
 case class RegArrayMem(depth:Int=128, path:String="", dumplog:Boolean=false) extends memoryType
 case class SRAMSysMem(depth:Int=1024, path:String="", dumplog:Boolean=false) extends memoryType
 
-
+/**
+  * TCM configuration parameters, used by ITCM and DTCM Module
+  *
+  * @param start_addr
+  * @param end_addr
+  * 
+  */
 case class tcm(val start_addr:BigInt,
                val end_addr:BigInt) {
   val size = (end_addr - start_addr + 1)
   val depth = size/8 //in 64 bits
+  // tcm must be aligned with 8 bytes
+  require(start_addr % 8 == 0, s"TCM start address 0x${start_addr.toString(16)} is not aligned with 8 bytes!")
+  require(end_addr % 8 == 7, s"TCM end address 0x${end_addr.toString(16)} is not aligned with 8 bytes!")
+  // calculate index width
+  //must full all index
+  def ispow2(n: Int): Boolean = n != 0 && ((n & (n - 1)) == 0)
+  require(ispow2(depth.toInt), s"TCM size ${size} bytes is not power of 2!")
+  // get index width
+  def width_of_index(depth:Int):Int ={
+    var w = 0
+    var d = depth
+    while(d > 1){
+      d = d >> 1
+      w = w + 1
+    }
+    w
+  }
+  val index_width = width_of_index(depth.toInt)
+}
+
+object testMain extends App {
+  val test_tcm = tcm(BigInt(0x00000000),BigInt("00FFFFFF",16))
+  println(s"tcm size: ${test_tcm.size} bytes, depth: ${test_tcm.depth} entries, index width: ${test_tcm.index_width} bits")
 }
 
 trait WithTCM {
