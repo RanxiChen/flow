@@ -64,6 +64,17 @@ class MCUMemType extends memoryType with WithTCM{
     """.stripMargin
 }
 
+object FEMux{
+  val itcm = 0
+  val imem = 1
+  val nop = 2
+  val sleep = 3
+  val width = 2
+}
+object GlobalSilent{
+  val silent = false
+}
+
 
 
 /**
@@ -90,6 +101,7 @@ object DefaultConfig{
     val XLEN = 64
     val BOOT_ADDR = 0x00000000L
     val ADDR_XXX = 0x00000000L 
+    val DEFALUT_ILLEGAL_INSTRUCTION = 0x0
 }
 /**
   * User defined configuration parameters,which can be changed
