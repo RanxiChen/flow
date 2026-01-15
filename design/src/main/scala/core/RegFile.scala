@@ -7,16 +7,19 @@ import top._
   * Register File, used to store general purpose registers
   * @param XLEN
   */
+
+class RegFileIO(XLEN:Int) extends Bundle{
+    val rs1_addr = Input(UInt(5.W))
+    val rs2_addr = Input(UInt(5.W))
+    val rd_addr  = Input(UInt(5.W))
+    val rd_data  = Input(UInt(XLEN.W))
+    val rd_en    = Input(Bool())
+    val rs1_data = Output(UInt(XLEN.W))
+    val rs2_data = Output(UInt(XLEN.W))
+}
+
 class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
-    val io = IO(new Bundle{
-        val rs1_addr = Input(UInt(5.W))
-        val rs2_addr = Input(UInt(5.W))
-        val rd_addr  = Input(UInt(5.W))
-        val rd_data  = Input(UInt(XLEN.W))
-        val rd_en    = Input(Bool())
-        val rs1_data = Output(UInt(XLEN.W))
-        val rs2_data = Output(UInt(XLEN.W))
-    })
+    val io = IO(new RegFileIO(XLEN))
     val content = RegInit(VecInit(Seq.fill(32)(0.U(XLEN.W))))
     io.rs1_data := Mux(io.rs1_addr === 0.U, 0.U, content(io.rs1_addr))
     io.rs2_data := Mux(io.rs2_addr === 0.U, 0.U, content(io.rs2_addr))
@@ -34,6 +37,109 @@ class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     printf("\n")
     }
 }
+
+// Derived from Rocket Chip project (BSD 3-Clause License)
+// Modified for this project
+import scala.collection.mutable.ArrayBuffer
+class RocketRegFile extends Module {
+    val io = IO(new RegFileIO(64))
+    val n = 31
+    val w = 64
+    val zero = false
+    val rf = Mem(n, UInt(w.W))
+  private def access(addr: UInt) = rf(~addr(log2Up(n)-1,0))
+  private val reads = ArrayBuffer[(UInt,UInt)]()
+  private var canRead = true
+  def read(addr: UInt) = {
+    require(canRead)
+    reads += addr -> Wire(UInt())
+    reads.last._2 := Mux(zero.B && addr === 0.U, 0.U, access(addr))
+    reads.last._2
+  }
+  def write(addr: UInt, data: UInt) = {
+    canRead = false
+    when (addr =/= 0.U) {
+      access(addr) := data
+      for ((raddr, rdata) <- reads)
+        when (addr === raddr) { rdata := data }
+    }
+  }
+    io.rs1_data := read(io.rs1_addr)
+    io.rs2_data := read(io.rs2_addr)
+    when(io.rd_en){
+        write(io.rd_addr, io.rd_data)
+    }
+}
+
+class DiffRegFile extends Module {
+    val io = IO(new Bundle{
+        val sucess = Output(Bool())
+        val index = Output(UInt(5.W))
+        val reg1 = Output(UInt(64.W))
+        val reg2 = Output(UInt(64.W))
+    })
+    io.sucess := false.B
+    io.index := 0.U
+    io.reg1 := 0.U
+    io.reg2 := 0.U
+    val a = Module(new RegFile(64))
+    val b = Module(new RocketRegFile())
+    val cnt = RegInit(0.U(5.W))
+    val counter = RegInit(0.U(7.W))
+    counter := counter + 1.U
+    //first 32 cycle write
+    when(counter < 32.U){
+        a.io.rd_en := true.B
+        b.io.rd_en := true.B
+        a.io.rd_addr := counter
+        b.io.rd_addr := counter
+        a.io.rd_data := counter + 10.U
+        b.io.rd_data := counter + 10.U
+        a.io.rs1_addr := 0.U
+        a.io.rs2_addr := 0.U
+        b.io.rs1_addr := 0.U
+        b.io.rs2_addr := 0.U
+    }.otherwise{
+        a.io.rd_en := false.B
+        b.io.rd_en := false.B
+        val read_addr = counter(4,0)
+        a.io.rs1_addr := read_addr
+        a.io.rs2_addr := read_addr + 1.U
+        b.io.rs1_addr := read_addr
+        b.io.rs2_addr := read_addr + 1.U
+        a.io.rd_addr := 0.U
+        a.io.rd_data := 0.U
+        b.io.rd_addr := 0.U
+        b.io.rd_data := 0.U
+        when(a.io.rs1_data =/= b.io.rs1_data){
+            io.sucess := false.B
+            io.index := read_addr
+            io.reg1 := a.io.rs1_data
+            io.reg2 := b.io.rs1_data
+        }.elsewhen(a.io.rs2_data =/= b.io.rs2_data){
+            io.sucess := false.B
+            io.index := read_addr + 1.U
+            io.reg1 := a.io.rs2_data
+            io.reg2 := b.io.rs2_data
+        }.otherwise{
+            io.sucess := true.B
+            io.index := 0.U
+            io.reg1 := 0.U
+            io.reg2 := 0.U
+        }
+    }
+}
+
+import _root_.circt.stage.ChiselStage
+
+object GenerateRegFileVerilogFile extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new DiffRegFile(),
+        Array("--target-dir", "build"),
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable")
+    )
+}
+
 class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val io = IO(new Bundle{
         val csr_addr = Input(UInt(12.W))
