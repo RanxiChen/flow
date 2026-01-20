@@ -22,6 +22,7 @@ class FrontendCtrl extends Bundle {
     val flush = Bool() //TODO: now just use pc_misfetch to clear pipeline
     val pc_misfetch = Bool()
     val pc_redir = UInt(64.W)
+    val weak_be = Bool() // Back-End is busy, not want new instructions
 }
 
 class IMemPort extends Bundle {
@@ -30,7 +31,54 @@ class IMemPort extends Bundle {
     val data = Input(UInt(32.W))
     val can_next = Input(Bool())
 }
-
+class MemReq extends Bundle {
+    val addr = UInt(64.W)
+}
+class MemResp extends Bundle {
+    val addr = UInt(64.W)
+    val data = UInt(32.W)
+}
+/**
+  * A simplified frontend that only fetches instructions continuously from memory
+  * no cache, no pipeline, just fetch from bus
+  */
+class SimpleFrontend(useFASE: Boolean=false) extends Module {
+    val io = IO(new Bundle {
+        val fetch = Decoupled(new InstPack)
+        val memreq = new IMemPort
+        val ctrl = Flipped(new FrontendCtrl)
+        val ext_drain = if(useFASE)Some(Input(Bool())) else None
+        val ext_frozen = if(useFASE)Some(Output(Bool())) else None
+    })
+    val fetch_wait_resp = WireDefault(false.B) // indicate waiting for memory response
+    val pc = RegInit(BOOT_ADDR.U(64.W))
+    val npc = MuxCase(pc + 4.U, IndexedSeq(
+        fetch_wait_resp -> pc, // wait for response, do not update pc
+        io.ctrl.pc_misfetch -> io.ctrl.pc_redir,
+        io.ctrl.weak_be -> pc // backend is busy, do not update pc
+        )
+    )
+    pc := npc
+    // request memory
+    io.memreq.req_addr := pc
+    fetch_wait_resp := !io.memreq.can_next
+    // puch instruction to backend
+    val inst_pack = Wire(new InstPack)
+    inst_pack.pc := io.memreq.resp_addr
+    inst_pack.data := io.memreq.data
+    inst_pack.xcpt := false.B // TODO: handle exception
+    inst_pack.instruction_address_misaligned := false.B
+    inst_pack.instruction_access_fault := false.B
+    io.fetch.valid := !fetch_wait_resp
+    io.fetch.bits := inst_pack
+    
+}
+/**
+  * This module is reserved for pipelined cache access, 
+  * but it is currently unavailable 
+  * because the frontend acutally used is simplified for now 
+  * and will only continuously fetch instructions from the bus.
+  */
 class Frontend() extends Module {
     val io = IO(new Bundle {
         val fetch = Decoupled(new InstPack)

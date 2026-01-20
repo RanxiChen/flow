@@ -43,20 +43,26 @@ class uart_wb_master extends Module {
         val addr_buffer = Output(UInt(32.W))
         val data_buffer = Output(UInt(32.W))
         val state = Output(UInt(2.W))
+        val byte_len = Output(UInt(2.W))
+        val rx_fire = Output(Bool())
+        val tx_fire = Output(Bool())
+        val rx_data = Output(UInt(8.W))
     })
     object WbState extends ChiselEnum {
         val idle,recieve,wb_read,send = Value
     }
     import WbState._
     val state = RegInit(idle)
-    val rx_module = Module(new Rx(50000000, 115200))
-    val tx_module = Module(new Tx(50000000, 115200))
+    val rx_module = Module(new Rx(125000000, 115200))
+    val tx_module = Module(new Tx(125000000, 115200))
     rx_module.io.rxd := io.rxd
     io.txd := tx_module.io.txd
     rx_module.io.data.ready := false.B
     tx_module.io.data.valid := false.B
     tx_module.io.data.bits := 0xff.U
-    val addr_buffer = RegInit(0.U(32.W))
+    val initial_value = Fill(32, 1.U)
+    val addr_buffer = RegInit(initial_value)
+    val addr_vec = RegInit(VecInit(Seq.fill(4)(0xff.U(8.W))))
     val data_buffer = RegInit(0.U(32.W))
     val buffer_length = RegInit(0.U(2.W)) //0~3,for one word(4 bytes)
     //default wishbone signals
@@ -72,14 +78,16 @@ class uart_wb_master extends Module {
     when(state === idle){
         rx_module.io.data.ready := true.B
         when(rx_module.io.data.fire){
-            addr_buffer := Cat(0.U(24.W),rx_module.io.data.bits)
+            addr_buffer := rx_module.io.data.bits
+            addr_vec(buffer_length) := rx_module.io.data.bits
             state := recieve
-            buffer_length := 0.U
+            buffer_length := 1.U
         }
     }.elsewhen(state === recieve){
         rx_module.io.data.ready := true.B
         when(rx_module.io.data.fire){
-            addr_buffer := addr_buffer << 8 | rx_module.io.data.bits
+            //addr_buffer := addr_buffer | rx_module.io.data.bits << ( (8.U)*(buffer_length) )
+            addr_vec(buffer_length) := rx_module.io.data.bits
             when(buffer_length === 3.U){
                 //got full addr
                 state := wb_read
@@ -91,12 +99,13 @@ class uart_wb_master extends Module {
         }
     }.elsewhen(state === wb_read){
         //start wishbone read
-        io.wb.adr := addr_buffer(31,2) //word addressed
+        io.wb.adr := addr_vec.asUInt(31,2)
         io.wb.cyc := true.B
         io.wb.stb := true.B
         when(io.wb.ack){
             data_buffer := io.wb.dat_r
             state := send
+            buffer_length := 0.U
         }.otherwise{
             state := wb_read
         }
@@ -110,16 +119,20 @@ class uart_wb_master extends Module {
                 state := idle
                 buffer_length := 0.U
                 data_buffer := 0.U
-                addr_buffer := 0.U
+                addr_buffer := initial_value
             }.otherwise{
                 buffer_length := buffer_length + 1.U
                 state := send
             }
         }
     }
-    io.addr_buffer := addr_buffer
+    io.addr_buffer := addr_vec.asUInt
     io.data_buffer := data_buffer
     io.state := state.asUInt
+    io.byte_len := buffer_length
+    io.rx_fire := rx_module.io.data.fire
+    io.tx_fire := tx_module.io.data.fire
+    io.rx_data := rx_module.io.data.bits
 }
 
 import _root_.circt.stage.ChiselStage

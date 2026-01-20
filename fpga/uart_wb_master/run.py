@@ -27,12 +27,13 @@ from litex.soc.integration.builder import *
 from litex.build.generic_platform import *
 from litex.build.xilinx import XilinxUSPlatform, VivadoProgrammer
 from litex.soc.interconnect import wishbone
+from litex.soc.interconnect.csr import CSRStatus
 
 v_path = Path.cwd().parent.parent / "design" / "build"
 chisel_root_path = Path.cwd().parent.parent / "design"
 run_path = Path.cwd()
 
-class WBWrapper(Module):
+class WBWrapper(Module,AutoCSR):
     def __init__(self,platform):
         self.wb_bus = wishbone.Interface(data_width=32, addr_width=32)
         uart_rx = platform.request("ctrl_uart_rx")
@@ -40,6 +41,14 @@ class WBWrapper(Module):
         self.addr_port = Signal(32)
         self.data_port = Signal(32)
         self.state_port = Signal(2)
+        self.byte_len = Signal(2)
+        self.rx_fire = Signal()
+        self.tx_fire = Signal()
+        self.rx_data = Signal(8)
+        self.uart_state = CSRStatus(32)
+        self.index = CSRStatus(32)
+        self.addr_reg = CSRStatus(32)
+        self.data_reg = CSRStatus(32)
         self.specials += Instance("uart_wb_master",
             i_clock=ClockSignal("sys"),
             i_reset=ResetSignal("sys"),
@@ -58,13 +67,23 @@ class WBWrapper(Module):
             i_io_wb_err = self.wb_bus.err,
             o_io_addr_buffer = self.addr_port,
             o_io_data_buffer = self.data_port,
-            o_io_state = self.state_port
+            o_io_state = self.state_port,
+            o_io_byte_len = self.byte_len,
+            o_io_rx_fire = self.rx_fire,
+            o_io_tx_fire = self.tx_fire,
+            o_io_rx_data = self.rx_data
         )
         platform.add_sources(v_path,
                                 "uart_wb_master.sv",
                                 "Rx.sv",
                                 "Tx.sv"                            
         )
+        self.sync += [
+            self.uart_state.status.eq(self.state_port),
+            self.index.status.eq(self.byte_len),
+            self.addr_reg.status.eq(self.addr_port),
+            self.data_reg.status.eq(self.data_port)
+        ]
 
 
                                   
@@ -85,21 +104,39 @@ class BaseSoC(SoCMini):
         )
 
         ## add ddr
-        self.ddrphy = usddrphy.USDDRPHY(platform.request("ddram"),
-                memtype          = "DDR4",
-                sys_clk_freq     = 125e6,
-                iodelay_clk_freq = 200e6)
-        self.add_sdram("sdram",
-                phy           = self.ddrphy,
-                module        = EDY4016A(125e6, "1:4"),
-                size          = 0x40000000,
-                l2_cache_size = 8192
-            )
+        if False:
+            self.ddrphy = usddrphy.USDDRPHY(platform.request("ddram"),
+                    memtype          = "DDR4",
+                    sys_clk_freq     = 125e6,
+                    iodelay_clk_freq = 200e6)
+            self.add_sdram("sdram",
+                    phy           = self.ddrphy,
+                    module        = EDY4016A(125e6, "1:4"),
+                    size          = 0x40000000,
+                    l2_cache_size = 8192
+                    )
         self.add_uartbone()
         ## add wb wrapper
         uart_wb_master = WBWrapper(platform)
         self.submodules.uart_wb_wrapper = uart_wb_master
+        self.add_csr("uart_wb_wrapper")
         self.bus.add_master(name="uart_wb_master",master=self.uart_wb_wrapper.wb_bus)
+        analyzer_signals = [
+            uart_wb_master.wb_bus,
+            uart_wb_master.addr_port,
+            uart_wb_master.data_port,
+            uart_wb_master.state_port,
+            uart_wb_master.byte_len,
+            uart_wb_master.rx_fire,
+            uart_wb_master.tx_fire,
+            uart_wb_master.rx_data
+        ]
+        from litescope import LiteScopeAnalyzer
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals, 512, 
+                                                     clock_domain ="sys",
+            csr_csv="analyzer.csv"
+        )
+        self.add_csr("analyzer")
 
 
 def fire():
