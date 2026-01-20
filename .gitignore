@@ -31,3 +31,11 @@ build/
 *.rpt
 *.dcp
 *.bit
+
+## IDE
+*/.idea/
+*/.bsp/
+*.idea/
+
+## litex
+analyzer.csv
