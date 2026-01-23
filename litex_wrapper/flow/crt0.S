@@ -73,3 +73,4 @@ trap_vector:
 	lw t6, 15*4(sp)
 	addi sp, sp, 16*4
 	mret
+
