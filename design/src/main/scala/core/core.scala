@@ -9,6 +9,13 @@ class CoreIO extends Bundle{
 abstract class CoreModule extends Module{
     val io = IO(new CoreIO)
 }
+
+/**
+  * early core
+  * Early versions of the core utilized this form, 
+  * but the design was deprecated to achieve the separation of front-end and back-end.
+  * @deprecated
+  */
 class early_core extends CoreModule{
     val XLEN = 64
     val dumplog = true

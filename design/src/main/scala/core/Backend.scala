@@ -2,7 +2,7 @@ package core
 
 import chisel3._
 import chisel3.util._
-import top.DefaultConfig._
+
 class DMemPort extends Bundle {
     val req_addr = Output(UInt(64.W))
     val rdata = Input(UInt(64.W))
@@ -13,53 +13,12 @@ class DMemPort extends Bundle {
     val resp_addr = Input(UInt(64.W))
     val can_next = Input(Bool())
 }
-/*
-class IbufPackWithValid extends Bundle {
-    val valid = Bool()
-    val pack = new InstPack
-}
-class IBuf extends Module {
-    val io = IO(new Bundle {
-        val enq = Flipped(DecoupledIO(new InstPack))
-        val deq = DecoupledIO(new InstPack)
-        val flush = Input(Bool())
-    })
-    /**
-      * Instruction Buffer, will be flushed when flush is high
-      * the entry is 2, allow both enq and deq
-      * when flush happends,flush the whole buffer
-      * when impl, when flush happends, the enq are connected to buble
-      * the deq will output buble until the flush is done
-      */
-    val ibuf = Module(new Queue(new IbufPackWithValid, 2))
-    object State extends ChiselEnum {
-        val sNormal, sFlush = Value
-    }
-    val state = RegInit(State.sNormal)
-    //state transition
-    when(state === State.sNormal){
-        when(io.flush){
-            state := State.sFlush
-        }
-    }.elsewhen(state === State.sFlush){
-        when(!io.flush && ibuf.io.count === 0.U){
-            state := State.sNormal
-        }
-    }.otherwise{
-        state := State.sNormal
-    }
-    //work
-    when(state === State.sNormal){
-        io.enq.ready := ibuf.io.enq.ready
-        ibuf.io.enq.valid := io.enq.valid
-        ibuf.io.enq.bits.pack := io.enq.bits
-        ibuf.io.enq.bits.valid := true.B
-        io.deq.valid := ibuf.io.deq.valid
-        io.deq.bits := ibuf.io.deq.bits.pack
-        ibuf.io.deq.ready := io.deq.ready
-    }
-}
-*/
+
+/**
+  * Backend Module
+  * when mispredict, backend will flush instruction buffer and send refetch signal to frontend
+  * when instbuf has entry, backend will advance
+  */
 
 
 class Backend extends Module{
@@ -67,68 +26,68 @@ class Backend extends Module{
     val dumplog = true
     //IO
     val io = IO(new Bundle{
+        val reset_addr = Input(UInt(64.W))
         val imem = Flipped(DecoupledIO(new InstPack))
         val dmem = new DMemPort
-        val fctl = new FrontendCtrl
+        val inst_buf_ctrl = new IB_BE_Bundle
+        val fe_ctl = Output(new FE_BE_Bundle)
     })
     //counter instrctions    
     val id_cnt = RegInit(0.U(64.W))
     val exe_cnt = RegInit(0.U(64.W))
     val mem_cnt = RegInit(0.U(64.W))
     val wb_cnt = RegInit(0.U(64.W)) 
-    val mem_stall = WireDefault(false.B)
-    val pc_error_predict = WireDefault(false.B)
-    val instruction_address_misaligned = WireDefault(false.B)
-    val sucessful_fetch = WireDefault(false.B)
-
+    
+    val BOOT_ADDR = io.reset_addr
     //initial IO
-    io.fctl.flush := false.B
-    io.fctl.pc_redir := ADDR_XXX.U(64.W)
-    io.fctl.pc_misfetch := false.B
+    io.fe_ctl.flush := false.B
+    io.fe_ctl.pc_redir := BOOT_ADDR
+    io.fe_ctl.pc_misfetch := false.B
     io.dmem.req_addr := 0.U
     io.dmem.wt_rd := false.B
     io.dmem.mem_valid := false.B
     io.dmem.wdata := 0.U
     io.dmem.wmask := 0.U
-    //IBUF
-    val inst_buf_flush = WireDefault(false.B) //flush when mispredict
-    //Fetch
-    //val ibuf = Module(new IBuf)
-    val ibuf = Module(new Queue(new InstPack, 2,hasFlush = true))
-    //ibuf.io.flush := inst_buf_flush
-    ibuf.io.flush.get := inst_buf_flush
-    //frontend feed inst to ibuf
-    ibuf.io.enq <> io.imem
-
-    val ibuf_pc = RegInit(0.U(64.W)) //ibuf content
-    val ibuf_inst = RegInit(0.U(32.W)) //ibuf content
-    val if_id_inst = WireDefault(0.U(32.W)) // used by id stage
-    val if_id_pc = WireDefault(0.U(64.W)) // used by id stage
-    
-    val inst_buf_buble = RegInit(true.B) //flag indicate buble
-    val inst_buf_stall = WireDefault(false.B) //stall when needed,such as mem take longer time
-    ibuf.io.deq.ready := !inst_buf_stall
-    //when ibuf is empty,or stall,or flush,then insert nop
-    ibuf_pc := ibuf.io.deq.bits.pc
-    ibuf_inst := ibuf.io.deq.bits.data
-    inst_buf_buble := !ibuf.io.deq.fire || inst_buf_flush
-    if_id_inst := Mux(inst_buf_buble, "h00000013".U, ibuf_inst) //nop if buble
-    if_id_pc := Mux(inst_buf_buble, ADDR_XXX.U(64.W), ibuf_pc)
-    id_cnt := Mux(inst_buf_buble, 0.U, id_cnt+1.U)
-    
+    io.inst_buf_ctrl.flush := false.B
+    /**
+     * take instruction from instruction buffer
+     * Now, pipeline just stall when mem is not ready 
+     * when no instruction enter be, decode nop
+     */
+    // Only when inst buffer has entry, backend will advance
+    val advance_backend = WireDefault(false.B)
+    advance_backend := io.imem.fire
+    val mem_stall = WireDefault(false.B) // case stall when mem not ready
+    val pc_error_predict = WireDefault(false.B) // when pc mispredict, jarlr,jal,branch
+    // id stage
+    val if_id_bundle = Wire(new InstPack) // id stage input
+    if_id_bundle := 0.U.asTypeOf(new InstPack)
+    val if_id_buble = WireDefault(true.B) // flag indicate buble
+    io.imem.ready := !mem_stall  && !pc_error_predict // when mem not stall, or we are flushing decode stage , can accept new instruction
+    // input signal from inst buffer
+    if_id_buble := pc_error_predict // insert buble when pc mispredict
+    val id_nop = Wire(new InstPack)
+    id_nop.pc := BOOT_ADDR
+    id_nop.data := "h00000013".U // nop instruction
+    id_nop.instruction_access_fault := false.B
+    id_nop.instruction_address_misaligned := false.B
+    //if_id_bundle := Mux(if_id_buble, id_nop, io.imem.bits) // flush or stall
+    if_id_buble := !io.imem.valid
+    id_cnt := Mux(io.imem.fire, id_cnt + 1.U, id_cnt)
  
-    //decode
+    //decode process
     val id = Module(new Decoder())
-    id.io.inst := if_id_inst
+    id.io.inst := if_id_bundle.data
     val rf = Module(new RegFile(64,dumplog))
-    val id_rs1_addr = if_id_inst(19,15)
-    val id_rs2_addr = if_id_inst(24,20)
+    val id_rs1_addr = if_id_bundle.data(19,15)
+    val id_rs2_addr = if_id_bundle.data(24,20)
     rf.io.rs1_addr := id_rs1_addr
     rf.io.rs2_addr := id_rs2_addr
     val imm_gen = Module(new ImmGen(64))
-    imm_gen.io.inst := if_id_inst
+    imm_gen.io.inst := if_id_bundle.data
     imm_gen.io.type_sel := id.io.exe_ctrl.sel_imm
-    class EXE_Reg extends Bundle {
+     // id exe handshake
+    class ID_EXE_Bundle extends Bundle {
         val ctrl = new EXE_Ctrl
         val pc   = UInt(64.W)
         val rs1_data = UInt(XLEN.W)
@@ -138,9 +97,12 @@ class Backend extends Module{
         val rd = UInt(5.W)
         val imm = UInt(XLEN.W)
         val buble = Bool()
+        val instruction_address_misaligned = Bool()
+        val instruction_access_fault = Bool()
     }
-    val exe_reg_flush = WireDefault(false.B)
-    val exe_reg = Reg(new EXE_Reg)
+    val exe_reg_flush = WireDefault(false.B) // cased by pc mispredict
+    exe_reg_flush := pc_error_predict
+    val exe_reg = Reg(new ID_EXE_Bundle)
     val rs2_data_id = WireDefault(0.U(XLEN.W))
     val rs1_data_id = WireDefault(0.U(XLEN.W))
     when(rf.io.rd_en){
@@ -173,7 +135,7 @@ class Backend extends Module{
         exe_reg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
         exe_reg.ctrl.sel_wb := SEL_WB.XXX.U
         exe_reg.ctrl.wb_en := false.B
-        exe_reg.pc := ADDR_XXX.U(64.W)
+        exe_reg.pc := BOOT_ADDR
         exe_reg.rs1_data := 0.U
         exe_reg.rs2_data := 0.U
         exe_reg.rs1_addr := 0.U
@@ -181,18 +143,22 @@ class Backend extends Module{
         exe_reg.imm := 0.U
         exe_reg.rd := 0.U
         exe_reg.buble := true.B
+        exe_reg.instruction_address_misaligned := false.B
+        exe_reg.instruction_access_fault := false.B
         exe_cnt := 0.U
-    }.elsewhen(!mem_stall){
+    }.elsewhen(advance_backend){
         exe_reg.ctrl := id.io.exe_ctrl
-        exe_reg.pc := if_id_pc
+        exe_reg.pc := if_id_bundle.pc
         exe_reg.rs1_data := rs1_data_id
         exe_reg.rs2_data := rs2_data_id
-        exe_reg.rs1_addr := if_id_inst(19,15)
-        exe_reg.rs2_addr := if_id_inst(24,20)
+        exe_reg.rs1_addr := if_id_bundle.data(19,15)
+        exe_reg.rs2_addr := if_id_bundle.data(24,20)
         exe_reg.imm := imm_gen.io.imm
-        exe_reg.rd := if_id_inst(11,7)
-        exe_reg.buble := inst_buf_buble
+        exe_reg.rd := if_id_bundle.data(11,7)
+        exe_reg.buble := if_id_buble
         exe_cnt := id_cnt
+        exe_reg.instruction_address_misaligned := if_id_bundle.instruction_address_misaligned
+        exe_reg.instruction_access_fault := if_id_bundle.instruction_access_fault
     }
     //EXE stage
     val rs1_data_wire = WireDefault(0.U(XLEN.W))
@@ -227,17 +193,26 @@ class Backend extends Module{
     jau.io.pc := exe_reg.pc
     jau.io.rs1_data := rs1_data_wire
     jau.io.imm := exe_reg.imm
-    pc_error_predict := (jau.io.jmp_addr =/= if_id_pc) && 
-         !inst_buf_buble && (exe_reg.ctrl.redir_inst || 
+    //detect pc mispredict
+    // if next speculatively fetched instructions not in backend, directly flush
+    val next_possible_pc = Wire(UInt(64.W))
+    next_possible_pc := MuxCase(
+        BOOT_ADDR,
+        IndexedSeq(
+            !if_id_buble -> if_id_bundle.pc
+        )
+    )
+
+    pc_error_predict := (jau.io.jmp_addr =/= next_possible_pc) && 
+        (exe_reg.ctrl.redir_inst || 
             exe_reg.ctrl.bru_inst && bru.io.take_branch
         )
-    inst_buf_flush := pc_error_predict
-    exe_reg_flush := pc_error_predict
-    io.fctl.pc_redir:= jau.io.jmp_addr
-    io.fctl.pc_misfetch := pc_error_predict
-    inst_buf_flush := pc_error_predict
+    //flush inst buffer when pc mispredict
+    io.inst_buf_ctrl.flush := pc_error_predict
+    io.fe_ctl.pc_misfetch := pc_error_predict
+    io.fe_ctl.pc_redir := jau.io.jmp_addr
     //Mem Stage
-    class MEM_Reg extends Bundle {
+    class EXE_MEM_Bundle extends Bundle {
         val data = UInt(XLEN.W)
         val rs2 = UInt(XLEN.W)
         val mem_cmd = UInt(MEM_TYPE.width.W)
@@ -248,9 +223,11 @@ class Backend extends Module{
         val wb_en = Bool()
         val wb_sel = UInt(SEL_WB.width.W)
         val buble = Bool()
+        val instruction_address_misaligned = Bool()
+        val instruction_access_fault = Bool()
     }
-    val mem_reg_flush = WireDefault(false.B)
-    val mem_reg = Reg(new MEM_Reg)
+    val mem_reg_flush = WireDefault(false.B) // no cause for mem flush now
+    val mem_reg = Reg(new EXE_MEM_Bundle)
     when(reset.asBool || mem_reg_flush){
         mem_reg.data := 0.U
         mem_reg.rs2 := 0.U
@@ -263,7 +240,9 @@ class Backend extends Module{
         mem_reg.rs1_addr := 0.U
         mem_reg.csr_addr := 0.U
         mem_reg.csr_cmd := CSR_CMD.XXX.U
-    }.elsewhen(!mem_stall){
+        mem_reg.instruction_address_misaligned := false.B
+        mem_reg.instruction_access_fault := false.B
+    }.elsewhen(advance_backend){
         mem_reg.data := alu.io.alu_out
         mem_reg.rs2 := rs2_data_wire
         mem_reg.mem_cmd := exe_reg.ctrl.mem_cmd
@@ -275,6 +254,8 @@ class Backend extends Module{
         mem_reg.csr_addr := exe_reg.ctrl.csr_addr
         mem_reg.csr_cmd := exe_reg.ctrl.csr_cmd
         mem_cnt := exe_cnt
+        mem_reg.instruction_address_misaligned := exe_reg.instruction_address_misaligned
+        mem_reg.instruction_access_fault := exe_reg.instruction_access_fault
     }
     val mem_base_addr = WireDefault(0.U(XLEN.W))
     mem_base_addr := mem_reg.data >> 3.U << 3.U // align to 8 bytes
@@ -377,7 +358,6 @@ class Backend extends Module{
     io.dmem.mem_valid := mem_reg.mem_cmd =/= MEM_TYPE.NOT_MEM.U && !mem_reg.buble && 
         !load_address_misaligned_xcpt && !store_address_misaligned_xcpt
     mem_stall := io.dmem.mem_valid && !io.dmem.can_next
-    inst_buf_stall := mem_stall
     val csr = Module(new CSRFile(XLEN,dumplog))
     csr.io.csr_addr := mem_reg.csr_addr
     csr.io.csr_cmd := mem_reg.csr_cmd
@@ -387,7 +367,7 @@ class Backend extends Module{
 
 
     //WB state
-    class WB_Reg extends Bundle {
+    class MEM_WB_Bunle extends Bundle {
         val wb_en = Bool()
         val sel_wb = UInt(SEL_WB.width.W)
         val rd_addr = UInt(5.W)
@@ -395,9 +375,11 @@ class Backend extends Module{
         val mem_data = UInt(XLEN.W)
         val csr_data = UInt(XLEN.W)
         val buble = Bool()
+        val instruction_address_misaligned = Bool()
+        val instruction_access_fault = Bool()
     }
-    val wb_reg_flush = WireDefault(false.B)
-    val wb_reg = Reg(new WB_Reg)
+    val wb_reg_flush = WireDefault(false.B) // no cause for wb flush now
+    val wb_reg = Reg(new MEM_WB_Bunle)
     when(reset.asBool || wb_reg_flush){
         wb_reg.wb_en := false.B
         wb_reg.sel_wb := SEL_WB.XXX.U
@@ -407,6 +389,8 @@ class Backend extends Module{
         wb_reg.buble := true.B
         wb_reg.csr_data := 0.U
         wb_cnt := 0.U
+        wb_reg.instruction_address_misaligned := false.B
+        wb_reg.instruction_access_fault := false.B
     }.elsewhen(io.dmem.can_next && (io.dmem.req_addr === io.dmem.resp_addr) ||
         mem_reg.mem_cmd === MEM_TYPE.NOT_MEM.U
         ){
@@ -418,6 +402,8 @@ class Backend extends Module{
         wb_reg.buble := mem_reg.buble
         wb_reg.csr_data := csr.io.csr_wdata
         wb_cnt := mem_cnt
+        wb_reg.instruction_address_misaligned := mem_reg.instruction_address_misaligned
+        wb_reg.instruction_access_fault := mem_reg.instruction_access_fault
     }
     rf.io.rd_en := wb_reg.wb_en && !wb_reg.buble
     rf.io.rd_addr := wb_reg.rd_addr
@@ -493,9 +479,9 @@ class Backend extends Module{
     printf(cf"[PiPeLine]")
     printf(cf"[${coretimer}%3d]")
     printf(cf"[ID]") 
-    when(!inst_buf_buble){
+    when(!if_id_buble){
         //normal instruction in ibuf
-        printf(cf"pc=0x${if_id_pc}%4x,inst=0x${if_id_inst}%8x")
+        printf(cf"pc=0x${if_id_bundle.pc}%4x,inst=0x${if_id_bundle.data}%8x")
     }.otherwise{
         //one buble
         printf(cf"XXXXXXXXX=buble=XXXXXXXXX")

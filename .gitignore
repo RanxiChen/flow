@@ -39,3 +39,8 @@ build/
 
 ## litex
 analyzer.csv
+csr.csv
+__pycache__/
+
+# generated
+generated/*
