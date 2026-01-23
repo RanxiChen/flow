@@ -24,7 +24,7 @@ GCC_FLAGS = {
     #                               |    |||/--- Single-Precision Floating-Point
     #                               |    ||||/-- Double-Precision Floating-Point
     #                               i    macfd
-    "minimal":          "-march=rv64i2p0m       -mabi=lp64 "
+    "minimal":          "-march=rv64i2p0       -mabi=lp64 "
 }
 
 class Flow(CPU):
@@ -43,9 +43,10 @@ class Flow(CPU):
     # GCC Flags.
     @property
     def gcc_flags(self):
-        flags = ""
+        flags = "-mno-save-restore "
         flags +=  GCC_FLAGS[self.variant]
         flags += " -D__flow__ "
+        flags += "-mcmodel=medany"
         return flags
 
     def __init__(self, platform, variant="minimal"):
