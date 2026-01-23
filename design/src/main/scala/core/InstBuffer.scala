@@ -3,37 +3,31 @@ package core
 import chisel3._
 import chisel3.util._
 
-class InstBuffer(val useFASE: Boolean=false) extends Module {
+class IB_BE_Bundle extends Bundle {
+    val flush = Output(Bool()) // when mispredict, flush the buffer
+}
+
+/**
+  * Instruction Buffer Module
+  * when instruction buffer is empty, backend will not advance
+  * when need flush, instruction buffer will be flushed
+  * @param buffer_entry
+  */
+class InstBuffer(val buffer_entry: Int = 2) extends Module {
     val io = IO(new Bundle{
-        val in = Flipped(Decoupled(new InstPack))
+        val fe_in = Flipped(Decoupled(new InstPack))
         val out = Decoupled(new InstPack)
-        val flush = Input(Bool())
-        val empty = Output(Bool()) //indicate buffer is empty, can insert new instruction
-        val ext_in = if (useFASE) Some(Flipped(Decoupled(new InstPack))) else None
+        val be_in = Flipped(new IB_BE_Bundle)
     })
     val buffer = Module(new Queue(new InstPack, 
-                            entries = 2, pipe = true, 
+                            entries = buffer_entry, pipe = true, 
                             flow = true,hasFlush = true
                             )
-                )
-    buffer.io.flush.get := io.flush
-    if(useFASE){
-        //FASE input has higher priority
-        when(io.ext_in.get.valid){
-            buffer.io.enq.bits := io.ext_in.get.bits
-            buffer.io.enq.valid := io.ext_in.get.valid
-            io.ext_in.get.ready := buffer.io.enq.ready
-            io.in.ready := false.B
-        }.otherwise{
-            buffer.io.enq.bits := io.in.bits
-            buffer.io.enq.valid := io.in.valid
-            io.in.ready := buffer.io.enq.ready
-            io.ext_in.get.ready := false.B
-        }
-    }else{
-        buffer.io.enq <> io.in
-    }
-
-    io.out <> buffer.io.deq
-    io.empty := buffer.io.count === 0.U
+                        )
+    /**
+      * when flush is high, the buffer will be flushed
+      */
+    buffer.io.enq <> io.fe_in
+    buffer.io.deq <> io.out
+    buffer.io.flush.get := io.be_in.flush
 }

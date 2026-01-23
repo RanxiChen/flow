@@ -2,8 +2,7 @@ package core
 
 import chisel3._
 import chisel3.util._
-import top.DefaultConfig._
-import top.DefaultConfig._
+
 import chisel3.util.experimental.loadMemoryFromFileInline
 import chisel3.ActualDirection.Default
 import top.FEMux
@@ -13,16 +12,16 @@ import mem.ITCM
 class InstPack extends Bundle {
     val data = UInt(32.W)
     val pc   = UInt(64.W)
-    val xcpt = Bool()
     val instruction_address_misaligned = Bool()
     val instruction_access_fault = Bool()
 }
-
-class FrontendCtrl extends Bundle {
-    val flush = Bool() //TODO: now just use pc_misfetch to clear pipeline
+/**
+  * Control signals from backend to frontend
+  */
+class FE_BE_Bundle extends Bundle {
+    val flush = Bool() //TODO: now just use pc_misfetch to clear pipeline, reserved for fence
     val pc_misfetch = Bool()
     val pc_redir = UInt(64.W)
-    val weak_be = Bool() // Back-End is busy, not want new instructions
 }
 
 class IMemPort extends Bundle {
@@ -38,40 +37,75 @@ class MemResp extends Bundle {
     val addr = UInt(64.W)
     val data = UInt(32.W)
 }
+// stand in fe, used by simple frontend
+class IMEM_IO extends Bundle {
+    val req_valid = Output(Bool())
+    val req_addr = Output(UInt(64.W))
+    val resp_data = Input(UInt(32.W)) // instruction data
+    val resp_ack = Input(Bool()) // response valid
+} 
+
 /**
   * A simplified frontend that only fetches instructions continuously from memory
-  * no cache, no pipeline, just fetch from bus
+  * no cache, no pipeline, just dispatch request to bus interface and get response
+  * impl by fsm, since directly connect to bus interface and backend will advance just when
+  * there is data in inst buffer
   */
-class SimpleFrontend(useFASE: Boolean=false) extends Module {
+class SimpleFrontend() extends Module {
     val io = IO(new Bundle {
+        val reset_addr = Input(UInt(64.W))
         val fetch = Decoupled(new InstPack)
-        val memreq = new IMemPort
-        val ctrl = Flipped(new FrontendCtrl)
-        val ext_drain = if(useFASE)Some(Input(Bool())) else None
-        val ext_frozen = if(useFASE)Some(Output(Bool())) else None
+        val memreq = new IMEM_IO
+        val be_ctrl = Flipped(new FE_BE_Bundle)
     })
-    val fetch_wait_resp = WireDefault(false.B) // indicate waiting for memory response
-    val pc = RegInit(BOOT_ADDR.U(64.W))
-    val npc = MuxCase(pc + 4.U, IndexedSeq(
-        fetch_wait_resp -> pc, // wait for response, do not update pc
-        io.ctrl.pc_misfetch -> io.ctrl.pc_redir,
-        io.ctrl.weak_be -> pc // backend is busy, do not update pc
+    //initial IO
+    io.memreq.req_addr := 0.U
+    io.memreq.req_valid := false.B
+    io.fetch.valid := false.B
+    io.fetch.bits := 0.U.asTypeOf(new InstPack)
+    val BOOT_ADDR = io.reset_addr
+    val redir_pc = RegInit(BOOT_ADDR)
+    val should_redir = RegInit(false.B)
+    val mem_read = RegInit(false.B)
+    val pc = RegInit(BOOT_ADDR)
+    val npc = Wire(UInt(64.W))
+    npc := MuxCase(
+        pc + 4.U,
+        IndexedSeq(
+            (io.be_ctrl.pc_misfetch) -> io.be_ctrl.pc_redir,
+            (should_redir) -> redir_pc
         )
     )
-    pc := npc
-    // request memory
-    io.memreq.req_addr := pc
-    fetch_wait_resp := !io.memreq.can_next
-    // puch instruction to backend
-    val inst_pack = Wire(new InstPack)
-    inst_pack.pc := io.memreq.resp_addr
-    inst_pack.data := io.memreq.data
-    inst_pack.xcpt := false.B // TODO: handle exception
-    inst_pack.instruction_address_misaligned := false.B
-    inst_pack.instruction_access_fault := false.B
-    io.fetch.valid := !fetch_wait_resp
-    io.fetch.bits := inst_pack
-    
+    when(mem_read === false.B){
+        io.memreq.req_valid := false.B
+        when(io.fetch.ready){
+            mem_read := true.B
+            pc := npc
+        }.otherwise{
+            when(io.be_ctrl.pc_misfetch){
+                redir_pc := io.be_ctrl.pc_redir
+                should_redir := true.B
+            }
+        }
+    }.otherwise{
+        io.memreq.req_valid := true.B
+        io.memreq.req_addr := pc
+        when(io.memreq.resp_ack){
+            mem_read := false.B
+            io.fetch.valid := true.B
+            io.fetch.bits.data := io.memreq.resp_data
+            io.fetch.bits.pc := pc
+            io.fetch.bits.instruction_address_misaligned := pc(1,0) =/= 0.U
+            io.fetch.bits.instruction_access_fault := false.B // TODO: add access fault check
+            pc := npc
+            should_redir := false.B
+        }.otherwise{
+            when(io.be_ctrl.pc_misfetch){
+                redir_pc := io.be_ctrl.pc_redir
+                should_redir := true.B
+            }
+        }
+    }
 }
 /**
   * This module is reserved for pipelined cache access, 
@@ -83,8 +117,9 @@ class Frontend() extends Module {
     val io = IO(new Bundle {
         val fetch = Decoupled(new InstPack)
         val memreq = new IMemPort
-        val ctrl = Flipped(new FrontendCtrl)
+        val ctrl = Flipped(new FE_BE_Bundle)
     })
+    import top.DefaultConfig._
     // at this stage, we will not get data from memory
     //initial IO
     io.memreq <> DontCare
@@ -182,7 +217,6 @@ class Frontend() extends Module {
     io.fetch.valid := s1_data_valid
     io.fetch.bits.data := s1_data
     io.fetch.bits.pc := s1_pc
-    io.fetch.bits.xcpt := mis_access_fault || s1_instruction_address_misaligned
     io.fetch.bits.instruction_address_misaligned := s1_instruction_address_misaligned
     io.fetch.bits.instruction_access_fault := mis_access_fault 
     //dump log
@@ -193,7 +227,6 @@ class Frontend() extends Module {
         printf(cf"addr_mux=${source_mux}%d,")
         printf(cf"[s1]")
         printf(cf"inst=0x${s1_data}%0x,pc=0x${s1_pc}%0x,")
-        printf(cf"xcpt=${io.fetch.bits.xcpt}%d,")
         when(io.fetch.fire){
             printf(cf"fire\n")
         }.otherwise{
