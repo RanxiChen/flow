@@ -24,7 +24,7 @@ GCC_FLAGS = {
     #                               |    |||/--- Single-Precision Floating-Point
     #                               |    ||||/-- Double-Precision Floating-Point
     #                               i    macfd
-    "minimal":          "-march=rv32i2p0       -mabi=ilp32 "
+    "minimal":          "-march=rv64i2p0m       -mabi=lp64 "
 }
 
 class Flow(CPU):
@@ -33,7 +33,7 @@ class Flow(CPU):
     name                 = "flow"
     human_name           = "Flow"
     variants             = CPU_VARIANTS
-    data_width           = 64 # core is RV64, but now, address/data bus is 32-bit only.
+    data_width           = 64 
     endianness           = "little"
     gcc_triple           = CPU_GCC_TRIPLE_RISCV64
     linker_output_format = "elf64-littleriscv"
@@ -43,7 +43,8 @@ class Flow(CPU):
     # GCC Flags.
     @property
     def gcc_flags(self):
-        flags =  GCC_FLAGS[self.variant]
+        flags = ""
+        flags +=  GCC_FLAGS[self.variant]
         flags += " -D__flow__ "
         return flags
 
@@ -74,7 +75,7 @@ class Flow(CPU):
             o_io_bus_cti = idbus.cti,
             o_io_bus_bte = idbus.bte,
             i_io_bus_err = idbus.err,
-            i_reset_addr = Constant(0, 64)
+            i_io_reset_addr = Constant(0, 64)
         )
 
         # Add Verilog sources.
@@ -83,7 +84,7 @@ class Flow(CPU):
 
     def set_reset_address(self, reset_address):
         self.reset_address = reset_address
-        self.cpu_params.update(i_reset_addr=Constant(reset_address, 64))
+        self.cpu_params.update(i_io_reset_addr=Constant(reset_address, 64))
 
     @staticmethod
     def add_sources(platform, variant):
