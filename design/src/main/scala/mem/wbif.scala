@@ -36,96 +36,113 @@ class cpu_wb_bus_if extends Module {
     io.backend.resp_addr := 0.U
 
     object State extends ChiselEnum {
-        val idle, high,low = Value
+        val idle, high,low,out = Value
     }
     import State._
     val state = RegInit(idle)
-    val req_addr_reg = RegInit(0.U(64.W))
-    val imem_dmem = RegInit(false.B) // false for imem, true for dmem
-    val data_buf = RegInit(0.U(32.W))
-    val tap0 = RegInit(false.B) // temporary clear stb when go to `high` state
-    when(state === idle){
+    object wb_state extends ChiselEnum {
+        val wb_idle,wb_wait_ack,wb_ack,wb_nop = Value
+    }
+    import wb_state._
+    val addr_reg = Reg(UInt(64.W))
+    val wdata_reg = Reg(UInt(32.W))
+    val sel_reg = Reg(UInt(4.W))
+    val we_reg = Reg(Bool())
+    val rdata_reg = Reg(UInt(32.W))
+    val wb_bus_resp = Wire(Bool())
+    wb_bus_resp := false.B
+    val low_buf = Reg(UInt(32.W))
+    // wb fsm
+    val wb_fsm = RegInit(wb_idle)
+    when(wb_fsm === wb_idle){
         io.wb.cyc := false.B
         io.wb.stb := false.B
-        io.wb.we := false.B
-        io.wb.sel := "b0000".U
-        when(io.backend.mem_valid){
-            //storage req addr
-            req_addr_reg := io.backend.req_addr
-            imem_dmem := true.B
-            // first process lowr part
-            state := low
-        }.elsewhen(io.frontend.req_valid){
-            //storage req addr
-            req_addr_reg := io.frontend.req_addr
-            imem_dmem := false.B
-            state := low
-        }.otherwise{
-            state := idle
-        }
-    }.elsewhen(state === low){
+        wb_fsm := wb_wait_ack
+    }.elsewhen(wb_fsm === wb_wait_ack){
         io.wb.cyc := true.B
         io.wb.stb := true.B
-        io.wb.adr := req_addr_reg(31,2) // word aligned
-        io.wb.dat_w := io.backend.wdata(31,0)
-        io.wb.sel := io.backend.wmask(3,0)
-        io.wb.we := Mux(imem_dmem,io.backend.wt_rd, false.B)
-        //ack and depends on we, decide weather read or write
+        io.wb.adr := addr_reg(31,2)
+        io.wb.we := we_reg
+        io.wb.sel := sel_reg
+        io.wb.dat_w := wdata_reg
         when(io.wb.ack){
-            when(io.wb.we){
-                //write complete, just dmem can write
+            wb_fsm := wb_ack
+            rdata_reg := io.wb.dat_r
+        }
+    }.elsewhen(wb_fsm === wb_ack){
+        io.wb.cyc := false.B
+        io.wb.stb := false.B
+        wb_fsm := wb_nop
+        wb_bus_resp := true.B
+    }.elsewhen(wb_fsm === wb_nop){
+        wb_fsm := wb_nop
+    }
+    val imem_dmem = RegInit(true.B) // true for imem, false for dmem
+    // main fsm
+    when(state === idle){
+        //prioritize dmem req
+        when(io.backend.mem_valid){
+            //store req
+            addr_reg := io.backend.req_addr(31,0)
+            we_reg := io.backend.wt_rd
+            sel_reg := io.backend.wmask(3,0)
+            wdata_reg := io.backend.wdata(31,0)
+            imem_dmem := false.B
+            state := low
+            wb_fsm := wb_idle
+        }.elsewhen(io.frontend.req_valid){
+            //fetch req
+            addr_reg := io.frontend.req_addr
+            we_reg := false.B
+            sel_reg := "b1111".U
+            wdata_reg := 0.U
+            imem_dmem := true.B
+            state := low
+            wb_fsm := wb_idle
+        }
+    }.elsewhen(state === low){
+        //wb access
+        when(wb_bus_resp){
+            when(imem_dmem){
+                //imem resp
+                state := out
+                wb_fsm := wb_nop
+            }.elsewhen(!imem_dmem){
+                //dmem resp
                 state := high
-            }.otherwise{
-                //read data
-                when(imem_dmem){
-                    //dmem read, store low part
-                    data_buf := io.wb.dat_r
-                    state := high
-                    tap0 := true.B
-                }.otherwise{
-                    //imem read, directly response
-                    io.frontend.resp_data := io.wb.dat_r
-                    io.frontend.resp_ack := true.B
-                    state := idle
-                }
+                wb_fsm := wb_idle
+                low_buf := rdata_reg
+                addr_reg := io.backend.req_addr + 4.U
+                we_reg := io.backend.wt_rd
+                sel_reg := io.backend.wmask(7,4)
+                wdata_reg := io.backend.wdata(63,32)
+                imem_dmem := false.B                               
             }
         }
     }.elsewhen(state === high){
-        // just dmem may come here
-        io.wb.cyc := true.B
-        when(tap0){
-            io.wb.stb := false.B
-            tap0 := false.B
-        }.otherwise{
-            io.wb.stb := true.B
-            io.wb.adr := (req_addr_reg + 4.U(64.W)) (31,2) // word aligned
-            io.wb.dat_w := io.backend.wdata(63,32)
-            io.wb.sel := io.backend.wmask(7,4)
-            io.wb.we := io.backend.wt_rd
-            when(io.wb.ack){
-                when(io.wb.we){
-                    //write complete, respond back
-                    io.backend.can_next := true.B
-                    io.backend.resp_addr := req_addr_reg
-                    state := idle
-                }.otherwise{
-                    //read data, send back
-                    io.backend.rdata := Cat(io.wb.dat_r, data_buf)
-                    io.backend.can_next := true.B
-                    io.backend.resp_addr := req_addr_reg
-                    state := idle
-                }
-            }
+        when(wb_bus_resp){
+            //dmem resp
+            state := out
+            wb_fsm := wb_nop
+        }
+    }.elsewhen(state === out){
+        when(imem_dmem){
+            //imem resp
+            io.frontend.resp_data := rdata_reg
+            io.frontend.resp_ack := true.B
+            state := idle
+        }.elsewhen(!imem_dmem){
+            //dmem resp
+            io.backend.rdata := Cat(rdata_reg,low_buf)
+            io.backend.resp_addr := io.backend.req_addr
+            io.backend.can_next := true.B
+            state := idle
         }
     }
     if(dump){
-        printf(cf"[wbif]state = ${state} ")
-        printf(cf"dmem_valid=${io.backend.mem_valid} ")
-        printf(cf"imem_valid=${io.frontend.req_valid} ")
-        printf(cf"addr=0x${req_addr_reg}%0x ")
-        printf(cf"we=${io.wb.we} ")
-        printf(cf"ack=${io.wb.ack} ")
-        printf(cf"cyc=${io.wb.cyc} ")
-        printf(cf"stb=${io.wb.stb} ")
+        printf(cf"[cpu_wb_bus_if] state=${state},")
+        printf(cf"wb_fsm=${wb_fsm},")
+        printf(cf"cyc=${io.wb.cyc},stb=${io.wb.stb},ack=${io.wb.ack}\n")
     }
+    
 }
