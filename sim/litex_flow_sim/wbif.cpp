@@ -74,6 +74,7 @@ void wbif::tick() {
             }else {
                 state = WBState::err;
             }
+            break;;
         case WBState::valid_ack:
             if (advance) {
                 // process we request
@@ -104,11 +105,16 @@ void wbif::tick() {
                     std :: cout << "Read " << "0x" << std::setfill('0') << std::setw(8) << std::hex << data_buf << " from " << "0x" << std::setfill('0') << std::setw(16) << std::hex << (io.adr << 2) << std::dec << std::endl;
                 }
                 state = WBState::idle;
+                break;;
             }else {
                 state = WBState::err;
+                break;;
             }
         case WBState::err:
             state = WBState::idle;
+            break;;
+        default:
+            std::cout << "unknown state" << std::endl;
     }
     std::cout << "[WBIF] Next State: " << wbstate2str(state) << std::endl;
 }

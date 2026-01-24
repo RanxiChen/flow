@@ -64,6 +64,18 @@ class FlowCore(SoCCore):
             self.leds = LedChaser(
                 pads         = platform.request_all("user_led"),
                 sys_clk_freq = sys_clk_freq)
+        if True:
+            analyzer_signals = [
+                self.cpu.idbus
+            ]
+            from litescope import LiteScopeAnalyzer
+            self.submodules.analyzer = LiteScopeAnalyzer(
+                   analyzer_signals,
+                    depth        = 512,
+                    clock_domain ="sys",
+                    csr_csv      = "analyzer.csv"
+            )
+            self.add_csr("analyzer")
             
 def main():
     from litex.build.parser import LiteXArgumentParser
