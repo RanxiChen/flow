@@ -51,7 +51,7 @@ class IMEM_IO extends Bundle {
   * impl by fsm, since directly connect to bus interface and backend will advance just when
   * there is data in inst buffer
   */
-class SimpleFrontend() extends Module {
+class SimpleFrontend(val dump:Boolean = true) extends Module {
     val io = IO(new Bundle {
         val reset_addr = Input(UInt(64.W))
         val fetch = Decoupled(new InstPack)
@@ -104,6 +104,20 @@ class SimpleFrontend() extends Module {
                 redir_pc := io.be_ctrl.pc_redir
                 should_redir := true.B
             }
+        }
+    }
+    //dump log
+    if(dump){
+        printf(cf"[SimpleFrontend] pc=0x${pc}%0x,")
+        printf(cf"state = ${mem_read}%x")
+        printf(cf"npc = 0x${npc}%0x,")
+        when(io.memreq.resp_ack){
+            printf(cf"mem_ack: ${io.memreq.resp_data}%x,")
+        }
+        when(io.fetch.fire){
+            printf(cf"inst=0x${io.fetch.bits.data}%0x,fire\n")
+        }.otherwise{
+            printf(cf"stall\n")
         }
     }
 }

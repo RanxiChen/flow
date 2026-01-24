@@ -19,6 +19,7 @@ class cpu_wb_bus_if extends Module {
         val backend = Flipped( new DMemPort)
         val wb = new wishbone.litex_wb_port()
     })
+    val dump = true
     // initial io
     io.wb.cyc := false.B
     io.wb.stb := false.B
@@ -116,5 +117,15 @@ class cpu_wb_bus_if extends Module {
                 }
             }
         }
+    }
+    if(dump){
+        printf(cf"[wbif]state = ${state} ")
+        printf(cf"dmem_valid=${io.backend.mem_valid} ")
+        printf(cf"imem_valid=${io.frontend.req_valid} ")
+        printf(cf"addr=0x${req_addr_reg}%0x ")
+        printf(cf"we=${io.wb.we} ")
+        printf(cf"ack=${io.wb.ack} ")
+        printf(cf"cyc=${io.wb.cyc} ")
+        printf(cf"stb=${io.wb.stb} ")
     }
 }
