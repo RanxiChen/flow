@@ -31,8 +31,8 @@ uint64_t initial_data[16] = {
         // before posedge rising
         top->clock = 1;
         //get inputs
-        top -> io_bus_dat_r = mem ->io.data_r();
         top -> io_bus_ack = mem ->io.ack();
+        top -> io_bus_dat_r = mem ->io.data_r();
         top -> io_bus_err = mem ->io.err();
 
         //model update
@@ -48,7 +48,8 @@ uint64_t initial_data[16] = {
         top-> eval();
         tfp-> dump(sim_time);
         sim_time++;
-        mem ->tick();
+        //mem ->tick();
+        mem ->step();
         top ->clock =0;
         top -> eval();
         tfp -> dump(sim_time);
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
         top->trace(tfp, 99);
         tfp->open("litex_flow_top.vcd");
         //initial sim model
-        wbif *mem = new wbif;
+        wbif *mem = new wbif(2);
         mem->initial_mem_hex(0,initial_data,16);
         std::cout << "simulate flow_top module" << std::endl;
         top -> io_reset_addr = 0;

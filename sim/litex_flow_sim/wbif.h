@@ -38,9 +38,12 @@ class wbif {
 public:
     struct wishbone io;
     wbif();
+    wbif(int delay);
     void tick();
+    void step();
     void initial_mem(uint64_t start_addr,char*data,int len);
     void initial_mem_hex(uint64_t start_addr, uint64_t*data, int len);
+    uint64_t get_count();
 private:
     wbmem content;
     /**
@@ -49,6 +52,8 @@ private:
      */
     WBState state;
     uint32_t data_buf;
+    uint8_t count;
+    uint8_t delay;
 };
 
 #endif //LITEX_FLOW_SIM_WBIF_H
