@@ -49,6 +49,57 @@ wbif::wbif() {
     };
 }
 
+wbif::wbif(int delay):delay(delay) {
+    std::cout << "another wbif" << std::endl;
+    //initial state
+    count = 0;
+    data_buf = 0xffffff;
+    state = WBState::idle;
+    io.ack = [this]() -> bool {
+        if (count == this->delay) {
+            //process RW
+            if (io.we) {
+                //write
+                uint64_t base_addr = io.adr << 2;
+                for (int sel_index =0;sel_index <=3;sel_index++) {
+                    uint64_t current_addr = base_addr + sel_index;
+                    bool current_mask = (io.sel >> sel_index)&0x1;
+                    uint8_t current_byte = (io.data_w >> (sel_index*8))& 0xff;
+                    if (current_mask) {
+                        this -> content.write(current_addr, current_byte);
+                        std::cout << "since " << sel_index << "is 1 " << "write " << current_addr << "with " << current_byte << " byte" << std::endl;
+                    }
+                }
+                std::cout << "Done write " << io.data_w << " to " << base_addr << std::endl;
+            }else {
+                //read
+                uint64_t base_addr = io.adr << 2;
+                uint32_t rbuf[4];
+                for (int sel_index =0;sel_index <=3;sel_index++) {
+                    uint64_t current_addr = base_addr + sel_index;
+                    rbuf[sel_index] = this->content.read(current_addr);
+                    std::cout << "Read byte " << "0x" << std::setfill('0') << std::setw(2) << std::hex << (uint32_t)rbuf[sel_index] << " from " << "0x" << std::setfill('0') << std::setw(16) << std::hex << current_addr << std::dec << std::endl;
+                }
+                data_buf = rbuf[0]&0xff | (rbuf[1]&0xff) << 8 | (rbuf[2]&0xff)<< 16 | (rbuf[3]&0xff) << 24;
+                std :: cout << "Read " << "0x" << std::setfill('0') << std::setw(8) << std::hex << data_buf << " from " << "0x" << std::setfill('0') << std::setw(16) << std::hex << (io.adr << 2) << std::dec << std::endl;
+            }
+            return true;
+        }else {
+            return false;
+        }
+    };
+    io.data_r = [this]() -> uint32_t {
+        return data_buf;
+    };
+    io.err = [this]() -> bool {
+        if (count == 0xff) {
+            return true;
+        }else {
+            return false;
+        }
+    };
+}
+
 void wbif::tick() {
     bool advance = io.cyc && io.stb;
     std::cout << "[WBIF] Current State: " << wbstate2str(state) << ", advance: " << advance << std::endl;
@@ -120,6 +171,25 @@ void wbif::tick() {
     }
     std::cout << "[WBIF] Next State: " << wbstate2str(state) << std::endl;
 }
+
+void wbif::step() {
+    bool advance = io.cyc && io.stb;
+    while (count < this->delay) {
+        if (advance) {
+            count++;
+        }
+        return;
+    }
+    if (count >=this ->delay) {
+        count = 0;
+        return;
+    }
+}
+
+uint64_t wbif::get_count() {
+    return count;
+}
+
 
 void wbif::initial_mem(uint64_t start_addr, char *data, int len) {
     this -> content.loadmem(start_addr, data, len);

@@ -78,8 +78,6 @@ class cpu_wb_bus_if extends Module {
             if(dump)printf(cf"wishbone read data: data_r=0x${io.wb.dat_r}%x\n")
         }
     }.elsewhen(wb_fsm === wb_ack){
-        io.wb.cyc := true.B
-        io.wb.stb := true.B
         wb_fsm := wb_nop
         wb_bus_resp := true.B
     }.elsewhen(wb_fsm === wb_nop){
