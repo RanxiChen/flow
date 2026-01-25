@@ -7,6 +7,7 @@ uint64_t sim_time =0; //current simulation time
 #include "VLitexFlowTop.h"
 #include "wbmem.h"
 #include "wbif.h"
+#include "misc.h"
 
 uint64_t initial_data[16] = {
         0xffb0011300a00093ULL,
@@ -33,9 +34,7 @@ uint64_t initial_data[16] = {
         top -> io_bus_dat_r = mem ->io.data_r();
         top -> io_bus_ack = mem ->io.ack();
         top -> io_bus_err = mem ->io.err();
-        top-> eval();
-        tfp-> dump(sim_time);
-        sim_time++;
+
         //model update
         mem -> io.adr = top ->io_bus_adr;
         mem -> io.data_w = top ->io_bus_dat_w;
@@ -45,8 +44,11 @@ uint64_t initial_data[16] = {
         mem -> io.we = top ->io_bus_we;
         mem -> io.bte = top ->io_bus_bte;
         mem -> io.cti = top ->io_bus_cti;
+        std::cout << Color::Green<< "=========== Posedge at " << sim_time << "===========" << Color::Reset <<std::endl;
+        top-> eval();
+        tfp-> dump(sim_time);
+        sim_time++;
         mem ->tick();
-
         top ->clock =0;
         top -> eval();
         tfp -> dump(sim_time);

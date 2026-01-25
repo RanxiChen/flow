@@ -19,6 +19,7 @@ class InstBuffer(val buffer_entry: Int = 2) extends Module {
         val out = Decoupled(new InstPack)
         val be_in = Flipped(new IB_BE_Bundle)
     })
+    val dump = true
     val buffer = Module(new Queue(new InstPack, 
                             entries = buffer_entry, pipe = true, 
                             flow = true,hasFlush = true
@@ -30,4 +31,13 @@ class InstBuffer(val buffer_entry: Int = 2) extends Module {
     buffer.io.enq <> io.fe_in
     buffer.io.deq <> io.out
     buffer.io.flush.get := io.be_in.flush
+    if(dump){
+        when(io.fe_in.ready){
+            printf(cf"[InstBuf]InstBuf not full, can accept instruction\n")
+        }
+        when(io.fe_in.fire){
+            printf(cf"[InstBuf] enqueue: pc=0x${io.fe_in.bits.pc}%0x,")
+            printf(cf"data=0x${io.fe_in.bits.data}%0x\n")
+        }
+    }
 }

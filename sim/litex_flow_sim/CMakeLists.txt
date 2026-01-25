@@ -27,7 +27,8 @@ add_executable(litex_flow_sim main.cpp
         wbmem.cpp
         wbmem.h
         wbif.cpp
-        wbif.h)
+        wbif.h
+        misc.h)
 verilate(litex_flow_sim
         TOP_MODULE litex_flow_top
         PREFIX VLitexFlowTop

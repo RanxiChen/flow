@@ -53,7 +53,7 @@ class cpu_wb_bus_if extends Module {
     wb_bus_resp := false.B
     val low_buf = Reg(UInt(32.W))
     // wb fsm
-    val wb_fsm = RegInit(wb_idle)
+    val wb_fsm = RegInit(wb_nop)
     when(wb_fsm === wb_idle){
         io.wb.cyc := false.B
         io.wb.stb := false.B
@@ -65,17 +65,27 @@ class cpu_wb_bus_if extends Module {
         io.wb.we := we_reg
         io.wb.sel := sel_reg
         io.wb.dat_w := wdata_reg
+        if(dump){
+            printf(cf"wishbone access: addr=0x${io.wb.adr}%0x,")
+            printf(cf"we=${io.wb.we},")
+            printf(cf"sel=0b${io.wb.sel}%b,")
+            printf(cf"data_w=0x${io.wb.dat_w}%x,")
+            printf(cf"cyc=${io.wb.cyc},stb=${io.wb.stb},ack=${io.wb.ack}\n")
+        }
         when(io.wb.ack){
             wb_fsm := wb_ack
             rdata_reg := io.wb.dat_r
+            if(dump)printf(cf"wishbone read data: data_r=0x${io.wb.dat_r}%x\n")
         }
     }.elsewhen(wb_fsm === wb_ack){
-        io.wb.cyc := false.B
-        io.wb.stb := false.B
+        io.wb.cyc := true.B
+        io.wb.stb := true.B
         wb_fsm := wb_nop
         wb_bus_resp := true.B
     }.elsewhen(wb_fsm === wb_nop){
         wb_fsm := wb_nop
+        io.wb.cyc := false.B
+        io.wb.stb := false.B
     }
     val imem_dmem = RegInit(true.B) // true for imem, false for dmem
     // main fsm

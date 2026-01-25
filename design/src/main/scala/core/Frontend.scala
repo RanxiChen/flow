@@ -66,58 +66,48 @@ class SimpleFrontend(val dump:Boolean = true) extends Module {
     val BOOT_ADDR = io.reset_addr
     val redir_pc = RegInit(BOOT_ADDR)
     val should_redir = RegInit(false.B)
-    val mem_read = RegInit(false.B)
     val pc = RegInit(BOOT_ADDR)
-    val npc = Wire(UInt(64.W))
-    npc := MuxCase(
-        pc + 4.U,
-        IndexedSeq(
-            (io.be_ctrl.pc_misfetch) -> io.be_ctrl.pc_redir,
-            (should_redir) -> redir_pc
-        )
-    )
-    when(mem_read === false.B){
-        io.memreq.req_valid := false.B
-        when(io.fetch.ready){
-            mem_read := true.B
-            pc := npc
-        }.otherwise{
-            when(io.be_ctrl.pc_misfetch){
-                redir_pc := io.be_ctrl.pc_redir
-                should_redir := true.B
-            }
+
+    object State extends ChiselEnum {
+        val idle, req = Value
+    }
+    import State._
+    val state = RegInit(idle)
+
+    when(state === idle){
+        when(io.be_ctrl.pc_misfetch){
+            pc := io.be_ctrl.pc_redir
         }
-    }.otherwise{
-        io.memreq.req_valid := true.B
+        when(io.fetch.ready){
+            // has space to accept instruction
+            state := req
+        }
+    }.elsewhen(state === req){
+        //dispatch request
         io.memreq.req_addr := pc
+        io.memreq.req_valid := true.B
+        when(io.be_ctrl.pc_misfetch){
+            should_redir := true.B
+            redir_pc := io.be_ctrl.pc_redir
+        }
         when(io.memreq.resp_ack){
-            mem_read := false.B
-            io.fetch.valid := true.B
-            io.fetch.bits.data := io.memreq.resp_data
-            io.fetch.bits.pc := pc
-            io.fetch.bits.instruction_address_misaligned := pc(1,0) =/= 0.U
-            io.fetch.bits.instruction_access_fault := false.B // TODO: add access fault check
-            pc := npc
-            should_redir := false.B
-        }.otherwise{
-            when(io.be_ctrl.pc_misfetch){
-                redir_pc := io.be_ctrl.pc_redir
-                should_redir := true.B
+            state := idle
+            pc := Mux(should_redir, redir_pc, pc + 4.U)
+            when(should_redir){
+                should_redir := false.B
             }
         }
     }
-    //dump log
+    // dump to inst buf
+    io.fetch.valid := (state === req) && io.memreq.resp_ack
+    io.fetch.bits.data := io.memreq.resp_data
+    io.fetch.bits.pc := pc
+    io.fetch.bits.instruction_address_misaligned := pc(1,0) =/= 0.U
+    io.fetch.bits.instruction_access_fault := false.B // no access fault in this simple frontend
     if(dump){
-        printf(cf"[SimpleFrontend] pc=0x${pc}%0x,")
-        printf(cf"state = ${mem_read}%x")
-        printf(cf"npc = 0x${npc}%0x,")
+        printf(cf"[FE] state=${state}, pc=0x${pc}%0x, req_valid=${io.memreq.req_valid} ,resp_valid=${io.memreq.resp_ack} ")
         when(io.memreq.resp_ack){
-            printf(cf"mem_ack: ${io.memreq.resp_data}%x,")
-        }
-        when(io.fetch.fire){
-            printf(cf"inst=0x${io.fetch.bits.data}%0x,fire\n")
-        }.otherwise{
-            printf(cf"stall\n")
+            printf(cf", inst=0x${io.memreq.resp_data}%0x")
         }
     }
 }
