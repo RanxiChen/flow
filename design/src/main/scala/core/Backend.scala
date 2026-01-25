@@ -23,7 +23,7 @@ class DMemPort extends Bundle {
 
 class Backend extends Module{
     val XLEN = 64
-    val dumplog = true
+    val dumplog = false
     //IO
     val io = IO(new Bundle{
         val reset_addr = Input(UInt(64.W))
