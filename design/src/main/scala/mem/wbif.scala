@@ -19,7 +19,7 @@ class cpu_wb_bus_if extends Module {
         val backend = Flipped( new DMemPort)
         val wb = new wishbone.litex_wb_port()
     })
-    val dump = true
+    val dump = false
     // initial io
     io.wb.cyc := false.B
     io.wb.stb := false.B

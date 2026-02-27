@@ -51,7 +51,7 @@ class IMEM_IO extends Bundle {
   * impl by fsm, since directly connect to bus interface and backend will advance just when
   * there is data in inst buffer
   */
-class SimpleFrontend(val dump:Boolean = true) extends Module {
+class SimpleFrontend() extends Module {
     val io = IO(new Bundle {
         val reset_addr = Input(UInt(64.W))
         val fetch = Decoupled(new InstPack)
@@ -63,6 +63,7 @@ class SimpleFrontend(val dump:Boolean = true) extends Module {
     io.memreq.req_valid := false.B
     io.fetch.valid := false.B
     io.fetch.bits := 0.U.asTypeOf(new InstPack)
+    val dump = false
     val BOOT_ADDR = io.reset_addr
     val redir_pc = RegInit(BOOT_ADDR)
     val should_redir = RegInit(false.B)
@@ -105,10 +106,11 @@ class SimpleFrontend(val dump:Boolean = true) extends Module {
     io.fetch.bits.instruction_address_misaligned := pc(1,0) =/= 0.U
     io.fetch.bits.instruction_access_fault := false.B // no access fault in this simple frontend
     if(dump){
-        printf(cf"[FE] state=${state}, pc=0x${pc}%0x, req_valid=${io.memreq.req_valid} ,resp_valid=${io.memreq.resp_ack} ")
+        printf(cf"[FE] state=${state}, pc=0x${pc}%0x, req_valid=${io.memreq.req_valid} ,resp_valid=${io.memreq.resp_ack} redir=${io.be_ctrl.pc_misfetch}")
         when(io.memreq.resp_ack){
             printf(cf", inst=0x${io.memreq.resp_data}%0x")
         }
+        printf(cf"\n")
     }
 }
 /**
