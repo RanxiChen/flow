@@ -19,7 +19,7 @@ class InstBuffer(val buffer_entry: Int = 2) extends Module {
         val out = Decoupled(new InstPack)
         val be_in = Flipped(new IB_BE_Bundle)
     })
-    val dump = true
+    val dump = false
     val buffer = Module(new Queue(new InstPack, 
                             entries = buffer_entry, pipe = true, 
                             flow = true,hasFlush = true
@@ -39,5 +39,6 @@ class InstBuffer(val buffer_entry: Int = 2) extends Module {
             printf(cf"[InstBuf] enqueue: pc=0x${io.fe_in.bits.pc}%0x,")
             printf(cf"data=0x${io.fe_in.bits.data}%0x\n")
         }
+        printf(cf"[InstBuf] buffer size=${buffer.io.count}\n")
     }
 }

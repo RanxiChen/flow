@@ -202,7 +202,7 @@ void wbif::initial_mem_hex(uint64_t start_addr, uint64_t *data, int len) {
             uint64_t dst_addr = start_addr + index*8 + byte_id;
             uint8_t data = (line >> byte_id*8) & 0xff;
             this->content.write(dst_addr, data);
-            std::cout << "write byte " << "0x" << std::setfill('0') << std::setw(2) << std::hex << (uint32_t)data << " to " << "0x" << dst_addr << std::endl;
+            //std::cout << "write byte " << "0x" << std::setfill('0') << std::setw(2) << std::hex << (uint32_t)data << " to " << "0x" << dst_addr << std::endl;
         }
         std::cout << "write " << "0x" << std::setfill('0') << std::setw(16) << std::hex << line << " to " << "0x" << start_addr + index*8 << std::endl;
     }
