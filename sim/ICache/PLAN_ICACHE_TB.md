@@ -5,6 +5,7 @@
 - 支持两种模式：
 - `single`：单次读取。
 - `double`：两次流水线读取，第 2 次地址为第 1 次地址的下一个 32-bit 字（`addr + 4`）。
+- `stream`：从 `--single-addr` 开始，连续读取多次 32-bit 字（地址每次 `+4`），用于长流量不间断请求验证。
 
 ### 2. 关键文件
 - `tb_main.cpp`：主测试逻辑、`dst` 驱动、严格检查、统计、日志、post-run。
@@ -46,6 +47,8 @@
 - `double`：
 - 第 1 次地址：`--single-addr`。
 - 第 2 次地址：`--single-addr + 4`。
+- `stream`：
+- 第 `i` 次地址：`--single-addr + i * 4`，`i ∈ [0, --stream-count-1]`。
 - 期望值计算：
 - `beat_data = backend.read(req_addr & ~0x7)`。
 - `req_addr[2]==0` 取低 32-bit，`req_addr[2]==1` 取高 32-bit。
@@ -81,13 +84,15 @@ cmake --build cmake-build-debug -j4
 ```bash
 ./cmake-build-debug/icache_sim --no-vcd --test=single --single-addr=0x1000 --post-cycles=0
 ./cmake-build-debug/icache_sim --no-vcd --test=double --single-addr=0x1000 --post-cycles=0
+./cmake-build-debug/icache_sim --no-vcd --test=stream --single-addr=0x1000 --stream-count=320 --post-cycles=0
 ```
 - 参数列表：
-- `--test=single|double`
+- `--test=single|double|stream`
 - `--max-cycles=N`
 - `--latency=N`
 - `--beat-gap=N`
 - `--single-addr=N`
+- `--stream-count=N`
 - `--single-timeout=N`
 - `--post-cycles=N`
 - `--no-vcd`
@@ -95,3 +100,4 @@ cmake --build cmake-build-debug -j4
 ### 9. 当前状态说明
 - `single` 模式可通过，并输出完整时序统计。
 - `double` 模式已按“第二次地址为 `+4`”执行并严格校验；若第二次返回值不对应会直接失败并报 `data_mismatch`（这是预期的检查行为）。
+- `stream` 模式用于连续数百条 32-bit 请求压力验证；默认 `stream-count=320`，并在未显式配置时自动放宽 `max-cycles` 与单请求超时阈值以适配长序列测试。

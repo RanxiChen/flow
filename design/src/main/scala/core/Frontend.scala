@@ -9,6 +9,7 @@ import top.FEMux
 import top.GlobalSilent
 import top.tcm
 import mem.ITCM
+import _root_.interface.ICacheIO
 class InstPack extends Bundle {
     val data = UInt(32.W)
     val pc   = UInt(64.W)
@@ -239,4 +240,20 @@ class Frontend() extends Module {
             printf(cf"stall\n")
         }
     }
+}
+
+/**
+  * 有cache的前端
+  * pc的选择是一个节拍，下一个节拍就是cache的tag check，然后再一个节拍是产生读取的32位指令
+  * 将这个结果包装成instpack的形式，通过握手传给inst buffer
+  * 再前端不用管传给谁，只需要实现握手逻辑可以传送出去就行
+  * 当前的是默认不跳转，之后分支预测失败的修复也是后面的事情，先实现pc一直跳转，然后一直发给cache，
+  * 然后向后传递就可以，cache就永cache包里面的icache
+  */
+
+class gustFrontend() extends Module {
+    val io = IO(new Bundle{
+        val imem = Flipped(new ICacheIO)
+        val instpack = Decoupled(new InstPack)
+    })
 }
