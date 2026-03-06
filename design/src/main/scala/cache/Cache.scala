@@ -304,7 +304,8 @@ class ICache extends Module {
           val victim_way = lfsr(0)  // 使用 LFSR 最低位选择 way
           val refill_data = Cat(refill_buffer(3), refill_buffer(2), refill_buffer(1), refill_buffer(0))
 
-          printf(p"[UPDATE-REFILL] victim_way=${victim_way}, index=${index_reg}, tag=0x${Hexadecimal(tag_reg)}\n")
+          // 日志：记录 refill 操作的详细信息
+          printf(p"[UPDATE-REFILL] *** Refill to Way ${victim_way} *** index=${index_reg}, tag=0x${Hexadecimal(tag_reg)}\n")
           printf(p"[UPDATE-REFILL] refill_data=0x${Hexadecimal(refill_data)}\n")
 
           when(victim_way === 0.U) {
@@ -312,17 +313,15 @@ class ICache extends Module {
             tag_ram0.write(index_reg, tag_reg)
             data_ram0.write(index_reg, refill_data)
             valid_bit0(index_reg) := true.B
-            printf(p"[UPDATE-REFILL] Write to way 0\n")
           }.otherwise {
             // 替换 way 1
             tag_ram1.write(index_reg, tag_reg)
             data_ram1.write(index_reg, refill_data)
             valid_bit1(index_reg) := true.B
-            printf(p"[UPDATE-REFILL] Write to way 1\n")
           }
 
           update_statusReg := WAIT
-          printf(p"[UPDATE-REFILL] Enter WAIT state\n")
+          printf(p"[UPDATE-REFILL] Refill completed, enter WAIT state\n")
         }
 
         // ========== WAIT 子状态：返回 refill 的数据并完成 ==========

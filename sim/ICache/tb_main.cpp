@@ -17,8 +17,9 @@ struct TbConfig {
   uint64_t max_cycles = 2000;
   uint32_t response_latency = 12;
   uint32_t inter_beat_latency = 2;
-  std::string test_mode = "single"; // single | double
+  std::string test_mode = "single"; // single | double | stream
   uint64_t single_req_addr = 0x1000;
+  uint32_t stream_req_count = 320;
   uint64_t single_timeout_cycles = 300;
   uint64_t post_cycles = 80;
   bool enable_vcd = true;
@@ -103,6 +104,8 @@ static TbConfig ParseArgs(int argc, char **argv) {
       cfg.inter_beat_latency = static_cast<uint32_t>(std::strtoul(arg.c_str() + 11, nullptr, 10));
     } else if (arg.rfind("--single-addr=", 0) == 0) {
       cfg.single_req_addr = std::strtoull(arg.c_str() + 14, nullptr, 0);
+    } else if (arg.rfind("--stream-count=", 0) == 0) {
+      cfg.stream_req_count = static_cast<uint32_t>(std::strtoul(arg.c_str() + 15, nullptr, 10));
     } else if (arg.rfind("--single-timeout=", 0) == 0) {
       cfg.single_timeout_cycles = std::strtoull(arg.c_str() + 17, nullptr, 10);
     } else if (arg.rfind("--post-cycles=", 0) == 0) {
@@ -111,13 +114,25 @@ static TbConfig ParseArgs(int argc, char **argv) {
       cfg.enable_vcd = false;
     } else if (arg == "--help") {
       std::cout
-          << "Usage: icache_sim [--test=single|double] [--max-cycles=N] [--latency=N] "
-             "[--beat-gap=N] [--single-addr=N] [--single-timeout=N] [--post-cycles=N] [--no-vcd]\n";
+          << "Usage: icache_sim [--test=single|double|stream] [--max-cycles=N] [--latency=N] "
+             "[--beat-gap=N] [--single-addr=N] [--stream-count=N] [--single-timeout=N] "
+             "[--post-cycles=N] [--no-vcd]\n";
       std::exit(0);
     }
   }
-  if (cfg.test_mode != "single" && cfg.test_mode != "double") {
-    throw std::runtime_error("Invalid --test mode, expected single or double");
+  if (cfg.test_mode != "single" && cfg.test_mode != "double" && cfg.test_mode != "stream") {
+    throw std::runtime_error("Invalid --test mode, expected single, double or stream");
+  }
+  if (cfg.stream_req_count == 0) {
+    throw std::runtime_error("Invalid --stream-count, expected > 0");
+  }
+  if (cfg.test_mode == "stream") {
+    if (cfg.max_cycles == 2000) {
+      cfg.max_cycles = 50000;
+    }
+    if (cfg.single_timeout_cycles == 300) {
+      cfg.single_timeout_cycles = 5000;
+    }
   }
   return cfg;
 }
@@ -160,7 +175,8 @@ int main(int argc, char **argv) {
   TbStats stats;
   PendingCommerTxn pending_commer;
   AccessTimeline timeline;
-  const uint32_t target_requests = (cfg.test_mode == "double") ? 2 : 1;
+  const uint32_t target_requests =
+      (cfg.test_mode == "double") ? 2 : ((cfg.test_mode == "stream") ? cfg.stream_req_count : 1);
   const uint64_t req_addr_base = cfg.single_req_addr;
   std::vector<AccessTiming> access_timing(target_requests);
   std::deque<InflightReq> inflight_reqs;
@@ -189,7 +205,12 @@ int main(int argc, char **argv) {
   try {
     while (!Verilated::gotFinish()) {
       const bool issue_req = (req_sent < target_requests);
-      const uint64_t req_addr = (cfg.test_mode == "double" && req_sent == 1) ? (req_addr_base + 4ULL) : req_addr_base;
+      uint64_t req_addr = req_addr_base;
+      if (cfg.test_mode == "double" && req_sent == 1) {
+        req_addr = req_addr_base + 4ULL;
+      } else if (cfg.test_mode == "stream") {
+        req_addr = req_addr_base + static_cast<uint64_t>(req_sent) * 4ULL;
+      }
       dut->io_dst_req_valid = issue_req ? 1 : 0;
       dut->io_dst_req_bits_addr = req_addr;
       dut->io_dst_resp_ready = 1;
@@ -390,7 +411,13 @@ int main(int argc, char **argv) {
     std::cout << "commer_req_cycle=<none> commer_last_resp_cycle=<none> commer_transfer_cycles=<none>\n";
   }
 
+  const bool compact_access_log = target_requests > 32;
   for (uint32_t i = 0; i < target_requests; ++i) {
+    if (compact_access_log && i == 8) {
+      const uint32_t skipped = target_requests - 16;
+      std::cout << "... skipped " << skipped << " accesses ...\n";
+      i = target_requests - 8;
+    }
     if (access_timing[i].req_seen && access_timing[i].resp_seen) {
       const uint64_t latency = access_timing[i].resp_cycle - access_timing[i].req_cycle + 1;
       std::cout << "access[" << i << "] req_cycle=" << access_timing[i].req_cycle
@@ -416,6 +443,16 @@ int main(int argc, char **argv) {
               << " second_vs_first=" << PercentStr(latency1, latency0) << "\n";
     std::cout << "double_access_ch: 第1次访问耗时 " << latency0 << " 周期, 第2次访问耗时 " << latency1
               << " 周期, 两次窗口总耗时 " << total_window << " 周期\n";
+  }
+  if (target_requests > 2 && access_timing.front().req_seen && access_timing.front().resp_seen &&
+      access_timing.back().req_seen && access_timing.back().resp_seen) {
+    const uint64_t first_latency = access_timing.front().resp_cycle - access_timing.front().req_cycle + 1;
+    const uint64_t last_latency = access_timing.back().resp_cycle - access_timing.back().req_cycle + 1;
+    const uint64_t total_window = access_timing.back().resp_cycle - access_timing.front().req_cycle + 1;
+    std::cout << "stream_access_total_cycles(first_req_fire->last_resp_fire)=" << total_window << "\n";
+    std::cout << "stream_access_ch: 连续访问 " << target_requests << " 次, 第1次耗时 " << first_latency
+              << " 周期, 第" << target_requests << "次耗时 " << last_latency << " 周期, 整体窗口耗时 " << total_window
+              << " 周期\n";
   }
 
   if (!pass) {
