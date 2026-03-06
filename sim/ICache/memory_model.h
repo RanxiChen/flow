@@ -25,13 +25,17 @@ public:
 
 class SingleOutstandingMemModel {
 public:
+  static constexpr uint32_t kBurstBeats = 4;
+  static constexpr uint32_t kBeatBytes = 8;
+
   struct Outputs {
     bool req_ready;
     bool resp_valid;
     uint64_t resp_data;
   };
 
-  explicit SingleOutstandingMemModel(MemoryBackend &backend, uint32_t response_latency = 1);
+  explicit SingleOutstandingMemModel(MemoryBackend &backend, uint32_t response_latency = 12,
+                                     uint32_t inter_beat_latency = 2);
 
   void reset();
   Outputs comb() const;
@@ -42,11 +46,14 @@ public:
 private:
   MemoryBackend &backend_;
   uint32_t response_latency_;
+  uint32_t inter_beat_latency_;
 
   bool busy_ = false;
   bool resp_valid_ = false;
   uint64_t resp_data_ = 0;
   uint32_t countdown_ = 0;
+  uint64_t base_addr_ = 0;
+  uint32_t beat_index_ = 0;
 };
 
 #endif
