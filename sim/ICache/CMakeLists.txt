@@ -8,9 +8,15 @@ add_executable(icache_sim
         tb_main.cpp
         memory_model.cpp
 )
+
+# Read RTL sources from filelist.f under rtl/
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/rtl/filelist.f" RTL_FILELIST)
+list(FILTER RTL_FILELIST EXCLUDE REGEX "^[ \t]*($|#|//)")
+list(TRANSFORM RTL_FILELIST PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/rtl/")
+
 verilate(icache_sim
         TOP_MODULE ICache
         PREFIX VICache
-        SOURCES rtl/ICache.sv
+        SOURCES ${RTL_FILELIST}
         TRACE
 )

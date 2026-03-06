@@ -96,20 +96,69 @@
 - 工具：Verilator + C++ testbench
 - 内存模型：单在途（single outstanding）请求处理
 - 特性：
-  - 可配置响应延迟（response_latency）
-  - 自动协议检查（背压、握手正确性）
-  - VCD 波形生成
-  - 统计和超时检测
+  - 可配置响应延迟（response_latency，默认 12 周期）
+  - beat 间延迟（inter_beat_latency，默认 2 周期）
+  - 自动协议检查（背压、握手正确性、数据一致性）
+  - VCD 波形生成（可选）
+  - 详细统计和超时检测
+  - 支持 single/double 测试模式
+
+**编译和运行流程：**
+
+1. **编译 Chisel 代码生成 SystemVerilog：**
+   ```bash
+   cd /home/chen/FUN/flow/design
+   sbt "runMain cache.FireICache"
+   ```
+   生成的 SystemVerilog 文件会输出到 `sim/ICache/rtl/` 目录。
+
+2. **构建 Verilator 仿真器：**
+   ```bash
+   cd /home/chen/FUN/flow/sim/ICache
+   cmake --build cmake-build-debug -j4
+   ```
+
+3. **运行仿真测试：**
+   - **Single 模式**（单次访问）：
+     ```bash
+     ./cmake-build-debug/icache_sim --no-vcd --test=single --single-addr=0x1000 --post-cycles=0
+     ```
+
+   - **Double 模式**（两次流水线访问，第二次地址 = 第一次地址 + 4）：
+     ```bash
+     ./cmake-build-debug/icache_sim --no-vcd --test=double --single-addr=0x1000 --post-cycles=0
+     ```
+
+   - **常用参数：**
+     - `--test=single|double`：测试模式
+     - `--max-cycles=N`：最大仿真周期数
+     - `--latency=N`：内存响应延迟（首 beat，默认 12）
+     - `--beat-gap=N`：beat 间延迟（默认 2）
+     - `--single-addr=N`：起始访问地址
+     - `--single-timeout=N`：单次请求超时周期
+     - `--post-cycles=N`：测试后额外运行周期（默认 0）
+     - `--no-vcd`：禁用 VCD 波形生成（加快仿真）
+
+4. **测试输出解读：**
+   - `TB PASS`：测试通过
+   - `TB FAIL`：测试失败（会显示失败原因）
+   - 统计信息包括：
+     - 总周期数、握手次数、burst 完成数
+     - 各个访问的延迟统计
+     - 中文总结（如：第 1 次访问耗时 X 周期）
 
 **测试方法：**
-采用增量测试方法，每完成一个功能点立即编写对应测试。可以：
+采用增量测试方法，每完成一个功能点立即编写对应测试：
 1. 使用 Verilator 仿真环境验证硬件行为
-
+2. 每次修改代码后重新编译并运行测试
+3. 参考 `sim/ICache/PLAN_ICACHE_TB.md` 了解测试环境详细设计
 
 **测试重点：**
 - 基础握手协议正确性
 - 冷启动 miss → refill → hit 流程
+- 4-beat refill 正确性
 - 多路替换逻辑
+- 流水线连续访问（double 模式）
 - 边界情况处理
 
 ## 开发工作流
