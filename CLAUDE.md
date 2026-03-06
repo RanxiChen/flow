@@ -161,6 +161,41 @@
 - 流水线连续访问（double 模式）
 - 边界情况处理
 
+
+
+### GustEngine 仿真环境
+
+**状态：**
+- ✅ 已完成 `sim/GustEngine/` Verilator C++ testbench 基础环境
+- ✅ 覆盖模式：`sequential`、`backpressure`、`branch`、`misalign`
+
+**目录与文件：**
+- `sim/GustEngine/CMakeLists.txt`
+- `sim/GustEngine/tb_main.cpp`
+- `sim/GustEngine/backend_model.h/.cpp`
+- `sim/GustEngine/memory_model.h/.cpp`
+- `sim/GustEngine/rtl/filelist.f`
+- `sim/GustEngine/DEV_GUSTENGINE_TB_2026-03-06.md`（开发过程记录）
+
+**构建与运行：**
+```bash
+cd /home/chen/FUN/flow/sim/GustEngine
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug -j4
+
+# 顺序取指
+./cmake-build-debug/gustengine_sim --no-vcd --test=sequential --reset-addr=0x1000 --target-commits=16
+
+# 后端背压
+./cmake-build-debug/gustengine_sim --no-vcd --test=backpressure --ready-pattern=110010 --target-commits=16
+
+# 分支重定向
+./cmake-build-debug/gustengine_sim --no-vcd --test=branch --branch-cycle=100 --branch-target=0x3000 --branch-post-commits=8 --target-commits=20
+
+# 未对齐异常
+./cmake-build-debug/gustengine_sim --no-vcd --test=misalign --reset-addr=0x1002 --target-commits=12
+```
+
 ## 开发工作流
 
 1. 用户会先自行编写模块代码
