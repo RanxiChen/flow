@@ -21,10 +21,9 @@ class DMemPort extends Bundle {
   */
 
 
-class Backend extends Module{
+class Backend(val dumplog: Boolean = false) extends Module{
     val XLEN = 64
-    val dumplog = false
-    val dumpstate = true
+    val dumpstate = dumplog
     //IO
     val io = IO(new Bundle{
         val reset_addr = Input(UInt(64.W))
@@ -570,4 +569,3 @@ object GenerateFile extends App {
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable")
     )
 }
-
