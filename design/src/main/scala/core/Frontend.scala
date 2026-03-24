@@ -259,7 +259,7 @@ class Frontend() extends Module {
   *   - instpack: S2 输出指令包给后端
   *   - be_ctrl: 后端控制信号（分支跳转）
   */
-class gustFrontend() extends Module {
+class gustFrontend(val dumplog: Boolean = false) extends Module {
     val io = IO(new Bundle{
         val reset_addr = Input(UInt(64.W))
         val imem = Flipped(new ICacheIO)
@@ -361,9 +361,7 @@ class gustFrontend() extends Module {
 
     // ========== 调试输出 ==========
 
-    val dump = false
-
-    if(dump) {
+    if(dumplog) {
         printf(cf"[gustFe] ")
         printf(cf"S0(pc=0x${pc}%x,v=${s0_valid},ma=${s0_misaligned}) ")
         printf(cf"S1(pc=0x${s1_pc}%x,v=${s1_valid}) ")
@@ -385,15 +383,15 @@ class gustFrontend() extends Module {
   * 配有完整的测试代码环境
   *
   */
-class GustEngine() extends Module {
+class GustEngine(val dumplog: Boolean = false) extends Module {
     val io = IO(new Bundle{
         val reset_addr = Input(UInt(64.W))
         val instpack = Decoupled(new InstPack)
         val be_ctrl = Flipped(new FE_BE_Bundle)
         val mem = new NativeMemIO
     })
-    val frontend = Module(new gustFrontend())
-    val icache = Module(new cache.ICache())
+    val frontend = Module(new gustFrontend(dumplog))
+    val icache = Module(new cache.ICache(dumplog))
     // 连接前端和 I-Cache
     frontend.io.reset_addr := io.reset_addr
     frontend.io.be_ctrl := io.be_ctrl

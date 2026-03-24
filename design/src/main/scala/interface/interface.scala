@@ -115,3 +115,10 @@ class NativeMemIO extends Bundle {
         resp.ready := false.B
     }
 }
+
+class Frontend_Instruction_Bunlde(val pc_width: Int = 64) extends Bundle{
+    val inst = UInt(32.W)
+    val pc = UInt(pc_width.W)
+    val address_misaligned = Bool()
+    val access_fault = Bool()
+}

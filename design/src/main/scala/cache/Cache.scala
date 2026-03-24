@@ -51,7 +51,7 @@ import chisel3.util._
 import _root_.interface.{ICacheIO, NativeMemIO}
 import _root_.circt.stage.ChiselStage
 
-class ICache extends Module {
+class ICache(val dumplog: Boolean = false) extends Module {
   val io = IO(new Bundle{
     val commer = new NativeMemIO
     val dst = new ICacheIO
@@ -180,19 +180,23 @@ class ICache extends Module {
   io.dst.resp.bits.data := 0.U
 
   // ========== 周期分隔和状态监控输出 ==========
-  printf(p"==================== Cycle ====================\n")
-  printf(p"[State] cache=${cache_statusReg}")
-  when(cache_statusReg === UPDATE) {
-    printf(p", update=${update_statusReg}")
+  if(dumplog) {
+    printf(p"==================== Cycle ====================\n")
+    printf(p"[State] cache=${cache_statusReg}")
+    when(cache_statusReg === UPDATE) {
+      printf(p", update=${update_statusReg}")
+    }
+    printf(p"\n")
   }
-  printf(p"\n")
 
   switch(cache_statusReg) {
     // ========== IDLE 状态：初始状态 ==========
     is(IDLE) {
       // 修改原因：等待第一个请求，然后转入 RUN 状态
       io.dst.req.ready := true.B
-      printf(p"[IDLE] Waiting for first req (req.valid=${io.dst.req.valid})\n")
+      if(dumplog) {
+        printf(p"[IDLE] Waiting for first req (req.valid=${io.dst.req.valid})\n")
+      }
       when(io.dst.req.fire) {
         cache_statusReg := RUN
         // 锁存地址信息
@@ -200,7 +204,9 @@ class ICache extends Module {
         index_reg := req_index
         tag_reg := req_tag
         offset_reg := req_offset
-        printf(p"[IDLE] First req received: addr=0x${Hexadecimal(req_addr)}, enter RUN state\n")
+        if(dumplog) {
+          printf(p"[IDLE] First req received: addr=0x${Hexadecimal(req_addr)}, enter RUN state\n")
+        }
       }
     }
 
@@ -211,15 +217,21 @@ class ICache extends Module {
 
       // ========== Stage 1 监控：当前周期接收的请求 ==========
       when(io.dst.req.fire) {
-        printf(p"[RUN-S1] Accept new req: addr=0x${Hexadecimal(req_addr)}, tag=0x${Hexadecimal(req_tag)}, index=${req_index}, offset=${req_offset}\n")
+        if(dumplog) {
+          printf(p"[RUN-S1] Accept new req: addr=0x${Hexadecimal(req_addr)}, tag=0x${Hexadecimal(req_tag)}, index=${req_index}, offset=${req_offset}\n")
+        }
       }.otherwise {
-        printf(p"[RUN-S1] No new req (req.valid=${io.dst.req.valid}, req.ready=${io.dst.req.ready})\n")
+        if(dumplog) {
+          printf(p"[RUN-S1] No new req (req.valid=${io.dst.req.valid}, req.ready=${io.dst.req.ready})\n")
+        }
       }
 
       // ========== Stage 2 监控：上一周期请求的 TAG 检查和数据访问 ==========
-      printf(p"[RUN-S2] Process prev req: addr=0x${Hexadecimal(addr_reg)}, tag=0x${Hexadecimal(tag_reg)}, index=${index_reg}, offset=${offset_reg}\n")
-      printf(p"[RUN-S2] Hit check: valid0=${valid_bit0(index_reg)}, tag0=0x${Hexadecimal(tag0_read)}, hit0=${hit0}, ")
-      printf(p"valid1=${valid_bit1(index_reg)}, tag1=0x${Hexadecimal(tag1_read)}, hit1=${hit1}, cache_hit=${cache_hit}\n")
+      if(dumplog) {
+        printf(p"[RUN-S2] Process prev req: addr=0x${Hexadecimal(addr_reg)}, tag=0x${Hexadecimal(tag_reg)}, index=${index_reg}, offset=${offset_reg}\n")
+        printf(p"[RUN-S2] Hit check: valid0=${valid_bit0(index_reg)}, tag0=0x${Hexadecimal(tag0_read)}, hit0=${hit0}, ")
+        printf(p"valid1=${valid_bit1(index_reg)}, tag1=0x${Hexadecimal(tag1_read)}, hit1=${hit1}, cache_hit=${cache_hit}\n")
+      }
 
       // Stage 1: 当前周期接收新地址，发起 RAM 读取
       when(io.dst.req.fire) {
@@ -248,10 +260,14 @@ class ICache extends Module {
         }
         io.dst.resp.bits.data := inst
         io.dst.resp.valid := true.B
-        printf(p"[RUN-S2] HIT! way=${Mux(hit0, 0.U, 1.U)}, word_offset=${word_offset}, inst=0x${Hexadecimal(inst)}\n")
+        if(dumplog) {
+          printf(p"[RUN-S2] HIT! way=${Mux(hit0, 0.U, 1.U)}, word_offset=${word_offset}, inst=0x${Hexadecimal(inst)}\n")
+        }
       }.otherwise {
         // Miss: 进入 UPDATE 状态
-        printf(p"[RUN-S2] MISS! Enter UPDATE state\n")
+        if(dumplog) {
+          printf(p"[RUN-S2] MISS! Enter UPDATE state\n")
+        }
         cache_statusReg := UPDATE
         update_statusReg := REQ
         io.dst.req.ready := false.B  // 阻塞新请求
@@ -269,11 +285,15 @@ class ICache extends Module {
         is(REQ) {
           // 修改原因：使用 speak 方法发送 cache line 起始地址
           val line_addr = Cat(tag_reg, index_reg, 0.U(block_offset_width.W))
-          printf(p"[UPDATE-REQ] Sending mem request: line_addr=0x${Hexadecimal(line_addr)}, commer.req.ready=${io.commer.req.ready}\n")
+          if(dumplog) {
+            printf(p"[UPDATE-REQ] Sending mem request: line_addr=0x${Hexadecimal(line_addr)}, commer.req.ready=${io.commer.req.ready}\n")
+          }
           when(io.commer.speak(line_addr)) {
             update_statusReg := RESP
             beat_cnt := 0.U
-            printf(p"[UPDATE-REQ] Request accepted, enter RESP state\n")
+            if(dumplog) {
+              printf(p"[UPDATE-REQ] Request accepted, enter RESP state\n")
+            }
           }
         }
 
@@ -281,16 +301,22 @@ class ICache extends Module {
         is(RESP) {
           // 修改原因：使用 listen 方法接收 4 个 beat 的数据
           val (done, data) = io.commer.listen()
-          printf(p"[UPDATE-RESP] Waiting beat ${beat_cnt}: done=${done}, data=0x${Hexadecimal(data)}\n")
+          if(dumplog) {
+            printf(p"[UPDATE-RESP] Waiting beat ${beat_cnt}: done=${done}, data=0x${Hexadecimal(data)}\n")
+          }
           when(done) {
             // 将数据存入 buffer
             refill_buffer(beat_cnt) := data
-            printf(p"[UPDATE-RESP] Received beat ${beat_cnt}: 0x${Hexadecimal(data)}\n")
+            if(dumplog) {
+              printf(p"[UPDATE-RESP] Received beat ${beat_cnt}: 0x${Hexadecimal(data)}\n")
+            }
 
             when(beat_cnt === 3.U) {
               // 收到最后一个 beat，进入 REFILL
               update_statusReg := REFILL
-              printf(p"[UPDATE-RESP] All 4 beats received, enter REFILL state\n")
+              if(dumplog) {
+                printf(p"[UPDATE-RESP] All 4 beats received, enter REFILL state\n")
+              }
             }.otherwise {
               // 继续接收下一个 beat
               beat_cnt := beat_cnt + 1.U
@@ -305,8 +331,10 @@ class ICache extends Module {
           val refill_data = Cat(refill_buffer(3), refill_buffer(2), refill_buffer(1), refill_buffer(0))
 
           // 日志：记录 refill 操作的详细信息
-          printf(p"[UPDATE-REFILL] *** Refill to Way ${victim_way} *** index=${index_reg}, tag=0x${Hexadecimal(tag_reg)}\n")
-          printf(p"[UPDATE-REFILL] refill_data=0x${Hexadecimal(refill_data)}\n")
+          if(dumplog) {
+            printf(p"[UPDATE-REFILL] *** Refill to Way ${victim_way} *** index=${index_reg}, tag=0x${Hexadecimal(tag_reg)}\n")
+            printf(p"[UPDATE-REFILL] refill_data=0x${Hexadecimal(refill_data)}\n")
+          }
 
           when(victim_way === 0.U) {
             // 替换 way 0
@@ -321,7 +349,9 @@ class ICache extends Module {
           }
 
           update_statusReg := WAIT
-          printf(p"[UPDATE-REFILL] Refill completed, enter WAIT state\n")
+          if(dumplog) {
+            printf(p"[UPDATE-REFILL] Refill completed, enter WAIT state\n")
+          }
         }
 
         // ========== WAIT 子状态：返回 refill 的数据并完成 ==========
@@ -335,7 +365,9 @@ class ICache extends Module {
             index_reg := req_index
             tag_reg := req_tag
             offset_reg := req_offset
-            printf(p"[UPDATE-WAIT] Accept new req: addr=0x${Hexadecimal(req_addr)}, tag=0x${Hexadecimal(req_tag)}, index=${req_index}, offset=${req_offset}\n")
+            if(dumplog) {
+              printf(p"[UPDATE-WAIT] Accept new req: addr=0x${Hexadecimal(req_addr)}, tag=0x${Hexadecimal(req_tag)}, index=${req_index}, offset=${req_offset}\n")
+            }
           }
 
           // 修改原因：从 refill_buffer 直接提取指令返回给 CPU，无需等待下次请求
@@ -355,13 +387,17 @@ class ICache extends Module {
           io.dst.resp.bits.data := inst
           io.dst.resp.valid := true.B
 
-          printf(p"[UPDATE-WAIT] word_offset=${word_offset}, inst=0x${Hexadecimal(inst)}, resp.valid=true\n")
-          printf(p"[UPDATE-WAIT] req.valid=${io.dst.req.valid}, req.ready=true, fire=${io.dst.req.fire}\n")
+          if(dumplog) {
+            printf(p"[UPDATE-WAIT] word_offset=${word_offset}, inst=0x${Hexadecimal(inst)}, resp.valid=true\n")
+            printf(p"[UPDATE-WAIT] req.valid=${io.dst.req.valid}, req.ready=true, fire=${io.dst.req.fire}\n")
+          }
 
           // 状态转换：回到 RUN 状态
           cache_statusReg := RUN
           update_statusReg := REQ
-          printf(p"[UPDATE-WAIT] Return to RUN state\n")
+          if(dumplog) {
+            printf(p"[UPDATE-WAIT] Return to RUN state\n")
+          }
         }
       }
     }
