@@ -45,6 +45,11 @@ __pycache__/
 # generated
 generated/*
 
+# tinycore litex sim
+litex_sim_dir/tinysoc/build/
+litex_sim_dir/tinysoc/__pycache__/
+litex_sim_dir/tinysoc/_litex_sim_core/
+
 # sim/ICache
 sim/ICache/*.vcd
 sim/ICache/cmake-*
@@ -52,3 +57,4 @@ sim/ICache/rtl/
 
 sim/*/rtl/
 sim/*/cmake-*
+

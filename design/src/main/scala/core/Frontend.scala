@@ -9,10 +9,10 @@ import top.FEMux
 import top.GlobalSilent
 import top.tcm
 import mem.ITCM
-import _root_.interface.ICacheIO
+import _root_.flow.interface.ICacheIO
 import cache.ICache
 import _root_.circt.stage.ChiselStage
-import _root_.interface.NativeMemIO
+import _root_.flow.interface.NativeMemIO
 class InstPack extends Bundle {
     val data = UInt(32.W)
     val pc   = UInt(64.W)
