@@ -48,7 +48,7 @@ import chisel3.util._
   *     - `busDataWidth` is a multiple of 8
   */
 
-import _root_.interface.{ICacheIO, NativeMemIO}
+import _root_.flow.interface.{ICacheIO, NativeMemIO}
 import _root_.circt.stage.ChiselStage
 
 class ICache(val dumplog: Boolean = false) extends Module {

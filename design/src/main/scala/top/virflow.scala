@@ -2,7 +2,7 @@ package top
 
 import chisel3._
 import chisel3.util._
-import _root_.interface.NativeMemIO
+import _root_.flow.interface.NativeMemIO
 import _root_.core.GustEngine
 import _root_.core.InstBuffer
 import _root_.core.Backend

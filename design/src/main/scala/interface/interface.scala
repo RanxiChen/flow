@@ -1,4 +1,4 @@
-package interface
+package flow.interface
 
 import chisel3._
 import chisel3.util._
@@ -121,4 +121,13 @@ class Frontend_Instruction_Bunlde(val pc_width: Int = 64) extends Bundle{
     val pc = UInt(pc_width.W)
     val address_misaligned = Bool()
     val access_fault = Bool()
+}
+
+class BreezeCacheReqIO extends Bundle{
+    val addr = UInt(64.W)
+}
+
+class BreezeCacheRespIO extends Bundle{
+    val data = UInt(64.W)
+    val addr = UInt(64.W)
 }
