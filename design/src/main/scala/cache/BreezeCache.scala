@@ -31,6 +31,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig) extends Module {
     val s1_tag_hit = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, Bool()))
     val s1_hit = s1_tag_hit.reduce(_ || _)
     val s1_dout = Wire(UInt(cacheConfig.FETCH_WIDTH.W))
+    //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
+    io.dreq.ready := !s1_valid || s1_hit
     // sram
     val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH)))
     val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH)))
@@ -59,6 +61,14 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig) extends Module {
         s1_tag_hit(i) := s1_vld && tag_match
     }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
+    // s1 miss处理
+    val process_miss = s1_valid && !s1_hit
+    val s2_valid = RegEnable(s1_valid,process_miss) //???
+    val s2_vaddr = RegEnable(s1_vaddr,process_miss) //???
+    //当s1 miss时，发出miss请求
+    io.next_level_req.req := s2_vaddr
+    io.next_level_req.paddr := s2_vaddr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
+
     // hanshake and response,一个周期的脉冲，下游的责任去接收
     io.drsp.valid := s1_valid & s1_hit
     io.drsp.bits.data := s1_dout
