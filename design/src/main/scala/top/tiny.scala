@@ -6,6 +6,9 @@ import flow.interface.LiteXWishboneMaster
 import _root_.circt.stage.ChiselStage
 import chisel3.BlackBox
 import chisel3.util.HasBlackBoxInline
+/**
+  * Tiny配置将会使用wishbone接口，并且内部实现icache跟dcache的仲裁，对外只暴露一个wishbone接口
+  */
 
 class TinyCoreBusMonitor extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {

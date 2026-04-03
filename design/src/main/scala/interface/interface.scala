@@ -123,11 +123,32 @@ class Frontend_Instruction_Bunlde(val pc_width: Int = 64) extends Bundle{
     val access_fault = Bool()
 }
 
-class BreezeCacheReqIO extends Bundle{
-    val addr = UInt(64.W)
+class BreezeCacheReqIO(val VLEN:Int =64) extends Bundle{
+    val vaddr = UInt(VLEN.W)
 }
 
-class BreezeCacheRespIO extends Bundle{
-    val data = UInt(64.W)
-    val addr = UInt(64.W)
+class BreezeCacheRespIO(val VLEN:Int = 64,val FETCH_WIDTH:Int = 32) extends Bundle{
+    val data = UInt(FETCH_WIDTH.W)
+    val vaddr = UInt(VLEN.W)
+}
+/**
+  * L1 ICache当miss的时候，向下级cache发出请求的接口
+  * 默认方向是以ICache的视角
+  *
+  */
+class L1CacheMissReqIO(val PLEN:Int = 64) extends Bundle{
+    val paddr = Output(UInt(PLEN.W))
+    val req = Output(Bool())
+    val ack = Input(Bool())
+}
+
+/**
+  * L1 ICache miss的时候，下级向cache的返回接口
+  * 每次下一级向l1 icache返回一个cache line位宽的数据
+  * 默认是32byte = 32 * 8bit = 256 bits的cache line
+  */
+
+class L1CacheMissRespIO(val ICACHE_LINE_WIDTH:Int = 256) extends Bundle {
+    val data = Input(UInt(ICACHE_LINE_WIDTH.W))
+    val vld = Input(Bool())
 }
