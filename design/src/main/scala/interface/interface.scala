@@ -139,7 +139,6 @@ class BreezeCacheRespIO(val VLEN:Int = 64,val FETCH_WIDTH:Int = 32) extends Bund
 class L1CacheMissReqIO(val PLEN:Int = 64) extends Bundle{
     val paddr = Output(UInt(PLEN.W))
     val req = Output(Bool())
-    val ack = Input(Bool())
 }
 
 /**
