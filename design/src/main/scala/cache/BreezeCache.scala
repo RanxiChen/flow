@@ -7,6 +7,76 @@ import _root_.circt.stage.ChiselStage
 import flow.config.DefaultICacheConfig
 import flow.mem.flowSRAM
 
+object BreezePLRU {
+    /**
+      * LRU替换算法的实现，输入是当前cache line的valid位向量和PLRU位向量
+      * 目前是硬编码到 4-ways
+      * @param valid_vec
+      * @param plru_vec
+      * @param cfg
+      * @return (new_valid_vec,new plru_vec,wb_en_OH)
+      *            b0
+      *         /     \
+      *       b1       b2
+      *      /  \     /  \
+      *    w0    w1 w2    w3
+      */
+    def replace_way_select(valid_vec:UInt,plru_vec:UInt):(UInt,UInt,UInt) ={
+        //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
+        val num_ways = 4
+        val old_valid_vec = valid_vec(num_ways-1,0)
+        val old_plru_vec = plru_vec(num_ways-1,0)
+        val replace_way_OH = WireDefault(0.U(num_ways.W))
+        val new_valid_vec = old_valid_vec
+        val b0 = old_plru_vec(2)
+        val b1 = old_plru_vec(1)
+        val b2 = old_plru_vec(0)
+        when(old_valid_vec.andR === false.B){
+          //有无效的way，直接替换
+          replace_way_OH := PriorityEncoderOH(~old_valid_vec)
+          new_valid_vec := old_valid_vec | replace_way_OH
+        }.otherwise{
+          //无无效的way，需要从PLRU中选择
+          new_valid_vec := old_valid_vec
+          when(b0 === false.B){
+            //左边的更久未使用，选择左边
+            when(b1 === false.B){
+                //w0更久未使用，选择w0
+                replace_way_OH := "b0001".U
+                }.otherwise{
+                //w1更久未使用，选择w1
+                replace_way_OH := "b0010".U
+            } 
+          }.otherwise{
+            //右边的更久未使用，选择右边
+            when(b2 === false.B){
+                //w2更久未使用，选择w2
+                replace_way_OH := "b0100".U
+            }.otherwise{
+                //w3更久未使用，选择w3
+                replace_way_OH := "b1000".U
+            }
+          } 
+        }
+        //更新PLRU位，选择的路的父节点都要更新为最近使用
+        val new_plru_vec = old_plru_vec
+        when(replace_way_OH(0) === true.B){
+            //选择了w0
+            new_plru_vec := true.B ## true.B ## old_plru_vec(0)
+        }.elsewhen(replace_way_OH(1) === true.B){
+            //选择了w1
+            new_plru_vec := true.B ## false.B ## old_plru_vec(0)
+        }.elsewhen(replace_way_OH(2) === true.B){
+            //选择了w2
+            new_plru_vec := false.B ## old_plru_vec(1) ## true.B
+        }.elsewhen(replace_way_OH(3) === true.B){
+            //选择了w3
+            new_plru_vec := false.B ## old_plru_vec(1) ## false.B
+        }
+        (new_valid_vec, new_plru_vec, replace_way_OH)
+    }
+}
+
 class BreezeCacheDebugIO(vlen: Int) extends Bundle {
     val s0_valid = Output(Bool())
     val s0_vaddr = Output(UInt(vlen.W))
@@ -18,6 +88,7 @@ class BreezeCacheDebugIO(vlen: Int) extends Bundle {
 
 /**
   * 当前的cache每次会向下一级的存储请求一个cache line的数据
+  * 因为PLRU硬编码到4路组相连，所以当前cache的路数固定为4
   *
   * @param cacheConfig
   * @param enabledebug
@@ -30,6 +101,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         val next_level_rsp = new L1CacheMissRespIO(cacheConfig.ICACHE_LINE_WIDTH)
         val debug = if(enabledebug) Some(new BreezeCacheDebugIO(cacheConfig.VLEN)) else None
     })
+    assert(cacheConfig.ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
     //initial IO
     //dreq
     io.dreq.ready := false.B
@@ -64,10 +136,10 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         data_array(i).io.we := false.B
         data_array(i).io.re := false.B
     }
-    val metaReg = RegInit(VecInit(Seq.fill(cacheConfig.ICACHE_WAY_NUM)(0.U(cacheConfig.META_WIDTH.W)))) // valid + PLRU
+    val metaReg = RegInit(VecInit(Seq.fill(cacheConfig.ICACHE_SET_NUM)(0.U(cacheConfig.META_WIDTH.W)))) // PLRU, .....valid[1],valid[0]
     //s1 read tag and data
     val can_read_array = s0_valid
-    val cacheline_index = s0_vaddr(cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_OFFSET_WIDTH - 1, cacheConfig.ICACHE_OFFSET_WIDTH)
+    val cacheline_index = index_pos(s0_vaddr, cacheConfig)
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         tag_array(i).io.addr := cacheline_index
         tag_array(i).io.re := can_read_array
@@ -76,60 +148,104 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     val tag_array_rdata = tag_array.map(_.io.data_out)
     val data_array_rdata = data_array.map(_.io.data_out)
-    val s1_word_offset = s1_vaddr(cacheConfig.ICACHE_OFFSET_WIDTH - 1, log2Ceil(cacheConfig.FETCH_WIDTH / 8))
+    val s1_word_offset = s1_vaddr(cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH - 1, cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
     val s1_way_dout = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, UInt(cacheConfig.FETCH_WIDTH.W)))
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         s1_way_dout(i) := data_array_rdata(i) >> (s1_word_offset * cacheConfig.FETCH_WIDTH.U)
     }
     //s1 compare tag
-    val desired_tag = s1_vaddr(cacheConfig.VLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_OFFSET_WIDTH)
+    val desired_tag = s1_vaddr(cacheConfig.VLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
-        val s1_vld = metaReg(i)(cacheConfig.META_WIDTH - 1)
+        val s1_index = index_pos(s1_vaddr, cacheConfig)
+        val s1_vld = metaReg(s1_index)(i) // valid bit
         val tag_match = tag_array_rdata(i) === desired_tag
         s1_tag_hit(i) := s1_vld && tag_match
     }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
     // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
-    val s2_busy = RegInit(false.B)
-    val s2_valid = RegNext(s1_valid && !s1_hit & !s2_busy, false.B)
+    // s2正在处理的时候，不会有其他的访问进入流水线
+    val s2_done = WireDefault(false.B) //标志s2的miss处理完成
+    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
     val s2_vaddr = RegNext(s1_vaddr)
+    val s2_word_offset = RegNext(s1_word_offset)
     val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
-    line_addr := ???
+    line_addr := s2_vaddr & ~( (cacheConfig.ICACHE_LINE_BYTES - 1).U) // cache line对齐
+    //在s2选择要替换到那一个way
+    val s2_index = index_pos(s2_vaddr, cacheConfig)
+    val s2_replace_way = RegInit(0.U(log2Ceil(cacheConfig.ICACHE_WAY_NUM).W))
+    //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
+    val s2_entry_meta = metaReg(s2_index)
+    val (new_valid_vec, new_plru_vec, wb_en_OH) = BreezePLRU.replace_way_select(s2_entry_meta(3,0),s2_entry_meta(6,4))
+    // 暂存控制信号
+    val s2_new_valid_vec = Reg(UInt(4.W))
+    val s2_new_plru_vec = Reg(UInt(3.W))
+    val s2_wt_en_OH = Reg(UInt(4.W))
+    val s2_refill_tag = Reg(UInt(cacheConfig.ICACHE_TAG_WIDTH.W))
+    when(s2_valid){
+        s2_new_valid_vec := new_valid_vec
+        s2_new_plru_vec := new_plru_vec
+        s2_wt_en_OH := wb_en_OH
+        s2_refill_tag := s2_vaddr(cacheConfig.VLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
+    }
     //当s1 miss时，发出miss请求
     //当请求进入s2以后，先发送一个脉冲式的请求，然后就是等待cache line返回
     //之后当cache line长度的数据返回以后，同周期进行数据的写回和meta的更新
-    //
     val s2_dout = Wire(UInt(cacheConfig.FETCH_WIDTH.W))
     //向下一级的存储发送一个脉冲式的请求
-    val s2_req_pulse = RegInit(false.B)
+    val s2_req_pulse_done = RegInit(false.B) //标志有没有成功发出请求的脉冲
     when(s2_valid){
-        s2_req_pulse := true.B
-    }.otherwise{
-        s2_req_pulse := false.B
+        s2_req_pulse_done := true.B
+    }.elsewhen(s2_done){//当s2结束以后清零
+        s2_req_pulse_done := false.B
     }
     // 一个周期的对外的请求脉冲
-    io.next_level_req.req := s2_req_pulse
-    io.next_level_req.paddr := s2_vaddr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
+    io.next_level_req.req := s2_valid && !s2_req_pulse_done
+    io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
     //等待下一级的存储返回数据
     val write_back_en = WireDefault(false.B)
-    val s2_rsp_data = Reg(UInt(cacheConfig.FETCH_WIDTH.W))
-    val s2_rsp_vld = RegInit(false.B)
+    val wait_rsp = RegInit(false.B)
     when(io.next_level_rsp.vld){
-        write_back_en := true.B
-        s2_rsp_data := io.next_level_rsp.data
-        s2_rsp_vld := true.B
-    }.otherwise{
-        write_back_en := false.B
-        s2_rsp_vld := false.B
+        wait_rsp := ~ wait_rsp //结束wait rsp 状态
+    }.elsewhen(s2_valid){
+        wait_rsp := s2_req_pulse_done
+    }.elsewhen(s2_done){ //当s2结束以后清零
+        wait_rsp := false.B
     }
-    
+    write_back_en := io.next_level_rsp.vld & wait_rsp
+    //数据写回和meta更新
+    //覆盖对sram的写
+    for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
+        // 先写回数据
+        // data_array(i).io.addr依旧是之前的index,本处不需要覆盖
+        data_array(i).io.data_in := io.next_level_rsp.data //不分bank了，直接全线写回
+        data_array(i).io.we := write_back_en && s2_wt_en_OH(i)
+        // tag 的更新
+        tag_array(i).io.data_in := s2_refill_tag
+        tag_array(i).io.we := write_back_en && s2_wt_en_OH(i)
+    }
+    val s2_refill_done = RegNext(io.next_level_rsp.vld, false.B)
+    when(io.next_level_rsp.vld){
+        s2_dout := io.next_level_rsp.data >> (s2_word_offset * cacheConfig.FETCH_WIDTH.U)
+    }.otherwise{
+        s2_dout := 0.U
+    }
+    //在更新完数据和tag以后，更新meta
+    when(s2_refill_done){
+        metaReg(s2_index) := s2_new_plru_vec(3,0) ## s2_new_valid_vec(3,0)
+    }
+    s2_done := s2_refill_done
 
     // 目前将使用状态机显式的管理miss处理的流程，后续可以考虑使用更优雅的方式
-    io.next_level_req.req := s2_vaddr
-    io.next_level_req.paddr := s2_vaddr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
+    io.next_level_req.req := line_addr
+    io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
     // hanshake and response,一个周期的脉冲，下游的责任去接收
     io.drsp.valid := s1_valid & s1_hit
     io.drsp.bits.data := s1_dout
+
+    def index_pos(vaddr:UInt,cfg:DefaultICacheConfig): UInt = {
+        vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_BYTES_OFFSET_WIDTH)
+    }
+    
 
     if(enabledebug){
         io.debug.get.s0_valid := s0_valid
