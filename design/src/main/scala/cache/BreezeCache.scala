@@ -6,6 +6,7 @@ import flow.interface._
 import _root_.circt.stage.ChiselStage
 import flow.config.DefaultICacheConfig
 import flow.mem.flowSRAM
+import svsim.CommonCompilationSettings.Timescale.Unit.s
 
 object BreezePLRU {
     /**
@@ -83,10 +84,17 @@ class BreezeCacheDebugIO(vlen: Int) extends Bundle {
     val s0_ready = Output(Bool())
     val s1_valid = Output(Bool())
     val s1_vaddr = Output(UInt(vlen.W))
+    val s1_meta = Output(UInt(DefaultICacheConfig().META_WIDTH.W))
     val s1_tag_hit = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
     val s1_hit = Output(Bool())
     val s2_valid = Output(Bool())
     val s2_vaddr = Output(UInt(vlen.W))
+    val s2_req_pulse_done = Output(Bool())
+    val wait_rsp = Output(Bool())
+    val s2_refill_done = Output(Bool())
+    val s2_done = Output(Bool())
+    val data_array_we = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
+    val tag_array_we = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
 }
 
 /**
@@ -124,19 +132,12 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s1_tag_hit = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, Bool()))
     val s1_hit = s1_tag_hit.reduce(_ || _)
     val s1_dout = Wire(UInt(cacheConfig.FETCH_WIDTH.W))
+
     
-    // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
-    // s2正在处理的时候，不会有其他的访问进入流水线
-    val s2_done = WireDefault(false.B) //标志s2的miss处理完成
-    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
-    val s2_vaddr = RegNext(s1_vaddr)
-    val s2_word_offset = RegNext(s1_word_offset)
-    val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
-    //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
-    io.dreq.ready := ~(s1_valid && !s1_hit || s2_valid ) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
+    
     // sram
-    val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH)))
-    val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH)))
+    val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH,"tag",enabledebug)))
+    val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH,"data",enabledebug)))
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         tag_array(i).io.addr := 0.U
         tag_array(i).io.data_in := 0.U
@@ -146,6 +147,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         data_array(i).io.data_in := 0.U
         data_array(i).io.we := false.B
         data_array(i).io.re := false.B
+        data_array(i).io.id := i.U
+        tag_array(i).io.id := i.U
     }
     val metaReg = RegInit(VecInit(Seq.fill(cacheConfig.ICACHE_SET_NUM)(0.U(cacheConfig.META_WIDTH.W)))) // PLRU, .....valid[1],valid[0]
     //s1 read tag and data
@@ -173,7 +176,13 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s1_tag_hit(i) := s1_vld && tag_match
     }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
-    
+    // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
+    // s2正在处理的时候，不会有其他的访问进入流水线
+    val s2_done = WireDefault(false.B) //标志s2的miss处理完成
+    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
+    val s2_vaddr = RegNext(s1_vaddr)
+    val s2_word_offset = RegNext(s1_word_offset)
+    val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
     line_addr := s2_vaddr & ~( (cacheConfig.ICACHE_LINE_BYTES - 1).U) // cache line对齐
     //在s2选择要替换到那一个way
     val s2_index = index_pos(s2_vaddr, cacheConfig)
@@ -195,11 +204,13 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     //当s1 miss时，发出miss请求
     //当请求进入s2以后，先发送一个脉冲式的请求，然后就是等待cache line返回
     //之后当cache line长度的数据返回以后，同周期进行数据的写回和meta的更新
-    val s2_dout = Wire(UInt(cacheConfig.FETCH_WIDTH.W))
+    val s2_dout = RegInit(0.U(cacheConfig.FETCH_WIDTH.W))
     //向下一级的存储发送一个脉冲式的请求
     val s2_req_pulse_done = RegInit(false.B) //标志有没有成功发出请求的脉冲
+    val wait_rsp = RegInit(false.B) //cache正在等待下一级的响应
     when(s2_valid){
         s2_req_pulse_done := true.B
+        wait_rsp := true.B
     }.elsewhen(s2_done){//当s2结束以后清零
         s2_req_pulse_done := false.B
     }
@@ -208,12 +219,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
     //等待下一级的存储返回数据
     val write_back_en = WireDefault(false.B)
-    val wait_rsp = RegInit(false.B)
+    
     when(io.next_level_rsp.vld){
-        wait_rsp := ~ wait_rsp //结束wait rsp 状态
-    }.elsewhen(s2_valid){
-        wait_rsp := s2_req_pulse_done
-    }.elsewhen(s2_done){ //当s2结束以后清零
         wait_rsp := false.B
     }
     write_back_en := io.next_level_rsp.vld & wait_rsp
@@ -231,26 +238,33 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s2_refill_done = RegNext(io.next_level_rsp.vld, false.B)
     when(io.next_level_rsp.vld){
         s2_dout := io.next_level_rsp.data >> (s2_word_offset * cacheConfig.FETCH_WIDTH.U)
-    }.otherwise{
-        s2_dout := 0.U
     }
     //在更新完数据和tag以后，更新meta
-    when(s2_refill_done){
+    when(s2_req_pulse_done && wait_rsp && io.next_level_rsp.vld){
         metaReg(s2_index) := s2_new_plru_vec(2,0) ## s2_new_valid_vec(3,0) // PLRU位在高位，valid位在低位，默认4 ways
+        //printf(p"*********************s2 refill done, update meta: index=0x${Hexadecimal(s2_index)}, new_meta=0b${Binary(s2_new_plru_vec)}_${Binary(s2_new_valid_vec)}\n")
     }
     s2_done := s2_refill_done
 
-    // 目前将使用状态机显式的管理miss处理的流程，后续可以考虑使用更优雅的方式
-    io.next_level_req.req := line_addr
-    io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
-    // hanshake and response,一个周期的脉冲，下游的责任去接收
-    io.drsp.valid := s1_valid & s1_hit
-    io.drsp.bits.data := s1_dout
-
+    //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
+    val stop_new_req = s1_valid && !s1_hit || s2_valid && !s2_done
+    io.dreq.ready := ~(stop_new_req) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
+    
     def index_pos(vaddr:UInt,cfg:DefaultICacheConfig): UInt = {
         vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH)
     }
     
+    // handshake and response: prefer returning the refill result when s2 completes
+    when(s2_valid && s2_done){
+        io.drsp.valid := true.B
+        io.drsp.bits.data := s2_dout
+    }.elsewhen(s1_valid && s1_hit){
+        io.drsp.valid := true.B
+        io.drsp.bits.data := s1_dout
+    }.otherwise{
+        io.drsp.valid := false.B
+        io.drsp.bits.data := 0.U
+    }
 
     if(enabledebug){
         io.debug.get.s0_valid := s0_valid
@@ -258,10 +272,17 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         io.debug.get.s0_ready := io.dreq.ready
         io.debug.get.s1_valid := s1_valid
         io.debug.get.s1_vaddr := s1_vaddr
+        io.debug.get.s1_meta := metaReg(index_pos(s1_vaddr, cacheConfig))
         io.debug.get.s1_tag_hit := s1_tag_hit.asUInt
         io.debug.get.s1_hit := s1_hit
         io.debug.get.s2_valid := s2_valid
         io.debug.get.s2_vaddr := s2_vaddr
+        io.debug.get.s2_req_pulse_done := s2_req_pulse_done
+        io.debug.get.wait_rsp := wait_rsp
+        io.debug.get.s2_refill_done := s2_refill_done
+        io.debug.get.s2_done := s2_done
+        io.debug.get.data_array_we := VecInit(data_array.map(_.io.we)).asUInt
+        io.debug.get.tag_array_we := VecInit(tag_array.map(_.io.we)).asUInt
     }
 }
 
