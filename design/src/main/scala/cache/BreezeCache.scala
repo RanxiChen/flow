@@ -25,9 +25,9 @@ object BreezePLRU {
         //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
         val num_ways = 4
         val old_valid_vec = valid_vec(num_ways-1,0)
-        val old_plru_vec = plru_vec(num_ways-1,0)
+        val old_plru_vec = plru_vec(num_ways-2,0)
         val replace_way_OH = WireDefault(0.U(num_ways.W))
-        val new_valid_vec = old_valid_vec
+        val new_valid_vec = WireDefault(old_valid_vec)
         val b0 = old_plru_vec(2)
         val b1 = old_plru_vec(1)
         val b2 = old_plru_vec(0)
@@ -59,7 +59,7 @@ object BreezePLRU {
           } 
         }
         //更新PLRU位，选择的路的父节点都要更新为最近使用
-        val new_plru_vec = old_plru_vec
+        val new_plru_vec = WireDefault(old_plru_vec)
         when(replace_way_OH(0) === true.B){
             //选择了w0
             new_plru_vec := true.B ## true.B ## old_plru_vec(0)
@@ -80,10 +80,13 @@ object BreezePLRU {
 class BreezeCacheDebugIO(vlen: Int) extends Bundle {
     val s0_valid = Output(Bool())
     val s0_vaddr = Output(UInt(vlen.W))
+    val s0_ready = Output(Bool())
     val s1_valid = Output(Bool())
     val s1_vaddr = Output(UInt(vlen.W))
     val s1_tag_hit = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
     val s1_hit = Output(Bool())
+    val s2_valid = Output(Bool())
+    val s2_vaddr = Output(UInt(vlen.W))
 }
 
 /**
@@ -121,8 +124,16 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s1_tag_hit = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, Bool()))
     val s1_hit = s1_tag_hit.reduce(_ || _)
     val s1_dout = Wire(UInt(cacheConfig.FETCH_WIDTH.W))
+    
+    // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
+    // s2正在处理的时候，不会有其他的访问进入流水线
+    val s2_done = WireDefault(false.B) //标志s2的miss处理完成
+    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
+    val s2_vaddr = RegNext(s1_vaddr)
+    val s2_word_offset = RegNext(s1_word_offset)
+    val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
     //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
-    io.dreq.ready := !s1_valid || s1_hit
+    io.dreq.ready := ~(s1_valid && !s1_hit || s2_valid ) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
     // sram
     val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH)))
     val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH)))
@@ -162,13 +173,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s1_tag_hit(i) := s1_vld && tag_match
     }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
-    // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
-    // s2正在处理的时候，不会有其他的访问进入流水线
-    val s2_done = WireDefault(false.B) //标志s2的miss处理完成
-    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
-    val s2_vaddr = RegNext(s1_vaddr)
-    val s2_word_offset = RegNext(s1_word_offset)
-    val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
+    
     line_addr := s2_vaddr & ~( (cacheConfig.ICACHE_LINE_BYTES - 1).U) // cache line对齐
     //在s2选择要替换到那一个way
     val s2_index = index_pos(s2_vaddr, cacheConfig)
@@ -231,7 +236,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     //在更新完数据和tag以后，更新meta
     when(s2_refill_done){
-        metaReg(s2_index) := s2_new_plru_vec(3,0) ## s2_new_valid_vec(3,0)
+        metaReg(s2_index) := s2_new_plru_vec(2,0) ## s2_new_valid_vec(3,0) // PLRU位在高位，valid位在低位，默认4 ways
     }
     s2_done := s2_refill_done
 
@@ -243,17 +248,20 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     io.drsp.bits.data := s1_dout
 
     def index_pos(vaddr:UInt,cfg:DefaultICacheConfig): UInt = {
-        vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_BYTES_OFFSET_WIDTH)
+        vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH)
     }
     
 
     if(enabledebug){
         io.debug.get.s0_valid := s0_valid
         io.debug.get.s0_vaddr := s0_vaddr
+        io.debug.get.s0_ready := io.dreq.ready
         io.debug.get.s1_valid := s1_valid
         io.debug.get.s1_vaddr := s1_vaddr
         io.debug.get.s1_tag_hit := s1_tag_hit.asUInt
         io.debug.get.s1_hit := s1_hit
+        io.debug.get.s2_valid := s2_valid
+        io.debug.get.s2_vaddr := s2_vaddr
     }
 }
 
