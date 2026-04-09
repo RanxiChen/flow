@@ -88,6 +88,16 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             assert(dut.io.debug.get.s1_vaddr.peek().litValue == 0x0, "debug.s1_vaddr should match the requested address")
             println(s"[INFO] s1_tag_hit = 0x${dut.io.debug.get.s1_tag_hit.peek().litValue.toString(16)}")
             println(s"[INFO] s1_hit = ${dut.io.debug.get.s1_hit.peek().litToBoolean}")
+            println(s"[INFO] cycle ${cycle_count} , checking miss backpressure: s0 ready should be blocked")
+            dut.io.debug.get.s0_ready.expect(false.B)
+            dut.clock.step(1)
+            cycle_count += 1
+            println(s"[INFO] ==================== enter s2 check ====================")
+            println(s"[INFO] cycle ${cycle_count} , only s2 should be valid")
+            dut.io.debug.get.s0_valid.expect(false.B)
+            dut.io.debug.get.s1_valid.expect(false.B)
+            dut.io.debug.get.s2_valid.expect(true.B)
+            dut.io.debug.get.s2_vaddr.expect(0x0.U)
         }
     }
 
