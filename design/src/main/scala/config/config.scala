@@ -23,3 +23,12 @@ case class DefaultICacheConfig(
     val META_WIDTH: Int = PLRU_WIDTH + ICACHE_WAY_NUM // 每个cache line需要存储的元信息位宽，包括valid位和PLRU位,选择valid放到低位
     assert(ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
 }
+
+case class BreezeFrontendConfig(
+    VLEN: Int = 64
+) {
+    val cacheCfg: DefaultICacheConfig = DefaultICacheConfig(
+        VLEN = VLEN,
+        PLEN = VLEN
+    )
+}

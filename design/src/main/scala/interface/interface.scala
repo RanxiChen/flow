@@ -55,6 +55,34 @@ class ICacheReq extends Bundle{
 class ICacheResp extends Bundle{
     val data = UInt(32.W)
 }
+
+class FrontendRedirectIO(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val target = UInt(VLEN.W)
+}
+
+object FrontendPredType extends ChiselEnum {
+    val NONE, JAL = Value
+}
+
+class FrontendPredInfo(val VLEN: Int = 64) extends Bundle {
+    val predType = FrontendPredType()
+    val predTaken = Bool()
+    val predPc = UInt(VLEN.W)
+}
+
+class FrontendFetchBundle(val VLEN: Int = 64) extends Bundle {
+    val pc = UInt(VLEN.W)
+    val inst = UInt(32.W)
+    val pred = new FrontendPredInfo(VLEN)
+}
+
+class FrontendFetchBufferIO(val VLEN: Int = 64) extends Bundle {
+    val valid = Output(Bool())
+    val bits = Output(new FrontendFetchBundle(VLEN))
+    val canAccept3 = Input(Bool())
+}
+
 //from cache
 class ICacheIO extends Bundle{
     val req = Flipped(Decoupled(new ICacheReq))
