@@ -127,7 +127,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s0_valid = io.dreq.fire
     val s0_vaddr = io.dreq.bits.vaddr
 
-    val s1_valid = RegNext(s0_valid)
+    val s1_valid = RegNext(s0_valid, false.B)
     val s1_vaddr = RegNext(s0_vaddr,s0_valid)
     val s1_tag_hit = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, Bool()))
     val s1_hit = s1_tag_hit.reduce(_ || _)

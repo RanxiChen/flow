@@ -179,5 +179,17 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
+    "BreezeCache should follow default flow after reset" in {
+        simulate(new BreezeCache(cfg, enabledebug = true)){dut =>
+            dut.io.dreq.valid.poke(false.B)
+            dut.io.dreq.bits.vaddr.poke(0.U)
+            dut.io.drsp.ready.poke(true.B)
+            dut.io.next_level_rsp.vld.poke(false.B)
+            dut.io.next_level_rsp.data.poke(0.U)
+
+            println("hello world")
+        }
+    }
+
     
 }
