@@ -58,3 +58,4 @@ sim/ICache/rtl/
 sim/*/rtl/
 sim/*/cmake-*
 
+.codex
