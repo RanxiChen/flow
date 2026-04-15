@@ -38,25 +38,45 @@ class MiniDecode(val vlen: Int = 64) extends Module {
     }
 }
 
+class BreezeFrontendDebugIO(vlen: Int) extends Bundle {
+    val s1_pcReg = Output(UInt(vlen.W))
+    val s1_valid = Output(Bool())
+    val dreq_valid = Output(Bool())
+    val dreq_ready = Output(Bool())
+    val dreq_fire = Output(Bool())
+    val s2_pcReg = Output(UInt(vlen.W))
+    val s2_valid = Output(Bool())
+    val s2_respValid = Output(Bool())
+    val s3_pcReg = Output(UInt(vlen.W))
+    val s3_valid = Output(Bool())
+    val cache_s0_ready = Output(Bool())
+    val cache_s1_valid = Output(Bool())
+    val cache_s1_hit = Output(Bool())
+    val cache_s2_valid = Output(Bool())
+    val cache_s2_done = Output(Bool())
+}
+
 /**
   * 使用 BreezeCache 的前端骨架。
   * 当前实现前端入口 PC 选择、cache 请求/返回，以及 s3 的快速预测输出。
   * 地址统一按虚拟地址处理。
   */
-class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) extends Module {
+class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val enabledebug: Boolean = false) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val beRedirect = Input(new FrontendRedirectIO(cfg.VLEN))
         val fetchBuffer = new FrontendFetchBufferIO(cfg.VLEN)
         val nextLevelReq = new L1CacheMissReqIO(cfg.cacheCfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(cfg.cacheCfg.ICACHE_LINE_WIDTH)
+        val debug = if (enabledebug) Some(new BreezeFrontendDebugIO(cfg.VLEN)) else None
     })
 
     // ===== Module Instances =====
-    val icache = Module(new BreezeCache(cfg.cacheCfg))
+    val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
     val miniDecode = Module(new MiniDecode(cfg.VLEN))
 
     // ===== S1: Stage State =====
+    val s1_validReg = RegInit(true.B)
     val s1_pcReg = RegInit(0.U(cfg.VLEN.W))
 
     // ===== S2: Stage State =====
@@ -82,9 +102,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) ext
     val s0_backendRedirectSel = Wire(Bool())
     val s0_fastRedirectSel = Wire(Bool())
     val s0_fallThroughSel = Wire(Bool())
-    val s0_canAdvance = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
-    val s1_valid = Wire(Bool())
     val s1_fire = Wire(Bool())
     val s2_respValid = Wire(Bool())
 
@@ -92,7 +110,6 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) ext
     s0_backendRedirectSel := io.beRedirect.valid
     s0_fastRedirectSel := !s0_backendRedirectSel && s3_fastRedirectValid
     s0_fallThroughSel := !s0_backendRedirectSel && !s3_fastRedirectValid
-    s0_canAdvance := io.fetchBuffer.canAccept3 && icache.io.drsp.valid
     s0_nextPc := Mux(
         reset.asBool,
         io.resetAddr,
@@ -104,21 +121,21 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) ext
     )
 
     // ===== S1: Register Update =====
-    s1_valid := io.fetchBuffer.canAccept3 && !s2_validReg
     s1_fire := icache.io.dreq.fire
 
     when(reset.asBool) {
+        s1_validReg := true.B
         s1_pcReg := io.resetAddr
-    }.elsewhen(s0_canAdvance) {
+    }.elsewhen(s1_fire) {
         s1_pcReg := s0_nextPc
     }
 
     // ===== S1: Cache Request =====
-    icache.io.dreq.valid := s1_valid
+    icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
     icache.io.dreq.bits.vaddr := s1_pcReg
 
     // ===== S2: Cache Request Tracking =====
-    s2_respValid := icache.io.drsp.valid
+    s2_respValid := s2_validReg && icache.io.drsp.valid
 
     when(icache.io.dreq.fire) {
         s2_validReg := true.B
@@ -131,6 +148,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) ext
     icache.io.drsp.ready := true.B
 
     // ===== S3: Cache Response Registers =====
+    // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
+    // 如果下一拍又有新的返回，S3 会直接被新的返回覆盖。
     s3_validReg := false.B
     when(s2_respValid) {
         s3_validReg := true.B
@@ -149,6 +168,24 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig()) ext
     // ===== Cache Miss Interface =====
     icache.io.next_level_req <> io.nextLevelReq
     icache.io.next_level_rsp <> io.nextLevelRsp
+
+    io.debug.foreach { debug =>
+        debug.s1_pcReg := s1_pcReg
+        debug.s1_valid := s1_validReg
+        debug.dreq_valid := icache.io.dreq.valid
+        debug.dreq_ready := icache.io.dreq.ready
+        debug.dreq_fire := s1_fire
+        debug.s2_pcReg := s2_pcReg
+        debug.s2_valid := s2_validReg
+        debug.s2_respValid := s2_respValid
+        debug.s3_pcReg := s3_pcReg
+        debug.s3_valid := s3_validReg
+        debug.cache_s0_ready := icache.io.debug.get.s0_ready
+        debug.cache_s1_valid := icache.io.debug.get.s1_valid
+        debug.cache_s1_hit := icache.io.debug.get.s1_hit
+        debug.cache_s2_valid := icache.io.debug.get.s2_valid
+        debug.cache_s2_done := icache.io.debug.get.s2_done
+    }
 }
 
 object FireBreezeFrontend extends App {
