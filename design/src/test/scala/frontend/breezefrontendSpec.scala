@@ -16,6 +16,17 @@ case class CapturedFetchPacket(
 )
 
 class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
+        val imm12 = imm & 0xfff
+        BigInt((imm12 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x13)
+    }
+
+    private def buildRefillLine(words: Seq[BigInt]): BigInt = {
+        words.zipWithIndex.foldLeft(BigInt(0)) { case (acc, (word, idx)) =>
+            acc | ((word & BigInt("ffffffff", 16)) << (idx * 32))
+        }
+    }
+
     class VirtualFetchBuffer(val capacity: Int = 5) {
         private val queue = ArrayDeque.empty[CapturedFetchPacket]
 
@@ -56,6 +67,9 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
     "BreezeFrontend should follow default flow after reset" in {
         simulate(new BreezeFrontend(enabledebug = true)){dut =>
             val debug = dut.io.debug.get
+            val refillDelayCycles = 6
+            val refillInstWords = Seq.tabulate(8)(i => encodeAddi(rd = i + 1, rs1 = 0, imm = i + 1))
+            val refillLineData = buildRefillLine(refillInstWords)
 
             // ==================== cycle 0 ====================
             // 先建立这个用例的默认输入环境：
@@ -86,6 +100,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             debug.cache_s0_ready.expect(true.B)
             debug.dreq_fire.expect(true.B)
             dut.io.fetchBuffer.valid.expect(false.B)
+            debug.s3_valid.expect(false.B)
 
             // ==================== cycle 1 ====================
             // 这里把 reset 拉回正常值，进入下一拍的默认顺序流观察。
@@ -107,108 +122,122 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             debug.cache_s1_valid.expect(true.B)
             debug.cache_s1_hit.expect(false.B)
             dut.io.fetchBuffer.valid.expect(false.B)
-        }
-    }
-}
+            debug.s3_valid.expect(false.B)
 
-class BreezeFrontendFE001Spec extends AnyFreeSpec with Matchers with ChiselSim {
-    "BreezeFrontend FE-001 bug replication scenario" in {
-        simulate(new BreezeFrontend(enabledebug = true)){dut =>
-            val debug = dut.io.debug.get
+            // ==================== poll nextLevelReq ====================
+            // 从这里开始轮询 miss 请求接口，直到 cache 真正向下一级发出请求。
+            var observedMissReq = false
+            var waitCycles = 0
+            while (!observedMissReq) {
+                println(
+                  f"[INFO] poll miss req: nextLevelReq.req=${dut.io.nextLevelReq.req.peek().litToBoolean} " +
+                    f"paddr=0x${dut.io.nextLevelReq.paddr.peek().litValue}%x " +
+                    f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
+                    f"s3_valid=${debug.s3_valid.peek().litToBoolean}"
+                )
+                dut.io.nextLevelRsp.vld.expect(false.B)
+                dut.io.fetchBuffer.valid.expect(false.B)
+                debug.s3_valid.expect(false.B)
 
-            // ==================== cycle 0 ====================
-            // 先建立这个用例的默认输入环境：
-            // 1. fetch buffer 先默认可接收，避免前端因为后端背压而不工作
-            // 2. reset 地址固定为 0，作为复位后的起始 PC
-            // 3. 后端重定向关闭，只观察默认顺序取指流程
-            // 4. 下一级存储当前不返回数据，先看前端在"无反馈"时的初始状态
-            dut.io.fetchBuffer.canAccept3.poke(true.B)
-            dut.io.resetAddr.poke(0x0.U)
-            dut.io.beRedirect.valid.poke(false.B)
-            dut.io.beRedirect.target.poke(0x0.U)
+                if (dut.io.nextLevelReq.req.peek().litToBoolean) {
+                    observedMissReq = true
+                    dut.io.nextLevelReq.paddr.expect(0x0.U)
+                } else {
+                    dut.clock.step(1)
+                }
+            }
+
+            // ==================== fixed 6-cycle wait ====================
+            // 看到 miss 请求以后，固定空等 6 拍，不返回任何 refill 数据。
+            while (waitCycles < refillDelayCycles) {
+                dut.clock.step(1)
+                waitCycles += 1
+                println(
+                  f"[INFO] wait refill cycle $waitCycles: " +
+                    f"nextLevelReq.req=${dut.io.nextLevelReq.req.peek().litToBoolean} " +
+                    f"s3_valid=${debug.s3_valid.peek().litToBoolean}"
+                )
+                dut.io.nextLevelRsp.vld.expect(false.B)
+                dut.io.fetchBuffer.valid.expect(false.B)
+                debug.s3_valid.expect(false.B)
+            }
+
+            // ==================== single-cycle refill response ====================
+            // 第 6 拍等待之后，用一拍送回完整 32B cache line。
+            dut.io.nextLevelRsp.data.poke(refillLineData.U)
+            dut.io.nextLevelRsp.vld.poke(true.B)
+            dut.clock.step(1)
+
+            println(
+              f"[INFO] refill response accept cycle: " +
+                f"s2_respValid=${debug.s2_respValid.peek().litToBoolean} " +
+                f"s3_valid=${debug.s3_valid.peek().litToBoolean} " +
+                f"fetchBuffer.valid=${dut.io.fetchBuffer.valid.peek().litToBoolean}"
+            )
+            dut.io.fetchBuffer.valid.expect(false.B)
+            debug.s3_valid.expect(false.B)
+
+            // ==================== cache response becomes visible to s2 ====================
+            // 按照 BreezeCacheSpec 的时序，nextLevelRsp.vld 后一拍，cache 才把返回对前端可见。
             dut.io.nextLevelRsp.vld.poke(false.B)
-            dut.io.nextLevelRsp.data.poke(0x0.U)
-
-            // 显式把 reset 拉高一个拍，确保这里观察到的是"复位作用后的寄存器值"
-            dut.reset.poke(true.B)
             dut.clock.step(1)
 
-            // 这一拍仍处于 reset 作用后的状态，只检查 reset 是否把 s1 初始化到了 resetAddr。
-            println(f"[INFO] default-flow cycle 0: s1_pcReg = 0x${debug.s1_pcReg.peek().litValue}%x")
-            println(s"[INFO] default-flow cycle 0: s1_valid = ${debug.s1_valid.peek().litToBoolean}")
             println(
-              f"[INFO] FE001 cycle 0 frontend: " +
-                f"dreq_valid=${debug.dreq_valid.peek().litToBoolean} " +
-                f"dreq_ready=${debug.dreq_ready.peek().litToBoolean} " +
-                f"dreq_fire=${debug.dreq_fire.peek().litToBoolean} " +
+              f"[INFO] s2 response visible cycle: " +
                 f"s2_valid=${debug.s2_valid.peek().litToBoolean} " +
                 f"s2_pcReg=0x${debug.s2_pcReg.peek().litValue}%x " +
                 f"s2_respValid=${debug.s2_respValid.peek().litToBoolean} " +
-                f"s3_valid=${debug.s3_valid.peek().litToBoolean} " +
-                f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x"
+                f"s1_valid=${debug.s1_valid.peek().litToBoolean} " +
+                f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
+                f"dreq_fire=${debug.dreq_fire.peek().litToBoolean}"
             )
-            println(
-              f"[INFO] FE001 cycle 0 cache: " +
-                f"s0_valid=${debug.dreq_fire.peek().litToBoolean} " +
-                f"s0_ready=${debug.cache_s0_ready.peek().litToBoolean} " +
-                f"s1_valid=${debug.cache_s1_valid.peek().litToBoolean} " +
-                f"s1_hit=${debug.cache_s1_hit.peek().litToBoolean} " +
-                f"s2_valid=${debug.cache_s2_valid.peek().litToBoolean} " +
-                f"s2_done=${debug.cache_s2_done.peek().litToBoolean}"
-            )
-            println(
-              f"[INFO] FE001 cycle 0 inputs: " +
-                f"fetchBuffer.canAccept3=${dut.io.fetchBuffer.canAccept3.peek().litToBoolean} " +
-                f"fetchBuffer.valid=${dut.io.fetchBuffer.valid.peek().litToBoolean} " +
-                f"beRedirect.valid=${dut.io.beRedirect.valid.peek().litToBoolean} " +
-                f"nextLevelRsp.vld=${dut.io.nextLevelRsp.vld.peek().litToBoolean}"
-            )
-            debug.cache_s0_ready.expect(true.B)
-            debug.dreq_fire.expect(true.B)
+            debug.s2_respValid.expect(true.B)
+            debug.s2_valid.expect(true.B)
+            debug.s2_pcReg.expect(0x0.U)
 
-            // ==================== cycle 1 ====================
-            // 这里把 reset 拉回正常值，表示从这个周期开始进入正常工作流。
-            // 其他输入保持不变：fetch buffer 仍可接收、后端无重定向、下一级仍无返回。
-            dut.reset.poke(false.B)
+            // ==================== first visible instruction after refill ====================
+            // 再下一拍，0x0 进入 s3；同时 s2 挂着 0x4 且应当 hit，s1 推进到 0x8。
             dut.clock.step(1)
 
-            // 这一拍是默认顺序流真正开始工作的第一拍：
-            // 1. s1 仍然有效
-            // 2. s1 的 PC 仍是 0
-            // 3. fetch buffer 允许前进，因此 dreq.valid 会被拉高
-            // 4. cache 在冷启动后的这个周期准备好接收请求，所以本拍 dreq.fire
-            println(f"[INFO] FE001 cycle 1: s1_pcReg = 0x${debug.s1_pcReg.peek().litValue}%x")
-            println(s"[INFO] FE001 cycle 1: s1_valid = ${debug.s1_valid.peek().litToBoolean}")
             println(
-              f"[INFO] FE001 cycle 1 frontend: " +
-                f"dreq_valid=${debug.dreq_valid.peek().litToBoolean} " +
-                f"dreq_ready=${debug.dreq_ready.peek().litToBoolean} " +
-                f"dreq_fire=${debug.dreq_fire.peek().litToBoolean} " +
+              f"[INFO] post-refill s3 cycle: " +
+                f"s3_valid=${debug.s3_valid.peek().litToBoolean} " +
+                f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x " +
                 f"s2_valid=${debug.s2_valid.peek().litToBoolean} " +
                 f"s2_pcReg=0x${debug.s2_pcReg.peek().litValue}%x " +
                 f"s2_respValid=${debug.s2_respValid.peek().litToBoolean} " +
-                f"s3_valid=${debug.s3_valid.peek().litToBoolean} " +
-                f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x"
+                f"s1_valid=${debug.s1_valid.peek().litToBoolean} " +
+                f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
+                f"cache_s1_hit=${debug.cache_s1_hit.peek().litToBoolean} " +
+                f"dreq_fire=${debug.dreq_fire.peek().litToBoolean} " +
+                f"fetch_pc=0x${dut.io.fetchBuffer.bits.pc.peek().litValue}%x " +
+                f"fetch_inst=0x${dut.io.fetchBuffer.bits.inst.peek().litValue}%x"
             )
+            debug.s3_valid.expect(true.B)
+            debug.s3_pcReg.expect(0x0.U)
+            debug.s2_valid.expect(true.B)
+            debug.s2_pcReg.expect(0x4.U)
+            debug.s2_respValid.expect(true.B)
+            debug.s1_valid.expect(true.B)
+            debug.s1_pcReg.expect(0x8.U)
+            debug.cache_s1_hit.expect(true.B)
+            dut.io.fetchBuffer.valid.expect(true.B)
+            dut.io.fetchBuffer.bits.pc.expect(0x0.U)
+            dut.io.fetchBuffer.bits.inst.expect(refillInstWords.head.U)
+
+            // ==================== next cycle should keep streaming ====================
+            // 如果前一拍组合逻辑已经在尝试把 0x10 推进进来，那么这一拍 s1 应推进到 0x10。
+            dut.clock.step(1)
             println(
-              f"[INFO] FE001 cycle 1 cache: " +
-                f"s0_valid=${debug.dreq_fire.peek().litToBoolean} " +
-                f"s0_ready=${debug.cache_s0_ready.peek().litToBoolean} " +
-                f"s1_valid=${debug.cache_s1_valid.peek().litToBoolean} " +
-                f"s1_hit=${debug.cache_s1_hit.peek().litToBoolean} " +
-                f"s2_valid=${debug.cache_s2_valid.peek().litToBoolean} " +
-                f"s2_done=${debug.cache_s2_done.peek().litToBoolean}"
+              f"[INFO] stream-forward cycle: " +
+                f"s1_valid=${debug.s1_valid.peek().litToBoolean} " +
+                f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
+                f"s2_valid=${debug.s2_valid.peek().litToBoolean} " +
+                f"s2_pcReg=0x${debug.s2_pcReg.peek().litValue}%x " +
+                f"s3_valid=${debug.s3_valid.peek().litToBoolean}"
             )
-            println(
-              f"[INFO] FE001 cycle 1 inputs: " +
-                f"fetchBuffer.canAccept3=${dut.io.fetchBuffer.canAccept3.peek().litToBoolean} " +
-                f"fetchBuffer.valid=${dut.io.fetchBuffer.valid.peek().litToBoolean} " +
-                f"beRedirect.valid=${dut.io.beRedirect.valid.peek().litToBoolean} " +
-                f"nextLevelRsp.vld=${dut.io.nextLevelRsp.vld.peek().litToBoolean}"
-            )
-            debug.cache_s0_ready.expect(false.B)
-            debug.cache_s1_valid.expect(true.B)
-            debug.cache_s1_hit.expect(false.B)
+            debug.s1_valid.expect(true.B)
+            debug.s1_pcReg.expect(0x10.U)
         }
     }
 }
