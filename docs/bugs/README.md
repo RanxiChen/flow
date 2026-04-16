@@ -16,6 +16,7 @@ The intent is not to build a heavy process. The intent is to make debugging repr
 Use a short subsystem prefix plus a sequence number.
 
 - `FE-001`: frontend bug
+- `FE-002`: frontend response/PC context mismatch bug
 - `CACHE-001`: cache bug
 - `CORE-001`: core bug
 - `TB-001`: testbench or infrastructure bug

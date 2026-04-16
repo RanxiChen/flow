@@ -47,6 +47,8 @@ class BreezeFrontendDebugIO(vlen: Int) extends Bundle {
     val s2_pcReg = Output(UInt(vlen.W))
     val s2_valid = Output(Bool())
     val s2_respValid = Output(Bool())
+    val cache_drsp_valid = Output(Bool())
+    val cache_drsp_vaddr = Output(UInt(vlen.W))
     val s3_pcReg = Output(UInt(vlen.W))
     val s3_valid = Output(Bool())
     val cache_s0_ready = Output(Bool())
@@ -178,6 +180,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         debug.s2_pcReg := s2_pcReg
         debug.s2_valid := s2_validReg
         debug.s2_respValid := s2_respValid
+        debug.cache_drsp_valid := icache.io.drsp.valid
+        debug.cache_drsp_vaddr := icache.io.drsp.bits.vaddr
         debug.s3_pcReg := s3_pcReg
         debug.s3_valid := s3_validReg
         debug.cache_s0_ready := icache.io.debug.get.s0_ready
