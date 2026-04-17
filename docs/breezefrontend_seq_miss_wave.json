@@ -1,0 +1,29 @@
+{
+  "signal": [
+    {"name":"clk",              "wave":"P......."},
+    {"name":"reset",            "wave":"10......"},
+    {"name":"s0_nextPc",        "wave":"x.======","data":["A","B","C","C","C","C"]},
+    {"name":"s1_valid",         "wave":"0.1....."},
+    {"name":"s1_pc",            "wave":"x.=====.","data":["A","B","B","B","B"]},
+    {"name":"s1_cache_req_en",  "wave":"0.10..10"},
+    {"name":"s2_valid",         "wave":"0..1..10"},
+    {"name":"s2_pc",            "wave":"x..=..=x","data":["A","B"]},
+    {"name":"s2_wait_miss",     "wave":"0..1..00"},
+    {"name":"cache_miss_req",   "wave":"0...10.."},
+    {"name":"cache_refill_vld", "wave":"0.....10"},
+    {"name":"s3_valid",         "wave":"0......1"},
+    {"name":"s3_pc",            "wave":"x......=","data":["A"]},
+    {"name":"fetch_valid",      "wave":"0......1"},
+    {"name":"fetch_pc",         "wave":"x......=","data":["A"]}
+  ],
+  "head": {
+    "text": "BreezeFrontend draft timing: A cold miss, B waits in S1 with cache access gated",
+    "tick": 0
+  },
+  "foot": {
+    "text": "reset is shown high for one clock period; if the testbench keeps reset asserted for multiple rising edges, extend the reset lane accordingly"
+  },
+  "config": {
+    "hscale": 2
+  }
+}

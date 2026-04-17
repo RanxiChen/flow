@@ -9,6 +9,10 @@ import top.FEMux
 import top.GlobalSilent
 import top.tcm
 import mem.ITCM
+import _root_.flow.interface.ICacheIO
+import cache.ICache
+import _root_.circt.stage.ChiselStage
+import _root_.flow.interface.NativeMemIO
 class InstPack extends Bundle {
     val data = UInt(32.W)
     val pc   = UInt(64.W)
@@ -239,4 +243,173 @@ class Frontend() extends Module {
             printf(cf"stall\n")
         }
     }
+}
+
+/**
+  * 带 I-Cache 的三级流水线前端
+  *
+  * 流水线结构：
+  *   S0: PC 生成，发送 cache 请求，检测 PC 对齐异常
+  *   S1: 等待 cache tag check，传递 PC 和异常标志
+  *   S2: 接收 cache 数据，打包成 InstPack 输出
+  *
+  * 握手协议：
+  *   - imem.req: S0 发送地址请求给 cache
+  *   - imem.resp: S2 接收 cache 返回的指令数据
+  *   - instpack: S2 输出指令包给后端
+  *   - be_ctrl: 后端控制信号（分支跳转）
+  */
+class gustFrontend(val dumplog: Boolean = false) extends Module {
+    val io = IO(new Bundle{
+        val reset_addr = Input(UInt(64.W))
+        val imem = Flipped(new ICacheIO)
+        val instpack = Decoupled(new InstPack)
+        val be_ctrl = Flipped(new FE_BE_Bundle)
+    })
+
+    // ========== PC 寄存器 ==========
+    val pc = RegInit(io.reset_addr)
+
+    // ========== 流水线级间寄存器 ==========
+
+    // S0 → S1
+    val s1_valid = RegInit(false.B)
+    val s1_pc = RegInit(0.U(64.W))
+    val s1_misaligned = RegInit(false.B)
+
+    // S1 → S2
+    val s2_valid = RegInit(false.B)
+    val s2_pc = RegInit(0.U(64.W))
+    val s2_misaligned = RegInit(false.B)
+
+    // ========== S0 阶段：PC 生成和异常检测 ==========
+
+    val s0_valid = WireDefault(true.B)
+    val s0_misaligned = pc(1, 0) =/= 0.U
+
+    // ========== 背压传播（Stall 逻辑）==========
+
+    // S2 阻塞：后端不能接收新指令
+    val stall_s2 = s2_valid && !io.instpack.ready
+
+    // S1 阻塞：S2 阻塞
+    val stall_s1 = stall_s2
+
+    // S0 阻塞：S1 阻塞 或 cache 不 ready
+    val stall_s0 = stall_s1 || !io.imem.req.ready
+
+    // ========== 分支跳转和流水线冲刷 ==========
+
+    val flush_pipeline = io.be_ctrl.pc_misfetch
+
+    // ========== S0 → Cache 请求握手 ==========
+
+    io.imem.req.valid := s0_valid && !stall_s0
+    io.imem.req.bits.addr := pc
+
+    val s0_fire = io.imem.req.fire
+
+    // ========== S2 阶段：接收 cache 数据 ==========
+
+    io.imem.resp.ready := !stall_s2
+
+    val s2_has_data = io.imem.resp.fire
+
+    // ========== S2 → InstPack 输出 ==========
+
+    io.instpack.valid := s2_valid && io.imem.resp.valid
+    io.instpack.bits.data := io.imem.resp.bits.data
+    io.instpack.bits.pc := s2_pc
+    io.instpack.bits.instruction_address_misaligned := s2_misaligned
+    io.instpack.bits.instruction_access_fault := false.B
+
+    val s2_output_fire = io.instpack.fire
+
+    // ========== PC 更新逻辑 ==========
+
+    when(flush_pipeline) {
+        pc := io.be_ctrl.pc_redir
+    }.elsewhen(!stall_s0 && s0_fire) {
+        pc := pc + 4.U
+    }
+
+    // ========== S0 → S1 流水线前进 ==========
+
+    when(flush_pipeline) {
+        s1_valid := false.B
+        s1_pc := 0.U
+        s1_misaligned := false.B
+    }.elsewhen(!stall_s0 && s0_fire) {
+        s1_valid := true.B
+        s1_pc := pc
+        s1_misaligned := s0_misaligned
+    }
+
+    // ========== S1 → S2 流水线前进 ==========
+
+    when(flush_pipeline) {
+        s2_valid := false.B
+        s2_pc := 0.U
+        s2_misaligned := false.B
+    }.elsewhen(!stall_s1 && s1_valid) {
+        s2_valid := true.B
+        s2_pc := s1_pc
+        s2_misaligned := s1_misaligned
+    }.elsewhen(s2_output_fire) {
+        s2_valid := false.B
+    }
+
+    // ========== 调试输出 ==========
+
+    if(dumplog) {
+        printf(cf"[gustFe] ")
+        printf(cf"S0(pc=0x${pc}%x,v=${s0_valid},ma=${s0_misaligned}) ")
+        printf(cf"S1(pc=0x${s1_pc}%x,v=${s1_valid}) ")
+        printf(cf"S2(pc=0x${s2_pc}%x,v=${s2_valid}) ")
+        when(s0_fire) { printf(cf"REQ ") }
+        when(s2_has_data) { printf(cf"RESP ") }
+        when(io.instpack.fire) {
+            printf(cf"OUT(inst=0x${io.instpack.bits.data}%x) ")
+        }
+        when(flush_pipeline) {
+            printf(cf"FLUSH(tgt=0x${io.be_ctrl.pc_redir}%x) ")
+        }
+        when(stall_s0) { printf(cf"STALL ") }
+        printf(cf"\n")
+    }
+}
+/**
+  * 带 I-Cache 的三级流水线前端
+  * 配有完整的测试代码环境
+  *
+  */
+class GustEngine(val dumplog: Boolean = false) extends Module {
+    val io = IO(new Bundle{
+        val reset_addr = Input(UInt(64.W))
+        val instpack = Decoupled(new InstPack)
+        val be_ctrl = Flipped(new FE_BE_Bundle)
+        val mem = new NativeMemIO
+    })
+    val frontend = Module(new gustFrontend(dumplog))
+    val icache = Module(new cache.ICache(dumplog))
+    // 连接前端和 I-Cache
+    frontend.io.reset_addr := io.reset_addr
+    frontend.io.be_ctrl := io.be_ctrl
+    frontend.io.instpack <> io.instpack
+    frontend.io.imem <> icache.io.dst
+    // 连接 I-Cache 和内存接口
+    icache.io.commer <> io.mem
+}
+
+object FireGustFrontend extends App {
+    println("Generating the FireGustEngine hardware")
+    ChiselStage.emitSystemVerilogFile(
+        new GustEngine(),
+        Array("--target-dir", "../sim/GustEngine/rtl"),
+        firtoolOpts = Array(
+            "-disable-all-randomization",
+            "-strip-debug-info",
+            "-default-layer-specialization=enable"
+        )
+    )
 }

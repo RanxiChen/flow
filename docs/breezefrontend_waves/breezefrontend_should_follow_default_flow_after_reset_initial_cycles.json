@@ -1,0 +1,35 @@
+{
+  "signal": [
+    { "name": "clk",                     "wave": "P...." },
+    { "name": "reset",                   "wave": "10..." },
+    { "name": "resetAddr",               "wave": "x.===", "data": ["0", "0", "0"] },
+    { "name": "fetchBuffer.canAccept3",  "wave": "x.111" },
+    { "name": "beRedirect.valid",        "wave": "x.000" },
+    { "name": "nextLevelRsp.vld",        "wave": "x.000" },
+
+    { "name": "s1_validReg",             "wave": "0.111" },
+    { "name": "s1_pcReg",                "wave": "x.===", "data": ["0", "4", "4"] },
+
+    { "name": "icache.io.dreq.ready",    "wave": "x.100" },
+    { "name": "icache.io.dreq.valid",    "wave": "x.111" },
+    { "name": "s1_fire / dreq.fire",     "wave": "x.100" },
+
+    { "name": "s2_validReg",             "wave": "0..11" },
+    { "name": "s2_pcReg",                "wave": "x..==", "data": ["0", "0"] },
+    { "name": "s2_respValid",            "wave": "0...." },
+
+    { "name": "s3_validReg",             "wave": "0...." },
+    { "name": "s3_pcReg",                "wave": "x...." },
+    { "name": "io.fetchBuffer.valid",    "wave": "0...." }
+  ],
+  "head": {
+    "text": "BreezeFrontend should follow default flow after reset - initial cycles subset",
+    "tick": 0
+  },
+  "foot": {
+    "text": "Cycle 1: reset released, s1 valid with PC=0, cache request fires. Cycle 2: s1 advances to 4, s2 captures 0, cache miss so no response. Cycle 3: s1 holds at 4, s2 still valid with 0, s3 remains invalid."
+  },
+  "config": {
+    "hscale": 2
+  }
+}

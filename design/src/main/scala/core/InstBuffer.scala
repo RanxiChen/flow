@@ -13,13 +13,12 @@ class IB_BE_Bundle extends Bundle {
   * when need flush, instruction buffer will be flushed
   * @param buffer_entry
   */
-class InstBuffer(val buffer_entry: Int = 2) extends Module {
+class InstBuffer(val buffer_entry: Int = 2, val dumplog: Boolean = false) extends Module {
     val io = IO(new Bundle{
         val fe_in = Flipped(Decoupled(new InstPack))
         val out = Decoupled(new InstPack)
         val be_in = Flipped(new IB_BE_Bundle)
     })
-    val dump = false
     val buffer = Module(new Queue(new InstPack, 
                             entries = buffer_entry, pipe = true, 
                             flow = true,hasFlush = true
@@ -31,7 +30,7 @@ class InstBuffer(val buffer_entry: Int = 2) extends Module {
     buffer.io.enq <> io.fe_in
     buffer.io.deq <> io.out
     buffer.io.flush.get := io.be_in.flush
-    if(dump){
+    if(dumplog){
         when(io.fe_in.ready){
             printf(cf"[InstBuf]InstBuf not full, can accept instruction\n")
         }
