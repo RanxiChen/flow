@@ -10,6 +10,7 @@ class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
     val io = IO(new Bundle {
         val in = Flipped(new FrontendFetchBufferIO(VLEN))
         val out = Decoupled(new FrontendFetchBundle(VLEN))
+        val flush = Input(Bool())
     })
 
     val fifo = Module(
@@ -17,13 +18,16 @@ class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
             gen = new FrontendFetchBundle(VLEN),
             entries = entries,
             pipe = false,
-            flow = false
+            flow = false,
+            useSyncReadMem = false,
+            hasFlush = true
         )
     )
 
     fifo.io.enq.valid := io.in.valid
     fifo.io.enq.bits := io.in.bits
     io.out <> fifo.io.deq
+    fifo.io.flush.get := io.flush
 
     val freeEntries = entries.U - fifo.io.count
     io.in.canAccept3 := freeEntries >= 3.U
