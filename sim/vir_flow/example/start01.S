@@ -1,0 +1,9 @@
+li x1,2024
+li x2,2025
+li x3,2026
+li x4,2027
+addi x5,x0,0
+addi x6,x0,5
+addi x7,x0,10
+addi x8,x0,15
+sub x9,x2,x1
