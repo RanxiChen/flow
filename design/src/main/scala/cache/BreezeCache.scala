@@ -104,7 +104,7 @@ class BreezeCacheDebugIO(vlen: Int) extends Bundle {
   * @param cacheConfig
   * @param enabledebug
   */
-class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean = false) extends Module {
+class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean = false,val inspectsram:Boolean=false) extends Module {
     val io = IO(new Bundle{
         val dreq = Flipped(Decoupled(new BreezeCacheReqIO(cacheConfig.VLEN)))
         val drsp = Decoupled(new BreezeCacheRespIO(cacheConfig.VLEN,cacheConfig.FETCH_WIDTH))
@@ -136,8 +136,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     
     
     // sram
-    val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH,"tag",enabledebug)))
-    val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH,"data",enabledebug)))
+    val tag_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_TAG_WIDTH,"tag",inspectsram)))
+    val data_array = Seq.fill(cacheConfig.ICACHE_WAY_NUM)(Module(new flowSRAM(cacheConfig.ICACHE_SET_NUM, cacheConfig.ICACHE_LINE_WIDTH,"data",inspectsram)))
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         tag_array(i).io.addr := 0.U
         tag_array(i).io.data_in := 0.U
@@ -179,9 +179,22 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
     // s2正在处理的时候，不会有其他的访问进入流水线
     val s2_done = WireDefault(false.B) //标志s2的miss处理完成
-    val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
-    val s2_vaddr = RegNext(s1_vaddr)
-    val s2_word_offset = RegNext(s1_word_offset)
+    //val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
+    val s2_valid = RegInit(false.B)
+    val s2_vaddr = RegInit(0.U(cacheConfig.VLEN.W))
+    val s2_word_offset = RegInit(0.U(s1_word_offset.getWidth.W))
+    when(s1_valid){
+        when(s1_hit){
+            s2_valid := false.B
+        }.otherwise{
+            s2_valid := true.B
+            s2_vaddr := s1_vaddr
+            s2_word_offset := s1_word_offset
+        }
+    }.elsewhen(s2_done){
+        s2_valid := false.B
+    }
+    //val s2_vaddr = RegNext(s1_vaddr)
     val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
     line_addr := s2_vaddr & ~( (cacheConfig.ICACHE_LINE_BYTES - 1).U) // cache line对齐
     //在s2选择要替换到那一个way
@@ -257,12 +270,15 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     // handshake and response: prefer returning the refill result when s2 completes
     when(s2_valid && s2_done){
         io.drsp.valid := true.B
+        io.drsp.bits.vaddr := s2_vaddr
         io.drsp.bits.data := s2_dout
     }.elsewhen(s1_valid && s1_hit){
         io.drsp.valid := true.B
+        io.drsp.bits.vaddr := s1_vaddr
         io.drsp.bits.data := s1_dout
     }.otherwise{
         io.drsp.valid := false.B
+        io.drsp.bits.vaddr := 0.U
         io.drsp.bits.data := 0.U
     }
 

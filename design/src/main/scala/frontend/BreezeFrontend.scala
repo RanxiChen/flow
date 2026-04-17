@@ -140,14 +140,15 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     s2_respValid := s2_validReg && icache.io.drsp.valid
 
     when(icache.io.dreq.fire) {
-        s2_validReg := true.B
+        s2_validReg := s1_validReg
         s2_pcReg := s1_pcReg
+        //printf(p"S1: Send cache request for PC=0x${Hexadecimal(s1_pcReg)}\n")
     }.elsewhen(s2_respValid) {
         s2_validReg := false.B
     }
 
     // ===== S2: Cache Response =====
-    icache.io.drsp.ready := true.B
+    icache.io.drsp.ready := s2_validReg
 
     // ===== S3: Cache Response Registers =====
     // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
