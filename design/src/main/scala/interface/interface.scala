@@ -48,6 +48,25 @@ class NativeRespIO(val data_width: Int) extends Bundle {
     val data = UInt(data_width.W)
 }
 
+class BackendMemReq(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
+    val valid = Bool()
+    val isWrite = Bool()
+    val addr = UInt(VLEN.W)
+    val wdata = UInt(64.W)
+    val wmask = UInt(8.W)
+}
+
+class BackendMemResp extends Bundle {
+    val valid = Bool()
+    val data = UInt(64.W)
+    val isWriteAck = Bool()
+}
+
+class BackendMemIO(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
+    val req = new BackendMemReq(VLEN)
+    val rsp = Flipped(new BackendMemResp)
+}
+
 class ICacheReq extends Bundle{
     val addr = UInt(FlowConst.pc_addr_width.W)
 }
@@ -58,6 +77,7 @@ class ICacheResp extends Bundle{
 
 class FrontendRedirectIO(val VLEN: Int = 64) extends Bundle {
     val valid = Bool()
+    val flush = Bool()
     val target = UInt(VLEN.W)
 }
 
