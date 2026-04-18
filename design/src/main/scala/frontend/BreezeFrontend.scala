@@ -101,23 +101,22 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== S0: Next PC Generation =====
     val s0_defaultNextPc = Wire(UInt(cfg.VLEN.W))
-    val s0_backendRedirectSel = Wire(Bool())
-    val s0_fastRedirectSel = Wire(Bool())
+    val redirectValid = Wire(Bool())
+    val redirectTarget = Wire(UInt(cfg.VLEN.W))
     val s0_fallThroughSel = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
     val s1_fire = Wire(Bool())
     val s2_respValid = Wire(Bool())
 
     s0_defaultNextPc := s1_pcReg + 4.U
-    s0_backendRedirectSel := io.beRedirect.valid
-    s0_fastRedirectSel := !s0_backendRedirectSel && s3_fastRedirectValid
-    s0_fallThroughSel := !s0_backendRedirectSel && !s3_fastRedirectValid
+    redirectValid := io.beRedirect.valid || s3_fastRedirectValid
+    redirectTarget := Mux(io.beRedirect.valid, io.beRedirect.target, s3_fastRedirectTarget)
+    s0_fallThroughSel := !redirectValid
     s0_nextPc := Mux(
         reset.asBool,
         io.resetAddr,
         Mux1H(Seq(
-            s0_backendRedirectSel -> io.beRedirect.target,
-            s0_fastRedirectSel -> s3_fastRedirectTarget,
+            redirectValid -> redirectTarget,
             s0_fallThroughSel -> s0_defaultNextPc
         ))
     )
@@ -128,6 +127,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     when(reset.asBool) {
         s1_validReg := true.B
         s1_pcReg := io.resetAddr
+    }.elsewhen(redirectValid) {
+        s1_pcReg := redirectTarget
     }.elsewhen(s1_fire) {
         s1_pcReg := s0_nextPc
     }
@@ -139,7 +140,10 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // ===== S2: Cache Request Tracking =====
     s2_respValid := s2_validReg && icache.io.drsp.valid
 
-    when(icache.io.dreq.fire) {
+    when(reset.asBool || redirectValid) {
+        s2_validReg := false.B
+        s2_pcReg := 0.U
+    }.elsewhen(icache.io.dreq.fire) {
         s2_validReg := s1_validReg
         s2_pcReg := s1_pcReg
         //printf(p"S1: Send cache request for PC=0x${Hexadecimal(s1_pcReg)}\n")
@@ -154,7 +158,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
     // 如果下一拍又有新的返回，S3 会直接被新的返回覆盖。
     s3_validReg := false.B
-    when(s2_respValid) {
+    when(!reset.asBool && !redirectValid && s2_respValid) {
         s3_validReg := true.B
         s3_pcReg := s2_pcReg
         s3_instReg := icache.io.drsp.bits.data
