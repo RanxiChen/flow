@@ -9,28 +9,61 @@ import scala.collection.mutable
 
 class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private val nopInst = BigInt("00000013", 16)
+    private val mask64 = (BigInt(1) << 64) - 1
 
     private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
         val imm12 = imm & 0xfff
-        BigInt((imm12 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x13)
+        (BigInt(imm12) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(0) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x13)
     }
 
     private case class AddiTrace(rd: Int, imm: Int, inst: BigInt)
     private case class LoadCase(name: String, funct3: Int, offset: Int, rspData: BigInt, expectedWb: BigInt)
     private case class StoreCase(name: String, funct3: Int, offset: Int, rs2Value: Int, expectedWdata: BigInt, expectedWmask: BigInt)
+    private case class RTypeCase(
+        name: String,
+        rs1Value: Int,
+        rs2Value: Int,
+        funct3: Int,
+        funct7: Int,
+        expectedAluOut: BigInt
+    )
     private case class ObservedDmemReq(addr: BigInt, isWrite: Boolean, wdata: BigInt, wmask: BigInt)
     private case class PendingDmemResp(addr: BigInt, data: BigInt, isWriteAck: Boolean, cyclesLeft: Int)
 
+    private def u64(value: BigInt): BigInt = value & mask64
+
     private def encodeLoad(rd: Int, rs1: Int, imm: Int, funct3: Int): BigInt = {
         val imm12 = imm & 0xfff
-        BigInt((imm12 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | 0x03)
+        (BigInt(imm12) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x03)
+    }
+
+    private def encodeRType(rd: Int, rs1: Int, rs2: Int, funct3: Int, funct7: Int): BigInt = {
+        (BigInt(funct7) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x33)
     }
 
     private def encodeStore(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
         val imm12 = imm & 0xfff
         val immHi = (imm12 >> 5) & 0x7f
         val immLo = imm12 & 0x1f
-        BigInt((immHi << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) | (immLo << 7) | 0x23)
+        (BigInt(immHi) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(immLo) << 7) |
+        BigInt(0x23)
     }
 
     private def initCore(dut: BreezeCore): Unit = {
@@ -264,6 +297,92 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                         fase.inst_valid.poke(false.B)
                     }
                     dut.clock.step(1)
+                }
+            }
+        }
+    }
+
+    "BreezeCore should execute RV64I R-type ALU instructions through the pipeline" in {
+        val rTypeCases = Seq(
+            RTypeCase("add-basic", 3, 5, funct3 = 0, funct7 = 0x00, expectedAluOut = 8),
+            RTypeCase("add-cancel", -1, 1, funct3 = 0, funct7 = 0x00, expectedAluOut = 0),
+            RTypeCase("sub-basic", 9, 4, funct3 = 0, funct7 = 0x20, expectedAluOut = 5),
+            RTypeCase("sub-negative", 1, 2, funct3 = 0, funct7 = 0x20, expectedAluOut = -1),
+            RTypeCase("and-mask", 0x55, 0x0f, funct3 = 7, funct7 = 0x00, expectedAluOut = 0x05),
+            RTypeCase("and-preserve", -1, 0x12, funct3 = 7, funct7 = 0x00, expectedAluOut = 0x12),
+            RTypeCase("or-mask", 0x50, 0x0f, funct3 = 6, funct7 = 0x00, expectedAluOut = 0x5f),
+            RTypeCase("or-all-ones", 0, -1, funct3 = 6, funct7 = 0x00, expectedAluOut = -1),
+            RTypeCase("xor-mask", 0x5a, 0x0f, funct3 = 4, funct7 = 0x00, expectedAluOut = 0x55),
+            RTypeCase("xor-clear", -1, -1, funct3 = 4, funct7 = 0x00, expectedAluOut = 0),
+            RTypeCase("sll-small", 1, 3, funct3 = 1, funct7 = 0x00, expectedAluOut = 8),
+            RTypeCase("sll-large", 1, 8, funct3 = 1, funct7 = 0x00, expectedAluOut = 0x100),
+            RTypeCase("srl-basic", 0x80, 3, funct3 = 5, funct7 = 0x00, expectedAluOut = 0x10),
+            RTypeCase("srl-unsigned", -1, 4, funct3 = 5, funct7 = 0x00, expectedAluOut = BigInt("0fffffffffffffff", 16)),
+            RTypeCase("sra-negative", -16, 2, funct3 = 5, funct7 = 0x20, expectedAluOut = -4),
+            RTypeCase("sra-all-ones", -1, 8, funct3 = 5, funct7 = 0x20, expectedAluOut = -1),
+            RTypeCase("slt-signed-true", -1, 1, funct3 = 2, funct7 = 0x00, expectedAluOut = 1),
+            RTypeCase("slt-signed-false", 5, 5, funct3 = 2, funct7 = 0x00, expectedAluOut = 0),
+            RTypeCase("sltu-false", -1, 1, funct3 = 3, funct7 = 0x00, expectedAluOut = 0),
+            RTypeCase("sltu-true", 1, -1, funct3 = 3, funct7 = 0x00, expectedAluOut = 1)
+        )
+
+        rTypeCases.foreach { testCase =>
+            withClue(s"R-type case ${testCase.name}: ") {
+                simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+                    val debug = dut.io.debug.get
+                    val rd = 3
+                    val targetInst = encodeRType(rd, rs1 = 1, rs2 = 2, testCase.funct3, testCase.funct7)
+                    val instQueue = mutable.Queue[BigInt](
+                        encodeAddi(rd = 1, rs1 = 0, imm = testCase.rs1Value),
+                        encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value),
+                        nopInst,
+                        nopInst,
+                        nopInst,
+                        nopInst,
+                        targetInst
+                    )
+                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+                    val expectedRs1 = u64(BigInt(testCase.rs1Value))
+                    val expectedRs2 = u64(BigInt(testCase.rs2Value))
+                    val expectedAluOut = u64(testCase.expectedAluOut)
+                    var seenTargetDecode = false
+
+                    initCore(dut)
+
+                    for (_ <- 0 until 64 if !seenTargetDecode) {
+                        seenTargetDecode ||= debug.decodeValid.peek().litToBoolean &&
+                            debug.decodeInst.peek().litValue == targetInst
+                        if (!seenTargetDecode) {
+                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                                throw new AssertionError(
+                                    s"unexpected dmem req in R-type ALU test: addr=0x${req.addr.toString(16)}"
+                                )
+                            }
+                        }
+                    }
+                    seenTargetDecode mustBe true
+                    debug.decodeInst.expect(targetInst.U)
+                    debug.decodePc.expect(0.U)
+
+                    dut.clock.step(1)
+                    debug.idExeValid.expect(true.B)
+                    debug.idExeRs1Addr.expect(1.U)
+                    debug.idExeRs2Addr.expect(2.U)
+                    debug.exeSrc1.expect(expectedRs1.U)
+                    debug.exeSrc2.expect(expectedRs2.U)
+                    debug.exeAluOut.expect(expectedAluOut.U)
+
+                    dut.clock.step(1)
+                    debug.exeMemValid.expect(true.B)
+                    debug.exeMemRdAddr.expect(rd.U)
+                    debug.exeMemData.expect(expectedAluOut.U)
+
+                    dut.clock.step(1)
+                    debug.memWbValid.expect(true.B)
+                    debug.wbData.expect(expectedAluOut.U)
+
+                    observedReqs mustBe empty
                 }
             }
         }
