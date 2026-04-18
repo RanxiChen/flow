@@ -263,7 +263,9 @@ class BreezeBackend(
         (idExeReg.rs1_addr =/= 0.U && idExeReg.rs1_addr === exeMemReg.rd_addr) ||
         (idExeReg.rs2_addr =/= 0.U && idExeReg.rs2_addr === exeMemReg.rd_addr)
     )
-    pipelineHold := (memWaitingRespReg && !io.dmem.rsp.valid) || loadUseHazard
+    // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
+    // overwritten before the outstanding memory operation receives a response.
+    pipelineHold := memReqIssued || (memWaitingRespReg && !io.dmem.rsp.valid) || loadUseHazard
 
     csrFile.io.csr_addr := exeMemReg.csr_addr
     csrFile.io.csr_cmd := exeMemReg.csr_cmd
