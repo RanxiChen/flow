@@ -109,6 +109,8 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val decodeInst = Output(UInt(32.W))
     val decodePc = Output(UInt(VLEN.W))
     val idExeValid = Output(Bool())
+    val idExeInst = Output(UInt(32.W))
+    val idExePc = Output(UInt(VLEN.W))
     val idExeRs1Addr = Output(UInt(5.W))
     val idExeRs2Addr = Output(UInt(5.W))
     val idExeSrc1 = Output(UInt(VLEN.W))
@@ -119,6 +121,7 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val exeBruTaken = Output(Bool())
     val exeJumpAddr = Output(UInt(VLEN.W))
     val exeMemValid = Output(Bool())
+    val exeMemPc = Output(UInt(VLEN.W))
     val exeMemData = Output(UInt(VLEN.W))
     val exeMemRdAddr = Output(UInt(5.W))
     val memWaitingResp = Output(Bool())
@@ -127,6 +130,7 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val exeBypassRs1 = Output(UInt(VLEN.W))
     val exeBypassRs2 = Output(UInt(VLEN.W))
     val loadUseHazard = Output(Bool())
+    val redirectValid = Output(Bool())
 }
 
 class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
