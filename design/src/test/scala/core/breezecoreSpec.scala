@@ -5,6 +5,7 @@ import chisel3.simulator.scalatest.ChiselSim
 import flow.config.BreezeCoreConfig
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import scala.collection.mutable
 
 class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private val nopInst = BigInt("00000013", 16)
@@ -17,6 +18,8 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private case class AddiTrace(rd: Int, imm: Int, inst: BigInt)
     private case class LoadCase(name: String, funct3: Int, offset: Int, rspData: BigInt, expectedWb: BigInt)
     private case class StoreCase(name: String, funct3: Int, offset: Int, rs2Value: Int, expectedWdata: BigInt, expectedWmask: BigInt)
+    private case class ObservedDmemReq(addr: BigInt, isWrite: Boolean, wdata: BigInt, wmask: BigInt)
+    private case class PendingDmemResp(addr: BigInt, data: BigInt, isWriteAck: Boolean, cyclesLeft: Int)
 
     private def encodeLoad(rd: Int, rs1: Int, imm: Int, funct3: Int): BigInt = {
         val imm12 = imm & 0xfff
@@ -99,20 +102,65 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
-    private def sendDmemRspAfter(
+    private def stepWithFakeDrivers(
         dut: BreezeCore,
-        delayCycles: Int,
-        data: BigInt,
-        isWriteAck: Boolean
+        instQueue: mutable.Queue[BigInt],
+        pendingDmemResps: mutable.Queue[PendingDmemResp],
+        observedReqs: mutable.ArrayBuffer[ObservedDmemReq]
+    )(
+        mkResponse: ObservedDmemReq => PendingDmemResp
     ): Unit = {
-        dut.clock.step(delayCycles)
-        dut.io.dmem.rsp.valid.poke(true.B)
-        dut.io.dmem.rsp.data.poke(data.U)
-        dut.io.dmem.rsp.isWriteAck.poke(isWriteAck.B)
+        val fase = dut.io.fase.get
+        val dmemReq = dut.io.dmem.req
+        val dmemRsp = dut.io.dmem.rsp
+        val driveRespThisCycle = pendingDmemResps.headOption.exists(_.cyclesLeft == 0)
+
+        if (instQueue.nonEmpty && fase.inst_ready.peek().litToBoolean) {
+            fase.inst_valid.poke(true.B)
+            fase.instruction.poke(instQueue.dequeue().U)
+        } else {
+            fase.inst_valid.poke(false.B)
+            fase.instruction.poke(0.U)
+        }
+
+        pendingDmemResps.headOption match {
+            case Some(resp) if driveRespThisCycle =>
+                dmemRsp.valid.poke(true.B)
+                dmemRsp.data.poke(resp.data.U)
+                dmemRsp.isWriteAck.poke(resp.isWriteAck.B)
+            case _ =>
+                dmemRsp.valid.poke(false.B)
+                dmemRsp.data.poke(0.U)
+                dmemRsp.isWriteAck.poke(false.B)
+        }
+
+        if (dmemReq.valid.peek().litToBoolean) {
+            val observedReq = ObservedDmemReq(
+                addr = dmemReq.addr.peek().litValue,
+                isWrite = dmemReq.isWrite.peek().litToBoolean,
+                wdata = dmemReq.wdata.peek().litValue,
+                wmask = dmemReq.wmask.peek().litValue
+            )
+            observedReqs += observedReq
+            pendingDmemResps.enqueue(mkResponse(observedReq))
+        }
+
         dut.clock.step(1)
-        dut.io.dmem.rsp.valid.poke(false.B)
-        dut.io.dmem.rsp.data.poke(0.U)
-        dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+        fase.inst_valid.poke(false.B)
+        fase.instruction.poke(0.U)
+        dmemRsp.valid.poke(false.B)
+        dmemRsp.data.poke(0.U)
+        dmemRsp.isWriteAck.poke(false.B)
+
+        if (driveRespThisCycle) {
+            pendingDmemResps.dequeue()
+        }
+        val decremented = pendingDmemResps.map { resp =>
+            resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
+        }
+        pendingDmemResps.clear()
+        pendingDmemResps ++= decremented
     }
 
     "BreezeCore should retire a single addi instruction from FASE input" in {
@@ -233,46 +281,46 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         loadCases.foreach { testCase =>
             withClue(s"load case ${testCase.name}: ") {
                 simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+                    val debug = dut.io.debug.get
+                    val instQueue = mutable.Queue[BigInt](
+                        encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
+                        nopInst,
+                        nopInst,
+                        nopInst,
+                        nopInst,
+                        encodeLoad(rd = 3, rs1 = 1, imm = testCase.offset, funct3 = testCase.funct3)
+                    )
+                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+                    var seenExpectedWb = false
+
                     initCore(dut)
 
-                    enqueueFaseInstruction(dut, encodeAddi(rd = 1, rs1 = 0, imm = 0x20))
-                    enqueueNopsUntilWbObserved(dut, nopCount = 4, expectedWb = 0x20)
-
-                    enqueueFaseInstruction(dut, encodeLoad(rd = 3, rs1 = 1, imm = testCase.offset, funct3 = testCase.funct3))
-
-                    withClue(s"waiting for dmem req in ${testCase.name}: ") {
-                        stepUntil(dut, maxCycles = 32) { dut.io.dmem.req.valid.peek().litToBoolean }
-                    }
-                    if (testCase.name == "lb") {
-                        println(
-                            f"[lb-debug] req: valid=${dut.io.dmem.req.valid.peek().litToBoolean} " +
-                            f"isWrite=${dut.io.dmem.req.isWrite.peek().litToBoolean} " +
-                            f"addr=0x${dut.io.dmem.req.addr.peek().litValue}%x " +
-                            f"exeMemValid=${dut.io.debug.get.exeMemValid.peek().litToBoolean} " +
-                            f"memWaitingResp=${dut.io.debug.get.memWaitingResp.peek().litToBoolean}"
-                        )
-                    }
-                    dut.io.dmem.req.isWrite.expect(false.B)
-                    dut.io.dmem.req.addr.expect(0x20.U)
-
-                    sendDmemRspAfter(dut, delayCycles = 3, data = testCase.rspData, isWriteAck = false)
-                    if (testCase.name == "lb") {
-                        for (cycle <- 0 until 6) {
-                            println(
-                                f"[lb-debug] post-rsp cycle $cycle: " +
-                                f"exeMemValid=${dut.io.debug.get.exeMemValid.peek().litToBoolean} " +
-                                f"exeMemData=0x${dut.io.debug.get.exeMemData.peek().litValue}%x " +
-                                f"memWaitingResp=${dut.io.debug.get.memWaitingResp.peek().litToBoolean} " +
-                                f"memWbValid=${dut.io.debug.get.memWbValid.peek().litToBoolean} " +
-                                f"wbData=0x${dut.io.debug.get.wbData.peek().litValue}%x"
-                            )
-                            dut.clock.step(1)
+                    for (_ <- 0 until 64 if !seenExpectedWb) {
+                        if (dut.io.dmem.req.valid.peek().litToBoolean) {
+                            dut.io.dmem.req.isWrite.expect(false.B)
+                            dut.io.dmem.req.addr.expect(0x20.U)
+                        }
+                        seenExpectedWb ||= debug.memWbValid.peek().litToBoolean &&
+                            debug.wbData.peek().litValue == testCase.expectedWb
+                        if (!seenExpectedWb) {
+                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                                if (req.addr != BigInt(0x20) || req.isWrite) {
+                                    throw new AssertionError(
+                                        s"unexpected load req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
+                                    )
+                                }
+                                PendingDmemResp(req.addr, testCase.rspData, isWriteAck = false, cyclesLeft = 6)
+                            }
                         }
                     }
-                    withClue(s"waiting for memWbValid in ${testCase.name}: ") {
-                        stepUntil(dut, maxCycles = 32) { dut.io.debug.get.memWbValid.peek().litToBoolean }
+
+                    withClue(s"observed reqs in ${testCase.name}: ") {
+                        observedReqs.count(_.addr == BigInt(0x20)) mustBe 1
                     }
-                    dut.io.debug.get.wbData.expect(testCase.expectedWb.U)
+                    withClue(s"waiting for memWbValid in ${testCase.name}: ") {
+                        seenExpectedWb mustBe true
+                    }
                 }
             }
         }
@@ -288,22 +336,41 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         storeCases.foreach { testCase =>
             simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
                 val debug = dut.io.debug.get
+                val instQueue = mutable.Queue[BigInt](
+                    encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
+                    encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value),
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    encodeStore(rs1 = 1, rs2 = 2, imm = testCase.offset, funct3 = testCase.funct3)
+                )
+                val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+                val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+                var seenStoreAck = false
+
                 initCore(dut)
 
-                enqueueFaseInstruction(dut, encodeAddi(rd = 1, rs1 = 0, imm = 0x20))
-                enqueueFaseInstruction(dut, encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value))
-                enqueueNopsUntilWbObserved(dut, nopCount = 4, expectedWb = testCase.rs2Value)
+                for (_ <- 0 until 64 if !seenStoreAck) {
+                    seenStoreAck ||= observedReqs.nonEmpty && !debug.memWaitingResp.peek().litToBoolean
+                    if (!seenStoreAck) {
+                        stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                            if (!req.isWrite || req.addr != BigInt(0x20)) {
+                                throw new AssertionError(
+                                    s"unexpected store req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
+                                )
+                            }
+                            PendingDmemResp(req.addr, data = 0, isWriteAck = true, cyclesLeft = 6)
+                        }
+                    }
+                }
 
-                enqueueFaseInstruction(dut, encodeStore(rs1 = 1, rs2 = 2, imm = testCase.offset, funct3 = testCase.funct3))
-
-                stepUntil(dut, maxCycles = 32) { dut.io.dmem.req.valid.peek().litToBoolean }
-                dut.io.dmem.req.isWrite.expect(true.B)
-                dut.io.dmem.req.addr.expect(0x20.U)
-                dut.io.dmem.req.wdata.expect(testCase.expectedWdata.U)
-                dut.io.dmem.req.wmask.expect(testCase.expectedWmask.U)
-
-                sendDmemRspAfter(dut, delayCycles = 3, data = 0, isWriteAck = true)
-                stepUntil(dut, maxCycles = 32) { !debug.memWaitingResp.peek().litToBoolean }
+                observedReqs.length mustBe 1
+                observedReqs.head.isWrite mustBe true
+                observedReqs.head.addr mustBe BigInt(0x20)
+                observedReqs.head.wdata mustBe testCase.expectedWdata
+                observedReqs.head.wmask mustBe testCase.expectedWmask
+                seenStoreAck mustBe true
             }
         }
     }
