@@ -26,6 +26,8 @@ class BreezeBackend(
     val csrFile = Module(new CSRFile(cfg.VLEN))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN)))
 
+    val decodeReady = Wire(Bool())
+    val decodeFire = Wire(Bool())
     val decodeValid = io.fetchBuffer.valid
     val decodePc = Mux(decodeValid, io.fetchBuffer.bits.pc, 0.U(cfg.VLEN.W))
     val decodeInst = Mux(decodeValid, io.fetchBuffer.bits.inst, nopInst)
@@ -126,8 +128,8 @@ class BreezeBackend(
         idExeReg.imm := 0.U
         idExeReg.src1 := 0.U
         idExeReg.src2 := 0.U
-    }.elsewhen(!pipelineHold) {
-        idExeReg.valid := decodeValid
+    }.elsewhen(decodeFire) {
+        idExeReg.valid := true.B
         idExeReg.pc := decodePc
         idExeReg.inst := decodeInst
         idExeReg.pred := io.fetchBuffer.bits.pred
@@ -140,6 +142,35 @@ class BreezeBackend(
         idExeReg.imm := immGen.io.imm
         idExeReg.src1 := src1
         idExeReg.src2 := src2
+    }.elsewhen(decodeReady) {
+        idExeReg.valid := false.B
+        idExeReg.pc := 0.U
+        idExeReg.inst := nopInst
+        idExeReg.pred.predType := FrontendPredType.NONE
+        idExeReg.pred.predTaken := false.B
+        idExeReg.pred.predPc := 0.U
+        idExeReg.ctrl.alu_op := ALU_OP.XXX.U
+        idExeReg.ctrl.bru_op := BRU_OP.XXX.U
+        idExeReg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
+        idExeReg.ctrl.sel_alu2 := SEL_ALU2.XXX.U
+        idExeReg.ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
+        idExeReg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
+        idExeReg.ctrl.redir_inst := false.B
+        idExeReg.ctrl.bru_inst := false.B
+        idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+        idExeReg.ctrl.sel_wb := SEL_WB.XXX.U
+        idExeReg.ctrl.wb_en := false.B
+        idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
+        idExeReg.ctrl.csr_addr := 0.U
+        idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
+        idExeReg.rs1_addr := 0.U
+        idExeReg.rs2_addr := 0.U
+        idExeReg.rd_addr := 0.U
+        idExeReg.rs1_data := 0.U
+        idExeReg.rs2_data := 0.U
+        idExeReg.imm := 0.U
+        idExeReg.src1 := 0.U
+        idExeReg.src2 := 0.U
     }
 
     alu.io.alu_op := idExeReg.ctrl.alu_op
@@ -273,7 +304,7 @@ class BreezeBackend(
     csrFile.io.rs1_id := exeMemReg.rs1_addr
     csrFile.io.rd_id := exeMemReg.rd_addr
 
-    when(reset.asBool || redirectNeeded) {
+    when(reset.asBool) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.inst := nopInst
@@ -309,7 +340,7 @@ class BreezeBackend(
         exeMemReg.actual_target := actualTarget
     }
 
-    when(reset.asBool || redirectNeeded) {
+    when(reset.asBool) {
         memWaitingRespReg := false.B
     }.elsewhen(memRspFire) {
         memWaitingRespReg := false.B
@@ -317,7 +348,7 @@ class BreezeBackend(
         memWaitingRespReg := true.B
     }
 
-    when(reset.asBool || redirectNeeded) {
+    when(reset.asBool) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
@@ -349,7 +380,9 @@ class BreezeBackend(
         memWbReg.csr_data := csrFile.io.csr_wdata
     }
 
-    io.fetchBuffer.ready := !pipelineHold
+    decodeReady := !pipelineHold && !redirectNeeded
+    decodeFire := decodeValid && decodeReady
+    io.fetchBuffer.ready := decodeReady
 
     io.dmem.req.valid := memReqIssued
     io.dmem.req.isWrite := exeMemIsStore
