@@ -567,3 +567,198 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 }
+
+class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val mask64 = (BigInt(1) << 64) - 1
+
+    private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
+        val imm12 = imm & 0xfff
+        (BigInt(imm12) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(0) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x13)
+    }
+
+    private def buildRefillLine(words: Seq[BigInt]): BigInt = {
+        words.zipWithIndex.foldLeft(BigInt(0)) { case (acc, (word, idx)) =>
+            acc | ((word & BigInt("ffffffff", 16)) << (idx * 32))
+        }
+    }
+
+    private def stepUntil(
+        dut: BreezeCore,
+        maxCycles: Int = 64
+    )(cond: => Boolean): Unit = {
+        var cycles = 0
+        while (!cond && cycles < maxCycles) {
+            dut.clock.step(1)
+            cycles += 1
+        }
+        assert(cond, s"condition not met within $maxCycles cycles")
+    }
+
+    private def logCoreTimeline(dut: BreezeCore, cycle: Int, tag: String): Unit = {
+        val frontendDebug = dut.io.frontendDebug.get
+        val backendDebug = dut.io.debug.get
+        println(
+          f"[NoFASE][$tag] cycle=$cycle%02d " +
+            f"req=${dut.io.nextLevelReq.req.peek().litToBoolean} " +
+            f"paddr=0x${dut.io.nextLevelReq.paddr.peek().litValue}%x " +
+            f"rsp=${dut.io.nextLevelRsp.vld.peek().litToBoolean} " +
+            f"| s1(pc=0x${frontendDebug.s1_pcReg.peek().litValue}%x,v=${frontendDebug.s1_valid.peek().litToBoolean},fire=${frontendDebug.dreq_fire.peek().litToBoolean}) " +
+            f"s2(pc=0x${frontendDebug.s2_pcReg.peek().litValue}%x,v=${frontendDebug.s2_valid.peek().litToBoolean},resp=${frontendDebug.s2_respValid.peek().litToBoolean}) " +
+            f"s3(pc=0x${frontendDebug.s3_pcReg.peek().litValue}%x,v=${frontendDebug.s3_valid.peek().litToBoolean}) " +
+            f"| decode(v=${backendDebug.decodeValid.peek().litToBoolean},pc=0x${backendDebug.decodePc.peek().litValue}%x) " +
+            f"idExe(v=${backendDebug.idExeValid.peek().litToBoolean}) " +
+            f"exeMem(v=${backendDebug.exeMemValid.peek().litToBoolean}) " +
+            f"memWb(v=${backendDebug.memWbValid.peek().litToBoolean},wb=0x${backendDebug.wbData.peek().litValue}%x)"
+        )
+    }
+
+    "BreezeCore should stall in frontend s2 on a single icache miss and then flow without extra bubbles" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val frontendDebug = dut.io.frontendDebug.get
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+            val refillInstWords = Seq.tabulate(8)(i => encodeAddi(rd = i + 1, rs1 = 0, imm = i + 1))
+            val refillLine = buildRefillLine(refillInstWords)
+            var cycle = 0
+
+            dut.io.resetAddr.poke(0.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            logCoreTimeline(dut, cycle, "after-reset")
+            cycle += 1
+
+            frontendDebug.s1_pcReg.expect(0.U)
+            frontendDebug.dreq_fire.expect(true.B)
+            frontendDebug.s2_valid.expect(false.B)
+            frontendDebug.s3_valid.expect(false.B)
+            backendDebug.decodeValid.expect(false.B)
+
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+            logCoreTimeline(dut, cycle, "first-miss-detect")
+            cycle += 1
+
+            frontendDebug.cache_s1_valid.expect(true.B)
+            frontendDebug.cache_s1_hit.expect(false.B)
+
+            var observedMissReq = false
+            var missReqWaitCycles = 0
+            while (!observedMissReq && missReqWaitCycles < 16) {
+                logCoreTimeline(dut, cycle, s"wait-miss-req-$missReqWaitCycles")
+                observedMissReq = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (!observedMissReq) {
+                    dut.clock.step(1)
+                    cycle += 1
+                    missReqWaitCycles += 1
+                }
+            }
+            assert(observedMissReq, "miss request was not observed within 16 cycles")
+
+            frontendDebug.s2_valid.expect(true.B)
+            frontendDebug.s2_pcReg.expect(0.U)
+            frontendDebug.s3_valid.expect(false.B)
+            backendDebug.decodeValid.expect(false.B)
+
+            val missAddr = dut.io.nextLevelReq.paddr.peek().litValue
+            missAddr mustBe BigInt(0)
+
+            for (waitIdx <- 0 until refillDelayCycles) {
+                logCoreTimeline(dut, cycle, s"stall-in-s2-$waitIdx")
+                dut.io.nextLevelRsp.vld.expect(false.B)
+                frontendDebug.s2_valid.expect(true.B)
+                frontendDebug.s2_pcReg.expect(0.U)
+                frontendDebug.s3_valid.expect(false.B)
+                backendDebug.decodeValid.expect(false.B)
+                dut.clock.step(1)
+                cycle += 1
+            }
+
+            dut.io.nextLevelRsp.vld.poke(true.B)
+            dut.io.nextLevelRsp.data.poke(refillLine.U)
+            logCoreTimeline(dut, cycle, "drive-refill")
+            dut.clock.step(1)
+            cycle += 1
+
+            frontendDebug.s3_valid.expect(false.B)
+            backendDebug.decodeValid.expect(false.B)
+
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            logCoreTimeline(dut, cycle, "refill-accepted")
+            dut.clock.step(1)
+            cycle += 1
+
+            logCoreTimeline(dut, cycle, "s2-resp-visible")
+            frontendDebug.s2_respValid.expect(true.B)
+            frontendDebug.s2_valid.expect(true.B)
+            frontendDebug.s2_pcReg.expect(4.U)
+
+            dut.clock.step(1)
+            cycle += 1
+
+            logCoreTimeline(dut, cycle, "s3-visible")
+            frontendDebug.s3_valid.expect(true.B)
+            frontendDebug.s3_pcReg.expect(4.U)
+            frontendDebug.s2_valid.expect(true.B)
+            frontendDebug.s2_pcReg.expect(8.U)
+
+            stepUntil(dut) {
+                backendDebug.decodeValid.peek().litToBoolean && backendDebug.decodePc.peek().litValue == 0
+            }
+            logCoreTimeline(dut, cycle, "decode-pc0")
+            backendDebug.decodeInst.expect(refillInstWords.head.U)
+
+            dut.clock.step(1)
+            cycle += 1
+            logCoreTimeline(dut, cycle, "decode-pc4-idexe-pc0")
+            backendDebug.idExeValid.expect(true.B)
+            backendDebug.decodeValid.expect(true.B)
+            backendDebug.decodePc.expect(4.U)
+            backendDebug.decodeInst.expect(refillInstWords(1).U)
+
+            dut.clock.step(1)
+            cycle += 1
+            logCoreTimeline(dut, cycle, "decode-pc8-exemem-pc0")
+            backendDebug.idExeValid.expect(true.B)
+            backendDebug.exeMemValid.expect(true.B)
+            backendDebug.decodeValid.expect(true.B)
+            backendDebug.decodePc.expect(8.U)
+            backendDebug.decodeInst.expect(refillInstWords(2).U)
+
+            dut.clock.step(1)
+            cycle += 1
+            logCoreTimeline(dut, cycle, "decode-pc12-memwb-pc0")
+            backendDebug.idExeValid.expect(true.B)
+            backendDebug.exeMemValid.expect(true.B)
+            backendDebug.memWbValid.expect(true.B)
+            backendDebug.wbData.expect(1.U)
+            backendDebug.decodeValid.expect(true.B)
+            backendDebug.decodePc.expect(12.U)
+            backendDebug.decodeInst.expect(refillInstWords(3).U)
+
+            dut.clock.step(1)
+            cycle += 1
+            logCoreTimeline(dut, cycle, "steady-state-1")
+            backendDebug.idExeValid.expect(true.B)
+            backendDebug.exeMemValid.expect(true.B)
+            backendDebug.memWbValid.expect(true.B)
+            backendDebug.wbData.expect(2.U)
+            dut.clock.step(1)
+            cycle += 1
+            logCoreTimeline(dut, cycle, "steady-state-2")
+            backendDebug.exeMemValid.expect(true.B)
+            backendDebug.memWbValid.expect(true.B)
+            backendDebug.wbData.expect(3.U)
+        }
+    }
+}

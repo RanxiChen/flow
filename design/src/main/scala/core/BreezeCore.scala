@@ -6,7 +6,7 @@ import flow.backend.BreezeBackend
 import flow.buffer.FASEFetchBuffer
 import flow.buffer.FetchBuffer
 import flow.config._
-import flow.frontend.BreezeFrontend
+import flow.frontend.{BreezeFrontend, BreezeFrontendDebugIO}
 import flow.interface._
 
 class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false) extends Module {
@@ -16,10 +16,11 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
         val dmem = new BackendMemIO(corecfg.VLEN)
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
+        val frontendDebug = if (enabledebug) Some(new BreezeFrontendDebugIO(corecfg.VLEN)) else None
         val debug = if (enabledebug) Some(new BackendDebugIO(corecfg.VLEN)) else None
     })
 
-    val frontend = Module(new BreezeFrontend(corecfg.frontendCfg))
+    val frontend = Module(new BreezeFrontend(corecfg.frontendCfg, enabledebug = enabledebug))
     val buffer = Module(new FetchBuffer(corecfg.VLEN, 6))
     val backend = Module(new BreezeBackend(corecfg.backendCfg, enabledebug = enabledebug))
 
@@ -33,6 +34,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
 
     backend.io.resetAddr := io.resetAddr
     io.dmem <> backend.io.dmem
+    io.frontendDebug.foreach(_ <> frontend.io.debug.get)
     io.debug.foreach(_ <> backend.io.debug.get)
 
     if (corecfg.useFASE) {
