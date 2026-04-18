@@ -37,3 +37,28 @@ class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
         "FetchBuffer overflow: frontend pushed data when FIFO could not accept it"
     )
 }
+
+class FASEFetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
+    require(entries > 0, "FetchBuffer entries must be positive")
+
+    val io = IO(new Bundle {
+        val in = Flipped(Decoupled(new FrontendFetchBundle(VLEN)))
+        val out = Decoupled(new FrontendFetchBundle(VLEN))
+        val flush = Input(Bool())
+    })
+
+    val fifo = Module(
+        new Queue(
+            gen = new FrontendFetchBundle(VLEN),
+            entries = entries,
+            pipe = false,
+            flow = false,
+            useSyncReadMem = false,
+            hasFlush = true
+        )
+    )
+
+    fifo.io.enq <> io.in
+    io.out <> fifo.io.deq
+    fifo.io.flush.get := io.flush
+}

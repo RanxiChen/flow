@@ -1,7 +1,7 @@
-package core
+package flow.core
 import chisel3._
 import chisel3.util._
-import core.IMM_TYPE.CSR_Type
+import flow.core.IMM_TYPE.CSR_Type
 
 class EXE_Ctrl extends Bundle {
     val alu_op = Output(UInt(ALU_OP.width.W))
