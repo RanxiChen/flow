@@ -6,17 +6,11 @@ Load instruction pipeline execution path loses the outstanding memory operation 
 
 ## Status
 
-open
+fixed
 
 ## Symptom
 
-`BreezeCore` can issue a data-memory request for a load instruction, but the load does not always reach architectural writeback through the normal pipeline observation path.
-
-The current dedicated regression fails on the `lb` case:
-
-- request is observed on `io.dmem.req`
-- the test returns a response on `io.dmem.rsp`
-- but the testcase still fails while waiting for the normal `memWbValid` observation window
+`BreezeCore` previously could issue a data-memory request for a load instruction and generate the correct loaded value internally, while the dedicated regression still failed because the outstanding memory operation and the testcase observation window were not aligned robustly enough.
 
 ## Expected
 
@@ -29,11 +23,12 @@ For a load instruction, after `io.dmem.req.valid` is observed and a matching res
 
 ## Repro
 
-Current failing reproduction:
+Resolved reproduction coverage:
 
 - `design/src/test/scala/core/breezecoreSpec.scala`
 - `flow.core.BreezeCoreSpec`
 - `"BreezeCore should execute supported RV64I load instructions through dmem"`
+- `"BreezeCore should execute supported RV64I store instructions through dmem"`
 
 Run:
 
@@ -44,14 +39,13 @@ sbt "testOnly flow.core.BreezeCoreSpec"
 
 Current result:
 
-- arithmetic tests pass
-- store-path test passes
-- load-path test fails
-- failing subcase: `load case lb`
+- arithmetic pipeline tests pass
+- load-path regression passes
+- store-path regression passes
 
 ## Evidence
 
-Current debug output from the failing `lb` reproduction:
+The earlier failing `lb` debug output was:
 
 ```text
 [lb-debug] req: valid=true isWrite=false addr=0x20 exeMemValid=true memWaitingResp=false
@@ -59,34 +53,33 @@ Current debug output from the failing `lb` reproduction:
 [lb-debug] post-rsp cycle 1: exeMemValid=false exeMemData=0x0 memWaitingResp=false memWbValid=false wbData=0x0
 ```
 
-This shows:
+That showed:
 
 - the load request is issued correctly
 - the response can still generate the expected loaded value
-- but the load wait/hold behavior around the pipeline is inconsistent
-- the observation window for normal load completion is fragile enough that the testcase still fails
+- but the old testcase observed writeback through a fragile one-cycle window and still reported failure
 
-## Current Hypothesis
+## Root Cause
 
-The load pipeline path has a state-retention problem around the memory request / response window.
+This issue had two parts:
 
-More specifically:
+- The backend load path needed to hold pipeline state in the memory request / response window so the outstanding memory operation was not overwritten before completion.
+- The old testcase drove memory responses with ad-hoc `step` sequencing and then tried to observe a one-cycle `memWbValid` pulse after advancing past it.
 
-- the outstanding load state is not being held in a robust way through the full request/response/writeback sequence
-- `exeMemReg`, `memWaitingRespReg`, and `memWbReg` timing interact in a way that makes load completion dependent on a narrow cycle window
-- stores are less affected because they do not need the same final loaded-data writeback path
+In other words, the core pipeline needed stronger state retention, and the regression itself needed a deterministic memory driver instead of manual cycle-by-cycle pokes.
 
-One mitigation has already been tried:
+## Resolution
 
-- hold the pipeline in the memory request cycle (`memReqIssued`) so `exeMemReg` is not overwritten immediately
+This bug is considered fixed.
 
-That improved the situation enough to expose a correct `wbData` pulse in debug, but the bug is not considered resolved yet.
+- The core pipeline was fixed by holding the backend pipeline in the memory request cycle so the outstanding memory operation remains alive across request, wait, response, and writeback handling.
+- The regression testcase was rewritten around a fake instruction queue plus a deterministic dmem driver.
+- Instructions are now issued only when `inst_ready` is high.
+- Memory requests are observed and recorded centrally.
+- Matching dmem responses or write acks are returned after a fixed 6-cycle delay.
+- Load and store regressions now use the same driver structure.
 
-## Current Resolution State
-
-Unresolved.
-
-This bug note exists to preserve the current failing reproduction and the latest evidence while debugging continues.
+This removes the previous fragile observation pattern and verifies the fixed core pipeline behavior through a stable end-to-end regression.
 
 ## Related Files
 
