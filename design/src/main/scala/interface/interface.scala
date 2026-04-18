@@ -2,6 +2,7 @@ package flow.interface
 
 import chisel3._
 import chisel3.util._
+import flow.core._
 
 object FlowConst{
     val pc_addr_width = 64
@@ -103,6 +104,77 @@ class FrontendFetchBufferIO(val VLEN: Int = 64) extends Bundle {
     val canAccept3 = Input(Bool())
 }
 
+class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
+    val decodeValid = Output(Bool())
+    val decodeInst = Output(UInt(32.W))
+    val decodePc = Output(UInt(VLEN.W))
+    val idExeValid = Output(Bool())
+    val idExeRs1Addr = Output(UInt(5.W))
+    val idExeRs2Addr = Output(UInt(5.W))
+    val idExeSrc1 = Output(UInt(VLEN.W))
+    val idExeSrc2 = Output(UInt(VLEN.W))
+    val exeSrc1 = Output(UInt(VLEN.W))
+    val exeSrc2 = Output(UInt(VLEN.W))
+    val exeAluOut = Output(UInt(VLEN.W))
+    val exeBruTaken = Output(Bool())
+    val exeJumpAddr = Output(UInt(VLEN.W))
+    val exeMemValid = Output(Bool())
+    val exeMemData = Output(UInt(VLEN.W))
+    val exeMemRdAddr = Output(UInt(5.W))
+    val memWaitingResp = Output(Bool())
+    val memWbValid = Output(Bool())
+    val wbData = Output(UInt(VLEN.W))
+    val exeBypassRs1 = Output(UInt(VLEN.W))
+    val exeBypassRs2 = Output(UInt(VLEN.W))
+    val loadUseHazard = Output(Bool())
+}
+
+class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(VLEN.W)
+    val inst = UInt(32.W)
+    val pred = new FrontendPredInfo(VLEN)
+    val ctrl = new EXE_Ctrl
+    val rs1_addr = UInt(5.W)
+    val rs2_addr = UInt(5.W)
+    val rd_addr = UInt(5.W)
+    val rs1_data = UInt(VLEN.W)
+    val rs2_data = UInt(VLEN.W)
+    val imm = UInt(VLEN.W)
+    val src1 = UInt(VLEN.W)
+    val src2 = UInt(VLEN.W)
+}
+
+class BreezeBackendEXEMEM(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(VLEN.W)
+    val inst = UInt(32.W)
+    val pred = new FrontendPredInfo(VLEN)
+    val data = UInt(VLEN.W)
+    val rs2_data = UInt(VLEN.W)
+    val mem_cmd = UInt(MEM_TYPE.width.W)
+    val rd_addr = UInt(5.W)
+    val rs1_addr = UInt(5.W)
+    val csr_addr = UInt(12.W)
+    val csr_cmd = UInt(CSR_CMD.width.W)
+    val wb_en = Bool()
+    val wb_sel = UInt(SEL_WB.width.W)
+    val actual_taken = Bool()
+    val actual_target = UInt(VLEN.W)
+}
+
+class BreezeBackendMEMWB(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(VLEN.W)
+    val inst = UInt(32.W)
+    val wb_en = Bool()
+    val wb_sel = UInt(SEL_WB.width.W)
+    val rd_addr = UInt(5.W)
+    val alu_data = UInt(VLEN.W)
+    val mem_data = UInt(VLEN.W)
+    val csr_data = UInt(VLEN.W)
+}
+
 //from cache
 class ICacheIO extends Bundle{
     val req = Flipped(Decoupled(new ICacheReq))
@@ -198,4 +270,10 @@ class L1CacheMissReqIO(val PLEN:Int = 64) extends Bundle{
 class L1CacheMissRespIO(val ICACHE_LINE_WIDTH:Int = 256) extends Bundle {
     val data = Input(UInt(ICACHE_LINE_WIDTH.W))
     val vld = Input(Bool())
+}
+
+class FASECoreIO() extends Bundle {
+    val instruction = Input(UInt(32.W))
+    val inst_ready = Output(Bool())
+    val inst_valid = Input(Bool())
 }
