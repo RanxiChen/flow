@@ -1,8 +1,8 @@
-package core
+package flow.core
 
 import chisel3._
 import chisel3.util._
-import top._
+import flow.top._
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
