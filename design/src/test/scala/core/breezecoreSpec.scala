@@ -788,6 +788,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val branchPc = BigInt(0x8)
             val targetPc = BigInt(0x40)
             val branchInst = encodeBranch(rs1 = 1, rs2 = 2, imm = (targetPc - branchPc).toInt, funct3 = 0)
+            val targetFirstInst = encodeAddi(rd = 5, rs1 = 0, imm = 42)
             val fallbackLine = buildRefillLine(Seq.fill(8)(BigInt("deadbeef", 16)))
             val lineMap = Map(
                 BigInt(0x0) -> buildRefillLine(Seq(
@@ -818,6 +819,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var checkedRedirectFlush = false
             var seenRedirectedS2 = false
             var seenRedirectedS3 = false
+            var seenRedirectedDecode = false
             var cycle = 0
 
             dut.io.resetAddr.poke(0.U)
@@ -831,7 +833,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.clock.step(1)
             dut.reset.poke(false.B)
 
-            while (cycle < 200 && !seenRedirectedS3) {
+            while (cycle < 200 && !seenRedirectedDecode) {
                 pendingIcacheResps.headOption match {
                     case Some(resp) if resp.cyclesLeft == 0 =>
                         dut.io.nextLevelRsp.vld.poke(true.B)
@@ -892,18 +894,24 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                     backendDebug.decodeValid.expect(false.B)
                     backendDebug.idExeValid.expect(false.B)
                     backendDebug.exeMemValid.expect(false.B)
-                    backendDebug.memWbValid.expect(true.B)
                     seenRedirectedS2 = true
                 } else if (seenRedirectedS2 && !seenRedirectedS3) {
                     backendDebug.decodeValid.expect(false.B)
                     backendDebug.idExeValid.expect(false.B)
                     if (frontendDebug.s3_valid.peek().litToBoolean) {
                         frontendDebug.s3_pcReg.expect(targetPc.U)
+                        frontendDebug.cache_drsp_valid.expect(true.B)
                         seenRedirectedS3 = true
+                    }
+                } else if (seenRedirectedS3 && !seenRedirectedDecode) {
+                    if (backendDebug.decodeValid.peek().litToBoolean) {
+                        backendDebug.decodePc.expect(targetPc.U)
+                        backendDebug.decodeInst.expect(targetFirstInst.U)
+                        seenRedirectedDecode = true
                     }
                 }
 
-                if (!seenRedirectedS3) {
+                if (!seenRedirectedDecode) {
                     dut.clock.step(1)
                     cycle += 1
 
@@ -925,6 +933,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             checkedRedirectFlush mustBe true
             seenRedirectedS2 mustBe true
             seenRedirectedS3 mustBe true
+            seenRedirectedDecode mustBe true
             observedReqs.contains(BigInt(0x0)) mustBe true
         }
     }

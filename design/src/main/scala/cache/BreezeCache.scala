@@ -196,7 +196,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     //val s2_vaddr = RegNext(s1_vaddr)
     val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
-    line_addr := s2_vaddr & ~( (cacheConfig.ICACHE_LINE_BYTES - 1).U) // cache line对齐
+    line_addr := s2_vaddr & ~((cacheConfig.ICACHE_LINE_BYTES - 1).U(cacheConfig.PLEN.W)) // cache line对齐
     //在s2选择要替换到那一个way
     val s2_index = index_pos(s2_vaddr, cacheConfig)
     val s2_replace_way = RegInit(0.U(log2Ceil(cacheConfig.ICACHE_WAY_NUM).W))
@@ -219,23 +219,29 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     //之后当cache line长度的数据返回以后，同周期进行数据的写回和meta的更新
     val s2_dout = RegInit(0.U(cacheConfig.FETCH_WIDTH.W))
     //向下一级的存储发送一个脉冲式的请求
-    val s2_req_pulse_done = RegInit(false.B) //标志有没有成功发出请求的脉冲
+    val s2_req_pulse_done = RegInit(false.B) //标志当前这笔 miss 是否已经发出过请求脉冲
     val wait_rsp = RegInit(false.B) //cache正在等待下一级的响应
-    when(s2_valid){
-        s2_req_pulse_done := true.B
-        wait_rsp := true.B
-    }.elsewhen(s2_done){//当s2结束以后清零
+    val issue_s2_req_pulse = s2_valid && !s2_req_pulse_done
+
+    when(s2_done) { // 当前 miss 结束，给下一笔 miss 重新打开请求脉冲
         s2_req_pulse_done := false.B
+    }.elsewhen(issue_s2_req_pulse) { // 新 miss 进入 s2 的首拍发出请求脉冲
+        s2_req_pulse_done := true.B
     }
+
+    when(s2_done) {
+        wait_rsp := false.B
+    }.elsewhen(issue_s2_req_pulse) {
+        wait_rsp := true.B
+    }.elsewhen(io.next_level_rsp.vld) {
+        wait_rsp := false.B
+    }
+
     // 一个周期的对外的请求脉冲
-    io.next_level_req.req := s2_valid && !s2_req_pulse_done
+    io.next_level_req.req := issue_s2_req_pulse
     io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
     //等待下一级的存储返回数据
     val write_back_en = WireDefault(false.B)
-    
-    when(io.next_level_rsp.vld){
-        wait_rsp := false.B
-    }
     write_back_en := io.next_level_rsp.vld & wait_rsp
     //数据写回和meta更新
     //覆盖对sram的写
