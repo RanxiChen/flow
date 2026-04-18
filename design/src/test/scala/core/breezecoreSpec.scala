@@ -31,6 +31,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         funct7: Int,
         expectedAluOut: BigInt
     )
+    private case class DependencyChainCase(name: String, instructions: Seq[BigInt], expectedWb: Seq[BigInt])
     private case class ObservedDmemReq(addr: BigInt, isWrite: Boolean, wdata: BigInt, wmask: BigInt)
     private case class PendingDmemResp(addr: BigInt, data: BigInt, isWriteAck: Boolean, cyclesLeft: Int)
 
@@ -383,6 +384,78 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     debug.wbData.expect(expectedAluOut.U)
 
                     observedReqs mustBe empty
+                }
+            }
+        }
+    }
+
+    "BreezeCore should retire dependent add/sub chains without pipeline stalls after first writeback" in {
+        val dependencyCases = Seq(
+            DependencyChainCase(
+                name = "add-chain",
+                instructions = Seq(
+                    encodeAddi(rd = 1, rs1 = 0, imm = 1),
+                    encodeRType(rd = 2, rs1 = 1, rs2 = 1, funct3 = 0, funct7 = 0x00),
+                    encodeRType(rd = 3, rs1 = 2, rs2 = 1, funct3 = 0, funct7 = 0x00),
+                    encodeRType(rd = 4, rs1 = 3, rs2 = 2, funct3 = 0, funct7 = 0x00)
+                ),
+                expectedWb = Seq(1, 2, 3, 5).map(BigInt(_))
+            ),
+            DependencyChainCase(
+                name = "add-sub-chain",
+                instructions = Seq(
+                    encodeAddi(rd = 1, rs1 = 0, imm = 10),
+                    encodeAddi(rd = 2, rs1 = 0, imm = 3),
+                    encodeRType(rd = 3, rs1 = 1, rs2 = 2, funct3 = 0, funct7 = 0x20),
+                    encodeRType(rd = 4, rs1 = 3, rs2 = 2, funct3 = 0, funct7 = 0x00),
+                    encodeRType(rd = 5, rs1 = 4, rs2 = 1, funct3 = 0, funct7 = 0x20)
+                ),
+                expectedWb = Seq(10, 3, 7, 10, 0).map(BigInt(_))
+            )
+        )
+
+        dependencyCases.foreach { testCase =>
+            withClue(s"dependency chain ${testCase.name}: ") {
+                simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+                    val debug = dut.io.debug.get
+                    val instQueue = mutable.Queue.from(testCase.instructions)
+                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+                    val observedHazards = mutable.ArrayBuffer.empty[Boolean]
+                    val observedMemWaits = mutable.ArrayBuffer.empty[Boolean]
+                    val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
+                    val expectedWb = testCase.expectedWb.map(u64)
+                    var cycle = 0
+
+                    initCore(dut)
+
+                    while (cycle < 96 && observedRetire.length < expectedWb.length) {
+                        observedHazards += debug.loadUseHazard.peek().litToBoolean
+                        observedMemWaits += debug.memWaitingResp.peek().litToBoolean
+                        if (debug.memWbValid.peek().litToBoolean) {
+                            observedRetire += ((cycle, debug.wbData.peek().litValue))
+                        }
+                        if (observedRetire.length < expectedWb.length) {
+                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                                throw new AssertionError(
+                                    s"unexpected dmem req in dependency chain test: addr=0x${req.addr.toString(16)}"
+                                )
+                            }
+                            cycle += 1
+                        }
+                    }
+
+                    observedReqs mustBe empty
+                    observedRetire.length mustBe expectedWb.length
+                    observedRetire.map(_._2) mustBe expectedWb
+
+                    val retireCycles = observedRetire.map(_._1)
+                    retireCycles.sliding(2).foreach { pair =>
+                        pair(1) - pair(0) mustBe 1
+                    }
+
+                    observedHazards.exists(identity) mustBe false
+                    observedMemWaits.exists(identity) mustBe false
                 }
             }
         }
