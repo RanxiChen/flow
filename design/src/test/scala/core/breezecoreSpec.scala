@@ -570,6 +570,8 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
 class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
     private val mask64 = (BigInt(1) << 64) - 1
+    private val nopInst = BigInt("00000013", 16)
+    private case class PendingIcacheResp(paddr: BigInt, data: BigInt, cyclesLeft: Int)
 
     private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
         val imm12 = imm & 0xfff
@@ -578,6 +580,23 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         (BigInt(0) << 12) |
         (BigInt(rd) << 7) |
         BigInt(0x13)
+    }
+
+    private def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
+        val imm13 = imm & 0x1fff
+        val bit12 = (imm13 >> 12) & 0x1
+        val bits10To5 = (imm13 >> 5) & 0x3f
+        val bits4To1 = (imm13 >> 1) & 0xf
+        val bit11 = (imm13 >> 11) & 0x1
+
+        (BigInt(bit12) << 31) |
+        (BigInt(bits10To5) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(bits4To1) << 8) |
+        (BigInt(bit11) << 7) |
+        BigInt(0x63)
     }
 
     private def buildRefillLine(words: Seq[BigInt]): BigInt = {
@@ -759,6 +778,154 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             backendDebug.exeMemValid.expect(true.B)
             backendDebug.memWbValid.expect(true.B)
             backendDebug.wbData.expect(3.U)
+        }
+    }
+
+    "BreezeCore should redirect to the taken branch target after a frontend mispredict" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val frontendDebug = dut.io.frontendDebug.get
+            val backendDebug = dut.io.debug.get
+            val branchPc = BigInt(0x8)
+            val targetPc = BigInt(0x40)
+            val branchInst = encodeBranch(rs1 = 1, rs2 = 2, imm = (targetPc - branchPc).toInt, funct3 = 0)
+            val fallbackLine = buildRefillLine(Seq.fill(8)(BigInt("deadbeef", 16)))
+            val lineMap = Map(
+                BigInt(0x0) -> buildRefillLine(Seq(
+                    encodeAddi(rd = 1, rs1 = 0, imm = 1),
+                    encodeAddi(rd = 2, rs1 = 0, imm = 1),
+                    branchInst,
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst
+                )),
+                BigInt(0x20) -> buildRefillLine(Seq.fill(8)(nopInst)),
+                BigInt(0x40) -> buildRefillLine(Seq(
+                    encodeAddi(rd = 5, rs1 = 0, imm = 42),
+                    encodeAddi(rd = 6, rs1 = 0, imm = 7),
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst,
+                    nopInst
+                ))
+            )
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            val observedReqs = mutable.ArrayBuffer.empty[BigInt]
+            var seenBranchDecode = false
+            var checkedRedirectFlush = false
+            var seenRedirectedS2 = false
+            var seenRedirectedS3 = false
+            var cycle = 0
+
+            dut.io.resetAddr.poke(0.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            while (cycle < 200 && !seenRedirectedS3) {
+                pendingIcacheResps.headOption match {
+                    case Some(resp) if resp.cyclesLeft == 0 =>
+                        dut.io.nextLevelRsp.vld.poke(true.B)
+                        dut.io.nextLevelRsp.data.poke(resp.data.U)
+                    case _ =>
+                        dut.io.nextLevelRsp.vld.poke(false.B)
+                        dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (dut.io.nextLevelReq.req.peek().litToBoolean) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    observedReqs += reqAddr
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, lineMap.getOrElse(reqAddr, fallbackLine), cyclesLeft = 6)
+                    )
+                }
+
+                if (!seenBranchDecode &&
+                    backendDebug.decodeValid.peek().litToBoolean &&
+                    backendDebug.decodeInst.peek().litValue == branchInst) {
+                    seenBranchDecode = true
+                    backendDebug.decodePc.expect(branchPc.U)
+                } else if (seenBranchDecode && !checkedRedirectFlush) {
+                    backendDebug.idExeValid.expect(true.B)
+                    backendDebug.idExeInst.expect(branchInst.U)
+                    backendDebug.idExePc.expect(branchPc.U)
+                    backendDebug.exeBruTaken.expect(true.B)
+                    backendDebug.exeJumpAddr.expect(targetPc.U)
+                    backendDebug.redirectValid.expect(true.B)
+
+                    dut.clock.step(1)
+                    cycle += 1
+
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+
+                    if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                        pendingIcacheResps.dequeue()
+                    }
+                    val updatedAfterFlush = pendingIcacheResps.map { resp =>
+                        resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
+                    }
+                    pendingIcacheResps.clear()
+                    pendingIcacheResps ++= updatedAfterFlush
+
+                    frontendDebug.s1_valid.expect(true.B)
+                    frontendDebug.s1_pcReg.expect(targetPc.U)
+                    frontendDebug.s2_valid.expect(false.B)
+                    frontendDebug.s3_valid.expect(false.B)
+                    backendDebug.decodeValid.expect(false.B)
+                    backendDebug.idExeValid.expect(false.B)
+                    backendDebug.exeMemValid.expect(true.B)
+                    backendDebug.exeMemPc.expect(branchPc.U)
+                    checkedRedirectFlush = true
+                } else if (checkedRedirectFlush && !seenRedirectedS2 && frontendDebug.s2_valid.peek().litToBoolean) {
+                    frontendDebug.s2_pcReg.expect(targetPc.U)
+                    frontendDebug.s3_valid.expect(false.B)
+                    backendDebug.decodeValid.expect(false.B)
+                    backendDebug.idExeValid.expect(false.B)
+                    backendDebug.exeMemValid.expect(false.B)
+                    backendDebug.memWbValid.expect(true.B)
+                    seenRedirectedS2 = true
+                } else if (seenRedirectedS2 && !seenRedirectedS3) {
+                    backendDebug.decodeValid.expect(false.B)
+                    backendDebug.idExeValid.expect(false.B)
+                    if (frontendDebug.s3_valid.peek().litToBoolean) {
+                        frontendDebug.s3_pcReg.expect(targetPc.U)
+                        seenRedirectedS3 = true
+                    }
+                }
+
+                if (!seenRedirectedS3) {
+                    dut.clock.step(1)
+                    cycle += 1
+
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+
+                    if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                        pendingIcacheResps.dequeue()
+                    }
+                    val updatedPending = pendingIcacheResps.map { resp =>
+                        resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
+                    }
+                    pendingIcacheResps.clear()
+                    pendingIcacheResps ++= updatedPending
+                }
+            }
+
+            seenBranchDecode mustBe true
+            checkedRedirectFlush mustBe true
+            seenRedirectedS2 mustBe true
+            seenRedirectedS3 mustBe true
+            observedReqs.contains(BigInt(0x0)) mustBe true
         }
     }
 }

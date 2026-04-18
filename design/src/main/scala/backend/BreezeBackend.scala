@@ -425,6 +425,8 @@ class BreezeBackend(
         debug.decodeInst := decodeInst
         debug.decodePc := decodePc
         debug.idExeValid := idExeReg.valid
+        debug.idExeInst := idExeReg.inst
+        debug.idExePc := idExeReg.pc
         debug.idExeRs1Addr := idExeReg.rs1_addr
         debug.idExeRs2Addr := idExeReg.rs2_addr
         debug.idExeSrc1 := idExeReg.src1
@@ -435,6 +437,7 @@ class BreezeBackend(
         debug.exeBruTaken := bru.io.take_branch
         debug.exeJumpAddr := jau.io.jmp_addr
         debug.exeMemValid := exeMemReg.valid
+        debug.exeMemPc := exeMemReg.pc
         debug.exeMemData := exeMemReg.data
         debug.exeMemRdAddr := exeMemReg.rd_addr
         debug.memWaitingResp := memWaitingRespReg
@@ -443,5 +446,6 @@ class BreezeBackend(
         debug.exeBypassRs1 := exeRs1Data
         debug.exeBypassRs2 := exeRs2Data
         debug.loadUseHazard := loadUseHazard
+        debug.redirectValid := redirectNeeded
     }
 }
