@@ -306,3 +306,7 @@ object PrivConst{
    val SUPERVISOR = 1.U(2.W)
    val MACHINE    = 3.U(2.W)
 }
+
+object SIM_SYSTEM {
+   val ESTOP_IMM12 = "h7ff".U(12.W)
+}

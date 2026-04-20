@@ -15,6 +15,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
         val dmem = new BackendMemIO(corecfg.VLEN)
+        val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
         val frontendDebug = if (enabledebug) Some(new BreezeFrontendDebugIO(corecfg.VLEN)) else None
         val debug = if (enabledebug) Some(new BackendDebugIO(corecfg.VLEN)) else None
@@ -33,6 +34,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     buffer.io.flush := backend.io.frontendRedirect.flush
 
     backend.io.resetAddr := io.resetAddr
+    io.estop := backend.io.estop
     io.dmem <> backend.io.dmem
     io.frontendDebug.foreach(_ <> frontend.io.debug.get)
     io.debug.foreach(_ <> backend.io.debug.get)

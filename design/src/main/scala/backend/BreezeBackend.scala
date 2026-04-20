@@ -15,6 +15,7 @@ class BreezeBackend(
         val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN)))
         val dmem = new BackendMemIO(cfg.VLEN)
         val frontendRedirect = Output(new FrontendRedirectIO(cfg.VLEN))
+        val estop = Output(Bool())
         val debug = if (enabledebug) Some(new BackendDebugIO(cfg.VLEN)) else None
     })
 
@@ -31,10 +32,16 @@ class BreezeBackend(
     val decodeValid = io.fetchBuffer.valid
     val decodePc = Mux(decodeValid, io.fetchBuffer.bits.pc, 0.U(cfg.VLEN.W))
     val decodeInst = Mux(decodeValid, io.fetchBuffer.bits.inst, nopInst)
+    val decodeEstop = Wire(Bool())
 
     val rs1Addr = decodeInst(19, 15)
     val rs2Addr = decodeInst(24, 20)
     val rdAddr = decodeInst(11, 7)
+    decodeEstop := decodeInst(6, 0) === OPCODE.SYSTEM &&
+        decodeInst(14, 12) === 0.U &&
+        decodeInst(31, 20) === SIM_SYSTEM.ESTOP_IMM12 &&
+        decodeInst(19, 15) === 0.U &&
+        decodeInst(11, 7) === 0.U
 
     decoder.io.inst := decodeInst
     immGen.io.inst := decodeInst
@@ -48,6 +55,7 @@ class BreezeBackend(
     csrFile.io.core_retire := false.B
 
     val wbData = Wire(UInt(cfg.VLEN.W))
+    val estopCommitted = Wire(Bool())
 
     regFile.io.rs1_addr := rs1Addr
     regFile.io.rs2_addr := rs2Addr
@@ -61,6 +69,7 @@ class BreezeBackend(
         )
     )
     regFile.io.rd_data := wbData
+    estopCommitted := memWbReg.valid && memWbReg.estop
 
     val src1 = Wire(UInt(cfg.VLEN.W))
     val src2 = Wire(UInt(cfg.VLEN.W))
@@ -120,6 +129,7 @@ class BreezeBackend(
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
+        idExeReg.estop := false.B
         idExeReg.rs1_addr := 0.U
         idExeReg.rs2_addr := 0.U
         idExeReg.rd_addr := 0.U
@@ -134,6 +144,7 @@ class BreezeBackend(
         idExeReg.inst := decodeInst
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
+        idExeReg.estop := decodeEstop
         idExeReg.rs1_addr := rs1Addr
         idExeReg.rs2_addr := rs2Addr
         idExeReg.rd_addr := rdAddr
@@ -163,6 +174,7 @@ class BreezeBackend(
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
+        idExeReg.estop := false.B
         idExeReg.rs1_addr := 0.U
         idExeReg.rs2_addr := 0.U
         idExeReg.rd_addr := 0.U
@@ -311,6 +323,7 @@ class BreezeBackend(
         exeMemReg.pred.predType := FrontendPredType.NONE
         exeMemReg.pred.predTaken := false.B
         exeMemReg.pred.predPc := 0.U
+        exeMemReg.estop := false.B
         exeMemReg.data := 0.U
         exeMemReg.rs2_data := 0.U
         exeMemReg.mem_cmd := MEM_TYPE.NOT_MEM.U
@@ -327,6 +340,7 @@ class BreezeBackend(
         exeMemReg.pc := idExeReg.pc
         exeMemReg.inst := idExeReg.inst
         exeMemReg.pred := idExeReg.pred
+        exeMemReg.estop := idExeReg.estop
         exeMemReg.data := alu.io.alu_out
         exeMemReg.rs2_data := idExeReg.rs2_data
         exeMemReg.mem_cmd := idExeReg.ctrl.mem_cmd
@@ -352,6 +366,7 @@ class BreezeBackend(
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
+        memWbReg.estop := false.B
         memWbReg.wb_en := false.B
         memWbReg.wb_sel := SEL_WB.XXX.U
         memWbReg.rd_addr := 0.U
@@ -362,6 +377,7 @@ class BreezeBackend(
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.estop := exeMemReg.estop
         memWbReg.wb_en := exeMemReg.wb_en
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
@@ -372,6 +388,7 @@ class BreezeBackend(
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.estop := exeMemReg.estop
         memWbReg.wb_en := exeMemReg.wb_en
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
@@ -419,6 +436,7 @@ class BreezeBackend(
     io.frontendRedirect.valid := redirectNeeded
     io.frontendRedirect.flush := redirectNeeded
     io.frontendRedirect.target := Mux(redirectNeeded, actualTarget, io.resetAddr)
+    io.estop := estopCommitted
 
     io.debug.foreach { debug =>
         debug.decodeValid := decodeValid
