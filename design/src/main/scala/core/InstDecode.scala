@@ -184,38 +184,75 @@ class RV32IDecoder extends Module {
             }
         }
         is(OPCODE.SYSTEM){
-            //CSR instructions
-            io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
-            io.I_ctrl.wb_en := true.B
-            io.I_ctrl.sel_wb := SEL_WB.CSR.U
-            io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
-            io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
-            io.I_ctrl.alu_op := ALU_OP.XXX.U
-            io.I_ctrl.csr_addr := io.inst(31,20)
             switch(funct3){
+                is("b000".U){
+                    when(
+                        io.inst(31, 20) === SIM_SYSTEM.ESTOP_IMM12 &&
+                        io.inst(19, 15) === 0.U &&
+                        io.inst(11, 7) === 0.U
+                    ) {
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                    }
+                }
                 is("b001".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RW.U
-                    io.I_ctrl.alu_op := ALU_OP.RS1.U 
+                    io.I_ctrl.alu_op := ALU_OP.RS1.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRW
                 is("b010".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RS.U
                     io.I_ctrl.alu_op := ALU_OP.RS1.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRS
                 is("b011".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RC.U
                     io.I_ctrl.alu_op := ALU_OP.RS1.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRC
                 is("b101".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RWI.U
                     io.I_ctrl.alu_op := ALU_OP.RS2.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRWI
                 is("b110".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RSI.U
                     io.I_ctrl.alu_op := ALU_OP.RS2.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRSI
                 is("b111".U){
+                    io.I_ctrl.sel_imm :=  IMM_TYPE.CSR_Type.U
+                    io.I_ctrl.wb_en := true.B
+                    io.I_ctrl.sel_wb := SEL_WB.CSR.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
                     io.I_ctrl.csr_cmd := CSR_CMD.RCI.U
                     io.I_ctrl.alu_op := ALU_OP.RS2.U
+                    io.I_ctrl.csr_addr := io.inst(31,20)
                 } //CSRRCI
             }
         }
