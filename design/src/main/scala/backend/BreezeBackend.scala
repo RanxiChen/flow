@@ -460,6 +460,8 @@ class BreezeBackend(
         debug.exeMemRdAddr := exeMemReg.rd_addr
         debug.memWaitingResp := memWaitingRespReg
         debug.memWbValid := memWbReg.valid
+        debug.memWbPc := memWbReg.pc
+        debug.memWbInst := memWbReg.inst
         debug.wbData := wbData
         debug.exeBypassRs1 := exeRs1Data
         debug.exeBypassRs2 := exeRs2Data

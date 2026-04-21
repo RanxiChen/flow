@@ -1,152 +1,80 @@
-# Frontend Agent Notes
+# Flow Agent Notes
 
-本文件记录当前仓库里 `BreezeFrontend` 的开发目标、协作方式和当前实现状态。
+本文件记录当前仓库里前端、后端与联调相关的真实状态，避免继续沿用已经过时的阶段性描述。
 
-## 当前目标
+## 当前实现状态
 
-当前正在完善的模块是：
+当前已经具备的主路径如下：
 
-- `design/src/main/scala/frontend/BreezeFrontend.scala`
+1. `BreezeFrontend` 已经接入 `BreezeCache`，并通过 `nextLevelReq/nextLevelRsp` 与下一级存储接口联通。
+2. `BreezeCore` 已经把前端、fetch buffer、后端串起来，形成完整取指到执行的基本通路。
+3. `BreezeBackend` 已经会根据实际执行结果产生 `frontendRedirect`，用于修正前端 PC。
+4. 前端和 cache 相关调试口已经接出，前端/核心测试里也已经在使用这些观测信号。
 
-目标不是一次性写完完整前端，而是按流水线逐阶段补齐：
+这意味着当前工作重心不再是“把 cache 接进前端”或“只搭骨架”，而是继续补齐行为、修正时序、扩测试覆盖。
 
-1. 先把阶段定义、寄存器和接口关系写清楚
-2. 再把 `BreezeCache` 接进前端
-3. 再把指令和预测信息送到 fetch buffer
-4. 最后细化阻塞、预测、异常和 flush 行为
+## 前端当前行为
 
-## 当前设计理念
-
-当前前端采用以下原则：
+当前 `BreezeFrontend` 的实现特点如下：
 
 1. 地址统一按虚拟地址处理。
-2. `BreezeCache` 在前端模块内部实例化。
-3. 流水线按 `S0/S1/S2/S3` 分块组织。
-4. 代码组织优先强调“按阶段看得清楚”，而不是先追求功能铺满。
-5. 当前优先做骨架和信息流，后续再细化握手与阻塞。
+2. 前端内部按 `S1/S2/S3` 组织请求、返回和输出寄存。
+3. `S1` 负责向 `BreezeCache` 发起取指请求。
+4. `S2` 跟踪已经发出的 cache 请求，并等待返回。
+5. `S3` 锁存返回的 `pc/inst`，再通过 `fetchBuffer` 送给后端。
+6. 当前支持把后端 redirect 和前端本地 fast redirect 一起并入 next-pc 选择。
 
-## 当前已实现
+## 分支与跳转现状
 
-目前已经实现：
+当前仓库里的分支/跳转语义应按下面理解：
 
-1. `BreezeFrontendConfig`
-2. 前端重定向接口 `FrontendRedirectIO`
-3. fetch buffer 输出接口和预测信息类型
-4. `FrontendPredType`，当前只有 `NONE` 和 `JAL`
-5. 前端的 `S0/S1/S2/S3` 基础寄存结构
-6. `S0` 的 next-pc 选择逻辑
-7. `S1` 把 PC 喂给 `BreezeCache`
-8. `S2` 跟踪发给 cache 的请求
-9. `S3` 锁存 cache 返回的 PC 和指令
-10. `MiniDecode` 对 `JAL` 的快速识别和预测目标生成
+1. 默认配置下，`BreezeFrontendConfig.branchPredCfg = NoBranchPredictorConfig`。
+2. 也就是说，默认前端不做分支预测，不默认在前端主动跳转。
+3. 默认取指路径按 `pc + 4` 顺序推进。
+4. 真正发生跳转修正时，由后端执行结果产生 `frontendRedirect`，前端收到后刷新并跳到目标地址。
+5. 如果显式启用非 `None` 的前端预测配置，当前前端只实现了一个很轻量的 fast path：
+   - `MiniDecode` 只快速识别 `JAL`
+   - 命中后可在前端产生 fast redirect
+6. 条件分支预测器本身还没有形成完整可用实现，因此不要把当前系统描述成“已经有完整前端分支预测”。
 
-## 相关文档
+一句话说，当前默认行为就是：
 
-前端当前设计说明记录在：
+`不预测条件分支，顺序取指，跳转/分支修正主要依赖后端 redirect。`
 
-- `docs/breezefrontend.md`
+## 当前验证入口
 
-后续如果继续完善前端，优先先更新这份文档，再继续扩实现。
-
-## 当前协作规则
-
-当前这部分开发采用如下方式：
-
-1. 修改代码前，先向用户说明准备怎么改、为什么改。
-2. 用户确认后再动代码。
-3. 每次实现一小步后，由用户先看代码。
-4. 用户认可后再决定是否运行验证命令。
-5. 用户认可这一小步结果后，再单独提交 git。
-6. 等一个大功能完成后，再统一做 rebase/squash 整理历史。
-
-## 本轮前端联调流程
-
-本轮围绕 `breezefrontendSpec.scala` 的仿真代码补齐，按以下流程推进：
-
-1. 先在 `design/src/main/scala/frontend/BreezeFrontend.scala` 中增加一个 optional 调试 IO 口。
-2. 这个 optional IO 的组织方式参考 `design/src/main/scala/cache/BreezeCache.scala` 里的 `dump` 信号。
-3. 先把口子和最终驱动位置搭出来，再在你的指导下，一点点把需要观察的内部信号往外拉。
-4. 每次只补一小段信号或一小段测试代码，不一次性铺开。
-5. 测试侧主要在 `design/src/test/scala/frontend/breezefrontendSpec.scala` 中逐步补充。
-6. 每补一小步，就先看结果，再决定下一步补哪里。
-7. 如果遇到 `assert` / `expect` 失败，第一步不是直接修改源代码。
-8. 遇到失败时，先分析失败原因，整理现象、可能原因和我的猜测，再通知用户。
-9. 只有在用户给出进一步指令后，才继续决定是否修改源代码或调整测试。
-
-本轮工作的目标不是一次性写完整套前端仿真，而是按“先开观测口、再逐步拉信号、再逐步补测试、失败先分析”的方式稳定推进。
-
-## 本轮当前进展
-
-当前已经完成的第一小步如下：
-
-1. `design/src/main/scala/frontend/BreezeFrontend.scala` 已增加 optional debug IO。
-2. 当前 debug IO 里只先拉出了 `s1_pcReg`，不额外扩更多观测信号。
-3. `design/src/test/scala/frontend/breezefrontendSpec.scala` 已增加最小复位测试。
-4. 当前测试做的事情是：给 `resetAddr` 赋值 `0x0`，手动拉高复位，然后检查 `s1_pcReg` 是否回到 `0x0`。
-5. 这一小步已经完成一次实测通过，后续继续按同样方式一点点扩展。
-
-## 当前验证约定
-
-当前前端模块的生成入口是：
+当前常用验证入口如下：
 
 ```bash
 cd /home/chen/FUN/flow/design
 sbt "runMain flow.frontend.FireBreezeFrontend"
 ```
 
-以后如果要验证 `BreezeFrontend` 当前是否还能正常展开，优先运行这个入口，而不是只做普通 compile。
-
-当前这轮已经执行通过的前端测试命令是：
-
 ```bash
 cd /home/chen/FUN/flow/design
 sbt 'testOnly flow.frontend.BreezeFrontendSpec'
 ```
 
-## 接下来一段时间的协作流程
+```bash
+cd /home/chen/FUN/flow/design
+sbt 'testOnly flow.core.BreezeCoreSpec'
+```
 
-接下来围绕前端逐周期行为的测试与实现，按下面这套固定流程推进：
+如果目标是确认前端与核心主路径没有被改坏，优先跑这些入口，而不是只看单纯能否 compile。
 
-1. 先由用户描述想要的前端行为，用文字版把每个周期的流水状态说清楚。
-2. 我根据这份文字描述，整理成更规整的文字版时序说明，供双方确认。
-3. 在文字版确认后，我再把这份时序翻成 `WaveDrom` 波形图，放在 `docs/` 下维护。
-4. 只有当用户认为 `WaveDrom` 波形已经准确表达目标行为后，才进入代码阶段。
-5. 进入代码阶段后，先在源代码里增加需要的 debug/观测引脚，把波形里要看的内部状态拉出来。
-6. 然后再在测试代码里按波形图逐周期写 `expect` / `assert`，对齐目标行为。
-7. 如果测试暴露出当前实现和目标行为不一致，再回头修改源代码。
-8. 修改源代码后，继续以“文字版 -> 波形图 -> 观测信号 -> 测试断言”的同一口径迭代，不跳步骤。
+## 文档维护原则
 
-这段时间的重点不是先写代码，而是先把“目标行为”定义清楚，并且让文字描述、波形图、debug 引脚和测试断言保持同一份语义。
+后续更新本文档时，按下面规则处理：
 
-## Bug 记录工作流
+1. 只保留“当前真实状态”和“当前仍然有效的协作约定”。
+2. 明显带有阶段性的临时流程，完成后就删，不长期堆在这里。
+3. 如果实现已经改变，优先先改本文档，再继续口头沿用旧说法。
+4. 不要把“计划做什么”写成“已经实现了什么”。
 
-每次发现 bug，都按下面这套固定流程处理，尽量不要跳步骤：
+## 相关文件
 
-1. 先确认现象，用现有日志、打印、波形或手动观察把“实际发生了什么”说清楚。
-2. 如果已有测试能稳定看到这个问题，就先记录这个测试名和运行命令；如果还没有，就补一个最小复现 testcase。
-3. 在 `docs/bugs/` 下建立一条 bug 记录，按统一格式填写：
-   - `Title`
-   - `Status`
-   - `Symptom`
-   - `Expected`
-   - `Repro`
-   - `Related Files`
-   - `Evidence` 和 `Current Hypothesis` 可以先留空，后续再补。
-4. 如果当前状态值得保留，就先做一个 checkpoint commit，把“出错现场”保存下来，避免后续修复时丢上下文。
-5. 接着围绕这条 bug 补充专门的复现测试，目标是让问题可以被稳定、重复地跑出来。
-6. 只有在复现路径和 bug 记录都清楚以后，才开始修改 RTL 或测试基础设施去修问题。
-7. 修复后必须重新运行同一条复现路径；如果 bug 消失，再把 bug 状态更新，并补充最终证据。
-
-提交信息尽量带 bug 编号，例如：
-
-- `FE-001 checkpoint: preserve failing reproduction`
-- `FE-001 test: add dedicated repro case`
-- `FE-001 fix: align request timing`
-
-目标不是写很重的文档，而是保证每个 bug 都有：
-
-- 明确现象
-- 明确复现路径
-- 明确相关文件
-- 一个保留现场的提交
-- 一个最终验证修复是否成功的路径
+- `design/src/main/scala/frontend/BreezeFrontend.scala`
+- `design/src/main/scala/backend/BreezeBackend.scala`
+- `design/src/main/scala/core/BreezeCore.scala`
+- `design/src/test/scala/frontend/breezefrontendSpec.scala`
+- `design/src/test/scala/core/breezecoreSpec.scala`

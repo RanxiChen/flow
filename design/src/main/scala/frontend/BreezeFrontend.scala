@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import flow.cache.BreezeCache
-import flow.config.BreezeFrontendConfig
+import flow.config._
 import flow.interface._
 import _root_.circt.stage.ChiselStage
 
@@ -75,7 +75,6 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== Module Instances =====
     val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
-    val miniDecode = Module(new MiniDecode(cfg.VLEN))
 
     // ===== S1: Stage State =====
     val s1_validReg = RegInit(true.B)
@@ -94,10 +93,10 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s3_fastRedirectValid = Wire(Bool())
     val s3_fastRedirectTarget = Wire(UInt(cfg.VLEN.W))
 
-    miniDecode.io.pc := s3_pcReg
-    miniDecode.io.inst := s3_instReg
-    s3_fastRedirectValid := s3_validReg && miniDecode.io.predTaken
-    s3_fastRedirectTarget := miniDecode.io.predPc
+    s3_fastRedirectValid := false.B
+    s3_fastRedirectTarget := 0.U
+
+    
 
     // ===== S0: Next PC Generation =====
     val s0_defaultNextPc = Wire(UInt(cfg.VLEN.W))
@@ -168,9 +167,24 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     io.fetchBuffer.valid := s3_validReg
     io.fetchBuffer.bits.pc := s3_pcReg
     io.fetchBuffer.bits.inst := s3_instReg
-    io.fetchBuffer.bits.pred.predType := miniDecode.io.predType
-    io.fetchBuffer.bits.pred.predTaken := miniDecode.io.predTaken
-    io.fetchBuffer.bits.pred.predPc := miniDecode.io.predPc
+
+    io.fetchBuffer.bits.pred.predType := FrontendPredType.NONE
+    io.fetchBuffer.bits.pred.predTaken := false.B
+    io.fetchBuffer.bits.pred.predPc := 0.U
+
+    if(cfg.branchPredCfg.kind != FrontendBranchPredictorKind.None){
+        // 启用快速解码
+        val miniDecode = Module(new MiniDecode(cfg.VLEN))
+        miniDecode.io.pc := s3_pcReg
+        miniDecode.io.inst := s3_instReg
+        s3_fastRedirectValid := s3_validReg && miniDecode.io.predTaken
+        s3_fastRedirectTarget := miniDecode.io.predPc
+        io.fetchBuffer.bits.pred.predType := miniDecode.io.predType
+        io.fetchBuffer.bits.pred.predTaken := miniDecode.io.predTaken
+        io.fetchBuffer.bits.pred.predPc := miniDecode.io.predPc
+    }
+
+    
 
     // ===== Cache Miss Interface =====
     icache.io.next_level_req <> io.nextLevelReq

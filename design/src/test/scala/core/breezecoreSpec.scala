@@ -568,6 +568,279 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 }
 
+class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val estopInst = BigInt("7ff00073", 16)
+
+    private def initCore(dut: BreezeCore): Unit = {
+        val fase = dut.io.fase.get
+        dut.io.resetAddr.poke(0.U)
+        dut.io.nextLevelRsp.vld.poke(false.B)
+        dut.io.nextLevelRsp.data.poke(0.U)
+        dut.io.dmem.rsp.valid.poke(false.B)
+        dut.io.dmem.rsp.data.poke(0.U)
+        dut.io.dmem.rsp.isWriteAck.poke(false.B)
+        fase.inst_valid.poke(false.B)
+        fase.instruction.poke(0.U)
+
+        dut.reset.poke(true.B)
+        dut.clock.step(1)
+        dut.reset.poke(false.B)
+    }
+
+    private def assertNoDmemReq(dut: BreezeCore, cycle: Int): Unit = {
+        withClue(s"unexpected dmem req at cycle $cycle: ") {
+            dut.io.dmem.req.valid.expect(false.B)
+        }
+    }
+
+    private def stepUntil(
+        dut: BreezeCore,
+        maxCycles: Int = 32
+    )(cond: => Boolean): Unit = {
+        var cycles = 0
+        while (!cond && cycles < maxCycles) {
+            assertNoDmemReq(dut, cycles)
+            dut.clock.step(1)
+            cycles += 1
+        }
+        assert(cond, s"condition not met within $maxCycles cycles")
+    }
+
+    private def enqueueFaseInstruction(dut: BreezeCore, inst: BigInt): Unit = {
+        val fase = dut.io.fase.get
+        stepUntil(dut) { fase.inst_ready.peek().litToBoolean }
+        fase.inst_valid.poke(true.B)
+        fase.instruction.poke(inst.U)
+        assertNoDmemReq(dut, cycle = -1)
+        dut.clock.step(1)
+        fase.inst_valid.poke(false.B)
+        fase.instruction.poke(0.U)
+    }
+
+    "BreezeCore should pulse estop for one cycle when a single ESTOP retires from FASE input" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            var decodeSeen = false
+            var estopPulseCount = 0
+            var prevEstop = false
+            var prevCycleWasPulse = false
+
+            initCore(dut)
+            enqueueFaseInstruction(dut, estopInst)
+
+            for (cycle <- 0 until 16) {
+                assertNoDmemReq(dut, cycle)
+
+                val estop = dut.io.estop.peek().litToBoolean
+                val decodeValid = debug.decodeValid.peek().litToBoolean
+                val decodeInst = debug.decodeInst.peek().litValue
+                val memWbValid = debug.memWbValid.peek().litToBoolean
+
+                if (decodeValid && decodeInst == estopInst) {
+                    decodeSeen = true
+                }
+
+                if (estop) {
+                    withClue(s"estop pulse at cycle $cycle should start from low: ") {
+                        prevEstop mustBe false
+                    }
+                    withClue(s"estop pulse at cycle $cycle should align with memWbValid: ") {
+                        memWbValid mustBe true
+                    }
+                    estopPulseCount += 1
+                    prevCycleWasPulse = true
+                } else if (prevCycleWasPulse) {
+                    withClue(s"estop pulse should return low after pulse cycle $cycle: ") {
+                        estop mustBe false
+                    }
+                    prevCycleWasPulse = false
+                }
+
+                prevEstop = estop
+                dut.clock.step(1)
+            }
+
+            withClue("decode should observe ESTOP instruction: ") {
+                decodeSeen mustBe true
+            }
+            withClue("estop should pulse exactly once: ") {
+                estopPulseCount mustBe 1
+            }
+            withClue("estop pulse should not remain high at end of observation window: ") {
+                prevCycleWasPulse mustBe false
+            }
+        }
+    }
+}
+
+class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val nopInst = BigInt("00000013", 16)
+    private val estopInst = BigInt("7ff00073", 16)
+    private case class PendingIcacheResp(paddr: BigInt, data: BigInt, cyclesLeft: Int)
+
+    private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
+        val imm12 = imm & 0xfff
+        (BigInt(imm12) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(0) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x13)
+    }
+
+    private def encodeRType(rd: Int, rs1: Int, rs2: Int, funct3: Int, funct7: Int): BigInt = {
+        (BigInt(funct7) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x33)
+    }
+
+    private def buildRefillLine(words: Seq[BigInt]): BigInt = {
+        words.zipWithIndex.foldLeft(BigInt(0)) { case (acc, (word, idx)) =>
+            acc | ((word & BigInt("ffffffff", 16)) << (idx * 32))
+        }
+    }
+
+    private def stepUntil(
+        dut: BreezeCore,
+        maxCycles: Int = 64
+    )(cond: => Boolean): Unit = {
+        var cycles = 0
+        while (!cond && cycles < maxCycles) {
+            dut.clock.step(1)
+            cycles += 1
+        }
+        assert(cond, s"condition not met within $maxCycles cycles")
+    }
+
+    "BreezeCore should pulse estop for one cycle when ESTOP retires through the full frontend path" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val refillDelayCycles = 6
+            val firstLineWords = Seq(
+                encodeAddi(rd = 1, rs1 = 0, imm = 1),
+                encodeAddi(rd = 2, rs1 = 0, imm = 2),
+                encodeRType(rd = 3, rs1 = 1, rs2 = 2, funct3 = 0, funct7 = 0x00),
+                estopInst,
+                encodeAddi(rd = 4, rs1 = 0, imm = 9),
+                encodeAddi(rd = 5, rs1 = 0, imm = 10),
+                nopInst,
+                nopInst
+            )
+            val memoryMap = Map(
+                BigInt(0x0) -> buildRefillLine(firstLineWords),
+                BigInt(0x20) -> buildRefillLine(Seq.fill(8)(nopInst))
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var seenAnyReq = false
+            var seenEstopRetire = false
+            var prevReq = false
+            var postEstopCycleChecked = false
+            var cycle = 0
+
+            dut.io.resetAddr.poke(0.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            stepUntil(dut, maxCycles = 16) { dut.io.nextLevelReq.req.peek().litToBoolean }
+
+            while (cycle < 200 && !postEstopCycleChecked) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+
+                pendingIcacheResps.headOption match {
+                    case Some(resp) if resp.cyclesLeft == 0 =>
+                        dut.io.nextLevelRsp.vld.poke(true.B)
+                        dut.io.nextLevelRsp.data.poke(resp.data.U)
+                    case _ =>
+                        dut.io.nextLevelRsp.vld.poke(false.B)
+                        dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (reqValid && !prevReq) {
+                    seenAnyReq = true
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), cyclesLeft = refillDelayCycles)
+                    )
+                }
+
+                if (debug.memWbValid.peek().litToBoolean) {
+                    val retiringPc = debug.memWbPc.peek().litValue
+                    val retiringInst = debug.memWbInst.peek().litValue
+                    val estop = dut.io.estop.peek().litToBoolean
+
+                    if (retiringInst == estopInst) {
+                        withClue(s"estop should be high when ESTOP retires at WB cycle $cycle (pc=0x${retiringPc.toString(16)}): ") {
+                            estop mustBe true
+                        }
+                        seenEstopRetire = true
+                    } else {
+                        withClue(
+                          s"estop should stay low when non-ESTOP retires at WB cycle $cycle " +
+                            s"(pc=0x${retiringPc.toString(16)}, inst=0x${retiringInst.toString(16)}): "
+                        ) {
+                            estop mustBe false
+                        }
+                    }
+
+                    if (seenEstopRetire) {
+                        dut.clock.step(1)
+                        cycle += 1
+                        dut.io.nextLevelRsp.vld.poke(false.B)
+                        dut.io.nextLevelRsp.data.poke(0.U)
+
+                        if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                            pendingIcacheResps.dequeue()
+                        }
+                        val decrementedAfterEstop = pendingIcacheResps.map { resp =>
+                            resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
+                        }
+                        pendingIcacheResps.clear()
+                        pendingIcacheResps ++= decrementedAfterEstop
+
+                        withClue("estop should return low on the cycle after ESTOP retires: ") {
+                            dut.io.estop.peek().litToBoolean mustBe false
+                        }
+                        postEstopCycleChecked = true
+                    }
+                }
+
+                if (!postEstopCycleChecked) {
+                    dut.clock.step(1)
+                    cycle += 1
+
+                    if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                        pendingIcacheResps.dequeue()
+                    }
+                    val decremented = pendingIcacheResps.map { resp =>
+                        resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
+                    }
+                    pendingIcacheResps.clear()
+                    pendingIcacheResps ++= decremented
+                }
+
+                prevReq = dut.io.nextLevelReq.req.peek().litToBoolean
+            }
+
+            withClue("frontend path should issue at least one icache request: ") {
+                seenAnyReq mustBe true
+            }
+            withClue("ESTOP should eventually retire through WB: ") {
+                seenEstopRetire mustBe true
+            }
+        }
+    }
+}
+
 class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
     private val mask64 = (BigInt(1) << 64) - 1
     private val nopInst = BigInt("00000013", 16)

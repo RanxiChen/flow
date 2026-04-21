@@ -24,8 +24,28 @@ case class DefaultICacheConfig(
     assert(ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
 }
 
+object FrontendBranchPredictorKind extends Enumeration {
+    type FrontendBranchPredictorKind = Value
+    val None, GShare = Value
+}
+
+import FrontendBranchPredictorKind._
+
+sealed trait FrontendBranchPredictorConfig {
+    def kind: FrontendBranchPredictorKind
+}
+
+case object NoBranchPredictorConfig extends FrontendBranchPredictorConfig {
+    override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.None
+}
+
+case object GShareBranchPredictorConfig extends FrontendBranchPredictorConfig {
+    override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare
+}
+
 case class BreezeFrontendConfig(
-    VLEN: Int = 64
+    VLEN: Int = 64,
+    branchPredCfg: FrontendBranchPredictorConfig = NoBranchPredictorConfig
 ) {
     val cacheCfg: DefaultICacheConfig = DefaultICacheConfig(
         VLEN = VLEN,
