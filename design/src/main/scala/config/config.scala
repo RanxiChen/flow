@@ -55,14 +55,16 @@ case class BreezeFrontendConfig(
 
 case class BackendConfig(
     val VLEN: Int = 64,
-    val PLEN: Int = 64
+    val PLEN: Int = 64,
+    val enableTandem: Boolean = false
 ){}
 
 case class BreezeCoreConfig(
     val VLEN: Int = 64,
     val PLEN: Int = 64,
-    val useFASE: Boolean = false
+    val useFASE: Boolean = false,
+    val enableTandem: Boolean = false
 ){
     val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(VLEN)
-    val backendCfg: BackendConfig = BackendConfig(VLEN, PLEN)
+    val backendCfg: BackendConfig = BackendConfig(VLEN, PLEN, enableTandem)
 }

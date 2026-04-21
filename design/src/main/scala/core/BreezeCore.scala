@@ -17,6 +17,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val dmem = new BackendMemIO(corecfg.VLEN)
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
+        val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
         val frontendDebug = if (enabledebug) Some(new BreezeFrontendDebugIO(corecfg.VLEN)) else None
         val debug = if (enabledebug) Some(new BackendDebugIO(corecfg.VLEN)) else None
     })
@@ -36,6 +37,9 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     backend.io.resetAddr := io.resetAddr
     io.estop := backend.io.estop
     io.dmem <> backend.io.dmem
+    io.tandem.zip(backend.io.tandem).foreach { case (coreTandem, backendTandem) =>
+        coreTandem := backendTandem
+    }
     io.frontendDebug.foreach(_ <> frontend.io.debug.get)
     io.debug.foreach(_ <> backend.io.debug.get)
 

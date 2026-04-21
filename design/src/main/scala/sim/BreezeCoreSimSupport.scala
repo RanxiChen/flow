@@ -181,6 +181,23 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         )
     }
 
+    def runWithTandemTrace(
+        memory: mutable.Map[BigInt, BigInt],
+        coreCfg: BreezeCoreConfig,
+        maxCycles: Int,
+        imemLatency: Int,
+        dmemLatency: Int
+    ): BreezeCoreSimTandemResult = {
+        runWithTandemTrace(
+          memory = memory,
+          coreCfg = coreCfg,
+          maxCycles = maxCycles,
+          imemLatency = imemLatency,
+          dmemLatency = dmemLatency,
+          bootAddr = 0
+        )
+    }
+
     def run(
         memory: mutable.Map[BigInt, BigInt],
         coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false),
@@ -189,7 +206,47 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         dmemLatency: Int = 7,
         bootAddr: BigInt = 0
     ): BreezeCoreSimResult = {
+        runInternal(
+          memory = memory,
+          coreCfg = coreCfg,
+          maxCycles = maxCycles,
+          imemLatency = imemLatency,
+          dmemLatency = dmemLatency,
+          bootAddr = bootAddr,
+          collectTandemTrace = false
+        ).result
+    }
+
+    def runWithTandemTrace(
+        memory: mutable.Map[BigInt, BigInt],
+        coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false, enableTandem = true),
+        maxCycles: Int = 100000,
+        imemLatency: Int = 6,
+        dmemLatency: Int = 7,
+        bootAddr: BigInt = 0
+    ): BreezeCoreSimTandemResult = {
+        runInternal(
+          memory = memory,
+          coreCfg = coreCfg,
+          maxCycles = maxCycles,
+          imemLatency = imemLatency,
+          dmemLatency = dmemLatency,
+          bootAddr = bootAddr,
+          collectTandemTrace = true
+        )
+    }
+
+    private def runInternal(
+        memory: mutable.Map[BigInt, BigInt],
+        coreCfg: BreezeCoreConfig,
+        maxCycles: Int,
+        imemLatency: Int,
+        dmemLatency: Int,
+        bootAddr: BigInt,
+        collectTandemTrace: Boolean
+    ): BreezeCoreSimTandemResult = {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
+        val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
 
         EphemeralSimulator.simulate(new BreezeCore(coreCfg, enabledebug = true)) { dut =>
             val cacheLineBytes = coreCfg.frontendCfg.cacheCfg.ICACHE_LINE_BYTES
@@ -278,12 +335,36 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 
                 dut.clock.step(1)
                 cycleCount += 1
+
+                if (collectTandemTrace) {
+                    dut.io.tandem.foreach { tandem =>
+                        if (tandem.valid.peek().litToBoolean) {
+                            commitEvents += RawCommitEvent(
+                              valid = true,
+                              pc = tandem.pc.peek().litValue,
+                              inst = tandem.inst.peek().litValue,
+                              nextPc = tandem.nextPc.peek().litValue,
+                              estop = tandem.estop.peek().litToBoolean,
+                              rdWriteEn = tandem.rdWriteEn.peek().litToBoolean,
+                              rdAddr = tandem.rdAddr.peek().litValue.toInt,
+                              rdData = tandem.rdData.peek().litValue,
+                              memEn = tandem.memEn.peek().litToBoolean,
+                              memIsWrite = tandem.memIsWrite.peek().litToBoolean,
+                              memAddr = tandem.memAddr.peek().litValue,
+                              memAlignedAddr = tandem.memAlignedAddr.peek().litValue,
+                              memRData = tandem.memRData.peek().litValue,
+                              memWData = tandem.memWData.peek().litValue,
+                              memWMask = tandem.memWMask.peek().litValue
+                            )
+                        }
+                    }
+                }
             }
 
             result = BreezeCoreSimResult(cycleCount = cycleCount, timedOut = cycleCount >= maxCycles)
         }
 
-        result
+        BreezeCoreSimTandemResult(result = result, commitEvents = commitEvents.toSeq)
     }
 }
 

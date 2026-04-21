@@ -16,6 +16,7 @@ class BreezeBackend(
         val dmem = new BackendMemIO(cfg.VLEN)
         val frontendRedirect = Output(new FrontendRedirectIO(cfg.VLEN))
         val estop = Output(Bool())
+        val tandem = if (cfg.enableTandem) Some(Output(new TracePayload(cfg.VLEN))) else None
         val debug = if (enabledebug) Some(new BackendDebugIO(cfg.VLEN)) else None
     })
 
@@ -25,7 +26,7 @@ class BreezeBackend(
     val immGen = Module(new ImmGen(cfg.VLEN))
     val regFile = Module(new RegFile(cfg.VLEN))
     val csrFile = Module(new CSRFile(cfg.VLEN))
-    val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN)))
+    val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
 
     val decodeReady = Wire(Bool())
     val decodeFire = Wire(Bool())
@@ -199,7 +200,7 @@ class BreezeBackend(
     jau.io.rs1_data := exeRs1Data
     jau.io.imm := idExeReg.imm
 
-    val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN)))
+    val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN, cfg.enableTandem)))
     val memWaitingRespReg = RegInit(false.B)
     val memReqIssued = Wire(Bool())
     val memRspFire = Wire(Bool())
@@ -210,6 +211,9 @@ class BreezeBackend(
     val memOffset = Wire(UInt(3.W))
     val memRspData = Wire(UInt(cfg.VLEN.W))
     val loadAlignBuf = Wire(UInt(64.W))
+    val memReqWData = Wire(UInt(64.W))
+    val memReqWMask = Wire(UInt(8.W))
+    val exeNextPc = Wire(UInt(cfg.VLEN.W))
 
     actualTaken := Mux(
         idExeReg.ctrl.bru_inst,
@@ -217,6 +221,7 @@ class BreezeBackend(
         idExeReg.ctrl.redir_inst
     )
     actualTarget := jau.io.jmp_addr
+    exeNextPc := Mux(actualTaken, actualTarget, idExeReg.pc + 4.U)
 
     redirectDirectionMismatch := idExeReg.valid && (actualTaken =/= idExeReg.pred.predTaken)
     redirectTargetMismatch := idExeReg.valid && actualTaken && idExeReg.pred.predTaken &&
@@ -245,6 +250,8 @@ class BreezeBackend(
     memOffset := exeMemReg.data(2, 0)
     loadAlignBuf := (io.dmem.rsp.data >> (memOffset << 3.U))(63, 0)
     memRspData := 0.U
+    memReqWData := 0.U
+    memReqWMask := 0.U
     switch(exeMemReg.mem_cmd) {
         is(MEM_TYPE.LB.U) { memRspData := Cat(Fill(cfg.VLEN - 8, loadAlignBuf(7)), loadAlignBuf(7, 0)) }
         is(MEM_TYPE.LBU.U) { memRspData := Cat(0.U((cfg.VLEN - 8).W), loadAlignBuf(7, 0)) }
@@ -253,6 +260,29 @@ class BreezeBackend(
         is(MEM_TYPE.LW.U) { memRspData := Cat(Fill(cfg.VLEN - 32, loadAlignBuf(31)), loadAlignBuf(31, 0)) }
         is(MEM_TYPE.LWU.U) { memRspData := Cat(0.U((cfg.VLEN - 32).W), loadAlignBuf(31, 0)) }
         is(MEM_TYPE.LD.U) { memRspData := io.dmem.rsp.data }
+        is(MEM_TYPE.SB.U) {
+            memReqWData := Fill(8, exeMemReg.rs2_data(7, 0))
+            memReqWMask := UIntToOH(memOffset, 8)
+        }
+        is(MEM_TYPE.SH.U) {
+            memReqWData := Fill(4, exeMemReg.rs2_data(15, 0))
+            memReqWMask := MuxLookup(memOffset(2, 1), 0.U(8.W))(
+                Seq(
+                    "b00".U -> "b00000011".U,
+                    "b01".U -> "b00001100".U,
+                    "b10".U -> "b00110000".U,
+                    "b11".U -> "b11000000".U
+                )
+            )
+        }
+        is(MEM_TYPE.SW.U) {
+            memReqWData := Fill(2, exeMemReg.rs2_data(31, 0))
+            memReqWMask := Mux(memOffset(2), "b11110000".U, "b00001111".U)
+        }
+        is(MEM_TYPE.SD.U) {
+            memReqWData := exeMemReg.rs2_data
+            memReqWMask := "b11111111".U
+        }
     }
 
     exeRs1Data := idExeReg.rs1_data
@@ -335,6 +365,23 @@ class BreezeBackend(
         exeMemReg.wb_sel := SEL_WB.XXX.U
         exeMemReg.actual_taken := false.B
         exeMemReg.actual_target := 0.U
+        exeMemReg.trace.foreach { trace =>
+            trace.valid := false.B
+            trace.pc := 0.U
+            trace.inst := 0.U
+            trace.nextPc := 0.U
+            trace.estop := false.B
+            trace.rdWriteEn := false.B
+            trace.rdAddr := 0.U
+            trace.rdData := 0.U
+            trace.memEn := false.B
+            trace.memIsWrite := false.B
+            trace.memAddr := 0.U
+            trace.memAlignedAddr := 0.U
+            trace.memRData := 0.U
+            trace.memWData := 0.U
+            trace.memWMask := 0.U
+        }
     }.elsewhen(!pipelineHold) {
         exeMemReg.valid := idExeReg.valid
         exeMemReg.pc := idExeReg.pc
@@ -352,6 +399,26 @@ class BreezeBackend(
         exeMemReg.wb_sel := idExeReg.ctrl.sel_wb
         exeMemReg.actual_taken := actualTaken
         exeMemReg.actual_target := actualTarget
+        exeMemReg.trace.foreach { trace =>
+            trace.valid := idExeReg.valid
+            trace.pc := idExeReg.pc
+            trace.inst := idExeReg.inst
+            trace.nextPc := exeNextPc
+            trace.estop := idExeReg.estop
+            trace.rdWriteEn := idExeReg.ctrl.wb_en && (idExeReg.rd_addr =/= 0.U)
+            trace.rdAddr := idExeReg.rd_addr
+            trace.rdData := 0.U
+            trace.memEn := idExeReg.ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U
+            trace.memIsWrite := idExeReg.ctrl.mem_cmd === MEM_TYPE.SB.U ||
+                idExeReg.ctrl.mem_cmd === MEM_TYPE.SH.U ||
+                idExeReg.ctrl.mem_cmd === MEM_TYPE.SW.U ||
+                idExeReg.ctrl.mem_cmd === MEM_TYPE.SD.U
+            trace.memAddr := alu.io.alu_out
+            trace.memAlignedAddr := (alu.io.alu_out >> 3.U) << 3.U
+            trace.memRData := 0.U
+            trace.memWData := 0.U
+            trace.memWMask := 0.U
+        }
     }
 
     when(reset.asBool) {
@@ -373,6 +440,23 @@ class BreezeBackend(
         memWbReg.alu_data := 0.U
         memWbReg.mem_data := 0.U
         memWbReg.csr_data := 0.U
+        memWbReg.trace.foreach { trace =>
+            trace.valid := false.B
+            trace.pc := 0.U
+            trace.inst := 0.U
+            trace.nextPc := 0.U
+            trace.estop := false.B
+            trace.rdWriteEn := false.B
+            trace.rdAddr := 0.U
+            trace.rdData := 0.U
+            trace.memEn := false.B
+            trace.memIsWrite := false.B
+            trace.memAddr := 0.U
+            trace.memAlignedAddr := 0.U
+            trace.memRData := 0.U
+            trace.memWData := 0.U
+            trace.memWMask := 0.U
+        }
     }.elsewhen(!exeMemReg.valid || !exeMemIsMem) {
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
@@ -384,6 +468,20 @@ class BreezeBackend(
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := 0.U
         memWbReg.csr_data := csrFile.io.csr_wdata
+        memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
+            wbTrace := exeTrace
+            wbTrace.valid := exeMemReg.valid
+            wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
+                Seq(
+                    SEL_WB.ALU.U -> exeMemReg.data,
+                    SEL_WB.MEM.U -> 0.U(cfg.VLEN.W),
+                    SEL_WB.CSR.U -> csrFile.io.csr_wdata
+                )
+            )
+            wbTrace.memRData := 0.U
+            wbTrace.memWData := Mux(wbTrace.memIsWrite, memReqWData, 0.U)
+            wbTrace.memWMask := Mux(wbTrace.memIsWrite, memReqWMask, 0.U)
+        }
     }.elsewhen(memRspFire) {
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
@@ -395,6 +493,20 @@ class BreezeBackend(
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := Mux(exeMemIsLoad, memRspData, 0.U)
         memWbReg.csr_data := csrFile.io.csr_wdata
+        memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
+            wbTrace := exeTrace
+            wbTrace.valid := exeMemReg.valid
+            wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
+                Seq(
+                    SEL_WB.ALU.U -> exeMemReg.data,
+                    SEL_WB.MEM.U -> Mux(exeMemIsLoad, memRspData, 0.U),
+                    SEL_WB.CSR.U -> csrFile.io.csr_wdata
+                )
+            )
+            wbTrace.memRData := Mux(exeMemIsLoad, memRspData, 0.U)
+            wbTrace.memWData := Mux(wbTrace.memIsWrite, memReqWData, 0.U)
+            wbTrace.memWMask := Mux(wbTrace.memIsWrite, memReqWMask, 0.U)
+        }
     }
 
     decodeReady := !pipelineHold && !redirectNeeded
@@ -404,39 +516,16 @@ class BreezeBackend(
     io.dmem.req.valid := memReqIssued
     io.dmem.req.isWrite := exeMemIsStore
     io.dmem.req.addr := memBaseAddr
-    io.dmem.req.wdata := 0.U
-    io.dmem.req.wmask := 0.U
-
-    switch(exeMemReg.mem_cmd) {
-        is(MEM_TYPE.SB.U) {
-            io.dmem.req.wdata := Fill(8, exeMemReg.rs2_data(7, 0))
-            io.dmem.req.wmask := UIntToOH(memOffset, 8)
-        }
-        is(MEM_TYPE.SH.U) {
-            io.dmem.req.wdata := Fill(4, exeMemReg.rs2_data(15, 0))
-            io.dmem.req.wmask := MuxLookup(memOffset(2, 1), 0.U(8.W))(
-                Seq(
-                    "b00".U -> "b00000011".U,
-                    "b01".U -> "b00001100".U,
-                    "b10".U -> "b00110000".U,
-                    "b11".U -> "b11000000".U
-                )
-            )
-        }
-        is(MEM_TYPE.SW.U) {
-            io.dmem.req.wdata := Fill(2, exeMemReg.rs2_data(31, 0))
-            io.dmem.req.wmask := Mux(memOffset(2), "b11110000".U, "b00001111".U)
-        }
-        is(MEM_TYPE.SD.U) {
-            io.dmem.req.wdata := exeMemReg.rs2_data
-            io.dmem.req.wmask := "b11111111".U
-        }
-    }
+    io.dmem.req.wdata := memReqWData
+    io.dmem.req.wmask := memReqWMask
 
     io.frontendRedirect.valid := redirectNeeded
     io.frontendRedirect.flush := redirectNeeded
     io.frontendRedirect.target := Mux(redirectNeeded, actualTarget, io.resetAddr)
     io.estop := estopCommitted
+    io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
+        tandem := trace
+    }
 
     io.debug.foreach { debug =>
         debug.decodeValid := decodeValid

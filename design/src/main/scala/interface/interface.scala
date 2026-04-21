@@ -135,6 +135,24 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val redirectValid = Output(Bool())
 }
 
+class TracePayload(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(VLEN.W)
+    val inst = UInt(32.W)
+    val nextPc = UInt(VLEN.W)
+    val estop = Bool()
+    val rdWriteEn = Bool()
+    val rdAddr = UInt(5.W)
+    val rdData = UInt(VLEN.W)
+    val memEn = Bool()
+    val memIsWrite = Bool()
+    val memAddr = UInt(VLEN.W)
+    val memAlignedAddr = UInt(VLEN.W)
+    val memRData = UInt(VLEN.W)
+    val memWData = UInt(64.W)
+    val memWMask = UInt(8.W)
+}
+
 class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
@@ -152,7 +170,7 @@ class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
     val src2 = UInt(VLEN.W)
 }
 
-class BreezeBackendEXEMEM(val VLEN: Int = 64) extends Bundle {
+class BreezeBackendEXEMEM(val VLEN: Int = 64, val enableTandem: Boolean = false) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
@@ -169,9 +187,10 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64) extends Bundle {
     val wb_sel = UInt(SEL_WB.width.W)
     val actual_taken = Bool()
     val actual_target = UInt(VLEN.W)
+    val trace = if (enableTandem) Some(new TracePayload(VLEN)) else None
 }
 
-class BreezeBackendMEMWB(val VLEN: Int = 64) extends Bundle {
+class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
@@ -182,6 +201,7 @@ class BreezeBackendMEMWB(val VLEN: Int = 64) extends Bundle {
     val alu_data = UInt(VLEN.W)
     val mem_data = UInt(VLEN.W)
     val csr_data = UInt(VLEN.W)
+    val trace = if (enableTandem) Some(new TracePayload(VLEN)) else None
 }
 
 //from cache
