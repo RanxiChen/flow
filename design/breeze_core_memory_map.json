@@ -6,7 +6,8 @@
     "textBytes": 248
   },
   "simulation": {
-    "bootaddr": "0x0"
+    "bootaddr": "0x0",
+    "tandemLog":true
   },
   "memoryMap": {
     "0x0": "0x0020011300100093",
