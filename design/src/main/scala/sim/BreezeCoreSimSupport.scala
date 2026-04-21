@@ -12,6 +12,7 @@ import java.io.File
 import scala.collection.mutable
 
 final case class BreezeCoreSimResult(cycleCount: Int, timedOut: Boolean)
+final case class BreezeCoreSimulationConfig(bootAddr: BigInt, tandemLog: Boolean)
 
 object BreezeCoreSimSupport {
     val Mask32: BigInt = (BigInt(1) << 32) - 1
@@ -111,8 +112,19 @@ object BreezeCoreSimSupport {
 object BreezeCoreSimMemoryLoader {
     private val mapper = new ObjectMapper()
 
+    private def loadRoot(path: String): JsonNode = {
+        mapper.readTree(new File(path))
+    }
+
+    private def loadSimulationNode(path: String): JsonNode = {
+        val root = loadRoot(path)
+        Option(root.get("simulation")).getOrElse {
+            throw new IllegalArgumentException(s"missing top-level simulation in $path")
+        }
+    }
+
     def loadMemoryMap(path: String): mutable.LinkedHashMap[BigInt, BigInt] = {
-        val root = mapper.readTree(new File(path))
+        val root = loadRoot(path)
         val memoryMapNode = Option(root.get("memoryMap")).getOrElse {
             throw new IllegalArgumentException(s"missing top-level memoryMap in $path")
         }
@@ -133,14 +145,23 @@ object BreezeCoreSimMemoryLoader {
     }
 
     def loadBootAddr(path: String): BigInt = {
-        val root = mapper.readTree(new File(path))
-        val simulationNode = Option(root.get("simulation")).getOrElse {
-            throw new IllegalArgumentException(s"missing top-level simulation in $path")
-        }
-        val bootAddrNode = Option(simulationNode.get("bootaddr")).getOrElse {
+        val simNode = loadSimulationNode(path)
+        val bootAddrNode = Option(simNode.get("bootaddr")).getOrElse {
             throw new IllegalArgumentException(s"missing simulation.bootaddr in $path")
         }
         parseNodeValue(bootAddrNode)
+    }
+
+    def loadTandemLog(path: String): Boolean = {
+        val node = loadSimulationNode(path)
+        Option(node.get("tandemLog")).map(_.asBoolean(false)).getOrElse(false)
+    }
+
+    def loadSimulationConfig(path: String): BreezeCoreSimulationConfig = {
+        BreezeCoreSimulationConfig(
+          bootAddr = loadBootAddr(path),
+          tandemLog = loadTandemLog(path)
+        )
     }
 
     private def parseNodeValue(node: JsonNode): BigInt = {
@@ -194,7 +215,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
           maxCycles = maxCycles,
           imemLatency = imemLatency,
           dmemLatency = dmemLatency,
-          bootAddr = 0
+          bootAddr = 0,
+          logMode = TandemLogMode.Off
         )
     }
 
@@ -223,7 +245,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         maxCycles: Int = 100000,
         imemLatency: Int = 6,
         dmemLatency: Int = 7,
-        bootAddr: BigInt = 0
+        bootAddr: BigInt = 0,
+        logMode: TandemLogMode = TandemLogMode.Off
     ): BreezeCoreSimTandemResult = {
         runInternal(
           memory = memory,
@@ -232,7 +255,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
           imemLatency = imemLatency,
           dmemLatency = dmemLatency,
           bootAddr = bootAddr,
-          collectTandemTrace = true
+          collectTandemTrace = true,
+          logMode = logMode
         )
     }
 
@@ -243,7 +267,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         imemLatency: Int,
         dmemLatency: Int,
         bootAddr: BigInt,
-        collectTandemTrace: Boolean
+        collectTandemTrace: Boolean,
+        logMode: TandemLogMode = TandemLogMode.Off
     ): BreezeCoreSimTandemResult = {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
@@ -284,7 +309,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                     if (imemTape == imemLatency) {
                         dut.io.nextLevelRsp.vld.poke(true.B)
                         dut.io.nextLevelRsp.data.poke(imemRespData.U)
-                        println(s"[FE] refill ${imemRespData.toString(16)} to ${imemWaitAddr.toString(16)}")
+                        //println(s"[FE] refill ${imemRespData.toString(16)} to ${imemWaitAddr.toString(16)}")
                         processImemReq = false
                         imemTape = 0
                     } else {
@@ -295,7 +320,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                     imemRespData = BreezeCoreSimSupport.buildCacheLine(memory, imemWaitAddr, cacheLineBytes)
                     processImemReq = true
                     imemTape = 0
-                    println(s"[FE] receive imem req for ${imemWaitAddr.toString(16)}")
+                    //println(s"[FE] receive imem req for ${imemWaitAddr.toString(16)}")
                 }
 
                 if (processDmemReq) {
@@ -303,7 +328,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                         dut.io.dmem.rsp.valid.poke(true.B)
                         dut.io.dmem.rsp.data.poke(dmemRespData.U)
                         dut.io.dmem.rsp.isWriteAck.poke(dmemWaitIsWrite.B)
-                        println(
+                        if(false)println(
                           s"[BE] respond ${if (dmemWaitIsWrite) "write" else "read"} " +
                             s"addr=${dmemWaitAddr.toString(16)} data=${dmemRespData.toString(16)}"
                         )
@@ -320,13 +345,13 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                         val wdata = dut.io.dmem.req.wdata.peek().litValue
                         val wmask = dut.io.dmem.req.wmask.peek().litValue
                         dmemRespData = BreezeCoreSimSupport.write64(memory, dmemWaitAddr, wdata, wmask)
-                        println(
+                        if(false)println(
                           s"[BE] receive dmem write addr=${dmemWaitAddr.toString(16)} " +
                             s"wdata=${wdata.toString(16)} wmask=${wmask.toString(16)}"
                         )
                     } else {
                         dmemRespData = BreezeCoreSimSupport.read64(memory, dmemWaitAddr)
-                        println(s"[BE] receive dmem read addr=${dmemWaitAddr.toString(16)}")
+                        if(false)println(s"[BE] receive dmem read addr=${dmemWaitAddr.toString(16)}")
                     }
 
                     processDmemReq = true
@@ -339,7 +364,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                 if (collectTandemTrace) {
                     dut.io.tandem.foreach { tandem =>
                         if (tandem.valid.peek().litToBoolean) {
-                            commitEvents += RawCommitEvent(
+                            val event = RawCommitEvent(
                               valid = true,
                               pc = tandem.pc.peek().litValue,
                               inst = tandem.inst.peek().litValue,
@@ -356,6 +381,10 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                               memWData = tandem.memWData.peek().litValue,
                               memWMask = tandem.memWMask.peek().litValue
                             )
+                            commitEvents += event
+                            if (logMode == TandemLogMode.RawCommit) {
+                                println(RawCommitEventLogFormatter.format(cycleCount, event))
+                            }
                         }
                     }
                 }
@@ -372,8 +401,29 @@ object BreezeCoreSimApp {
     def main(args: Array[String]): Unit = {
         require(args.length == 1, "usage: BreezeCoreSimApp <memory-json-path>")
         val memory = BreezeCoreSimMemoryLoader.loadMemoryMap(args(0))
-        val result = BreezeCoreSimRunner.run(memory)
-        println(s"[BreezeCoreSimApp] cycleCount=${result.cycleCount} timedOut=${result.timedOut}")
-        require(!result.timedOut, "simulation timed out before estop")
+        val simCfg = BreezeCoreSimMemoryLoader.loadSimulationConfig(args(0))
+        val coreCfg = BreezeCoreConfig(useFASE = false, enableTandem = simCfg.tandemLog)
+        if (simCfg.tandemLog) {
+            val tandemResult = BreezeCoreSimRunner.runWithTandemTrace(
+              memory = memory,
+              coreCfg = coreCfg,
+              bootAddr = simCfg.bootAddr,
+              logMode = TandemLogMode.RawCommit
+            )
+            val commitCount = tandemResult.commitEvents.length
+            val ipc =
+                if (tandemResult.result.cycleCount == 0) 0.0
+                else commitCount.toDouble / tandemResult.result.cycleCount.toDouble
+            println(
+              f"[BreezeCoreSimApp] cycleCount=${tandemResult.result.cycleCount}%d " +
+                f"commitCount=$commitCount%d ipc=$ipc%.3f timedOut=${tandemResult.result.timedOut}"
+            )
+            require(!tandemResult.result.timedOut, "simulation timed out before estop")
+        } else {
+            val result =
+                BreezeCoreSimRunner.run(memory, coreCfg = coreCfg, bootAddr = simCfg.bootAddr)
+            println(s"[BreezeCoreSimApp] cycleCount=${result.cycleCount} timedOut=${result.timedOut}")
+            require(!result.timedOut, "simulation timed out before estop")
+        }
     }
 }
