@@ -13,6 +13,7 @@ OBJDUMP := $(RISCV_PREFIX)-objdump
 ARCH ?= rv64im
 ABI ?= lp64
 TANDEM_LOG ?= true
+CORE_PRESET ?= baseline
 
 ASM_SRC := $(TEST_DIR)/$(TEST_NAME).S
 LD_SCRIPT := $(TEST_DIR)/$(TEST_NAME).ld
@@ -50,7 +51,7 @@ $(JSON): $(ELF) $(TEST_DIR)/gen_case.py
 
 run: $(JSON) | $(OUT_DIR)
 	cd $(DESIGN_DIR) && \
-	sbt "runMain flow.sim.BreezeCoreSimApp $(JSON)" | tee $(OUT_DIR)/$(TEST_NAME).run.log
+	sbt "runMain flow.sim.BreezeCoreSimApp $(JSON) $(CORE_PRESET)" | tee $(OUT_DIR)/$(TEST_NAME).run.log
 
 clean:
 	rm -f $(ELF) $(DUMP) $(JSON) $(OUT_DIR)/$(TEST_NAME).run.log

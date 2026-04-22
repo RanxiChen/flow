@@ -64,5 +64,16 @@ make run
 
 - `make run`
   - 调用 `design/` 下的 `BreezeCoreSimApp`
+  - 默认使用 `baseline` 核心配置
+  - 可以通过 `CORE_PRESET=gshare make run` 切到 gshare 配置
+
+当前支持的核心配置：
+
+- `baseline`
+  - 前端不启用 gshare
+
+- `gshare`
+  - 前端启用 gshare
+  - 当前使用默认 `ghrLength` 和 `btbEntryNum`
 
 如果后面希望把最终稳定的 case 再沉淀到上层公共目录，也可以再复制到 `sim/breezecore/cases/`。
