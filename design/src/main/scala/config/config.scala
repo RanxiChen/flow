@@ -33,13 +33,21 @@ import FrontendBranchPredictorKind._
 
 sealed trait FrontendBranchPredictorConfig {
     def kind: FrontendBranchPredictorKind
+    def ghrLength: Int = 0
+    def btbEntryNum: Int = 0
 }
 
 case object NoBranchPredictorConfig extends FrontendBranchPredictorConfig {
     override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.None
 }
 
-case object GShareBranchPredictorConfig extends FrontendBranchPredictorConfig {
+case class GShareBranchPredictorConfig(
+    override val ghrLength: Int = 8,
+    override val btbEntryNum: Int = 16
+) extends FrontendBranchPredictorConfig {
+    require(ghrLength > 0, "GShare ghrLength must be greater than 0")
+    require(btbEntryNum > 0, "GShare btbEntryNum must be greater than 0")
+
     override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare
 }
 
@@ -56,6 +64,8 @@ case class BreezeFrontendConfig(
 case class BackendConfig(
     val VLEN: Int = 64,
     val PLEN: Int = 64,
+    val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.None,
+    val ghrLength: Int = 0,
     val enableTandem: Boolean = false
 ){}
 
@@ -66,5 +76,11 @@ case class BreezeCoreConfig(
     val enableTandem: Boolean = false
 ){
     val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(VLEN)
-    val backendCfg: BackendConfig = BackendConfig(VLEN, PLEN, enableTandem)
+    val backendCfg: BackendConfig = BackendConfig(
+        VLEN = VLEN,
+        PLEN = PLEN,
+        branchPredKind = frontendCfg.branchPredCfg.kind,
+        ghrLength = frontendCfg.branchPredCfg.ghrLength,
+        enableTandem = enableTandem
+    )
 }

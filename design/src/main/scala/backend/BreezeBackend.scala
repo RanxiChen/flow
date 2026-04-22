@@ -12,8 +12,11 @@ class BreezeBackend(
 ) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
-        val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN)))
+        val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN, cfg.ghrLength)))
         val dmem = new BackendMemIO(cfg.VLEN)
+        val frontendBtbUpdate = Output(new BreezeBTBUpdateReq(cfg.VLEN))
+        val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
+        val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
         val frontendRedirect = Output(new FrontendRedirectIO(cfg.VLEN))
         val estop = Output(Bool())
         val tandem = if (cfg.enableTandem) Some(Output(new TracePayload(cfg.VLEN))) else None
@@ -96,14 +99,17 @@ class BreezeBackend(
         )
     )
 
-    val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN)))
+    val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
     val actualTaken = Wire(Bool())
     val actualTarget = Wire(UInt(cfg.VLEN.W))
     val redirectDirectionMismatch = Wire(Bool())
     val redirectTargetMismatch = Wire(Bool())
     val redirectNeeded = Wire(Bool())
+    val predictionMiss = Wire(Bool())
     val pipelineHold = Wire(Bool())
     val loadUseHazard = Wire(Bool())
+    val frontendBtbUpdateValid = Wire(Bool())
+    val frontendPhtUpdateValid = Wire(Bool())
 
     val alu = Module(new ALU(cfg.VLEN))
     val bru = Module(new BRU(cfg.VLEN))
@@ -116,6 +122,7 @@ class BreezeBackend(
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
+        idExeReg.pred.phtIdx := 0.U
         idExeReg.ctrl.alu_op := ALU_OP.XXX.U
         idExeReg.ctrl.bru_op := BRU_OP.XXX.U
         idExeReg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
@@ -161,6 +168,7 @@ class BreezeBackend(
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
+        idExeReg.pred.phtIdx := 0.U
         idExeReg.ctrl.alu_op := ALU_OP.XXX.U
         idExeReg.ctrl.bru_op := BRU_OP.XXX.U
         idExeReg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
@@ -200,7 +208,7 @@ class BreezeBackend(
     jau.io.rs1_data := exeRs1Data
     jau.io.imm := idExeReg.imm
 
-    val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN, cfg.enableTandem)))
+    val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN, cfg.ghrLength, cfg.enableTandem)))
     val memWaitingRespReg = RegInit(false.B)
     val memReqIssued = Wire(Bool())
     val memRspFire = Wire(Bool())
@@ -227,6 +235,60 @@ class BreezeBackend(
     redirectTargetMismatch := idExeReg.valid && actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
+    predictionMiss := redirectNeeded
+
+    io.frontendBtbUpdate.valid := false.B
+    io.frontendBtbUpdate.pc := 0.U
+    io.frontendBtbUpdate.target := 0.U
+    io.frontendBtbUpdate.predType := FrontendPredType.NONE
+    io.frontendBtbUpdate.taken := false.B
+
+    io.frontendPhtUpdate.valid := false.B
+    io.frontendPhtUpdate.idx := 0.U
+    io.frontendPhtUpdate.taken := false.B
+    io.frontendGhrUpdate.valid := false.B
+    io.frontendGhrUpdate.taken := false.B
+
+    frontendBtbUpdateValid := false.B
+    frontendPhtUpdateValid := false.B
+
+    if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
+        when(idExeReg.valid) {
+            switch(idExeReg.pred.predType) {
+                is(FrontendPredType.BR) {
+                    frontendBtbUpdateValid := true.B
+                    frontendPhtUpdateValid := true.B
+                    io.frontendBtbUpdate.pc := idExeReg.pc
+                    io.frontendBtbUpdate.target := actualTarget
+                    io.frontendBtbUpdate.predType := FrontendPredType.BR
+                    io.frontendBtbUpdate.taken := actualTaken
+                    io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
+                    io.frontendPhtUpdate.taken := actualTaken
+                    io.frontendGhrUpdate.valid := true.B
+                    io.frontendGhrUpdate.taken := actualTaken
+                }
+                is(FrontendPredType.JAL) {
+                    frontendBtbUpdateValid := true.B
+                    io.frontendBtbUpdate.pc := idExeReg.pc
+                    io.frontendBtbUpdate.target := actualTarget
+                    io.frontendBtbUpdate.predType := FrontendPredType.JAL
+                    io.frontendBtbUpdate.taken := true.B
+                }
+                is(FrontendPredType.JALR) {
+                    when(predictionMiss) {
+                        frontendBtbUpdateValid := true.B
+                        io.frontendBtbUpdate.pc := idExeReg.pc
+                        io.frontendBtbUpdate.target := actualTarget
+                        io.frontendBtbUpdate.predType := FrontendPredType.JALR
+                        io.frontendBtbUpdate.taken := true.B
+                    }
+                }
+            }
+        }
+    }
+
+    io.frontendBtbUpdate.valid := frontendBtbUpdateValid
+    io.frontendPhtUpdate.valid := frontendPhtUpdateValid
 
     exeMemIsMem := exeMemReg.valid && (exeMemReg.mem_cmd =/= MEM_TYPE.NOT_MEM.U)
     exeMemIsLoad := exeMemIsMem && (
@@ -353,6 +415,7 @@ class BreezeBackend(
         exeMemReg.pred.predType := FrontendPredType.NONE
         exeMemReg.pred.predTaken := false.B
         exeMemReg.pred.predPc := 0.U
+        exeMemReg.pred.phtIdx := 0.U
         exeMemReg.estop := false.B
         exeMemReg.data := 0.U
         exeMemReg.rs2_data := 0.U

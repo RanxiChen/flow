@@ -4,18 +4,18 @@ import chisel3._
 import chisel3.util._
 import flow.interface._
 
-class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
+class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4, val ghrLength: Int = 0) extends Module {
     require(entries >= 3, "FetchBuffer entries must be at least 3 to support canAccept3")
 
     val io = IO(new Bundle {
-        val in = Flipped(new FrontendFetchBufferIO(VLEN))
-        val out = Decoupled(new FrontendFetchBundle(VLEN))
+        val in = Flipped(new FrontendFetchBufferIO(VLEN, ghrLength))
+        val out = Decoupled(new FrontendFetchBundle(VLEN, ghrLength))
         val flush = Input(Bool())
     })
 
     val fifo = Module(
         new Queue(
-            gen = new FrontendFetchBundle(VLEN),
+            gen = new FrontendFetchBundle(VLEN, ghrLength),
             entries = entries,
             pipe = false,
             flow = false,
@@ -38,18 +38,18 @@ class FetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
     )
 }
 
-class FASEFetchBuffer(val VLEN: Int = 64, val entries: Int = 4) extends Module {
+class FASEFetchBuffer(val VLEN: Int = 64, val entries: Int = 4, val ghrLength: Int = 0) extends Module {
     require(entries > 0, "FetchBuffer entries must be positive")
 
     val io = IO(new Bundle {
-        val in = Flipped(Decoupled(new FrontendFetchBundle(VLEN)))
-        val out = Decoupled(new FrontendFetchBundle(VLEN))
+        val in = Flipped(Decoupled(new FrontendFetchBundle(VLEN, ghrLength)))
+        val out = Decoupled(new FrontendFetchBundle(VLEN, ghrLength))
         val flush = Input(Bool())
     })
 
     val fifo = Module(
         new Queue(
-            gen = new FrontendFetchBundle(VLEN),
+            gen = new FrontendFetchBundle(VLEN, ghrLength),
             entries = entries,
             pipe = false,
             flow = false,
