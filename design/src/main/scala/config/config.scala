@@ -73,9 +73,25 @@ case class BreezeCoreConfig(
     val VLEN: Int = 64,
     val PLEN: Int = 64,
     val useFASE: Boolean = false,
-    val enableTandem: Boolean = false
+    val enableTandem: Boolean = false,
+    val useGShare: Boolean = false,
+    val gshareGhrLength: Int = 8,
+    val gshareBtbEntryNum: Int = 16
 ){
-    val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(VLEN)
+    private val branchPredCfg: FrontendBranchPredictorConfig =
+        if (useGShare) {
+            GShareBranchPredictorConfig(
+                ghrLength = gshareGhrLength,
+                btbEntryNum = gshareBtbEntryNum
+            )
+        } else {
+            NoBranchPredictorConfig
+        }
+
+    val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(
+        VLEN = VLEN,
+        branchPredCfg = branchPredCfg
+    )
     val backendCfg: BackendConfig = BackendConfig(
         VLEN = VLEN,
         PLEN = PLEN,
@@ -83,4 +99,20 @@ case class BreezeCoreConfig(
         ghrLength = frontendCfg.branchPredCfg.ghrLength,
         enableTandem = enableTandem
     )
+}
+
+object BreezeCoreConfigs {
+    def baseline(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfig(
+            useFASE = false,
+            enableTandem = enableTandem,
+            useGShare = false
+        )
+
+    def gshare(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfig(
+            useFASE = false,
+            enableTandem = enableTandem,
+            useGShare = true
+        )
 }

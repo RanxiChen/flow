@@ -5,7 +5,7 @@ import chisel3.simulator.EphemeralSimulator
 import chisel3.simulator.PeekPokeAPI
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import flow.config.BreezeCoreConfig
+import flow.config.{BreezeCoreConfig, BreezeCoreConfigs}
 import flow.core.BreezeCore
 
 import java.io.File
@@ -398,11 +398,21 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 }
 
 object BreezeCoreSimApp {
+    def buildCoreConfig(corePreset: String, enableTandem: Boolean): BreezeCoreConfig =
+        corePreset match {
+            case "baseline" => BreezeCoreConfigs.baseline(enableTandem = enableTandem)
+            case "gshare"   => BreezeCoreConfigs.gshare(enableTandem = enableTandem)
+            case other =>
+                throw new IllegalArgumentException(
+                  s"unsupported core preset: $other (expected baseline or gshare)"
+                )
+        }
+
     def main(args: Array[String]): Unit = {
-        require(args.length == 1, "usage: BreezeCoreSimApp <memory-json-path>")
+        require(args.length == 2, "usage: BreezeCoreSimApp <memory-json-path> <baseline|gshare>")
         val memory = BreezeCoreSimMemoryLoader.loadMemoryMap(args(0))
         val simCfg = BreezeCoreSimMemoryLoader.loadSimulationConfig(args(0))
-        val coreCfg = BreezeCoreConfig(useFASE = false, enableTandem = simCfg.tandemLog)
+        val coreCfg = buildCoreConfig(args(1), enableTandem = simCfg.tandemLog)
         if (simCfg.tandemLog) {
             val tandemResult = BreezeCoreSimRunner.runWithTandemTrace(
               memory = memory,
