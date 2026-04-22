@@ -8,6 +8,10 @@ object FlowConst{
     val pc_addr_width = 64
 }
 
+object BranchPredictConst {
+    def phtIdxWidth(ghrLength: Int): Int = if (ghrLength > 0) ghrLength else 1
+}
+
 // This file stores native interfaces.
 /**
   * 这个接口负责连接cache到一个虚拟的内存系统，提供地址和数据的输入输出
@@ -86,10 +90,11 @@ object FrontendPredType extends ChiselEnum {
     val NONE, BR, JAL, JALR = Value
 }
 
-class FrontendPredInfo(val VLEN: Int = 64) extends Bundle {
+class FrontendPredInfo(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val predType = FrontendPredType()
     val predTaken = Bool()
     val predPc = UInt(VLEN.W)
+    val phtIdx = UInt(BranchPredictConst.phtIdxWidth(ghrLength).W)
 }
 
 class BreezePHTPredictReq(val vlen: Int, val ghrLength: Int) extends Bundle {
@@ -107,6 +112,11 @@ class BreezePHTPredictResp(val ghrLength: Int) extends Bundle {
 class BreezePHTUpdateReq(val ghrLength: Int) extends Bundle {
     val valid = Bool()
     val idx = UInt(ghrLength.W)
+    val taken = Bool()
+}
+
+class BreezeGHRUpdateReq extends Bundle {
+    val valid = Bool()
     val taken = Bool()
 }
 
@@ -129,15 +139,15 @@ class BreezeBTBUpdateReq(val vlen: Int) extends Bundle {
     val taken = Bool()
 }
 
-class FrontendFetchBundle(val VLEN: Int = 64) extends Bundle {
+class FrontendFetchBundle(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
-    val pred = new FrontendPredInfo(VLEN)
+    val pred = new FrontendPredInfo(VLEN, ghrLength)
 }
 
-class FrontendFetchBufferIO(val VLEN: Int = 64) extends Bundle {
+class FrontendFetchBufferIO(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val valid = Output(Bool())
-    val bits = Output(new FrontendFetchBundle(VLEN))
+    val bits = Output(new FrontendFetchBundle(VLEN, ghrLength))
     val canAccept3 = Input(Bool())
 }
 
@@ -190,11 +200,11 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
     val memWMask = UInt(8.W)
 }
 
-class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
+class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
-    val pred = new FrontendPredInfo(VLEN)
+    val pred = new FrontendPredInfo(VLEN, ghrLength)
     val ctrl = new EXE_Ctrl
     val estop = Bool()
     val rs1_addr = UInt(5.W)
@@ -207,11 +217,11 @@ class BreezeBackendIDEXE(val VLEN: Int = 64) extends Bundle {
     val src2 = UInt(VLEN.W)
 }
 
-class BreezeBackendEXEMEM(val VLEN: Int = 64, val enableTandem: Boolean = false) extends Bundle {
+class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enableTandem: Boolean = false) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
-    val pred = new FrontendPredInfo(VLEN)
+    val pred = new FrontendPredInfo(VLEN, ghrLength)
     val estop = Bool()
     val data = UInt(VLEN.W)
     val rs2_data = UInt(VLEN.W)

@@ -23,11 +23,14 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     })
 
     val frontend = Module(new BreezeFrontend(corecfg.frontendCfg, enabledebug = enabledebug))
-    val buffer = Module(new FetchBuffer(corecfg.VLEN, 6))
+    val buffer = Module(new FetchBuffer(corecfg.VLEN, 6, corecfg.backendCfg.ghrLength))
     val backend = Module(new BreezeBackend(corecfg.backendCfg, enabledebug = enabledebug))
 
     frontend.io.resetAddr := io.resetAddr
     frontend.io.beRedirect := backend.io.frontendRedirect
+    frontend.io.btbUpdate := backend.io.frontendBtbUpdate
+    frontend.io.phtUpdate := backend.io.frontendPhtUpdate
+    frontend.io.ghrUpdate := backend.io.frontendGhrUpdate
     frontend.io.nextLevelReq <> io.nextLevelReq
     frontend.io.nextLevelRsp <> io.nextLevelRsp
 
@@ -44,7 +47,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.debug.foreach(_ <> backend.io.debug.get)
 
     if (corecfg.useFASE) {
-        val fasebuffer = Module(new FASEFetchBuffer(corecfg.frontendCfg.cacheCfg.VLEN, 6))
+        val fasebuffer = Module(new FASEFetchBuffer(corecfg.frontendCfg.cacheCfg.VLEN, 6, corecfg.backendCfg.ghrLength))
         val useFASEBuffer = Wire(Bool())
         val fase = io.fase.get
 
@@ -56,6 +59,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         fasebuffer.io.in.bits.pred.predType := FrontendPredType.NONE
         fasebuffer.io.in.bits.pred.predTaken := false.B
         fasebuffer.io.in.bits.pred.predPc := 0.U
+        fasebuffer.io.in.bits.pred.phtIdx := 0.U
         fasebuffer.io.flush := false.B
         fase.inst_ready := fasebuffer.io.in.ready
 
