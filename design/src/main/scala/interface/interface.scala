@@ -83,13 +83,50 @@ class FrontendRedirectIO(val VLEN: Int = 64) extends Bundle {
 }
 
 object FrontendPredType extends ChiselEnum {
-    val NONE, JAL = Value
+    val NONE, BR, JAL, JALR = Value
 }
 
 class FrontendPredInfo(val VLEN: Int = 64) extends Bundle {
     val predType = FrontendPredType()
     val predTaken = Bool()
     val predPc = UInt(VLEN.W)
+}
+
+class BreezePHTPredictReq(val vlen: Int, val ghrLength: Int) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(vlen.W)
+    val ghr = UInt(ghrLength.W)
+}
+
+class BreezePHTPredictResp(val ghrLength: Int) extends Bundle {
+    val valid = Bool()
+    val taken = Bool()
+    val idx = UInt(ghrLength.W)
+}
+
+class BreezePHTUpdateReq(val ghrLength: Int) extends Bundle {
+    val valid = Bool()
+    val idx = UInt(ghrLength.W)
+    val taken = Bool()
+}
+
+class BreezeBTBLookupReq(val vlen: Int) extends Bundle {
+    val pc = UInt(vlen.W)
+}
+
+class BreezeBTBLookupResp(val vlen: Int) extends Bundle {
+    val hit = Bool()
+    val taken = Bool()
+    val predType = FrontendPredType()
+    val target = UInt(vlen.W)
+}
+
+class BreezeBTBUpdateReq(val vlen: Int) extends Bundle {
+    val valid = Bool()
+    val pc = UInt(vlen.W)
+    val target = UInt(vlen.W)
+    val predType = FrontendPredType()
+    val taken = Bool()
 }
 
 class FrontendFetchBundle(val VLEN: Int = 64) extends Bundle {
