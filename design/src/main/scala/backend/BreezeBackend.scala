@@ -227,6 +227,10 @@ class BreezeBackend(
     val loadAlignBuf = Wire(UInt(64.W))
     val memReqWData = Wire(UInt(64.W))
     val memReqWMask = Wire(UInt(8.W))
+    val memAddrMisaligned = Wire(Bool())
+    val loadAddrMisaligned = Wire(Bool())
+    val storeAddrMisaligned = Wire(Bool())
+    val exeMemNeedsDmem = Wire(Bool())
     val exeNextPc = Wire(UInt(cfg.VLEN.W))
 
     actualTaken := Mux(
@@ -312,7 +316,22 @@ class BreezeBackend(
         exeMemReg.mem_cmd === MEM_TYPE.SW.U ||
         exeMemReg.mem_cmd === MEM_TYPE.SD.U
     )
-    memReqIssued := exeMemIsMem && !memWaitingRespReg
+    memAddrMisaligned := MuxLookup(exeMemReg.mem_cmd, false.B)(
+        Seq(
+            MEM_TYPE.LH.U -> exeMemReg.data(0),
+            MEM_TYPE.LHU.U -> exeMemReg.data(0),
+            MEM_TYPE.SH.U -> exeMemReg.data(0),
+            MEM_TYPE.LW.U -> exeMemReg.data(1, 0).orR,
+            MEM_TYPE.LWU.U -> exeMemReg.data(1, 0).orR,
+            MEM_TYPE.SW.U -> exeMemReg.data(1, 0).orR,
+            MEM_TYPE.LD.U -> exeMemReg.data(2, 0).orR,
+            MEM_TYPE.SD.U -> exeMemReg.data(2, 0).orR
+        )
+    )
+    loadAddrMisaligned := exeMemIsLoad && memAddrMisaligned
+    storeAddrMisaligned := exeMemIsStore && memAddrMisaligned
+    exeMemNeedsDmem := exeMemIsMem && !memAddrMisaligned
+    memReqIssued := exeMemNeedsDmem && !memWaitingRespReg
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
     memBaseAddr := (exeMemReg.data >> 3.U) << 3.U
     memOffset := exeMemReg.data(2, 0)
@@ -505,6 +524,8 @@ class BreezeBackend(
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
         memWbReg.illegal_inst := false.B
+        memWbReg.load_addr_misaligned := false.B
+        memWbReg.store_addr_misaligned := false.B
         memWbReg.estop := false.B
         memWbReg.wb_en := false.B
         memWbReg.wb_sel := SEL_WB.XXX.U
@@ -529,13 +550,15 @@ class BreezeBackend(
             trace.memWData := 0.U
             trace.memWMask := 0.U
         }
-    }.elsewhen(!exeMemReg.valid || !exeMemIsMem) {
+    }.elsewhen(!exeMemReg.valid || !exeMemNeedsDmem) {
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.estop := exeMemReg.estop
-        memWbReg.wb_en := exeMemReg.wb_en
+        memWbReg.load_addr_misaligned := loadAddrMisaligned
+        memWbReg.store_addr_misaligned := storeAddrMisaligned
+        memWbReg.wb_en := exeMemReg.wb_en && !memAddrMisaligned
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
         memWbReg.alu_data := exeMemReg.data
@@ -544,6 +567,7 @@ class BreezeBackend(
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid
+            wbTrace.rdWriteEn := exeTrace.rdWriteEn && !memAddrMisaligned
             wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
                 Seq(
                     SEL_WB.ALU.U -> exeMemReg.data,
@@ -561,6 +585,8 @@ class BreezeBackend(
         memWbReg.inst := exeMemReg.inst
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.estop := exeMemReg.estop
+        memWbReg.load_addr_misaligned := false.B
+        memWbReg.store_addr_misaligned := false.B
         memWbReg.wb_en := exeMemReg.wb_en
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
