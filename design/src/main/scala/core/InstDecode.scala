@@ -19,6 +19,7 @@ class EXE_Ctrl extends Bundle {
     val is_w = Output(Bool())
     val csr_addr = Output(UInt(12.W))
     val csr_cmd = Output(UInt(CSR_CMD.width.W))
+    val fencei = Output(Bool())
 }
 
 class RV64IZicsrDecoder extends Module {
@@ -43,6 +44,7 @@ class RV64IZicsrDecoder extends Module {
     io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
     io.I_ctrl.csr_addr := 0.U
     io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
+    io.I_ctrl.fencei := false.B
     io.illegal_inst := true.B
     //manual decode
     val opcode = io.inst(6,0)
@@ -300,6 +302,26 @@ class RV64IZicsrDecoder extends Module {
                     io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
                     io.illegal_inst := false.B
                 } //FENCE
+                is("b001".U){
+                    // FENCE.I is handled in MEM as a frontend redirect plus I-cache invalidate.
+                    io.I_ctrl.alu_op := ALU_OP.XXX.U
+                    io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
+                    io.I_ctrl.wb_en := false.B
+                    io.I_ctrl.sel_wb := SEL_WB.XXX.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.XXX.U
+                    io.I_ctrl.bru_op := BRU_OP.XXX.U
+                    io.I_ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
+                    io.I_ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
+                    io.I_ctrl.redir_inst := false.B
+                    io.I_ctrl.bru_inst := false.B
+                    io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                    io.I_ctrl.is_w := false.B
+                    io.I_ctrl.csr_addr := 0.U
+                    io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
+                    io.I_ctrl.fencei := true.B
+                    io.illegal_inst := false.B
+                } //FENCE.I
             }
         }
         is(OPCODE.SYSTEM){

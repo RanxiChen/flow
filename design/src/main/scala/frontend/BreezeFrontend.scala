@@ -227,6 +227,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     }
 
     // ===== S1: Cache Request =====
+    icache.io.flush := io.beRedirect.cacheFlush
     icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
     icache.io.dreq.bits.vaddr := s1_pcReg
 
