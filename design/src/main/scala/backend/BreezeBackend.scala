@@ -105,6 +105,8 @@ class BreezeBackend(
     val redirectDirectionMismatch = Wire(Bool())
     val redirectTargetMismatch = Wire(Bool())
     val redirectNeeded = Wire(Bool())
+    val fenceiFlush = Wire(Bool())
+    val frontendRedirectNeeded = Wire(Bool())
     val predictionMiss = Wire(Bool())
     val pipelineHold = Wire(Bool())
     val loadUseHazard = Wire(Bool())
@@ -115,7 +117,7 @@ class BreezeBackend(
     val bru = Module(new BRU(cfg.VLEN))
     val jau = Module(new JAU(cfg.VLEN))
 
-    when(reset.asBool || redirectNeeded) {
+    when(reset.asBool || frontendRedirectNeeded) {
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
@@ -139,6 +141,7 @@ class BreezeBackend(
         idExeReg.ctrl.is_w := false.B
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
+        idExeReg.ctrl.fencei := false.B
         idExeReg.estop := false.B
         idExeReg.rs1_addr := 0.U
         idExeReg.rs2_addr := 0.U
@@ -188,6 +191,7 @@ class BreezeBackend(
         idExeReg.ctrl.is_w := false.B
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
+        idExeReg.ctrl.fencei := false.B
         idExeReg.estop := false.B
         idExeReg.rs1_addr := 0.U
         idExeReg.rs2_addr := 0.U
@@ -245,6 +249,7 @@ class BreezeBackend(
     redirectTargetMismatch := idExeReg.valid && actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
+    frontendRedirectNeeded := fenceiFlush || redirectNeeded
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -433,7 +438,9 @@ class BreezeBackend(
     csrFile.io.rs1_id := exeMemReg.rs1_addr
     csrFile.io.rd_id := exeMemReg.rd_addr
 
-    when(reset.asBool) {
+    fenceiFlush := exeMemReg.valid && exeMemReg.fencei
+
+    when(reset.asBool || fenceiFlush) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.inst := nopInst
@@ -443,6 +450,7 @@ class BreezeBackend(
         exeMemReg.pred.predPc := 0.U
         exeMemReg.pred.phtIdx := 0.U
         exeMemReg.estop := false.B
+        exeMemReg.fencei := false.B
         exeMemReg.data := 0.U
         exeMemReg.rs2_data := 0.U
         exeMemReg.mem_cmd := MEM_TYPE.NOT_MEM.U
@@ -478,6 +486,7 @@ class BreezeBackend(
         exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
+        exeMemReg.fencei := idExeReg.ctrl.fencei
         exeMemReg.data := alu.io.alu_out
         exeMemReg.rs2_data := idExeReg.rs2_data
         exeMemReg.mem_cmd := idExeReg.ctrl.mem_cmd
@@ -609,7 +618,7 @@ class BreezeBackend(
         }
     }
 
-    decodeReady := !pipelineHold && !redirectNeeded
+    decodeReady := !pipelineHold && !frontendRedirectNeeded
     decodeFire := decodeValid && decodeReady
     io.fetchBuffer.ready := decodeReady
 
@@ -619,9 +628,14 @@ class BreezeBackend(
     io.dmem.req.wdata := memReqWData
     io.dmem.req.wmask := memReqWMask
 
-    io.frontendRedirect.valid := redirectNeeded
-    io.frontendRedirect.flush := redirectNeeded
-    io.frontendRedirect.target := Mux(redirectNeeded, actualTarget, io.resetAddr)
+    io.frontendRedirect.valid := frontendRedirectNeeded
+    io.frontendRedirect.flush := frontendRedirectNeeded
+    io.frontendRedirect.cacheFlush := fenceiFlush
+    io.frontendRedirect.target := Mux(
+        fenceiFlush,
+        exeMemReg.pc + 4.U,
+        Mux(redirectNeeded, actualTarget, io.resetAddr)
+    )
     io.estop := estopCommitted
     io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
         tandem := trace
@@ -655,6 +669,6 @@ class BreezeBackend(
         debug.exeBypassRs1 := exeRs1Data
         debug.exeBypassRs2 := exeRs2Data
         debug.loadUseHazard := loadUseHazard
-        debug.redirectValid := redirectNeeded
+        debug.redirectValid := frontendRedirectNeeded
     }
 }

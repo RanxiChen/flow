@@ -83,6 +83,7 @@ class ICacheResp extends Bundle{
 class FrontendRedirectIO(val VLEN: Int = 64) extends Bundle {
     val valid = Bool()
     val flush = Bool()
+    val cacheFlush = Bool()
     val target = UInt(VLEN.W)
 }
 
@@ -225,6 +226,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val illegal_inst = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
     val estop = Bool()
+    val fencei = Bool()
     val data = UInt(VLEN.W)
     val rs2_data = UInt(VLEN.W)
     val mem_cmd = UInt(MEM_TYPE.width.W)
