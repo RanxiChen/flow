@@ -183,6 +183,28 @@ class RV32IDecoder extends Module {
                 is("b010".U){io.I_ctrl.mem_cmd := MEM_TYPE.SW.U} //SW
             }
         }
+        is(OPCODE.MISC_MEM){
+            switch(funct3){
+                is("b000".U){
+                    // FENCE is currently satisfied by the in-order memory pipeline.
+                    // Decode it as an explicit NOP while preserving the original inst bits.
+                    io.I_ctrl.alu_op := ALU_OP.XXX.U
+                    io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
+                    io.I_ctrl.wb_en := false.B
+                    io.I_ctrl.sel_wb := SEL_WB.XXX.U
+                    io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
+                    io.I_ctrl.sel_alu1 := SEL_ALU1.XXX.U
+                    io.I_ctrl.bru_op := BRU_OP.XXX.U
+                    io.I_ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
+                    io.I_ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
+                    io.I_ctrl.redir_inst := false.B
+                    io.I_ctrl.bru_inst := false.B
+                    io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                    io.I_ctrl.csr_addr := 0.U
+                    io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
+                } //FENCE
+            }
+        }
         is(OPCODE.SYSTEM){
             switch(funct3){
                 is("b000".U){
