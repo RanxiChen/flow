@@ -8,35 +8,46 @@ class ALU(XLEN:Int=64) extends Module {
         val alu_op = Input(UInt(ALU_OP.width.W))
         val alu_in1 = Input(UInt(XLEN.W))
         val alu_in2 = Input(UInt(XLEN.W))
+        val is_w = Input(Bool())
         val alu_out = Output(UInt(XLEN.W))
     })
-    io.alu_out := 0.U
+    val aluIn1 = Mux(io.is_w, Cat(0.U((XLEN - 32).W), io.alu_in1(31, 0)), io.alu_in1)
+    val aluIn2 = Mux(io.is_w, Cat(0.U((XLEN - 32).W), io.alu_in2(31, 0)), io.alu_in2)
+    val shamt = Mux(io.is_w, Cat(0.U(1.W), aluIn2(4, 0)), aluIn2(5, 0))
+    val rawOut = WireDefault(0.U(XLEN.W))
     switch(io.alu_op){
-        is(ALU_OP.ADD.U){io.alu_out := io.alu_in1 + io.alu_in2}
-        is(ALU_OP.SUB.U){io.alu_out := io.alu_in1 - io.alu_in2}
-        is(ALU_OP.AND.U){io.alu_out := io.alu_in1 & io.alu_in2}
-        is(ALU_OP.OR.U) {io.alu_out := io.alu_in1 | io.alu_in2}
-        is(ALU_OP.XOR.U){io.alu_out := io.alu_in1 ^ io.alu_in2}
-        is(ALU_OP.SLL.U){io.alu_out := io.alu_in1 << io.alu_in2(5,0)}
-        is(ALU_OP.SRL.U){io.alu_out := io.alu_in1 >> io.alu_in2(5,0)}
-        is(ALU_OP.SRA.U){io.alu_out := (io.alu_in1.asSInt >> io.alu_in2(5,0)).asUInt}
+        is(ALU_OP.ADD.U){rawOut := aluIn1 + aluIn2}
+        is(ALU_OP.SUB.U){rawOut := aluIn1 - aluIn2}
+        is(ALU_OP.AND.U){rawOut := aluIn1 & aluIn2}
+        is(ALU_OP.OR.U) {rawOut := aluIn1 | aluIn2}
+        is(ALU_OP.XOR.U){rawOut := aluIn1 ^ aluIn2}
+        is(ALU_OP.SLL.U){rawOut := aluIn1 << shamt}
+        is(ALU_OP.SRL.U){rawOut := aluIn1 >> shamt}
+        is(ALU_OP.SRA.U){
+            rawOut := Mux(
+                io.is_w,
+                Cat(0.U((XLEN - 32).W), (io.alu_in1(31, 0).asSInt >> shamt(4, 0)).asUInt(31, 0)),
+                (aluIn1.asSInt >> shamt).asUInt
+            )
+        }
         is(ALU_OP.SLT.U){
-            when(io.alu_in1.asSInt < io.alu_in2.asSInt){
-                io.alu_out := 1.U
+            when(aluIn1.asSInt < aluIn2.asSInt){
+                rawOut := 1.U
             }.otherwise{
-                io.alu_out := 0.U
+                rawOut := 0.U
             }
         }
         is(ALU_OP.SLTU.U){
-            when(io.alu_in1 < io.alu_in2){
-                io.alu_out := 1.U
+            when(aluIn1 < aluIn2){
+                rawOut := 1.U
             }.otherwise{
-                io.alu_out := 0.U
+                rawOut := 0.U
             }
         }
-        is(ALU_OP.RS1.U){io.alu_out := io.alu_in1}
-        is(ALU_OP.RS2.U){io.alu_out := io.alu_in2}
+        is(ALU_OP.RS1.U){rawOut := aluIn1}
+        is(ALU_OP.RS2.U){rawOut := aluIn2}
     }
+    io.alu_out := Mux(io.is_w, Cat(Fill(XLEN - 32, rawOut(31)), rawOut(31, 0)), rawOut)
 }
 
 class BRU (XLEN:Int=64) extends Module {
@@ -126,4 +137,3 @@ class ImmGen(XLEN:Int=32) extends Module {
         )
     )
 }
-

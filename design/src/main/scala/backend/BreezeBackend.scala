@@ -119,6 +119,7 @@ class BreezeBackend(
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
+        idExeReg.illegal_inst := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -135,6 +136,7 @@ class BreezeBackend(
         idExeReg.ctrl.sel_wb := SEL_WB.XXX.U
         idExeReg.ctrl.wb_en := false.B
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
+        idExeReg.ctrl.is_w := false.B
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
         idExeReg.estop := false.B
@@ -150,6 +152,7 @@ class BreezeBackend(
         idExeReg.valid := true.B
         idExeReg.pc := decodePc
         idExeReg.inst := decodeInst
+        idExeReg.illegal_inst := decoder.io.illegal_inst
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
         idExeReg.estop := decodeEstop
@@ -165,6 +168,7 @@ class BreezeBackend(
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
+        idExeReg.illegal_inst := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -181,6 +185,7 @@ class BreezeBackend(
         idExeReg.ctrl.sel_wb := SEL_WB.XXX.U
         idExeReg.ctrl.wb_en := false.B
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
+        idExeReg.ctrl.is_w := false.B
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
         idExeReg.estop := false.B
@@ -197,6 +202,7 @@ class BreezeBackend(
     alu.io.alu_op := idExeReg.ctrl.alu_op
     alu.io.alu_in1 := exeSrc1
     alu.io.alu_in2 := exeSrc2
+    alu.io.is_w := idExeReg.ctrl.is_w
 
     bru.io.bru_op := idExeReg.ctrl.bru_op
     bru.io.rs1_data := exeRs1Data
@@ -412,6 +418,7 @@ class BreezeBackend(
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.inst := nopInst
+        exeMemReg.illegal_inst := false.B
         exeMemReg.pred.predType := FrontendPredType.NONE
         exeMemReg.pred.predTaken := false.B
         exeMemReg.pred.predPc := 0.U
@@ -449,6 +456,7 @@ class BreezeBackend(
         exeMemReg.valid := idExeReg.valid
         exeMemReg.pc := idExeReg.pc
         exeMemReg.inst := idExeReg.inst
+        exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
         exeMemReg.data := alu.io.alu_out
@@ -496,6 +504,7 @@ class BreezeBackend(
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
+        memWbReg.illegal_inst := false.B
         memWbReg.estop := false.B
         memWbReg.wb_en := false.B
         memWbReg.wb_sel := SEL_WB.XXX.U
@@ -524,6 +533,7 @@ class BreezeBackend(
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.estop := exeMemReg.estop
         memWbReg.wb_en := exeMemReg.wb_en
         memWbReg.wb_sel := exeMemReg.wb_sel
@@ -549,6 +559,7 @@ class BreezeBackend(
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.estop := exeMemReg.estop
         memWbReg.wb_en := exeMemReg.wb_en
         memWbReg.wb_sel := exeMemReg.wb_sel
