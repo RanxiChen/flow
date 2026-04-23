@@ -48,6 +48,7 @@ class RV64IZicsrDecoder extends Module {
     val opcode = io.inst(6,0)
     val funct3 = io.inst(14,12)
     val funct7 = io.inst(31,25)
+    val funct6 = io.inst(31,26)
     switch(opcode){
         is(OPCODE.OP_IMM){
             //I-type ALU instructions
@@ -64,12 +65,17 @@ class RV64IZicsrDecoder extends Module {
                 is("b100".U){io.I_ctrl.alu_op := ALU_OP.XOR.U; io.illegal_inst := false.B} //XORI
                 is("b110".U){io.I_ctrl.alu_op := ALU_OP.OR.U; io.illegal_inst := false.B} //ORI
                 is("b111".U){io.I_ctrl.alu_op := ALU_OP.AND.U; io.illegal_inst := false.B} //ANDI
-                is("b001".U){io.I_ctrl.alu_op := ALU_OP.SLL.U; io.illegal_inst := false.B} //SLLI
+                is("b001".U){
+                    when(funct6 === "b000000".U){
+                        io.I_ctrl.alu_op := ALU_OP.SLL.U //SLLI
+                        io.illegal_inst := false.B
+                    }
+                }
                 is("b101".U){
-                    when(funct7 === "b0000000".U){
+                    when(funct6 === "b000000".U){
                         io.I_ctrl.alu_op := ALU_OP.SRL.U //SRLI
                         io.illegal_inst := false.B
-                    }.elsewhen(funct7 === "b0100000".U){
+                    }.elsewhen(funct6 === "b010000".U){
                         io.I_ctrl.alu_op := ALU_OP.SRA.U //SRAI
                         io.illegal_inst := false.B
                     }
@@ -138,10 +144,18 @@ class RV64IZicsrDecoder extends Module {
                         is("b0100000".U){io.I_ctrl.alu_op := ALU_OP.SUB.U; io.illegal_inst := false.B} //SUB
                     }
                 }
-                is("b001".U){io.I_ctrl.alu_op := ALU_OP.SLL.U; io.illegal_inst := false.B} //SLL
-                is("b010".U){io.I_ctrl.alu_op := ALU_OP.SLT.U; io.illegal_inst := false.B} //SLT
-                is("b011".U){io.I_ctrl.alu_op := ALU_OP.SLTU.U; io.illegal_inst := false.B} //SLTU
-                is("b100".U){io.I_ctrl.alu_op := ALU_OP.XOR.U; io.illegal_inst := false.B} //XOR
+                is("b001".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.SLL.U; io.illegal_inst := false.B} //SLL
+                }
+                is("b010".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.SLT.U; io.illegal_inst := false.B} //SLT
+                }
+                is("b011".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.SLTU.U; io.illegal_inst := false.B} //SLTU
+                }
+                is("b100".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.XOR.U; io.illegal_inst := false.B} //XOR
+                }
                 is("b101".U){
                     when(funct7 === "b0000000".U){
                         io.I_ctrl.alu_op := ALU_OP.SRL.U //SRL
@@ -151,8 +165,12 @@ class RV64IZicsrDecoder extends Module {
                         io.illegal_inst := false.B
                     }
                 }
-                is("b110".U){io.I_ctrl.alu_op := ALU_OP.OR.U; io.illegal_inst := false.B} //OR
-                is("b111".U){io.I_ctrl.alu_op := ALU_OP.AND.U; io.illegal_inst := false.B} //AND
+                is("b110".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.OR.U; io.illegal_inst := false.B} //OR
+                }
+                is("b111".U){
+                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.AND.U; io.illegal_inst := false.B} //AND
+                }
             }
         }
         is(OPCODE.OP_32){
@@ -201,17 +219,19 @@ class RV64IZicsrDecoder extends Module {
             io.illegal_inst := false.B
         }
         is(OPCODE.JALR){
-            io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
-            io.I_ctrl.wb_en := true.B
-            io.I_ctrl.sel_wb := SEL_WB.ALU.U
-            io.I_ctrl.redir_inst := true.B
-            io.I_ctrl.bru_inst := false.B
-            io.I_ctrl.sel_alu1 := SEL_ALU1.PC.U
-            io.I_ctrl.sel_alu2 := SEL_ALU2.CONST4.U
-            io.I_ctrl.sel_jpc_i := SEL_JPC_I.RS1.U
-            io.I_ctrl.sel_jpc_o := SEL_JPC_O.Jalr.U
-            io.I_ctrl.alu_op := ALU_OP.ADD.U
-            io.illegal_inst := false.B
+            when(funct3 === "b000".U) {
+                io.I_ctrl.sel_imm := IMM_TYPE.I_Type.U
+                io.I_ctrl.wb_en := true.B
+                io.I_ctrl.sel_wb := SEL_WB.ALU.U
+                io.I_ctrl.redir_inst := true.B
+                io.I_ctrl.bru_inst := false.B
+                io.I_ctrl.sel_alu1 := SEL_ALU1.PC.U
+                io.I_ctrl.sel_alu2 := SEL_ALU2.CONST4.U
+                io.I_ctrl.sel_jpc_i := SEL_JPC_I.RS1.U
+                io.I_ctrl.sel_jpc_o := SEL_JPC_O.Jalr.U
+                io.I_ctrl.alu_op := ALU_OP.ADD.U
+                io.illegal_inst := false.B
+            }
         }
         is(OPCODE.BRANCH){
             io.I_ctrl.bru_inst := true.B
@@ -238,8 +258,10 @@ class RV64IZicsrDecoder extends Module {
                 is("b000".U){io.I_ctrl.mem_cmd := MEM_TYPE.LB.U; io.illegal_inst := false.B} //LB
                 is("b001".U){io.I_ctrl.mem_cmd := MEM_TYPE.LH.U; io.illegal_inst := false.B} //LH
                 is("b010".U){io.I_ctrl.mem_cmd := MEM_TYPE.LW.U; io.illegal_inst := false.B} //LW
+                is("b011".U){io.I_ctrl.mem_cmd := MEM_TYPE.LD.U; io.illegal_inst := false.B} //LD
                 is("b100".U){io.I_ctrl.mem_cmd := MEM_TYPE.LBU.U; io.illegal_inst := false.B} //LBU
                 is("b101".U){io.I_ctrl.mem_cmd := MEM_TYPE.LHU.U; io.illegal_inst := false.B} //LHU
+                is("b110".U){io.I_ctrl.mem_cmd := MEM_TYPE.LWU.U; io.illegal_inst := false.B} //LWU
             }
         }
         is(OPCODE.STORE){
@@ -253,6 +275,7 @@ class RV64IZicsrDecoder extends Module {
                 is("b000".U){io.I_ctrl.mem_cmd := MEM_TYPE.SB.U; io.illegal_inst := false.B} //SB
                 is("b001".U){io.I_ctrl.mem_cmd := MEM_TYPE.SH.U; io.illegal_inst := false.B} //SH
                 is("b010".U){io.I_ctrl.mem_cmd := MEM_TYPE.SW.U; io.illegal_inst := false.B} //SW
+                is("b011".U){io.I_ctrl.mem_cmd := MEM_TYPE.SD.U; io.illegal_inst := false.B} //SD
             }
         }
         is(OPCODE.MISC_MEM){
