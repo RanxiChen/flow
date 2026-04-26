@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import flow.cache.BreezeCache
-import flow.config.BreezeFrontendConfig
+import flow.config._
 import flow.interface._
 import _root_.circt.stage.ChiselStage
 
@@ -18,12 +18,22 @@ class MiniDecode(val vlen: Int = 64) extends Module {
     })
 
     val isJal = io.inst(6, 0) === "b1101111".U
+    val isJalr = io.inst(6, 0) === "b1100111".U && io.inst(14, 12) === 0.U
+    val isBranch = io.inst(6, 0) === "b1100011".U
     val jalImm = Cat(
         Fill(vlen - 21, io.inst(31)),
         io.inst(31),
         io.inst(19, 12),
         io.inst(20),
         io.inst(30, 21),
+        0.U(1.W)
+    )
+    val branchImm = Cat(
+        Fill(vlen - 13, io.inst(31)),
+        io.inst(31),
+        io.inst(7),
+        io.inst(30, 25),
+        io.inst(11, 8),
         0.U(1.W)
     )
 
@@ -35,6 +45,11 @@ class MiniDecode(val vlen: Int = 64) extends Module {
         io.predType := FrontendPredType.JAL
         io.predTaken := true.B
         io.predPc := io.pc + jalImm
+    }.elsewhen(isBranch) {
+        io.predType := FrontendPredType.BR
+        io.predPc := io.pc + branchImm
+    }.elsewhen(isJalr) {
+        io.predType := FrontendPredType.JALR
     }
 }
 
@@ -67,7 +82,10 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val beRedirect = Input(new FrontendRedirectIO(cfg.VLEN))
-        val fetchBuffer = new FrontendFetchBufferIO(cfg.VLEN)
+        val btbUpdate = Input(new BreezeBTBUpdateReq(cfg.VLEN))
+        val phtUpdate = Input(new BreezePHTUpdateReq(cfg.branchPredCfg.ghrLength.max(1)))
+        val ghrUpdate = Input(new BreezeGHRUpdateReq)
+        val fetchBuffer = new FrontendFetchBufferIO(cfg.VLEN, cfg.branchPredCfg.ghrLength)
         val nextLevelReq = new L1CacheMissReqIO(cfg.cacheCfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(cfg.cacheCfg.ICACHE_LINE_WIDTH)
         val debug = if (enabledebug) Some(new BreezeFrontendDebugIO(cfg.VLEN)) else None
@@ -75,76 +93,176 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== Module Instances =====
     val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
-    val miniDecode = Module(new MiniDecode(cfg.VLEN))
+    val isGShare = cfg.branchPredCfg.kind == FrontendBranchPredictorKind.GShare
+
+    // ===== GShare Optional State =====
+    val miniDecode = if (isGShare) Some(Module(new MiniDecode(cfg.VLEN))) else None
+    val ghrReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
+    val btb = if (isGShare) Some(Module(new BreezeBTB(cfg.VLEN, cfg.branchPredCfg.btbEntryNum))) else None
+    val pht = if (isGShare) Some(Module(new BreezePHT(cfg.VLEN, cfg.branchPredCfg.ghrLength))) else None
 
     // ===== S1: Stage State =====
     val s1_validReg = RegInit(true.B)
     val s1_pcReg = RegInit(0.U(cfg.VLEN.W))
+    val s1_fire = Wire(Bool())
+    val s1_predTaken = Wire(Bool())
+    val s1_predPc = Wire(UInt(cfg.VLEN.W))
+    val s1_predType = Wire(FrontendPredType())
+    val s1_phtIdx = Wire(UInt(cfg.branchPredCfg.ghrLength.max(1).W))
 
     // ===== S2: Stage State =====
     val s2_validReg = RegInit(false.B)
     val s2_pcReg = RegInit(0.U(cfg.VLEN.W))
+
+    // ===== GShare S2 Metadata =====
+    val s2_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
+    val s2_predTakenReg = if (isGShare) Some(RegInit(false.B)) else None
+    val s2_predPcReg = if (isGShare) Some(RegInit(0.U(cfg.VLEN.W))) else None
+    val s2_predTypeReg = if (isGShare) Some(RegInit(FrontendPredType.NONE)) else None
+    val s2_phtIdxReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
 
     // ===== S3: Stage State =====
     val s3_validReg = RegInit(false.B)
     val s3_pcReg = RegInit(0.U(cfg.VLEN.W))
     val s3_instReg = RegInit(0.U(32.W))
 
-    // ===== S3: Mini Decode =====
+    // ===== GShare S3 Metadata =====
+    val s3_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
+    val s3_predTakenReg = if (isGShare) Some(RegInit(false.B)) else None
+    val s3_predPcReg = if (isGShare) Some(RegInit(0.U(cfg.VLEN.W))) else None
+    val s3_predTypeReg = if (isGShare) Some(RegInit(FrontendPredType.NONE)) else None
+    val s3_phtIdxReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
+
+    // ===== GShare Correction Wires =====
     val s3_fastRedirectValid = Wire(Bool())
     val s3_fastRedirectTarget = Wire(UInt(cfg.VLEN.W))
+    val s3_finalPredTaken = Wire(Bool())
+    val s3_finalPredPc = Wire(UInt(cfg.VLEN.W))
+    val s3_finalPredType = Wire(FrontendPredType())
 
-    miniDecode.io.pc := s3_pcReg
-    miniDecode.io.inst := s3_instReg
-    s3_fastRedirectValid := s3_validReg && miniDecode.io.predTaken
-    s3_fastRedirectTarget := miniDecode.io.predPc
+    s3_fastRedirectValid := false.B
+    s3_fastRedirectTarget := 0.U
+    s3_finalPredTaken := false.B
+    s3_finalPredPc := 0.U
+    s3_finalPredType := FrontendPredType.NONE
 
     // ===== S0: Next PC Generation =====
     val s0_defaultNextPc = Wire(UInt(cfg.VLEN.W))
-    val s0_backendRedirectSel = Wire(Bool())
-    val s0_fastRedirectSel = Wire(Bool())
+    val redirectValid = Wire(Bool())
+    val redirectTarget = Wire(UInt(cfg.VLEN.W))
     val s0_fallThroughSel = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
-    val s1_fire = Wire(Bool())
     val s2_respValid = Wire(Bool())
 
     s0_defaultNextPc := s1_pcReg + 4.U
-    s0_backendRedirectSel := io.beRedirect.valid
-    s0_fastRedirectSel := !s0_backendRedirectSel && s3_fastRedirectValid
-    s0_fallThroughSel := !s0_backendRedirectSel && !s3_fastRedirectValid
+    redirectValid := io.beRedirect.valid || s3_fastRedirectValid
+    redirectTarget := Mux(io.beRedirect.valid, io.beRedirect.target, s3_fastRedirectTarget)
+    s0_fallThroughSel := !redirectValid
     s0_nextPc := Mux(
         reset.asBool,
         io.resetAddr,
         Mux1H(Seq(
-            s0_backendRedirectSel -> io.beRedirect.target,
-            s0_fastRedirectSel -> s3_fastRedirectTarget,
+            redirectValid -> redirectTarget,
             s0_fallThroughSel -> s0_defaultNextPc
         ))
     )
 
-    // ===== S1: Register Update =====
+    s1_predTaken := false.B
+    s1_predPc := s1_pcReg + 4.U
+    s1_predType := FrontendPredType.NONE
+    s1_phtIdx := 0.U
+
+    // ===== GShare S1 Prediction =====
+    if (isGShare) {
+        btb.get.io.lookup.pc := s1_pcReg
+        btb.get.io.update := io.btbUpdate
+
+        pht.get.io.predict.valid := s1_fire
+        pht.get.io.predict.pc := s1_pcReg
+        pht.get.io.predict.ghr := ghrReg.get
+        pht.get.io.update := io.phtUpdate
+
+        s1_phtIdx := pht.get.io.resp.idx
+
+        when(btb.get.io.resp.hit) {
+            s1_predType := btb.get.io.resp.predType
+            switch(btb.get.io.resp.predType) {
+                is(FrontendPredType.JAL) {
+                    s1_predTaken := true.B
+                    s1_predPc := btb.get.io.resp.target
+                }
+                is(FrontendPredType.JALR) {
+                    s1_predTaken := true.B
+                    s1_predPc := btb.get.io.resp.target
+                }
+                is(FrontendPredType.BR) {
+                    s1_predTaken := pht.get.io.resp.taken
+                    s1_predPc := Mux(pht.get.io.resp.taken, btb.get.io.resp.target, s1_pcReg + 4.U)
+                }
+            }
+        }
+
+        s0_defaultNextPc := s1_predPc
+    }
+
+    // ===== GShare Update Path =====
     s1_fire := icache.io.dreq.fire
 
+    if (isGShare) {
+        when(reset.asBool) {
+            ghrReg.get := 0.U
+        }.elsewhen(io.ghrUpdate.valid) {
+            ghrReg.get := Cat(ghrReg.get(cfg.branchPredCfg.ghrLength - 2, 0), io.ghrUpdate.taken)
+        }
+    }
+
+    // ===== S1: Register Update =====
     when(reset.asBool) {
         s1_validReg := true.B
         s1_pcReg := io.resetAddr
+    }.elsewhen(redirectValid) {
+        s1_pcReg := redirectTarget
     }.elsewhen(s1_fire) {
         s1_pcReg := s0_nextPc
     }
 
     // ===== S1: Cache Request =====
+    icache.io.flush := io.beRedirect.cacheFlush
     icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
     icache.io.dreq.bits.vaddr := s1_pcReg
 
     // ===== S2: Cache Request Tracking =====
     s2_respValid := s2_validReg && icache.io.drsp.valid
 
-    when(icache.io.dreq.fire) {
+    when(reset.asBool || redirectValid) {
+        s2_validReg := false.B
+        s2_pcReg := 0.U
+        if (isGShare) {
+            s2_ghrSnapshotReg.get := 0.U
+            s2_predTakenReg.get := false.B
+            s2_predPcReg.get := 0.U
+            s2_predTypeReg.get := FrontendPredType.NONE
+            s2_phtIdxReg.get := 0.U
+        }
+    }.elsewhen(icache.io.dreq.fire) {
         s2_validReg := s1_validReg
         s2_pcReg := s1_pcReg
+        if (isGShare) {
+            s2_ghrSnapshotReg.get := ghrReg.get
+            s2_predTakenReg.get := s1_predTaken
+            s2_predPcReg.get := s1_predPc
+            s2_predTypeReg.get := s1_predType
+            s2_phtIdxReg.get := s1_phtIdx
+        }
         //printf(p"S1: Send cache request for PC=0x${Hexadecimal(s1_pcReg)}\n")
     }.elsewhen(s2_respValid) {
         s2_validReg := false.B
+        if (isGShare) {
+            s2_predTakenReg.get := false.B
+            s2_predPcReg.get := 0.U
+            s2_predTypeReg.get := FrontendPredType.NONE
+            s2_phtIdxReg.get := 0.U
+        }
     }
 
     // ===== S2: Cache Response =====
@@ -154,19 +272,76 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
     // 如果下一拍又有新的返回，S3 会直接被新的返回覆盖。
     s3_validReg := false.B
-    when(s2_respValid) {
+    when(!reset.asBool && !redirectValid && s2_respValid) {
         s3_validReg := true.B
         s3_pcReg := s2_pcReg
         s3_instReg := icache.io.drsp.bits.data
+        if (isGShare) {
+            s3_ghrSnapshotReg.get := s2_ghrSnapshotReg.get
+            s3_predTakenReg.get := s2_predTakenReg.get
+            s3_predPcReg.get := s2_predPcReg.get
+            s3_predTypeReg.get := s2_predTypeReg.get
+            s3_phtIdxReg.get := s2_phtIdxReg.get
+        }
+    }.elsewhen(reset.asBool || redirectValid) {
+        if (isGShare) {
+            s3_ghrSnapshotReg.get := 0.U
+            s3_predTakenReg.get := false.B
+            s3_predPcReg.get := 0.U
+            s3_predTypeReg.get := FrontendPredType.NONE
+            s3_phtIdxReg.get := 0.U
+        }
     }
 
     // ===== S3: Fetch Buffer Output =====
     io.fetchBuffer.valid := s3_validReg
     io.fetchBuffer.bits.pc := s3_pcReg
     io.fetchBuffer.bits.inst := s3_instReg
-    io.fetchBuffer.bits.pred.predType := miniDecode.io.predType
-    io.fetchBuffer.bits.pred.predTaken := miniDecode.io.predTaken
-    io.fetchBuffer.bits.pred.predPc := miniDecode.io.predPc
+
+    io.fetchBuffer.bits.pred.predType := s3_finalPredType
+    io.fetchBuffer.bits.pred.predTaken := s3_finalPredTaken
+    io.fetchBuffer.bits.pred.predPc := s3_finalPredPc
+    io.fetchBuffer.bits.pred.phtIdx := 0.U
+
+    // ===== GShare S3 Correction =====
+    if(isGShare){
+        miniDecode.get.io.pc := s3_pcReg
+        miniDecode.get.io.inst := s3_instReg
+
+        s3_finalPredType := s3_predTypeReg.get
+        s3_finalPredTaken := s3_predTakenReg.get
+        s3_finalPredPc := s3_predPcReg.get
+
+        when(s3_validReg) {
+            switch(miniDecode.get.io.predType) {
+                is(FrontendPredType.JAL) {
+                    s3_finalPredType := FrontendPredType.JAL
+                    s3_finalPredTaken := true.B
+                    s3_finalPredPc := miniDecode.get.io.predPc
+                }
+                is(FrontendPredType.BR) {
+                    s3_finalPredType := FrontendPredType.BR
+                    when(s3_predTakenReg.get) {
+                        s3_finalPredPc := miniDecode.get.io.predPc
+                    }
+                }
+                is(FrontendPredType.JALR) {
+                    s3_finalPredType := FrontendPredType.JALR
+                }
+            }
+        }
+
+        s3_fastRedirectValid := s3_validReg && (
+            (miniDecode.get.io.predType === FrontendPredType.JAL &&
+                (!s3_predTakenReg.get || s3_predTypeReg.get =/= FrontendPredType.JAL ||
+                    s3_predPcReg.get =/= miniDecode.get.io.predPc)) ||
+            (miniDecode.get.io.predType === FrontendPredType.BR &&
+                s3_predTakenReg.get &&
+                s3_predPcReg.get =/= miniDecode.get.io.predPc)
+        )
+        s3_fastRedirectTarget := s3_finalPredPc
+        io.fetchBuffer.bits.pred.phtIdx := s3_phtIdxReg.get
+    }
 
     // ===== Cache Miss Interface =====
     icache.io.next_level_req <> io.nextLevelReq

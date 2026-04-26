@@ -1,8 +1,8 @@
-package core
+package flow.core
 
 import chisel3._
 import chisel3.util._
-import top._
+import flow.top._
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
@@ -145,61 +145,29 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         val csr_addr = Input(UInt(12.W))
         val csr_cmd  = Input(UInt(CSR_CMD.width.W))
         val csr_reg_data = Input(UInt(XLEN.W))
-        val csr_wdata = Output(UInt(XLEN.W))
+        val csr_old_data = Output(UInt(XLEN.W))
+        val csr_new_data = Output(UInt(XLEN.W))
+        val csr_write_en = Output(Bool())
         val rs1_id = Input(UInt(5.W))
         val rd_id = Input(UInt(5.W))
-        //Privilege related
-        val priv = Output(UInt(2.W))
-        val core_retire = Input(Bool())
+        val commit_valid = Input(Bool())
+        val commit_addr = Input(UInt(12.W))
+        val commit_wdata = Input(UInt(XLEN.W))
+        val commit_write_en = Input(Bool())
+        val retire_valid = Input(Bool())
     })
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
-    val misa = RegInit(CoreParam.misa.U(64.W))
+    val coreinst = RegInit(0.U(XLEN.W))
+    val misa_value = (BigInt(2) << 62) | (BigInt(1) << 8) // RV64I
+    val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))
     val mimpid = RegInit(0.U(XLEN.W))
     val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
-    //mstatus
-    val __SIE = false.B
-    val __MIE = RegInit(false.B)
-    val __SPIE = false.B
-    val __UBE = RegInit(false.B)
-    val __MPIE = RegInit(false.B)
-    val __SPP = RegInit(false.B)
-    val __VS  = RegInit(0.U(2.W))
-    val __MPP = RegInit(0.U(2.W))
-    val __FS  = RegInit(0.U(2.W))
-    val __XS  = RegInit(0.U(2.W))
-    val __MPRV= RegInit(false.B)
-    val __SUM = RegInit(false.B)
-    val __MXR = RegInit(false.B)
-    val __TVM = RegInit(false.B)
-    val __TW  = RegInit(false.B)
-    val __TSR = RegInit(false.B)
-    val __SPELP= RegInit(false.B)
-    val __SDT  = RegInit(false.B)
-    val __UXL = RegInit(0.U(2.W))
-    val __SXL = RegInit(0.U(2.W))
-    val __SBE = RegInit(false.B)
-    val __MBE = RegInit(false.B)
-    val __GVA = RegInit(false.B)
-    val __MPV = RegInit(false.B)
-    val __MPELP = RegInit(false.B)
-    val __MDT = RegInit(false.B)
-    val __SD = RegInit(false.B) 
-    //count retired instructions
-    val retire_counter = RegInit(0.U(XLEN.W))
-    if(dumplog){
-        val inner_timer = RegInit(0.U(64.W))
-        inner_timer := inner_timer + 1.U
-        when(io.core_retire){
-            retire_counter := retire_counter + 1.U
-            printf(cf"[DEBUG] ${inner_timer}%0d core retired instruction count = ${retire_counter}%d\n")
-        }
-    }
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
-        BitPat(CSRMAP.coreinst.U) -> retire_counter,
+        BitPat(CSRMAP.coreinst.U) -> coreinst,
         BitPat(CSRMAP.misa.U)    -> misa,
         BitPat(CSRMAP.mvendorid.U)-> mvendorid,
         BitPat(CSRMAP.marchid.U)  -> marchid,
@@ -213,6 +181,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val uimm = io.csr_reg_data(4,0)
     read_csr := false.B
     write_csr := false.B
+    // Zicsr对寄存器的读
     when(read_csr){
         old_csr_val := Lookup(io.csr_addr, 0.U, csrFile)
     }.otherwise{
@@ -256,18 +225,18 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
             new_csr_val := old_csr_val & (~io.csr_reg_data)
         }
     }
-    when(write_csr){
-        switch(io.csr_addr){
+    // Zicsr对寄存器的写在wb阶段提交
+    when(io.commit_valid && io.commit_write_en){
+        switch(io.commit_addr){
             is(CSRMAP.printer.U){
-                printer := new_csr_val
+                printer := io.commit_wdata
                 if(dumplog){
-                    printf(cf"[INFO] printer = 0x${new_csr_val}%x\n")
+                    printf(cf"[INFO] printer = 0x${io.commit_wdata}%x\n")
                 }
             }
             is(CSRMAP.coreinst.U){
-                //retire_counter is read only
                 if(dumplog){
-                    printf(cf"[INFO] coreinst = 0x${retire_counter}%x\n")
+                    printf(cf"[INFO] coreinst = 0x${coreinst}%x\n")
                 }
             }
             is(CSRMAP.misa.U){
@@ -290,10 +259,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
             }
         }
     }
-    io.csr_wdata := old_csr_val
-    val priv = RegInit(PrivConst.MACHINE)
-    io.priv := priv
-    val csr_err_priv = WireDefault(false.B)
-    csr_err_priv := ( io.csr_addr(9,8) > priv) || (io.csr_addr(11,10) === "b11".U && write_csr )
-
+    // 更新寄存器的值
+    when(io.retire_valid){
+        coreinst := coreinst + 1.U
+    }
+    io.csr_old_data := old_csr_val
+    io.csr_new_data := new_csr_val
+    io.csr_write_en := write_csr
 }

@@ -59,3 +59,5 @@ sim/*/rtl/
 sim/*/cmake-*
 
 .codex
+
+*-workspace
