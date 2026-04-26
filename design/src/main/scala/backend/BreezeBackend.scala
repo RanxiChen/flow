@@ -56,7 +56,11 @@ class BreezeBackend(
     csrFile.io.csr_reg_data := 0.U
     csrFile.io.rs1_id := 0.U
     csrFile.io.rd_id := 0.U
-    csrFile.io.core_retire := false.B
+    csrFile.io.commit_valid := false.B
+    csrFile.io.commit_addr := 0.U
+    csrFile.io.commit_wdata := 0.U
+    csrFile.io.commit_write_en := false.B
+    csrFile.io.retire_valid := memWbReg.valid
 
     val wbData = Wire(UInt(cfg.VLEN.W))
     val estopCommitted = Wire(Bool())
@@ -81,6 +85,8 @@ class BreezeBackend(
     val exeRs2Data = Wire(UInt(cfg.VLEN.W))
     val exeSrc1 = Wire(UInt(cfg.VLEN.W))
     val exeSrc2 = Wire(UInt(cfg.VLEN.W))
+    val decodeUsesRs1 = Wire(Bool())
+    val decodeUsesRs2 = Wire(Bool())
 
     src1 := MuxLookup(decoder.io.exe_ctrl.sel_alu1, 0.U(cfg.VLEN.W))(
         Seq(
@@ -99,6 +105,14 @@ class BreezeBackend(
         )
     )
 
+    decodeUsesRs1 := decoder.io.exe_ctrl.sel_alu1 === SEL_ALU1.RS1.U ||
+        decoder.io.exe_ctrl.bru_inst ||
+        decoder.io.exe_ctrl.sel_jpc_i === SEL_JPC_I.RS1.U ||
+        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RW.U ||
+        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RS.U ||
+        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RC.U
+    decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U || decoder.io.exe_ctrl.bru_inst
+
     val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
     val actualTaken = Wire(Bool())
     val actualTarget = Wire(UInt(cfg.VLEN.W))
@@ -110,6 +124,12 @@ class BreezeBackend(
     val predictionMiss = Wire(Bool())
     val pipelineHold = Wire(Bool())
     val loadUseHazard = Wire(Bool())
+    val csrUseHazard = Wire(Bool())
+    val csrStateHazard = Wire(Bool())
+    val idExePendingCsrRd = Wire(Bool())
+    val exeMemPendingCsrRd = Wire(Bool())
+    val idExePendingCsrState = Wire(Bool())
+    val exeMemPendingCsrState = Wire(Bool())
     val frontendBtbUpdateValid = Wire(Bool())
     val frontendPhtUpdateValid = Wire(Bool())
 
@@ -384,7 +404,8 @@ class BreezeBackend(
         exeMemReg.valid &&
         exeMemReg.wb_en &&
         (exeMemReg.rd_addr =/= 0.U) &&
-        (exeMemReg.mem_cmd === MEM_TYPE.NOT_MEM.U)
+        (exeMemReg.mem_cmd === MEM_TYPE.NOT_MEM.U) &&
+        (exeMemReg.wb_sel === SEL_WB.ALU.U)
     ) {
         when(idExeReg.rs1_addr === exeMemReg.rd_addr) {
             exeRs1Data := exeMemReg.data
@@ -428,15 +449,45 @@ class BreezeBackend(
         (idExeReg.rs1_addr =/= 0.U && idExeReg.rs1_addr === exeMemReg.rd_addr) ||
         (idExeReg.rs2_addr =/= 0.U && idExeReg.rs2_addr === exeMemReg.rd_addr)
     )
+    idExePendingCsrRd := idExeReg.valid &&
+        idExeReg.ctrl.wb_en &&
+        (idExeReg.ctrl.sel_wb === SEL_WB.CSR.U) &&
+        (idExeReg.rd_addr =/= 0.U)
+    exeMemPendingCsrRd := exeMemReg.valid &&
+        exeMemReg.wb_en &&
+        (exeMemReg.wb_sel === SEL_WB.CSR.U) &&
+        (exeMemReg.rd_addr =/= 0.U)
+    csrUseHazard := (
+        idExePendingCsrRd && (
+            (decodeUsesRs1 && (rs1Addr === idExeReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === idExeReg.rd_addr))
+        )
+    ) || (
+        exeMemPendingCsrRd && (
+            (decodeUsesRs1 && (rs1Addr === exeMemReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === exeMemReg.rd_addr))
+        )
+    )
+    idExePendingCsrState := idExeReg.valid && (idExeReg.ctrl.csr_cmd =/= CSR_CMD.NOP.U)
+    exeMemPendingCsrState := exeMemReg.valid && csrFile.io.csr_write_en
+    csrStateHazard := (decoder.io.exe_ctrl.csr_cmd =/= CSR_CMD.NOP.U) && (
+        (idExePendingCsrState && (decoder.io.exe_ctrl.csr_addr === idExeReg.ctrl.csr_addr)) ||
+        (exeMemPendingCsrState && (decoder.io.exe_ctrl.csr_addr === exeMemReg.csr_addr))
+    )
     // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
     // overwritten before the outstanding memory operation receives a response.
-    pipelineHold := memReqIssued || (memWaitingRespReg && !io.dmem.rsp.valid) || loadUseHazard
+    pipelineHold := memReqIssued || (memWaitingRespReg && !io.dmem.rsp.valid) ||
+        loadUseHazard || csrUseHazard || csrStateHazard
 
     csrFile.io.csr_addr := exeMemReg.csr_addr
     csrFile.io.csr_cmd := exeMemReg.csr_cmd
     csrFile.io.csr_reg_data := exeMemReg.data
     csrFile.io.rs1_id := exeMemReg.rs1_addr
     csrFile.io.rd_id := exeMemReg.rd_addr
+    csrFile.io.commit_valid := memWbReg.valid
+    csrFile.io.commit_addr := memWbReg.csr_addr
+    csrFile.io.commit_wdata := memWbReg.csr_new_data
+    csrFile.io.commit_write_en := memWbReg.csr_write_en
 
     fenceiFlush := exeMemReg.valid && exeMemReg.fencei
 
@@ -542,6 +593,9 @@ class BreezeBackend(
         memWbReg.alu_data := 0.U
         memWbReg.mem_data := 0.U
         memWbReg.csr_data := 0.U
+        memWbReg.csr_addr := 0.U
+        memWbReg.csr_new_data := 0.U
+        memWbReg.csr_write_en := false.B
         memWbReg.trace.foreach { trace =>
             trace.valid := false.B
             trace.pc := 0.U
@@ -572,7 +626,10 @@ class BreezeBackend(
         memWbReg.rd_addr := exeMemReg.rd_addr
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := 0.U
-        memWbReg.csr_data := csrFile.io.csr_wdata
+        memWbReg.csr_data := csrFile.io.csr_old_data
+        memWbReg.csr_addr := exeMemReg.csr_addr
+        memWbReg.csr_new_data := csrFile.io.csr_new_data
+        memWbReg.csr_write_en := csrFile.io.csr_write_en && !memAddrMisaligned
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid
@@ -581,7 +638,7 @@ class BreezeBackend(
                 Seq(
                     SEL_WB.ALU.U -> exeMemReg.data,
                     SEL_WB.MEM.U -> 0.U(cfg.VLEN.W),
-                    SEL_WB.CSR.U -> csrFile.io.csr_wdata
+                    SEL_WB.CSR.U -> csrFile.io.csr_old_data
                 )
             )
             wbTrace.memRData := 0.U
@@ -601,7 +658,10 @@ class BreezeBackend(
         memWbReg.rd_addr := exeMemReg.rd_addr
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := Mux(exeMemIsLoad, memRspData, 0.U)
-        memWbReg.csr_data := csrFile.io.csr_wdata
+        memWbReg.csr_data := csrFile.io.csr_old_data
+        memWbReg.csr_addr := exeMemReg.csr_addr
+        memWbReg.csr_new_data := csrFile.io.csr_new_data
+        memWbReg.csr_write_en := csrFile.io.csr_write_en
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid
@@ -609,7 +669,7 @@ class BreezeBackend(
                 Seq(
                     SEL_WB.ALU.U -> exeMemReg.data,
                     SEL_WB.MEM.U -> Mux(exeMemIsLoad, memRspData, 0.U),
-                    SEL_WB.CSR.U -> csrFile.io.csr_wdata
+                    SEL_WB.CSR.U -> csrFile.io.csr_old_data
                 )
             )
             wbTrace.memRData := Mux(exeMemIsLoad, memRspData, 0.U)

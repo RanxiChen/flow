@@ -255,6 +255,9 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val alu_data = UInt(VLEN.W)
     val mem_data = UInt(VLEN.W)
     val csr_data = UInt(VLEN.W)
+    val csr_addr = UInt(12.W)
+    val csr_new_data = UInt(VLEN.W)
+    val csr_write_en = Bool()
     val trace = if (enableTandem) Some(new TracePayload(VLEN)) else None
 }
 

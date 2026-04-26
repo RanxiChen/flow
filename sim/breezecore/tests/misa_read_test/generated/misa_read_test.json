@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "name": "misa_read_test",
+    "source": "branch_test/misa_read_test.S",
+    "elf": "misa_read_test/generated/misa_read_test.elf",
+    "generator": "branch_test/gen_case.py"
+  },
+  "simulation": {
+    "bootaddr": "0x0",
+    "tandemLog": true
+  },
+  "memoryMap": {
+    "0x0": "0x7ff00073301020f3"
+  }
+}

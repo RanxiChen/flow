@@ -7,6 +7,34 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
 
+class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    "CSRFile should count retired instructions in coreinst CSR" in {
+        simulate(new CSRFile(64)) { dut =>
+            dut.io.csr_addr.poke(CSRMAP.coreinst.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_addr.poke(0.U)
+            dut.io.commit_wdata.poke(0.U)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.retire_valid.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.io.csr_old_data.expect(0.U)
+
+            dut.io.retire_valid.poke(true.B)
+            dut.clock.step(3)
+            dut.io.retire_valid.poke(false.B)
+
+            dut.io.csr_old_data.expect(3.U)
+        }
+    }
+}
+
 class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private val nopInst = BigInt("00000013", 16)
     private val mask64 = (BigInt(1) << 64) - 1
@@ -18,6 +46,14 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         (BigInt(0) << 12) |
         (BigInt(rd) << 7) |
         BigInt(0x13)
+    }
+
+    private def encodeCsr(rd: Int, rs1: Int, csr: Int, funct3: Int): BigInt = {
+        (BigInt(csr & 0xfff) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x73)
     }
 
     private case class AddiTrace(rd: Int, imm: Int, inst: BigInt)
@@ -458,6 +494,94 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     observedMemWaits.exists(identity) mustBe false
                 }
             }
+        }
+    }
+
+    "BreezeCore should stall on CSR rd dependencies until CSR writeback is available" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val instQueue = mutable.Queue[BigInt](
+                encodeAddi(rd = 2, rs1 = 0, imm = 1),
+                encodeCsr(rd = 1, rs1 = 2, csr = CSRMAP.printer, funct3 = 1),
+                encodeAddi(rd = 3, rs1 = 1, imm = 1)
+            )
+            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+            val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
+            var lastObservedWb: Option[(BigInt, BigInt, BigInt)] = None
+            var cycle = 0
+
+            initCore(dut)
+
+            while (cycle < 64 && observedRetire.length < 3) {
+                if (debug.memWbValid.peek().litToBoolean) {
+                    val currentWb = (
+                        debug.memWbPc.peek().litValue,
+                        debug.memWbInst.peek().litValue,
+                        debug.wbData.peek().litValue
+                    )
+                    if (!lastObservedWb.contains(currentWb)) {
+                        observedRetire += ((cycle, currentWb._3))
+                        lastObservedWb = Some(currentWb)
+                    }
+                }
+                if (observedRetire.length < 3) {
+                    stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                        throw new AssertionError(
+                            s"unexpected dmem req in CSR rd dependency test: addr=0x${req.addr.toString(16)}"
+                        )
+                    }
+                    cycle += 1
+                }
+            }
+
+            observedReqs mustBe empty
+            observedRetire.map(_._2) mustBe Seq(BigInt(1), BigInt(0), BigInt(1)).map(u64)
+            observedRetire(2)._1 - observedRetire(1)._1 must be >= 2
+        }
+    }
+
+    "BreezeCore should stall adjacent CSR operations targeting the same CSR until wb commit" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val instQueue = mutable.Queue[BigInt](
+                encodeAddi(rd = 2, rs1 = 0, imm = 1),
+                encodeCsr(rd = 1, rs1 = 2, csr = CSRMAP.printer, funct3 = 1),
+                encodeCsr(rd = 3, rs1 = 0, csr = CSRMAP.printer, funct3 = 2)
+            )
+            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+            val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
+            var lastObservedWb: Option[(BigInt, BigInt, BigInt)] = None
+            var cycle = 0
+
+            initCore(dut)
+
+            while (cycle < 64 && observedRetire.length < 3) {
+                if (debug.memWbValid.peek().litToBoolean) {
+                    val currentWb = (
+                        debug.memWbPc.peek().litValue,
+                        debug.memWbInst.peek().litValue,
+                        debug.wbData.peek().litValue
+                    )
+                    if (!lastObservedWb.contains(currentWb)) {
+                        observedRetire += ((cycle, currentWb._3))
+                        lastObservedWb = Some(currentWb)
+                    }
+                }
+                if (observedRetire.length < 3) {
+                    stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                        throw new AssertionError(
+                            s"unexpected dmem req in adjacent CSR hazard test: addr=0x${req.addr.toString(16)}"
+                        )
+                    }
+                    cycle += 1
+                }
+            }
+
+            observedReqs mustBe empty
+            observedRetire.map(_._2) mustBe Seq(BigInt(1), BigInt(0), BigInt(1)).map(u64)
+            observedRetire(2)._1 - observedRetire(1)._1 must be >= 2
         }
     }
 
