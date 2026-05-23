@@ -123,6 +123,7 @@ class BreezeBackend(
     val frontendRedirectNeeded = Wire(Bool())
     val predictionMiss = Wire(Bool())
     val pipelineHold = Wire(Bool())
+    val csrHold = Wire(Bool())
     val loadUseHazard = Wire(Bool())
     val csrUseHazard = Wire(Bool())
     val csrStateHazard = Wire(Bool())
@@ -187,7 +188,7 @@ class BreezeBackend(
         idExeReg.imm := immGen.io.imm
         idExeReg.src1 := src1
         idExeReg.src2 := src2
-    }.elsewhen(decodeReady) {
+    }.elsewhen(decodeReady || !pipelineHold) {
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
@@ -418,7 +419,8 @@ class BreezeBackend(
     when(
         memWbReg.valid &&
         memWbReg.wb_en &&
-        (memWbReg.rd_addr =/= 0.U)
+        (memWbReg.rd_addr =/= 0.U) &&
+        (memWbReg.wb_sel =/= SEL_WB.CSR.U)
     ) {
         when(idExeReg.rs1_addr === memWbReg.rd_addr) {
             exeRs1Data := wbData
@@ -474,10 +476,14 @@ class BreezeBackend(
         (idExePendingCsrState && (decoder.io.exe_ctrl.csr_addr === idExeReg.ctrl.csr_addr)) ||
         (exeMemPendingCsrState && (decoder.io.exe_ctrl.csr_addr === exeMemReg.csr_addr))
     )
+    // CSR hazards: only stall decode, NOT idExe→exeMem.
+    // CSR producers must flow through to memWb so the register file is updated.
+    csrHold := csrUseHazard || csrStateHazard
+
     // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
     // overwritten before the outstanding memory operation receives a response.
     pipelineHold := memReqIssued || (memWaitingRespReg && !io.dmem.rsp.valid) ||
-        loadUseHazard || csrUseHazard || csrStateHazard
+        loadUseHazard
 
     csrFile.io.csr_addr := exeMemReg.csr_addr
     csrFile.io.csr_cmd := exeMemReg.csr_cmd
@@ -678,7 +684,7 @@ class BreezeBackend(
         }
     }
 
-    decodeReady := !pipelineHold && !frontendRedirectNeeded
+    decodeReady := !pipelineHold && !csrHold && !frontendRedirectNeeded
     decodeFire := decodeValid && decodeReady
     io.fetchBuffer.ready := decodeReady
 
