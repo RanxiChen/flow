@@ -201,6 +201,11 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
     val memWMask = UInt(8.W)
 }
 
+class CSRExceptionInfo(val VLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val pc    = UInt(VLEN.W)
+}
+
 class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)

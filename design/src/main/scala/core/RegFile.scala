@@ -3,6 +3,7 @@ package flow.core
 import chisel3._
 import chisel3.util._
 import flow.top._
+import flow.interface._
 /**
   * Register File, used to store general purpose registers
   * @param XLEN
@@ -155,6 +156,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         val commit_wdata = Input(UInt(XLEN.W))
         val commit_write_en = Input(Bool())
         val retire_valid = Input(Bool())
+        val exception = Input(new CSRExceptionInfo(XLEN))
+        val mtvec = Output(UInt(XLEN.W))
     })
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
@@ -165,6 +168,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val marchid = RegInit(0.U(XLEN.W))
     val mimpid = RegInit(0.U(XLEN.W))
     val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
+    val mepc = RegInit(0.U(XLEN.W))
+    val mtvec = RegInit(BigInt("100", 16).U(XLEN.W))
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
         BitPat(CSRMAP.coreinst.U) -> coreinst,
@@ -172,7 +177,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         BitPat(CSRMAP.mvendorid.U)-> mvendorid,
         BitPat(CSRMAP.marchid.U)  -> marchid,
         BitPat(CSRMAP.mimpid.U)    -> mimpid,
-        BitPat(CSRMAP.mhartid.U)  -> mhartid
+        BitPat(CSRMAP.mhartid.U)  -> mhartid,
+        BitPat(CSRMAP.mepc.U)     -> mepc,
+        BitPat(CSRMAP.mtvec.U)    -> mtvec
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -187,8 +194,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     }.otherwise{
         old_csr_val := 0.U
     }
-    switch(io.csr_cmd){
-        is(CSR_CMD.NOP.U){
+    when(!io.exception.valid){
+        switch(io.csr_cmd){
+            is(CSR_CMD.NOP.U){
             //nop
             read_csr := false.B
             write_csr := false.B
@@ -225,8 +233,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
             new_csr_val := old_csr_val & (~io.csr_reg_data)
         }
     }
+    }
     // Zicsr对寄存器的写在wb阶段提交
-    when(io.commit_valid && io.commit_write_en){
+    when(io.commit_valid && io.commit_write_en && !io.exception.valid){
         switch(io.commit_addr){
             is(CSRMAP.printer.U){
                 printer := io.commit_wdata
@@ -257,13 +266,24 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
                     printf(cf"[INFO] mhartid = 0\n")
                 }
             }
+            is(CSRMAP.mtvec.U){
+                mtvec := io.commit_wdata
+                if(dumplog){
+                    printf(cf"[INFO] mtvec = 0x${io.commit_wdata}%x\n")
+                }
+            }
         }
     }
     // 更新寄存器的值
     when(io.retire_valid){
         coreinst := coreinst + 1.U
     }
+    // 异常时记录异常PC到mepc
+    when(io.exception.valid){
+        mepc := io.exception.pc
+    }
     io.csr_old_data := old_csr_val
     io.csr_new_data := new_csr_val
     io.csr_write_en := write_csr
+    io.mtvec := mtvec
 }

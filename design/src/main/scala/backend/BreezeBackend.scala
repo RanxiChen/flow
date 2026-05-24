@@ -61,6 +61,8 @@ class BreezeBackend(
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
     csrFile.io.retire_valid := memWbReg.valid
+    csrFile.io.exception.valid := false.B
+    csrFile.io.exception.pc := 0.U
 
     val wbData = Wire(UInt(cfg.VLEN.W))
     val estopCommitted = Wire(Bool())
@@ -256,6 +258,7 @@ class BreezeBackend(
     val loadAddrMisaligned = Wire(Bool())
     val storeAddrMisaligned = Wire(Bool())
     val exeMemNeedsDmem = Wire(Bool())
+    val exceptionRedirect = Wire(Bool())
     val exeNextPc = Wire(UInt(cfg.VLEN.W))
 
     actualTaken := Mux(
@@ -270,7 +273,8 @@ class BreezeBackend(
     redirectTargetMismatch := idExeReg.valid && actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
-    frontendRedirectNeeded := fenceiFlush || redirectNeeded
+    exceptionRedirect := memWbReg.valid && memWbReg.illegal_inst
+    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -494,10 +498,12 @@ class BreezeBackend(
     csrFile.io.commit_addr := memWbReg.csr_addr
     csrFile.io.commit_wdata := memWbReg.csr_new_data
     csrFile.io.commit_write_en := memWbReg.csr_write_en
+    csrFile.io.exception.valid := memWbReg.illegal_inst
+    csrFile.io.exception.pc := memWbReg.pc
 
     fenceiFlush := exeMemReg.valid && exeMemReg.fencei
 
-    when(reset.asBool || fenceiFlush) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.inst := nopInst
@@ -585,7 +591,7 @@ class BreezeBackend(
         memWaitingRespReg := true.B
     }
 
-    when(reset.asBool) {
+    when(reset.asBool || exceptionRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
@@ -698,9 +704,12 @@ class BreezeBackend(
     io.frontendRedirect.flush := frontendRedirectNeeded
     io.frontendRedirect.cacheFlush := fenceiFlush
     io.frontendRedirect.target := Mux(
-        fenceiFlush,
-        exeMemReg.pc + 4.U,
-        Mux(redirectNeeded, actualTarget, io.resetAddr)
+        exceptionRedirect,
+        csrFile.io.mtvec,
+        Mux(fenceiFlush,
+            exeMemReg.pc + 4.U,
+            Mux(redirectNeeded, actualTarget, io.resetAddr)
+        )
     )
     io.estop := estopCommitted
     io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
