@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "test": "illegal-instruction-trap",
+    "description": "addi x1..x13 with illegal instruction at 0x814, trap handler at 0x100"
+  },
+  "simulation": {
+    "bootaddr": "0x800",
+    "mtvec": "0x100",
+    "tandemLog": false
+  },
+  "memoryMap": {
+    "0x800": "0x0020011300100093",
+    "0x808": "0x0040021300300193",
+    "0x810": "0xFFFFFFFF00500293",
+    "0x818": "0x0070039300600313",
+    "0x820": "0x0090049300800413",
+    "0x828": "0x00B0059300A00513",
+    "0x830": "0x00D0069300C00613",
+    "0x100": "0x0010011300000093",
+    "0x108": "0x000000007FF00073"
+  }
+}

@@ -152,6 +152,14 @@ object BreezeCoreSimMemoryLoader {
         parseNodeValue(bootAddrNode)
     }
 
+    def loadMtvec(path: String): BigInt = {
+        val simNode = loadSimulationNode(path)
+        val mtvecNode = Option(simNode.get("mtvec")).getOrElse {
+            throw new IllegalArgumentException(s"missing simulation.mtvec in $path")
+        }
+        parseNodeValue(mtvecNode)
+    }
+
     def loadTandemLog(path: String): Boolean = {
         val node = loadSimulationNode(path)
         Option(node.get("tandemLog")).map(_.asBoolean(false)).getOrElse(false)

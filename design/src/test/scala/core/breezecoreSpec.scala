@@ -1334,4 +1334,96 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             observedReqs.contains(BigInt(0x0)) mustBe true
         }
     }
+
+    "BreezeCore should trap on illegal instruction at 0x814 and jump to mtvec at 0x100" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 1),  encodeAddi(2, 0, 2),
+                encodeAddi(3, 0, 3),  encodeAddi(4, 0, 4),
+                encodeAddi(5, 0, 5),  BigInt("FFFFFFFF", 16),
+                encodeAddi(6, 0, 6),  encodeAddi(7, 0, 7)
+            ))
+            val line0x820 = buildRefillLine(Seq(
+                encodeAddi(8, 0, 8),   encodeAddi(9, 0, 9),
+                encodeAddi(10, 0, 10), encodeAddi(11, 0, 11),
+                encodeAddi(12, 0, 12), encodeAddi(13, 0, 13),
+                nopInst, nopInst
+            ))
+            val line0x100 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0),
+                encodeAddi(2, 0, 1),
+                BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst, nopInst, nopInst
+            ))
+            val memoryMap = Map(
+                BigInt(0x800) -> line0x800,
+                BigInt(0x820) -> line0x820,
+                BigInt(0x100) -> line0x100
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+
+            val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
+            var estopSeen = false
+            var cycle = 0
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelayCycles)
+                    )
+                }
+                prevIcacheReq = reqValid
+
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B)
+                    dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else {
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (backendDebug.memWbValid.peek().litToBoolean) {
+                    retiredPcs += backendDebug.memWbPc.peek().litValue
+                }
+
+                if (dut.io.estop.peek().litToBoolean) {
+                    estopSeen = true
+                }
+
+                dut.clock.step(1)
+                cycle += 1
+
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear()
+                pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true
+            retiredPcs mustBe Seq(
+                BigInt(0x800), BigInt(0x804), BigInt(0x808),
+                BigInt(0x80c), BigInt(0x810), BigInt(0x814),
+                BigInt(0x100), BigInt(0x104), BigInt(0x108)
+            )
+        }
+    }
 }
