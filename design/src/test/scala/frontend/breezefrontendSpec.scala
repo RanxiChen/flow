@@ -47,6 +47,8 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
         simulate(new BreezeFrontend(enabledebug = true)){dut =>
             dut.io.resetAddr.poke(0x0.U)
             dut.io.beRedirect.valid.poke(false.B)
+            dut.io.beRedirect.flush.poke(false.B)
+            dut.io.beRedirect.cacheFlush.poke(false.B)
             dut.io.beRedirect.target.poke("hdeadbeef".U)
             dut.io.fetchBuffer.canAccept3.poke(false.B)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -80,6 +82,8 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.fetchBuffer.canAccept3.poke(true.B)
             dut.io.resetAddr.poke(0x0.U)
             dut.io.beRedirect.valid.poke(false.B)
+            dut.io.beRedirect.flush.poke(false.B)
+            dut.io.beRedirect.cacheFlush.poke(false.B)
             dut.io.beRedirect.target.poke(0x0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0x0.U)

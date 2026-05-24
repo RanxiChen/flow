@@ -1,4 +1,4 @@
-package core
+package flow.core
 import chisel3._
 import chisel3.util._
 
@@ -301,8 +301,6 @@ object CSRMAP{
    val mcountinhibit=0x320
 }
 
-object PrivConst{
-   val USER       = 0.U(2.W)
-   val SUPERVISOR = 1.U(2.W)
-   val MACHINE    = 3.U(2.W)
+object SIM_SYSTEM {
+   val ESTOP_IMM12 = "h7ff".U(12.W)
 }

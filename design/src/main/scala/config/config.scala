@@ -24,11 +24,95 @@ case class DefaultICacheConfig(
     assert(ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
 }
 
+object FrontendBranchPredictorKind extends Enumeration {
+    type FrontendBranchPredictorKind = Value
+    val None, GShare = Value
+}
+
+import FrontendBranchPredictorKind._
+
+sealed trait FrontendBranchPredictorConfig {
+    def kind: FrontendBranchPredictorKind
+    def ghrLength: Int = 0
+    def btbEntryNum: Int = 0
+}
+
+case object NoBranchPredictorConfig extends FrontendBranchPredictorConfig {
+    override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.None
+}
+
+case class GShareBranchPredictorConfig(
+    override val ghrLength: Int = 8,
+    override val btbEntryNum: Int = 16
+) extends FrontendBranchPredictorConfig {
+    require(ghrLength > 0, "GShare ghrLength must be greater than 0")
+    require(btbEntryNum > 0, "GShare btbEntryNum must be greater than 0")
+
+    override val kind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare
+}
+
 case class BreezeFrontendConfig(
-    VLEN: Int = 64
+    VLEN: Int = 64,
+    branchPredCfg: FrontendBranchPredictorConfig = NoBranchPredictorConfig
 ) {
     val cacheCfg: DefaultICacheConfig = DefaultICacheConfig(
         VLEN = VLEN,
         PLEN = VLEN
     )
+}
+
+case class BackendConfig(
+    val VLEN: Int = 64,
+    val PLEN: Int = 64,
+    val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.None,
+    val ghrLength: Int = 0,
+    val enableTandem: Boolean = false
+){}
+
+case class BreezeCoreConfig(
+    val VLEN: Int = 64,
+    val PLEN: Int = 64,
+    val useFASE: Boolean = false,
+    val enableTandem: Boolean = false,
+    val useGShare: Boolean = false,
+    val gshareGhrLength: Int = 8,
+    val gshareBtbEntryNum: Int = 16
+){
+    private val branchPredCfg: FrontendBranchPredictorConfig =
+        if (useGShare) {
+            GShareBranchPredictorConfig(
+                ghrLength = gshareGhrLength,
+                btbEntryNum = gshareBtbEntryNum
+            )
+        } else {
+            NoBranchPredictorConfig
+        }
+
+    val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(
+        VLEN = VLEN,
+        branchPredCfg = branchPredCfg
+    )
+    val backendCfg: BackendConfig = BackendConfig(
+        VLEN = VLEN,
+        PLEN = PLEN,
+        branchPredKind = frontendCfg.branchPredCfg.kind,
+        ghrLength = frontendCfg.branchPredCfg.ghrLength,
+        enableTandem = enableTandem
+    )
+}
+
+object BreezeCoreConfigs {
+    def baseline(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfig(
+            useFASE = false,
+            enableTandem = enableTandem,
+            useGShare = false
+        )
+
+    def gshare(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfig(
+            useFASE = false,
+            enableTandem = enableTandem,
+            useGShare = true
+        )
 }

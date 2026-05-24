@@ -77,6 +77,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             var s2Cycle = 0
             val refillLine = BigInt("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100", 16)
             // defaultly, chiseltest will auto reset the dut, so we can directly check the initial state
+            dut.io.flush.poke(false.B)
             dut.io.drsp.ready.poke(true.B)
             dut.io.next_level_rsp.vld.poke(false.B)
             dut.io.next_level_rsp.data.poke(0.U)
@@ -181,6 +182,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
     "BreezeCache should follow default flow after reset" in {
         simulate(new BreezeCache(cfg, enabledebug = true)){dut =>
+            dut.io.flush.poke(false.B)
             dut.io.dreq.valid.poke(false.B)
             dut.io.dreq.bits.vaddr.poke(0.U)
             dut.io.drsp.ready.poke(true.B)
