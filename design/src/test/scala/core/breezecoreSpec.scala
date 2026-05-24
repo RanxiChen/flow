@@ -1426,4 +1426,86 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             )
         }
     }
+
+    "BreezeCore should boot from resetAddr 0x800" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+
+            // Program at 0x800: 4 addi + ESTOP
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 1), encodeAddi(2, 0, 2),
+                encodeAddi(3, 0, 3), encodeAddi(4, 0, 4),
+                BigInt("7FF00073", 16), nopInst, nopInst, nopInst
+            ))
+            // Also put same program at 0x0 so ESTOP fires even with the resetAddr bug
+            val line0x00 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 1), encodeAddi(2, 0, 2),
+                encodeAddi(3, 0, 3), encodeAddi(4, 0, 4),
+                BigInt("7FF00073", 16), nopInst, nopInst, nopInst
+            ))
+            val memoryMap = Map(
+                BigInt(0x00) -> line0x00,
+                BigInt(0x800) -> line0x800
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+
+            val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
+            var estopSeen = false
+            var cycle = 0
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelayCycles)
+                    )
+                }
+                prevIcacheReq = reqValid
+
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B)
+                    dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else {
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (backendDebug.memWbValid.peek().litToBoolean) {
+                    retiredPcs += backendDebug.memWbPc.peek().litValue
+                }
+
+                if (dut.io.estop.peek().litToBoolean) {
+                    estopSeen = true
+                }
+
+                dut.clock.step(1)
+                cycle += 1
+
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear()
+                pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true
+            // The key assertion: with resetAddr=0x800, the first retired PC must be 0x800
+            retiredPcs.headOption mustBe Some(BigInt(0x800))
+        }
+    }
 }
