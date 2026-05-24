@@ -17,6 +17,7 @@ Use a short subsystem prefix plus a sequence number.
 
 - `FE-001`: frontend bug
 - `FE-002`: frontend response/PC context mismatch bug
+- `FE-003`: frontend `s1_pcReg` does not boot from non-zero `resetAddr`
 - `CACHE-001`: cache bug
 - `CORE-001`: core bug
 - `TB-001`: testbench or infrastructure bug
