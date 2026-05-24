@@ -103,7 +103,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== S1: Stage State =====
     val s1_validReg = RegInit(true.B)
-    val s1_pcReg = RegInit(0.U(cfg.VLEN.W))
+    val s1_pcReg = Reg(UInt(cfg.VLEN.W))
     val s1_fire = Wire(Bool())
     val s1_predTaken = Wire(Bool())
     val s1_predPc = Wire(UInt(cfg.VLEN.W))
@@ -112,7 +112,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== S2: Stage State =====
     val s2_validReg = RegInit(false.B)
-    val s2_pcReg = RegInit(0.U(cfg.VLEN.W))
+    val s2_pcReg = Reg(UInt(cfg.VLEN.W))
 
     // ===== GShare S2 Metadata =====
     val s2_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
@@ -123,7 +123,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== S3: Stage State =====
     val s3_validReg = RegInit(false.B)
-    val s3_pcReg = RegInit(0.U(cfg.VLEN.W))
+    val s3_pcReg = Reg(UInt(cfg.VLEN.W))
     val s3_instReg = RegInit(0.U(32.W))
 
     // ===== GShare S3 Metadata =====
