@@ -181,6 +181,10 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val exeBypassRs2 = Output(UInt(VLEN.W))
     val loadUseHazard = Output(Bool())
     val redirectValid = Output(Bool())
+    val csrMtvec       = Output(UInt(VLEN.W))
+    val csrMcause      = Output(UInt(VLEN.W))
+    val csrMepc        = Output(UInt(VLEN.W))
+    val memWbException = Output(Bool())
 }
 
 class TracePayload(val VLEN: Int = 64) extends Bundle {
@@ -202,8 +206,14 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
 }
 
 class CSRExceptionInfo(val VLEN: Int = 64) extends Bundle {
-    val valid = Bool()
-    val pc    = UInt(VLEN.W)
+    val valid  = Bool()
+    val pc     = UInt(VLEN.W)
+    val mcause = UInt(VLEN.W)
+}
+
+class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {
+    val mcause = Output(UInt(XLEN.W))
+    val mepc   = Output(UInt(XLEN.W))
 }
 
 class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {

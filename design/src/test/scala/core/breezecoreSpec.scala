@@ -1436,6 +1436,101 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
+    "BreezeCore should set correct mcause/mepc/mtvec on illegal instruction exception" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200),               encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeAddi(1, 0, 1),                   encodeAddi(2, 0, 2),
+                encodeAddi(3, 0, 3),                   encodeAddi(4, 0, 4),
+                encodeAddi(5, 0, 5),                   BigInt("FFFFFFFF", 16)
+            ))
+            val line0x820 = buildRefillLine(Seq(
+                encodeAddi(6, 0, 6),   encodeAddi(7, 0, 7),
+                encodeAddi(8, 0, 8),   encodeAddi(9, 0, 9),
+                encodeAddi(10, 0, 10), encodeAddi(11, 0, 11),
+                encodeAddi(12, 0, 12), encodeAddi(13, 0, 13)
+            ))
+            val line0x200 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0),
+                encodeAddi(2, 0, 1),
+                BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst, nopInst, nopInst
+            ))
+            val memoryMap = Map(
+                BigInt(0x800) -> line0x800,
+                BigInt(0x820) -> line0x820,
+                BigInt(0x200) -> line0x200
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+
+            var exceptionSeen = false
+            var exceptionChecked = false
+            var estopSeen = false
+            var cycle = 0
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelayCycles)
+                    )
+                }
+                prevIcacheReq = reqValid
+
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B)
+                    dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else {
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (!exceptionSeen && backendDebug.memWbException.peek().litToBoolean) {
+                    backendDebug.csrMtvec.expect(0x200L.U)
+                    exceptionSeen = true
+                } else if (exceptionSeen && !exceptionChecked) {
+                    backendDebug.csrMcause.expect(2.U)
+                    backendDebug.csrMepc.expect(0x81cL.U)
+                    exceptionChecked = true
+                }
+
+                if (dut.io.estop.peek().litToBoolean) {
+                    estopSeen = true
+                }
+
+                dut.clock.step(1)
+                cycle += 1
+
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear()
+                pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true
+            exceptionSeen mustBe true
+            exceptionChecked mustBe true
+        }
+    }
+
     "BreezeCore should boot from resetAddr 0x800" in {
         simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
             val backendDebug = dut.io.debug.get
