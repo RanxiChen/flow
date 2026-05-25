@@ -141,7 +141,7 @@ object GenerateRegFileVerilogFile extends App {
     )
 }
 
-class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
+class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false) extends Module {
     val io = IO(new Bundle{
         val csr_addr = Input(UInt(12.W))
         val csr_cmd  = Input(UInt(CSR_CMD.width.W))
@@ -158,6 +158,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         val retire_valid = Input(Bool())
         val exception = Input(new CSRExceptionInfo(XLEN))
         val mtvec = Output(UInt(XLEN.W))
+        val debug = if (enabledebug) Some(new CSRFDebugIO(XLEN)) else None
     })
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
@@ -170,6 +171,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
     val mepc = RegInit(0.U(XLEN.W))
     val mtvec = RegInit(BigInt("200", 16).U(XLEN.W))
+    val mcause = RegInit(0.U(XLEN.W))
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
         BitPat(CSRMAP.coreinst.U) -> coreinst,
@@ -179,7 +181,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
         BitPat(CSRMAP.mimpid.U)    -> mimpid,
         BitPat(CSRMAP.mhartid.U)  -> mhartid,
         BitPat(CSRMAP.mepc.U)     -> mepc,
-        BitPat(CSRMAP.mtvec.U)    -> mtvec
+        BitPat(CSRMAP.mtvec.U)    -> mtvec,
+        BitPat(CSRMAP.mcause.U)   -> mcause
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -272,6 +275,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
                     printf(cf"[INFO] mtvec = 0x${io.commit_wdata}%x\n")
                 }
             }
+            is(CSRMAP.mcause.U){
+                mcause := io.commit_wdata
+                if(dumplog){
+                    printf(cf"[INFO] mcause = 0x${io.commit_wdata}%x\n")
+                }
+            }
         }
     }
     // 更新寄存器的值
@@ -281,9 +290,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     // 异常时记录异常PC到mepc
     when(io.exception.valid){
         mepc := io.exception.pc
+        mcause := io.exception.mcause
     }
     io.csr_old_data := old_csr_val
     io.csr_new_data := new_csr_val
     io.csr_write_en := write_csr
     io.mtvec := mtvec
+    io.debug.foreach { debug =>
+        debug.mcause := mcause
+        debug.mepc  := mepc
+    }
 }

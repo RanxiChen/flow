@@ -28,7 +28,7 @@ class BreezeBackend(
     val decoder = Module(new Decoder())
     val immGen = Module(new ImmGen(cfg.VLEN))
     val regFile = Module(new RegFile(cfg.VLEN))
-    val csrFile = Module(new CSRFile(cfg.VLEN))
+    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
 
     val decodeReady = Wire(Bool())
@@ -63,6 +63,7 @@ class BreezeBackend(
     csrFile.io.retire_valid := memWbReg.valid
     csrFile.io.exception.valid := false.B
     csrFile.io.exception.pc := 0.U
+    csrFile.io.exception.mcause := 0.U
 
     val wbData = Wire(UInt(cfg.VLEN.W))
     val estopCommitted = Wire(Bool())
@@ -70,7 +71,7 @@ class BreezeBackend(
     regFile.io.rs1_addr := rs1Addr
     regFile.io.rs2_addr := rs2Addr
     regFile.io.rd_addr := memWbReg.rd_addr
-    regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en
+    regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en && !memWbReg.illegal_inst
     wbData := MuxLookup(memWbReg.wb_sel, 0.U(cfg.VLEN.W))(
         Seq(
             SEL_WB.ALU.U -> memWbReg.alu_data,
@@ -500,6 +501,7 @@ class BreezeBackend(
     csrFile.io.commit_write_en := memWbReg.csr_write_en
     csrFile.io.exception.valid := memWbReg.illegal_inst
     csrFile.io.exception.pc := memWbReg.pc
+    csrFile.io.exception.mcause := 2.U // illegal instruction
 
     fenceiFlush := exeMemReg.valid && exeMemReg.fencei
 
@@ -745,5 +747,9 @@ class BreezeBackend(
         debug.exeBypassRs2 := exeRs2Data
         debug.loadUseHazard := loadUseHazard
         debug.redirectValid := frontendRedirectNeeded
+        debug.csrMtvec       := csrFile.io.mtvec
+        debug.csrMcause      := csrFile.io.debug.get.mcause
+        debug.csrMepc        := csrFile.io.debug.get.mepc
+        debug.memWbException := memWbReg.illegal_inst
     }
 }
