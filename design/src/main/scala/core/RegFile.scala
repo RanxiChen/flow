@@ -169,7 +169,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val mimpid = RegInit(0.U(XLEN.W))
     val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
     val mepc = RegInit(0.U(XLEN.W))
-    val mtvec = RegInit(BigInt("100", 16).U(XLEN.W))
+    val mtvec = RegInit(BigInt("200", 16).U(XLEN.W))
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
         BitPat(CSRMAP.coreinst.U) -> coreinst,
