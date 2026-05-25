@@ -979,6 +979,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         BigInt(0x13)
     }
 
+    private def encodeCsr(rd: Int, rs1: Int, csr: Int, funct3: Int): BigInt = {
+        (BigInt(csr & 0xfff) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x73)
+    }
+
     private def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
         val imm13 = imm & 0x1fff
         val bit12 = (imm13 >> 12) & 0x1
@@ -1335,24 +1343,24 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
-    "BreezeCore should trap on illegal instruction at 0x814 and jump to mtvec at 0x100" in {
+    "BreezeCore should trap on illegal instruction at 0x81c and jump to mtvec at 0x200" in {
         simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
             val backendDebug = dut.io.debug.get
             val refillDelayCycles = 6
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 1),  encodeAddi(2, 0, 2),
-                encodeAddi(3, 0, 3),  encodeAddi(4, 0, 4),
-                encodeAddi(5, 0, 5),  BigInt("FFFFFFFF", 16),
-                encodeAddi(6, 0, 6),  encodeAddi(7, 0, 7)
+                encodeAddi(1, 0, 0x200),               encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeAddi(1, 0, 1),                   encodeAddi(2, 0, 2),
+                encodeAddi(3, 0, 3),                   encodeAddi(4, 0, 4),
+                encodeAddi(5, 0, 5),                   BigInt("FFFFFFFF", 16)
             ))
             val line0x820 = buildRefillLine(Seq(
+                encodeAddi(6, 0, 6),   encodeAddi(7, 0, 7),
                 encodeAddi(8, 0, 8),   encodeAddi(9, 0, 9),
                 encodeAddi(10, 0, 10), encodeAddi(11, 0, 11),
-                encodeAddi(12, 0, 12), encodeAddi(13, 0, 13),
-                nopInst, nopInst
+                encodeAddi(12, 0, 12), encodeAddi(13, 0, 13)
             ))
-            val line0x100 = buildRefillLine(Seq(
+            val line0x200 = buildRefillLine(Seq(
                 encodeAddi(1, 0, 0),
                 encodeAddi(2, 0, 1),
                 BigInt("7FF00073", 16),
@@ -1361,7 +1369,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val memoryMap = Map(
                 BigInt(0x800) -> line0x800,
                 BigInt(0x820) -> line0x820,
-                BigInt(0x100) -> line0x100
+                BigInt(0x200) -> line0x200
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
@@ -1422,7 +1430,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             retiredPcs mustBe Seq(
                 BigInt(0x800), BigInt(0x804), BigInt(0x808),
                 BigInt(0x80c), BigInt(0x810), BigInt(0x814),
-                BigInt(0x100), BigInt(0x104), BigInt(0x108)
+                BigInt(0x818), BigInt(0x81c),
+                BigInt(0x200), BigInt(0x204), BigInt(0x208)
             )
         }
     }
