@@ -1612,4 +1612,107 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             retiredPcs.headOption mustBe Some(BigInt(0x800))
         }
     }
+
+    "BreezeCore should trap on ecall with correct mcause/mepc and enter handler" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+            val ecallInst = BigInt("00000073", 16)
+
+            // Main program @ 0x800: set mtvec=0x200, ecall, then ESTOP (should not reach)
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200),     encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst,                    encodeAddi(2, 0, 1),
+                encodeAddi(3, 0, 2),         BigInt("7FF00073", 16),
+                nopInst,                      nopInst
+            ))
+            // Handler @ 0x200: just ESTOP (verifies trap entered handler)
+            val line0x200 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0),  // nop-like
+                encodeAddi(2, 0, 0),
+                BigInt("7FF00073", 16), // ESTOP
+                nopInst, nopInst, nopInst, nopInst, nopInst
+            ))
+            val line0x000 = buildRefillLine(Seq.fill(8)(nopInst))
+            val memoryMap = Map(
+                BigInt(0x000) -> line0x000,
+                BigInt(0x200) -> line0x200,
+                BigInt(0x800) -> line0x800
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+
+            val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
+            var trapSeen = false
+            var csrChecked = false
+            var estopSeen = false
+            var cycle = 0
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelayCycles)
+                    )
+                }
+                prevIcacheReq = reqValid
+
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B)
+                    dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else {
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                if (!trapSeen && backendDebug.memWbTrapValid.peek().litToBoolean &&
+                    backendDebug.memWbIsEcall.peek().litToBoolean) {
+                    trapSeen = true
+                } else if (trapSeen && !csrChecked) {
+                    // After ecall trap: verify CSRs set correctly
+                    backendDebug.csrMcause.expect(11.U)          // Environment call from M-mode
+                    backendDebug.csrMepc.expect(0x808L.U)       // PC of ecall
+                    backendDebug.csrMtvec.expect(0x200L.U)      // handler address
+                    csrChecked = true
+                }
+
+                if (backendDebug.memWbValid.peek().litToBoolean) {
+                    retiredPcs += backendDebug.memWbPc.peek().litValue
+                }
+
+                if (dut.io.estop.peek().litToBoolean) {
+                    estopSeen = true
+                }
+
+                dut.clock.step(1)
+                cycle += 1
+
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear()
+                pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true
+            trapSeen mustBe true
+            csrChecked mustBe true
+            // Key PCs: main → ecall(0x808) → handler(0x200)
+            retiredPcs must contain(BigInt(0x808))
+            retiredPcs must contain(BigInt(0x200))
+        }
+    }
 }

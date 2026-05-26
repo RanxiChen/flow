@@ -185,6 +185,10 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val csrMcause      = Output(UInt(VLEN.W))
     val csrMepc        = Output(UInt(VLEN.W))
     val memWbException = Output(Bool())
+    val memWbTrapValid = Output(Bool())
+    val memWbIsEcall = Output(Bool())
+    val memWbIsMret = Output(Bool())
+    val csrIllegal = Output(Bool())
 }
 
 class TracePayload(val VLEN: Int = 64) extends Bundle {
@@ -205,10 +209,11 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
     val memWMask = UInt(8.W)
 }
 
-class CSRExceptionInfo(val VLEN: Int = 64) extends Bundle {
-    val valid  = Bool()
-    val pc     = UInt(VLEN.W)
-    val mcause = UInt(VLEN.W)
+class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
+    val valid        = Bool()
+    val is_interrupt = Bool()
+    val cause        = UInt(XLEN.W)
+    val pc           = UInt(XLEN.W)
 }
 
 class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {
@@ -221,6 +226,8 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
     val illegal_inst = Bool()
+    val is_ecall = Bool()
+    val is_mret  = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
     val ctrl = new EXE_Ctrl
     val estop = Bool()
@@ -239,6 +246,9 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
     val illegal_inst = Bool()
+    val is_ecall = Bool()
+    val is_mret  = Bool()
+    val csr_illegal = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
     val estop = Bool()
     val fencei = Bool()
@@ -261,6 +271,9 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
     val illegal_inst = Bool()
+    val is_ecall = Bool()
+    val is_mret  = Bool()
+    val csr_illegal = Bool()
     val load_addr_misaligned = Bool()
     val store_addr_misaligned = Bool()
     val estop = Bool()
