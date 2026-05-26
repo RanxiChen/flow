@@ -1929,4 +1929,232 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             retiredPcs.count(_ == BigInt(0x808)) mustBe 1
         }
     }
+
+    // ── CORE-003 diagnostic variants ──────────────────────────────
+    // All use csrrw to write mepc in handler context.
+    // The base case (read+write both csrrw) is the failing test above.
+
+    "BreezeCore CORE-003 variant: csrrs-read + csrrw-write to mepc should pass" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val ecallInst = BigInt("00000073", 16)
+            val mretInst  = BigInt("30200073", 16)
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst
+            ))
+            // Handler: csrrs read mepc (no side-effect) → addi → csrrw write mepc → mret
+            val csrrs_rd   = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 2)  // read with RS
+            val addi_x5    = encodeAddi(rd = 5, rs1 = 5, imm = 4)
+            val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)  // write with RW
+            val line0x200 = buildRefillLine(Seq(csrrs_rd, addi_x5, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
+
+            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
+
+            var phase = 0; var trapSeen = false; var mretSeen = false; var returned = false; var estopSeen = false; var cycle = 0
+            val refillDelay = 6
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelay))
+                }
+                prevIcacheReq = reqValid
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B); dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else { dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U) }
+
+                if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
+                else if (phase == 1) { phase = 2 }
+                if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (dut.io.estop.peek().litToBoolean) estopSeen = true
+                dut.clock.step(1); cycle += 1
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear(); pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true; trapSeen mustBe true; mretSeen mustBe true; returned mustBe true
+        }
+    }
+
+    "BreezeCore CORE-003 variant: different reg for addi result, csrrw write via x6 should pass" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val ecallInst = BigInt("00000073", 16)
+            val mretInst  = BigInt("30200073", 16)
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst
+            ))
+            // Handler: csrrw read mepc→x5, addi→x6 (different reg!), csrrw write x6→mepc, mret
+            val csrrw_rd   = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)
+            val addi_x6    = encodeAddi(rd = 6, rs1 = 5, imm = 4)   // x6 = x5 + 4 (DIFFERENT rd!)
+            val csrrw_wr   = encodeCsr(rd = 0, rs1 = 6, csr = CSRMAP.mepc, funct3 = 1)  // write x6→mepc
+            val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x6, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
+
+            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
+
+            var phase = 0; var trapSeen = false; var mretSeen = false; var returned = false; var estopSeen = false; var cycle = 0
+            val refillDelay = 6
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelay))
+                }
+                prevIcacheReq = reqValid
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B); dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else { dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U) }
+
+                if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
+                else if (phase == 1) { phase = 2 }
+                if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (dut.io.estop.peek().litToBoolean) estopSeen = true
+                dut.clock.step(1); cycle += 1
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear(); pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true; trapSeen mustBe true; mretSeen mustBe true; returned mustBe true
+        }
+    }
+
+    "BreezeCore CORE-003 variant: NOP between addi and csrrw write should pass" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val ecallInst = BigInt("00000073", 16)
+            val mretInst  = BigInt("30200073", 16)
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst
+            ))
+            // Handler: csrrw read mepc → addi → NOP (bubble) → csrrw write mepc → mret
+            val csrrw_rd   = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)
+            val addi_x5    = encodeAddi(rd = 5, rs1 = 5, imm = 4)
+            val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
+            val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x5, nopInst, csrrw_wr, mretInst, nopInst, nopInst, nopInst))
+
+            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
+
+            var phase = 0; var trapSeen = false; var mretSeen = false; var returned = false; var estopSeen = false; var cycle = 0
+            val refillDelay = 6
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelay))
+                }
+                prevIcacheReq = reqValid
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B); dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else { dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U) }
+
+                if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
+                else if (phase == 1) { phase = 2 }
+                if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (dut.io.estop.peek().litToBoolean) estopSeen = true
+                dut.clock.step(1); cycle += 1
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear(); pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true; trapSeen mustBe true; mretSeen mustBe true; returned mustBe true
+        }
+    }
+
+    "BreezeCore CORE-003 variant: addi rd≠rs1 (x5=x3+4), csrrw reads x5 should pass" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val ecallInst = BigInt("00000073", 16)
+            val mretInst  = BigInt("30200073", 16)
+
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
+                nopInst, nopInst, nopInst
+            ))
+            // Handler: csrrw read mepc→x3, addi x5=x3+4 (rs1≠rd!), csrrw write x5→mepc, mret
+            val csrrw_rd   = encodeCsr(rd = 3, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)
+            val addi_x5    = encodeAddi(rd = 5, rs1 = 3, imm = 4)   // rd=5, rs1=3 — DIFFERENT!
+            val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
+            val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x5, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
+
+            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
+
+            var phase = 0; var trapSeen = false; var mretSeen = false; var returned = false; var estopSeen = false; var cycle = 0
+            val refillDelay = 6
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelay))
+                }
+                prevIcacheReq = reqValid
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B); dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else { dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U) }
+
+                if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
+                else if (phase == 1) { phase = 2 }
+                if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (dut.io.estop.peek().litToBoolean) estopSeen = true
+                dut.clock.step(1); cycle += 1
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear(); pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true; trapSeen mustBe true; mretSeen mustBe true; returned mustBe true
+        }
+    }
 }

@@ -65,15 +65,36 @@ val csrrs_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 2)  //
 
 Both confirm the CSRRW instruction encoding, CSR_CMD.RW path, and commit mechanism are correct in isolation.
 
-### Where it fails
+### Root cause confirmed (2026-05-26): forwarding path selects immediate instead of ALU result when addi rs1==rd
 
-The bug only manifests in the handler context after an ecall trap redirect. Possible causes:
+The bug is triggered specifically when:
+1. `addi` has **rs1 == rd** (same register as both source and destination)
+2. `csrrw` subsequently **reads that same register as rs1**
 
-1. **Pipeline bypass issue**: The `addi x5, x5, 4` instruction produces 0x80c, but when `csrrw x0, mepc, x5` reads x5 in the EXE stage, the forwarded/bypassed value might be the immediate (4) instead of the ALU result (0x80c). This would explain mepc becoming 0x4.
+In this scenario, the forwarding/bypass logic routes the **immediate value (4)** instead of the **ALU result (0x80c)** to the CSR write data path, causing mepc to become `0x4`.
 
-2. **CSR state hazard**: The `csrrs x5, mepc, x0` at 0x200 reads mepc, then `csrrw x0, mepc, x5` at 0x208 writes mepc. If the CSR pipeline hazard detection incorrectly stalls or misroutes the write data.
+### Diagnostic test matrix
 
-3. **Commit timing**: When csrrw retires, the `io.commit_write_en` from CSRFile may be deasserted due to a pipeline flush/redirect from a prior event.
+All tests use the same ecall→handler→mret framework, varying only the handler instruction sequence:
+
+| # | Handler pattern | rs1==rd? | Result |
+|---|----------------|----------|--------|
+| 1 | `csrrw x5, mepc → addi x5, x5, 4 → csrrw x0, mepc, x5` | ✅ rs1==rd | ❌ FAIL |
+| 2 | `csrrs x5, mepc → addi x5, x5, 4 → csrrw x0, mepc, x5` | ✅ rs1==rd | ❌ FAIL |
+| 3 | `csrrw x5, mepc → addi x6, x5, 4 → csrrw x0, mepc, x6` | ❌ rd≠rs1 | ✅ PASS |
+| 4 | `csrrw x5, mepc → addi x5, x5, 4 → nop → csrrw x0, mepc, x5` | ✅ rs1==rd | ❌ FAIL |
+| 5 | `csrrw x3, mepc → addi x5, x3, 4 → csrrw x0, mepc, x5` | ❌ rs1≠rd | ✅ PASS |
+
+**结论：**
+- Test 2 排除了「csrrw 读 zero 了 mepc」的假说（csrrs 读也同样失败）
+- Test 3 排除了「csrrw 本身有问题」的假说（不同 rd 就通过）
+- Test 4 排除了简单的「背靠背时序不够」假说（NOP 不管用）
+- Test 5 锁定：addi 的 rs1 ≠ rd 时一切正常
+- **只有当 addi 的 rs1==rd 时，后续 csrrw 读同一个寄存器才会拿到错误的值（立即数而非 ALU 结果）**
+
+### Next step for fix
+
+排查 `BreezeBackend.scala` 中 EXE 阶段的转发/bypass 逻辑：当 `addi rd, rs1, imm` 且 `rd == rs1` 时，转发路径可能错误地将 imm 旁路给了后续 CSR 指令的 rs1 输入。
 
 ### Workaround
 
@@ -88,6 +109,6 @@ val csrrs_mepc = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 2)
 
 ## Related Files
 
-- `design/src/main/scala/core/RegFile.scala` — CSRFile CSR_CMD.RW/RW path
-- `design/src/main/scala/backend/BreezeBackend.scala` — pipeline bypass and CSR commit
-- `design/src/test/scala/core/breezecoreSpec.scala` — mret test (currently uses csrrs workaround)
+- `design/src/main/scala/core/RegFile.scala` — CSRFile CSR_CMD.RW/RS path
+- `design/src/main/scala/backend/BreezeBackend.scala` — pipeline bypass and CSR commit（重点排查 EXE 阶段转发逻辑）
+- `design/src/test/scala/core/breezecoreSpec.scala` — Base test + 5 CORE-003 diagnostic variants (Tests 1-5 above)
