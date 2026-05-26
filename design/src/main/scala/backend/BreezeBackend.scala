@@ -134,8 +134,10 @@ class BreezeBackend(
     val loadUseHazard = Wire(Bool())
     val csrUseHazard = Wire(Bool())
     val csrStateHazard = Wire(Bool())
+    val csrRegHazard = Wire(Bool())
     val idExePendingCsrRd = Wire(Bool())
     val exeMemPendingCsrRd = Wire(Bool())
+    val memWbPendingCsrRd = Wire(Bool())
     val idExePendingCsrState = Wire(Bool())
     val exeMemPendingCsrState = Wire(Bool())
     val frontendBtbUpdateValid = Wire(Bool())
@@ -478,6 +480,10 @@ class BreezeBackend(
         exeMemReg.wb_en &&
         (exeMemReg.wb_sel === SEL_WB.CSR.U) &&
         (exeMemReg.rd_addr =/= 0.U)
+    memWbPendingCsrRd := memWbReg.valid &&
+        memWbReg.wb_en &&
+        (memWbReg.wb_sel === SEL_WB.CSR.U) &&
+        (memWbReg.rd_addr =/= 0.U)
     csrUseHazard := (
         idExePendingCsrRd && (
             (decodeUsesRs1 && (rs1Addr === idExeReg.rd_addr)) ||
@@ -488,6 +494,11 @@ class BreezeBackend(
             (decodeUsesRs1 && (rs1Addr === exeMemReg.rd_addr)) ||
             (decodeUsesRs2 && (rs2Addr === exeMemReg.rd_addr))
         )
+    ) || (
+        memWbPendingCsrRd && (
+            (decodeUsesRs1 && (rs1Addr === memWbReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === memWbReg.rd_addr))
+        )
     )
     idExePendingCsrState := idExeReg.valid && (idExeReg.ctrl.csr_cmd =/= CSR_CMD.NOP.U)
     exeMemPendingCsrState := exeMemReg.valid && csrFile.io.csr_write_en
@@ -497,7 +508,28 @@ class BreezeBackend(
     )
     // CSR hazards: only stall decode, NOT idExe→exeMem.
     // CSR producers must flow through to memWb so the register file is updated.
-    csrHold := csrUseHazard || csrStateHazard
+    //
+    // csrRegHazard: conservative stall — when a CSR instruction enters decode,
+    // if ANY prior instruction in the pipeline (idExe, exeMem, memWb) has a
+    // pending register write to rs1/rs2 that the CSR reads, stall until the
+    // pipeline is clear. This avoids broken forwarding (CORE-003) and the
+    // RegFile synchronous read-before-write race.
+    csrRegHazard := (decoder.io.exe_ctrl.csr_cmd =/= CSR_CMD.NOP.U) && (
+        (idExeReg.valid && idExeReg.ctrl.wb_en && (idExeReg.rd_addr =/= 0.U) && (
+            (decodeUsesRs1 && (rs1Addr === idExeReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === idExeReg.rd_addr))
+        )) ||
+        (exeMemReg.valid && exeMemReg.wb_en && (exeMemReg.rd_addr =/= 0.U) && (
+            (decodeUsesRs1 && (rs1Addr === exeMemReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === exeMemReg.rd_addr))
+        )) ||
+        (memWbReg.valid && memWbReg.wb_en && (memWbReg.rd_addr =/= 0.U) &&
+            (memWbReg.wb_sel =/= SEL_WB.CSR.U) && (
+            (decodeUsesRs1 && (rs1Addr === memWbReg.rd_addr)) ||
+            (decodeUsesRs2 && (rs2Addr === memWbReg.rd_addr))
+        ))
+    )
+    csrHold := csrUseHazard || csrStateHazard || csrRegHazard
 
     // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
     // overwritten before the outstanding memory operation receives a response.
