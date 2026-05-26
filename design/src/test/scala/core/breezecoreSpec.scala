@@ -1813,14 +1813,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 BigInt("7FF00073", 16),         // ESTOP
                 nopInst, nopInst, nopInst
             ))
-            // Handler @ 0x200: read mepc, +4, write back via csrrs, mret
-            // csrrs x5, mepc, x0  (CSRRS with rs1=x0 = pure read)
-            val csrrs_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 2)
+            // Handler @ 0x200: read mepc, +4, write back via csrrw, mret
+            // csrrw x5, mepc, x0  (CSRRW: read old mepc→x5, write x0→mepc temporarily)
+            val csrrw_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)
             val addi_x5_4    = encodeAddi(rd = 5, rs1 = 5, imm = 4)
-            // csrrs x0, mepc, x5: set-bits write (mepc | x5). Since mepc=0x808, x5=0x80c, result=0x80c
-            val csrrs_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 2)
+            // csrrw x0, mepc, x5: write x5→mepc (rd=x0 discards old value)
+            val csrrw_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
             val line0x200 = buildRefillLine(Seq(
-                csrrs_x5_mepc, addi_x5_4, csrrs_mepc, mretInst,
+                csrrw_x5_mepc, addi_x5_4, csrrw_mepc, mretInst,
                 nopInst, nopInst, nopInst, nopInst
             ))
             val line0x000 = buildRefillLine(Seq.fill(8)(nopInst))

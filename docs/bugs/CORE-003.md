@@ -6,7 +6,9 @@ CSRRW instruction (CSR_CMD.RW) write to mepc fails in handler context after ecal
 
 ## Status
 
-open
+open — 已确认可复现 (2026-05-26)
+
+当前 `breezecoreSpec.scala` 的 ecall handler 测试已改为使用 `csrrw`，**33/34 测试通过，ecall→handler→mret 测试失败**，确认 csrrw 在 handler 上下文写 mepc 确实触发此 bug。
 
 ## Symptom
 
@@ -34,12 +36,24 @@ After csrrw x0, mepc, x5 retires at cycle 42, mepc should be updated to 0x80c by
 
 ```bash
 cd design
-# csrrs version works:
-#   "BreezeCore should handle ecall → handler(advance mepc) → mret → return to next instruction"
-
-# csrrw version fails — change handler line from csrrs to csrrw:
-#   val csrrw_mepc = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
+# 当前代码已使用 csrrw，直接全量跑即可复现：
+sbt test
+# 或单测：
 sbt 'testOnly flow.core.BreezeCoreNoFASESpec -- -t "handler"'
+```
+
+当前 handler 代码（已改为 csrrw）：
+```scala
+val csrrw_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)  // csrrw x5, mepc, x0
+val csrrw_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)  // csrrw x0, mepc, x5
+```
+
+失败结果：`false was not equal to true (breezecoreSpec.scala:1919)`
+
+如需绕过 bug，改回 csrrs：
+```scala
+val csrrs_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 2)  // csrrs x5, mepc, x0
+val csrrs_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 2)  // csrrs x0, mepc, x5
 ```
 
 ## Analysis
