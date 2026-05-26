@@ -175,6 +175,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mepc = RegInit(0.U(XLEN.W))
     val mtvec = RegInit(BigInt("200", 16).U(XLEN.W))
     val mcause = RegInit(0.U(XLEN.W))
+    val mtval = RegInit(0.U(XLEN.W))
+    val mscratch = RegInit(0.U(XLEN.W))
     // mstatus: distributed fields, assembled on read, disassembled on write
     val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
     val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
@@ -200,6 +202,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         BitPat(CSRMAP.mepc.U)     -> mepc,
         BitPat(CSRMAP.mtvec.U)    -> mtvec,
         BitPat(CSRMAP.mcause.U)   -> mcause,
+        BitPat(CSRMAP.mtval.U)    -> mtval,
+        BitPat(CSRMAP.mscratch.U) -> mscratch,
         BitPat(CSRMAP.mstatus.U)  -> mstatus_read
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
@@ -308,6 +312,18 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     printf(cf"[INFO] mcause = 0x${io.commit_wdata}%x\n")
                 }
             }
+            is(CSRMAP.mtval.U){
+                mtval := io.commit_wdata
+                if(dumplog){
+                    printf(cf"[INFO] mtval = 0x${io.commit_wdata}%x\n")
+                }
+            }
+            is(CSRMAP.mscratch.U){
+                mscratch := io.commit_wdata
+                if(dumplog){
+                    printf(cf"[INFO] mscratch = 0x${io.commit_wdata}%x\n")
+                }
+            }
             is(CSRMAP.mstatus.U){
                 mstatus_MIE  := io.commit_wdata(3)
                 mstatus_MPIE := io.commit_wdata(7)
@@ -326,6 +342,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     when(io.trap.valid){
         mepc := io.trap.pc
         mcause := io.trap.cause
+        mtval := io.trap.tval
         mstatus_MPIE := mstatus_MIE
         mstatus_MIE  := false.B
         mstatus_MPP  := "b11".U
