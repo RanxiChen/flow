@@ -8,6 +8,64 @@ import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
 
 class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    "CSRFile should write mtvec via CSRRW (RW command) and read back" in {
+        simulate(new CSRFile(64)) { dut =>
+            // Drive trap/mret defaults
+            dut.io.trap.valid.poke(false.B)
+            dut.io.trap.is_interrupt.poke(false.B)
+            dut.io.trap.cause.poke(0.U)
+            dut.io.trap.pc.poke(0.U)
+            dut.io.mret_commit.poke(false.B)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.commit_addr.poke(0.U)
+            dut.io.commit_wdata.poke(0.U)
+            dut.io.retire_valid.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            // Step 1: Read mtvec (default 0x200) via pure read (RS with rs1=0)
+            dut.io.csr_addr.poke(CSRMAP.mtvec.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.clock.step(1)
+            dut.io.csr_old_data.expect(BigInt("200", 16).U)
+            // RS with rs1=0 is pure read: write_csr=false
+
+            // Step 2: CSRRW write 0x345 to mtvec (rd=x0, rs1=x5)
+            dut.io.csr_addr.poke(CSRMAP.mtvec.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RW.U)
+            dut.io.csr_reg_data.poke(BigInt("345", 16).U)
+            dut.io.rs1_id.poke(5.U)
+            dut.io.rd_id.poke(0.U)  // rd=0 → read suppressed, write still happens
+            dut.clock.step(1)
+            dut.io.csr_write_en.expect(true.B)
+            dut.io.csr_new_data.expect(BigInt("345", 16).U)
+
+            // Step 3: Commit the write
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mtvec.U)
+            dut.io.commit_wdata.poke(BigInt("345", 16).U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+
+            // Step 4: Read back mtvec → should be 0x345
+            dut.io.csr_addr.poke(CSRMAP.mtvec.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.clock.step(1)
+            dut.io.csr_old_data.expect(BigInt("345", 16).U)
+        }
+    }
+
     "CSRFile should count retired instructions in coreinst CSR" in {
         simulate(new CSRFile(64)) { dut =>
             dut.io.csr_addr.poke(CSRMAP.coreinst.U)
@@ -582,6 +640,29 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
             observedReqs mustBe empty
             observedRetire.map(_._2) mustBe Seq(BigInt(1), BigInt(0), BigInt(1)).map(u64)
             observedRetire(2)._1 - observedRetire(1)._1 must be >= 2
+        }
+    }
+
+    "BreezeCore should write CSR via CSRRW (RW command) with rd=0" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val fase = dut.io.fase.get
+            // addi x1, x0, 0x345 → csrrw x0, mtvec, x1 → csrrs x2, mtvec, x0 → verify x2=0x345
+            val addiX1   = encodeAddi(rd = 1, rs1 = 0, imm = 0x345)
+            val csrrwWr  = encodeCsr(rd = 0, rs1 = 1, csr = CSRMAP.mtvec, funct3 = 1)
+            val csrrsRd  = encodeCsr(rd = 2, rs1 = 0, csr = CSRMAP.mtvec, funct3 = 2)
+            var wbVals = mutable.ArrayBuffer.empty[BigInt]
+            var cycle = 0
+            initCore(dut)
+            enqueueFaseInstruction(dut, addiX1)
+            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean }
+            debug.wbData.expect(BigInt(0x345).U)
+            enqueueFaseInstruction(dut, csrrwWr)
+            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean }
+            // CSRRW with rd=0 should commit the write
+            enqueueFaseInstruction(dut, csrrsRd)
+            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean && debug.wbData.peek().litValue == BigInt(0x345) }
+            debug.wbData.expect(BigInt(0x345).U)
         }
     }
 
@@ -1713,6 +1794,139 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             // Key PCs: main → ecall(0x808) → handler(0x200)
             retiredPcs must contain(BigInt(0x808))
             retiredPcs must contain(BigInt(0x200))
+        }
+    }
+
+    "BreezeCore should handle ecall → handler(advance mepc) → mret → return to next instruction" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
+            val backendDebug = dut.io.debug.get
+            val refillDelayCycles = 6
+            val ecallInst = BigInt("00000073", 16)
+            val mretInst  = BigInt("30200073", 16)
+
+            // Main @ 0x800: set mtvec, ecall, then (after mret) addi + ESTOP
+            val line0x800 = buildRefillLine(Seq(
+                encodeAddi(1, 0, 0x200),
+                encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                ecallInst,
+                encodeAddi(2, 0, 1),           // ← mret returns here (0x80c)
+                BigInt("7FF00073", 16),         // ESTOP
+                nopInst, nopInst, nopInst
+            ))
+            // Handler @ 0x200: read mepc, +4, write back via csrrs, mret
+            // csrrs x5, mepc, x0  (CSRRS with rs1=x0 = pure read)
+            val csrrs_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 2)
+            val addi_x5_4    = encodeAddi(rd = 5, rs1 = 5, imm = 4)
+            // csrrs x0, mepc, x5: set-bits write (mepc | x5). Since mepc=0x808, x5=0x80c, result=0x80c
+            val csrrs_mepc   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 2)
+            val line0x200 = buildRefillLine(Seq(
+                csrrs_x5_mepc, addi_x5_4, csrrs_mepc, mretInst,
+                nopInst, nopInst, nopInst, nopInst
+            ))
+            val line0x000 = buildRefillLine(Seq.fill(8)(nopInst))
+            val memoryMap = Map(
+                BigInt(0x000) -> line0x000,
+                BigInt(0x200) -> line0x200,
+                BigInt(0x800) -> line0x800
+            )
+            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
+            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
+            var prevIcacheReq = false
+
+            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.nextLevelRsp.vld.poke(false.B)
+            dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.clock.step(1)
+
+            val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
+            var phase = 0 // 0=wait ecall, 1=check CSR, 2=wait mret, 3=wait return, 4=wait ESTOP
+            var trapSeen = false
+            var csrChecked = false
+            var mretSeen = false
+            var returned = false
+            var estopSeen = false
+            var cycle = 0
+
+            while (!estopSeen && cycle < 500) {
+                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (reqValid && !prevIcacheReq) {
+                    val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
+                    pendingIcacheResps.enqueue(
+                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), refillDelayCycles)
+                    )
+                }
+                prevIcacheReq = reqValid
+
+                if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
+                    val resp = pendingIcacheResps.dequeue()
+                    dut.io.nextLevelRsp.vld.poke(true.B)
+                    dut.io.nextLevelRsp.data.poke(resp.data.U)
+                } else {
+                    dut.io.nextLevelRsp.vld.poke(false.B)
+                    dut.io.nextLevelRsp.data.poke(0.U)
+                }
+
+                // Phase 0: wait for ecall trap
+                val isEcallTrap = backendDebug.memWbTrapValid.peek().litToBoolean &&
+                    backendDebug.memWbIsEcall.peek().litToBoolean
+                if (phase == 0 && isEcallTrap) {
+                    trapSeen = true
+                    phase = 1
+                }
+                // Phase 1: CSR check (next cycle after trap)
+                else if (phase == 1) {
+                    backendDebug.csrMcause.expect(11.U)
+                    backendDebug.csrMepc.expect(0x808L.U)
+                    csrChecked = true
+                    phase = 2
+                }
+                // Phase 2: wait for mret in handler
+                if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean &&
+                    backendDebug.memWbIsMret.peek().litToBoolean) {
+                    mretSeen = true
+                    phase = 3
+                }
+                // Phase 3: wait for return to 0x80c
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean &&
+                    backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) {
+                    returned = true
+                    phase = 4
+                }
+
+                if (backendDebug.memWbValid.peek().litToBoolean) {
+                    retiredPcs += backendDebug.memWbPc.peek().litValue
+                }
+
+                if (dut.io.estop.peek().litToBoolean) {
+                    estopSeen = true
+                }
+
+                dut.clock.step(1)
+                cycle += 1
+
+                val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
+                pendingIcacheResps.clear()
+                pendingIcacheResps ++= updated
+            }
+
+            estopSeen mustBe true
+            trapSeen mustBe true
+            csrChecked mustBe true
+            mretSeen mustBe true
+            returned mustBe true
+            // Verify PC sequence: main → ecall → handler → back to main
+            retiredPcs must contain(BigInt(0x808))   // ecall
+            retiredPcs must contain(BigInt(0x200))   // handler entry
+            retiredPcs must contain(BigInt(0x80c))   // returned after mret
+            // ecall must execute exactly once (mret did NOT jump back to 0x808)
+            retiredPcs.count(_ == BigInt(0x808)) mustBe 1
         }
     }
 }
