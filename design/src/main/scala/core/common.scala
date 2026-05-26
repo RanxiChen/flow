@@ -303,4 +303,38 @@ object CSRMAP{
 
 object SIM_SYSTEM {
    val ESTOP_IMM12 = "h7ff".U(12.W)
+   val ECALL_IMM12  = "h000".U(12.W)
+   val MRET_IMM12   = "h302".U(12.W)
+}
+
+// Per m-mode-implementation spec V1:
+// These CSR addresses trigger illegal instruction exception when accessed
+object ILLEGAL_CSR_ADDRS {
+   val addrs: Seq[Int] = Seq(
+      0x302, // medeleg
+      0x303, // mideleg
+      0x312, // medelegh (not in CSRMAP but spec mentions it)
+      0x100, // sstatus
+      0x104, // sie
+      0x105, // stvec
+      0x106, // scounteren
+      0x10a, // senvcfg
+      0x10c, // sstateen0
+      0x10d, // sstateen1
+      0x10e, // sstateen2
+      0x10f, // sstateen3
+      0x120, // scountinhibit
+      0x140, // sscratch
+      0x141, // sepc
+      0x142, // scause
+      0x143, // stval
+      0x144, // sip
+      0x180, // satp
+      0x5A8, // scontext
+      0xDA0, // scountovf
+      0x740, // mnscratch
+      0x741, // mnepc
+      0x742, // mncause
+      0x744  // mnstatus
+   )
 }

@@ -156,8 +156,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val commit_wdata = Input(UInt(XLEN.W))
         val commit_write_en = Input(Bool())
         val retire_valid = Input(Bool())
-        val exception = Input(new CSRExceptionInfo(XLEN))
+        val trap = Input(new CSRTrapInfo(XLEN))
+        val mret_commit = Input(Bool())
         val mtvec = Output(UInt(XLEN.W))
+        val mepc_out = Output(UInt(XLEN.W))
+        val csr_illegal = Output(Bool())
         val debug = if (enabledebug) Some(new CSRFDebugIO(XLEN)) else None
     })
     // csr supported
@@ -172,6 +175,20 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mepc = RegInit(0.U(XLEN.W))
     val mtvec = RegInit(BigInt("200", 16).U(XLEN.W))
     val mcause = RegInit(0.U(XLEN.W))
+    // mstatus: distributed fields, assembled on read, disassembled on write
+    val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
+    val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
+    val mstatus_MPP  = RegInit("b11".U(2.W)) // bits 12-11: machine previous privilege (always M=3)
+    val mstatus_read = Wire(UInt(XLEN.W))
+    mstatus_read := Cat(
+        0.U(61.W),       // [63:13] read-only zero
+        mstatus_MPP,      // [12:11]
+        0.U(3.W),        // [10:8]
+        mstatus_MPIE,     // [7]
+        0.U(3.W),        // [6:4]
+        mstatus_MIE,      // [3]
+        0.U(3.W)         // [2:0]
+    )
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
         BitPat(CSRMAP.coreinst.U) -> coreinst,
@@ -182,7 +199,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         BitPat(CSRMAP.mhartid.U)  -> mhartid,
         BitPat(CSRMAP.mepc.U)     -> mepc,
         BitPat(CSRMAP.mtvec.U)    -> mtvec,
-        BitPat(CSRMAP.mcause.U)   -> mcause
+        BitPat(CSRMAP.mcause.U)   -> mcause,
+        BitPat(CSRMAP.mstatus.U)  -> mstatus_read
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -197,7 +215,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }.otherwise{
         old_csr_val := 0.U
     }
-    when(!io.exception.valid){
+    val csr_illegal_addr = ILLEGAL_CSR_ADDRS.addrs.map(a => io.csr_addr === a.U(12.W)).reduce(_ || _)
+    io.csr_illegal := read_csr && csr_illegal_addr
+
+    when(!io.trap.valid){
         switch(io.csr_cmd){
             is(CSR_CMD.NOP.U){
             //nop
@@ -238,7 +259,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }
     }
     // Zicsr对寄存器的写在wb阶段提交
-    when(io.commit_valid && io.commit_write_en && !io.exception.valid){
+    when(io.commit_valid && io.commit_write_en && !io.trap.valid){
         switch(io.commit_addr){
             is(CSRMAP.printer.U){
                 printer := io.commit_wdata
@@ -281,21 +302,39 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     printf(cf"[INFO] mcause = 0x${io.commit_wdata}%x\n")
                 }
             }
+            is(CSRMAP.mstatus.U){
+                mstatus_MIE  := io.commit_wdata(3)
+                mstatus_MPIE := io.commit_wdata(7)
+                mstatus_MPP  := io.commit_wdata(12, 11)
+                if(dumplog){
+                    printf(cf"[INFO] mstatus write: MIE=${io.commit_wdata(3)} MPIE=${io.commit_wdata(7)} MPP=${io.commit_wdata(12,11)}\n")
+                }
+            }
         }
     }
     // 更新寄存器的值
     when(io.retire_valid){
         coreinst := coreinst + 1.U
     }
-    // 异常时记录异常PC到mepc
-    when(io.exception.valid){
-        mepc := io.exception.pc
-        mcause := io.exception.mcause
+    // Trap entry: record pc/cause, update mstatus
+    when(io.trap.valid){
+        mepc := io.trap.pc
+        mcause := io.trap.cause
+        mstatus_MPIE := mstatus_MIE
+        mstatus_MIE  := false.B
+        mstatus_MPP  := "b11".U
+    }
+    // MRET: restore mstatus from saved state
+    when(io.mret_commit){
+        mstatus_MIE  := mstatus_MPIE
+        mstatus_MPIE := true.B
+        mstatus_MPP  := "b11".U
     }
     io.csr_old_data := old_csr_val
     io.csr_new_data := new_csr_val
     io.csr_write_en := write_csr
     io.mtvec := mtvec
+    io.mepc_out := mepc
     io.debug.foreach { debug =>
         debug.mcause := mcause
         debug.mepc  := mepc

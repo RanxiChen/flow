@@ -61,9 +61,11 @@ class BreezeBackend(
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
     csrFile.io.retire_valid := memWbReg.valid
-    csrFile.io.exception.valid := false.B
-    csrFile.io.exception.pc := 0.U
-    csrFile.io.exception.mcause := 0.U
+    csrFile.io.trap.valid := false.B
+    csrFile.io.trap.is_interrupt := false.B
+    csrFile.io.trap.cause := 0.U
+    csrFile.io.trap.pc := 0.U
+    csrFile.io.mret_commit := false.B
 
     val wbData = Wire(UInt(cfg.VLEN.W))
     val estopCommitted = Wire(Bool())
@@ -71,7 +73,9 @@ class BreezeBackend(
     regFile.io.rs1_addr := rs1Addr
     regFile.io.rs2_addr := rs2Addr
     regFile.io.rd_addr := memWbReg.rd_addr
-    regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en && !memWbReg.illegal_inst
+    regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en &&
+        !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
+        !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned
     wbData := MuxLookup(memWbReg.wb_sel, 0.U(cfg.VLEN.W))(
         Seq(
             SEL_WB.ALU.U -> memWbReg.alu_data,
@@ -146,6 +150,8 @@ class BreezeBackend(
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
         idExeReg.illegal_inst := false.B
+        idExeReg.is_ecall := false.B
+        idExeReg.is_mret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -180,6 +186,8 @@ class BreezeBackend(
         idExeReg.pc := decodePc
         idExeReg.inst := decodeInst
         idExeReg.illegal_inst := decoder.io.illegal_inst
+        idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall
+        idExeReg.is_mret := decoder.io.exe_ctrl.is_mret
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
         idExeReg.estop := decodeEstop
@@ -196,6 +204,8 @@ class BreezeBackend(
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
         idExeReg.illegal_inst := false.B
+        idExeReg.is_ecall := false.B
+        idExeReg.is_mret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -274,8 +284,12 @@ class BreezeBackend(
     redirectTargetMismatch := idExeReg.valid && actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
-    exceptionRedirect := memWbReg.valid && memWbReg.illegal_inst
-    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect
+    val wbTrap = memWbReg.illegal_inst || memWbReg.csr_illegal || memWbReg.is_ecall ||
+        memWbReg.load_addr_misaligned || memWbReg.store_addr_misaligned
+    val mretRedirect = Wire(Bool())
+    exceptionRedirect := memWbReg.valid && wbTrap
+    mretRedirect := memWbReg.valid && memWbReg.is_mret
+    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect || mretRedirect
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -499,17 +513,33 @@ class BreezeBackend(
     csrFile.io.commit_addr := memWbReg.csr_addr
     csrFile.io.commit_wdata := memWbReg.csr_new_data
     csrFile.io.commit_write_en := memWbReg.csr_write_en
-    csrFile.io.exception.valid := memWbReg.illegal_inst
-    csrFile.io.exception.pc := memWbReg.pc
-    csrFile.io.exception.mcause := 2.U // illegal instruction
+    // Compute trap cause at WB stage: priority-encode the exception bools
+    val mcauseVal = Wire(UInt(cfg.VLEN.W))
+    mcauseVal := Mux1H(Seq(
+        memWbReg.store_addr_misaligned -> BigInt(7).U(cfg.VLEN.W),
+        memWbReg.load_addr_misaligned  -> BigInt(4).U(cfg.VLEN.W),
+        memWbReg.is_ecall              -> BigInt(11).U(cfg.VLEN.W),
+        memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
+        memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W),
+        true.B                         -> 0.U(cfg.VLEN.W)
+    ))
+
+    csrFile.io.trap.valid        := wbTrap
+    csrFile.io.trap.is_interrupt := false.B
+    csrFile.io.trap.cause        := mcauseVal
+    csrFile.io.trap.pc           := memWbReg.pc
+    csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
 
     fenceiFlush := exeMemReg.valid && exeMemReg.fencei
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.inst := nopInst
         exeMemReg.illegal_inst := false.B
+        exeMemReg.is_ecall := false.B
+        exeMemReg.is_mret := false.B
+        exeMemReg.csr_illegal := false.B
         exeMemReg.pred.predType := FrontendPredType.NONE
         exeMemReg.pred.predTaken := false.B
         exeMemReg.pred.predPc := 0.U
@@ -549,6 +579,9 @@ class BreezeBackend(
         exeMemReg.pc := idExeReg.pc
         exeMemReg.inst := idExeReg.inst
         exeMemReg.illegal_inst := idExeReg.illegal_inst
+        exeMemReg.is_ecall := idExeReg.is_ecall
+        exeMemReg.is_mret := idExeReg.is_mret
+        exeMemReg.csr_illegal := csrFile.io.csr_illegal
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
         exeMemReg.fencei := idExeReg.ctrl.fencei
@@ -593,11 +626,14 @@ class BreezeBackend(
         memWaitingRespReg := true.B
     }
 
-    when(reset.asBool || exceptionRedirect) {
+    when(reset.asBool || exceptionRedirect || mretRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.inst := nopInst
         memWbReg.illegal_inst := false.B
+        memWbReg.is_ecall := false.B
+        memWbReg.is_mret := false.B
+        memWbReg.csr_illegal := false.B
         memWbReg.load_addr_misaligned := false.B
         memWbReg.store_addr_misaligned := false.B
         memWbReg.estop := false.B
@@ -632,6 +668,9 @@ class BreezeBackend(
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
         memWbReg.illegal_inst := exeMemReg.illegal_inst
+        memWbReg.is_ecall := exeMemReg.is_ecall
+        memWbReg.is_mret := exeMemReg.is_mret
+        memWbReg.csr_illegal := exeMemReg.csr_illegal
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := loadAddrMisaligned
         memWbReg.store_addr_misaligned := storeAddrMisaligned
@@ -664,6 +703,9 @@ class BreezeBackend(
         memWbReg.pc := exeMemReg.pc
         memWbReg.inst := exeMemReg.inst
         memWbReg.illegal_inst := exeMemReg.illegal_inst
+        memWbReg.is_ecall := exeMemReg.is_ecall
+        memWbReg.is_mret := exeMemReg.is_mret
+        memWbReg.csr_illegal := exeMemReg.csr_illegal
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := false.B
         memWbReg.store_addr_misaligned := false.B
@@ -705,14 +747,12 @@ class BreezeBackend(
     io.frontendRedirect.valid := frontendRedirectNeeded
     io.frontendRedirect.flush := frontendRedirectNeeded
     io.frontendRedirect.cacheFlush := fenceiFlush
-    io.frontendRedirect.target := Mux(
-        exceptionRedirect,
-        csrFile.io.mtvec,
-        Mux(fenceiFlush,
-            exeMemReg.pc + 4.U,
-            Mux(redirectNeeded, actualTarget, io.resetAddr)
-        )
-    )
+    io.frontendRedirect.target := Mux1H(Seq(
+        fenceiFlush        -> (exeMemReg.pc + 4.U),
+        mretRedirect       -> csrFile.io.mepc_out,
+        exceptionRedirect  -> csrFile.io.mtvec,
+        redirectNeeded     -> actualTarget
+    ))
     io.estop := estopCommitted
     io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
         tandem := trace
@@ -751,5 +791,9 @@ class BreezeBackend(
         debug.csrMcause      := csrFile.io.debug.get.mcause
         debug.csrMepc        := csrFile.io.debug.get.mepc
         debug.memWbException := memWbReg.illegal_inst
+        debug.memWbTrapValid := wbTrap
+        debug.memWbIsEcall := memWbReg.is_ecall
+        debug.memWbIsMret := memWbReg.is_mret
+        debug.csrIllegal := exeMemReg.csr_illegal
     }
 }

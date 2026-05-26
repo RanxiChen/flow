@@ -20,6 +20,8 @@ class EXE_Ctrl extends Bundle {
     val csr_addr = Output(UInt(12.W))
     val csr_cmd = Output(UInt(CSR_CMD.width.W))
     val fencei = Output(Bool())
+    val is_ecall = Output(Bool())
+    val is_mret  = Output(Bool())
 }
 
 class RV64IZicsrDecoder extends Module {
@@ -45,6 +47,8 @@ class RV64IZicsrDecoder extends Module {
     io.I_ctrl.csr_addr := 0.U
     io.I_ctrl.csr_cmd := CSR_CMD.NOP.U
     io.I_ctrl.fencei := false.B
+    io.I_ctrl.is_ecall := false.B
+    io.I_ctrl.is_mret := false.B
     io.illegal_inst := true.B
     //manual decode
     val opcode = io.inst(6,0)
@@ -333,6 +337,25 @@ class RV64IZicsrDecoder extends Module {
                         io.inst(11, 7) === 0.U
                     ) {
                         io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.illegal_inst := false.B
+                    }.elsewhen(
+                        io.inst(31, 20) === SIM_SYSTEM.ECALL_IMM12 &&
+                        io.inst(19, 15) === 0.U &&
+                        io.inst(11, 7) === 0.U
+                    ) {
+                        // ECALL: environment call → trap to M-mode
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.I_ctrl.is_ecall := true.B
+                        io.illegal_inst := false.B
+                    }.elsewhen(
+                        io.inst(31, 20) === SIM_SYSTEM.MRET_IMM12 &&
+                        io.inst(19, 15) === 0.U &&
+                        io.inst(11, 7) === 0.U
+                    ) {
+                        // MRET: return from M-mode trap
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.I_ctrl.wb_en := false.B
+                        io.I_ctrl.is_mret := true.B
                         io.illegal_inst := false.B
                     }
                 }
