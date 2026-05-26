@@ -296,6 +296,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     printf(cf"[INFO] mtvec = 0x${io.commit_wdata}%x\n")
                 }
             }
+            is(CSRMAP.mepc.U){
+                mepc := io.commit_wdata
+                if(dumplog){
+                    printf(cf"[INFO] mepc = 0x${io.commit_wdata}%x\n")
+                }
+            }
             is(CSRMAP.mcause.U){
                 mcause := io.commit_wdata
                 if(dumplog){
