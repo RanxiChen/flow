@@ -214,6 +214,7 @@ class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
     val is_interrupt = Bool()
     val cause        = UInt(XLEN.W)
     val pc           = UInt(XLEN.W)
+    val tval         = UInt(XLEN.W)
 }
 
 class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {

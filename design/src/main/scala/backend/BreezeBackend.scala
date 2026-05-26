@@ -65,6 +65,7 @@ class BreezeBackend(
     csrFile.io.trap.is_interrupt := false.B
     csrFile.io.trap.cause := 0.U
     csrFile.io.trap.pc := 0.U
+    csrFile.io.trap.tval := 0.U
     csrFile.io.mret_commit := false.B
 
     val wbData = Wire(UInt(cfg.VLEN.W))
@@ -556,10 +557,22 @@ class BreezeBackend(
         true.B                         -> 0.U(cfg.VLEN.W)
     ))
 
+    // Compute trap value at WB stage: faulting address or zero
+    val mtvalVal = Wire(UInt(cfg.VLEN.W))
+    mtvalVal := Mux1H(Seq(
+        memWbReg.store_addr_misaligned -> memWbReg.alu_data,
+        memWbReg.load_addr_misaligned  -> memWbReg.alu_data,
+        memWbReg.is_ecall              -> 0.U(cfg.VLEN.W),
+        memWbReg.csr_illegal           -> 0.U(cfg.VLEN.W),
+        memWbReg.illegal_inst          -> 0.U(cfg.VLEN.W),
+        true.B                         -> 0.U(cfg.VLEN.W)
+    ))
+
     csrFile.io.trap.valid        := wbTrap
     csrFile.io.trap.is_interrupt := false.B
     csrFile.io.trap.cause        := mcauseVal
     csrFile.io.trap.pc           := memWbReg.pc
+    csrFile.io.trap.tval         := mtvalVal
     csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
 
     fenceiFlush := exeMemReg.valid && exeMemReg.fencei
