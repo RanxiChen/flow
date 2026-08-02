@@ -15,6 +15,7 @@
   ],
   "machineTimer": {
     "region": "machine_timer",
+    "mtimeFrequencyHz": 1000000,
     "mtimecmpOffset": "0x00004000",
     "mtimeOffset": "0x0000bff8",
     "interrupt": "mtip"

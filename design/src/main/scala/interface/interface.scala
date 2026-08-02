@@ -251,6 +251,7 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
 class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enableTandem: Boolean = false) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
+    val nextPc = UInt(VLEN.W)
     val inst = UInt(32.W)
     val instruction_access_fault = Bool()
     val illegal_inst = Bool()
@@ -277,6 +278,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
 class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) extends Bundle {
     val valid = Bool()
     val pc = UInt(VLEN.W)
+    val nextPc = UInt(VLEN.W)
     val inst = UInt(32.W)
     val instruction_access_fault = Bool()
     val illegal_inst = Bool()

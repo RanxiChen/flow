@@ -156,10 +156,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val commit_wdata = Input(UInt(XLEN.W))
         val commit_write_en = Input(Bool())
         val retire_valid = Input(Bool())
+        val machineTimerInterrupt = Input(Bool())
+        val machineExternalInterrupt = Input(Bool())
         val trap = Input(new CSRTrapInfo(XLEN))
         val mret_commit = Input(Bool())
         val mtvec = Output(UInt(XLEN.W))
         val mepc_out = Output(UInt(XLEN.W))
+        val interruptPending = Output(Bool())
+        val interruptCause = Output(UInt(XLEN.W))
         val csr_illegal = Output(Bool())
         val debug = if (enabledebug) Some(new CSRFDebugIO(XLEN)) else None
     })
@@ -181,6 +185,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
     val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
     val mstatus_MPP  = RegInit("b11".U(2.W)) // bits 12-11: machine previous privilege (always M=3)
+    val mie_MTIE = RegInit(false.B)          // bit 7:  machine timer interrupt enable
+    val mie_MEIE = RegInit(false.B)          // bit 11: machine external interrupt enable
     val mstatus_read = Wire(UInt(XLEN.W))
     mstatus_read := Cat(
         0.U(61.W),       // [63:13] read-only zero
@@ -190,6 +196,22 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         0.U(3.W),        // [6:4]
         mstatus_MIE,      // [3]
         0.U(3.W)         // [2:0]
+    )
+    val mie_read = Wire(UInt(XLEN.W))
+    val mip_read = Wire(UInt(XLEN.W))
+    mie_read := Cat(
+        0.U((XLEN - 12).W),
+        mie_MEIE,
+        0.U(3.W),
+        mie_MTIE,
+        0.U(7.W)
+    )
+    mip_read := Cat(
+        0.U((XLEN - 12).W),
+        io.machineExternalInterrupt,
+        0.U(3.W),
+        io.machineTimerInterrupt,
+        0.U(7.W)
     )
     val csrFile = Seq(
         BitPat(CSRMAP.printer.U) -> printer,
@@ -204,7 +226,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         BitPat(CSRMAP.mcause.U)   -> mcause,
         BitPat(CSRMAP.mtval.U)    -> mtval,
         BitPat(CSRMAP.mscratch.U) -> mscratch,
-        BitPat(CSRMAP.mstatus.U)  -> mstatus_read
+        BitPat(CSRMAP.mstatus.U)  -> mstatus_read,
+        BitPat(CSRMAP.mie.U)      -> mie_read,
+        BitPat(CSRMAP.mip.U)      -> mip_read
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -295,13 +319,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.mtvec.U){
-                mtvec := io.commit_wdata
+                // This core supports mtvec Direct mode only. MODE is WARL=0.
+                mtvec := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
                 if(dumplog){
                     printf(cf"[INFO] mtvec = 0x${io.commit_wdata}%x\n")
                 }
             }
             is(CSRMAP.mepc.U){
-                mepc := io.commit_wdata
+                mepc := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
                 if(dumplog){
                     printf(cf"[INFO] mepc = 0x${io.commit_wdata}%x\n")
                 }
@@ -332,6 +357,13 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     printf(cf"[INFO] mstatus write: MIE=${io.commit_wdata(3)} MPIE=${io.commit_wdata(7)} MPP=${io.commit_wdata(12,11)}\n")
                 }
             }
+            is(CSRMAP.mie.U){
+                mie_MTIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.TIMER)
+                mie_MEIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.EXTERNAL)
+            }
+            is(CSRMAP.mip.U){
+                // MTIP and MEIP are read-only reflections of platform inputs.
+            }
         }
     }
     // 更新寄存器的值
@@ -340,9 +372,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }
     // Trap entry: record pc/cause, update mstatus
     when(io.trap.valid){
-        mepc := io.trap.pc
-        mcause := io.trap.cause
-        mtval := io.trap.tval
+        mepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
+        mcause := io.trap.cause |
+            (io.trap.is_interrupt.asUInt << (XLEN - 1))
+        mtval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
         mstatus_MPIE := mstatus_MIE
         mstatus_MIE  := false.B
         mstatus_MPP  := "b11".U
@@ -358,6 +391,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.csr_write_en := write_csr
     io.mtvec := mtvec
     io.mepc_out := mepc
+    val externalInterruptPending = mstatus_MIE && mie_MEIE && io.machineExternalInterrupt
+    val timerInterruptPending = mstatus_MIE && mie_MTIE && io.machineTimerInterrupt
+    io.interruptPending := externalInterruptPending || timerInterruptPending
+    io.interruptCause := Mux(
+        externalInterruptPending,
+        MACHINE_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
+        MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W)
+    )
     io.debug.foreach { debug =>
         debug.mcause := mcause
         debug.mepc  := mepc

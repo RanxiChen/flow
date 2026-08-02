@@ -15,7 +15,10 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.trap.is_interrupt.poke(false.B)
             dut.io.trap.cause.poke(0.U)
             dut.io.trap.pc.poke(0.U)
+            dut.io.trap.tval.poke(0.U)
             dut.io.mret_commit.poke(false.B)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.machineExternalInterrupt.poke(false.B)
             dut.io.commit_valid.poke(false.B)
             dut.io.commit_write_en.poke(false.B)
             dut.io.commit_addr.poke(0.U)
@@ -55,14 +58,14 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.commit_valid.poke(false.B)
             dut.io.commit_write_en.poke(false.B)
 
-            // Step 4: Read back mtvec → should be 0x345
+            // Step 4: Direct-only mtvec clears MODE bits → reads back 0x344
             dut.io.csr_addr.poke(CSRMAP.mtvec.U)
             dut.io.csr_cmd.poke(CSR_CMD.RS.U)
             dut.io.csr_reg_data.poke(0.U)
             dut.io.rs1_id.poke(0.U)
             dut.io.rd_id.poke(1.U)
             dut.clock.step(1)
-            dut.io.csr_old_data.expect(BigInt("345", 16).U)
+            dut.io.csr_old_data.expect(BigInt("344", 16).U)
         }
     }
 
@@ -78,6 +81,14 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.commit_wdata.poke(0.U)
             dut.io.commit_write_en.poke(false.B)
             dut.io.retire_valid.poke(false.B)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.machineExternalInterrupt.poke(false.B)
+            dut.io.trap.valid.poke(false.B)
+            dut.io.trap.is_interrupt.poke(false.B)
+            dut.io.trap.cause.poke(0.U)
+            dut.io.trap.pc.poke(0.U)
+            dut.io.trap.tval.poke(0.U)
+            dut.io.mret_commit.poke(false.B)
 
             dut.reset.poke(true.B)
             dut.clock.step(1)
@@ -164,6 +175,8 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private def initCore(dut: BreezeCore): Unit = {
         val fase = dut.io.fase.get
         dut.io.resetAddr.poke(0.U)
+        dut.io.machineTimerInterrupt.poke(false.B)
+        dut.io.externalInterrupts.poke(0.U)
         dut.io.nextLevelRsp.vld.poke(false.B)
         dut.io.nextLevelRsp.data.poke(0.U)
         dut.io.dmem.rsp.valid.poke(false.B)
@@ -779,6 +792,8 @@ class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim
     private def initCore(dut: BreezeCore): Unit = {
         val fase = dut.io.fase.get
         dut.io.resetAddr.poke(0.U)
+        dut.io.machineTimerInterrupt.poke(false.B)
+        dut.io.externalInterrupts.poke(0.U)
         dut.io.nextLevelRsp.vld.poke(false.B)
         dut.io.nextLevelRsp.data.poke(0.U)
         dut.io.dmem.rsp.valid.poke(false.B)
@@ -946,6 +961,8 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Chi
             var cycle = 0
 
             dut.io.resetAddr.poke(0.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1131,6 +1148,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var cycle = 0
 
             dut.io.resetAddr.poke(0.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1309,6 +1328,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var cycle = 0
 
             dut.io.resetAddr.poke(0.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1457,6 +1478,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1550,6 +1573,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1638,6 +1663,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1725,6 +1752,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1834,6 +1863,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B)
@@ -1957,6 +1988,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
@@ -2013,6 +2046,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
@@ -2069,6 +2104,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
@@ -2125,6 +2162,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var prevIcacheReq = false
 
             dut.io.resetAddr.poke(0x800L.U)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U); dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B); dut.clock.step(1)
