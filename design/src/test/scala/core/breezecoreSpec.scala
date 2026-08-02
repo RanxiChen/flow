@@ -97,10 +97,29 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.commit_valid.poke(false.B)
             dut.io.commit_write_en.poke(false.B)
 
-            // Step 4: Direct-only mtvec clears MODE bits → reads back 0x344
+            // Step 4: MODE=1 is supported and preserved.
             dut.io.csr_addr.poke(CSRMAP.mtvec.U)
             dut.io.csr_cmd.poke(CSR_CMD.RS.U)
             dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.clock.step(1)
+            dut.io.csr_old_data.expect(BigInt("345", 16).U)
+
+            // Reserved MODE=2 is WARL-coerced to Direct mode.
+            dut.io.csr_cmd.poke(CSR_CMD.RW.U)
+            dut.io.csr_reg_data.poke(BigInt("346", 16).U)
+            dut.io.rs1_id.poke(5.U)
+            dut.io.rd_id.poke(0.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mtvec.U)
+            dut.io.commit_wdata.poke(BigInt("346", 16).U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
             dut.io.rs1_id.poke(0.U)
             dut.io.rd_id.poke(1.U)
             dut.clock.step(1)
@@ -139,6 +158,58 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.retire_valid.poke(false.B)
 
             dut.io.csr_old_data.expect(3.U)
+        }
+    }
+
+    "CSRFile should expose writable mcycle and minstret counters" in {
+        simulate(new CSRFile(64)) { dut =>
+            dut.io.csr_addr.poke(CSRMAP.mcycle.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_addr.poke(0.U)
+            dut.io.commit_wdata.poke(0.U)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.retire_valid.poke(false.B)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.machineExternalInterrupt.poke(false.B)
+            dut.io.trap.valid.poke(false.B)
+            dut.io.trap.is_interrupt.poke(false.B)
+            dut.io.trap.cause.poke(0.U)
+            dut.io.trap.pc.poke(0.U)
+            dut.io.trap.tval.poke(0.U)
+            dut.io.mret_commit.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            val firstCycle = dut.io.csr_old_data.peek().litValue
+            dut.clock.step(3)
+            dut.io.csr_old_data.expect((firstCycle + 3).U)
+
+            dut.io.csr_addr.poke(CSRMAP.minstret.U)
+            dut.io.retire_valid.poke(true.B)
+            dut.clock.step(4)
+            dut.io.retire_valid.poke(false.B)
+            dut.io.csr_old_data.expect(4.U)
+
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.minstret.U)
+            dut.io.commit_wdata.poke(100.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.csr_old_data.expect(100.U)
+
+            dut.io.csr_addr.poke(CSRMAP.cycle.U)
+            dut.clock.step(1)
+            assert(dut.io.csr_old_data.peek().litValue > firstCycle)
+            dut.io.csr_addr.poke(CSRMAP.instret.U)
+            dut.io.csr_old_data.expect(100.U)
         }
     }
 }

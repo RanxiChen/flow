@@ -66,7 +66,11 @@ class BreezeBackend(
     csrFile.io.commit_addr := 0.U
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
-    csrFile.io.retire_valid := memWbReg.valid
+    csrFile.io.retire_valid := memWbReg.valid &&
+        !memWbReg.instruction_access_fault &&
+        !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
+        !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
+        !memWbReg.load_access_fault && !memWbReg.store_access_fault
     csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
     csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
     csrFile.io.trap.valid := false.B
@@ -307,6 +311,15 @@ class BreezeBackend(
     val pipelineEmpty = Wire(Bool())
     val architecturalNextPc = RegInit(0.U(cfg.VLEN.W))
     val exeNextPc = Wire(UInt(cfg.VLEN.W))
+    val mtvecBase = Wire(UInt(cfg.VLEN.W))
+    val interruptTrapTarget = Wire(UInt(cfg.VLEN.W))
+
+    mtvecBase := Cat(csrFile.io.mtvec(cfg.VLEN - 1, 2), 0.U(2.W))
+    interruptTrapTarget := Mux(
+        csrFile.io.mtvec(1, 0) === 1.U,
+        mtvecBase + (csrFile.io.interruptCause << 2),
+        mtvecBase
+    )
 
     actualTaken := Mux(
         idExeReg.ctrl.bru_inst,
@@ -905,8 +918,8 @@ class BreezeBackend(
     io.frontendRedirect.target := Mux1H(Seq(
         fenceiFlush        -> (exeMemReg.pc + 4.U),
         mretRedirect       -> csrFile.io.mepc_out,
-        interruptRedirect  -> csrFile.io.mtvec,
-        exceptionRedirect  -> csrFile.io.mtvec,
+        interruptRedirect  -> interruptTrapTarget,
+        exceptionRedirect  -> mtvecBase,
         redirectNeeded     -> actualTarget
     ))
     io.estop := estopCommitted

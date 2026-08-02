@@ -43,6 +43,25 @@ timebase  1 MHz
 
 Its level-sensitive `mtip` output is connected directly to the CPU.
 
+## Reusable MCU application runner
+
+`run_mcu.py` builds the common startup/trap/UART runtime with either a supplied
+`main.c` or one of the directed interrupt applications, runs a finite LiteX
+simulation, parses the firmware's `mcycle`/`minstret` deltas, and calculates
+IPC in Python:
+
+```bash
+python sim/litex/run_mcu.py --main software/breeze-mcu/apps/main.c --elaborate
+python sim/litex/run_mcu.py --smoke timer --mtvec-mode direct
+python sim/litex/run_mcu.py --smoke uart --mtvec-mode direct
+python sim/litex/run_mcu.py --smoke timer --mtvec-mode vectored
+```
+
+Interrupt checks require the raw interrupt source to assert, the expected
+Direct/Vectored table slot to retire, the source to be deasserted before
+`mret`, and the post-return firmware PASS signature to retire. A watchdog makes
+all modes finite.
+
 The simulation uses LiteX's standard `CRG`, including its power-on reset pulse.
 This reset is required for the Chisel core to load the ROM reset vector before
 the first instruction fetch.
