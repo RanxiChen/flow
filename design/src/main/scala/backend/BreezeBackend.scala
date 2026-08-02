@@ -833,8 +833,8 @@ class BreezeBackend(
                 )
             )
             wbTrace.memRData := 0.U
-            wbTrace.memWData := Mux(wbTrace.memIsWrite, memReqWData, 0.U)
-            wbTrace.memWMask := Mux(wbTrace.memIsWrite, memReqWMask, 0.U)
+            wbTrace.memWData := Mux(exeTrace.memIsWrite, memReqWData, 0.U)
+            wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
         }
     }.elsewhen(memRspFire) {
         memWbReg.valid := exeMemReg.valid
@@ -874,8 +874,8 @@ class BreezeBackend(
                 )
             )
             wbTrace.memRData := Mux(exeMemIsLoad && !io.dmem.rsp.error, memRspData, 0.U)
-            wbTrace.memWData := Mux(wbTrace.memIsWrite, memReqWData, 0.U)
-            wbTrace.memWMask := Mux(wbTrace.memIsWrite, memReqWMask, 0.U)
+            wbTrace.memWData := Mux(exeTrace.memIsWrite, memReqWData, 0.U)
+            wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
         }
     }.otherwise {
         // A memory instruction occupies EXE/MEM until its response arrives.

@@ -824,8 +824,12 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 
     "BreezeCore should execute an adjacent load-to-store dependency exactly once" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+        simulate(new BreezeCore(
+            BreezeCoreConfig(useFASE = true, enableTandem = true),
+            enabledebug = true
+        )) { dut =>
             val debug = dut.io.debug.get
+            val tandem = dut.io.tandem.get
             val addi = encodeAddi(rd = 1, rs1 = 0, imm = 0x20)
             val load = encodeLoad(rd = 2, rs1 = 1, imm = 0, funct3 = 3)
             val store = encodeStore(rs1 = 1, rs2 = 2, imm = 8, funct3 = 3)
@@ -834,12 +838,23 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
             val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
             val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
             val retired = mutable.ArrayBuffer.empty[BigInt]
+            var storeTrace: Option[(BigInt, BigInt, BigInt)] = None
 
             initCore(dut)
 
             for (_ <- 0 until 64) {
                 if (debug.memWbValid.peek().litToBoolean) {
                     retired += debug.memWbInst.peek().litValue
+                }
+                if (tandem.valid.peek().litToBoolean &&
+                    tandem.inst.peek().litValue == store) {
+                    tandem.memEn.expect(true.B)
+                    tandem.memIsWrite.expect(true.B)
+                    storeTrace = Some((
+                        tandem.memAddr.peek().litValue,
+                        tandem.memWData.peek().litValue,
+                        tandem.memWMask.peek().litValue
+                    ))
                 }
                 stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
                     if (!req.isWrite) {
@@ -857,6 +872,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
             observedReqs.map(req => (req.addr, req.isWrite)) mustBe
                 Seq((BigInt(0x20), false), (BigInt(0x28), true))
             retired mustBe Seq(addi, load, store)
+            storeTrace mustBe Some((BigInt(0x28), loadData, BigInt(0xff)))
         }
     }
 
