@@ -463,6 +463,22 @@ class BreezeBackend(
     exeRs1Data := idExeReg.rs1_data
     exeRs2Data := idExeReg.rs2_data
 
+    // Forward the older MEM/WB result first. A matching EXE/MEM producer below
+    // must win when two in-flight instructions write the same register.
+    when(
+        memWbReg.valid &&
+        memWbReg.wb_en &&
+        (memWbReg.rd_addr =/= 0.U) &&
+        (memWbReg.wb_sel =/= SEL_WB.CSR.U)
+    ) {
+        when(idExeReg.rs1_addr === memWbReg.rd_addr) {
+            exeRs1Data := wbData
+        }
+        when(idExeReg.rs2_addr === memWbReg.rd_addr) {
+            exeRs2Data := wbData
+        }
+    }
+
     when(
         exeMemReg.valid &&
         exeMemReg.wb_en &&
@@ -475,20 +491,6 @@ class BreezeBackend(
         }
         when(idExeReg.rs2_addr === exeMemReg.rd_addr) {
             exeRs2Data := exeMemReg.data
-        }
-    }
-
-    when(
-        memWbReg.valid &&
-        memWbReg.wb_en &&
-        (memWbReg.rd_addr =/= 0.U) &&
-        (memWbReg.wb_sel =/= SEL_WB.CSR.U)
-    ) {
-        when(idExeReg.rs1_addr === memWbReg.rd_addr) {
-            exeRs1Data := wbData
-        }
-        when(idExeReg.rs2_addr === memWbReg.rd_addr) {
-            exeRs2Data := wbData
         }
     }
 
@@ -683,6 +685,12 @@ class BreezeBackend(
             trace.memWData := 0.U
             trace.memWMask := 0.U
         }
+    }.elsewhen(memRspFire && loadUseHazard) {
+        // The completed load has been consumed by MEM/WB, but its dependent
+        // instruction must remain in ID/EXE for one more cycle. Insert a bubble
+        // here so the completed load cannot be issued again next cycle.
+        exeMemReg.valid := false.B
+        exeMemReg.trace.foreach(_.valid := false.B)
     }.elsewhen(!pipelineHold) {
         exeMemReg.valid := idExeReg.valid
         exeMemReg.pc := idExeReg.pc
@@ -697,7 +705,9 @@ class BreezeBackend(
         exeMemReg.estop := idExeReg.estop
         exeMemReg.fencei := idExeReg.ctrl.fencei
         exeMemReg.data := alu.io.alu_out
-        exeMemReg.rs2_data := idExeReg.rs2_data
+        // Stores need the forwarded rs2 value, especially for an adjacent
+        // load-to-store dependency.
+        exeMemReg.rs2_data := exeRs2Data
         exeMemReg.mem_cmd := idExeReg.ctrl.mem_cmd
         exeMemReg.rd_addr := idExeReg.rd_addr
         exeMemReg.rs1_addr := idExeReg.rs1_addr
