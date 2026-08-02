@@ -221,6 +221,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.dmem.rsp.valid.poke(false.B)
         dut.io.dmem.rsp.data.poke(0.U)
         dut.io.dmem.rsp.isWriteAck.poke(false.B)
+        dut.io.dmem.rsp.error.poke(false.B)
         fase.inst_valid.poke(false.B)
         fase.instruction.poke(0.U)
 
@@ -308,10 +309,12 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                 dmemRsp.valid.poke(true.B)
                 dmemRsp.data.poke(resp.data.U)
                 dmemRsp.isWriteAck.poke(resp.isWriteAck.B)
+                dmemRsp.error.poke(false.B)
             case _ =>
                 dmemRsp.valid.poke(false.B)
                 dmemRsp.data.poke(0.U)
                 dmemRsp.isWriteAck.poke(false.B)
+                dmemRsp.error.poke(false.B)
         }
 
         if (dmemReq.valid.peek().litToBoolean) {
@@ -332,6 +335,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dmemRsp.valid.poke(false.B)
         dmemRsp.data.poke(0.U)
         dmemRsp.isWriteAck.poke(false.B)
+        dmemRsp.error.poke(false.B)
 
         if (driveRespThisCycle) {
             pendingDmemResps.dequeue()
@@ -557,6 +561,15 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     encodeRType(rd = 5, rs1 = 4, rs2 = 1, funct3 = 0, funct7 = 0x20)
                 ),
                 expectedWb = Seq(10, 3, 7, 10, 0).map(BigInt(_))
+            ),
+            DependencyChainCase(
+                name = "newest-producer-wins",
+                instructions = Seq(
+                    encodeAddi(rd = 1, rs1 = 0, imm = 1),
+                    encodeAddi(rd = 1, rs1 = 0, imm = 2),
+                    encodeAddi(rd = 2, rs1 = 1, imm = 0)
+                ),
+                expectedWb = Seq(1, 2, 2).map(BigInt(_))
             )
         )
 
@@ -807,6 +820,43 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
             observedReqs.length mustBe 1
             retired mustBe Seq((addi, BigInt(0x20)), (load, loadData))
+        }
+    }
+
+    "BreezeCore should execute an adjacent load-to-store dependency exactly once" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val addi = encodeAddi(rd = 1, rs1 = 0, imm = 0x20)
+            val load = encodeLoad(rd = 2, rs1 = 1, imm = 0, funct3 = 3)
+            val store = encodeStore(rs1 = 1, rs2 = 2, imm = 8, funct3 = 3)
+            val loadData = BigInt("0123456789abcdef", 16)
+            val instQueue = mutable.Queue[BigInt](addi, load, store)
+            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+            val retired = mutable.ArrayBuffer.empty[BigInt]
+
+            initCore(dut)
+
+            for (_ <- 0 until 64) {
+                if (debug.memWbValid.peek().litToBoolean) {
+                    retired += debug.memWbInst.peek().litValue
+                }
+                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                    if (!req.isWrite) {
+                        req.addr mustBe BigInt(0x20)
+                        PendingDmemResp(req.addr, loadData, isWriteAck = false, cyclesLeft = 6)
+                    } else {
+                        req.addr mustBe BigInt(0x28)
+                        req.wdata mustBe loadData
+                        req.wmask mustBe BigInt(0xff)
+                        PendingDmemResp(req.addr, data = 0, isWriteAck = true, cyclesLeft = 6)
+                    }
+                }
+            }
+
+            observedReqs.map(req => (req.addr, req.isWrite)) mustBe
+                Seq((BigInt(0x20), false), (BigInt(0x28), true))
+            retired mustBe Seq(addi, load, store)
         }
     }
 
