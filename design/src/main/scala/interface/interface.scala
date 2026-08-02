@@ -56,7 +56,10 @@ class NativeRespIO(val data_width: Int) extends Bundle {
 class BackendMemReq(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
     val valid = Bool()
     val isWrite = Bool()
+    // Original byte address. Alignment belongs to the cache/bus layer so PMA
+    // checks and mtval keep the architecturally visible address.
     val addr = UInt(VLEN.W)
+    val sizeLog2 = UInt(3.W)
     val wdata = UInt(64.W)
     val wmask = UInt(8.W)
 }
@@ -65,6 +68,7 @@ class BackendMemResp extends Bundle {
     val valid = Bool()
     val data = UInt(64.W)
     val isWriteAck = Bool()
+    val error = Bool()
 }
 
 class BackendMemIO(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
@@ -143,6 +147,7 @@ class BreezeBTBUpdateReq(val vlen: Int) extends Bundle {
 class FrontendFetchBundle(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val instructionAccessFault = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
 }
 
@@ -226,6 +231,7 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val instruction_access_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
@@ -246,6 +252,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val instruction_access_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
@@ -271,12 +278,15 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val instruction_access_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
     val csr_illegal = Bool()
     val load_addr_misaligned = Bool()
     val store_addr_misaligned = Bool()
+    val load_access_fault = Bool()
+    val store_access_fault = Bool()
     val estop = Bool()
     val wb_en = Bool()
     val wb_sel = UInt(SEL_WB.width.W)
@@ -365,10 +375,14 @@ class BreezeCacheReqIO(val VLEN:Int =64) extends Bundle{
 class BreezeCacheRespIO(val VLEN:Int = 64,val FETCH_WIDTH:Int = 32) extends Bundle{
     val data = UInt(FETCH_WIDTH.W)
     val vaddr = UInt(VLEN.W)
+    val accessFault = Bool()
 }
 /**
   * L1 ICache当miss的时候，向下级cache发出请求的接口
   * 默认方向是以ICache的视角
+  *
+  * req是单周期事件脉冲，不提供ready。专用下级必须在req有效的周期
+  * 无条件锁存paddr。阻塞式ICache在收到响应以前不会发出第二个请求。
   *
   */
 class L1CacheMissReqIO(val PLEN:Int = 64) extends Bundle{
@@ -380,11 +394,39 @@ class L1CacheMissReqIO(val PLEN:Int = 64) extends Bundle{
   * L1 ICache miss的时候，下级向cache的返回接口
   * 每次下一级向l1 icache返回一个cache line位宽的数据
   * 默认是32byte = 32 * 8bit = 256 bits的cache line
+  * vld同样是单周期事件脉冲；ICache在等待响应期间无条件接收。
+  * error表示该cache line获取失败，此时data无效且不得写入cache。
   */
 
 class L1CacheMissRespIO(val ICACHE_LINE_WIDTH:Int = 256) extends Bundle {
     val data = Input(UInt(ICACHE_LINE_WIDTH.W))
     val vld = Input(Bool())
+    val error = Input(Bool())
+}
+
+/** Blocking DCache-to-memory request, viewed from the DCache side.
+  *
+  * `req` is a one-cycle event pulse. The dedicated lower-level bridge must be
+  * idle and capture it unconditionally. Only one transaction is outstanding.
+  * Scalar transactions place their payload and byte mask in the low 64 bits.
+  */
+class DCacheMemReqIO(
+    val PLEN: Int = 64,
+    val lineBytes: Int = 32
+) extends Bundle {
+    val req = Output(Bool())
+    val addr = Output(UInt(PLEN.W))
+    val isWrite = Output(Bool())
+    val isLine = Output(Bool())
+    val data = Output(UInt((lineBytes * 8).W))
+    val mask = Output(UInt(lineBytes.W))
+}
+
+/** Blocking DCache-to-memory response, viewed from the DCache side. */
+class DCacheMemRespIO(val lineBytes: Int = 32) extends Bundle {
+    val vld = Input(Bool())
+    val data = Input(UInt((lineBytes * 8).W))
+    val error = Input(Bool())
 }
 
 class FASECoreIO() extends Bundle {

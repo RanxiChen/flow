@@ -21,3 +21,12 @@ lazy val root = (project in file("."))
     ),
     addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
   )
+
+// Canonical BreezeCore developer entry points. `build` checks both production
+// and test Scala sources without running tests; `elaborate` emits the single
+// official SoC-facing RTL top through a dedicated App.
+addCommandAlias("build", ";Compile / compile;Test / compile")
+addCommandAlias(
+  "elaborate",
+  "Compile / runMain flow.top.GenerateBreezeCoreWishbone"
+)

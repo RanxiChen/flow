@@ -69,6 +69,23 @@ case class BackendConfig(
     val enableTandem: Boolean = false
 ){}
 
+/** Parameters that materially change DCache hardware cost or performance. */
+case class DefaultDCacheConfig(
+    VLEN: Int = 64,
+    PLEN: Int = 64,
+    entryNum: Int = 8,
+    lineBytes: Int = 32
+) {
+    require(entryNum > 0, "DCache must contain at least one entry")
+    require(lineBytes >= 8 && (lineBytes & (lineBytes - 1)) == 0,
+        "DCache line size must be a power of two and at least 8 bytes")
+    require(lineBytes % 8 == 0, "DCache line must contain complete 64-bit words")
+
+    val lineWidth: Int = lineBytes * 8
+    val lineOffsetWidth: Int = log2Ceil(lineBytes)
+    val tagWidth: Int = PLEN - lineOffsetWidth
+}
+
 case class BreezeCoreConfig(
     val VLEN: Int = 64,
     val PLEN: Int = 64,
@@ -76,7 +93,9 @@ case class BreezeCoreConfig(
     val enableTandem: Boolean = false,
     val useGShare: Boolean = false,
     val gshareGhrLength: Int = 8,
-    val gshareBtbEntryNum: Int = 16
+    val gshareBtbEntryNum: Int = 16,
+    val dcacheEntryNum: Int = 8,
+    val dcacheLineBytes: Int = 32
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -98,6 +117,12 @@ case class BreezeCoreConfig(
         branchPredKind = frontendCfg.branchPredCfg.kind,
         ghrLength = frontendCfg.branchPredCfg.ghrLength,
         enableTandem = enableTandem
+    )
+    val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
+        VLEN = VLEN,
+        PLEN = PLEN,
+        entryNum = dcacheEntryNum,
+        lineBytes = dcacheLineBytes
     )
 }
 

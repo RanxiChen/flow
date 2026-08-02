@@ -38,7 +38,10 @@ class Flow(CPU):
     gcc_triple           = CPU_GCC_TRIPLE_RISCV64
     linker_output_format = "elf64-littleriscv"
     nop                  = "nop"
-    io_regions           = {0x8000_0000: 0x8000_0000} # Origin, Length.
+    io_regions           = {
+        0x0200_0000: 0x0001_0000,  # Machine timer.
+        0x1200_0000: 0x0100_0000,  # LiteX MMIO window.
+    }
 
     # GCC Flags.
     @property
@@ -54,9 +57,11 @@ class Flow(CPU):
         self.variant      = variant
         self.human_name   = f"Flow-{variant.upper()}"
         self.reset        = Signal()
-        self.idbus        = idbus = wishbone.Interface(data_width=32, address_width=32)
-        self.periph_buses = [idbus] # Peripheral buses (Connected to main SoC's bus).
+        self.ibus         = ibus = wishbone.Interface(data_width=64, address_width=32)
+        self.dbus         = dbus = wishbone.Interface(data_width=64, address_width=32)
+        self.periph_buses = [ibus, dbus] # Independent instruction/data masters.
         self.memory_buses = []      # Memory buses (Connected directly to LiteDRAM).
+        self.dcache_fatal_error = Signal()
 
         
         self.cpu_params = dict(
@@ -64,19 +69,33 @@ class Flow(CPU):
             i_clock   = ClockSignal("sys"),
             i_reset = ResetSignal("sys") | self.reset,
 
-            # Wishbone Interface.
-            o_io_bus_adr = idbus.adr,
-            o_io_bus_dat_w = idbus.dat_w,
-            i_io_bus_dat_r = idbus.dat_r,
-            o_io_bus_sel = idbus.sel,
-            o_io_bus_cyc = idbus.cyc,
-            o_io_bus_stb = idbus.stb,
-            i_io_bus_ack = idbus.ack,
-            o_io_bus_we = idbus.we,
-            o_io_bus_cti = idbus.cti,
-            o_io_bus_bte = idbus.bte,
-            i_io_bus_err = idbus.err,
-            i_io_reset_addr = Constant(0, 64)
+            # Instruction Wishbone master.
+            o_io_iWishbone_adr   = ibus.adr,
+            o_io_iWishbone_dat_w = ibus.dat_w,
+            i_io_iWishbone_dat_r = ibus.dat_r,
+            o_io_iWishbone_sel   = ibus.sel,
+            o_io_iWishbone_cyc   = ibus.cyc,
+            o_io_iWishbone_stb   = ibus.stb,
+            i_io_iWishbone_ack   = ibus.ack,
+            o_io_iWishbone_we    = ibus.we,
+            o_io_iWishbone_cti   = ibus.cti,
+            o_io_iWishbone_bte   = ibus.bte,
+            i_io_iWishbone_err   = ibus.err,
+
+            # Data Wishbone master.
+            o_io_dWishbone_adr   = dbus.adr,
+            o_io_dWishbone_dat_w = dbus.dat_w,
+            i_io_dWishbone_dat_r = dbus.dat_r,
+            o_io_dWishbone_sel   = dbus.sel,
+            o_io_dWishbone_cyc   = dbus.cyc,
+            o_io_dWishbone_stb   = dbus.stb,
+            i_io_dWishbone_ack   = dbus.ack,
+            o_io_dWishbone_we    = dbus.we,
+            o_io_dWishbone_cti   = dbus.cti,
+            o_io_dWishbone_bte   = dbus.bte,
+            i_io_dWishbone_err   = dbus.err,
+            o_io_dcacheFatalError = self.dcache_fatal_error,
+            i_io_resetAddr = Constant(0, 64)
         )
 
         # Add Verilog sources.
@@ -85,7 +104,7 @@ class Flow(CPU):
 
     def set_reset_address(self, reset_address):
         self.reset_address = reset_address
-        self.cpu_params.update(i_io_reset_addr=Constant(reset_address, 64))
+        self.cpu_params.update(i_io_resetAddr=Constant(reset_address, 64))
 
     @staticmethod
     def add_sources(platform, variant):
@@ -96,41 +115,34 @@ class Flow(CPU):
         chisel_dir = os.path.join(flow_root_dir,"design")
         rtl_dir = os.path.join(flow_root_dir,"generated")
         print("Adding Flow core Verilog sources...")
-        rtl_list = os.path.join(rtl_dir,"filelist.f")
-        print(f"[FLOW] Reading RTL file list from :{rtl_list}")
-        if not os.path.exists(rtl_list):
-            #raise FileNotFoundError(f"Flow RTL file list not found: {rtl_list}")
-            print(f"[FLOW] Warning: Flow RTL file list not found: {rtl_list}")
+        rtl_file = os.path.join(rtl_dir, "BreezeCoreWishbone.sv")
+        if not os.path.exists(rtl_file):
+            print(f"[FLOW] RTL file not found: {rtl_file}")
             print(f"[FLOW] Generate files in {chisel_dir}")
             try:
-                subprocess.run(["sbt","runMain top.GenerateFlowTop"], cwd=chisel_dir, check=True)
+                subprocess.run(
+                    ["sbt", "runMain flow.top.GenerateBreezeCoreWishbone"],
+                    cwd=chisel_dir,
+                    check=True,
+                )
                 print(f"[FLOW] Flow RTL files generated successfully.")
             except Exception as e:
                 raise RuntimeError(f"Failed to generate Flow RTL files: {e}")
-            # cp generated files to rtl_dir
+
             if not os.path.exists(rtl_dir):
                 os.makedirs(rtl_dir)
-            print(f"[FLOW] Copying generated files to {rtl_dir}")
-            for filename in os.listdir(os.path.join(chisel_dir,"build")):
-                if filename.endswith(".v") or filename.endswith(".sv") or filename.endswith(".f"):
-                    src_file = os.path.join(chisel_dir,"build",filename)
-                    dst_file =  os.path.join(rtl_dir,filename)
-                    import shutil
-                    shutil.copy2(src_file,dst_file)
-                    print(f"[FLOW] Copied {src_file} to {dst_file}")
-            
-        
-        # Add all sources in filelist.f
-        with open(rtl_list, "r") as f:
-            for line in f:
-                filename = line.strip()
-                if not filename or filename.startswith("#") or filename.startswith("//"):
-                    continue
-                full_path = os.path.join(rtl_dir, filename)
-                platform.add_source(full_path)
-                print(f"[FLOW] Added source: {full_path}")
+            generated_file = os.path.join(chisel_dir, "build", "BreezeCoreWishbone.sv")
+            if not os.path.exists(generated_file):
+                raise RuntimeError(f"Generated Flow RTL not found: {generated_file}")
+
+            import shutil
+            shutil.copy2(generated_file, rtl_file)
+            print(f"[FLOW] Copied {generated_file} to {rtl_file}")
+
+        platform.add_source(rtl_file)
+        print(f"[FLOW] Added source: {rtl_file}")
 
 
     def do_finalize(self):
         assert hasattr(self, "reset_address")
-        self.specials += Instance("litex_flow_top", **self.cpu_params)
+        self.specials += Instance("BreezeCoreWishbone", **self.cpu_params)
