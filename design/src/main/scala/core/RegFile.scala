@@ -22,9 +22,18 @@ class RegFileIO(XLEN:Int) extends Bundle{
 class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val io = IO(new RegFileIO(XLEN))
     val content = RegInit(VecInit(Seq.fill(32)(0.U(XLEN.W))))
-    io.rs1_data := Mux(io.rs1_addr === 0.U, 0.U, content(io.rs1_addr))
-    io.rs2_data := Mux(io.rs2_addr === 0.U, 0.U, content(io.rs2_addr))
-    when(io.rd_en && (io.rd_addr =/= 0.U)){
+    val writeValid = io.rd_en && (io.rd_addr =/= 0.U)
+    val rs1WriteHit = writeValid && (io.rs1_addr === io.rd_addr)
+    val rs2WriteHit = writeValid && (io.rs2_addr === io.rd_addr)
+
+    // WB writes and decode reads happen in the same cycle. Make that ordering
+    // explicit so a consumer sees the value being committed, not the previous
+    // contents of the register file.
+    io.rs1_data := Mux(io.rs1_addr === 0.U, 0.U,
+        Mux(rs1WriteHit, io.rd_data, content(io.rs1_addr)))
+    io.rs2_data := Mux(io.rs2_addr === 0.U, 0.U,
+        Mux(rs2WriteHit, io.rd_data, content(io.rs2_addr)))
+    when(writeValid){
         content(io.rd_addr) := io.rd_data
     }        
     if(dumplog){

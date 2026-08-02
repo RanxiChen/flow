@@ -861,6 +861,13 @@ class BreezeBackend(
             wbTrace.memWData := Mux(wbTrace.memIsWrite, memReqWData, 0.U)
             wbTrace.memWMask := Mux(wbTrace.memIsWrite, memReqWMask, 0.U)
         }
+    }.otherwise {
+        // A memory instruction occupies EXE/MEM until its response arrives.
+        // Do not leave the previous MEM/WB entry valid during those wait
+        // cycles, otherwise one instruction appears to retire repeatedly.
+        memWbReg.valid := false.B
+        memWbReg.csr_write_en := false.B
+        memWbReg.trace.foreach(_.valid := false.B)
     }
 
     // A pending enabled interrupt stops issue while older instructions drain.
