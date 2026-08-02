@@ -453,7 +453,9 @@ class McuCompletionMonitor(Module):
             ),
 
             If(result_store,
-                If(retire.mem_wdata == fail_magic,
+                If(retire.mem_wdata == 0,
+                    Display(f"[{label}-ARM] firmware runtime started")
+                ).Elif(retire.mem_wdata == fail_magic,
                     Display(f"[{label}-FAIL] firmware reported failure"),
                     Finish()
                 ).Elif(retire.mem_wdata != pass_magic,
