@@ -75,23 +75,24 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
         simulate(new BreezeCache(cfg, enabledebug = true)){dut =>
             var cycle_count = 0
             var s2Cycle = 0
+            val lineBase = BigInt(0x10000000L)
             val refillLine = BigInt("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100", 16)
             // defaultly, chiseltest will auto reset the dut, so we can directly check the initial state
             dut.io.flush.poke(false.B)
             dut.io.drsp.ready.poke(true.B)
             dut.io.next_level_rsp.vld.poke(false.B)
             dut.io.next_level_rsp.data.poke(0.U)
-            sendCacheReq(dut, 0x0)
+            sendCacheReq(dut, lineBase)
             println(s"[INFO] cycle 0")
             println(s"[INFO] cycle ${cycle_count} , s0 should valid")
             assert(dut.io.debug.get.s0_valid.peek().litToBoolean, "debug.s0_valid should be asserted after sendCacheReq")
-            assert(dut.io.debug.get.s0_vaddr.peek().litValue == 0x0, "debug.s0_vaddr should match the requested address")
+            assert(dut.io.debug.get.s0_vaddr.peek().litValue == lineBase, "debug.s0_vaddr should match the requested address")
             dut.clock.step(1)
             cycle_count += 1
             println(s"[INFO] cycle 1")
             println(s"[INFO] cycle ${cycle_count} , s1 should valid")
             assert(dut.io.debug.get.s1_valid.peek().litToBoolean, "debug.s1_valid should be asserted one cycle after sendCacheReq")
-            assert(dut.io.debug.get.s1_vaddr.peek().litValue == 0x0, "debug.s1_vaddr should match the requested address")
+            assert(dut.io.debug.get.s1_vaddr.peek().litValue == lineBase, "debug.s1_vaddr should match the requested address")
             println(s"[INFO] s1_tag_hit = 0x${dut.io.debug.get.s1_tag_hit.peek().litValue.toString(16)}")
             println(s"[INFO] s1_hit = ${dut.io.debug.get.s1_hit.peek().litToBoolean}")
             println(s"[INFO] cycle ${cycle_count} , checking miss backpressure: s0 ready should be blocked")
@@ -104,7 +105,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.debug.get.s0_valid.expect(false.B)
             dut.io.debug.get.s1_valid.expect(false.B)
             dut.io.debug.get.s2_valid.expect(true.B)
-            dut.io.debug.get.s2_vaddr.expect(0x0.U)
+            dut.io.debug.get.s2_vaddr.expect(lineBase.U)
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , checking request pulse and wait state")
             dut.io.next_level_req.req.expect(true.B)
             dut.io.debug.get.s2_req_pulse_done.expect(false.B)
@@ -153,7 +154,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.debug.get.s2_req_pulse_done.expect(true.B)
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , send a new request 0x4 while s2_done is high")
             dut.io.dreq.valid.poke(true.B)
-            dut.io.dreq.bits.vaddr.poke(0x4.U)
+            dut.io.dreq.bits.vaddr.poke((lineBase + 4).U)
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , check 0x4 enters cache while miss result is returned")
             dut.io.debug.get.s0_valid.expect(true.B)
             dut.io.debug.get.s1_valid.expect(false.B)
@@ -166,7 +167,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             println(s"[INFO] ==================== enter post-refill hit pipeline check ====================")
             println(s"[INFO] cycle ${cycle_count} , send next request 0x8 and check hit pipeline state")
             dut.io.dreq.valid.poke(true.B)
-            dut.io.dreq.bits.vaddr.poke(0x8.U)
+            dut.io.dreq.bits.vaddr.poke((lineBase + 8).U)
             val s1Meta = dut.io.debug.get.s1_meta.peek().litValue
             val s1ValidVec = s1Meta & 0xf
             val s1Plru = (s1Meta >> 4) & 0x7
@@ -190,6 +191,67 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.next_level_rsp.data.poke(0.U)
 
             println("hello world")
+        }
+    }
+
+    "BreezeCache should refill the outstanding miss set when dreq changes under backpressure" in {
+        simulate(new BreezeCache(cfg, enabledebug = true)) { dut =>
+            val missedAddr = BigInt(0x10000320L)
+            val redirectedAddr = BigInt(0x100002c0L)
+            val refillLine = BigInt("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080000000000050913", 16)
+
+            dut.io.flush.poke(false.B)
+            dut.io.drsp.ready.poke(true.B)
+            dut.io.next_level_rsp.vld.poke(false.B)
+            dut.io.next_level_rsp.data.poke(0.U)
+            dut.io.next_level_rsp.error.poke(false.B)
+
+            // Launch a miss for 0x320.
+            dut.io.dreq.valid.poke(true.B)
+            dut.io.dreq.bits.vaddr.poke(missedAddr.U)
+            dut.io.dreq.ready.expect(true.B)
+            dut.clock.step()
+            dut.io.debug.get.s1_vaddr.expect(missedAddr.U)
+            dut.io.debug.get.s1_hit.expect(false.B)
+
+            // A redirect changes dreq.bits while the miss is blocking s0.  The
+            // changed address must not become the SRAM address for the refill.
+            dut.io.dreq.valid.poke(false.B)
+            dut.io.dreq.bits.vaddr.poke(redirectedAddr.U)
+            dut.clock.step()
+            dut.io.next_level_req.req.expect(true.B)
+            dut.io.next_level_req.paddr.expect(missedAddr.U)
+            dut.clock.step()
+            dut.io.debug.get.wait_rsp.expect(true.B)
+
+            dut.io.next_level_rsp.vld.poke(true.B)
+            dut.io.next_level_rsp.data.poke(refillLine.U)
+            dut.clock.step()
+            dut.io.next_level_rsp.vld.poke(false.B)
+
+            // Let the refill response retire and the blocking miss state clear.
+            dut.clock.step()
+            dut.io.debug.get.s2_done.expect(false.B)
+
+            // The returned line must first be present at the outstanding miss
+            // address, including its requested word.
+            dut.io.dreq.valid.poke(true.B)
+            dut.io.dreq.bits.vaddr.poke(missedAddr.U)
+            dut.io.dreq.ready.expect(true.B)
+            dut.clock.step()
+            dut.io.debug.get.s1_vaddr.expect(missedAddr.U)
+            dut.io.debug.get.s1_hit.expect(true.B)
+            dut.io.drsp.valid.expect(true.B)
+            dut.io.drsp.bits.data.expect("h00050913".U)
+
+            // 0x2c0 and 0x320 have the same tag but different set indexes.  A
+            // hit here would prove that the 0x320 line was written into the
+            // redirect target's set.
+            dut.io.dreq.bits.vaddr.poke(redirectedAddr.U)
+            dut.io.dreq.ready.expect(true.B)
+            dut.clock.step()
+            dut.io.debug.get.s1_vaddr.expect(redirectedAddr.U)
+            dut.io.debug.get.s1_hit.expect(false.B)
         }
     }
 

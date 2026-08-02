@@ -46,9 +46,10 @@ Its level-sensitive `mtip` output is connected directly to the CPU.
 ## Reusable MCU application runner
 
 `run_mcu.py` builds the common startup/trap/UART runtime with either a supplied
-`main.c` or one of the directed interrupt applications, runs a finite LiteX
-simulation, parses the firmware's `mcycle`/`minstret` deltas, and calculates
-IPC in Python:
+`main.c` or one of the directed interrupt applications and runs a finite LiteX
+simulation. The runner reads the completion-mailbox address from the firmware
+symbol table; the monitor terminates only after a complete 64-bit PASS/FAIL
+store retires:
 
 ```bash
 python sim/litex/run_mcu.py --main software/breeze-mcu/apps/main.c --elaborate

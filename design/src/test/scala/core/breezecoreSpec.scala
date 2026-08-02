@@ -282,6 +282,23 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         BigInt(0x23)
     }
 
+    private def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
+        val imm13 = imm & 0x1fff
+        val bit12 = (imm13 >> 12) & 0x1
+        val bits10To5 = (imm13 >> 5) & 0x3f
+        val bits4To1 = (imm13 >> 1) & 0xf
+        val bit11 = (imm13 >> 11) & 0x1
+
+        (BigInt(bit12) << 31) |
+        (BigInt(bits10To5) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt(bits4To1) << 8) |
+        (BigInt(bit11) << 7) |
+        BigInt(0x63)
+    }
+
     private def initCore(dut: BreezeCore): Unit = {
         val fase = dut.io.fase.get
         dut.io.resetAddr.poke(0.U)
@@ -815,6 +832,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
             withClue(s"load case ${testCase.name}: ") {
                 simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
                     val debug = dut.io.debug.get
+                    val expectedAddress = BigInt(0x20 + testCase.offset)
                     val instQueue = mutable.Queue[BigInt](
                         encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
                         nopInst,
@@ -832,13 +850,13 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     for (_ <- 0 until 64 if !seenExpectedWb) {
                         if (dut.io.dmem.req.valid.peek().litToBoolean) {
                             dut.io.dmem.req.isWrite.expect(false.B)
-                            dut.io.dmem.req.addr.expect(0x20.U)
+                            dut.io.dmem.req.addr.expect(expectedAddress.U)
                         }
                         seenExpectedWb ||= debug.memWbValid.peek().litToBoolean &&
                             debug.wbData.peek().litValue == testCase.expectedWb
                         if (!seenExpectedWb) {
                             stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                                if (req.addr != BigInt(0x20) || req.isWrite) {
+                                if (req.addr != expectedAddress || req.isWrite) {
                                     throw new AssertionError(
                                         s"unexpected load req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
                                     )
@@ -849,7 +867,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     }
 
                     withClue(s"observed reqs in ${testCase.name}: ") {
-                        observedReqs.count(_.addr == BigInt(0x20)) mustBe 1
+                        observedReqs.count(_.addr == expectedAddress) mustBe 1
                     }
                     withClue(s"waiting for memWbValid in ${testCase.name}: ") {
                         seenExpectedWb mustBe true
@@ -947,6 +965,42 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
+    "BreezeCore should resolve an adjacent load-to-branch with the loaded value" in {
+        simulate(new BreezeCore(
+            BreezeCoreConfig(useFASE = true, enableTandem = true),
+            enabledebug = true
+        )) { dut =>
+            val debug = dut.io.debug.get
+            val setOldValue = encodeAddi(rd = 2, rs1 = 0, imm = 1)
+            val loadZero = encodeLoad(rd = 2, rs1 = 0, imm = 0, funct3 = 4)
+            val branchNotEqual = encodeBranch(rs1 = 2, rs2 = 0, imm = 8, funct3 = 1)
+            val instQueue = mutable.Queue[BigInt](setOldValue, loadZero, branchNotEqual)
+            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+            val retired = mutable.ArrayBuffer.empty[BigInt]
+            var redirectSeen = false
+
+            initCore(dut)
+
+            for (_ <- 0 until 64) {
+                redirectSeen ||= debug.redirectValid.peek().litToBoolean
+                if (debug.memWbValid.peek().litToBoolean) {
+                    retired += debug.memWbInst.peek().litValue
+                }
+                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                    req.isWrite mustBe false
+                    req.addr mustBe BigInt(0)
+                    PendingDmemResp(req.addr, data = 0, isWriteAck = false, cyclesLeft = 6)
+                }
+            }
+
+            observedReqs.map(req => (req.addr, req.isWrite)) mustBe
+                Seq((BigInt(0), false))
+            retired mustBe Seq(setOldValue, loadZero, branchNotEqual)
+            redirectSeen mustBe false
+        }
+    }
+
     "BreezeCore should execute supported RV64I store instructions through dmem" in {
         val storeCases = Seq(
             StoreCase("sb", 0, 1, 0x0ab, BigInt("abababababababab", 16), BigInt("02", 16)),
@@ -957,6 +1011,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
         storeCases.foreach { testCase =>
             simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
                 val debug = dut.io.debug.get
+                val expectedAddress = BigInt(0x20 + testCase.offset)
                 val instQueue = mutable.Queue[BigInt](
                     encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
                     encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value),
@@ -976,7 +1031,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     seenStoreAck ||= observedReqs.nonEmpty && !debug.memWaitingResp.peek().litToBoolean
                     if (!seenStoreAck) {
                         stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                            if (!req.isWrite || req.addr != BigInt(0x20)) {
+                            if (!req.isWrite || req.addr != expectedAddress) {
                                 throw new AssertionError(
                                     s"unexpected store req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
                                 )
@@ -988,7 +1043,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
                 observedReqs.length mustBe 1
                 observedReqs.head.isWrite mustBe true
-                observedReqs.head.addr mustBe BigInt(0x20)
+                observedReqs.head.addr mustBe expectedAddress
                 observedReqs.head.wdata mustBe testCase.expectedWdata
                 observedReqs.head.wmask mustBe testCase.expectedWmask
                 seenStoreAck mustBe true

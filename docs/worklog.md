@@ -324,3 +324,248 @@ address、预期 Wishbone 地址和 ROM 首字全部落到显式位宽的组合 
   10000-cycle memory timeout；阈值可通过 `--retire-stall-timeout` 调整。
 
 该增强完成后尚未重新运行远端仿真。
+
+## 2026-08-03
+
+### MCU 软件模板、中断 smoke 与 IPC 统计
+
+本阶段已经实现并推送以下代码：
+
+- CSRFile 增加真实 64-bit `mcycle`/`minstret`，以及 `cycle`/`instret` 只读别名；
+  CSR 地址匹配改为严格 12-bit decode，修复 `0xB00` 错误命中 `mstatus` 的别名问题。
+- `mtvec` 支持 Direct 和 Vectored 两种 WARL mode；中断在 Vectored 模式跳到
+  `BASE + 4 * cause`，同步异常仍跳到 BASE。
+- 新增 `software/breeze-mcu` 通用裸机模板：`_start`、64-byte trap vector table、
+  整数上下文保存/恢复、C trap handler、`mret`、用户 `main.c`、UART/Timer 小型库和
+  linker script。
+- runtime 在 `main()` 前后读取 `mcycle`/`minstret`，通过 UART 输出：
+
+  ```text
+  BREEZE_STATS cycles=0x... instructions=0x...
+  ```
+
+  Python runner 解析这两个值并计算、打印 `BREEZE_IPC`。
+- 新增 Timer IRQ 与 UART IRQ 两个定向 smoke，以及 LiteX 侧有限 completion monitor；
+  monitor 检查中断源、预期 trap PC、`mret`、固件结果签名和超时。
+- `sim/litex/run_mcu.py` 统一完成 firmware build、可选 RTL elaboration、非交互
+  LiteX/Verilator 运行、PASS marker 检查和 IPC 计算。
+
+对应已推送提交：
+
+```text
+8af6d56 feat: add MCU interrupt smoke and IPC runtime
+85b493b fix: use exact-width CSR decode patterns
+30c733c fix: run automated MCU simulation non-interactively
+df2c0af fix: recognize MCU runtime arm signature
+```
+
+### 已确认的远端验证
+
+验证机器仍为：
+
+```text
+local -> ssh clawbot@120.27.148.132
+      -> ssh -p 2222 chen@127.0.0.1
+repo  -> /home/chen/FUN/flow
+```
+
+- `sbt "testOnly flow.core.CSRFileSpec"`：3/3 通过，覆盖 `mtvec` mode 和 counter CSR。
+- `sbt elaborate`：通过，能够重新生成正式 split RTL。
+- Timer Direct firmware：能够无警告完成编译、链接、binary/disassembly/symbol 生成。
+- Timer Direct 仿真能够进入 MCU runtime，completion monitor 观察到
+  `[TIMER-ARM] firmware runtime started`。
+
+### 当前阻塞点及证据
+
+Timer Direct 仍未通过。当前精确输出为：
+
+```text
+[TIMER-ARM] firmware runtime started
+TI[TIMER-TIMEOUT] cycle=19999 source_seen=0 vector_seen=0 mret_seen=0
+```
+
+因此现在不能宣称 Timer、UART、Direct 或 Vectored smoke 已通过，也没有可用的
+最终 IPC 数据。`source_seen=0` 说明 Timer 固件在打印 `TIMER_IRQ: ARM` 的前两个
+字符后就已经跑偏，尚未执行到设置 `mtimecmp` 的位置；当前问题不是已经确认的
+Timer 外设故障。
+
+退休轨迹提供了更具体的证据：
+
+- `breeze_uart_puts` 在 `PC=0x10000310` 调用 `0x100002c0`；
+- 当前 ELF/ROM 在 `0x100002c0` 的指令应为 `0x120017b7`（UART putc 的 `lui`）；
+- 实际退休指令却为 `0x00050913`，它来自当前 ROM 的 `0x10000320`；
+- 后续不断进入另一函数序言并重复压栈，最终形成递归式错误执行；
+- `breeze-mcu.bin`、`sim_rom.init` 和 objdump 三者在 `0x2c0` 的内容已经核对一致，
+  都是正确的 UART putc 指令。因此错位发生在核心取指/返回关联路径，而不是固件
+  binary 或 LiteX ROM 文件生成阶段。
+
+### 当前未提交修改
+
+本地和远端开发树目前都有一处尚未提交的实验性修正：
+
+```text
+design/src/main/scala/frontend/BreezeFrontend.scala
+```
+
+该修改要求 ICache response 的 `vaddr` 与 frontend 当前 `s2_pcReg` 完全一致，尝试
+丢弃 redirect 后迟到的 wrong-path refill。当前精确版本已经成功 `sbt elaborate`，
+但 Timer Direct 复跑仍得到相同的 `TI` 超时，所以它不是完整修复，暂时不得提交。
+
+曾尝试同时让 ICache 在 `s2_done` 返回拍禁止接收新请求，但该临时修改使现有
+`BreezeFrontendSpec` 在早期 ready 时序断言处失败，已经在本地和远端全部撤销；
+`BreezeCache.scala` 当前没有未提交修改。
+
+### 新窗口继续位置
+
+1. 保留并审查 frontend 的 response-address guard，暂不提交。
+2. 给 ICache miss/refill 路径增加有限诊断：打印 miss line address、Wishbone 四个
+   beat、cache response `vaddr/data`，重点观察跳转到 `0x100002c0` 前后是否仍把
+   `0x10000320` 的 line data 标记成 `0x100002c0`。
+3. 根据诊断修正 ICache 内部 `s1/s2` 在 refill 完成拍与新请求同拍时的状态覆盖，
+   并新增 redirect + outstanding miss 的回归测试。
+4. 修通后依次执行 Timer Direct、UART Direct、Timer Vectored、UART Vectored；
+   Vectored 预期入口分别为 `BASE+28` 和 `BASE+44`。
+5. 四个中断 smoke 通过后再跑通用 `main.c`、检查 `BREEZE_STATS/BREEZE_IPC`，最后
+   执行 `sbt build` 和旧 memory smoke 回归，更新本 worklog 后提交并 push。
+
+### ICache refill 写入错误 set：根因、修复与复跑
+
+继续排查后已确认上述错位的根因位于 `BreezeCache` refill 写地址，而不是
+Wishbone 返回数据或 ROM 镜像：
+
+- miss 进入 `s2` 后，`s2_vaddr` 正确保存了 outstanding miss 地址；
+- refill 拍虽使用 `s2_refill_tag` 和返回数据，但 tag/data SRAM 的 `addr` 仍然使用
+  当前组合的 `s0_vaddr = io.dreq.bits.vaddr`；
+- miss 阻塞期间 frontend 可因 redirect 把 `dreq.bits.vaddr` 改成新目标，即使
+  `dreq.fire = false`，旧逻辑仍会把返回行写到新目标的 set。
+
+现场的 `0x10000320` 和 `0x100002c0` 位于同一个 2 KiB tag 范围、但 set index
+不同。因此旧逻辑把 0x320 行写进 0x2c0 的 set 后，随后的 0x2c0 取指会 tag
+命中并返回 0x320 的数据，这与之前观察到 `PC=0x100002c0` 退休
+`0x00050913` 完全一致。
+
+已实施修复：
+
+- refill 写拍显式将所有 tag/data SRAM 地址切换为 `s2_index`；
+- 保留 frontend response-address guard，继续丢弃 redirect 后与当前 `s2_pcReg`
+  不匹配的迟到 response；
+- 新增定向回归：先发起 `0x10000320` miss，再在 backpressure 期间把
+  `dreq.bits` 改成 `0x100002c0`，验证 refill 后 0x320 在正确 set 命中并返回
+  `0x00050913`，同时 0x2c0 仍为 miss；
+- 同时将旧 `BreezeCacheSpec` 的 `0x0` 取指地址更新为真实 boot ROM 地址，
+  因为 PMA 引入后 `0x0` 已应当返回 instruction access fault，不再是合法
+  cache miss 测试地址。
+
+远端 `/home/chen/FUN/flow` 已完成以下实际验证：
+
+- `sbt "testOnly flow.cache.BreezeCacheSpec"`：3/3 通过；
+- `sbt elaborate`：通过；
+- `sbt build`：通过；
+- Timer Direct：source cycle 1122，vector PC `0x10000080`，观察到 `mret` 和
+  `[TIMER-PASS]`；
+- UART Direct：source cycle 1725，vector PC `0x10000080`，观察到 `mret` 和
+  `[UART-PASS]`；
+- Timer Vectored：source cycle 1123，vector PC `0x1000009c = BASE+28`，观察到
+  `mret` 和 `[TIMER-PASS]`；
+- UART Vectored：source cycle 1726，vector PC `0x100000ac = BASE+44`，观察到
+  `mret` 和 `[UART-PASS]`。
+
+上述四次仿真均已通过硬件 completion monitor，原 `TI` 后取指跑偏和
+20,000-cycle timeout 已消失。但四次 `run_mcu.py` 最终仍返回非零：仿真 UART
+字符流在每段 `breeze_uart_puts` 边界多出 `NUL`，例如：
+
+```text
+BREEZE_STATS cycles=<NUL>0x<NUL>000000000000098b instructions=<NUL>0x<NUL>0000000000000242
+```
+
+因此 runner 的严格正则未匹配到 stats，还没有输出最终 `BREEZE_IPC`。这是已与
+ICache 错 set 问题分离的新边界：本次不通过过滤 `NUL` 来伪造 runner 成功，
+通用 `main.c`、最终 IPC 和旧 memory smoke 也尚未复跑。当前修复及测试仍未提交、
+未 push。
+
+### 仿真 completion 收口：删除 IPC 依赖
+
+按当前目标，仿真固件不再承担 IPC 测量。用户程序只提供 `int main(void)`；`main`
+返回后，runtime 使用标准 RISC-V `fence` 和 64 位 `sd` 向 SRAM 中链接器保留的
+`__breeze_result` 写入 PASS/FAIL magic，随后原地驻留。仿真侧 monitor 观察该次已经
+架构退休的写入并调用 `$finish`，不新增自定义停止指令、IPC MMIO 或核心端口。
+
+已完成以下修改：
+
+- runtime 删除 `mcycle/minstret` 起止读取、`BREEZE_STATS` 和固件 PASS/FAIL UART
+  打印；UART 只作为应用诊断输出，不再控制仿真结束；
+- completion store 前执行 `fence iorw, w`；反汇编确认结果最终以完整 `sd` 写往
+  `0x11000000 <__breeze_result>`；
+- `run_mcu.py` 从 firmware symbol table 读取 `__breeze_result`，通过
+  `--mcu-result-address` 传给仿真，不再在 monitor 中重复写死地址；
+- monitor 仅接受 `mem_wmask == 0xff` 的完整 64 位退休写入；
+- runner 删除 stats 正则、cycle/instruction 解析和 `BREEZE_IPC` 计算；
+- generic completion 与 interrupt proof 的生成逻辑分开，避免 generic 模式引用
+  已被 Migen 优化掉的中断证明信号。
+
+本地完成 `git diff --check`、两个 Python 入口的 `py_compile`，并使用
+`/usr/bin/riscv64-linux-gnu-` 完成通用固件编译、链接和反汇编检查。本地 LiteX
+环境缺少完整生成依赖，因此运行验证放在 `chen` 机器的临时副本
+`/tmp/flow-mcu-completion-20260803`，正式远端仓库未被修改。远端运行前使用：
+
+```bash
+source /home/chen/miniforge3/etc/profile.d/conda.sh
+source ~/FUN/env.sh
+```
+
+实际运行结果：
+
+- 通用 `main.c` Direct：`[GENERIC-ARM]`、应用 UART 文本、
+  `[GENERIC-PASS]`，runner 返回 0；
+- Timer Direct：source cycle 1083，vector `0x10000080`，观察到 `mret` 和 PASS；
+- UART Direct：source cycle 1677，vector `0x10000080`，观察到 `mret` 和 PASS；
+- Timer Vectored：source cycle 1084，vector `0x1000009c`，观察到 `mret` 和 PASS；
+- UART Vectored：source cycle 1678，vector `0x100000ac`，观察到 `mret` 和 PASS。
+
+五次 `run_mcu.py` 均返回 0，证明 simulation completion 已与 IPC/UART 文本解析
+解耦。UART 字符流问题仍然存在且没有被过滤：每次 `breeze_uart_puts()` 的字符串
+结束后都会多出一个 `NUL`，UART interrupt smoke 中还观察到 `UART_IRQ: PASS`
+重复输出。源码中该行只有一次调用，因此当前只把问题定位到
+CPU MMIO store/Wishbone-to-CSR/LiteX UART simulation path，尚未确认具体责任模块；
+不能据此宣称 UART console 已正确。
+
+### CORE-004：load-to-branch 错误 redirect 导致 UART NUL/重复输出
+
+对通用 `main.c` 开启退休内存轨迹后，确认 NUL 已经由核心架构提交，而不是
+LiteX UART 仿真模型额外生成。字符串末尾的关键退休序列为：
+
+```text
+LBU 从字符串终止地址读回 0
+紧邻 BNEZ 仍按上一个非零字符产生 taken redirect
+SW 向 UART_RXTX 写入 0，mask=0x0f
+```
+
+根因为 `BreezeBackend` 在 older load 令 `pipelineHold` 有效时虽然保持 ID/EXE，
+却仍允许该槽中的 dependent branch 参与 `redirectDirectionMismatch`/
+`redirectTargetMismatch`。因此 branch 在 load 数据进入 MEM/WB forwarding 之前就使用
+旧寄存器值重定向；GShare 更新也存在同样的 held-instruction 重复训练风险。
+
+修复内容：
+
+- branch redirect resolution 增加 `!pipelineHold` 条件；
+- GShare BTB/PHT/GHR training 同样只在 `!pipelineHold` 时进行；
+- 新增定向回归：先令 `x2=1`，再 load zero 到 `x2`，紧接
+  `bne x2,x0`，要求 branch 正常退休且全程不产生 redirect。
+
+远端临时树 `/tmp/flow-uart-fix-20260803` 的 A/B 结果：
+
+- 旧 backend：定向测试失败，只退休 addi/load，branch 被错误 redirect 冲掉；
+- 修复 backend：定向测试 1/1 通过；
+- `sbt elaborate`：通过；
+- 通用 `main.c`、Timer Direct、UART Direct、Timer Vectored、UART Vectored：
+  五次 runner 全部返回 0；
+- 五份原始日志 `NUL_COUNT=0`；Timer/UART 应用 PASS 文本每份只出现一次；
+- Direct vector 为 `0x10000080`，Vectored Timer/UART 分别为 `0x1000009c`、
+  `0x100000ac`，均观察到 source、vector、mret 和 completion PASS。
+
+首次全量 `BreezeCoreSpec` 中，supported-load/store 两组以 `0x21` 实际地址对
+`0x20` 期望失败；将 backend 换回修复前版本后也得到相同结果，排除了 CORE-004
+回归。进一步核对接口后确认测试混淆了两层地址：`BreezeCore.io.dmem.req.addr` 是完整
+的 `rs1 + imm` 有效地址，只有 DCache 下游的 Wishbone 请求才按 8-byte beat 对齐。
+将用例期望改为 `0x20 + offset` 后，远端隔离树完整 `BreezeCoreSpec` 12/12 通过，
+`sbt build` 通过。本次修复的独立记录见 `docs/bugs/CORE-004.md`。
