@@ -59,6 +59,10 @@ RESET_VECTOR = _platform_int(PLATFORM_CONFIG["resetVector"])
 IBUS_DATA_WIDTH = 64
 ICACHE_LINE_BYTES = 32
 
+SMOKE_MAIN_RAM_ADDRESS = 0x8000_0000
+SMOKE_MEMORY_PATTERN = 0x0123_4567_89ab_cdef
+SMOKE_INITIAL_SP = 0x1104_0000
+
 
 _IO = [
     ("sys_clk", 0, Pins(1)),
@@ -171,6 +175,147 @@ class FetchWishboneMonitor(Module):
         ]
 
 
+class RetireMonitor(Module):
+    """Finite retirement and smoke-memory checks for SoC bring-up."""
+
+    def __init__(self, retire, expected_first_pc, expected_first_inst,
+                 first_retire_timeout=200, stop_after_first_retire=False,
+                 check_smoke_memory=False, memory_timeout=10000):
+        if first_retire_timeout <= 0:
+            raise ValueError("First-retire timeout must be greater than zero")
+        if memory_timeout <= 0:
+            raise ValueError("Memory timeout must be greater than zero")
+
+        cycle = Signal(32)
+        memory_cycle = Signal(32)
+        first_retire_seen = Signal()
+        smoke_store_seen = Signal()
+        smoke_memory_complete = Signal()
+
+        expected_first_pc_signal = Signal(64)
+        expected_first_inst_signal = Signal(32)
+        expected_initial_sp_signal = Signal(64)
+        smoke_main_ram_address_signal = Signal(64)
+        smoke_memory_pattern_signal = Signal(64)
+
+        self.comb += [
+            expected_first_pc_signal.eq(expected_first_pc),
+            expected_first_inst_signal.eq(expected_first_inst),
+            expected_initial_sp_signal.eq(SMOKE_INITIAL_SP),
+            smoke_main_ram_address_signal.eq(SMOKE_MAIN_RAM_ADDRESS),
+            smoke_memory_pattern_signal.eq(SMOKE_MEMORY_PATTERN),
+        ]
+
+        first_retire_success = (
+            (retire.pc == expected_first_pc_signal) &
+            (retire.inst == expected_first_inst_signal)
+        )
+        if check_smoke_memory:
+            first_retire_success = (
+                first_retire_success &
+                retire.rd_write_en &
+                (retire.rd_addr == 2) &
+                (retire.rd_data == expected_initial_sp_signal)
+            )
+
+        target_memory_retire = (
+            retire.valid & retire.mem_en &
+            (retire.mem_addr == smoke_main_ram_address_signal)
+        )
+
+        first_success_statements = [
+            Display("[RETIRE-PASS] first instruction retired"),
+            first_retire_seen.eq(1),
+        ]
+        if stop_after_first_retire:
+            first_success_statements.append(Finish())
+
+        memory_success_statements = [
+            Display("[MEM-PASS] smoke SD/LD returned expected data"),
+            smoke_memory_complete.eq(1),
+            Finish(),
+        ]
+
+        self.sync += [
+            cycle.eq(cycle + 1),
+            If(first_retire_seen & ~smoke_memory_complete,
+                memory_cycle.eq(memory_cycle + 1)
+            ),
+
+            If(retire.valid & ~first_retire_seen,
+                Display(
+                    "[RETIRE-FIRST] cycle=%d pc=0x%x inst=0x%x "
+                    "rd_we=%d rd=x%d rd_data=0x%x",
+                    cycle, retire.pc, retire.inst, retire.rd_write_en,
+                    retire.rd_addr, retire.rd_data),
+                If(~first_retire_success,
+                    Display(
+                        "[RETIRE-FAIL] expected pc=0x%x inst=0x%x",
+                        expected_first_pc_signal, expected_first_inst_signal),
+                    Finish()
+                ).Else(
+                    *first_success_statements
+                )
+            ),
+
+            If(~first_retire_seen & ~retire.valid &
+               (cycle >= (first_retire_timeout - 1)),
+                Display(
+                    "[RETIRE-TIMEOUT] no instruction retired within cycle=%d",
+                    cycle),
+                Finish()
+            ),
+        ]
+
+        if check_smoke_memory:
+            self.sync += [
+                If(first_retire_seen & target_memory_retire &
+                   retire.mem_is_write,
+                    Display(
+                        "[MEM-STORE] cycle=%d pc=0x%x addr=0x%x "
+                        "data=0x%x mask=0x%x",
+                        cycle, retire.pc, retire.mem_addr,
+                        retire.mem_wdata, retire.mem_wmask),
+                    If(smoke_store_seen |
+                       (retire.mem_wdata != smoke_memory_pattern_signal) |
+                       (retire.mem_wmask != 0xff),
+                        Display("[MEM-FAIL] unexpected smoke SD retirement"),
+                        Finish()
+                    ).Else(
+                        smoke_store_seen.eq(1)
+                    )
+                ),
+
+                If(first_retire_seen & target_memory_retire &
+                   ~retire.mem_is_write,
+                    Display(
+                        "[MEM-LOAD] cycle=%d pc=0x%x addr=0x%x "
+                        "mem_data=0x%x rd_data=0x%x",
+                        cycle, retire.pc, retire.mem_addr,
+                        retire.mem_rdata, retire.rd_data),
+                    If(~smoke_store_seen |
+                       ~retire.rd_write_en |
+                       (retire.mem_rdata != smoke_memory_pattern_signal) |
+                       (retire.rd_data != smoke_memory_pattern_signal),
+                        Display("[MEM-FAIL] unexpected smoke LD retirement"),
+                        Finish()
+                    ).Else(
+                        *memory_success_statements
+                    )
+                ),
+
+                If(first_retire_seen & ~smoke_memory_complete &
+                   ~target_memory_retire &
+                   (memory_cycle >= (memory_timeout - 1)),
+                    Display(
+                        "[MEM-TIMEOUT] smoke SD/LD incomplete cycle=%d "
+                        "store_seen=%d",
+                        cycle, smoke_store_seen),
+                    Finish()
+                )
+            ]
+
+
 class BreezeSimSoC(SoCCore):
     """Minimal Breeze MCU SoC matching breeze_mcu_platform.json."""
 
@@ -194,7 +339,9 @@ class BreezeSimSoC(SoCCore):
 
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
                  debug_fetch=False, fetch_timeout=100,
-                 stop_after_first_fetch=False, **kwargs):
+                 stop_after_first_fetch=False, debug_retire=False,
+                 first_retire_timeout=200, stop_after_first_retire=False,
+                 check_smoke_memory=False, memory_timeout=10000, **kwargs):
         platform = Platform()
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core. A clock-only domain leaves the core's
@@ -237,6 +384,19 @@ class BreezeSimSoC(SoCCore):
                 stop_after_first_fetch=stop_after_first_fetch,
             )
 
+        if debug_retire:
+            if not rom_init:
+                raise ValueError("Retire debug requires a non-empty ROM image")
+            self.submodules.retire_monitor = RetireMonitor(
+                retire=self.cpu.retire,
+                expected_first_pc=RESET_VECTOR,
+                expected_first_inst=rom_init[0] & 0xffff_ffff,
+                first_retire_timeout=first_retire_timeout,
+                stop_after_first_retire=stop_after_first_retire,
+                check_smoke_memory=check_smoke_memory,
+                memory_timeout=memory_timeout,
+            )
+
         self.submodules.machine_timer = BreezeMachineTimer(
             sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQUENCY_HZ,
@@ -274,6 +434,16 @@ def main():
         help="Cycles before an incomplete first refill fails (default: 100).")
     parser.add_argument("--stop-after-first-fetch", action="store_true",
         help="Finish simulation after the first valid ICache line is returned.")
+    parser.add_argument("--debug-retire", action="store_true",
+        help="Validate and print the first architecturally retired instruction.")
+    parser.add_argument("--first-retire-timeout", type=int, default=200,
+        help="Cycles before a missing first retirement fails (default: 200).")
+    parser.add_argument("--stop-after-first-retire", action="store_true",
+        help="Finish simulation after validating the first retirement.")
+    parser.add_argument("--check-smoke-memory", action="store_true",
+        help="Validate the smoke firmware's main-RAM SD/LD and then finish.")
+    parser.add_argument("--memory-timeout", type=int, default=10000,
+        help="Cycles after first retirement before SD/LD check fails.")
     parser.add_argument("--output-dir", default="build/litex-sim",
         help="LiteX output directory (default: build/litex-sim).")
     args = parser.parse_args()
@@ -294,12 +464,27 @@ def main():
         parser.error("--debug-fetch requires a non-empty --rom-init image")
     if args.fetch_timeout <= 0:
         parser.error("--fetch-timeout must be greater than zero")
+    if args.stop_after_first_retire and not args.debug_retire:
+        parser.error("--stop-after-first-retire requires --debug-retire")
+    if args.check_smoke_memory and not args.debug_retire:
+        parser.error("--check-smoke-memory requires --debug-retire")
+    if args.debug_retire and not rom_init:
+        parser.error("--debug-retire requires a non-empty --rom-init image")
+    if args.first_retire_timeout <= 0:
+        parser.error("--first-retire-timeout must be greater than zero")
+    if args.memory_timeout <= 0:
+        parser.error("--memory-timeout must be greater than zero")
 
     soc = BreezeSimSoC(
         rom_init=rom_init,
         debug_fetch=args.debug_fetch,
         fetch_timeout=args.fetch_timeout,
         stop_after_first_fetch=args.stop_after_first_fetch,
+        debug_retire=args.debug_retire,
+        first_retire_timeout=args.first_retire_timeout,
+        stop_after_first_retire=args.stop_after_first_retire,
+        check_smoke_memory=args.check_smoke_memory,
+        memory_timeout=args.memory_timeout,
     )
     builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
     builder.build(

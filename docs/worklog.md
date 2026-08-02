@@ -288,3 +288,23 @@ Verilator 语法错误。由于当前 Migen Verilog backend 的 `Display` 只对
 `Signal` 做名称 lowering，对其他参数直接调用 Python `str()`，修正为把 byte
 address、预期 Wishbone 地址和 ROM 首字全部落到显式位宽的组合 `Signal` 后再
 比较和打印。该修正尚未重新生成 `sim.v` 验证。
+
+### 退休与 smoke 内存指令诊断器
+
+为验证 ICache refill 之后的执行路径，正式 `BreezeCoreWishbone` elaboration
+配置开启已有 `TracePayload` tandem trace，LiteX CPU wrapper 显式接出退休 PC、
+指令、寄存器写回和内存访问信息。该 trace 只观察架构退休状态，不参与控制。
+
+`sim/litex/breeze_sim.py` 新增 `RetireMonitor` 及两种有限检查：
+
+- `--debug-retire --stop-after-first-retire`：200 cycles 内必须退休第一条指令，
+  PC 必须等于 reset vector，指令必须等于 ROM image 的首个 32-bit word；
+- `--debug-retire --check-smoke-memory`：除首条检查外，还确认首条 `AUIPC` 写出
+  `x2 = 0x11040000`，再等待 main RAM `0x80000000` 上的 `SD/LD` 退休；
+- smoke `SD` 必须写入 `0x0123456789abcdef` 且 mask 为 `0xff`；随后 `LD` 的
+  trace memory data 和寄存器写回必须返回同一数值；
+- memory check 默认在首次退休后的 10000 cycles 超时，并在通过或失败时用
+  `$finish` 结束，避免无输出的无限仿真。
+
+该功能改变了生成顶层端口，因此远端验证前必须重新运行 `sbt elaborate`，再
+重新生成 LiteX `sim.v`。代码完成后尚未编译或运行。
