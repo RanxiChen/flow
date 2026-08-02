@@ -42,3 +42,7 @@ timebase  1 MHz
 ```
 
 Its level-sensitive `mtip` output is connected directly to the CPU.
+
+The simulation uses LiteX's standard `CRG`, including its power-on reset pulse.
+This reset is required for the Chisel core to load the ROM reset vector before
+the first instruction fetch.
