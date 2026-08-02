@@ -66,3 +66,36 @@ image, prints all four beats of the first 32-byte refill, and fails after 100
 cycles by default. Use `--fetch-timeout N` to change the watchdog. Omit
 `--stop-after-first-fetch` to let the smoke firmware continue to UART after a
 successful refill.
+
+## Retirement and smoke-memory diagnostics
+
+The canonical `BreezeCoreWishbone` RTL exposes the existing architectural
+`TracePayload` retirement interface. Regenerate RTL after updating this source.
+To validate only the first retired instruction:
+
+```bash
+cd design && sbt elaborate
+cd ..
+python sim/litex/breeze_sim.py \
+    --rom-init software/breeze-smoke/build/breeze-smoke.bin \
+    --debug-retire \
+    --stop-after-first-retire \
+    --build
+```
+
+The expected first retirement is the instruction at the ROM reset vector. With
+the smoke image, the monitor also checks that its first `AUIPC` writes stack
+pointer `x2 = 0x11040000` when the memory check is enabled:
+
+```bash
+python sim/litex/breeze_sim.py \
+    --rom-init software/breeze-smoke/build/breeze-smoke.bin \
+    --debug-retire \
+    --check-smoke-memory \
+    --build
+```
+
+This second mode waits for the `SD` and `LD` retiring at main-RAM address
+`0x80000000`, checks data `0x0123456789abcdef` and store mask `0xff`, and then
+finishes. The first-retirement and memory watchdogs default to 200 and 10000
+cycles respectively.

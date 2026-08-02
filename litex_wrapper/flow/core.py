@@ -5,7 +5,7 @@ separately with ``cd design && sbt elaborate`` before constructing a SoC.
 """
 
 import os
-from migen import ClockSignal, Constant, Instance, ResetSignal, Signal
+from migen import ClockSignal, Constant, Instance, Record, ResetSignal, Signal
 
 from litex.soc.interconnect import wishbone
 
@@ -73,6 +73,23 @@ class Flow(CPU):
         self.estop = Signal()
         self.interrupt = Signal(8)
         self.mtip = Signal()
+        self.retire = Record([
+            ("valid",            1),
+            ("pc",              64),
+            ("inst",            32),
+            ("next_pc",         64),
+            ("estop",            1),
+            ("rd_write_en",      1),
+            ("rd_addr",          5),
+            ("rd_data",         64),
+            ("mem_en",           1),
+            ("mem_is_write",     1),
+            ("mem_addr",        64),
+            ("mem_aligned_addr", 64),
+            ("mem_rdata",       64),
+            ("mem_wdata",       64),
+            ("mem_wmask",        8),
+        ])
 
         self.cpu_params = dict(
             # Clk / Rst.
@@ -108,6 +125,23 @@ class Flow(CPU):
             i_io_dWishbone_err   = dbus.err,
             o_io_dcacheFatalError = self.dcache_fatal_error,
             o_io_estop = self.estop,
+
+            # Architectural retirement trace.
+            o_io_tandem_valid          = self.retire.valid,
+            o_io_tandem_pc             = self.retire.pc,
+            o_io_tandem_inst           = self.retire.inst,
+            o_io_tandem_nextPc         = self.retire.next_pc,
+            o_io_tandem_estop          = self.retire.estop,
+            o_io_tandem_rdWriteEn      = self.retire.rd_write_en,
+            o_io_tandem_rdAddr         = self.retire.rd_addr,
+            o_io_tandem_rdData         = self.retire.rd_data,
+            o_io_tandem_memEn          = self.retire.mem_en,
+            o_io_tandem_memIsWrite     = self.retire.mem_is_write,
+            o_io_tandem_memAddr        = self.retire.mem_addr,
+            o_io_tandem_memAlignedAddr = self.retire.mem_aligned_addr,
+            o_io_tandem_memRData       = self.retire.mem_rdata,
+            o_io_tandem_memWData       = self.retire.mem_wdata,
+            o_io_tandem_memWMask       = self.retire.mem_wmask,
             i_io_resetAddr = Constant(0, 64),
         )
 

@@ -15,7 +15,9 @@ import flow.config.BreezeCoreConfigs
   */
 object GenerateBreezeCoreWishbone extends App {
   ChiselStage.emitSystemVerilogFile(
-    new BreezeCoreWishbone(BreezeCoreConfigs.baseline()),
+    // Keep the architectural retirement trace on the canonical SoC top. It is
+    // consumed by simulation bring-up monitors and does not affect execution.
+    new BreezeCoreWishbone(BreezeCoreConfigs.baseline(enableTandem = true)),
     Array("--target-dir", "build/rtl"),
     firtoolOpts = Array(
       "-disable-all-randomization",
