@@ -98,4 +98,7 @@ python sim/litex/breeze_sim.py \
 This second mode waits for the `SD` and `LD` retiring at main-RAM address
 `0x80000000`, checks data `0x0123456789abcdef` and store mask `0xff`, and then
 finishes. The first-retirement and memory watchdogs default to 200 and 10000
-cycles respectively.
+cycles respectively. It also prints the first 64 retired instructions and every
+retired memory instruction. `--retire-log-limit N` changes the initial trace
+length. If no instruction retires for 500 cycles, `--retire-stall-timeout`
+prints the last retired instruction and memory access before terminating.

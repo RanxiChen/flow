@@ -180,17 +180,30 @@ class RetireMonitor(Module):
 
     def __init__(self, retire, expected_first_pc, expected_first_inst,
                  first_retire_timeout=200, stop_after_first_retire=False,
-                 check_smoke_memory=False, memory_timeout=10000):
+                 check_smoke_memory=False, memory_timeout=10000,
+                 retire_log_limit=64, retire_stall_timeout=500):
         if first_retire_timeout <= 0:
             raise ValueError("First-retire timeout must be greater than zero")
         if memory_timeout <= 0:
             raise ValueError("Memory timeout must be greater than zero")
+        if retire_log_limit < 0:
+            raise ValueError("Retire log limit must not be negative")
+        if retire_stall_timeout <= 0:
+            raise ValueError("Retire-stall timeout must be greater than zero")
 
         cycle = Signal(32)
         memory_cycle = Signal(32)
+        retire_count = Signal(32)
+        retire_number = Signal(32)
+        retire_idle_cycles = Signal(32)
         first_retire_seen = Signal()
         smoke_store_seen = Signal()
         smoke_memory_complete = Signal()
+        last_retire_pc = Signal(64)
+        last_retire_inst = Signal(32)
+        last_memory_seen = Signal()
+        last_memory_is_write = Signal()
+        last_memory_address = Signal(64)
 
         expected_first_pc_signal = Signal(64)
         expected_first_inst_signal = Signal(32)
@@ -204,6 +217,7 @@ class RetireMonitor(Module):
             expected_initial_sp_signal.eq(SMOKE_INITIAL_SP),
             smoke_main_ram_address_signal.eq(SMOKE_MAIN_RAM_ADDRESS),
             smoke_memory_pattern_signal.eq(SMOKE_MEMORY_PATTERN),
+            retire_number.eq(retire_count + 1),
         ]
 
         first_retire_success = (
@@ -240,6 +254,33 @@ class RetireMonitor(Module):
             cycle.eq(cycle + 1),
             If(first_retire_seen & ~smoke_memory_complete,
                 memory_cycle.eq(memory_cycle + 1)
+            ),
+
+            If(retire.valid,
+                retire_count.eq(retire_number),
+                retire_idle_cycles.eq(0),
+                last_retire_pc.eq(retire.pc),
+                last_retire_inst.eq(retire.inst),
+                If(retire_count < retire_log_limit,
+                    Display(
+                        "[RETIRE] count=%d cycle=%d pc=0x%x inst=0x%x",
+                        retire_number, cycle, retire.pc, retire.inst)
+                ),
+                If(retire.mem_en,
+                    last_memory_seen.eq(1),
+                    last_memory_is_write.eq(retire.mem_is_write),
+                    last_memory_address.eq(retire.mem_addr),
+                    Display(
+                        "[MEM-RETIRE] count=%d cycle=%d pc=0x%x "
+                        "write=%d addr=0x%x rdata=0x%x "
+                        "wdata=0x%x mask=0x%x",
+                        retire_number, cycle, retire.pc,
+                        retire.mem_is_write, retire.mem_addr,
+                        retire.mem_rdata, retire.mem_wdata,
+                        retire.mem_wmask)
+                )
+            ).Elif(first_retire_seen & ~smoke_memory_complete,
+                retire_idle_cycles.eq(retire_idle_cycles + 1)
             ),
 
             If(retire.valid & ~first_retire_seen,
@@ -308,9 +349,29 @@ class RetireMonitor(Module):
                    ~target_memory_retire &
                    (memory_cycle >= (memory_timeout - 1)),
                     Display(
-                        "[MEM-TIMEOUT] smoke SD/LD incomplete cycle=%d "
-                        "store_seen=%d",
-                        cycle, smoke_store_seen),
+                        "[MEM-TIMEOUT] cycle=%d retire_count=%d "
+                        "last_pc=0x%x last_inst=0x%x store_seen=%d "
+                        "last_mem_valid=%d last_mem_write=%d "
+                        "last_mem_addr=0x%x",
+                        cycle, retire_count, last_retire_pc,
+                        last_retire_inst, smoke_store_seen,
+                        last_memory_seen, last_memory_is_write,
+                        last_memory_address),
+                    Finish()
+                ),
+
+                If(first_retire_seen & ~smoke_memory_complete &
+                   ~retire.valid &
+                   (retire_idle_cycles >= (retire_stall_timeout - 1)),
+                    Display(
+                        "[RETIRE-STALL] cycle=%d idle_cycles=%d "
+                        "retire_count=%d last_pc=0x%x last_inst=0x%x "
+                        "last_mem_valid=%d last_mem_write=%d "
+                        "last_mem_addr=0x%x",
+                        cycle, retire_idle_cycles, retire_count,
+                        last_retire_pc, last_retire_inst,
+                        last_memory_seen, last_memory_is_write,
+                        last_memory_address),
                     Finish()
                 )
             ]
@@ -341,7 +402,8 @@ class BreezeSimSoC(SoCCore):
                  debug_fetch=False, fetch_timeout=100,
                  stop_after_first_fetch=False, debug_retire=False,
                  first_retire_timeout=200, stop_after_first_retire=False,
-                 check_smoke_memory=False, memory_timeout=10000, **kwargs):
+                 check_smoke_memory=False, memory_timeout=10000,
+                 retire_log_limit=64, retire_stall_timeout=500, **kwargs):
         platform = Platform()
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core. A clock-only domain leaves the core's
@@ -395,6 +457,8 @@ class BreezeSimSoC(SoCCore):
                 stop_after_first_retire=stop_after_first_retire,
                 check_smoke_memory=check_smoke_memory,
                 memory_timeout=memory_timeout,
+                retire_log_limit=retire_log_limit,
+                retire_stall_timeout=retire_stall_timeout,
             )
 
         self.submodules.machine_timer = BreezeMachineTimer(
@@ -444,6 +508,10 @@ def main():
         help="Validate the smoke firmware's main-RAM SD/LD and then finish.")
     parser.add_argument("--memory-timeout", type=int, default=10000,
         help="Cycles after first retirement before SD/LD check fails.")
+    parser.add_argument("--retire-log-limit", type=int, default=64,
+        help="Number of initial retirements printed (default: 64).")
+    parser.add_argument("--retire-stall-timeout", type=int, default=500,
+        help="Cycles without retirement before smoke check fails.")
     parser.add_argument("--output-dir", default="build/litex-sim",
         help="LiteX output directory (default: build/litex-sim).")
     args = parser.parse_args()
@@ -474,6 +542,10 @@ def main():
         parser.error("--first-retire-timeout must be greater than zero")
     if args.memory_timeout <= 0:
         parser.error("--memory-timeout must be greater than zero")
+    if args.retire_log_limit < 0:
+        parser.error("--retire-log-limit must not be negative")
+    if args.retire_stall_timeout <= 0:
+        parser.error("--retire-stall-timeout must be greater than zero")
 
     soc = BreezeSimSoC(
         rom_init=rom_init,
@@ -485,6 +557,8 @@ def main():
         stop_after_first_retire=args.stop_after_first_retire,
         check_smoke_memory=args.check_smoke_memory,
         memory_timeout=args.memory_timeout,
+        retire_log_limit=args.retire_log_limit,
+        retire_stall_timeout=args.retire_stall_timeout,
     )
     builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
     builder.build(
