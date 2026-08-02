@@ -280,3 +280,11 @@ smoke 固件的 UART 输出。远端现场确认：
 
 该 monitor 只观察 LiteX wrapper 的 `cpu.ibus`，不修改 BreezeCore RTL 或正常
 总线逻辑。代码完成后尚未运行 Python、LiteX 或 Verilator。
+
+首次远端生成 `sim.v` 时，monitor 的两类 `Display` 参数暴露了 Migen lowering
+限制：组合表达式 `ibus.adr << 3` 被按 Python object 字符串写进 Verilog，ROM
+首字的 Python 大整数则被写成超过 32-bit 的 unsized decimal literal，均导致
+Verilator 语法错误。由于当前 Migen Verilog backend 的 `Display` 只对
+`Signal` 做名称 lowering，对其他参数直接调用 Python `str()`，修正为把 byte
+address、预期 Wishbone 地址和 ROM 首字全部落到显式位宽的组合 `Signal` 后再
+比较和打印。该修正尚未重新生成 `sim.v` 验证。

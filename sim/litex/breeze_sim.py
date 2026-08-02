@@ -100,8 +100,16 @@ class FetchWishboneMonitor(Module):
         beat_index = Signal(max=max(2, beat_count))
         refill_complete = Signal()
         active = Signal()
+        byte_address = Signal(len(ibus.adr) + 3)
+        expected_word_address_signal = Signal(len(ibus.adr))
+        expected_first_word_signal = Signal(len(ibus.dat_r))
 
-        self.comb += active.eq(ibus.cyc & ibus.stb)
+        self.comb += [
+            active.eq(ibus.cyc & ibus.stb),
+            byte_address.eq(ibus.adr << 3),
+            expected_word_address_signal.eq(expected_word_address),
+            expected_first_word_signal.eq(expected_first_word),
+        ]
 
         completion_statements = [
             Display("[IFETCH-PASS] first %d-byte cacheline returned", line_bytes),
@@ -118,12 +126,12 @@ class FetchWishboneMonitor(Module):
             If(~refill_complete & active & ~previous_active,
                 Display(
                     "[IFETCH-REQ] cycle=%d word_addr=0x%x byte_addr=0x%x",
-                    cycle, ibus.adr, ibus.adr << 3),
-                If(ibus.adr != expected_word_address,
+                    cycle, ibus.adr, byte_address),
+                If(ibus.adr != expected_word_address_signal,
                     Display(
                         "[IFETCH-FAIL] wrong reset fetch address "
                         "expected=0x%x actual=0x%x",
-                        expected_word_address, ibus.adr),
+                        expected_word_address_signal, ibus.adr),
                     Finish()
                 )
             ),
@@ -132,18 +140,18 @@ class FetchWishboneMonitor(Module):
                 Display(
                     "[IFETCH-FAIL] Wishbone error cycle=%d "
                     "word_addr=0x%x byte_addr=0x%x",
-                    cycle, ibus.adr, ibus.adr << 3),
+                    cycle, ibus.adr, byte_address),
                 Finish()
             ).Elif(~refill_complete & active & ibus.ack,
                 Display(
                     "[IFETCH-ACK] cycle=%d beat=%d word_addr=0x%x data=0x%x",
                     cycle, beat_index, ibus.adr, ibus.dat_r),
                 If((beat_index == 0) &
-                   (ibus.dat_r != expected_first_word),
+                   (ibus.dat_r != expected_first_word_signal),
                     Display(
                         "[IFETCH-FAIL] first ROM word mismatch "
                         "expected=0x%x actual=0x%x",
-                        expected_first_word, ibus.dat_r),
+                        expected_first_word_signal, ibus.dat_r),
                     Finish()
                 ).Elif(beat_index == (beat_count - 1),
                     *completion_statements
