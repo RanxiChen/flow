@@ -46,3 +46,23 @@ Its level-sensitive `mtip` output is connected directly to the CPU.
 The simulation uses LiteX's standard `CRG`, including its power-on reset pulse.
 This reset is required for the Chisel core to load the ROM reset vector before
 the first instruction fetch.
+
+## First instruction refill diagnostic
+
+The optional fetch monitor checks the instruction Wishbone path without adding
+ports to the core RTL:
+
+```bash
+python sim/litex/breeze_sim.py \
+    --rom-init software/breeze-smoke/build/breeze-smoke.bin \
+    --debug-fetch \
+    --stop-after-first-fetch \
+    --build
+```
+
+It requires the first request to use word address `0x02000000` (byte address
+`0x10000000`), compares the first returned 64-bit word with the actual ROM
+image, prints all four beats of the first 32-byte refill, and fails after 100
+cycles by default. Use `--fetch-timeout N` to change the watchdog. Omit
+`--stop-after-first-fetch` to let the smoke firmware continue to UART after a
+successful refill.

@@ -240,3 +240,43 @@ smoke 固件的 UART 输出。远端现场确认：
 修正为直接使用 LiteX 标准 `CRG`。该 CRG 通过独立的 reset-less `por` 时钟域
 产生 power-on reset pulse，再驱动 `cd_sys.rst`，满足 Chisel 核的同步复位
 要求。修正后尚未重新运行仿真。
+
+当前验证边界：
+
+- 已确认完整 split RTL 能通过 Verilator 编译，并由 `clang++`/mold 成功链接
+  出 `obj_dir/Vsim`；此前的子模块缺失错误已经跨过。
+- 已确认无输出的旧仿真持续运行超过 90 秒并占满一个 CPU core；这不是正常的
+  固件等待状态，已停止继续把它视为性能问题。
+- smoke 固件本身以无限循环结尾，因此修复后的正确判据不是 `Vsim` 自动退出，
+  而是先看到：
+
+  ```text
+  BreezeCore ROM boot
+  main RAM cached R/W: PASS
+  ```
+
+  随后进程继续运行才属于预期行为。
+- power-on reset 修复尚未经过远端复跑。同步修改后只需重新生成/构建 LiteX
+  仿真，不需要再次 elaboration 核心 RTL，也不需要重新编译未变化的 smoke
+  固件。
+
+### 首次取指 Wishbone 诊断器
+
+为避免继续只用 UART 输出判断整个启动链路，在 `sim/litex/breeze_sim.py` 中
+新增了纯仿真 `FetchWishboneMonitor`：
+
+- `--debug-fetch` 开启第一次 ICache refill 的事件式打印与检查；
+- 第一笔请求必须是 64-bit Wishbone word address `0x02000000`，对应 reset
+  byte address `0x10000000`；
+- 第一拍返回数据直接与 `get_mem_data()` 载入的 ROM 第一个 64-bit word 比较，
+  不在 monitor 中写死具体固件内容；
+- 每次 `ack` 打印 cycle、beat、地址和数据；当前 32-byte cacheline 应收到四个
+  64-bit beat；
+- Wishbone `err`、错误首地址、首字数据不匹配都会打印明确原因并结束仿真；
+- `--fetch-timeout` 默认 100 cycles，未完成首次 refill 时打印当前
+  `cyc/stb/ack/err/address/beat` 后结束；
+- `--stop-after-first-fetch` 可在首次完整 cacheline 返回后结束，便于把取指链路
+  独立成有限测试；不加该选项时继续执行 ROM smoke 固件。
+
+该 monitor 只观察 LiteX wrapper 的 `cpu.ibus`，不修改 BreezeCore RTL 或正常
+总线逻辑。代码完成后尚未运行 Python、LiteX 或 Verilator。
