@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Build a Breeze MCU application, run LiteX simulation, and report IPC."""
+"""Build a Breeze MCU application and run it to finite completion."""
 
 import argparse
 import os
-import re
 import subprocess
 import sys
 
@@ -17,10 +16,6 @@ SMOKE_APPS = {
     "uart": os.path.join(SOFTWARE_ROOT, "apps", "uart_irq_smoke.c"),
 }
 INTERRUPT_CAUSES = {"timer": 7, "uart": 11}
-STATS_PATTERN = re.compile(
-    r"BREEZE_STATS cycles=(0x[0-9a-fA-F]+) "
-    r"instructions=(0x[0-9a-fA-F]+)"
-)
 
 
 def run_checked(command, cwd=None):
@@ -57,7 +52,7 @@ def run_streaming(command, cwd=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build and run a Breeze MCU main.c with finite completion and IPC reporting.")
+        description="Build and run a Breeze MCU main.c to finite completion.")
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--main", help="Application main.c (default: template apps/main.c).")
     source.add_argument("--smoke", choices=("timer", "uart"),
@@ -111,11 +106,13 @@ def main():
     ])
 
     trap_vector = read_symbol(firmware_prefix + ".sym", "breeze_trap_vector")
+    result_address = read_symbol(firmware_prefix + ".sym", "__breeze_result")
     sim_command = [
         sys.executable,
         SIM_ENTRY,
         "--rom-init", firmware_prefix + ".bin",
         "--check-mcu-completion", check_kind,
+        "--mcu-result-address", hex(result_address),
         "--mtvec-mode", args.mtvec_mode,
         "--mcu-timeout", str(args.mcu_timeout),
         "--output-dir", output_dir,
@@ -135,23 +132,6 @@ def main():
     if pass_marker not in output:
         print(f"ERROR: simulator did not report {pass_marker!r}", file=sys.stderr)
         raise SystemExit(1)
-
-    stats = STATS_PATTERN.search(output)
-    if stats is None:
-        print("ERROR: firmware did not print a BREEZE_STATS line", file=sys.stderr)
-        raise SystemExit(1)
-
-    cycles = int(stats.group(1), 16)
-    instructions = int(stats.group(2), 16)
-    if cycles == 0:
-        print("ERROR: measured cycle delta is zero", file=sys.stderr)
-        raise SystemExit(1)
-
-    ipc = instructions / cycles
-    print(
-        f"BREEZE_IPC cycles={cycles} instructions={instructions} ipc={ipc:.6f}",
-        flush=True,
-    )
 
 
 if __name__ == "__main__":

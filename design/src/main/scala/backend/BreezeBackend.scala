@@ -329,9 +329,14 @@ class BreezeBackend(
     actualTarget := jau.io.jmp_addr
     exeNextPc := Mux(actualTaken, actualTarget, idExeReg.pc + 4.U)
 
-    redirectDirectionMismatch := idExeReg.valid && !idExeReg.instruction_access_fault &&
+    // ID/EXE remains valid while an older memory operation holds the pipeline.
+    // Do not resolve or train a branch until that instruction can advance: a
+    // dependent branch may still contain the pre-load register value here.
+    redirectDirectionMismatch := idExeReg.valid && !pipelineHold &&
+        !idExeReg.instruction_access_fault &&
         (actualTaken =/= idExeReg.pred.predTaken)
-    redirectTargetMismatch := idExeReg.valid && !idExeReg.instruction_access_fault &&
+    redirectTargetMismatch := idExeReg.valid && !pipelineHold &&
+        !idExeReg.instruction_access_fault &&
         actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
@@ -365,7 +370,7 @@ class BreezeBackend(
     frontendPhtUpdateValid := false.B
 
     if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
-        when(idExeReg.valid && !idExeReg.instruction_access_fault) {
+        when(idExeReg.valid && !pipelineHold && !idExeReg.instruction_access_fault) {
             switch(idExeReg.pred.predType) {
                 is(FrontendPredType.BR) {
                     frontendBtbUpdateValid := true.B

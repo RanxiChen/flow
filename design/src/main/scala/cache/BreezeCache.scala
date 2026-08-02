@@ -300,7 +300,14 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     //覆盖对sram的写
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         // 先写回数据
-        // data_array(i).io.addr依旧是之前的index,本处不需要覆盖
+        // Refill belongs to the outstanding s2 miss.  io.dreq.bits may already
+        // carry a redirect target even though that request is backpressured, so
+        // using the normal s0 read address here can write a returned line into
+        // the wrong set.
+        when(write_back_en) {
+            data_array(i).io.addr := s2_index
+            tag_array(i).io.addr := s2_index
+        }
         data_array(i).io.data_in := io.next_level_rsp.data //不分bank了，直接全线写回
         data_array(i).io.we := write_back_en && s2_wt_en_OH(i)
         // tag 的更新

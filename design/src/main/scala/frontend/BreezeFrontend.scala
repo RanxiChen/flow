@@ -233,7 +233,11 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     icache.io.dreq.bits.vaddr := s1_pcReg
 
     // ===== S2: Cache Request Tracking =====
-    s2_respValid := s2_validReg && icache.io.drsp.valid
+    // A redirect can cancel the frontend request while an ICache miss is still
+    // completing.  Only pair a response with the exact request that created
+    // the current s2 context; a late wrong-path refill is simply discarded.
+    s2_respValid := s2_validReg && icache.io.drsp.valid &&
+        (icache.io.drsp.bits.vaddr === s2_pcReg)
 
     when(reset.asBool || redirectValid) {
         s2_validReg := false.B
