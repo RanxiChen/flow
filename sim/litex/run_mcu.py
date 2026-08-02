@@ -103,7 +103,7 @@ def main():
         run_checked(["sbt", "elaborate"], cwd=os.path.join(FLOW_ROOT, "design"))
 
     run_checked([
-        "make", "-C", SOFTWARE_ROOT,
+        "make", "-B", "-C", SOFTWARE_ROOT,
         f"BUILD_DIR={firmware_build}",
         f"MAIN={main_source}",
         f"MTVEC_MODE={mode_number}",

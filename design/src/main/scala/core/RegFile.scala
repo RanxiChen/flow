@@ -224,26 +224,27 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         io.machineTimerInterrupt,
         0.U(7.W)
     )
+    def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
     val csrFile = Seq(
-        BitPat(CSRMAP.printer.U) -> printer,
-        BitPat(CSRMAP.coreinst.U) -> coreinst,
-        BitPat(CSRMAP.misa.U)    -> misa,
-        BitPat(CSRMAP.mvendorid.U)-> mvendorid,
-        BitPat(CSRMAP.marchid.U)  -> marchid,
-        BitPat(CSRMAP.mimpid.U)    -> mimpid,
-        BitPat(CSRMAP.mhartid.U)  -> mhartid,
-        BitPat(CSRMAP.mepc.U)     -> mepc,
-        BitPat(CSRMAP.mtvec.U)    -> mtvec,
-        BitPat(CSRMAP.mcause.U)   -> mcause,
-        BitPat(CSRMAP.mtval.U)    -> mtval,
-        BitPat(CSRMAP.mscratch.U) -> mscratch,
-        BitPat(CSRMAP.mstatus.U)  -> mstatus_read,
-        BitPat(CSRMAP.mie.U)      -> mie_read,
-        BitPat(CSRMAP.mip.U)      -> mip_read,
-        BitPat(CSRMAP.mcycle.U)   -> mcycle,
-        BitPat(CSRMAP.minstret.U) -> minstret,
-        BitPat(CSRMAP.cycle.U)    -> mcycle,
-        BitPat(CSRMAP.instret.U)  -> minstret
+        csrPattern(CSRMAP.printer) -> printer,
+        csrPattern(CSRMAP.coreinst) -> coreinst,
+        csrPattern(CSRMAP.misa)    -> misa,
+        csrPattern(CSRMAP.mvendorid)-> mvendorid,
+        csrPattern(CSRMAP.marchid)  -> marchid,
+        csrPattern(CSRMAP.mimpid)    -> mimpid,
+        csrPattern(CSRMAP.mhartid)  -> mhartid,
+        csrPattern(CSRMAP.mepc)     -> mepc,
+        csrPattern(CSRMAP.mtvec)    -> mtvec,
+        csrPattern(CSRMAP.mcause)   -> mcause,
+        csrPattern(CSRMAP.mtval)    -> mtval,
+        csrPattern(CSRMAP.mscratch) -> mscratch,
+        csrPattern(CSRMAP.mstatus)  -> mstatus_read,
+        csrPattern(CSRMAP.mie)      -> mie_read,
+        csrPattern(CSRMAP.mip)      -> mip_read,
+        csrPattern(CSRMAP.mcycle)   -> mcycle,
+        csrPattern(CSRMAP.minstret) -> minstret,
+        csrPattern(CSRMAP.cycle)    -> mcycle,
+        csrPattern(CSRMAP.instret)  -> minstret
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
