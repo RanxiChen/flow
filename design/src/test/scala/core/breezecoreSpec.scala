@@ -7,6 +7,45 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
 
+class RegFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    "RegFile should forward a same-cycle write to both read ports" in {
+        simulate(new RegFile(64)) { dut =>
+            val value = BigInt("0123456789abcdef", 16)
+
+            dut.io.rs1_addr.poke(0.U)
+            dut.io.rs2_addr.poke(0.U)
+            dut.io.rd_addr.poke(0.U)
+            dut.io.rd_data.poke(0.U)
+            dut.io.rd_en.poke(false.B)
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            dut.io.rs1_addr.poke(5.U)
+            dut.io.rs2_addr.poke(5.U)
+            dut.io.rd_addr.poke(5.U)
+            dut.io.rd_data.poke(value.U)
+            dut.io.rd_en.poke(true.B)
+
+            dut.io.rs1_data.expect(value.U)
+            dut.io.rs2_data.expect(value.U)
+
+            dut.clock.step(1)
+            dut.io.rd_en.poke(false.B)
+            dut.io.rs1_data.expect(value.U)
+            dut.io.rs2_data.expect(value.U)
+
+            dut.io.rs1_addr.poke(0.U)
+            dut.io.rs2_addr.poke(0.U)
+            dut.io.rd_addr.poke(0.U)
+            dut.io.rd_data.poke("hffffffffffffffff".U)
+            dut.io.rd_en.poke(true.B)
+            dut.io.rs1_data.expect(0.U)
+            dut.io.rs2_data.expect(0.U)
+        }
+    }
+}
+
 class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
     "CSRFile should write mtvec via CSRRW (RW command) and read back" in {
         simulate(new CSRFile(64)) { dut =>
@@ -733,6 +772,41 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
                     }
                 }
             }
+        }
+    }
+
+    "BreezeCore should retire a delayed load exactly once" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
+            val debug = dut.io.debug.get
+            val addi = encodeAddi(rd = 1, rs1 = 0, imm = 0x20)
+            val load = encodeLoad(rd = 2, rs1 = 1, imm = 0, funct3 = 3)
+            val loadData = BigInt("0123456789abcdef", 16)
+            val instQueue = mutable.Queue[BigInt](addi, load)
+            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
+            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
+            val retired = mutable.ArrayBuffer.empty[(BigInt, BigInt)]
+
+            initCore(dut)
+
+            for (_ <- 0 until 32) {
+                if (debug.memWbValid.peek().litToBoolean) {
+                    retired += ((
+                        debug.memWbInst.peek().litValue,
+                        debug.wbData.peek().litValue
+                    ))
+                }
+                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
+                    if (req.addr != BigInt(0x20) || req.isWrite) {
+                        throw new AssertionError(
+                            s"unexpected delayed-load req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
+                        )
+                    }
+                    PendingDmemResp(req.addr, loadData, isWriteAck = false, cyclesLeft = 6)
+                }
+            }
+
+            observedReqs.length mustBe 1
+            retired mustBe Seq((addi, BigInt(0x20)), (load, loadData))
         }
     }
 
