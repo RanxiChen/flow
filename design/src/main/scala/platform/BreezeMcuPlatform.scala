@@ -33,6 +33,7 @@ final case class BreezeMcuPlatformConfig(
     platform: String,
     addressWidth: Int,
     resetVector: BigInt,
+    externalInterruptWidth: Int,
     pmaRegions: Seq[PMARegionConst]
 )
 
@@ -105,10 +106,16 @@ object BreezeMcuPlatform {
     val platform = requiredText(root, "platform")
     val addressWidth = requiredInt(root, "addressWidth")
     val resetVector = requiredNumber(root, "resetVector")
+    val externalInterrupts = required(root, "externalInterrupts")
+    val externalInterruptWidth = requiredInt(externalInterrupts, "width")
     val regionNodes = required(root, "regions")
 
     require(schemaVersion == 1, s"Unsupported platform schema version: $schemaVersion")
     require(addressWidth >= 1 && addressWidth <= 64, s"Invalid physical address width: $addressWidth")
+    require(
+      externalInterruptWidth >= 1 && externalInterruptWidth <= 32,
+      s"Invalid external interrupt width: $externalInterruptWidth"
+    )
     require(regionNodes.isArray, "Platform field regions must be an array")
 
     val regions = regionNodes.elements().asScala.map { node =>
@@ -160,6 +167,7 @@ object BreezeMcuPlatform {
       platform = platform,
       addressWidth = addressWidth,
       resetVector = resetVector,
+      externalInterruptWidth = externalInterruptWidth,
       pmaRegions = regions
     )
   }
@@ -167,5 +175,6 @@ object BreezeMcuPlatform {
   val Config: BreezeMcuPlatformConfig = load()
   val AddressWidth: Int = Config.addressWidth
   val ResetVector: BigInt = Config.resetVector
+  val ExternalInterruptWidth: Int = Config.externalInterruptWidth
   val PMARegions: Seq[PMARegionConst] = Config.pmaRegions
 }

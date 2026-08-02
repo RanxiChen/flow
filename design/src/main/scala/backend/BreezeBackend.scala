@@ -5,6 +5,7 @@ import chisel3.util._
 import flow.config.BackendConfig
 import flow.interface._
 import flow.core._
+import flow.platform.BreezeMcuPlatform
 
 class BreezeBackend(
     val cfg: BackendConfig = BackendConfig(),
@@ -12,6 +13,8 @@ class BreezeBackend(
 ) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
+        val machineTimerInterrupt = Input(Bool())
+        val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN, cfg.ghrLength)))
         val dmem = new BackendMemIO(cfg.VLEN)
         val dcacheFlushReq = Output(Bool())
@@ -64,6 +67,8 @@ class BreezeBackend(
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
     csrFile.io.retire_valid := memWbReg.valid
+    csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
+    csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
     csrFile.io.trap.valid := false.B
     csrFile.io.trap.is_interrupt := false.B
     csrFile.io.trap.cause := 0.U
@@ -292,6 +297,9 @@ class BreezeBackend(
     val storeAddrMisaligned = Wire(Bool())
     val exeMemNeedsDmem = Wire(Bool())
     val exceptionRedirect = Wire(Bool())
+    val interruptRedirect = Wire(Bool())
+    val pipelineEmpty = Wire(Bool())
+    val architecturalNextPc = RegInit(0.U(cfg.VLEN.W))
     val exeNextPc = Wire(UInt(cfg.VLEN.W))
 
     actualTaken := Mux(
@@ -315,7 +323,11 @@ class BreezeBackend(
     val mretRedirect = Wire(Bool())
     exceptionRedirect := memWbReg.valid && wbTrap
     mretRedirect := memWbReg.valid && memWbReg.is_mret
-    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect || mretRedirect
+    pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
+        !memWbReg.valid && !memWaitingRespReg
+    interruptRedirect := csrFile.io.interruptPending && pipelineEmpty
+    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect ||
+        mretRedirect || interruptRedirect
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -602,26 +614,35 @@ class BreezeBackend(
         true.B                         -> 0.U(cfg.VLEN.W)
     ))
 
-    csrFile.io.trap.valid        := wbTrap
-    csrFile.io.trap.is_interrupt := false.B
-    csrFile.io.trap.cause        := mcauseVal
-    csrFile.io.trap.pc           := memWbReg.pc
-    csrFile.io.trap.tval         := mtvalVal
+    csrFile.io.trap.valid        := exceptionRedirect || interruptRedirect
+    csrFile.io.trap.is_interrupt := interruptRedirect
+    csrFile.io.trap.cause        := Mux(interruptRedirect, csrFile.io.interruptCause, mcauseVal)
+    csrFile.io.trap.pc           := Mux(interruptRedirect, architecturalNextPc, memWbReg.pc)
+    csrFile.io.trap.tval         := Mux(interruptRedirect, 0.U, mtvalVal)
     csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
+
+    when(reset.asBool) {
+        architecturalNextPc := io.resetAddr
+    }.elsewhen(mretRedirect) {
+        architecturalNextPc := csrFile.io.mepc_out
+    }.elsewhen(memWbReg.valid && !wbTrap) {
+        architecturalNextPc := memWbReg.nextPc
+    }
 
     fenceiPending := exeMemReg.valid && exeMemReg.fencei
     io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg
     fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect || interruptRedirect) {
         fenceiFlushIssuedReg := false.B
     }.elsewhen(io.dcacheFlushReq) {
         fenceiFlushIssuedReg := true.B
     }
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect || interruptRedirect) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
+        exeMemReg.nextPc := 0.U
         exeMemReg.inst := nopInst
         exeMemReg.instruction_access_fault := false.B
         exeMemReg.illegal_inst := false.B
@@ -665,6 +686,7 @@ class BreezeBackend(
     }.elsewhen(!pipelineHold) {
         exeMemReg.valid := idExeReg.valid
         exeMemReg.pc := idExeReg.pc
+        exeMemReg.nextPc := exeNextPc
         exeMemReg.inst := idExeReg.inst
         exeMemReg.instruction_access_fault := idExeReg.instruction_access_fault
         exeMemReg.illegal_inst := idExeReg.illegal_inst
@@ -715,9 +737,10 @@ class BreezeBackend(
         memWaitingRespReg := true.B
     }
 
-    when(reset.asBool || exceptionRedirect || mretRedirect) {
+    when(reset.asBool || exceptionRedirect || mretRedirect || interruptRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
+        memWbReg.nextPc := 0.U
         memWbReg.inst := nopInst
         memWbReg.instruction_access_fault := false.B
         memWbReg.illegal_inst := false.B
@@ -760,6 +783,7 @@ class BreezeBackend(
         // flush is emitted; do not repeatedly retire it while the cache scans.
         memWbReg.valid := exeMemReg.valid && (!exeMemReg.fencei || fenceiFlush)
         memWbReg.pc := exeMemReg.pc
+        memWbReg.nextPc := exeMemReg.nextPc
         memWbReg.inst := exeMemReg.inst
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
@@ -799,6 +823,7 @@ class BreezeBackend(
     }.elsewhen(memRspFire) {
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
+        memWbReg.nextPc := exeMemReg.nextPc
         memWbReg.inst := exeMemReg.inst
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
@@ -838,7 +863,9 @@ class BreezeBackend(
         }
     }
 
-    decodeReady := !pipelineHold && !csrHold && !frontendRedirectNeeded
+    // A pending enabled interrupt stops issue while older instructions drain.
+    decodeReady := !pipelineHold && !csrHold && !frontendRedirectNeeded &&
+        !csrFile.io.interruptPending
     decodeFire := decodeValid && decodeReady
     io.fetchBuffer.ready := decodeReady
 
@@ -855,6 +882,7 @@ class BreezeBackend(
     io.frontendRedirect.target := Mux1H(Seq(
         fenceiFlush        -> (exeMemReg.pc + 4.U),
         mretRedirect       -> csrFile.io.mepc_out,
+        interruptRedirect  -> csrFile.io.mtvec,
         exceptionRedirect  -> csrFile.io.mtvec,
         redirectNeeded     -> actualTarget
     ))
@@ -896,7 +924,7 @@ class BreezeBackend(
         debug.csrMcause      := csrFile.io.debug.get.mcause
         debug.csrMepc        := csrFile.io.debug.get.mepc
         debug.memWbException := memWbReg.instruction_access_fault || memWbReg.illegal_inst
-        debug.memWbTrapValid := wbTrap
+        debug.memWbTrapValid := wbTrap || interruptRedirect
         debug.memWbIsEcall := memWbReg.is_ecall
         debug.memWbIsMret := memWbReg.is_mret
         debug.csrIllegal := exeMemReg.csr_illegal

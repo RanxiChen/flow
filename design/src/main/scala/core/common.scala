@@ -307,6 +307,11 @@ object SIM_SYSTEM {
    val MRET_IMM12   = "h302".U(12.W)
 }
 
+object MACHINE_INTERRUPT_CAUSE {
+   val TIMER    = 7
+   val EXTERNAL = 11
+}
+
 // Per m-mode-implementation spec V1:
 // These CSR addresses trigger illegal instruction exception when accessed
 object ILLEGAL_CSR_ADDRS {

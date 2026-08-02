@@ -8,10 +8,13 @@ import flow.buffer.FetchBuffer
 import flow.config._
 import flow.frontend.{BreezeFrontend, BreezeFrontendDebugIO}
 import flow.interface._
+import flow.platform.BreezeMcuPlatform
 
 class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(corecfg.VLEN.W))
+        val machineTimerInterrupt = Input(Bool())
+        val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
         val dmem = new BackendMemIO(corecfg.VLEN)
@@ -40,6 +43,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     buffer.io.flush := backend.io.frontendRedirect.flush
 
     backend.io.resetAddr := io.resetAddr
+    backend.io.machineTimerInterrupt := io.machineTimerInterrupt
+    backend.io.externalInterrupts := io.externalInterrupts
     io.estop := backend.io.estop
     io.dmem <> backend.io.dmem
     io.dcacheFlushReq := backend.io.dcacheFlushReq

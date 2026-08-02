@@ -30,6 +30,8 @@ class BreezeCoreWishbone(
 
   val io = IO(new Bundle {
     val resetAddr = Input(UInt(corecfg.VLEN.W))
+    val machineTimerInterrupt = Input(Bool())
+    val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
     val iWishbone = new LiteXWishboneMasterIO(iWishboneParams)
     val dWishbone = new LiteXWishboneMasterIO(dWishboneParams)
     val dcacheFatalError = Output(Bool())
@@ -54,6 +56,8 @@ class BreezeCoreWishbone(
   ))
 
   core.io.resetAddr := io.resetAddr
+  core.io.machineTimerInterrupt := io.machineTimerInterrupt
+  core.io.externalInterrupts := io.externalInterrupts
   iBridge.io.cacheReq <> core.io.nextLevelReq
   iBridge.io.cacheResp <> core.io.nextLevelRsp
   io.iWishbone <> iBridge.io.wishbone
