@@ -11,6 +11,10 @@ cd ..
 make -C software/breeze-smoke
 ```
 
+Elaboration emits split SystemVerilog. `design/build/rtl/filelist.f` is the
+authoritative source manifest; the LiteX CPU wrapper registers every file in
+that list, including `BreezeCoreWishbone.sv` as the top-level module.
+
 Then, in the LiteX Python environment, generate the simulation build tree:
 
 ```bash

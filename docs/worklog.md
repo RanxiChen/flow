@@ -204,3 +204,22 @@ SoC 侧驱动。本阶段仍未运行 SBT、elaboration、LiteX 或 Verilator。
 
 本阶段仍只写代码，不构建固件、不运行 SBT/LiteX/Verilator/仿真；实际指令
 生成、ROM 装载和 UART 输出均等待统一编译阶段验证。
+
+### 首次 LiteX Verilator 构建反馈：split RTL 清单
+
+远端首次构建已经成功生成 LiteX `sim.v` 并进入 Verilator，但暴露了 RTL
+注册问题：Chisel/CIRCT 将设计拆为 24 个 SystemVerilog 文件并生成
+`design/build/rtl/filelist.f`，原 wrapper 却只向 LiteX 注册了顶层
+`BreezeCoreWishbone.sv`，导致 Verilator 找不到 `BreezeCore`、两个 Wishbone
+bridge 和 `BreezeDCache` 等子模块。
+
+对应修正为：
+
+- `litex_wrapper/flow/core.py` 读取 `filelist.f`，检查清单非空及每个文件存在，
+  再按清单把完整 RTL 集合注册给 LiteX。
+- wrapper 显式连接顶层 `io_estop` 输出，消除 `PINMISSING` 警告并为后续仿真
+  停机控制保留信号。
+- `TIMESCALEMOD` 当前只是 `-Wno-fatal` 下的非阻断警告，本次不改变 RTL
+  时序语义，待完整编译通过后再统一处理。
+
+该修复完成后尚未在本地或远端重新运行 LiteX/Verilator。
