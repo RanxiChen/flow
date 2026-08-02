@@ -308,3 +308,19 @@ address、预期 Wishbone 地址和 ROM 首字全部落到显式位宽的组合 
 
 该功能改变了生成顶层端口，因此远端验证前必须重新运行 `sbt elaborate`，再
 重新生成 LiteX `sim.v`。代码完成后尚未编译或运行。
+
+首次 memory check 已在远端确认第一条 `AUIPC` 于 cycle 17 正确退休并写出
+`x2 = 0x11040000`，但 10000 cycles 内没有观察到 `0x80000000` 的目标 store，
+旧超时信息只能给出 `store_seen=0`，无法区分启动汇编、SRAM 栈访问、DCache
+和 UART polling。
+
+因此进一步增强退休诊断：
+
+- 默认打印前 64 条退休指令的 count、cycle、PC 和 instruction；
+- 每一条退休内存指令都打印读写方向、地址、读写数据和 mask；
+- 持续保存最后退休 PC/instruction 及最后内存访问；
+- memory timeout 现在报告 retirement count 和上述最后状态；
+- 500 cycles 没有任何新退休时触发独立 `RETIRE-STALL`，避免等待完整的
+  10000-cycle memory timeout；阈值可通过 `--retire-stall-timeout` 调整。
+
+该增强完成后尚未重新运行远端仿真。
