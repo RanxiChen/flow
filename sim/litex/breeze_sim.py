@@ -6,6 +6,8 @@ import json
 import os
 import sys
 
+from migen import Display, Finish, If, Module, Signal
+
 from litex.build.generic_platform import Pins, Subsignal
 from litex.build.io import CRG
 from litex.build.sim import SimPlatform
@@ -52,6 +54,10 @@ MACHINE_TIMER_SIZE = _platform_int(MACHINE_TIMER_REGION["size"])
 MTIMECMP_OFFSET = _platform_int(MACHINE_TIMER_CONFIG["mtimecmpOffset"])
 MTIME_OFFSET = _platform_int(MACHINE_TIMER_CONFIG["mtimeOffset"])
 MTIME_FREQUENCY_HZ = _platform_int(MACHINE_TIMER_CONFIG["mtimeFrequencyHz"])
+RESET_VECTOR = _platform_int(PLATFORM_CONFIG["resetVector"])
+
+IBUS_DATA_WIDTH = 64
+ICACHE_LINE_BYTES = 32
 
 
 _IO = [
@@ -69,6 +75,92 @@ _IO = [
 class Platform(SimPlatform):
     def __init__(self):
         super().__init__("SIM", _IO)
+
+
+class FetchWishboneMonitor(Module):
+    """Finite first-refill diagnostic for the simulation instruction bus."""
+
+    def __init__(self, ibus, reset_vector, expected_first_word,
+                 timeout_cycles=100, line_bytes=ICACHE_LINE_BYTES,
+                 stop_after_first_fetch=False):
+        beat_bytes = len(ibus.dat_r) // 8
+        if len(ibus.dat_r) != IBUS_DATA_WIDTH:
+            raise ValueError(
+                f"Fetch monitor requires a {IBUS_DATA_WIDTH}-bit instruction bus")
+        if line_bytes <= 0 or line_bytes % beat_bytes != 0:
+            raise ValueError("ICache line size must contain complete bus beats")
+        if timeout_cycles <= 0:
+            raise ValueError("Fetch timeout must be greater than zero")
+
+        beat_count = line_bytes // beat_bytes
+        expected_word_address = reset_vector // beat_bytes
+
+        cycle = Signal(32)
+        previous_active = Signal()
+        beat_index = Signal(max=max(2, beat_count))
+        refill_complete = Signal()
+        active = Signal()
+
+        self.comb += active.eq(ibus.cyc & ibus.stb)
+
+        completion_statements = [
+            Display("[IFETCH-PASS] first %d-byte cacheline returned", line_bytes),
+            refill_complete.eq(1),
+            beat_index.eq(0),
+        ]
+        if stop_after_first_fetch:
+            completion_statements.append(Finish())
+
+        self.sync += [
+            cycle.eq(cycle + 1),
+            previous_active.eq(active),
+
+            If(~refill_complete & active & ~previous_active,
+                Display(
+                    "[IFETCH-REQ] cycle=%d word_addr=0x%x byte_addr=0x%x",
+                    cycle, ibus.adr, ibus.adr << 3),
+                If(ibus.adr != expected_word_address,
+                    Display(
+                        "[IFETCH-FAIL] wrong reset fetch address "
+                        "expected=0x%x actual=0x%x",
+                        expected_word_address, ibus.adr),
+                    Finish()
+                )
+            ),
+
+            If(~refill_complete & active & ibus.err,
+                Display(
+                    "[IFETCH-FAIL] Wishbone error cycle=%d "
+                    "word_addr=0x%x byte_addr=0x%x",
+                    cycle, ibus.adr, ibus.adr << 3),
+                Finish()
+            ).Elif(~refill_complete & active & ibus.ack,
+                Display(
+                    "[IFETCH-ACK] cycle=%d beat=%d word_addr=0x%x data=0x%x",
+                    cycle, beat_index, ibus.adr, ibus.dat_r),
+                If((beat_index == 0) &
+                   (ibus.dat_r != expected_first_word),
+                    Display(
+                        "[IFETCH-FAIL] first ROM word mismatch "
+                        "expected=0x%x actual=0x%x",
+                        expected_first_word, ibus.dat_r),
+                    Finish()
+                ).Elif(beat_index == (beat_count - 1),
+                    *completion_statements
+                ).Else(
+                    beat_index.eq(beat_index + 1)
+                )
+            ),
+
+            If((cycle == (timeout_cycles - 1)) & ~refill_complete,
+                Display(
+                    "[IFETCH-TIMEOUT] cycle=%d cyc=%d stb=%d ack=%d err=%d "
+                    "word_addr=0x%x received_beats=%d",
+                    cycle, ibus.cyc, ibus.stb, ibus.ack, ibus.err,
+                    ibus.adr, beat_index),
+                Finish()
+            )
+        ]
 
 
 class BreezeSimSoC(SoCCore):
@@ -92,7 +184,9 @@ class BreezeSimSoC(SoCCore):
         "gpio3" : 4,
     }
 
-    def __init__(self, sys_clk_freq=int(1e6), rom_init=None, **kwargs):
+    def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
+                 debug_fetch=False, fetch_timeout=100,
+                 stop_after_first_fetch=False, **kwargs):
         platform = Platform()
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core. A clock-only domain leaves the core's
@@ -123,6 +217,17 @@ class BreezeSimSoC(SoCCore):
             with_timer=False,
             **kwargs,
         )
+
+        if debug_fetch:
+            if not rom_init:
+                raise ValueError("Fetch debug requires a non-empty ROM image")
+            self.submodules.fetch_monitor = FetchWishboneMonitor(
+                ibus=self.cpu.ibus,
+                reset_vector=RESET_VECTOR,
+                expected_first_word=rom_init[0],
+                timeout_cycles=fetch_timeout,
+                stop_after_first_fetch=stop_after_first_fetch,
+            )
 
         self.submodules.machine_timer = BreezeMachineTimer(
             sys_clk_freq=sys_clk_freq,
@@ -155,6 +260,12 @@ def main():
         help="Enable simulator waveform tracing.")
     parser.add_argument("--rom-init",
         help="Raw binary loaded at the ROM base address (0x10000000).")
+    parser.add_argument("--debug-fetch", action="store_true",
+        help="Print and validate the first instruction-cache refill.")
+    parser.add_argument("--fetch-timeout", type=int, default=100,
+        help="Cycles before an incomplete first refill fails (default: 100).")
+    parser.add_argument("--stop-after-first-fetch", action="store_true",
+        help="Finish simulation after the first valid ICache line is returned.")
     parser.add_argument("--output-dir", default="build/litex-sim",
         help="LiteX output directory (default: build/litex-sim).")
     args = parser.parse_args()
@@ -169,7 +280,19 @@ def main():
         endianness="little",
         mem_size=0x0001_0000,
     )
-    soc = BreezeSimSoC(rom_init=rom_init)
+    if args.stop_after_first_fetch and not args.debug_fetch:
+        parser.error("--stop-after-first-fetch requires --debug-fetch")
+    if args.debug_fetch and not rom_init:
+        parser.error("--debug-fetch requires a non-empty --rom-init image")
+    if args.fetch_timeout <= 0:
+        parser.error("--fetch-timeout must be greater than zero")
+
+    soc = BreezeSimSoC(
+        rom_init=rom_init,
+        debug_fetch=args.debug_fetch,
+        fetch_timeout=args.fetch_timeout,
+        stop_after_first_fetch=args.stop_after_first_fetch,
+    )
     builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
     builder.build(
         run=args.build,
