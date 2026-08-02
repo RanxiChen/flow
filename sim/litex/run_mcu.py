@@ -119,6 +119,7 @@ def main():
         "--mtvec-mode", args.mtvec_mode,
         "--mcu-timeout", str(args.mcu_timeout),
         "--output-dir", output_dir,
+        "--non-interactive",
         "--build",
     ]
     if check_kind in INTERRUPT_CAUSES:
