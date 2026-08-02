@@ -626,6 +626,8 @@ def main():
         help="Run Verilator after generating the LiteX build tree.")
     parser.add_argument("--trace", action="store_true",
         help="Enable simulator waveform tracing.")
+    parser.add_argument("--non-interactive", action="store_true",
+        help="Run without attaching simulator stdin to a terminal.")
     parser.add_argument("--rom-init",
         help="Raw binary loaded at the ROM base address (0x10000000).")
     parser.add_argument("--debug-fetch", action="store_true",
@@ -720,6 +722,7 @@ def main():
         run=args.build,
         sim_config=sim_config,
         trace=args.trace,
+        interactive=not args.non_interactive,
     )
 
 
