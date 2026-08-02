@@ -261,6 +261,12 @@ class BreezeBackend(
         idExeReg.imm := 0.U
         idExeReg.src1 := 0.U
         idExeReg.src2 := 0.U
+    }.otherwise {
+        // ID/EXE is stalled behind a memory operation. Preserve any older
+        // producer values that are forwardable now; those producers may have
+        // left MEM/WB by the time the stalled instruction is allowed to run.
+        idExeReg.rs1_data := exeRs1Data
+        idExeReg.rs2_data := exeRs2Data
     }
 
     alu.io.alu_op := idExeReg.ctrl.alu_op
