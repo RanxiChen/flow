@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1300" viewBox="0 0 1900 1300">
+  <defs>
+    <style>
+      .title { font: 700 32px sans-serif; fill: #1f2937; }
+      .subtitle { font: 18px sans-serif; fill: #4b5563; }
+      .state-title { font: 700 18px sans-serif; fill: #111827; text-anchor: middle; }
+      .state-text { font: 14px sans-serif; fill: #374151; text-anchor: middle; }
+      .edge-label { font: 14px sans-serif; fill: #374151; paint-order: stroke; stroke: #ffffff; stroke-width: 5px; stroke-linejoin: round; }
+      .note { font: 14px sans-serif; fill: #374151; }
+      .state { stroke: #334155; stroke-width: 2.5; rx: 16; ry: 16; }
+      .normal { fill: #e7f5ff; }
+      .decision { fill: #d0ebff; }
+      .bus { fill: #fff3bf; }
+      .success { fill: #d3f9d8; }
+      .fault { fill: #ffe3e3; stroke: #c92a2a; }
+      .flush { fill: #f3d9fa; stroke: #862e9c; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 2.4; marker-end: url(#arrow); }
+      .error-arrow { fill: none; stroke: #c92a2a; stroke-width: 2.4; marker-end: url(#arrow-red); }
+      .flush-arrow { fill: none; stroke: #862e9c; stroke-width: 2.4; marker-end: url(#arrow-purple); }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#c92a2a"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#862e9c"/>
+    </marker>
+  </defs>
+
+  <rect width="1900" height="1300" fill="#ffffff"/>
+  <text x="70" y="55" class="title">Breeze DCache FSM — Write-back + Write-allocate</text>
+  <text x="70" y="88" class="subtitle">8-entry 默认、全相连、32 Byte cache line、Reg Array、单个未完成请求</text>
+
+  <!-- Main states -->
+  <rect x="790" y="115" width="260" height="72" class="state normal"/>
+  <text x="920" y="145" class="state-title">IDLE</text>
+  <text x="920" y="169" class="state-text">等待 BackendMemReq 脉冲</text>
+
+  <rect x="750" y="245" width="340" height="92" class="state decision"/>
+  <text x="920" y="277" class="state-title">CLASSIFY / LOOKUP</text>
+  <text x="920" y="301" class="state-text">PMA检查 + device/cacheable分类</text>
+  <text x="920" y="322" class="state-text">8-entry并行tag比较</text>
+
+  <rect x="80" y="400" width="245" height="82" class="state bus"/>
+  <text x="202" y="431" class="state-title">UNCACHED_REQ</text>
+  <text x="202" y="455" class="state-text">MMIO/device标量Wishbone</text>
+
+  <rect x="80" y="545" width="245" height="82" class="state bus"/>
+  <text x="202" y="576" class="state-title">UNCACHED_WAIT</text>
+  <text x="202" y="600" class="state-text">等待 ack / err</text>
+
+  <rect x="405" y="400" width="235" height="82" class="state normal"/>
+  <text x="522" y="431" class="state-title">LOAD_HIT</text>
+  <text x="522" y="455" class="state-text">选出64-bit beat</text>
+
+  <rect x="705" y="400" width="255" height="82" class="state normal"/>
+  <text x="832" y="431" class="state-title">STORE_HIT</text>
+  <text x="832" y="455" class="state-text">按wmask更新并置dirty</text>
+
+  <rect x="1060" y="400" width="270" height="82" class="state decision"/>
+  <text x="1195" y="431" class="state-title">SELECT_VICTIM</text>
+  <text x="1195" y="455" class="state-text">invalid优先，否则Round-Robin</text>
+
+  <rect x="1015" y="545" width="255" height="82" class="state bus"/>
+  <text x="1142" y="576" class="state-title">WRITEBACK_REQ</text>
+  <text x="1142" y="600" class="state-text">发送完整dirty cache line</text>
+
+  <rect x="1015" y="690" width="255" height="82" class="state bus"/>
+  <text x="1142" y="721" class="state-title">WRITEBACK_WAIT</text>
+  <text x="1142" y="745" class="state-text">等待整行写回完成</text>
+
+  <rect x="1430" y="545" width="245" height="82" class="state bus"/>
+  <text x="1552" y="576" class="state-title">REFILL_REQ</text>
+  <text x="1552" y="600" class="state-text">请求32 Byte cache line</text>
+
+  <rect x="1430" y="690" width="245" height="82" class="state bus"/>
+  <text x="1552" y="721" class="state-title">REFILL_WAIT</text>
+  <text x="1552" y="745" class="state-text">等待完整cache line / error</text>
+
+  <rect x="1255" y="835" width="285" height="92" class="state normal"/>
+  <text x="1397" y="867" class="state-title">INSTALL + REPLAY</text>
+  <text x="1397" y="891" class="state-text">安装新line并重放原请求</text>
+  <text x="1397" y="912" class="state-text">Store miss合并数据并置dirty</text>
+
+  <rect x="655" y="835" width="245" height="82" class="state success"/>
+  <text x="777" y="866" class="state-title">SUCCESS_RESP</text>
+  <text x="777" y="890" class="state-text">Load data / Store ack</text>
+
+  <rect x="345" y="690" width="245" height="82" class="state fault"/>
+  <text x="467" y="721" class="state-title">ACCESS_FAULT</text>
+  <text x="467" y="745" class="state-text">Load cause=5 / Store cause=7</text>
+
+  <!-- Main arrows -->
+  <path d="M920 187 L920 245" class="arrow"/>
+  <text x="936" y="219" class="edge-label">Backend请求脉冲</text>
+
+  <path d="M750 285 C560 285 350 330 202 400" class="arrow"/>
+  <text x="415" y="319" class="edge-label">PMA允许且device/MMIO</text>
+
+  <path d="M830 337 L570 400" class="arrow"/>
+  <text x="596" y="361" class="edge-label">cacheable + Load hit</text>
+
+  <path d="M920 337 L845 400" class="arrow"/>
+  <text x="854" y="370" class="edge-label">Store hit</text>
+
+  <path d="M1090 292 C1210 305 1225 350 1195 400" class="arrow"/>
+  <text x="1225" y="341" class="edge-label">cacheable miss</text>
+
+  <path d="M775 337 C680 460 560 590 505 690" class="error-arrow"/>
+  <text x="594" y="535" class="edge-label">PMA拒绝</text>
+
+  <path d="M202 482 L202 545" class="arrow"/>
+  <path d="M325 585 C450 600 575 700 700 835" class="arrow"/>
+  <text x="411" y="621" class="edge-label">ack</text>
+  <path d="M202 627 C245 690 290 727 345 731" class="error-arrow"/>
+  <text x="226" y="680" class="edge-label">err</text>
+
+  <path d="M522 482 C555 615 655 748 725 835" class="arrow"/>
+  <path d="M832 482 L800 835" class="arrow"/>
+
+  <path d="M1170 482 L1142 545" class="arrow"/>
+  <text x="1040" y="515" class="edge-label">valid + dirty</text>
+  <path d="M1330 441 C1430 450 1510 480 1552 545" class="arrow"/>
+  <text x="1424" y="455" class="edge-label">invalid或clean</text>
+
+  <path d="M1142 627 L1142 690" class="arrow"/>
+  <path d="M1270 730 C1340 720 1370 620 1430 586" class="arrow"/>
+  <text x="1300" y="686" class="edge-label">写回成功</text>
+  <path d="M1015 730 C825 730 700 730 590 730" class="error-arrow"/>
+  <text x="770" y="716" class="edge-label">写回err，保留victim</text>
+
+  <path d="M1552 627 L1552 690" class="arrow"/>
+  <path d="M1510 772 L1430 835" class="arrow"/>
+  <text x="1460" y="808" class="edge-label">refill成功</text>
+  <path d="M1430 731 C1050 790 720 765 590 742" class="error-arrow"/>
+  <text x="1030" y="785" class="edge-label">refill err，不安装新line</text>
+
+  <path d="M1255 876 L900 876" class="arrow"/>
+  <path d="M655 876 C600 875 600 180 790 151" class="arrow"/>
+  <text x="605" y="520" class="edge-label">响应脉冲后回到IDLE</text>
+  <path d="M467 690 C455 500 570 175 790 151" class="error-arrow"/>
+
+  <!-- fence.i flush path -->
+  <rect x="345" y="1040" width="245" height="82" class="state flush"/>
+  <text x="467" y="1071" class="state-title">FLUSH_SCAN</text>
+  <text x="467" y="1095" class="state-text">顺序扫描8个entry</text>
+
+  <rect x="715" y="1040" width="255" height="82" class="state flush"/>
+  <text x="842" y="1071" class="state-title">FLUSH_WB_REQ</text>
+  <text x="842" y="1095" class="state-text">发送dirty line写回</text>
+
+  <rect x="1095" y="1040" width="255" height="82" class="state flush"/>
+  <text x="1222" y="1071" class="state-title">FLUSH_WB_WAIT</text>
+  <text x="1222" y="1095" class="state-text">等待写回完成</text>
+
+  <rect x="1500" y="1040" width="245" height="82" class="state success"/>
+  <text x="1622" y="1071" class="state-title">FENCE_DONE</text>
+  <text x="1622" y="1095" class="state-text">随后flush ICache</text>
+
+  <rect x="1095" y="1190" width="255" height="72" class="state fault"/>
+  <text x="1222" y="1220" class="state-title">FATAL_WB_ERROR</text>
+  <text x="1222" y="1244" class="state-text">cacheable RAM写回失败</text>
+
+  <path d="M820 187 C650 450 500 750 467 1040" class="flush-arrow"/>
+  <text x="541" y="944" class="edge-label">fence.i请求</text>
+  <path d="M590 1081 L715 1081" class="flush-arrow"/>
+  <text x="617" y="1063" class="edge-label">dirty</text>
+  <path d="M970 1081 L1095 1081" class="flush-arrow"/>
+  <path d="M1222 1040 C1160 970 760 970 510 1040" class="flush-arrow"/>
+  <text x="826" y="986" class="edge-label">ack：清dirty，index++</text>
+  <path d="M467 1122 C450 1170 380 1170 365 1081 C350 990 385 970 430 1040" class="flush-arrow"/>
+  <text x="245" y="1175" class="edge-label">invalid/clean：index++</text>
+  <path d="M590 1105 C890 1160 1260 1150 1500 1095" class="flush-arrow"/>
+  <text x="925" y="1167" class="edge-label">全部entry扫描完成</text>
+  <path d="M1622 1040 C1770 760 1720 220 1050 151" class="flush-arrow"/>
+  <path d="M1222 1122 L1222 1190" class="error-arrow"/>
+  <text x="1238" y="1160" class="edge-label">err</text>
+
+  <!-- Notes -->
+  <rect x="70" y="1160" width="810" height="102" rx="12" ry="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="90" y="1190" class="note">关键提交原则：</text>
+  <text x="90" y="1215" class="note">• victim在writeback/refill全部成功以前不得被覆盖；失败时保持旧entry可恢复。</text>
+  <text x="90" y="1240" class="note">• Store hit立即更新Reg Array并置dirty；Store miss在INSTALL + REPLAY阶段合并。</text>
+</svg>

@@ -6,6 +6,7 @@ import flow.interface._
 import _root_.circt.stage.ChiselStage
 import flow.config.DefaultICacheConfig
 import flow.mem.flowSRAM
+import flow.platform.{BreezeMcuPlatform, PMAAccessType, PMAChecker}
 import svsim.CommonCompilationSettings.Timescale.Unit.s
 
 object BreezePLRU {
@@ -114,6 +115,14 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         val debug = if(enabledebug) Some(new BreezeCacheDebugIO(cacheConfig.VLEN)) else None
     })
     assert(cacheConfig.ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
+    BreezeMcuPlatform.PMARegions.filter(_.supportsExecute).foreach { region =>
+        require(region.cacheable, s"Executable PMA region ${region.name} must be cacheable")
+        require(
+            region.origin % cacheConfig.ICACHE_LINE_BYTES == 0 &&
+            region.size % cacheConfig.ICACHE_LINE_BYTES == 0,
+            s"Executable PMA region ${region.name} must be aligned to the ICache line size"
+        )
+    }
     //initial IO
     //dreq
     io.dreq.ready := false.B
@@ -121,6 +130,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     io.drsp.valid := false.B
     io.drsp.bits.vaddr := 0xdeadbeefL.U
     io.drsp.bits.data := 0xdeadbeefL.U
+    io.drsp.bits.accessFault := false.B
     //next level req
     io.next_level_req.req := false.B
     io.next_level_req.paddr := 0xdeadbeefL.U
@@ -128,13 +138,27 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s0_valid = io.dreq.fire
     val s0_vaddr = io.dreq.bits.vaddr
 
+    // PMA classification runs in parallel with the normal s0 cache-array
+    // request. This MCU only caches instruction fetches from executable,
+    // cacheable physical regions.
+    val fetchPma = Module(new PMAChecker)
+    fetchPma.io.query.addr := io.dreq.bits.vaddr
+    fetchPma.io.query.sizeLog2 := 2.U // RV64I instruction fetch: 4 bytes
+    fetchPma.io.query.accessType := PMAAccessType.Fetch
+
     val s1_valid = RegInit(false.B)
     val s1_vaddr = RegInit(0.U(cacheConfig.VLEN.W))
+    val s1_pma_allowed = RegInit(false.B)
+    val s1_pma_cacheable = RegInit(false.B)
     when(io.flush) {
         s1_valid := false.B
+        s1_pma_allowed := false.B
+        s1_pma_cacheable := false.B
     }.otherwise {
         s1_valid := s0_valid
         s1_vaddr := s0_vaddr
+        s1_pma_allowed := s0_valid && fetchPma.io.result.allowed
+        s1_pma_cacheable := s0_valid && fetchPma.io.result.cacheable
     }
     val s1_tag_hit = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, Bool()))
     val s1_hit = s1_tag_hit.reduce(_ || _)
@@ -159,7 +183,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     val metaReg = RegInit(VecInit(Seq.fill(cacheConfig.ICACHE_SET_NUM)(0.U(cacheConfig.META_WIDTH.W)))) // PLRU, .....valid[1],valid[0]
     //s1 read tag and data
-    val can_read_array = s0_valid
+    val can_read_array = s0_valid && fetchPma.io.result.allowed && fetchPma.io.result.cacheable
     val cacheline_index = index_pos(s0_vaddr, cacheConfig)
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         tag_array(i).io.addr := cacheline_index
@@ -183,6 +207,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s1_tag_hit(i) := s1_vld && tag_match
     }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
+    val s1_pma_fault = s1_valid && (!s1_pma_allowed || !s1_pma_cacheable)
+    val s1_miss = s1_valid && !s1_pma_fault && !s1_hit
     // 当s2有miss需要处理的时候，会阻塞s0,s1的正常运行，直到s2处理完成
     // s2正在处理的时候，不会有其他的访问进入流水线
     val s2_done = WireDefault(false.B) //标志s2的miss处理完成
@@ -204,7 +230,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
             s2_flush_seen := false.B
         }
     }.elsewhen(s1_valid){
-        when(s1_hit){
+        when(s1_pma_fault || s1_hit){
             s2_valid := false.B
         }.otherwise{
             s2_valid := true.B
@@ -240,6 +266,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     //当请求进入s2以后，先发送一个脉冲式的请求，然后就是等待cache line返回
     //之后当cache line长度的数据返回以后，同周期进行数据的写回和meta的更新
     val s2_dout = RegInit(0.U(cacheConfig.FETCH_WIDTH.W))
+    val s2_refill_error = RegInit(false.B)
     //向下一级的存储发送一个脉冲式的请求
     val issue_s2_req_pulse = s2_valid && !s2_req_pulse_done && !io.flush && !s2_flush_seen
 
@@ -247,13 +274,18 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s2_req_pulse_done := false.B
     }.elsewhen(issue_s2_req_pulse) { // 新 miss 进入 s2 的首拍发出请求脉冲
         s2_req_pulse_done := true.B
+        s2_refill_error := false.B
+    }
+
+    when(io.next_level_rsp.vld && wait_rsp) {
+        s2_refill_error := io.next_level_rsp.error
     }
 
     when(s2_done) {
         wait_rsp := false.B
     }.elsewhen(issue_s2_req_pulse) {
         wait_rsp := true.B
-    }.elsewhen(io.next_level_rsp.vld) {
+    }.elsewhen(io.next_level_rsp.vld && wait_rsp) {
         wait_rsp := false.B
     }
 
@@ -262,7 +294,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
     //等待下一级的存储返回数据
     val write_back_en = WireDefault(false.B)
-    write_back_en := io.next_level_rsp.vld && wait_rsp && !io.flush && !s2_flush_seen
+    val refill_response = io.next_level_rsp.vld && wait_rsp
+    write_back_en := refill_response && !io.next_level_rsp.error && !io.flush && !s2_flush_seen
     //数据写回和meta更新
     //覆盖对sram的写
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
@@ -274,8 +307,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         tag_array(i).io.data_in := s2_refill_tag
         tag_array(i).io.we := write_back_en && s2_wt_en_OH(i)
     }
-    val s2_refill_done = RegNext(io.next_level_rsp.vld, false.B)
-    when(io.next_level_rsp.vld){
+    val s2_refill_done = RegNext(refill_response, false.B)
+    when(refill_response && !io.next_level_rsp.error){
         s2_dout := io.next_level_rsp.data >> (s2_word_offset * cacheConfig.FETCH_WIDTH.U)
     }
     //在更新完数据和tag以后，更新meta
@@ -283,14 +316,14 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         for(i <- 0 until cacheConfig.ICACHE_SET_NUM){
             metaReg(i) := 0.U
         }
-    }.elsewhen(s2_req_pulse_done && wait_rsp && io.next_level_rsp.vld && !s2_flush_seen){
+    }.elsewhen(s2_req_pulse_done && write_back_en){
         metaReg(s2_index) := s2_new_plru_vec(2,0) ## s2_new_valid_vec(3,0) // PLRU位在高位，valid位在低位，默认4 ways
         //printf(p"*********************s2 refill done, update meta: index=0x${Hexadecimal(s2_index)}, new_meta=0b${Binary(s2_new_plru_vec)}_${Binary(s2_new_valid_vec)}\n")
     }
     s2_done := s2_refill_done
 
     //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
-    val stop_new_req = s1_valid && !s1_hit || s2_valid && !s2_done
+    val stop_new_req = s1_miss || s2_valid && !s2_done
     io.dreq.ready := !io.flush && ~(stop_new_req) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
     
     def index_pos(vaddr:UInt,cfg:DefaultICacheConfig): UInt = {
@@ -301,15 +334,23 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     when(!io.flush && !s2_flush_seen && s2_valid && s2_done){
         io.drsp.valid := true.B
         io.drsp.bits.vaddr := s2_vaddr
-        io.drsp.bits.data := s2_dout
+        io.drsp.bits.data := Mux(s2_refill_error, 0.U, s2_dout)
+        io.drsp.bits.accessFault := s2_refill_error
+    }.elsewhen(!io.flush && s1_pma_fault){
+        io.drsp.valid := true.B
+        io.drsp.bits.vaddr := s1_vaddr
+        io.drsp.bits.data := 0.U
+        io.drsp.bits.accessFault := true.B
     }.elsewhen(!io.flush && s1_valid && s1_hit){
         io.drsp.valid := true.B
         io.drsp.bits.vaddr := s1_vaddr
         io.drsp.bits.data := s1_dout
+        io.drsp.bits.accessFault := false.B
     }.otherwise{
         io.drsp.valid := false.B
         io.drsp.bits.vaddr := 0.U
         io.drsp.bits.data := 0.U
+        io.drsp.bits.accessFault := false.B
     }
 
     if(enabledebug){

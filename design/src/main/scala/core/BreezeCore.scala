@@ -15,6 +15,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
         val dmem = new BackendMemIO(corecfg.VLEN)
+        val dcacheFlushReq = Output(Bool())
+        val dcacheFlushDone = Input(Bool())
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
         val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
@@ -40,6 +42,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     backend.io.resetAddr := io.resetAddr
     io.estop := backend.io.estop
     io.dmem <> backend.io.dmem
+    io.dcacheFlushReq := backend.io.dcacheFlushReq
+    backend.io.dcacheFlushDone := io.dcacheFlushDone
     io.tandem.zip(backend.io.tandem).foreach { case (coreTandem, backendTandem) =>
         coreTandem := backendTandem
     }
@@ -56,6 +60,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         fasebuffer.io.in.valid := fase.inst_valid
         fasebuffer.io.in.bits.pc := 0.U
         fasebuffer.io.in.bits.inst := fase.instruction
+        fasebuffer.io.in.bits.instructionAccessFault := false.B
         fasebuffer.io.in.bits.pred.predType := FrontendPredType.NONE
         fasebuffer.io.in.bits.pred.predTaken := false.B
         fasebuffer.io.in.bits.pred.predPc := 0.U

@@ -298,6 +298,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.io.resetAddr.poke(bootAddr.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.nextLevelRsp.error.poke(false.B)
             dut.io.dmem.rsp.valid.poke(false.B)
             dut.io.dmem.rsp.data.poke(0.U)
             dut.io.dmem.rsp.isWriteAck.poke(false.B)
@@ -309,6 +310,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             while (!dut.io.estop.peek().litToBoolean && cycleCount < maxCycles) {
                 dut.io.nextLevelRsp.vld.poke(false.B)
                 dut.io.nextLevelRsp.data.poke(0.U)
+                dut.io.nextLevelRsp.error.poke(false.B)
                 dut.io.dmem.rsp.valid.poke(false.B)
                 dut.io.dmem.rsp.data.poke(0.U)
                 dut.io.dmem.rsp.isWriteAck.poke(false.B)

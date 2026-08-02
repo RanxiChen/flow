@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "platform": "breeze-mcu-v1",
+  "addressWidth": 32,
+  "resetVector": "0x10000000",
+  "regions": [
+    {"name": "machine_timer", "origin": "0x02000000", "size": "0x00010000", "readable": true, "writable": true, "executable": false, "cacheable": false, "device": true},
+    {"name": "boot_rom", "origin": "0x10000000", "size": "0x00010000", "readable": true, "writable": false, "executable": true, "cacheable": true, "device": false},
+    {"name": "sram", "origin": "0x11000000", "size": "0x00040000", "readable": true, "writable": true, "executable": true, "cacheable": true, "device": false},
+    {"name": "litex_mmio", "origin": "0x12000000", "size": "0x01000000", "readable": true, "writable": true, "executable": false, "cacheable": false, "device": true},
+    {"name": "main_ram", "origin": "0x80000000", "size": "0x02000000", "readable": true, "writable": true, "executable": true, "cacheable": true, "device": false}
+  ],
+  "reservedRegions": [
+    {"name": "plic", "origin": "0x0c000000", "size": "0x04000000", "implemented": false}
+  ],
+  "machineTimer": {
+    "region": "machine_timer",
+    "mtimecmpOffset": "0x00004000",
+    "mtimeOffset": "0x0000bff8",
+    "interrupt": "mtip"
+  },
+  "mmioPages": [
+    {"name": "soc_ctrl", "origin": "0x12000000", "size": "0x00001000"},
+    {"name": "uart", "origin": "0x12001000", "size": "0x00001000"},
+    {"name": "gpio0", "origin": "0x12002000", "size": "0x00001000"},
+    {"name": "gpio1", "origin": "0x12003000", "size": "0x00001000"},
+    {"name": "gpio2", "origin": "0x12004000", "size": "0x00001000"},
+    {"name": "gpio3", "origin": "0x12005000", "size": "0x00001000"}
+  ],
+  "externalInterrupts": {
+    "width": 8,
+    "aggregation": "or_reduce_to_meip",
+    "sources": [
+      {"index": 0, "name": "uart"},
+      {"index": 1, "name": "gpio0"},
+      {"index": 2, "name": "gpio1"},
+      {"index": 3, "name": "gpio2"},
+      {"index": 4, "name": "gpio3"},
+      {"index": 5, "name": "reserved"},
+      {"index": 6, "name": "reserved"},
+      {"index": 7, "name": "reserved"}
+    ]
+  }
+}

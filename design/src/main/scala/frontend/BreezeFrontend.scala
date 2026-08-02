@@ -125,6 +125,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s3_validReg = RegInit(false.B)
     val s3_pcReg = Reg(UInt(cfg.VLEN.W))
     val s3_instReg = RegInit(0.U(32.W))
+    val s3_accessFaultReg = RegInit(false.B)
 
     // ===== GShare S3 Metadata =====
     val s3_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
@@ -272,10 +273,12 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
     // 如果下一拍又有新的返回，S3 会直接被新的返回覆盖。
     s3_validReg := false.B
+    s3_accessFaultReg := false.B
     when(!reset.asBool && !redirectValid && s2_respValid) {
         s3_validReg := true.B
         s3_pcReg := s2_pcReg
         s3_instReg := icache.io.drsp.bits.data
+        s3_accessFaultReg := icache.io.drsp.bits.accessFault
         if (isGShare) {
             s3_ghrSnapshotReg.get := s2_ghrSnapshotReg.get
             s3_predTakenReg.get := s2_predTakenReg.get
@@ -297,6 +300,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     io.fetchBuffer.valid := s3_validReg
     io.fetchBuffer.bits.pc := s3_pcReg
     io.fetchBuffer.bits.inst := s3_instReg
+    io.fetchBuffer.bits.instructionAccessFault := s3_accessFaultReg
 
     io.fetchBuffer.bits.pred.predType := s3_finalPredType
     io.fetchBuffer.bits.pred.predTaken := s3_finalPredTaken
