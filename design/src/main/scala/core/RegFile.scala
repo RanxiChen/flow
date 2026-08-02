@@ -179,6 +179,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
     val coreinst = RegInit(0.U(XLEN.W))
+    val mcycle = RegInit(0.U(XLEN.W))
+    val minstret = RegInit(0.U(XLEN.W))
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 8) // RV64I
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
@@ -237,7 +239,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         BitPat(CSRMAP.mscratch.U) -> mscratch,
         BitPat(CSRMAP.mstatus.U)  -> mstatus_read,
         BitPat(CSRMAP.mie.U)      -> mie_read,
-        BitPat(CSRMAP.mip.U)      -> mip_read
+        BitPat(CSRMAP.mip.U)      -> mip_read,
+        BitPat(CSRMAP.mcycle.U)   -> mcycle,
+        BitPat(CSRMAP.minstret.U) -> minstret,
+        BitPat(CSRMAP.cycle.U)    -> mcycle,
+        BitPat(CSRMAP.instret.U)  -> minstret
     )
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
@@ -328,8 +334,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.mtvec.U){
-                // This core supports mtvec Direct mode only. MODE is WARL=0.
-                mtvec := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
+                // Direct (0) and Vectored (1) are supported. Reserved MODE
+                // values are WARL-coerced to Direct.
+                val requestedMode = io.commit_wdata(1, 0)
+                val legalMode = Mux(requestedMode === 1.U, 1.U(2.W), 0.U(2.W))
+                mtvec := Cat(io.commit_wdata(XLEN - 1, 2), legalMode)
                 if(dumplog){
                     printf(cf"[INFO] mtvec = 0x${io.commit_wdata}%x\n")
                 }
@@ -373,11 +382,29 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             is(CSRMAP.mip.U){
                 // MTIP and MEIP are read-only reflections of platform inputs.
             }
+            is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
+                // Updated below so an explicit CSR write has priority over
+                // the automatic per-cycle/per-retirement increments.
+            }
         }
     }
     // 更新寄存器的值
     when(io.retire_valid){
         coreinst := coreinst + 1.U
+    }
+    val writeMcycle = io.commit_valid && io.commit_write_en &&
+        !io.trap.valid && io.commit_addr === CSRMAP.mcycle.U
+    val writeMinstret = io.commit_valid && io.commit_write_en &&
+        !io.trap.valid && io.commit_addr === CSRMAP.minstret.U
+    when(writeMcycle) {
+        mcycle := io.commit_wdata
+    }.otherwise {
+        mcycle := mcycle + 1.U
+    }
+    when(writeMinstret) {
+        minstret := io.commit_wdata
+    }.elsewhen(io.retire_valid) {
+        minstret := minstret + 1.U
     }
     // Trap entry: record pc/cause, update mstatus
     when(io.trap.valid){

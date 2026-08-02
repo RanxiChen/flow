@@ -62,6 +62,10 @@ ICACHE_LINE_BYTES = 32
 SMOKE_MAIN_RAM_ADDRESS = 0x8000_0000
 SMOKE_MEMORY_PATTERN = 0x0123_4567_89ab_cdef
 SMOKE_INITIAL_SP = 0x1104_0000
+MCU_RESULT_ADDRESS = 0x1100_0000
+MCU_PASS_MAGIC = 0x4252_4545_5a45_5001
+MCU_FAIL_MAGIC = 0x4252_4545_5a45_f001
+MRET_INSTRUCTION = 0x3020_0073
 
 
 _IO = [
@@ -377,6 +381,108 @@ class RetireMonitor(Module):
             ]
 
 
+class McuCompletionMonitor(Module):
+    """Finite pass/fail monitor for the reusable MCU firmware runtime."""
+
+    def __init__(self, retire, check_kind="generic", irq_source=None,
+                 expected_vector_pc=None, timeout_cycles=20000):
+        if check_kind not in ("generic", "timer", "uart"):
+            raise ValueError(f"Unsupported MCU completion kind: {check_kind}")
+        if timeout_cycles <= 0:
+            raise ValueError("MCU completion timeout must be greater than zero")
+        if check_kind != "generic" and irq_source is None:
+            raise ValueError("Interrupt completion checks require an IRQ source")
+
+        label = check_kind.upper()
+        cycle = Signal(32)
+        source_seen = Signal(reset=0)
+        vector_seen = Signal(reset=0)
+        mret_seen = Signal(reset=0)
+        result_address = Signal(64)
+        pass_magic = Signal(64)
+        fail_magic = Signal(64)
+        expected_vector = Signal(64)
+        proof_complete = Signal()
+
+        proof_expression = 1
+        if irq_source is not None:
+            proof_expression = source_seen & mret_seen
+        if expected_vector_pc is not None:
+            proof_expression = proof_expression & vector_seen
+
+        self.comb += [
+            result_address.eq(MCU_RESULT_ADDRESS),
+            pass_magic.eq(MCU_PASS_MAGIC),
+            fail_magic.eq(MCU_FAIL_MAGIC),
+            expected_vector.eq(0 if expected_vector_pc is None else expected_vector_pc),
+            proof_complete.eq(proof_expression),
+        ]
+
+        result_store = (
+            retire.valid & retire.mem_en & retire.mem_is_write &
+            (retire.mem_addr == result_address)
+        )
+
+        self.sync += cycle.eq(cycle + 1)
+
+        if irq_source is not None:
+            self.sync += If(irq_source & ~source_seen,
+                source_seen.eq(1),
+                Display(f"[{label}-SRC] interrupt source asserted cycle=%d", cycle)
+            )
+
+        if expected_vector_pc is not None:
+            self.sync += If(retire.valid & (retire.pc == expected_vector),
+                vector_seen.eq(1),
+                Display(
+                    f"[{label}-VECTOR] expected vector slot retired "
+                    "cycle=%d pc=0x%x", cycle, retire.pc)
+            )
+
+        self.sync += [
+            If(retire.valid & (retire.inst == MRET_INSTRUCTION),
+                mret_seen.eq(1),
+                Display(f"[{label}-MRET] handler returned cycle=%d", cycle),
+                *([
+                    If(irq_source,
+                        Display(
+                            f"[{label}-FAIL] source still asserted at mret"),
+                        Finish()
+                    )
+                ] if irq_source is not None else [])
+            ),
+
+            If(result_store,
+                If(retire.mem_wdata == fail_magic,
+                    Display(f"[{label}-FAIL] firmware reported failure"),
+                    Finish()
+                ).Elif(retire.mem_wdata != pass_magic,
+                    Display(
+                        f"[{label}-FAIL] unexpected completion signature 0x%x",
+                        retire.mem_wdata),
+                    Finish()
+                ).Elif(~proof_complete,
+                    Display(
+                        f"[{label}-FAIL] incomplete proof source_seen=%d "
+                        "vector_seen=%d mret_seen=%d",
+                        source_seen, vector_seen, mret_seen),
+                    Finish()
+                ).Else(
+                    Display(f"[{label}-PASS] MCU firmware completed"),
+                    Finish()
+                )
+            ),
+
+            If(cycle >= (timeout_cycles - 1),
+                Display(
+                    f"[{label}-TIMEOUT] cycle=%d source_seen=%d "
+                    "vector_seen=%d mret_seen=%d",
+                    cycle, source_seen, vector_seen, mret_seen),
+                Finish()
+            )
+        ]
+
+
 class BreezeSimSoC(SoCCore):
     """Minimal Breeze MCU SoC matching breeze_mcu_platform.json."""
 
@@ -403,7 +509,9 @@ class BreezeSimSoC(SoCCore):
                  stop_after_first_fetch=False, debug_retire=False,
                  first_retire_timeout=200, stop_after_first_retire=False,
                  check_smoke_memory=False, memory_timeout=10000,
-                 retire_log_limit=64, retire_stall_timeout=500, **kwargs):
+                 retire_log_limit=64, retire_stall_timeout=500,
+                 check_mcu_completion=None, expected_trap_vector=None,
+                 mtvec_mode="direct", mcu_timeout=20000, **kwargs):
         platform = Platform()
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core. A clock-only domain leaves the core's
@@ -482,6 +590,34 @@ class BreezeSimSoC(SoCCore):
         self.add_constant("BREEZE_MTIMECMP", MACHINE_TIMER_ORIGIN + MTIMECMP_OFFSET)
         self.add_constant("BREEZE_MTIME_FREQUENCY", MTIME_FREQUENCY_HZ)
 
+        if check_mcu_completion is not None:
+            irq_source = None
+            expected_vector_pc = None
+            if check_mcu_completion == "timer":
+                irq_source = self.machine_timer.mtip
+                cause = 7
+            elif check_mcu_completion == "uart":
+                irq_source = self.cpu.interrupt[0]
+                cause = 11
+            elif check_mcu_completion != "generic":
+                raise ValueError(
+                    f"Unsupported MCU completion kind: {check_mcu_completion}")
+
+            if check_mcu_completion != "generic":
+                if expected_trap_vector is None:
+                    raise ValueError(
+                        "Interrupt completion checks require the trap vector base")
+                vector_offset = 4 * cause if mtvec_mode == "vectored" else 0
+                expected_vector_pc = expected_trap_vector + vector_offset
+
+            self.submodules.mcu_completion_monitor = McuCompletionMonitor(
+                retire=self.cpu.retire,
+                check_kind=check_mcu_completion,
+                irq_source=irq_source,
+                expected_vector_pc=expected_vector_pc,
+                timeout_cycles=mcu_timeout,
+            )
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -512,6 +648,15 @@ def main():
         help="Number of initial retirements printed (default: 64).")
     parser.add_argument("--retire-stall-timeout", type=int, default=500,
         help="Cycles without retirement before smoke check fails.")
+    parser.add_argument("--check-mcu-completion",
+        choices=("generic", "timer", "uart"),
+        help="Run a finite reusable-MCU firmware completion check.")
+    parser.add_argument("--expected-trap-vector", type=lambda value: int(value, 0),
+        help="Address of breeze_trap_vector from the firmware ELF.")
+    parser.add_argument("--mtvec-mode", choices=("direct", "vectored"),
+        default="direct", help="Firmware mtvec mode (default: direct).")
+    parser.add_argument("--mcu-timeout", type=int, default=20000,
+        help="Cycles before an MCU firmware check times out (default: 20000).")
     parser.add_argument("--output-dir", default="build/litex-sim",
         help="LiteX output directory (default: build/litex-sim).")
     args = parser.parse_args()
@@ -546,6 +691,12 @@ def main():
         parser.error("--retire-log-limit must not be negative")
     if args.retire_stall_timeout <= 0:
         parser.error("--retire-stall-timeout must be greater than zero")
+    if args.mcu_timeout <= 0:
+        parser.error("--mcu-timeout must be greater than zero")
+    if args.check_mcu_completion in ("timer", "uart") and \
+       args.expected_trap_vector is None:
+        parser.error(
+            "interrupt MCU checks require --expected-trap-vector")
 
     soc = BreezeSimSoC(
         rom_init=rom_init,
@@ -559,6 +710,10 @@ def main():
         memory_timeout=args.memory_timeout,
         retire_log_limit=args.retire_log_limit,
         retire_stall_timeout=args.retire_stall_timeout,
+        check_mcu_completion=args.check_mcu_completion,
+        expected_trap_vector=args.expected_trap_vector,
+        mtvec_mode=args.mtvec_mode,
+        mcu_timeout=args.mcu_timeout,
     )
     builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
     builder.build(
