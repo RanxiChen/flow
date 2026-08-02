@@ -223,3 +223,20 @@ bridge 和 `BreezeDCache` 等子模块。
   时序语义，待完整编译通过后再统一处理。
 
 该修复完成后尚未在本地或远端重新运行 LiteX/Verilator。
+
+### 首次运行无 UART 输出：仿真上电复位
+
+补齐 split RTL 后 Verilator 已成功编译、链接并启动，但持续占用 CPU 且没有
+smoke 固件的 UART 输出。远端现场确认：
+
+- `breeze-smoke.bin` 为 352 字节，LiteX 生成的 `sim_rom.init` 非空且首条
+  指令内容正确；
+- 仿真进程持续运行，说明不是编译失败或 ROM 文件缺失；
+- 原项目自建 `SimCRG` 只连接 `sys_clk`，生成的 `sys_rst` 从初值零开始且从未
+  拉高；
+- Chisel 前端的 `s1_pcReg` 只在同步 reset 时装载 `io_resetAddr`，因此没有
+  上电复位就不能保证从 `0x10000000` 启动。
+
+修正为直接使用 LiteX 标准 `CRG`。该 CRG 通过独立的 reset-less `por` 时钟域
+产生 power-on reset pulse，再驱动 `cd_sys.rst`，满足 Chisel 核的同步复位
+要求。修正后尚未重新运行仿真。

@@ -6,9 +6,8 @@ import json
 import os
 import sys
 
-from migen import ClockDomain, Module
-
 from litex.build.generic_platform import Pins, Subsignal
+from litex.build.io import CRG
 from litex.build.sim import SimPlatform
 from litex.build.sim.config import SimConfig
 from litex.soc.cores.cpu import CPUS
@@ -72,12 +71,6 @@ class Platform(SimPlatform):
         super().__init__("SIM", _IO)
 
 
-class SimCRG(Module):
-    def __init__(self, sys_clk):
-        self.clock_domains.cd_sys = ClockDomain()
-        self.comb += self.cd_sys.clk.eq(sys_clk)
-
-
 class BreezeSimSoC(SoCCore):
     """Minimal Breeze MCU SoC matching breeze_mcu_platform.json."""
 
@@ -101,7 +94,10 @@ class BreezeSimSoC(SoCCore):
 
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None, **kwargs):
         platform = Platform()
-        self.submodules.crg = SimCRG(platform.request("sys_clk"))
+        # LiteX's CRG supplies the power-on reset pulse required by the
+        # synchronous-reset Chisel core. A clock-only domain leaves the core's
+        # architectural state, including its reset PC, uninitialized.
+        self.submodules.crg = CRG(platform.request("sys_clk"))
 
         super().__init__(
             platform,
