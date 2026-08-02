@@ -9,8 +9,9 @@ import flow.config.BreezeCoreConfigs
   *
   *   sbt elaborate
   *
-  * The stable output is build/rtl/BreezeCoreWishbone.sv. LiteX integration is
-  * deliberately outside this App and will be designed separately.
+  * The stable output is the split SystemVerilog set named by
+  * build/rtl/filelist.f. BreezeCoreWishbone.sv remains the top-level module.
+  * LiteX integration consumes the manifest rather than guessing submodules.
   */
 object GenerateBreezeCoreWishbone extends App {
   ChiselStage.emitSystemVerilogFile(

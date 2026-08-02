@@ -70,6 +70,7 @@ class Flow(CPU):
         self.periph_buses = [ibus, dbus] # Independent instruction/data masters.
         self.memory_buses = [] # No bus bypasses the shared LiteX interconnect.
         self.dcache_fatal_error = Signal()
+        self.estop = Signal()
         self.interrupt = Signal(8)
         self.mtip = Signal()
 
@@ -106,6 +107,7 @@ class Flow(CPU):
             o_io_dWishbone_bte   = dbus.bte,
             i_io_dWishbone_err   = dbus.err,
             o_io_dcacheFatalError = self.dcache_fatal_error,
+            o_io_estop = self.estop,
             i_io_resetAddr = Constant(0, 64),
         )
 
@@ -119,17 +121,36 @@ class Flow(CPU):
     def add_sources(platform):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         flow_root_dir = os.path.dirname(os.path.dirname(current_dir))
-        rtl_file = os.path.join(
-            flow_root_dir, "design", "build", "rtl", "BreezeCoreWishbone.sv")
-        if not os.path.exists(rtl_file):
+        rtl_dir = os.path.join(flow_root_dir, "design", "build", "rtl")
+        filelist = os.path.join(rtl_dir, "filelist.f")
+        if not os.path.exists(filelist):
             raise FileNotFoundError(
-                "BreezeCore RTL has not been elaborated. Expected:\n"
-                f"  {rtl_file}\n"
+                "BreezeCore RTL manifest has not been elaborated. Expected:\n"
+                f"  {filelist}\n"
                 "Generate it with:\n"
                 f"  cd {os.path.join(flow_root_dir, 'design')} && sbt elaborate"
             )
 
-        platform.add_source(rtl_file)
+        with open(filelist, encoding="utf-8") as rtl_manifest:
+            rtl_names = [
+                line.split("#", 1)[0].strip()
+                for line in rtl_manifest
+                if line.split("#", 1)[0].strip()
+            ]
+
+        if not rtl_names:
+            raise RuntimeError(f"BreezeCore RTL manifest is empty: {filelist}")
+
+        rtl_files = [os.path.join(rtl_dir, name) for name in rtl_names]
+        missing_files = [path for path in rtl_files if not os.path.isfile(path)]
+        if missing_files:
+            missing = "\n".join(f"  {path}" for path in missing_files)
+            raise FileNotFoundError(
+                "BreezeCore RTL manifest references missing files:\n" + missing
+            )
+
+        for rtl_file in rtl_files:
+            platform.add_source(rtl_file)
 
     def do_finalize(self):
         assert hasattr(self, "reset_address")
