@@ -222,6 +222,20 @@ class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
     val tval         = UInt(XLEN.W)
 }
 
+/** One-cycle occurrence pulses plus per-cycle stall levels consumed by HPM. */
+class BreezeHpmEvents extends Bundle {
+    val controlRetired = Bool()
+    val controlTaken = Bool()
+    val predictionMiss = Bool()
+    val icacheAccess = Bool()
+    val icacheMiss = Bool()
+    val dcacheAccess = Bool()
+    val dcacheMiss = Bool()
+    val dcacheUncached = Bool()
+    val memStallCycle = Bool()
+    val loadUseStall = Bool()
+}
+
 class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {
     val mcause = Output(UInt(XLEN.W))
     val mepc   = Output(UInt(XLEN.W))
@@ -272,6 +286,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val wb_sel = UInt(SEL_WB.width.W)
     val actual_taken = Bool()
     val actual_target = UInt(VLEN.W)
+    val prediction_miss = Bool()
     val trace = if (enableTandem) Some(new TracePayload(VLEN)) else None
 }
 
@@ -299,6 +314,7 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val csr_addr = UInt(12.W)
     val csr_new_data = UInt(VLEN.W)
     val csr_write_en = Bool()
+    val prediction_miss = Bool()
     val trace = if (enableTandem) Some(new TracePayload(VLEN)) else None
 }
 

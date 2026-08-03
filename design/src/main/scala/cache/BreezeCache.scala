@@ -112,8 +112,10 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         val flush = Input(Bool())
         val next_level_req = new L1CacheMissReqIO(cacheConfig.PLEN)
         val next_level_rsp = new L1CacheMissRespIO(cacheConfig.ICACHE_LINE_WIDTH)
+        val hpm = Output(new BreezeHpmEvents)
         val debug = if(enabledebug) Some(new BreezeCacheDebugIO(cacheConfig.VLEN)) else None
     })
+    io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
     assert(cacheConfig.ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
     BreezeMcuPlatform.PMARegions.filter(_.supportsExecute).foreach { region =>
         require(region.cacheable, s"Executable PMA region ${region.name} must be cacheable")
@@ -269,6 +271,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s2_refill_error = RegInit(false.B)
     //向下一级的存储发送一个脉冲式的请求
     val issue_s2_req_pulse = s2_valid && !s2_req_pulse_done && !io.flush && !s2_flush_seen
+    io.hpm.icacheAccess := s0_valid
+    io.hpm.icacheMiss := issue_s2_req_pulse
 
     when(s2_done) { // 当前 miss 结束，给下一笔 miss 重新打开请求脉冲
         s2_req_pulse_done := false.B

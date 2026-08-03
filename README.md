@@ -20,6 +20,8 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 - 通用裸机 runtime：启动、栈、`.data`/`.bss`、trap frame、UART/Timer API；
 - `main()` 返回后通过 SRAM completion mailbox 结束仿真，不依赖 UART 文本解析，
   也不引入自定义停止指令或 IPC MMIO。
+- M-mode PMU 提供 `mcycle`、`minstret` 和 8 个可编程 HPM counter，统计控制流、
+  预测失败、Cache miss、uncached 访问和访存停顿；runner 自动计算 IPC。
 
 默认 LiteX 顶层使用 baseline 配置，不启用分支预测。代码中保留了可选 GShare 配置，
 但它不是当前通用 MCU 仿真的默认参数。
@@ -124,13 +126,22 @@ python3 sim/litex/run_mcu.py --main hello.c
 2. 按 `RV64I_Zicsr_Zifencei` 链接固件并生成 ELF、binary、反汇编和符号表；
 3. 将 binary 加载到 `0x1000_0000` Boot ROM；
 4. 生成并运行 LiteX/Verilator 仿真；
-5. 等待 `main()` 返回以及 completion store 退休，然后输出 PASS/FAIL 并结束。
+5. 等待 `main()` 返回以及 completion store 退休，输出 PASS/FAIL、PMU 和 IPC 并结束。
 
 `main()` 返回 `0` 表示成功，非零表示失败。正常结束时可以看到：
 
 ```text
+BREEZE_PERF cycles=<cycles> instructions=<instructions>
+BREEZE_PMU cycles=<cycles> instructions=<instructions> control=<count> taken=<count> pred_miss=<count> icache_miss=<count> dcache_access=<count> dcache_miss=<count> uncached=<count> mem_stall=<cycles>
 [GENERIC-PASS] MCU firmware completed
+BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
+BREEZE_METRICS prediction_miss_rate=<ratio> icache_mpki=<value> dcache_miss_rate=<ratio> memory_stall_ratio=<ratio>
 ```
+
+runtime 通过 `mcountinhibit` 在 `main()` 前配置、清零并启动架构 PMU，在 `main()` 返回后
+冻结计数器并把快照写入 linker 保留的 SRAM。monitor 捕获这些退休 store 后打印结果；
+统计不经过 UART，也不影响 completion 判定。IPC 使用 PMU 的 `minstret/mcycle`，包含
+调用/返回 `main()` 的固定少量胶水指令，适合相同固件和 SoC 参数下的相对比较。
 
 UART 文本只用于观察程序行为，不决定仿真是否成功。若要生成波形，可增加
 `--trace`：
@@ -163,4 +174,6 @@ python3 sim/litex/run_mcu.py --smoke uart  --mtvec-mode vectored
 - [MCU 总体目标](docs/breeze-mcu-target.md)
 - [LiteX 仿真和调试选项](sim/litex/README.md)
 - [裸机 runtime 与固件模板](software/breeze-mcu/README.md)
+- [GShare 当前状态](docs/gshare-status.md)
+- [M-mode PMU 与事件定义](docs/pmu.md)
 - [开发记录](docs/worklog.md)

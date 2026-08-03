@@ -165,6 +165,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val commit_wdata = Input(UInt(XLEN.W))
         val commit_write_en = Input(Bool())
         val retire_valid = Input(Bool())
+        val hpmEvents = Input(new BreezeHpmEvents)
         val machineTimerInterrupt = Input(Bool())
         val machineExternalInterrupt = Input(Bool())
         val trap = Input(new CSRTrapInfo(XLEN))
@@ -181,6 +182,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val coreinst = RegInit(0.U(XLEN.W))
     val mcycle = RegInit(0.U(XLEN.W))
     val minstret = RegInit(0.U(XLEN.W))
+    private val implementedHpmCounters = 8
+    val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
+    val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
+    val mcountinhibit = RegInit(0.U(32.W))
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 8) // RV64I
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
@@ -244,8 +249,13 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         csrPattern(CSRMAP.mcycle)   -> mcycle,
         csrPattern(CSRMAP.minstret) -> minstret,
         csrPattern(CSRMAP.cycle)    -> mcycle,
-        csrPattern(CSRMAP.instret)  -> minstret
-    )
+        csrPattern(CSRMAP.instret)  -> minstret,
+        csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit
+    ) ++ (0 until implementedHpmCounters).flatMap { index => Seq(
+        csrPattern(CSRMAP.mhpmcounter3 + index) -> mhpmcounter(index),
+        csrPattern(CSRMAP.hpmcounter3 + index) -> mhpmcounter(index),
+        csrPattern(CSRMAP.mhpmevent3 + index) -> mhpmevent(index)
+    ) }
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
     val read_csr = Wire(Bool())
@@ -387,6 +397,21 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 // Updated below so an explicit CSR write has priority over
                 // the automatic per-cycle/per-retirement increments.
             }
+            is(CSRMAP.mcountinhibit.U) {
+                val supportedMask = ((BigInt(1) << 0) | (BigInt(1) << 2) |
+                    ((BigInt(1) << implementedHpmCounters) - 1) << 3).U(32.W)
+                mcountinhibit := io.commit_wdata(31, 0) & supportedMask
+            }
+        }
+    }
+    for (index <- 0 until implementedHpmCounters) {
+        val writeSelector = io.commit_valid && io.commit_write_en &&
+            !io.trap.valid && io.commit_addr === (CSRMAP.mhpmevent3 + index).U
+        when(writeSelector) {
+            mhpmevent(index) := Mux(
+                io.commit_wdata <= BREEZE_HPM_EVENT.LOAD_USE_STALL.U,
+                io.commit_wdata,
+                0.U)
         }
     }
     // 更新寄存器的值
@@ -399,13 +424,34 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         !io.trap.valid && io.commit_addr === CSRMAP.minstret.U
     when(writeMcycle) {
         mcycle := io.commit_wdata
-    }.otherwise {
+    }.elsewhen(!mcountinhibit(0)) {
         mcycle := mcycle + 1.U
     }
     when(writeMinstret) {
         minstret := io.commit_wdata
-    }.elsewhen(io.retire_valid) {
+    }.elsewhen(io.retire_valid && !mcountinhibit(2)) {
         minstret := minstret + 1.U
+    }
+    def selectedHpmEvent(selector: UInt): Bool = MuxLookup(selector, false.B)(Seq(
+        BREEZE_HPM_EVENT.CONTROL_RETIRED.U -> io.hpmEvents.controlRetired,
+        BREEZE_HPM_EVENT.CONTROL_TAKEN.U -> io.hpmEvents.controlTaken,
+        BREEZE_HPM_EVENT.PREDICTION_MISS.U -> io.hpmEvents.predictionMiss,
+        BREEZE_HPM_EVENT.ICACHE_ACCESS.U -> io.hpmEvents.icacheAccess,
+        BREEZE_HPM_EVENT.ICACHE_MISS.U -> io.hpmEvents.icacheMiss,
+        BREEZE_HPM_EVENT.DCACHE_ACCESS.U -> io.hpmEvents.dcacheAccess,
+        BREEZE_HPM_EVENT.DCACHE_MISS.U -> io.hpmEvents.dcacheMiss,
+        BREEZE_HPM_EVENT.DCACHE_UNCACHED.U -> io.hpmEvents.dcacheUncached,
+        BREEZE_HPM_EVENT.MEM_STALL_CYCLE.U -> io.hpmEvents.memStallCycle,
+        BREEZE_HPM_EVENT.LOAD_USE_STALL.U -> io.hpmEvents.loadUseStall
+    ))
+    for (index <- 0 until implementedHpmCounters) {
+        val writeCounter = io.commit_valid && io.commit_write_en &&
+            !io.trap.valid && io.commit_addr === (CSRMAP.mhpmcounter3 + index).U
+        when(writeCounter) {
+            mhpmcounter(index) := io.commit_wdata
+        }.elsewhen(!mcountinhibit(index + 3) && selectedHpmEvent(mhpmevent(index))) {
+            mhpmcounter(index) := mhpmcounter(index) + 1.U
+        }
     }
     // Trap entry: record pc/cause, update mstatus
     when(io.trap.valid){

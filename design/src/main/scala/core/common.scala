@@ -186,7 +186,6 @@ object CSRMAP{
    val hpmcounter29= 0xc1d
    val hpmcounter30= 0xc1e
    val hpmcounter31= 0xc1f
-
    val sstatus     = 0x100
    val sie         = 0x104
    val stvec       = 0x105
@@ -299,6 +298,31 @@ object CSRMAP{
    val mhpmcounter30=0xb1e
    val mhpmcounter31=0xb1f
    val mcountinhibit=0x320
+   val mhpmevent3  =0x323
+   val mhpmevent4  =0x324
+   val mhpmevent5  =0x325
+   val mhpmevent6  =0x326
+   val mhpmevent7  =0x327
+   val mhpmevent8  =0x328
+   val mhpmevent9  =0x329
+   val mhpmevent10 =0x32a
+}
+
+/** Breeze platform-defined mhpmevent encodings. Event zero is reserved by
+  * the privileged architecture to mean "no event".
+  */
+object BREEZE_HPM_EVENT {
+   val NONE             = 0
+   val CONTROL_RETIRED  = 1
+   val CONTROL_TAKEN    = 2
+   val PREDICTION_MISS  = 3
+   val ICACHE_ACCESS    = 4
+   val ICACHE_MISS      = 5
+   val DCACHE_ACCESS    = 6
+   val DCACHE_MISS      = 7
+   val DCACHE_UNCACHED  = 8
+   val MEM_STALL_CYCLE  = 9
+   val LOAD_USE_STALL   = 10
 }
 
 object SIM_SYSTEM {

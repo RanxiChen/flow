@@ -26,6 +26,8 @@ SECTIONS
     {
         __breeze_result = .;
         . += 8;
+        __breeze_pmu_snapshot = .;
+        . += 80;
     } > SRAM
 
     .data : ALIGN(8)
