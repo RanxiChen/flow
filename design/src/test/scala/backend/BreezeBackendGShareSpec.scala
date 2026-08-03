@@ -26,6 +26,20 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with ChiselSim {
         BigInt(0x63)
     }
 
+    private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
+        (BigInt(imm & 0xfff) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(rd) << 7) |
+        BigInt(0x13)
+    }
+
+    private def encodeJalr(rd: Int, rs1: Int, imm: Int): BigInt = {
+        (BigInt(imm & 0xfff) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(rd) << 7) |
+        BigInt(0x67)
+    }
+
     private def driveIdleInputs(dut: BreezeBackend): Unit = {
         dut.io.resetAddr.poke(0.U)
         dut.io.machineTimerInterrupt.poke(false.B)
@@ -91,6 +105,26 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
         dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predPc.poke((pc + 4).U)
+        dut.io.fetchBuffer.bits.pred.phtIdx.poke(0.U)
+        dut.io.fetchBuffer.ready.expect(true.B)
+        dut.clock.step(1)
+        dut.io.fetchBuffer.valid.poke(false.B)
+    }
+
+    private def issuePredictedControl(
+        dut: BreezeBackend,
+        pc: BigInt,
+        inst: BigInt,
+        predType: FrontendPredType.Type,
+        predPc: BigInt
+    ): Unit = {
+        dut.io.fetchBuffer.valid.poke(true.B)
+        dut.io.fetchBuffer.bits.pc.poke(pc.U)
+        dut.io.fetchBuffer.bits.inst.poke(inst.U)
+        dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
+        dut.io.fetchBuffer.bits.pred.predType.poke(predType)
+        dut.io.fetchBuffer.bits.pred.predTaken.poke(true.B)
+        dut.io.fetchBuffer.bits.pred.predPc.poke(predPc.U)
         dut.io.fetchBuffer.bits.pred.phtIdx.poke(0.U)
         dut.io.fetchBuffer.ready.expect(true.B)
         dut.clock.step(1)
@@ -242,6 +276,64 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.clock.step(1)
 
             dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
+            dut.io.frontendPhtUpdate.valid.expect(false.B)
+            dut.io.frontendGhrUpdate.valid.expect(false.B)
+        }
+    }
+
+    "GShare backend should repair a stale JALR target exactly once" in {
+        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+            val producerPc = BigInt(0xfc)
+            val jalrPc = BigInt(0x100)
+            val staleTarget = BigInt(0x40)
+            val actualTarget = BigInt(0x80)
+
+            reset(dut)
+            issueInstruction(dut, producerPc, encodeAddi(rd = 1, rs1 = 0, imm = actualTarget.toInt))
+            issuePredictedControl(
+              dut,
+              jalrPc,
+              encodeJalr(rd = 0, rs1 = 1, imm = 0),
+              FrontendPredType.JALR,
+              staleTarget
+            )
+
+            dut.io.debug.get.idExeValid.expect(true.B)
+            dut.io.debug.get.idExePc.expect(jalrPc.U)
+            dut.io.frontendRedirect.valid.expect(true.B)
+            dut.io.frontendRedirect.target.expect(actualTarget.U)
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.pc.expect(jalrPc.U)
+            dut.io.frontendBtbUpdate.target.expect(actualTarget.U)
+            dut.io.frontendBtbUpdate.predType.expect(FrontendPredType.JALR)
+            dut.io.frontendBtbUpdate.taken.expect(true.B)
+            dut.io.frontendPhtUpdate.valid.expect(false.B)
+            dut.io.frontendGhrUpdate.valid.expect(false.B)
+
+            dut.clock.step(1)
+            dut.io.frontendRedirect.valid.expect(false.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
+        }
+    }
+
+    "GShare backend should keep a correct JALR target without retraining" in {
+        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+            val producerPc = BigInt(0xfc)
+            val jalrPc = BigInt(0x100)
+            val actualTarget = BigInt(0x80)
+
+            reset(dut)
+            issueInstruction(dut, producerPc, encodeAddi(rd = 1, rs1 = 0, imm = actualTarget.toInt))
+            issuePredictedControl(
+              dut,
+              jalrPc,
+              encodeJalr(rd = 0, rs1 = 1, imm = 0),
+              FrontendPredType.JALR,
+              actualTarget
+            )
+
+            dut.io.frontendRedirect.valid.expect(false.B)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(false.B)
             dut.io.frontendGhrUpdate.valid.expect(false.B)
