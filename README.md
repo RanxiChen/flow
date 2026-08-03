@@ -35,7 +35,7 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 | ISA | `RV64I_Zicsr_Zifencei` |
 | 特权级 | Machine mode only |
 | 地址 | 核内 64-bit 地址；当前 MCU 平台使用 32-bit 物理地址空间 |
-| 分支预测 | 默认关闭；可选 GShare 为 8-bit GHR、16-entry BTB |
+| 分支预测 | 默认关闭；可显式选择 GShare，具体参数见下节 |
 | ICache | 8 KiB，4-way，64 sets，32 B line，32-bit fetch，pseudo-LRU |
 | DCache | 256 B，8-entry fully-associative，32 B line |
 | DCache 策略 | blocking、write-back、write-allocate、invalid-first/round-robin replacement |
@@ -44,6 +44,29 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 ICache 和 DCache miss 都采用阻塞式处理。一个 32-byte cache line 会在 64-bit
 Wishbone 上拆成 4 个 beat。DCache 同时支持带 byte select 的单 beat MMIO/scalar
 访问和多 beat cache-line refill/writeback。
+
+## GShare 配置
+
+LiteX 仿真支持两套核心 preset：
+
+- `baseline`：默认配置，不实例化分支预测器；
+- `gshare`：显式 opt-in，实例化 GShare 方向预测器和 BTB。
+
+当前 `gshare` preset 使用以下固定参数：
+
+| 参数 | 配置 |
+| --- | --- |
+| GHR | 8 bit，实际分支结果每次移入 1 bit |
+| PHT | 256 entries，每项为 2-bit 饱和计数器 |
+| PHT 初始状态 | weakly not-taken |
+| PHT 索引 | `PC[9:2] xor GHR` |
+| BTB | 16 entries，使用完整对齐 PC tag |
+| BTB 控制流类型 | conditional branch、JAL、JALR |
+| BTB replacement | 优先使用无效 entry，满表后 round-robin |
+
+预测元数据随取指和后端流水传递。实际控制流结果与预测不一致时，后端重定向前端；
+训练以一次有效执行为单位，流水停顿不会重复更新。GShare 目前完成的是正确性 v1
+验收，IPC 只作为测量结果报告，不是 PASS/FAIL 门槛。
 
 ## 总线与仿真 SoC
 
@@ -157,6 +180,84 @@ UART 文本只用于观察程序行为，不决定仿真是否成功。若要生
 ```bash
 python3 sim/litex/run_mcu.py --main hello.c --trace
 ```
+
+## Example：计算 Fibonacci 数列
+
+仓库提供了一个完整的计算型程序
+[`software/breeze-mcu/apps/fibonacci.c`](software/breeze-mcu/apps/fibonacci.c)。它在目标
+核上循环计算 `fib(40)`，通过 UART 输出结果，并在结果等于十进制 `102334155` 时
+从 `main()` 返回 0。输入迭代次数使用 `volatile`，避免编译器把整个计算折叠为常量。
+
+程序的核心内容是：
+
+```c
+static uint64_t fibonacci(uint32_t count)
+{
+    uint64_t previous = 0;
+    uint64_t current = 1;
+
+    for (uint32_t index = 0; index < count; ++index) {
+        uint64_t next = previous + current;
+        previous = current;
+        current = next;
+    }
+    return previous;
+}
+```
+
+先运行默认 baseline：
+
+```bash
+python3 sim/litex/run_mcu.py \
+    --main software/breeze-mcu/apps/fibonacci.c \
+    --core-preset baseline \
+    --elaborate
+```
+
+再显式启用 GShare：
+
+```bash
+python3 sim/litex/run_mcu.py \
+    --main software/breeze-mcu/apps/fibonacci.c \
+    --core-preset gshare \
+    --elaborate
+```
+
+两次运行都会编译同一份 C 程序、生成所选 preset 的 RTL、构建 LiteX/Verilator SoC，
+然后启动固件。UART 应输出：
+
+```text
+Breeze MCU Fibonacci example
+fib(40) = 0x0000000006197ecb
+```
+
+之后 monitor 会输出 completion、PMU 和 IPC，最终出现：
+
+```text
+[GENERIC-PASS] MCU firmware completed
+BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
+```
+
+也可以用一个命令让同一固件依次运行 baseline 和 GShare，并自动检查固件 SHA256、
+completion、PMU/IPC 字段和退休指令数是否一致：
+
+```bash
+python3 sim/litex/run_gshare_regression.py \
+    --main software/breeze-mcu/apps/fibonacci.c \
+    --elaborate
+```
+
+脚本最后会分别打印两套配置的 cycles、instructions 和 IPC；这些数值用于观察，不设
+性能通过门槛。当前版本在 chen 的 LiteX/Verilator 环境中实测输出为：
+
+```text
+BREEZE_GSHARE_REGRESSION app=fibonacci mtvec=direct firmware_sha256=3ba36095e8ca1fdf95f189b0680dc2275477eabf53c744c81392bd8da91613ff PASS
+BREEZE_GSHARE_RESULT preset=baseline cycles=3905 instructions=1226 ipc=0.313956
+BREEZE_GSHARE_RESULT preset=gshare cycles=2748 instructions=1226 ipc=0.446143
+```
+
+这里最重要的正确性证据是两套核心运行同一 SHA256 固件、退休相同数量的指令并都
+完成 PASS。cycles 和 IPC 会受工具版本与 SoC 参数影响，这一组数值只是典型执行记录。
 
 如果交叉工具链使用其他前缀，可显式指定，例如：
 

@@ -729,3 +729,57 @@ miss/refill；NoFASE 程序也从未真正执行。此前看到的 `cache_s0_rea
 
 chen 机器按规定初始化 conda 并 `source ~/FUN/env.sh` 后验证：原失败的 5 个 suite
 共 16 项测试全部通过；完整 `sbt test` 为 21 suites、61 tests，61/61 通过。
+
+### GShare 正确性 v1 边界完整性签收
+
+本轮只补正确性边界，不修改 GShare RTL，也不进行微架构参数或性能调优。新增 5 项
+定向测试：
+
+- backend：stale JALR target 必须重定向到实际动态目标并只更新一次 BTB；正确目标
+  不重定向、不重复训练；
+- frontend：错误路径 ICache miss 未返回时发生 redirect，旧 refill 不得进入 fetch
+  buffer，目标路径之后仍能正常 miss、refill 和取指；
+- full core：同一个 JALR PC 连续切换三个目标时，baseline/GShare 退休轨迹完全一致；
+- full core：branch、ECALL、非法指令、两次 trap handler 和两次 MRET 组合中，
+  baseline/GShare 退休轨迹及最终寄存器状态完全一致。
+
+chen 隔离树 `/tmp/flow-pmu-20260803` 在每条命令前初始化 conda 并
+`source ~/FUN/env.sh` 后，三个 GShare 定向 suite 为 15/15 通过；全量 `sbt test` 为
+21 suites、66 tests，66/66 通过。
+
+随后用 `run_gshare_regression.py` 对 Timer/UART × Direct/Vectored 运行 baseline 与
+GShare。脚本对每一组校验 preset marker、completion、同一 firmware SHA256、PMU/IPC
+字段和相同退休指令数；monitor 同时观察中断源、正确 vector slot 与 MRET：
+
+```text
+timer direct   sha256=a0cf7c899a95949853c4503ff48a209dfeecfa435bba28646bba8fa35ba80865  baseline=2598/623/0.239800  gshare=2126/623/0.293039  PASS
+uart  direct   sha256=c3449c0280ce40d90a33e5e176a64caab7887fab166ba2eeed7355af7873289f  baseline=2525/600/0.237624  gshare=2072/600/0.289575  PASS
+timer vectored sha256=219d61ce340aff6992f61fd51405dffd3af7ffb628e6048e625e23e3ca04a595  baseline=2606/623/0.239064  gshare=2136/623/0.291667  PASS
+uart  vectored sha256=16e2db8bce76a846fa8da278559ef14c8813df2799246c9f2e7e4642bbb79c17  baseline=2525/600/0.237624  gshare=2072/600/0.289575  PASS
+```
+
+三元组依次为 cycles/instructions/IPC。cycles/IPC 只记录、不设门槛；本次结论是
+GShare 作为默认关闭、显式 opt-in 的功能已完成正确性 v1 签收，不代表性能特性签收。
+
+### README GShare 参数与 Fibonacci MCU example
+
+根 README 增加独立 GShare 配置章节，记录 baseline 默认关闭预测、GShare 显式
+opt-in，以及 8-bit GHR、256-entry/2-bit PHT、weakly not-taken、`PC[9:2] xor GHR`、
+16-entry full-tag BTB 和 round-robin replacement。新增
+`software/breeze-mcu/apps/fibonacci.c`：在目标核上循环计算 `fib(40)`，UART 打印
+结果，并用 `main()` 返回值接入原有 completion PASS/FAIL，不新增仿真专用指令或
+MMIO。
+
+chen 隔离树 `/tmp/flow-pmu-20260803` 在初始化 conda、`source ~/FUN/env.sh` 并将
+coursier 的 sbt 目录加入 `PATH` 后，执行同固件双 preset 回归。反汇编确认最终固件
+保留实际 add/branch 循环，并非编译期常量折叠。UART 输出
+`fib(40) = 0x0000000006197ecb`；回归结果：
+
+```text
+BREEZE_GSHARE_REGRESSION app=fibonacci mtvec=direct firmware_sha256=3ba36095e8ca1fdf95f189b0680dc2275477eabf53c744c81392bd8da91613ff PASS
+BREEZE_GSHARE_RESULT preset=baseline cycles=3905 instructions=1226 ipc=0.313956
+BREEZE_GSHARE_RESULT preset=gshare cycles=2748 instructions=1226 ipc=0.446143
+```
+
+两套配置退休指令数相同且 completion 均为 PASS；IPC 只作为示例执行记录，不作为
+正确性门槛或正式性能结论。

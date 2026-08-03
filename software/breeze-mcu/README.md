@@ -12,6 +12,17 @@ The default application is `apps/main.c`. Build it directly with:
 make -C software/breeze-mcu
 ```
 
+`apps/fibonacci.c` is a complete calculation example. It computes
+`fib(40)`, prints the result over UART, and returns zero only when the result
+matches the expected value. Run it with either core preset:
+
+```bash
+python3 sim/litex/run_mcu.py --main software/breeze-mcu/apps/fibonacci.c \
+    --core-preset baseline --elaborate
+python3 sim/litex/run_mcu.py --main software/breeze-mcu/apps/fibonacci.c \
+    --core-preset gshare --elaborate
+```
+
 The canonical simulation command is the project runner:
 
 ```bash

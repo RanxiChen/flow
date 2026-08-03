@@ -10,7 +10,9 @@ LiteX MCU 仿真路径。默认配置仍严格使用 baseline；只有传入
 
 代表性 `main.c` 已在 baseline/GShare 两种配置下完成同固件仿真。BTB、PHT、
 MiniDecode、GHR/预测选择、后端纠错与单次训练，以及完整核心架构轨迹一致性均已有
-定向回归。当前结果证明第一阶段集成和基础正确性可用，但还不能直接作为正式性能结论。
+定向回归。JALR 动态目标、ICache miss/redirect、trap/mret，以及 Timer/UART 的
+Direct/Vectored 中断路径也已覆盖。按“证明 GShare 确实可用、不做微架构调优”的
+当前目标，正确性 v1 已完成签收；这些结果不能直接作为正式性能结论。
 
 ## 已实现
 
@@ -45,30 +47,38 @@ MiniDecode、GHR/预测选择、后端纠错与单次训练，以及完整核心
   predicted-not-taken/actual-taken、正确预测仍训练，以及 older load stall 期间不重复训练；
 - 新增完整核心 baseline/GShare 架构一致性回归，逐条比较退休 PC、指令、next PC、
   寄存器写回和 estop，覆盖循环退出、交替分支、JAL 和 load-to-branch；
+- 新增 JALR 边界回归：同一个 JALR PC 连续切换三个动态目标；后端分别验证 stale
+  target 只 redirect/update 一次，以及正确 target 不 redirect、不重复训练；
+- 新增 ICache miss/redirect 回归：错误路径 miss 尚未返回时发生 redirect，旧 refill
+  可以完成 cache transaction，但不得进入 fetch buffer，随后目标路径能够正常取指；
+- 新增完整核心 trap/mret 回归：branch 后依次执行 ECALL、非法指令、两次 handler
+  和两次 MRET，baseline/GShare 的逐条退休轨迹与最终架构状态完全一致；
 - 新增 `sim/litex/run_gshare_regression.py`，使用同一个固件依次运行 baseline/GShare，
   校验 preset/completion marker、固件 SHA256、PMU/IPC 一致性，并对 deterministic
   generic 程序要求退休指令数一致；cycles/IPC 只报告，不设置性能门槛。
+- Timer/UART × Direct/Vectored 四组 LiteX 双 preset 回归全部通过；每组均验证同一
+  firmware SHA256、相同退休指令数、中断源触发、正确 vector slot、MRET 返回和最终
+  completion PASS。
 
-## 当前缺口
+## 当前范围外事项
 
-- 当前定向测试已覆盖 taken/not-taken、交替分支、JAL、load stall 和 redirect，
-  但 JALR 动态目标变化、ICache miss 与 redirect 竞争、trap/mret 组合仍未覆盖；
-- 仓库没有保存一组已审核的 `branch_test` baseline/GShare 运行结果；
-- GShare LiteX 路径已经可显式选择，但 Timer/UART、不同分支模式和复杂异常组合的
-  GShare 回归尚未完成；
-- 当前只有代表性 `main.c` 的探索性对照，还没有多 workload、重复运行和已审核的
-  baseline/GShare 性能报告。
+- 还没有多 workload、重复运行和已审核的 baseline/GShare 性能报告；
+- 尚未进行 GHR/BTB/PHT 容量、索引、初始状态或 replacement 策略调优；
+- 尚未把 IPC、prediction miss 等结果转化为性能门槛。当前回归只把架构结果、固件
+  一致性和控制流边界作为正确性门槛，cycles/IPC 仅供观察。
 
-## 后续验收条件
+## 正确性 v1 验收
 
-第一阶段验收已经完成：
+当前范围内的验收已经完成：
 
 1. BTB/PHT/GHR 和预测闭环已有独立定向测试；
 2. baseline/GShare 已在完整核心中逐条比较架构退休轨迹；
 3. LiteX 双 preset 已用同一固件 SHA256 完成 MCU 回归；
 4. 同一固件、Cache 参数和存储时序下已报告 cycles、instructions、IPC；
-5. PMU 已能报告 control、taken 和 prediction miss 等归因计数。
+5. PMU 已能报告 control、taken 和 prediction miss 等归因计数；
+6. JALR 动态目标、错路径 ICache refill、trap/mret 已有边界定向回归；
+7. Timer/UART 的 Direct/Vectored 中断在 baseline/GShare 下均完成端到端验证；
+8. chen 全量 `sbt test` 为 21 suites、66 tests，66/66 通过。
 
-进入正式性能调优前仍需补 JALR、ICache miss/redirect、trap/mret、Timer/UART 和多
-workload 重复运行。当前 GShare 可以用于受控探索和下一阶段开发，但尚不能视为已经
-签收的性能特性。
+因此 GShare 已可作为显式 opt-in 的可用功能进入下一阶段。后续若开始性能工作，应
+单独定义 workload、重复次数、对照配置和性能门槛，不把本轮正确性签收外推成性能签收。
