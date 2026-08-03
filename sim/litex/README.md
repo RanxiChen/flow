@@ -49,7 +49,9 @@ Its level-sensitive `mtip` output is connected directly to the CPU.
 `main.c` or one of the directed interrupt applications and runs a finite LiteX
 simulation. The runner reads the completion-mailbox address from the firmware
 symbol table; the monitor terminates only after a complete 64-bit PASS/FAIL
-store retires:
+store retires. The runtime also snapshots the architectural M-mode PMU into
+linker-reserved SRAM. The monitor captures those retired stores and
+`run_mcu.py` computes IPC from `minstret/mcycle`:
 
 ```bash
 python sim/litex/run_mcu.py --main software/breeze-mcu/apps/main.c --elaborate
@@ -57,6 +59,21 @@ python sim/litex/run_mcu.py --smoke timer --mtvec-mode direct
 python sim/litex/run_mcu.py --smoke uart --mtvec-mode direct
 python sim/litex/run_mcu.py --smoke timer --mtvec-mode vectored
 ```
+
+The performance output is independent of UART text and is not used to decide
+PASS/FAIL:
+
+```text
+BREEZE_PERF cycles=<cycles> instructions=<instructions>
+BREEZE_PMU cycles=<cycles> instructions=<instructions> control=<count> taken=<count> pred_miss=<count> icache_miss=<count> dcache_access=<count> dcache_miss=<count> uncached=<count> mem_stall=<cycles>
+BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
+BREEZE_METRICS prediction_miss_rate=<ratio> icache_mpki=<value> dcache_miss_rate=<ratio> memory_stall_ratio=<ratio>
+```
+
+`BREEZE_PERF` remains a simulation-window cross-check. `BREEZE_PMU` is the
+architectural snapshot and is the source used for `BREEZE_IPC`. It excludes
+startup and section initialization but includes fixed call/return and stop
+glue, so comparisons must use the same firmware and SoC configuration.
 
 Interrupt checks require the raw interrupt source to assert, the expected
 Direct/Vectored table slot to retire, the source to be deasserted before

@@ -19,6 +19,7 @@ class BreezeBackend(
         val dmem = new BackendMemIO(cfg.VLEN)
         val dcacheFlushReq = Output(Bool())
         val dcacheFlushDone = Input(Bool())
+        val hpmEvents = Input(new BreezeHpmEvents)
         val frontendBtbUpdate = Output(new BreezeBTBUpdateReq(cfg.VLEN))
         val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
         val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
@@ -35,6 +36,7 @@ class BreezeBackend(
     val regFile = Module(new RegFile(cfg.VLEN))
     val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
+    val retireValid = Wire(Bool())
 
     val decodeReady = Wire(Bool())
     val decodeFire = Wire(Bool())
@@ -66,11 +68,21 @@ class BreezeBackend(
     csrFile.io.commit_addr := 0.U
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
-    csrFile.io.retire_valid := memWbReg.valid &&
+    retireValid := memWbReg.valid &&
         !memWbReg.instruction_access_fault &&
         !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
         !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
         !memWbReg.load_access_fault && !memWbReg.store_access_fault
+    csrFile.io.retire_valid := retireValid
+    csrFile.io.hpmEvents := io.hpmEvents
+    val retiredOpcode = memWbReg.inst(6, 0)
+    val retiredControl = retiredOpcode === OPCODE.BRANCH ||
+        retiredOpcode === OPCODE.JAL || retiredOpcode === OPCODE.JALR
+    csrFile.io.hpmEvents.controlRetired := retireValid && retiredControl
+    csrFile.io.hpmEvents.controlTaken := retireValid && retiredControl &&
+        memWbReg.nextPc =/= (memWbReg.pc + 4.U)
+    csrFile.io.hpmEvents.predictionMiss := retireValid && retiredControl &&
+        memWbReg.prediction_miss
     csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
     csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
     csrFile.io.trap.valid := false.B
@@ -492,8 +504,7 @@ class BreezeBackend(
     when(
         memWbReg.valid &&
         memWbReg.wb_en &&
-        (memWbReg.rd_addr =/= 0.U) &&
-        (memWbReg.wb_sel =/= SEL_WB.CSR.U)
+        (memWbReg.rd_addr =/= 0.U)
     ) {
         when(idExeReg.rs1_addr === memWbReg.rd_addr) {
             exeRs1Data := wbData
@@ -692,6 +703,7 @@ class BreezeBackend(
         exeMemReg.wb_sel := SEL_WB.XXX.U
         exeMemReg.actual_taken := false.B
         exeMemReg.actual_target := 0.U
+        exeMemReg.prediction_miss := false.B
         exeMemReg.trace.foreach { trace =>
             trace.valid := false.B
             trace.pc := 0.U
@@ -741,6 +753,7 @@ class BreezeBackend(
         exeMemReg.wb_sel := idExeReg.ctrl.sel_wb
         exeMemReg.actual_taken := actualTaken
         exeMemReg.actual_target := actualTarget
+        exeMemReg.prediction_miss := predictionMiss
         exeMemReg.trace.foreach { trace =>
             trace.valid := idExeReg.valid
             trace.pc := idExeReg.pc
@@ -795,6 +808,7 @@ class BreezeBackend(
         memWbReg.csr_addr := 0.U
         memWbReg.csr_new_data := 0.U
         memWbReg.csr_write_en := false.B
+        memWbReg.prediction_miss := false.B
         memWbReg.trace.foreach { trace =>
             trace.valid := false.B
             trace.pc := 0.U
@@ -839,6 +853,7 @@ class BreezeBackend(
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en && !memAddrMisaligned &&
             !exeMemReg.instruction_access_fault
+        memWbReg.prediction_miss := exeMemReg.prediction_miss
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid && (!exeMemReg.fencei || fenceiFlush)
@@ -880,6 +895,7 @@ class BreezeBackend(
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en &&
             !exeMemReg.instruction_access_fault && !io.dmem.rsp.error
+        memWbReg.prediction_miss := exeMemReg.prediction_miss
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid
@@ -916,6 +932,10 @@ class BreezeBackend(
     io.dmem.req.sizeLog2 := memReqSizeLog2
     io.dmem.req.wdata := memReqWData
     io.dmem.req.wmask := memReqWMask
+
+    csrFile.io.hpmEvents.memStallCycle := memReqIssued ||
+        (memWaitingRespReg && !io.dmem.rsp.valid)
+    csrFile.io.hpmEvents.loadUseStall := loadUseHazard
 
     io.frontendRedirect.valid := frontendRedirectNeeded
     io.frontendRedirect.flush := frontendRedirectNeeded

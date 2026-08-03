@@ -47,8 +47,22 @@ class RegFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
 }
 
 class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private def clearHpmEvents(dut: CSRFile): Unit = {
+        dut.io.hpmEvents.controlRetired.poke(false.B)
+        dut.io.hpmEvents.controlTaken.poke(false.B)
+        dut.io.hpmEvents.predictionMiss.poke(false.B)
+        dut.io.hpmEvents.icacheAccess.poke(false.B)
+        dut.io.hpmEvents.icacheMiss.poke(false.B)
+        dut.io.hpmEvents.dcacheAccess.poke(false.B)
+        dut.io.hpmEvents.dcacheMiss.poke(false.B)
+        dut.io.hpmEvents.dcacheUncached.poke(false.B)
+        dut.io.hpmEvents.memStallCycle.poke(false.B)
+        dut.io.hpmEvents.loadUseStall.poke(false.B)
+    }
+
     "CSRFile should write mtvec via CSRRW (RW command) and read back" in {
         simulate(new CSRFile(64)) { dut =>
+            clearHpmEvents(dut)
             // Drive trap/mret defaults
             dut.io.trap.valid.poke(false.B)
             dut.io.trap.is_interrupt.poke(false.B)
@@ -129,6 +143,7 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
     "CSRFile should count retired instructions in coreinst CSR" in {
         simulate(new CSRFile(64)) { dut =>
+            clearHpmEvents(dut)
             dut.io.csr_addr.poke(CSRMAP.coreinst.U)
             dut.io.csr_cmd.poke(CSR_CMD.RS.U)
             dut.io.csr_reg_data.poke(0.U)
@@ -163,6 +178,7 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
     "CSRFile should expose writable mcycle and minstret counters" in {
         simulate(new CSRFile(64)) { dut =>
+            clearHpmEvents(dut)
             dut.io.csr_addr.poke(CSRMAP.mcycle.U)
             dut.io.csr_cmd.poke(CSR_CMD.RS.U)
             dut.io.csr_reg_data.poke(0.U)
@@ -210,6 +226,79 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             assert(dut.io.csr_old_data.peek().litValue > firstCycle)
             dut.io.csr_addr.poke(CSRMAP.instret.U)
             dut.io.csr_old_data.expect(100.U)
+        }
+    }
+
+    "CSRFile should program, count, inhibit, and overwrite HPM counters" in {
+        simulate(new CSRFile(64)) { dut =>
+            clearHpmEvents(dut)
+            dut.io.csr_addr.poke(CSRMAP.mhpmcounter3.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_addr.poke(0.U)
+            dut.io.commit_wdata.poke(0.U)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.retire_valid.poke(false.B)
+            dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.machineExternalInterrupt.poke(false.B)
+            dut.io.trap.valid.poke(false.B)
+            dut.io.trap.is_interrupt.poke(false.B)
+            dut.io.trap.cause.poke(0.U)
+            dut.io.trap.pc.poke(0.U)
+            dut.io.trap.tval.poke(0.U)
+            dut.io.mret_commit.poke(false.B)
+
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mhpmevent3.U)
+            dut.io.commit_wdata.poke(BREEZE_HPM_EVENT.CONTROL_RETIRED.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+
+            dut.io.hpmEvents.controlRetired.poke(true.B)
+            dut.clock.step(3)
+            dut.io.hpmEvents.controlRetired.poke(false.B)
+            dut.io.csr_old_data.expect(3.U)
+
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mcountinhibit.U)
+            dut.io.commit_wdata.poke((BigInt(1) << 3).U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.hpmEvents.controlRetired.poke(true.B)
+            dut.clock.step(2)
+            dut.io.hpmEvents.controlRetired.poke(false.B)
+            dut.io.csr_old_data.expect(3.U)
+
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mhpmcounter3.U)
+            dut.io.commit_wdata.poke(9.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.csr_addr.poke(CSRMAP.hpmcounter3.U)
+            dut.io.csr_old_data.expect(9.U)
+
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mhpmevent3.U)
+            dut.io.commit_wdata.poke(99.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.csr_addr.poke(CSRMAP.mhpmevent3.U)
+            dut.io.csr_old_data.expect(BREEZE_HPM_EVENT.NONE.U)
         }
     }
 }

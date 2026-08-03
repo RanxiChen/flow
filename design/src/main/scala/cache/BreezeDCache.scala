@@ -43,11 +43,14 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     val flushReq = Input(Bool())
     val flushDone = Output(Bool())
     val fatalError = Output(Bool())
+    val hpm = Output(new BreezeHpmEvents)
     val nextLevelReq = new DCacheMemReqIO(cfg.PLEN, cfg.lineBytes)
     val nextLevelRsp = new DCacheMemRespIO(cfg.lineBytes)
   })
 
   import BreezeDCacheState._
+
+  io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
 
   val state = RegInit(Idle)
   val validArray = RegInit(VecInit(Seq.fill(cfg.entryNum)(false.B)))
@@ -138,6 +141,12 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   io.nextLevelReq.isLine := false.B
   io.nextLevelReq.data := 0.U
   io.nextLevelReq.mask := 0.U
+
+  io.hpm.dcacheAccess := state === Idle && io.cpu.req.valid && !io.flushReq
+  io.hpm.dcacheMiss := state === Lookup && pma.io.result.allowed &&
+    pma.io.result.cacheable && !pma.io.result.device && !hit
+  io.hpm.dcacheUncached := state === Lookup && pma.io.result.allowed &&
+    (!pma.io.result.cacheable || pma.io.result.device)
 
   when(io.cpu.req.valid) {
     assert(state === Idle && !io.flushReq,

@@ -24,6 +24,13 @@ monitor observes the architecturally retired 64-bit store and terminates the
 simulation. UART output is diagnostic only. A return value of zero reports
 PASS, while a non-zero return value or an unexpected trap reports FAIL.
 
+Before `main`, the runtime programs and clears the architectural machine-mode
+HPM counters, then starts them with `mcountinhibit`. After `main` returns it
+freezes the counters and stores a ten-word snapshot in linker-reserved SRAM.
+The LiteX monitor captures those retired stores and reports PMU data and IPC.
+The firmware does not print or parse performance data over UART. Advanced
+M-mode firmware can use `include/breeze/perf.h` to access the same CSRs.
+
 Directed interrupt checks are:
 
 ```bash

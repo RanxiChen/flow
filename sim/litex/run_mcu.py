@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 
@@ -16,6 +17,15 @@ SMOKE_APPS = {
     "uart": os.path.join(SOFTWARE_ROOT, "apps", "uart_irq_smoke.c"),
 }
 INTERRUPT_CAUSES = {"timer": 7, "uart": 11}
+PERF_PATTERN = re.compile(
+    r"BREEZE_PERF cycles=\s*([0-9]+) instructions=\s*([0-9]+)"
+)
+PMU_PATTERN = re.compile(
+    r"BREEZE_PMU cycles=\s*([0-9]+) instructions=\s*([0-9]+) "
+    r"control=\s*([0-9]+) taken=\s*([0-9]+) pred_miss=\s*([0-9]+) "
+    r"icache_miss=\s*([0-9]+) dcache_access=\s*([0-9]+) "
+    r"dcache_miss=\s*([0-9]+) uncached=\s*([0-9]+) mem_stall=\s*([0-9]+)"
+)
 
 
 def run_checked(command, cwd=None):
@@ -107,12 +117,14 @@ def main():
 
     trap_vector = read_symbol(firmware_prefix + ".sym", "breeze_trap_vector")
     result_address = read_symbol(firmware_prefix + ".sym", "__breeze_result")
+    perf_address = read_symbol(firmware_prefix + ".sym", "__breeze_pmu_snapshot")
     sim_command = [
         sys.executable,
         SIM_ENTRY,
         "--rom-init", firmware_prefix + ".bin",
         "--check-mcu-completion", check_kind,
         "--mcu-result-address", hex(result_address),
+        "--mcu-perf-address", hex(perf_address),
         "--mtvec-mode", args.mtvec_mode,
         "--mcu-timeout", str(args.mcu_timeout),
         "--output-dir", output_dir,
@@ -132,6 +144,42 @@ def main():
     if pass_marker not in output:
         print(f"ERROR: simulator did not report {pass_marker!r}", file=sys.stderr)
         raise SystemExit(1)
+
+    perf_match = PERF_PATTERN.search(output)
+    if perf_match is None:
+        print("ERROR: simulator did not report BREEZE_PERF", file=sys.stderr)
+        raise SystemExit(1)
+
+    pmu_match = PMU_PATTERN.search(output)
+    if pmu_match is None:
+        print("ERROR: simulator did not report BREEZE_PMU", file=sys.stderr)
+        raise SystemExit(1)
+
+    cycles = int(pmu_match.group(1), 10)
+    instructions = int(pmu_match.group(2), 10)
+    if cycles == 0:
+        print("ERROR: measured cycle count is zero", file=sys.stderr)
+        raise SystemExit(1)
+
+    ipc = instructions / cycles
+    control = int(pmu_match.group(3), 10)
+    prediction_misses = int(pmu_match.group(5), 10)
+    icache_misses = int(pmu_match.group(6), 10)
+    dcache_accesses = int(pmu_match.group(7), 10)
+    dcache_misses = int(pmu_match.group(8), 10)
+    memory_stall_cycles = int(pmu_match.group(10), 10)
+    print(
+        f"BREEZE_IPC cycles={cycles} instructions={instructions} ipc={ipc:.6f}",
+        flush=True,
+    )
+    print(
+        "BREEZE_METRICS "
+        f"prediction_miss_rate={prediction_misses / control if control else 0.0:.6f} "
+        f"icache_mpki={icache_misses * 1000 / instructions if instructions else 0.0:.6f} "
+        f"dcache_miss_rate={dcache_misses / dcache_accesses if dcache_accesses else 0.0:.6f} "
+        f"memory_stall_ratio={memory_stall_cycles / cycles:.6f}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

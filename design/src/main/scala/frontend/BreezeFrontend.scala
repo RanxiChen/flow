@@ -88,11 +88,13 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         val fetchBuffer = new FrontendFetchBufferIO(cfg.VLEN, cfg.branchPredCfg.ghrLength)
         val nextLevelReq = new L1CacheMissReqIO(cfg.cacheCfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(cfg.cacheCfg.ICACHE_LINE_WIDTH)
+        val hpm = Output(new BreezeHpmEvents)
         val debug = if (enabledebug) Some(new BreezeFrontendDebugIO(cfg.VLEN)) else None
     })
 
     // ===== Module Instances =====
     val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
+    io.hpm := icache.io.hpm
     val isGShare = cfg.branchPredCfg.kind == FrontendBranchPredictorKind.GShare
 
     // ===== GShare Optional State =====

@@ -569,3 +569,78 @@ SW 向 UART_RXTX 写入 0，mask=0x0f
 的 `rs1 + imm` 有效地址，只有 DCache 下游的 Wishbone 请求才按 8-byte beat 对齐。
 将用例期望改为 `0x20 + offset` 后，远端隔离树完整 `BreezeCoreSpec` 12/12 通过，
 `sbt build` 通过。本次修复的独立记录见 `docs/bugs/CORE-004.md`。
+
+### LiteX completion monitor 增加 IPC 统计
+
+在不恢复固件 UART stats、不增加 IPC MMIO 或核心端口的前提下，复用现有 completion
+mailbox 定义仿真测量窗口：runtime 在调用 `main()` 前退休的零值 ARM store 打开窗口，
+最终 PASS/FAIL store 关闭窗口。`McuCompletionMonitor` 在窗口内按仿真时钟累计 cycle，
+并按 retirement trace 的 `valid` 累计退休指令；两个 marker store 本身不计入。
+
+monitor 输出纯整数：
+
+```text
+BREEZE_PERF cycles=<cycles> instructions=<instructions>
+```
+
+`run_mcu.py` 解析该行并计算：
+
+```text
+BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
+```
+
+completion PASS/FAIL 仍只由完整 64-bit mailbox store 和 magic 决定，性能文本不经过
+UART，也不参与硬件 completion 判定。测量排除了 startup 和 section 初始化，但包含
+调用/返回 `main()` 的固定少量胶水，当前定位是相同固件、相同 SoC 参数下的相对比较。
+
+本地完成两个 Python 文件的 `py_compile`、stats parser 普通/定宽空格输入检查和
+`git diff --check`。chen 机器先执行 conda 初始化及 `source ~/FUN/env.sh`，再在隔离树
+`/tmp/flow-uart-fix-20260803` 验证：
+
+- generic `main.c`：2044 cycles、612 instructions、IPC 0.299413，completion PASS；
+- Timer Direct：2593 cycles、623 instructions、IPC 0.240262，并观察到 source、
+  Direct vector、mret 和 completion PASS；
+- UART Vectored：2514 cycles、600 instructions、IPC 0.238663，并观察到 source、
+  Vectored vector、mret 和 completion PASS。
+
+### GShare 状态记录（本次不实现）
+
+本次没有修改 GShare RTL、配置和测试。代码审计确认 BTB、PHT、GHR、S1 lookup、
+S3 修正、预测元数据传递及后端训练反馈的基本闭环已经存在，但独立单元测试、
+训练后命中回归、复杂 redirect/stall/trap 组合验证、LiteX preset 选择和已审核的
+baseline/GShare 性能对照仍未完成。正式 LiteX elaboration 继续固定使用 baseline；
+新增 IPC 结果也只验证 baseline MCU。详细状态和后续验收条件见
+`docs/gshare-status.md`。
+
+### M-mode PMU：可编程 HPM counter 与 MCU 自动报告
+
+在保持 baseline、不修改 GShare 的前提下，实现 RISC-V machine HPM 框架。新增
+`mhpmcounter3` 至 `mhpmcounter10`、对应 `mhpmevent` WARL selector，以及支持
+`CY/IR/HPM3..10` 的 `mcountinhibit`；其余 HPM CSR 保持只读零。Breeze event 表覆盖
+退休控制流、taken、预测失败、ICache access/miss、DCache access/miss/uncached、
+memory-stall cycle 和 load-use stall。Cache miss 按一次 cache transaction 计数，不按
+Wishbone beat 计数。
+
+runtime 在 `main()` 前配置、清零并启动 PMU，返回后冻结 counter，将 `mcycle`、
+`minstret` 和 8 个 HPM counter 写入 linker 保留的 SRAM snapshot。LiteX completion
+monitor 从退休 store 捕获快照并打印 `BREEZE_PMU`；runner 使用 PMU 的
+`minstret/mcycle` 计算 `BREEZE_IPC`。UART、completion PASS/FAIL 和 PMU 仍彼此独立。
+
+首次端到端运行发现连续 `csrr` 后的 store 保存了上一个 CSR 结果。根因是通用
+MEM/WB forwarding 人为排除了 `SEL_WB.CSR`，导致短距离 CSR-to-store 相关读到旧值；
+删除该排除后，PMU snapshot 字段恢复正确。chen 隔离树
+`/tmp/flow-pmu-20260803`（运行前初始化 conda 并 `source ~/FUN/env.sh`）验证：
+
+- `sbt compile` 与 `sbt elaborate` 通过；
+- `CSRFileSpec` 4/4、`BreezeCoreSpec` 12/12 通过；
+- generic：2078 cycles、612 instructions、IPC 0.294514；188 control、156 taken、
+  156 prediction miss、10 ICache miss、164 DCache access、4 DCache miss、60 uncached、
+  683 memory-stall cycles；
+- Timer Direct：2598/623/0.239800，source/vector/mret/PMU/completion PASS；
+- UART Vectored：2525/600/0.237624，source/vector/mret/PMU/completion PASS；
+- 256 次紧分支循环：1597/522/0.326863，259 control、258 taken/miss；
+- 256 次热 load/store 循环：3661/1294/0.353455，514 DCache access、0 miss、
+  1028 memory-stall cycles，吻合每次热访问 2 个 hold cycle。
+
+事件定义、默认 selector mapping 和指标公式见 `docs/pmu.md`。本次没有启用或修改
+GShare。

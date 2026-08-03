@@ -383,7 +383,7 @@ class RetireMonitor(Module):
 class McuCompletionMonitor(Module):
     """Finite pass/fail monitor for the reusable MCU firmware runtime."""
 
-    def __init__(self, retire, result_address, check_kind="generic", irq_source=None,
+    def __init__(self, retire, result_address, perf_address, check_kind="generic", irq_source=None,
                  expected_vector_pc=None, timeout_cycles=20000):
         if check_kind not in ("generic", "timer", "uart"):
             raise ValueError(f"Unsupported MCU completion kind: {check_kind}")
@@ -397,11 +397,18 @@ class McuCompletionMonitor(Module):
         source_seen = Signal(reset=0)
         vector_seen = Signal(reset=0)
         mret_seen = Signal(reset=0)
+        measurement_active = Signal(reset=0)
+        measured_cycles = Signal(64, reset=0)
+        measured_instructions = Signal(64, reset=0)
+        perf_values = [Signal(64, reset=0) for _ in range(10)]
+        perf_seen = Signal(10, reset=0)
         result_address_signal = Signal(64)
+        perf_address_signal = Signal(64)
         pass_magic = Signal(64)
         fail_magic = Signal(64)
         expected_vector = Signal(64)
         proof_complete = Signal()
+        pmu_complete = Signal()
 
         proof_expression = 1
         if irq_source is not None:
@@ -411,10 +418,12 @@ class McuCompletionMonitor(Module):
 
         self.comb += [
             result_address_signal.eq(result_address),
+            perf_address_signal.eq(perf_address),
             pass_magic.eq(MCU_PASS_MAGIC),
             fail_magic.eq(MCU_FAIL_MAGIC),
             expected_vector.eq(0 if expected_vector_pc is None else expected_vector_pc),
             proof_complete.eq(proof_expression),
+            pmu_complete.eq(perf_seen == 0x3ff),
         ]
 
         result_store = (
@@ -422,8 +431,52 @@ class McuCompletionMonitor(Module):
             (retire.mem_addr == result_address_signal) &
             (retire.mem_wmask == 0xff)
         )
+        for index, value in enumerate(perf_values):
+            perf_store = (
+                retire.valid & retire.mem_en & retire.mem_is_write &
+                (retire.mem_addr == (perf_address_signal + 8 * index)) &
+                (retire.mem_wmask == 0xff)
+            )
+            self.sync += If(perf_store,
+                value.eq(retire.mem_wdata),
+                perf_seen.eq(perf_seen | (1 << index))
+            )
 
         self.sync += cycle.eq(cycle + 1)
+
+        # The runtime's zero-valued completion store is the measurement arm
+        # marker immediately before main().  Count only the cycles and retired
+        # instructions strictly between that marker and the final PASS/FAIL
+        # store, keeping performance reporting independent from UART output.
+        self.sync += [
+            If(result_store & (retire.mem_wdata == 0),
+                measurement_active.eq(1),
+                measured_cycles.eq(0),
+                measured_instructions.eq(0)
+            ).Elif(result_store & measurement_active,
+                measurement_active.eq(0)
+            ).Elif(measurement_active,
+                measured_cycles.eq(measured_cycles + 1),
+                If(retire.valid,
+                    measured_instructions.eq(measured_instructions + 1)
+                )
+            )
+        ]
+
+        self.sync += If(result_store & measurement_active,
+            Display(
+                "BREEZE_PERF cycles=%d instructions=%d",
+                measured_cycles, measured_instructions)
+        )
+        self.sync += If(result_store & measurement_active,
+            If(pmu_complete,
+                Display(
+                    "BREEZE_PMU cycles=%d instructions=%d control=%d taken=%d "
+                    "pred_miss=%d icache_miss=%d dcache_access=%d "
+                    "dcache_miss=%d uncached=%d mem_stall=%d",
+                    *perf_values)
+            )
+        )
 
         if irq_source is not None:
             self.sync += If(irq_source & ~source_seen,
@@ -441,8 +494,13 @@ class McuCompletionMonitor(Module):
 
         if irq_source is None and expected_vector_pc is None:
             completion_success = [
-                Display(f"[{label}-PASS] MCU firmware completed"),
-                Finish(),
+                If(~pmu_complete,
+                    Display(f"[{label}-FAIL] incomplete PMU snapshot mask=0x%x", perf_seen),
+                    Finish()
+                ).Else(
+                    Display(f"[{label}-PASS] MCU firmware completed"),
+                    Finish()
+                )
             ]
             timeout_failure = [
                 Display(f"[{label}-TIMEOUT] cycle=%d", cycle),
@@ -450,11 +508,11 @@ class McuCompletionMonitor(Module):
             ]
         else:
             completion_success = [
-                If(~proof_complete,
+                If(~proof_complete | ~pmu_complete,
                     Display(
                         f"[{label}-FAIL] incomplete proof source_seen=%d "
-                        "vector_seen=%d mret_seen=%d",
-                        source_seen, vector_seen, mret_seen),
+                        "vector_seen=%d mret_seen=%d pmu_mask=0x%x",
+                        source_seen, vector_seen, mret_seen, perf_seen),
                     Finish()
                 ).Else(
                     Display(f"[{label}-PASS] MCU firmware completed"),
@@ -532,7 +590,7 @@ class BreezeSimSoC(SoCCore):
                  check_smoke_memory=False, memory_timeout=10000,
                  retire_log_limit=64, retire_stall_timeout=500,
                  check_mcu_completion=None, expected_trap_vector=None,
-                 mcu_result_address=None, mtvec_mode="direct",
+                 mcu_result_address=None, mcu_perf_address=None, mtvec_mode="direct",
                  mcu_timeout=20000, **kwargs):
         platform = Platform()
         # LiteX's CRG supplies the power-on reset pulse required by the
@@ -616,6 +674,9 @@ class BreezeSimSoC(SoCCore):
             if mcu_result_address is None:
                 raise ValueError(
                     "MCU completion checks require the result symbol address")
+            if mcu_perf_address is None:
+                raise ValueError(
+                    "MCU completion checks require the PMU snapshot symbol address")
             irq_source = None
             expected_vector_pc = None
             if check_mcu_completion == "timer":
@@ -638,6 +699,7 @@ class BreezeSimSoC(SoCCore):
             self.submodules.mcu_completion_monitor = McuCompletionMonitor(
                 retire=self.cpu.retire,
                 result_address=mcu_result_address,
+                perf_address=mcu_perf_address,
                 check_kind=check_mcu_completion,
                 irq_source=irq_source,
                 expected_vector_pc=expected_vector_pc,
@@ -683,6 +745,8 @@ def main():
         help="Address of breeze_trap_vector from the firmware ELF.")
     parser.add_argument("--mcu-result-address", type=lambda value: int(value, 0),
         help="Address of __breeze_result from the firmware ELF.")
+    parser.add_argument("--mcu-perf-address", type=lambda value: int(value, 0),
+        help="Address of __breeze_pmu_snapshot from the firmware ELF.")
     parser.add_argument("--mtvec-mode", choices=("direct", "vectored"),
         default="direct", help="Firmware mtvec mode (default: direct).")
     parser.add_argument("--mcu-timeout", type=int, default=20000,
@@ -729,6 +793,8 @@ def main():
             "interrupt MCU checks require --expected-trap-vector")
     if args.check_mcu_completion and args.mcu_result_address is None:
         parser.error("MCU completion checks require --mcu-result-address")
+    if args.check_mcu_completion and args.mcu_perf_address is None:
+        parser.error("MCU completion checks require --mcu-perf-address")
 
     soc = BreezeSimSoC(
         rom_init=rom_init,
@@ -745,6 +811,7 @@ def main():
         check_mcu_completion=args.check_mcu_completion,
         expected_trap_vector=args.expected_trap_vector,
         mcu_result_address=args.mcu_result_address,
+        mcu_perf_address=args.mcu_perf_address,
         mtvec_mode=args.mtvec_mode,
         mcu_timeout=args.mcu_timeout,
     )

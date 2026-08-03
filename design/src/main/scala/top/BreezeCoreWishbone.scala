@@ -65,6 +65,7 @@ class BreezeCoreWishbone(
   dcache.io.cpu <> core.io.dmem
   dcache.io.flushReq := core.io.dcacheFlushReq
   core.io.dcacheFlushDone := dcache.io.flushDone
+  core.io.dcacheHpm := dcache.io.hpm
   dBridge.io.cacheReq <> dcache.io.nextLevelReq
   dBridge.io.cacheResp <> dcache.io.nextLevelRsp
   io.dWishbone <> dBridge.io.wishbone

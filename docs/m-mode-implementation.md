@@ -126,8 +126,6 @@
 - `SD`
 - `SPELP`
 - `MPELP`
-- `mhpmcounter3` ... `mhpmcounter31`
-- `mhpmevent3` ... `mhpmevent31`
 
 ## XLEN Policy
 
@@ -233,10 +231,13 @@
 - 对 `mcycle` 或 `minstret` 的 CSR 写操作在对应 CSR 指令提交时生效
 - CSR 写入会覆盖该周期的默认计数更新
 
-### Read-Only Zero Counters
+### Hardware Performance Events
 
-- `mhpmcounter3` 至 `mhpmcounter31` 在第一版中实现为只读 `0`，写入忽略
-- `mhpmevent3` 至 `mhpmevent31` 在第一版中实现为只读 `0`，写入忽略
+- `mhpmcounter3` 至 `mhpmcounter10` 为 64 位可读写计数器；
+- `mhpmevent3` 至 `mhpmevent10` 为 WARL event selector；
+- `mcountinhibit` 实现 `CY`、`IR`、`HPM3` 至 `HPM10`；
+- event `0` 表示不计数，Breeze 平台事件 `1` 至 `10` 见 `docs/pmu.md`；
+- `mhpmcounter11` 至 `mhpmcounter31` 及对应 selector 保持只读 `0`。
 
 ### RV32 High-Half Counter CSRs
 

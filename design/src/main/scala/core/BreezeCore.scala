@@ -20,6 +20,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val dmem = new BackendMemIO(corecfg.VLEN)
         val dcacheFlushReq = Output(Bool())
         val dcacheFlushDone = Input(Bool())
+        val dcacheHpm = Input(new BreezeHpmEvents)
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
         val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
@@ -49,6 +50,10 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.dmem <> backend.io.dmem
     io.dcacheFlushReq := backend.io.dcacheFlushReq
     backend.io.dcacheFlushDone := io.dcacheFlushDone
+    backend.io.hpmEvents := frontend.io.hpm
+    backend.io.hpmEvents.dcacheAccess := io.dcacheHpm.dcacheAccess
+    backend.io.hpmEvents.dcacheMiss := io.dcacheHpm.dcacheMiss
+    backend.io.hpmEvents.dcacheUncached := io.dcacheHpm.dcacheUncached
     io.tandem.zip(backend.io.tandem).foreach { case (coreTandem, backendTandem) =>
         coreTandem := backendTandem
     }
