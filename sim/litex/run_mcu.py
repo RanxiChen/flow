@@ -71,8 +71,11 @@ def main():
         default="direct", help="Trap mode used by the runtime (default: direct).")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-",
         help="Bare-metal tool prefix (default: riscv64-unknown-elf-).")
+    parser.add_argument("--core-preset", choices=("baseline", "gshare"),
+        default="baseline",
+        help="Core RTL preset (default: baseline; GShare is opt-in).")
     parser.add_argument("--elaborate", action="store_true",
-        help="Regenerate BreezeCoreWishbone RTL before simulation.")
+        help="Regenerate the selected BreezeCoreWishbone RTL before simulation.")
     parser.add_argument("--trace", action="store_true",
         help="Enable the LiteX/Verilator waveform trace.")
     parser.add_argument("--mcu-timeout", type=int, default=20000,
@@ -102,10 +105,14 @@ def main():
         SOFTWARE_ROOT, "build", f"{app_name}-{args.mtvec_mode}")
     firmware_prefix = os.path.join(firmware_build, "breeze-mcu")
     output_dir = os.path.abspath(args.output_dir or os.path.join(
-        FLOW_ROOT, "build", f"litex-mcu-{app_name}-{args.mtvec_mode}"))
+        FLOW_ROOT, "build",
+        f"litex-mcu-{app_name}-{args.mtvec_mode}-{args.core_preset}"))
 
     if args.elaborate:
-        run_checked(["sbt", "elaborate"], cwd=os.path.join(FLOW_ROOT, "design"))
+        run_checked([
+            "sbt",
+            "runMain flow.top.GenerateBreezeCoreWishbone " + args.core_preset,
+        ], cwd=os.path.join(FLOW_ROOT, "design"))
 
     run_checked([
         "make", "-B", "-C", SOFTWARE_ROOT,
@@ -122,6 +129,7 @@ def main():
         sys.executable,
         SIM_ENTRY,
         "--rom-init", firmware_prefix + ".bin",
+        "--core-preset", args.core_preset,
         "--check-mcu-completion", check_kind,
         "--mcu-result-address", hex(result_address),
         "--mcu-perf-address", hex(perf_address),
@@ -139,6 +147,11 @@ def main():
     return_code, output = run_streaming(sim_command, cwd=FLOW_ROOT)
     if return_code != 0:
         raise SystemExit(return_code)
+
+    config_marker = f"BREEZE_CONFIG core_preset={args.core_preset}"
+    if config_marker not in output:
+        print(f"ERROR: simulator did not report {config_marker!r}", file=sys.stderr)
+        raise SystemExit(1)
 
     pass_marker = f"[{check_kind.upper()}-PASS] MCU firmware completed"
     if pass_marker not in output:

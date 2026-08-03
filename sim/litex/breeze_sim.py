@@ -266,8 +266,10 @@ class RetireMonitor(Module):
                 last_retire_inst.eq(retire.inst),
                 If(retire_count < retire_log_limit,
                     Display(
-                        "[RETIRE] count=%d cycle=%d pc=0x%x inst=0x%x",
-                        retire_number, cycle, retire.pc, retire.inst)
+                        "[RETIRE] count=%d cycle=%d pc=0x%x inst=0x%x "
+                        "rd_we=%d rd=x%d rd_data=0x%x",
+                        retire_number, cycle, retire.pc, retire.inst,
+                        retire.rd_write_en, retire.rd_addr, retire.rd_data)
                 ),
                 If(retire.mem_en,
                     last_memory_seen.eq(1),
@@ -584,6 +586,7 @@ class BreezeSimSoC(SoCCore):
     }
 
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
+                 core_preset="baseline",
                  debug_fetch=False, fetch_timeout=100,
                  stop_after_first_fetch=False, debug_retire=False,
                  first_retire_timeout=200, stop_after_first_retire=False,
@@ -593,6 +596,7 @@ class BreezeSimSoC(SoCCore):
                  mcu_result_address=None, mcu_perf_address=None, mtvec_mode="direct",
                  mcu_timeout=20000, **kwargs):
         platform = Platform()
+        Flow.set_core_preset(core_preset)
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core. A clock-only domain leaves the core's
         # architectural state, including its reset PC, uninitialized.
@@ -718,6 +722,9 @@ def main():
         help="Run without attaching simulator stdin to a terminal.")
     parser.add_argument("--rom-init",
         help="Raw binary loaded at the ROM base address (0x10000000).")
+    parser.add_argument("--core-preset", choices=Flow.core_presets,
+        default="baseline",
+        help="BreezeCore RTL preset (default: baseline; GShare is opt-in).")
     parser.add_argument("--debug-fetch", action="store_true",
         help="Print and validate the first instruction-cache refill.")
     parser.add_argument("--fetch-timeout", type=int, default=100,
@@ -751,9 +758,13 @@ def main():
         default="direct", help="Firmware mtvec mode (default: direct).")
     parser.add_argument("--mcu-timeout", type=int, default=20000,
         help="Cycles before an MCU firmware check times out (default: 20000).")
-    parser.add_argument("--output-dir", default="build/litex-sim",
-        help="LiteX output directory (default: build/litex-sim).")
+    parser.add_argument("--output-dir",
+        help="LiteX output directory; defaults to build/litex-sim/<core-preset>.")
     args = parser.parse_args()
+
+    output_dir = args.output_dir or os.path.join(
+        "build", "litex-sim", args.core_preset)
+    print(f"BREEZE_CONFIG core_preset={args.core_preset}", flush=True)
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=int(1e6))
@@ -798,6 +809,7 @@ def main():
 
     soc = BreezeSimSoC(
         rom_init=rom_init,
+        core_preset=args.core_preset,
         debug_fetch=args.debug_fetch,
         fetch_timeout=args.fetch_timeout,
         stop_after_first_fetch=args.stop_after_first_fetch,
@@ -815,7 +827,7 @@ def main():
         mtvec_mode=args.mtvec_mode,
         mcu_timeout=args.mcu_timeout,
     )
-    builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
+    builder = Builder(soc, output_dir=output_dir, compile_software=False)
     builder.build(
         run=args.build,
         sim_config=sim_config,

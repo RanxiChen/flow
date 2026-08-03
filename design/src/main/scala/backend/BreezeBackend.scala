@@ -945,7 +945,11 @@ class BreezeBackend(
         mretRedirect       -> csrFile.io.mepc_out,
         interruptRedirect  -> interruptTrapTarget,
         exceptionRedirect  -> mtvecBase,
-        redirectNeeded     -> actualTarget
+        // Direction mispredicts can be either not-taken -> taken or
+        // taken -> not-taken. exeNextPc selects the architecturally correct
+        // destination for both cases; actualTarget alone would incorrectly
+        // send a predicted-taken loop back to its body on the exit iteration.
+        redirectNeeded     -> exeNextPc
     ))
     io.estop := estopCommitted
     io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>

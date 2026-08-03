@@ -53,7 +53,7 @@ class MiniDecode(val vlen: Int = 64) extends Module {
     }
 }
 
-class BreezeFrontendDebugIO(vlen: Int) extends Bundle {
+class BreezeFrontendDebugIO(vlen: Int, ghrLength: Int = 0) extends Bundle {
     val s1_pcReg = Output(UInt(vlen.W))
     val s1_valid = Output(Bool())
     val dreq_valid = Output(Bool())
@@ -71,6 +71,12 @@ class BreezeFrontendDebugIO(vlen: Int) extends Bundle {
     val cache_s1_hit = Output(Bool())
     val cache_s2_valid = Output(Bool())
     val cache_s2_done = Output(Bool())
+    val ghr = Output(UInt(ghrLength.max(1).W))
+    val s1PredTaken = Output(Bool())
+    val s1PredPc = Output(UInt(vlen.W))
+    val s1PhtIdx = Output(UInt(ghrLength.max(1).W))
+    val s3FastRedirectValid = Output(Bool())
+    val s3FastRedirectTarget = Output(UInt(vlen.W))
 }
 
 /**
@@ -89,7 +95,9 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         val nextLevelReq = new L1CacheMissReqIO(cfg.cacheCfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(cfg.cacheCfg.ICACHE_LINE_WIDTH)
         val hpm = Output(new BreezeHpmEvents)
-        val debug = if (enabledebug) Some(new BreezeFrontendDebugIO(cfg.VLEN)) else None
+        val debug = if (enabledebug) {
+            Some(new BreezeFrontendDebugIO(cfg.VLEN, cfg.branchPredCfg.ghrLength))
+        } else None
     })
 
     // ===== Module Instances =====
@@ -375,6 +383,15 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         debug.cache_s1_hit := icache.io.debug.get.s1_hit
         debug.cache_s2_valid := icache.io.debug.get.s2_valid
         debug.cache_s2_done := icache.io.debug.get.s2_done
+        debug.ghr := 0.U
+        debug.s1PredTaken := s1_predTaken
+        debug.s1PredPc := s1_predPc
+        debug.s1PhtIdx := s1_phtIdx
+        debug.s3FastRedirectValid := s3_fastRedirectValid
+        debug.s3FastRedirectTarget := s3_fastRedirectTarget
+        if (isGShare) {
+            debug.ghr := ghrReg.get
+        }
     }
 }
 

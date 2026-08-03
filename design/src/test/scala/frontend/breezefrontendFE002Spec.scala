@@ -2,10 +2,13 @@ package flow.frontend
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
+import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val BootAddr = BreezeMcuPlatform.ResetVector
+
     private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
         val imm12 = imm & 0xfff
         BigInt((imm12 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x13)
@@ -47,13 +50,14 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
             val maxObserveCycles = 40
 
             dut.io.fetchBuffer.canAccept3.poke(true.B)
-            dut.io.resetAddr.poke(0x0.U)
+            dut.io.resetAddr.poke(BootAddr.U)
             dut.io.beRedirect.valid.poke(false.B)
             dut.io.beRedirect.flush.poke(false.B)
             dut.io.beRedirect.cacheFlush.poke(false.B)
             dut.io.beRedirect.target.poke(0x0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0x0.U)
+            dut.io.nextLevelRsp.error.poke(false.B)
 
             dut.reset.poke(true.B)
             dut.clock.step(1)
@@ -95,7 +99,7 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
                 if (!observedReq && reqValid) {
                     observedReq = true
                     reqAddr = reqPaddr
-                    dut.io.nextLevelReq.paddr.expect(0x0.U)
+                    dut.io.nextLevelReq.paddr.expect(BootAddr.U)
                     if(false)println(f"[INFO] FE002 observed miss request at cycle $cycle, paddr=0x${reqAddr}%x")
                 } else if (observedReq && !refillSent) {
                     delayCount += 1
@@ -113,7 +117,7 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
                 }
 
                 if (!observedFirstResponse && (cacheRspValid || s2RespValid)) {
-                    val expectedPc = BigInt(responseBeat * 4)
+                    val expectedPc = BootAddr + responseBeat * 4
                     println(
                       f"[INFO] FE002 response observe at cycle $cycle: " +
                         f"cache_drsp_valid=$cacheRspValid " +
@@ -130,14 +134,14 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
                     debug.cache_drsp_vaddr.expect(expectedPc.U)
                     debug.s2_pcReg.expect(expectedPc.U)
                     debug.s1_valid.expect(true.B)
-                    debug.s1_pcReg.expect(0x4.U)
+                    debug.s1_pcReg.expect((BootAddr + 4).U)
                     responseBeat += 1
                     observedFirstResponse = true
                     postResponseCheckIndex = 0
                 } else if (postResponseCheckIndex >= 0 && postResponseCheckIndex < refillInstWords.length) {
-                    val expectedS3Pc = BigInt(postResponseCheckIndex * 4)
-                    val expectedS2Pc = BigInt((postResponseCheckIndex + 1) * 4)
-                    val expectedS1Pc = BigInt((postResponseCheckIndex + 2) * 4)
+                    val expectedS3Pc = BootAddr + postResponseCheckIndex * 4
+                    val expectedS2Pc = BootAddr + (postResponseCheckIndex + 1) * 4
+                    val expectedS1Pc = BootAddr + (postResponseCheckIndex + 2) * 4
                     val expectedInst = refillInstWords(postResponseCheckIndex)
                     println(
                       f"[INFO] FE002 post-response stream cycle $cycle: " +
@@ -160,7 +164,7 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
                 }
 
                 if (!observedFirstResponse && fetchValid) {
-                    val expectedPc = BigInt(fetchBeat * 4)
+                    val expectedPc = BootAddr + fetchBeat * 4
                     val expectedInst = refillInstWords(fetchBeat)
                     println(
                       f"[INFO] FE002 fetch observe at cycle $cycle: " +
