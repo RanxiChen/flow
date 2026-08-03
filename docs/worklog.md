@@ -644,3 +644,88 @@ MEM/WB forwarding 人为排除了 `SEL_WB.CSR`，导致短距离 CSR-to-store �
 
 事件定义、默认 selector mapping 和指标公式见 `docs/pmu.md`。本次没有启用或修改
 GShare。
+
+### LiteX MCU 增加可选 GShare preset（默认保持 baseline）
+
+完成第一阶段 GShare 集成。`GenerateBreezeCoreWishbone` 接受 `baseline|gshare`，并将
+RTL 分别写到 `design/build/rtl/<preset>/`；每套产物包含 `core-preset.txt`，LiteX CPU
+wrapper 在加载 `filelist.f` 前校验 marker。`breeze_sim.py` 和 `run_mcu.py` 增加
+`--core-preset`，默认值均为 `baseline`；默认 Verilator 输出目录也包含 preset，避免
+两种配置复用旧产物。runner 还要求仿真输出匹配
+`BREEZE_CONFIG core_preset=<preset>` 才接受 PASS。
+
+首次显式 GShare 运行能启动固件，但在 `main.c` 的 32 次循环退出处一直回跳。退休
+轨迹确认计数寄存器已经从 31 更新到 32，问题不在数据旁路；根因是 predicted-taken、
+actual-not-taken 时，后端检测到方向错误后仍使用 branch target 重定向。将 redirect
+目标改为 `exeNextPc` 后，taken 使用 branch target，not-taken 使用 `pc+4`。
+
+chen 隔离树 `/tmp/flow-pmu-20260803` 在初始化 conda 并 `source ~/FUN/env.sh` 后验证：
+
+- baseline 与 GShare elaboration 均成功；baseline manifest 不包含 BTB/PHT，GShare
+  manifest 包含 `BreezeBTB.sv` 和 `BreezePHT.sv`；
+- `BreezeCoreSpec` 12/12 通过；
+- 不传 `--core-preset` 的默认 baseline：2078 cycles、612 instructions、
+  IPC 0.294514，completion PASS；
+- 显式 `--core-preset gshare`：1548 cycles、612 instructions、IPC 0.395349，
+  23 次 prediction miss，completion PASS。
+
+这组数值只证明可选路径和循环退出修复有效。正式 GShare 性能结论仍需补齐预测器单元
+测试、复杂控制流/异常回归和多 workload 对照，见 `docs/gshare-status.md`。
+
+### GShare 单元测试与 baseline/GShare 正确性回归
+
+按先验证预测器电路、再验证核心和 LiteX 路径的顺序补齐第一阶段回归：
+
+- `BreezeBTBSpec` 2 项：复位 miss、metadata/update、完整 PC tag、round-robin replacement；
+- `BreezePHTSpec` 3 项：PC/GHR xor index、weakly not-taken、2-bit counter 状态转移与
+  饱和、alias；
+- `MiniDecodeSpec` 1 项：BR/JAL/JALR/普通指令分类及直接目标；
+- `BreezeFrontendGShareSpec` 3 项：GHR 单次移入与保持、复位状态、训练后 BTB/PHT
+  命中并选择 predicted next PC；
+- `BreezeBackendGShareSpec` 4 项：两种方向误预测的正确 redirect、正确预测仍训练、
+  older load hold 期间不重复 BTB/PHT/GHR training；
+- `BreezeCoreGShareSpec` 3 项：逐条比较 baseline/GShare 的退休 PC、指令、next PC、
+  寄存器写回和 estop，覆盖 20 次循环退出、交替分支与 JAL、load-to-branch。
+
+为观察 frontend 内部预测状态，增加只在 `enabledebug=true` 时生成的 GHR、S1 预测和
+S3 fast redirect debug 信号；正式 LiteX core 使用 `enabledebug=false`，没有新增产品
+顶层端口。core simulation runner 同时显式驱动新增 DMem/HPM 输入默认值，并将原
+`BreezeCoreSim` 的 boot 地址调整到当前 ICache/PMA 可执行的 ROM 基址 `0x10000000`。
+
+新增 `sim/litex/run_gshare_regression.py`：同一个 firmware binary 依次通过 baseline
+和 GShare 独立产物运行，校验 preset marker、completion PASS、固件 SHA256、
+PMU/IPC 字段；generic deterministic 程序还要求退休指令数相等。chen 隔离树
+`/tmp/flow-pmu-20260803` 的实际结果：
+
+```text
+BREEZE_GSHARE_REGRESSION app=main mtvec=direct firmware_sha256=9863e4f55241a1170753271f8d52bd0bf073db0fc95b3194443ff7197bed6b9e PASS
+BREEZE_GSHARE_RESULT preset=baseline cycles=2078 instructions=612 ipc=0.294514
+BREEZE_GSHARE_RESULT preset=gshare cycles=1548 instructions=612 ipc=0.395349
+```
+
+chen 上新增 16 项定向测试全部通过。全量 `sbt test` 为 61 项中 46 通过、15 失败，
+失败集中在 `BreezeFrontendSpec`、`BreezeFrontendFE001Spec`、
+`BreezeFrontendFE002Spec`、`BreezeCoreNoFASESpec` 和
+`BreezeCoreNoFASECustomInstrSpec`；这些不是本次新增 GShare 套件，因此当前不能宣称
+全仓测试全绿，也没有把它们计作 GShare 第一阶段通过项。下一阶段仍需补 JALR 动态
+目标、ICache miss/redirect、trap/mret、Timer/UART 和多 workload 回归。
+
+### 修复 Frontend/NoFASE 历史测试地址与 PMA 不一致
+
+继续排查上述 15 个失败后确认它们具有同一个根因：测试仍从 `0x0`、`0x200` 或
+`0x800` 构造取指和 trap handler，但加入 MCU PMA 后，这些地址都不属于 executable
+region。ICache 因而立即返回 instruction access fault，不会产生测试所期待的 cold
+miss/refill；NoFASE 程序也从未真正执行。此前看到的 `cache_s0_ready=true`、零指令和
+错误 trap cause 都是该测试平台失配的后果，不是新的 frontend/backend RTL 故障。
+
+修复仅调整测试平台：
+
+- Frontend 三个 suite 统一从 `BreezeMcuPlatform.ResetVector` 取指，并将所有流水 PC、
+  miss 地址和 refill 期望相应平移；同时显式将 refill `error` 输入拉低；
+- NoFASE suite 的程序、分支目标、异常入口和期望退休 PC 全部放入合法 ROM region；
+- trap 测试用一条 `LUI` 构造 ROM 基址并写入 `mtvec`，不再把非法的 `0x200` 当作
+  handler；测试指令间距、异常点和 `mret` 返回语义保持不变；
+- 测试地址直接引用平台配置的 reset vector，不重复硬编码 `0x10000000`。
+
+chen 机器按规定初始化 conda 并 `source ~/FUN/env.sh` 后验证：原失败的 5 个 suite
+共 16 项测试全部通过；完整 `sbt test` 为 21 suites、61 tests，61/61 通过。

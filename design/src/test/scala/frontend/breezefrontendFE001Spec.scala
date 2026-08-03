@@ -2,10 +2,13 @@ package flow.frontend
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
+import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class BreezeFrontendFE001Spec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val BootAddr = BreezeMcuPlatform.ResetVector
+
     "BreezeFrontend FE-001 bug replication scenario" in {
         simulate(new BreezeFrontend(enabledebug = true)){dut =>
             val debug = dut.io.debug.get
@@ -17,13 +20,14 @@ class BreezeFrontendFE001Spec extends AnyFreeSpec with Matchers with ChiselSim {
             // 3. 后端重定向关闭，只观察默认顺序取指流程
             // 4. 下一级存储当前不返回数据，先看前端在"无反馈"时的初始状态
             dut.io.fetchBuffer.canAccept3.poke(true.B)
-            dut.io.resetAddr.poke(0x0.U)
+            dut.io.resetAddr.poke(BootAddr.U)
             dut.io.beRedirect.valid.poke(false.B)
             dut.io.beRedirect.flush.poke(false.B)
             dut.io.beRedirect.cacheFlush.poke(false.B)
             dut.io.beRedirect.target.poke(0x0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0x0.U)
+            dut.io.nextLevelRsp.error.poke(false.B)
 
             // 显式把 reset 拉高一个拍，确保这里观察到的是"复位作用后的寄存器值"
             dut.reset.poke(true.B)
@@ -70,7 +74,7 @@ class BreezeFrontendFE001Spec extends AnyFreeSpec with Matchers with ChiselSim {
 
             // 这一拍是默认顺序流真正开始工作的第一拍：
             // 1. s1 仍然有效
-            // 2. s1 的 PC 仍是 0
+            // 2. s1 的 PC 已推进到 ROM 基址后的下一条指令
             // 3. fetch buffer 允许前进，因此 dreq.valid 会被拉高
             // 4. cache 在冷启动后的这个周期准备好接收请求，所以本拍 dreq.fire
             println(f"[INFO] FE001 cycle 1: s1_pcReg = 0x${debug.s1_pcReg.peek().litValue}%x")

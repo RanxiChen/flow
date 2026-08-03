@@ -1,7 +1,7 @@
 """LiteX CPU integration wrapper for BreezeCore.
 
-This module only adapts generated RTL to LiteX's CPU API. Generate the RTL
-separately with ``cd design && sbt elaborate`` before constructing a SoC.
+This module only adapts generated RTL to LiteX's CPU API. Generate the selected
+RTL preset separately before constructing a SoC.
 """
 
 import os
@@ -29,6 +29,8 @@ GCC_FLAGS = {
 }
 
 class Flow(CPU):
+    core_presets         = ("baseline", "gshare")
+    core_preset          = "baseline"
     category             = "softcore"
     family               = "riscv"
     name                 = "flow"
@@ -147,23 +149,46 @@ class Flow(CPU):
 
         self.add_sources(platform)
 
+    @classmethod
+    def set_core_preset(cls, core_preset):
+        if core_preset not in cls.core_presets:
+            expected = " or ".join(cls.core_presets)
+            raise ValueError(
+                f"Unsupported BreezeCore preset {core_preset!r}; expected {expected}")
+        cls.core_preset = core_preset
+
     def set_reset_address(self, reset_address):
         self.reset_address = reset_address
         self.cpu_params.update(i_io_resetAddr=Constant(reset_address, 64))
 
-    @staticmethod
-    def add_sources(platform):
+    @classmethod
+    def add_sources(cls, platform):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         flow_root_dir = os.path.dirname(os.path.dirname(current_dir))
-        rtl_dir = os.path.join(flow_root_dir, "design", "build", "rtl")
+        rtl_dir = os.path.join(
+            flow_root_dir, "design", "build", "rtl", cls.core_preset)
         filelist = os.path.join(rtl_dir, "filelist.f")
+        preset_marker = os.path.join(rtl_dir, "core-preset.txt")
         if not os.path.exists(filelist):
             raise FileNotFoundError(
                 "BreezeCore RTL manifest has not been elaborated. Expected:\n"
                 f"  {filelist}\n"
                 "Generate it with:\n"
-                f"  cd {os.path.join(flow_root_dir, 'design')} && sbt elaborate"
+                f"  cd {os.path.join(flow_root_dir, 'design')} && "
+                f"sbt \"runMain flow.top.GenerateBreezeCoreWishbone {cls.core_preset}\""
             )
+        if not os.path.isfile(preset_marker):
+            raise FileNotFoundError(
+                "BreezeCore RTL preset marker is missing:\n"
+                f"  {preset_marker}\n"
+                "Regenerate the selected RTL preset before simulation."
+            )
+        with open(preset_marker, encoding="utf-8") as marker_file:
+            generated_preset = marker_file.read().strip()
+        if generated_preset != cls.core_preset:
+            raise RuntimeError(
+                "BreezeCore RTL preset mismatch: "
+                f"requested={cls.core_preset} generated={generated_preset!r}")
 
         with open(filelist, encoding="utf-8") as rtl_manifest:
             rtl_names = [

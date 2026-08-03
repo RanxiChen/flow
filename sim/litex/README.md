@@ -3,7 +3,7 @@
 This directory owns the concrete LiteX simulation SoC. The reusable CPU API
 adapter remains in `litex_wrapper/flow/core.py`.
 
-Generate the fixed core RTL and the standalone ROM image first:
+Generate the baseline core RTL and the standalone ROM image first:
 
 ```bash
 cd design && sbt elaborate
@@ -11,9 +11,19 @@ cd ..
 make -C software/breeze-smoke
 ```
 
-Elaboration emits split SystemVerilog. `design/build/rtl/filelist.f` is the
-authoritative source manifest; the LiteX CPU wrapper registers every file in
-that list, including `BreezeCoreWishbone.sv` as the top-level module.
+Elaboration emits split SystemVerilog under `design/build/rtl/baseline`.
+`filelist.f` is the authoritative source manifest; the LiteX CPU wrapper
+registers every file in that list, including `BreezeCoreWishbone.sv` as the
+top-level module. GShare is opt-in and uses an independent RTL directory:
+
+```bash
+cd design
+sbt "runMain flow.top.GenerateBreezeCoreWishbone gshare"
+```
+
+Each directory contains `core-preset.txt`. The wrapper rejects a missing or
+mismatched marker so a previous GShare build cannot silently replace the
+default baseline core.
 
 Then, in the LiteX Python environment, generate the simulation build tree:
 
@@ -59,6 +69,31 @@ python sim/litex/run_mcu.py --smoke timer --mtvec-mode direct
 python sim/litex/run_mcu.py --smoke uart --mtvec-mode direct
 python sim/litex/run_mcu.py --smoke timer --mtvec-mode vectored
 ```
+
+All commands above default to `--core-preset baseline`. Enable GShare only when
+explicitly requested; use `--elaborate` the first time or after RTL changes:
+
+```bash
+python sim/litex/run_mcu.py --main software/breeze-mcu/apps/main.c \
+    --core-preset gshare --elaborate
+```
+
+The default LiteX/Verilator output directory includes the selected preset, so
+baseline and GShare builds do not share generated simulation products. The
+simulator prints `BREEZE_CONFIG core_preset=<preset>` and the runner requires
+that marker before accepting a result.
+
+Run the same firmware through both presets as a correctness regression:
+
+```bash
+python3 sim/litex/run_gshare_regression.py --elaborate
+```
+
+The regression requires both completion markers, checks that both runs used the
+same firmware SHA256, and requires equal retired-instruction counts for the
+deterministic generic application. It reports cycles and IPC but does not use a
+performance threshold as a correctness gate. Timer/UART smoke applications can
+also be selected with `--smoke timer|uart` and `--mtvec-mode direct|vectored`.
 
 The performance output is independent of UART text and is not used to decide
 PASS/FAIL:

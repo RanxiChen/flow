@@ -23,8 +23,9 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 - M-mode PMU 提供 `mcycle`、`minstret` 和 8 个可编程 HPM counter，统计控制流、
   预测失败、Cache miss、uncached 访问和访存停顿；runner 自动计算 IPC。
 
-默认 LiteX 顶层使用 baseline 配置，不启用分支预测。代码中保留了可选 GShare 配置，
-但它不是当前通用 MCU 仿真的默认参数。
+默认 LiteX 顶层使用 `baseline` 配置，不启用分支预测。GShare 必须通过
+`--core-preset gshare` 显式选择；两套 RTL 和 Verilator 产物使用独立目录，切换配置
+不会复用另一套产物。
 
 ## 微架构参数
 
@@ -118,6 +119,13 @@ python3 sim/litex/run_mcu.py --main hello.c --elaborate
 
 ```bash
 python3 sim/litex/run_mcu.py --main hello.c
+```
+
+默认命令使用 baseline。显式启用 GShare 并重新生成对应 RTL：
+
+```bash
+python3 sim/litex/run_mcu.py --main hello.c \
+    --core-preset gshare --elaborate
 ```
 
 脚本会依次完成：

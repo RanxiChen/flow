@@ -24,7 +24,12 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
         val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
-        val frontendDebug = if (enabledebug) Some(new BreezeFrontendDebugIO(corecfg.VLEN)) else None
+        val frontendDebug = if (enabledebug) {
+            Some(new BreezeFrontendDebugIO(
+              corecfg.VLEN,
+              corecfg.frontendCfg.branchPredCfg.ghrLength
+            ))
+        } else None
         val debug = if (enabledebug) Some(new BackendDebugIO(corecfg.VLEN)) else None
     })
 

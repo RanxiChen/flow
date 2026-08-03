@@ -3,6 +3,7 @@ package flow.frontend
 import chisel3._
 import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.scalatest.ChiselSim
+import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable.ArrayDeque
@@ -16,6 +17,8 @@ case class CapturedFetchPacket(
 )
 
 class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val BootAddr = BreezeMcuPlatform.ResetVector
+
     private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
         val imm12 = imm & 0xfff
         BigInt((imm12 << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x13)
@@ -45,7 +48,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
     "BreezeFrontend should correctly work after reset" in {
         simulate(new BreezeFrontend(enabledebug = true)){dut =>
-            dut.io.resetAddr.poke(0x0.U)
+            dut.io.resetAddr.poke(BootAddr.U)
             dut.io.beRedirect.valid.poke(false.B)
             dut.io.beRedirect.flush.poke(false.B)
             dut.io.beRedirect.cacheFlush.poke(false.B)
@@ -53,12 +56,13 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.fetchBuffer.canAccept3.poke(false.B)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke("hdeadbeef".U)
+            dut.io.nextLevelRsp.error.poke(false.B)
 
             dut.reset.poke(true.B)
             dut.clock.step(1)
             println(f"[INFO] after reset: s1_pcReg = 0x${dut.io.debug.get.s1_pcReg.peek().litValue}%x")
             println(s"[INFO] after reset: s1_valid = ${dut.io.debug.get.s1_valid.peek().litToBoolean}")
-            dut.io.debug.get.s1_pcReg.expect(0x0.U)
+            dut.io.debug.get.s1_pcReg.expect(BootAddr.U)
             dut.io.fetchBuffer.valid.expect(false.B)
 
             dut.reset.poke(false.B)
@@ -80,13 +84,14 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // 3. 后端重定向关闭，只观察默认顺序取指流程
             // 4. 下一级存储当前不返回数据，先看前端在“无反馈”时的初始状态
             dut.io.fetchBuffer.canAccept3.poke(true.B)
-            dut.io.resetAddr.poke(0x0.U)
+            dut.io.resetAddr.poke(BootAddr.U)
             dut.io.beRedirect.valid.poke(false.B)
             dut.io.beRedirect.flush.poke(false.B)
             dut.io.beRedirect.cacheFlush.poke(false.B)
             dut.io.beRedirect.target.poke(0x0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0x0.U)
+            dut.io.nextLevelRsp.error.poke(false.B)
 
             // 显式把 reset 拉高一个拍，观察 reset 后的第一个有效工作拍。
             dut.reset.poke(true.B)
@@ -98,7 +103,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // 3. 这一拍 cache 的 s0 入口 ready，首个请求在本拍完成 fire
             println(f"[INFO] default-flow cycle 0: s1_pcReg = 0x${debug.s1_pcReg.peek().litValue}%x")
             println(s"[INFO] default-flow cycle 0: s1_valid = ${debug.s1_valid.peek().litToBoolean}")
-            debug.s1_pcReg.expect(0x0.U)
+            debug.s1_pcReg.expect(BootAddr.U)
             debug.s1_valid.expect(true.B)
             debug.cache_s1_valid.expect(false.B)
             debug.cache_s0_ready.expect(true.B)
@@ -118,7 +123,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // 1. 首拍请求已经在 cycle 0 被 cache 接收，因此前端 s1_pc 已经推进到 4
             // 2. cache 的 s0 入口在这一拍被阻塞，不再接受新请求
             // 3. 上一拍接收的请求已经进入 cache s1，并在这一拍表现为 miss
-            debug.s1_pcReg.expect(0x4.U)
+            debug.s1_pcReg.expect((BootAddr + 4).U)
             debug.s1_valid.expect(true.B)
             debug.dreq_valid.expect(true.B)
             debug.cache_s0_ready.expect(false.B)
@@ -145,7 +150,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
                 if (dut.io.nextLevelReq.req.peek().litToBoolean) {
                     observedMissReq = true
-                    dut.io.nextLevelReq.paddr.expect(0x0.U)
+                    dut.io.nextLevelReq.paddr.expect(BootAddr.U)
                 } else {
                     dut.clock.step(1)
                 }
@@ -200,7 +205,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             )
             debug.s2_respValid.expect(true.B)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect(0x4.U)
+            debug.s2_pcReg.expect((BootAddr + 4).U)
 
             // ==================== first visible instruction after refill ====================
             // 再下一拍，流水线继续前推：
@@ -224,15 +229,15 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
                 f"fetch_inst=0x${dut.io.fetchBuffer.bits.inst.peek().litValue}%x"
             )
             debug.s3_valid.expect(true.B)
-            debug.s3_pcReg.expect(0x4.U)
+            debug.s3_pcReg.expect((BootAddr + 4).U)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect(0x8.U)
+            debug.s2_pcReg.expect((BootAddr + 8).U)
             debug.s2_respValid.expect(true.B)
             debug.s1_valid.expect(true.B)
-            debug.s1_pcReg.expect(0xc.U)
+            debug.s1_pcReg.expect((BootAddr + 0xc).U)
             debug.cache_s1_hit.expect(true.B)
             dut.io.fetchBuffer.valid.expect(true.B)
-            dut.io.fetchBuffer.bits.pc.expect(0x4.U)
+            dut.io.fetchBuffer.bits.pc.expect((BootAddr + 4).U)
             dut.io.fetchBuffer.bits.inst.expect(refillInstWords(1).U)
 
             // ==================== next cycle should keep streaming ====================
@@ -249,11 +254,11 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
                 f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x"
             )
             debug.s1_valid.expect(true.B)
-            debug.s1_pcReg.expect(0x10.U)
+            debug.s1_pcReg.expect((BootAddr + 0x10).U)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect(0xc.U)
+            debug.s2_pcReg.expect((BootAddr + 0xc).U)
             debug.s3_valid.expect(true.B)
-            debug.s3_pcReg.expect(0x8.U)
+            debug.s3_pcReg.expect((BootAddr + 8).U)
         }
     }
 }

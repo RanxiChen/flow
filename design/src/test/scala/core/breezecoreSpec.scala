@@ -3,6 +3,7 @@ package flow.core
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import flow.config.BreezeCoreConfig
+import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
@@ -1249,6 +1250,7 @@ class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim
 }
 
 class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val RomBase = BreezeMcuPlatform.ResetVector
     private val nopInst = BigInt("00000013", 16)
     private val estopInst = BigInt("7ff00073", 16)
     private case class PendingIcacheResp(paddr: BigInt, data: BigInt, cyclesLeft: Int)
@@ -1304,8 +1306,8 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Chi
                 nopInst
             )
             val memoryMap = Map(
-                BigInt(0x0) -> buildRefillLine(firstLineWords),
-                BigInt(0x20) -> buildRefillLine(Seq.fill(8)(nopInst))
+                RomBase -> buildRefillLine(firstLineWords),
+                (RomBase + 0x20) -> buildRefillLine(Seq.fill(8)(nopInst))
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
@@ -1315,7 +1317,7 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Chi
             var postEstopCycleChecked = false
             var cycle = 0
 
-            dut.io.resetAddr.poke(0.U)
+            dut.io.resetAddr.poke(RomBase.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -1419,6 +1421,7 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Chi
 }
 
 class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
+    private val RomBase = BreezeMcuPlatform.ResetVector
     private val mask64 = (BigInt(1) << 64) - 1
     private val nopInst = BigInt("00000013", 16)
     private case class PendingIcacheResp(paddr: BigInt, data: BigInt, cyclesLeft: Int)
@@ -1438,6 +1441,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         (BigInt(funct3) << 12) |
         (BigInt(rd) << 7) |
         BigInt(0x73)
+    }
+
+    private def encodeLui(rd: Int, imm20: Int): BigInt = {
+        (BigInt(imm20 & 0xfffff) << 12) |
+        (BigInt(rd) << 7) |
+        BigInt(0x37)
     }
 
     private def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
@@ -1502,7 +1511,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val refillLine = buildRefillLine(refillInstWords)
             var cycle = 0
 
-            dut.io.resetAddr.poke(0.U)
+            dut.io.resetAddr.poke(RomBase.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -1516,7 +1525,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             logCoreTimeline(dut, cycle, "after-reset")
             cycle += 1
 
-            frontendDebug.s1_pcReg.expect(0.U)
+            frontendDebug.s1_pcReg.expect(RomBase.U)
             frontendDebug.dreq_fire.expect(true.B)
             frontendDebug.s2_valid.expect(false.B)
             frontendDebug.s3_valid.expect(false.B)
@@ -1544,18 +1553,18 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             assert(observedMissReq, "miss request was not observed within 16 cycles")
 
             frontendDebug.s2_valid.expect(true.B)
-            frontendDebug.s2_pcReg.expect(0.U)
+            frontendDebug.s2_pcReg.expect(RomBase.U)
             frontendDebug.s3_valid.expect(false.B)
             backendDebug.decodeValid.expect(false.B)
 
             val missAddr = dut.io.nextLevelReq.paddr.peek().litValue
-            missAddr mustBe BigInt(0)
+            missAddr mustBe RomBase
 
             for (waitIdx <- 0 until refillDelayCycles) {
                 logCoreTimeline(dut, cycle, s"stall-in-s2-$waitIdx")
                 dut.io.nextLevelRsp.vld.expect(false.B)
                 frontendDebug.s2_valid.expect(true.B)
-                frontendDebug.s2_pcReg.expect(0.U)
+                frontendDebug.s2_pcReg.expect(RomBase.U)
                 frontendDebug.s3_valid.expect(false.B)
                 backendDebug.decodeValid.expect(false.B)
                 dut.clock.step(1)
@@ -1580,19 +1589,19 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             logCoreTimeline(dut, cycle, "s2-resp-visible")
             frontendDebug.s2_respValid.expect(true.B)
             frontendDebug.s2_valid.expect(true.B)
-            frontendDebug.s2_pcReg.expect(4.U)
+            frontendDebug.s2_pcReg.expect((RomBase + 4).U)
 
             dut.clock.step(1)
             cycle += 1
 
             logCoreTimeline(dut, cycle, "s3-visible")
             frontendDebug.s3_valid.expect(true.B)
-            frontendDebug.s3_pcReg.expect(4.U)
+            frontendDebug.s3_pcReg.expect((RomBase + 4).U)
             frontendDebug.s2_valid.expect(true.B)
-            frontendDebug.s2_pcReg.expect(8.U)
+            frontendDebug.s2_pcReg.expect((RomBase + 8).U)
 
             stepUntil(dut) {
-                backendDebug.decodeValid.peek().litToBoolean && backendDebug.decodePc.peek().litValue == 0
+                backendDebug.decodeValid.peek().litToBoolean && backendDebug.decodePc.peek().litValue == RomBase
             }
             logCoreTimeline(dut, cycle, "decode-pc0")
             backendDebug.decodeInst.expect(refillInstWords.head.U)
@@ -1602,7 +1611,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             logCoreTimeline(dut, cycle, "decode-pc4-idexe-pc0")
             backendDebug.idExeValid.expect(true.B)
             backendDebug.decodeValid.expect(true.B)
-            backendDebug.decodePc.expect(4.U)
+            backendDebug.decodePc.expect((RomBase + 4).U)
             backendDebug.decodeInst.expect(refillInstWords(1).U)
 
             dut.clock.step(1)
@@ -1611,7 +1620,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             backendDebug.idExeValid.expect(true.B)
             backendDebug.exeMemValid.expect(true.B)
             backendDebug.decodeValid.expect(true.B)
-            backendDebug.decodePc.expect(8.U)
+            backendDebug.decodePc.expect((RomBase + 8).U)
             backendDebug.decodeInst.expect(refillInstWords(2).U)
 
             dut.clock.step(1)
@@ -1622,7 +1631,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             backendDebug.memWbValid.expect(true.B)
             backendDebug.wbData.expect(1.U)
             backendDebug.decodeValid.expect(true.B)
-            backendDebug.decodePc.expect(12.U)
+            backendDebug.decodePc.expect((RomBase + 12).U)
             backendDebug.decodeInst.expect(refillInstWords(3).U)
 
             dut.clock.step(1)
@@ -1645,13 +1654,13 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
             val frontendDebug = dut.io.frontendDebug.get
             val backendDebug = dut.io.debug.get
-            val branchPc = BigInt(0x8)
-            val targetPc = BigInt(0x40)
+            val branchPc = RomBase + 0x8
+            val targetPc = RomBase + 0x40
             val branchInst = encodeBranch(rs1 = 1, rs2 = 2, imm = (targetPc - branchPc).toInt, funct3 = 0)
             val targetFirstInst = encodeAddi(rd = 5, rs1 = 0, imm = 42)
             val fallbackLine = buildRefillLine(Seq.fill(8)(BigInt("deadbeef", 16)))
             val lineMap = Map(
-                BigInt(0x0) -> buildRefillLine(Seq(
+                RomBase -> buildRefillLine(Seq(
                     encodeAddi(rd = 1, rs1 = 0, imm = 1),
                     encodeAddi(rd = 2, rs1 = 0, imm = 1),
                     branchInst,
@@ -1661,8 +1670,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                     nopInst,
                     nopInst
                 )),
-                BigInt(0x20) -> buildRefillLine(Seq.fill(8)(nopInst)),
-                BigInt(0x40) -> buildRefillLine(Seq(
+                (RomBase + 0x20) -> buildRefillLine(Seq.fill(8)(nopInst)),
+                (RomBase + 0x40) -> buildRefillLine(Seq(
                     encodeAddi(rd = 5, rs1 = 0, imm = 42),
                     encodeAddi(rd = 6, rs1 = 0, imm = 7),
                     nopInst,
@@ -1682,7 +1691,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             var seenRedirectedDecode = false
             var cycle = 0
 
-            dut.io.resetAddr.poke(0.U)
+            dut.io.resetAddr.poke(RomBase.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -1796,17 +1805,17 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             seenRedirectedS2 mustBe true
             seenRedirectedS3 mustBe true
             seenRedirectedDecode mustBe true
-            observedReqs.contains(BigInt(0x0)) mustBe true
+            observedReqs.contains(RomBase) mustBe true
         }
     }
 
-    "BreezeCore should trap on illegal instruction at 0x81c and jump to mtvec at 0x200" in {
+    "BreezeCore should trap on an illegal ROM instruction and jump to mtvec" in {
         simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
             val backendDebug = dut.io.debug.get
             val refillDelayCycles = 6
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200),               encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt),   encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 encodeAddi(1, 0, 1),                   encodeAddi(2, 0, 2),
                 encodeAddi(3, 0, 3),                   encodeAddi(4, 0, 4),
                 encodeAddi(5, 0, 5),                   BigInt("FFFFFFFF", 16)
@@ -1824,15 +1833,15 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 nopInst, nopInst, nopInst, nopInst, nopInst
             ))
             val memoryMap = Map(
-                BigInt(0x800) -> line0x800,
-                BigInt(0x820) -> line0x820,
-                BigInt(0x200) -> line0x200
+                (RomBase + 0x800) -> line0x800,
+                (RomBase + 0x820) -> line0x820,
+                RomBase -> line0x200
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -1887,10 +1896,10 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
 
             estopSeen mustBe true
             retiredPcs mustBe Seq(
-                BigInt(0x800), BigInt(0x804), BigInt(0x808),
-                BigInt(0x80c), BigInt(0x810), BigInt(0x814),
-                BigInt(0x818), BigInt(0x81c),
-                BigInt(0x200), BigInt(0x204), BigInt(0x208)
+                RomBase + 0x800, RomBase + 0x804, RomBase + 0x808,
+                RomBase + 0x80c, RomBase + 0x810, RomBase + 0x814,
+                RomBase + 0x818, RomBase + 0x81c,
+                RomBase, RomBase + 0x4, RomBase + 0x8
             )
         }
     }
@@ -1901,7 +1910,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val refillDelayCycles = 6
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200),               encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt),   encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 encodeAddi(1, 0, 1),                   encodeAddi(2, 0, 2),
                 encodeAddi(3, 0, 3),                   encodeAddi(4, 0, 4),
                 encodeAddi(5, 0, 5),                   BigInt("FFFFFFFF", 16)
@@ -1919,15 +1928,15 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 nopInst, nopInst, nopInst, nopInst, nopInst
             ))
             val memoryMap = Map(
-                BigInt(0x800) -> line0x800,
-                BigInt(0x820) -> line0x820,
-                BigInt(0x200) -> line0x200
+                (RomBase + 0x800) -> line0x800,
+                (RomBase + 0x820) -> line0x820,
+                RomBase -> line0x200
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -1966,11 +1975,11 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 }
 
                 if (!exceptionSeen && backendDebug.memWbException.peek().litToBoolean) {
-                    backendDebug.csrMtvec.expect(0x200L.U)
+                    backendDebug.csrMtvec.expect(RomBase.U)
                     exceptionSeen = true
                 } else if (exceptionSeen && !exceptionChecked) {
                     backendDebug.csrMcause.expect(2.U)
-                    backendDebug.csrMepc.expect(0x81cL.U)
+                    backendDebug.csrMepc.expect((RomBase + 0x81c).U)
                     exceptionChecked = true
                 }
 
@@ -1992,32 +2001,32 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
-    "BreezeCore should boot from resetAddr 0x800" in {
+    "BreezeCore should boot from a non-zero executable resetAddr" in {
         simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
             val backendDebug = dut.io.debug.get
             val refillDelayCycles = 6
 
-            // Program at 0x800: 4 addi + ESTOP
+            // Program at ROM base + 0x800: 4 addi + ESTOP
             val line0x800 = buildRefillLine(Seq(
                 encodeAddi(1, 0, 1), encodeAddi(2, 0, 2),
                 encodeAddi(3, 0, 3), encodeAddi(4, 0, 4),
                 BigInt("7FF00073", 16), nopInst, nopInst, nopInst
             ))
-            // Also put same program at 0x0 so ESTOP fires even with the resetAddr bug
+            // Keep a second legal ROM line to catch an incorrect base-only fetch.
             val line0x00 = buildRefillLine(Seq(
                 encodeAddi(1, 0, 1), encodeAddi(2, 0, 2),
                 encodeAddi(3, 0, 3), encodeAddi(4, 0, 4),
                 BigInt("7FF00073", 16), nopInst, nopInst, nopInst
             ))
             val memoryMap = Map(
-                BigInt(0x00) -> line0x00,
-                BigInt(0x800) -> line0x800
+                RomBase -> line0x00,
+                (RomBase + 0x800) -> line0x800
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -2071,8 +2080,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             }
 
             estopSeen mustBe true
-            // The key assertion: with resetAddr=0x800, the first retired PC must be 0x800
-            retiredPcs.headOption mustBe Some(BigInt(0x800))
+            // The first retired PC must be the exact non-zero reset address.
+            retiredPcs.headOption mustBe Some(RomBase + 0x800)
         }
     }
 
@@ -2082,31 +2091,29 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val refillDelayCycles = 6
             val ecallInst = BigInt("00000073", 16)
 
-            // Main program @ 0x800: set mtvec=0x200, ecall, then ESTOP (should not reach)
+            // Main program @ ROM base + 0x800: set mtvec to ROM base, then ecall.
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200),     encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt), encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst,                    encodeAddi(2, 0, 1),
                 encodeAddi(3, 0, 2),         BigInt("7FF00073", 16),
                 nopInst,                      nopInst
             ))
-            // Handler @ 0x200: just ESTOP (verifies trap entered handler)
+            // Handler @ ROM base: just ESTOP (verifies trap entered handler)
             val line0x200 = buildRefillLine(Seq(
                 encodeAddi(1, 0, 0),  // nop-like
                 encodeAddi(2, 0, 0),
                 BigInt("7FF00073", 16), // ESTOP
                 nopInst, nopInst, nopInst, nopInst, nopInst
             ))
-            val line0x000 = buildRefillLine(Seq.fill(8)(nopInst))
             val memoryMap = Map(
-                BigInt(0x000) -> line0x000,
-                BigInt(0x200) -> line0x200,
-                BigInt(0x800) -> line0x800
+                RomBase -> line0x200,
+                (RomBase + 0x800) -> line0x800
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -2151,8 +2158,8 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 } else if (trapSeen && !csrChecked) {
                     // After ecall trap: verify CSRs set correctly
                     backendDebug.csrMcause.expect(11.U)          // Environment call from M-mode
-                    backendDebug.csrMepc.expect(0x808L.U)       // PC of ecall
-                    backendDebug.csrMtvec.expect(0x200L.U)      // handler address
+                    backendDebug.csrMepc.expect((RomBase + 0x808).U) // PC of ecall
+                    backendDebug.csrMtvec.expect(RomBase.U)          // handler address
                     csrChecked = true
                 }
 
@@ -2175,9 +2182,9 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             estopSeen mustBe true
             trapSeen mustBe true
             csrChecked mustBe true
-            // Key PCs: main → ecall(0x808) → handler(0x200)
-            retiredPcs must contain(BigInt(0x808))
-            retiredPcs must contain(BigInt(0x200))
+            // Key PCs: main → ecall → handler.
+            retiredPcs must contain(RomBase + 0x808)
+            retiredPcs must contain(RomBase)
         }
     }
 
@@ -2188,16 +2195,16 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val ecallInst = BigInt("00000073", 16)
             val mretInst  = BigInt("30200073", 16)
 
-            // Main @ 0x800: set mtvec, ecall, then (after mret) addi + ESTOP
+            // Main @ ROM base + 0x800: set mtvec, ecall, then return to addi + ESTOP.
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200),
+                encodeLui(1, (RomBase >> 12).toInt),
                 encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst,
-                encodeAddi(2, 0, 1),           // ← mret returns here (0x80c)
+                encodeAddi(2, 0, 1),           // mret returns here (ROM base + 0x80c)
                 BigInt("7FF00073", 16),         // ESTOP
                 nopInst, nopInst, nopInst
             ))
-            // Handler @ 0x200: read mepc, +4, write back via csrrw, mret
+            // Handler @ ROM base: read mepc, +4, write back via csrrw, mret
             // csrrw x5, mepc, x0  (CSRRW: read old mepc→x5, write x0→mepc temporarily)
             val csrrw_x5_mepc = encodeCsr(rd = 5, rs1 = 0, csr = CSRMAP.mepc, funct3 = 1)
             val addi_x5_4    = encodeAddi(rd = 5, rs1 = 5, imm = 4)
@@ -2207,17 +2214,15 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 csrrw_x5_mepc, addi_x5_4, csrrw_mepc, mretInst,
                 nopInst, nopInst, nopInst, nopInst
             ))
-            val line0x000 = buildRefillLine(Seq.fill(8)(nopInst))
             val memoryMap = Map(
-                BigInt(0x000) -> line0x000,
-                BigInt(0x200) -> line0x200,
-                BigInt(0x800) -> line0x800
+                RomBase -> line0x200,
+                (RomBase + 0x800) -> line0x800
             )
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
@@ -2269,7 +2274,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 // Phase 1: CSR check (next cycle after trap)
                 else if (phase == 1) {
                     backendDebug.csrMcause.expect(11.U)
-                    backendDebug.csrMepc.expect(0x808L.U)
+                    backendDebug.csrMepc.expect((RomBase + 0x808).U)
                     csrChecked = true
                     phase = 2
                 }
@@ -2279,9 +2284,9 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                     mretSeen = true
                     phase = 3
                 }
-                // Phase 3: wait for return to 0x80c
+                // Phase 3: wait for return to ROM base + 0x80c
                 if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean &&
-                    backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) {
+                    backendDebug.memWbPc.peek().litValue == RomBase + 0x80c) {
                     returned = true
                     phase = 4
                 }
@@ -2308,11 +2313,11 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             mretSeen mustBe true
             returned mustBe true
             // Verify PC sequence: main → ecall → handler → back to main
-            retiredPcs must contain(BigInt(0x808))   // ecall
-            retiredPcs must contain(BigInt(0x200))   // handler entry
-            retiredPcs must contain(BigInt(0x80c))   // returned after mret
-            // ecall must execute exactly once (mret did NOT jump back to 0x808)
-            retiredPcs.count(_ == BigInt(0x808)) mustBe 1
+            retiredPcs must contain(RomBase + 0x808) // ecall
+            retiredPcs must contain(RomBase)         // handler entry
+            retiredPcs must contain(RomBase + 0x80c) // returned after mret
+            // ecall must execute exactly once.
+            retiredPcs.count(_ == RomBase + 0x808) mustBe 1
         }
     }
 
@@ -2327,7 +2332,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val mretInst  = BigInt("30200073", 16)
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt), encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
                 nopInst, nopInst, nopInst
             ))
@@ -2337,12 +2342,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)  // write with RW
             val line0x200 = buildRefillLine(Seq(csrrs_rd, addi_x5, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
 
-            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val memoryMap = Map(RomBase -> line0x200, (RomBase + 0x800) -> line0x800)
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
@@ -2367,7 +2372,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
                 else if (phase == 1) { phase = 2 }
                 if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
-                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == RomBase + 0x80c) { returned = true; phase = 4 }
                 if (dut.io.estop.peek().litToBoolean) estopSeen = true
                 dut.clock.step(1); cycle += 1
                 val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
@@ -2385,7 +2390,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val mretInst  = BigInt("30200073", 16)
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt), encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
                 nopInst, nopInst, nopInst
             ))
@@ -2395,12 +2400,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val csrrw_wr   = encodeCsr(rd = 0, rs1 = 6, csr = CSRMAP.mepc, funct3 = 1)  // write x6→mepc
             val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x6, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
 
-            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val memoryMap = Map(RomBase -> line0x200, (RomBase + 0x800) -> line0x800)
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
@@ -2425,7 +2430,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
                 else if (phase == 1) { phase = 2 }
                 if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
-                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == RomBase + 0x80c) { returned = true; phase = 4 }
                 if (dut.io.estop.peek().litToBoolean) estopSeen = true
                 dut.clock.step(1); cycle += 1
                 val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
@@ -2443,7 +2448,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val mretInst  = BigInt("30200073", 16)
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt), encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
                 nopInst, nopInst, nopInst
             ))
@@ -2453,12 +2458,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
             val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x5, nopInst, csrrw_wr, mretInst, nopInst, nopInst, nopInst))
 
-            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val memoryMap = Map(RomBase -> line0x200, (RomBase + 0x800) -> line0x800)
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
@@ -2483,7 +2488,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
                 else if (phase == 1) { phase = 2 }
                 if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
-                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == RomBase + 0x80c) { returned = true; phase = 4 }
                 if (dut.io.estop.peek().litToBoolean) estopSeen = true
                 dut.clock.step(1); cycle += 1
                 val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))
@@ -2501,7 +2506,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val mretInst  = BigInt("30200073", 16)
 
             val line0x800 = buildRefillLine(Seq(
-                encodeAddi(1, 0, 0x200), encodeCsr(0, 1, CSRMAP.mtvec, 1),
+                encodeLui(1, (RomBase >> 12).toInt), encodeCsr(0, 1, CSRMAP.mtvec, 1),
                 ecallInst, encodeAddi(2, 0, 1), BigInt("7FF00073", 16),
                 nopInst, nopInst, nopInst
             ))
@@ -2511,12 +2516,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
             val csrrw_wr   = encodeCsr(rd = 0, rs1 = 5, csr = CSRMAP.mepc, funct3 = 1)
             val line0x200 = buildRefillLine(Seq(csrrw_rd, addi_x5, csrrw_wr, mretInst, nopInst, nopInst, nopInst, nopInst))
 
-            val memoryMap = Map(BigInt(0x000) -> buildRefillLine(Seq.fill(8)(nopInst)), BigInt(0x200) -> line0x200, BigInt(0x800) -> line0x800)
+            val memoryMap = Map(RomBase -> line0x200, (RomBase + 0x800) -> line0x800)
             val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
-            dut.io.resetAddr.poke(0x800L.U)
+            dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U)
@@ -2541,7 +2546,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
                 if (phase == 0 && backendDebug.memWbTrapValid.peek().litToBoolean && backendDebug.memWbIsEcall.peek().litToBoolean) { trapSeen = true; phase = 1 }
                 else if (phase == 1) { phase = 2 }
                 if (phase == 2 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbIsMret.peek().litToBoolean) { mretSeen = true; phase = 3 }
-                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == BigInt(0x80c)) { returned = true; phase = 4 }
+                if (phase == 3 && backendDebug.memWbValid.peek().litToBoolean && backendDebug.memWbPc.peek().litValue == RomBase + 0x80c) { returned = true; phase = 4 }
                 if (dut.io.estop.peek().litToBoolean) estopSeen = true
                 dut.clock.step(1); cycle += 1
                 val updated = pendingIcacheResps.map(r => r.copy(cyclesLeft = math.max(r.cyclesLeft - 1, 0)))

@@ -49,6 +49,20 @@ object BreezeCoreSimSupport {
         BigInt(0x23)
     }
 
+    def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
+        require((imm & 1) == 0, s"branch immediate must be 2-byte aligned: $imm")
+        require(imm >= -4096 && imm <= 4094, s"branch immediate out of range: $imm")
+        val value = imm & 0x1fff
+        (BigInt((value >> 12) & 1) << 31) |
+        (BigInt((value >> 5) & 0x3f) << 25) |
+        (BigInt(rs2) << 20) |
+        (BigInt(rs1) << 15) |
+        (BigInt(funct3) << 12) |
+        (BigInt((value >> 1) & 0xf) << 8) |
+        (BigInt((value >> 11) & 1) << 7) |
+        BigInt(0x63)
+    }
+
     def alignDown(addr: BigInt, alignBytes: Int): BigInt = {
         require(alignBytes > 0 && (alignBytes & (alignBytes - 1)) == 0, s"alignBytes must be power of two: $alignBytes")
         addr & ~BigInt(alignBytes - 1)
@@ -304,6 +318,18 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.io.dmem.rsp.valid.poke(false.B)
             dut.io.dmem.rsp.data.poke(0.U)
             dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.io.dmem.rsp.error.poke(false.B)
+            dut.io.dcacheFlushDone.poke(false.B)
+            dut.io.dcacheHpm.controlRetired.poke(false.B)
+            dut.io.dcacheHpm.controlTaken.poke(false.B)
+            dut.io.dcacheHpm.predictionMiss.poke(false.B)
+            dut.io.dcacheHpm.icacheAccess.poke(false.B)
+            dut.io.dcacheHpm.icacheMiss.poke(false.B)
+            dut.io.dcacheHpm.dcacheAccess.poke(false.B)
+            dut.io.dcacheHpm.dcacheMiss.poke(false.B)
+            dut.io.dcacheHpm.dcacheUncached.poke(false.B)
+            dut.io.dcacheHpm.memStallCycle.poke(false.B)
+            dut.io.dcacheHpm.loadUseStall.poke(false.B)
 
             dut.reset.poke(true.B)
             dut.clock.step(1)
@@ -316,6 +342,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                 dut.io.dmem.rsp.valid.poke(false.B)
                 dut.io.dmem.rsp.data.poke(0.U)
                 dut.io.dmem.rsp.isWriteAck.poke(false.B)
+                dut.io.dmem.rsp.error.poke(false.B)
 
                 if (processImemReq) {
                     if (imemTape == imemLatency) {
