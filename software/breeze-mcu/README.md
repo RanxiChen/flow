@@ -23,6 +23,21 @@ python3 sim/litex/run_mcu.py --main software/breeze-mcu/apps/fibonacci.c \
     --core-preset gshare --elaborate
 ```
 
+`apps/multiply.c` is the RV64M multiplication workload. It performs 64
+repetitions of an eight-element signed dot product (512 dynamic
+multiplications), prints the checksum, and returns zero only when the result is
+`20608`. Its volatile inputs prevent compile-time constant folding, and the
+inner-loop multiply feeds the following accumulator update:
+
+```bash
+python3 sim/litex/run_mcu.py --main software/breeze-mcu/apps/multiply.c \
+    --core-preset baseline --elaborate
+```
+
+The firmware Makefile now defaults to `-march=rv64im_zicsr_zifencei`, matching
+the M extension advertised by the core. Override `MARCH` explicitly when a
+different software ISA baseline is needed.
+
 The canonical simulation command is the project runner:
 
 ```bash

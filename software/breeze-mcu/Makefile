@@ -2,6 +2,7 @@ CROSS_COMPILE ?= riscv64-unknown-elf-
 BUILD_DIR     ?= build
 MAIN          ?= apps/main.c
 MTVEC_MODE    ?= 0
+MARCH         ?= rv64im_zicsr_zifencei
 TARGET         = $(BUILD_DIR)/breeze-mcu
 
 CC      := $(CROSS_COMPILE)gcc
@@ -9,7 +10,7 @@ OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
 NM      := $(CROSS_COMPILE)nm
 
-ARCH_FLAGS = -march=rv64i_zicsr_zifencei -mabi=lp64 -mcmodel=medany
+ARCH_FLAGS = -march=$(MARCH) -mabi=lp64 -mcmodel=medany
 COMMON_FLAGS = $(ARCH_FLAGS) -mno-relax -msmall-data-limit=0 \
 	-ffreestanding -fno-builtin -fno-pic -fno-pie \
 	-ffunction-sections -fdata-sections -Os -Wall -Wextra \
