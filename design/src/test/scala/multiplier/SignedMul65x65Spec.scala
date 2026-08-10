@@ -10,7 +10,7 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
   private val Mask65  = (BigInt(1) << 65) - 1
   private val Mask130 = (BigInt(1) << 130) - 1
 
-  /** Interpret a 65-bit unsigned bit-pattern as a signed value. */
+  /** Interpret a 65-bit unsigned bit-pattern as a signed BigInt. */
   private def asSigned65(raw: BigInt): BigInt = {
     val u = raw & Mask65
     if (u.testBit(64)) u - (BigInt(1) << 65) else u
@@ -20,24 +20,30 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
   private def golden(rawA: BigInt, rawB: BigInt): BigInt = {
     val sa = asSigned65(rawA)
     val sb = asSigned65(rawB)
-    val product = sa * sb
-    product & Mask130
+    (sa * sb) & Mask130
   }
 
-  /** Drive one multiply through the 3-stage pipeline and return the result. */
+  /** Poke a 65-bit raw value into an SInt port (handles sign). */
+  private def pokeS65(dut: SignedMul65x65, portA: Boolean, raw: BigInt): Unit = {
+    val signed = asSigned65(raw)
+    if (portA) dut.io.a.poke(signed.S(65.W))
+    else       dut.io.b.poke(signed.S(65.W))
+  }
+
+  /** Drive one multiply through the 3-stage pipeline and return the raw result. */
   private def runOne(dut: SignedMul65x65, a: BigInt, b: BigInt): BigInt = {
     dut.io.in_valid.poke(true.B)
-    dut.io.a.poke((a & Mask65).S(65.W))
-    dut.io.b.poke((b & Mask65).S(65.W))
+    pokeS65(dut, portA = true, a)
+    pokeS65(dut, portA = false, b)
     dut.clock.step(1)
 
-    // Two pipeline bubbles after the single input
+    // Two pipeline bubbles
     dut.io.in_valid.poke(false.B)
     dut.io.a.poke(0.S(65.W))
     dut.io.b.poke(0.S(65.W))
     dut.clock.step(2)
 
-    // Result appears on cycle 3 (relative to input)
+    // Result at cycle 3
     dut.io.out_valid.expect(true.B)
     val result = dut.io.product.peekValue().asBigInt
     dut.clock.step(1)
@@ -52,17 +58,15 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     "0 × 0 = 0" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val result = runOne(dut, 0, 0)
-        result mustBe golden(0, 0)
+        runOne(dut, 0, 0) mustBe golden(0, 0)
       }
     }
 
     "0 × N = 0" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        for (n <- Seq(BigInt(1), BigInt(-1), BigInt(42), BigInt("ffffffffffffffff", 16))) {
-          val result = runOne(dut, 0, n)
-          result mustBe golden(0, n)
+        for (n <- Seq(BigInt(1), Mask65 /* -1 */, BigInt(42), BigInt("ffffffffffffffff", 16))) {
+          runOne(dut, 0, n) mustBe golden(0, n)
         }
       }
     }
@@ -70,9 +74,8 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     "N × 0 = 0" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        for (n <- Seq(BigInt(1), BigInt(-1), BigInt(42), BigInt("ffffffffffffffff", 16))) {
-          val result = runOne(dut, n, 0)
-          result mustBe golden(n, 0)
+        for (n <- Seq(BigInt(1), Mask65, BigInt(42), BigInt("ffffffffffffffff", 16))) {
+          runOne(dut, n, 0) mustBe golden(n, 0)
         }
       }
     }
@@ -80,45 +83,37 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     "1 × 1 = 1" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val result = runOne(dut, 1, 1)
-        result mustBe golden(1, 1)
+        runOne(dut, 1, 1) mustBe golden(1, 1)
       }
     }
 
     "1 × -1 = -1" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val mask = Mask65
-        val neg1 = mask // 65-bit representation of -1
-        val result = runOne(dut, 1, neg1)
-        result mustBe golden(1, neg1)
+        runOne(dut, 1, Mask65) mustBe golden(1, Mask65)
       }
     }
 
     "-1 × -1 = 1" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val neg1 = Mask65
-        val result = runOne(dut, neg1, neg1)
-        result mustBe golden(neg1, neg1)
+        runOne(dut, Mask65, Mask65) mustBe golden(Mask65, Mask65)
       }
     }
 
     "max positive × max positive" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val maxPos = BigInt("7ffffffffffffffff", 16) // 2^64 - 1, as 65-bit unsigned
-        val result = runOne(dut, maxPos, maxPos)
-        result mustBe golden(maxPos, maxPos)
+        val maxPos = BigInt("7ffffffffffffffff", 16) // 2^64 - 1
+        runOne(dut, maxPos, maxPos) mustBe golden(maxPos, maxPos)
       }
     }
 
     "min negative × min negative" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val minNeg = BigInt("10000000000000000", 16) // -2^64, as 65-bit unsigned
-        val result = runOne(dut, minNeg, minNeg)
-        result mustBe golden(minNeg, minNeg)
+        val minNeg = BigInt("10000000000000000", 16) // -2^64
+        runOne(dut, minNeg, minNeg) mustBe golden(minNeg, minNeg)
       }
     }
 
@@ -127,8 +122,7 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
         val minNeg = BigInt("10000000000000000", 16)
         val maxPos = BigInt("7ffffffffffffffff", 16)
-        val result = runOne(dut, minNeg, maxPos)
-        result mustBe golden(minNeg, maxPos)
+        runOne(dut, minNeg, maxPos) mustBe golden(minNeg, maxPos)
       }
     }
 
@@ -138,8 +132,7 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
         for ((a, b) <- Seq((3L, 7L), (42L, 100L), (0x7fffL, 0x3L))) {
-          val result = runOne(dut, BigInt(a), BigInt(b))
-          result mustBe golden(BigInt(a), BigInt(b))
+          runOne(dut, BigInt(a), BigInt(b)) mustBe golden(BigInt(a), BigInt(b))
         }
       }
     }
@@ -147,11 +140,10 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     "positive × negative" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val neg5  = Mask65 - 4  // -5 in 65-bit
-        val neg42 = Mask65 - 41 // -42 in 65-bit
+        val neg5  = BigInt("1fffffffffffffffb", 16) // -5 as 65-bit raw
+        val neg42 = BigInt("1fffffffffffffd6", 16)  // -42 as 65-bit raw
         for ((a, b) <- Seq((BigInt(7), neg5), (BigInt(100), neg42))) {
-          val result = runOne(dut, a, b)
-          result mustBe golden(a, b)
+          runOne(dut, a, b) mustBe golden(a, b)
         }
       }
     }
@@ -159,11 +151,10 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     "negative × positive" in {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
-        val neg3  = Mask65 - 2
-        val neg99 = Mask65 - 98
+        val neg3  = BigInt("1ffffffffffffffd", 16)  // -3
+        val neg99 = BigInt("1fffffffffffff9d", 16)  // -99
         for ((a, b) <- Seq((neg3, BigInt(8)), (neg99, BigInt(50)))) {
-          val result = runOne(dut, a, b)
-          result mustBe golden(a, b)
+          runOne(dut, a, b) mustBe golden(a, b)
         }
       }
     }
@@ -172,10 +163,9 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
         val neg1 = Mask65
-        val neg7 = Mask65 - 6
+        val neg7 = BigInt("1fffffffffffffff9", 16) // -7
         for ((a, b) <- Seq((neg1, neg1), (neg7, neg7), (neg1, neg7))) {
-          val result = runOne(dut, a, b)
-          result mustBe golden(a, b)
+          runOne(dut, a, b) mustBe golden(a, b)
         }
       }
     }
@@ -193,42 +183,31 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
           (BigInt(19), BigInt(23)),
           (BigInt(29), BigInt(31)),
         )
-
-        // Feed inputs continuously
-        for ((a, b) <- inputs) {
-          dut.io.in_valid.poke(true.B)
-          dut.io.a.poke((a & Mask65).S(65.W))
-          dut.io.b.poke((b & Mask65).S(65.W))
-          dut.clock.step(1)
-        }
-
-        // Wait for pipeline to drain + last result
-        dut.io.in_valid.poke(false.B)
-        dut.io.a.poke(0.S(65.W))
-        dut.io.b.poke(0.S(65.W))
-
-        // First result at cycle 3; last result at cycle 3 + inputs.size - 1
-        // Cycle 0-4: inputs fed
-        // Cycle 3: result[0] ready → need to capture it
-        // We're now at cycle 5 (after 5 input cycles). First result was at cycle 3.
-        // Let me step through carefully.
-
-        // After feeding 5 inputs, we're at time step 5.
-        // Result for input[0] appeared at time step 3 (already passed).
-        // Results for input[1..4] appear at time steps 4..7.
-
-        // Step until we've seen all results
         val expected = inputs.map { case (a, b) => golden(a, b) }
         val results  = scala.collection.mutable.ArrayBuffer[BigInt]()
 
-        for (_ <- 0 until inputs.length + 3) {
+        // Feed inputs continuously, collect results as they appear
+        for (cycle <- 0 until inputs.length + 3) {
+          // Feed
+          if (cycle < inputs.length) {
+            val (a, b) = inputs(cycle)
+            dut.io.in_valid.poke(true.B)
+            pokeS65(dut, portA = true, a)
+            pokeS65(dut, portA = false, b)
+          } else {
+            dut.io.in_valid.poke(false.B)
+            dut.io.a.poke(0.S(65.W))
+            dut.io.b.poke(0.S(65.W))
+          }
+
+          dut.clock.step(1)
+
+          // Collect output
           if (dut.io.out_valid.peekValue().asBigInt == 1) {
             results += dut.io.product.peekValue().asBigInt
           }
-          dut.clock.step(1)
         }
 
-        // We should see exactly inputs.length = 5 results
         results.size mustBe inputs.length
         for (i <- inputs.indices) {
           results(i) mustBe expected(i)
@@ -244,48 +223,18 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
 
         val rand  = new scala.util.Random(0xdeadbeefL)
         val count = 50000
+        var mismatches = 0
 
-        // Pipeline tracking: queue of (cycles_remaining, golden_result)
-        val pipeline = scala.collection.mutable.Queue[(Int, BigInt)]()
-        var cycle    = 0
-        var mismatch = 0
-
-        while (pipeline.nonEmpty || cycle < count) {
-          // Feed new input
-          if (cycle < count) {
-            val a = BigInt(65, rand)
-            val b = BigInt(65, rand)
-            val expected = golden(a, b)
-            dut.io.in_valid.poke(true.B)
-            dut.io.a.poke((a & Mask65).S(65.W))
-            dut.io.b.poke((b & Mask65).S(65.W))
-            pipeline.enqueue((3, expected))
-          } else {
-            dut.io.in_valid.poke(false.B)
-            dut.io.a.poke(0.S(65.W))
-            dut.io.b.poke(0.S(65.W))
+        for (_ <- 0 until count) {
+          val a = BigInt(65, rand)
+          val b = BigInt(65, rand)
+          val result = runOne(dut, a, b)
+          if (result != golden(a, b)) {
+            mismatches += 1
           }
-
-          // Check output
-          val outValid = dut.io.out_valid.peekValue().asBigInt == 1
-          if (outValid) {
-            val dutResult = dut.io.product.peekValue().asBigInt
-            val (_, expected) = pipeline.dequeue()
-            if (dutResult != expected) {
-              mismatch += 1
-            }
-          }
-
-          // Advance pipeline timers
-          val advanced = pipeline.map { case (rem, exp) => (rem - 1, exp) }
-          pipeline.clear()
-          pipeline ++= advanced
-
-          dut.clock.step(1)
-          cycle += 1
         }
 
-        mismatch mustBe 0
+        mismatches mustBe 0
       }
     }
 
@@ -295,7 +244,6 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
 
-        // Single input pulse
         dut.io.in_valid.poke(true.B)
         dut.io.a.poke(42.S(65.W))
         dut.io.b.poke(10.S(65.W))
@@ -305,19 +253,13 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.a.poke(0.S(65.W))
         dut.io.b.poke(0.S(65.W))
 
-        // Cycle 1 (1 after input): out_valid should be false
-        dut.io.out_valid.expect(false.B)
-        dut.clock.step(1)
-
-        // Cycle 2 (2 after input): out_valid should be false
-        dut.io.out_valid.expect(false.B)
-        dut.clock.step(1)
-
-        // Cycle 3 (3 after input): out_valid should be true
-        dut.io.out_valid.expect(true.B)
-        dut.clock.step(1)
-
-        // Cycle 4: out_valid should be false again
+        // Cycle 1 after input
+        dut.io.out_valid.expect(false.B); dut.clock.step(1)
+        // Cycle 2 after input
+        dut.io.out_valid.expect(false.B); dut.clock.step(1)
+        // Cycle 3 after input
+        dut.io.out_valid.expect(true.B); dut.clock.step(1)
+        // Cycle 4: back to 0
         dut.io.out_valid.expect(false.B)
       }
     }
@@ -325,10 +267,6 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
     // ── Structural Checks via Bit-Level Golden Comparison ─────────────────
 
     "Booth PP + correction equals reference product" in {
-      // This is verified implicitly by the end-to-end test above.
-      // Additional explicit check: we test many random inputs comparing DUT
-      // output against the BigInt golden reference, which proves the Booth
-      // encoding + Dadda tree + CPA combination is mathematically correct.
       simulate(new SignedMul65x65) { dut =>
         dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
 
@@ -336,8 +274,7 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
         for (_ <- 0 until 1000) {
           val a = BigInt(65, rand)
           val b = BigInt(65, rand)
-          val result = runOne(dut, a, b)
-          result mustBe golden(a, b)
+          runOne(dut, a, b) mustBe golden(a, b)
         }
       }
     }
@@ -350,13 +287,8 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
 
         for (i <- 0 until 64) {
           val pow2 = BigInt(1) << i
-          // pow2 × pow2 = 2^(2i)
-          val result1 = runOne(dut, pow2, pow2)
-          result1 mustBe golden(pow2, pow2)
-
-          // pow2 × 3
-          val result2 = runOne(dut, pow2, BigInt(3))
-          result2 mustBe golden(pow2, BigInt(3))
+          runOne(dut, pow2, pow2) mustBe golden(pow2, pow2)
+          runOne(dut, pow2, BigInt(3)) mustBe golden(pow2, BigInt(3))
         }
       }
     }
@@ -367,12 +299,10 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
 
         for (i <- 1 until 64) {
           val near = (BigInt(1) << i) - 1
-          val result = runOne(dut, near, near)
-          result mustBe golden(near, near)
+          runOne(dut, near, near) mustBe golden(near, near)
 
           val nearP1 = (BigInt(1) << i) + 1
-          val result2 = runOne(dut, nearP1, nearP1)
-          result2 mustBe golden(nearP1, nearP1)
+          runOne(dut, nearP1, nearP1) mustBe golden(nearP1, nearP1)
         }
       }
     }
@@ -385,13 +315,12 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
 
         val patterns = Seq(
           BigInt("5555555555555555", 16),  // 0101...
-          BigInt("aaaaaaaaaaaaaaaa", 16),  // 1010... (negative as 65-bit)
+          BigInt("aaaaaaaaaaaaaaaa", 16),  // 1010...
           BigInt("3333333333333333", 16),
           BigInt("cccccccccccccccc", 16),
         )
         for (pa <- patterns; pb <- patterns) {
-          val result = runOne(dut, pa, pb)
-          result mustBe golden(pa, pb)
+          runOne(dut, pa, pb) mustBe golden(pa, pb)
         }
       }
     }
