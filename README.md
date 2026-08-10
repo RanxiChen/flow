@@ -12,7 +12,7 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 ## 当前能力
 
 - RV64 单发射、顺序执行、五级流水线，按 `IF / ID / EX / MEM / WB` 组织；
-- `RV64I_Zicsr_Zifencei`，little-endian；
+- `RV64IM_Zicsr_Zifencei`，little-endian，完整支持 RV64M 乘除法指令；
 - 仅 Machine mode，不包含 MMU、TLB、页表、S-mode 和 U-mode；
 - Machine-mode exception、interrupt、Direct/Vectored `mtvec` 和 `mret`；
 - 独立 ICache、DCache 和 64-bit instruction/data Wishbone master；
@@ -32,7 +32,7 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 | 项目 | 当前默认配置 |
 | --- | --- |
 | 核心 | RV64，单发射，顺序执行，五级流水线 |
-| ISA | `RV64I_Zicsr_Zifencei` |
+| ISA | `RV64IM_Zicsr_Zifencei` |
 | 特权级 | Machine mode only |
 | 地址 | 核内 64-bit 地址；当前 MCU 平台使用 32-bit 物理地址空间 |
 | 分支预测 | 默认关闭；可显式选择 GShare，具体参数见下节 |
@@ -44,6 +44,23 @@ Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上�
 ICache 和 DCache miss 都采用阻塞式处理。一个 32-byte cache line 会在 64-bit
 Wishbone 上拆成 4 个 beat。DCache 同时支持带 byte select 的单 beat MMIO/scalar
 访问和多 beat cache-line refill/writeback。
+
+## RV64M 乘除法支持
+
+当前核心支持 RV64M 的全部整数乘除法指令：
+
+- 乘法：`MUL`、`MULH`、`MULHSU`、`MULHU`、`MULW`；
+- 除法与取余：`DIV`、`DIVU`、`REM`、`REMU`、`DIVW`、`DIVUW`、`REMW`、
+  `REMUW`。
+
+乘法器使用 65-bit 有符号统一数据通路，根据指令在 EX 阶段完成符号或零扩展。除法器
+采用单请求 radix-4 迭代实现，每周期生成 2 个商位，RV64 最坏为 32 次迭代，并通过
+前导位对齐支持可变延迟和 early-out。除零以及有符号 `MIN_INT / -1` 溢出在 EX 阶段
+直接生成架构规定结果，不进入迭代器。
+
+load、multiply 和 divide 在 MEM 完成点共用长延迟结果旁路。运算单元返回的周期会解除
+流水线 hold、只生成一次 MEM/WB valid，并允许紧随其后的相关指令直接使用返回值。
+当前尚未实现 RISC-V 规范建议的乘除法指令融合。
 
 ## GShare 配置
 
@@ -154,7 +171,7 @@ python3 sim/litex/run_mcu.py --main hello.c \
 脚本会依次完成：
 
 1. 将用户 `main.c` 与项目 runtime、trap、UART、Timer 代码一起编译；
-2. 按 `RV64I_Zicsr_Zifencei` 链接固件并生成 ELF、binary、反汇编和符号表；
+2. 按 `RV64IM_Zicsr_Zifencei` 链接固件并生成 ELF、binary、反汇编和符号表；
 3. 将 binary 加载到 `0x1000_0000` Boot ROM；
 4. 生成并运行 LiteX/Verilator 仿真；
 5. 等待 `main()` 返回以及 completion store 退休，输出 PASS/FAIL、PMU 和 IPC 并结束。
@@ -258,6 +275,33 @@ BREEZE_GSHARE_RESULT preset=gshare cycles=2748 instructions=1226 ipc=0.446143
 
 这里最重要的正确性证据是两套核心运行同一 SHA256 固件、退休相同数量的指令并都
 完成 PASS。cycles 和 IPC 会受工具版本与 SoC 参数影响，这一组数值只是典型执行记录。
+
+## Example：RV64M 乘法 workload
+
+[`software/breeze-mcu/apps/multiply.c`](software/breeze-mcu/apps/multiply.c) 使用
+volatile 输入执行 64 轮八元素有符号点积，共包含 512 次动态乘法。volatile 数组可防止
+编译器把点积折叠成常量；循环中的乘法结果立即参与累加，也会覆盖乘法完成旁路路径。
+
+在 baseline 核心上运行：
+
+```bash
+python3 sim/litex/run_mcu.py \
+    --main software/breeze-mcu/apps/multiply.c \
+    --core-preset baseline \
+    --elaborate
+```
+
+固件应输出：
+
+```text
+Breeze MCU RV64M multiply workload
+dot-product checksum = 0x0000000000005080
+[GENERIC-PASS] MCU firmware completed
+```
+
+其中 checksum `0x5080` 等于十进制 `20608`。可以在生成的
+`software/breeze-mcu/build/multiply-direct/breeze-mcu.dis` 中检查 `mul` 指令，确认
+乘法没有被编译期消除。固件 Makefile 默认使用 `-march=rv64im_zicsr_zifencei`。
 
 如果交叉工具链使用其他前缀，可显式指定，例如：
 
