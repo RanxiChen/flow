@@ -20,7 +20,10 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
   private def golden(rawA: BigInt, rawB: BigInt): BigInt = {
     val sa = asSigned65(rawA)
     val sb = asSigned65(rawB)
-    (sa * sb) & Mask130
+    val product = sa * sb
+    // Convert 130-bit raw pattern to signed (matching SInt peekValue().asBigInt)
+    val u = product & Mask130
+    if (u.testBit(129)) u - (BigInt(1) << 130) else u
   }
 
   /** Poke a 65-bit raw value into an SInt port (handles sign). */
