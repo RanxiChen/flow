@@ -337,21 +337,21 @@ class SignedMul65x65 extends Module {
   // CPA-layer check: the Dadda tree output (row0 + row1) must match the
   // Booth partial-product sum at stage 2. This isolates Dadda compression
   // errors from pipeline-register or SInt-conversion errors.
-  when(s2Valid) {
-    assert(
-      s2Row0 +& s2Row1 === boothRef_s2,
-      "[SignedMul65x65] CPA-layer FAIL: row0 + row1 != Booth PP sum at stage 2"
-    )
-  }
+  // Combinational form avoids firtool initialization-analysis issues with
+  // when-guarded assertions.
+  assert(
+    !s2Valid || s2Row0 +& s2Row1 === boothRef_s2,
+    "[SignedMul65x65] CPA-layer FAIL: row0 + row1 != Booth PP sum at stage 2"
+  )
 
   val boothRef_s3 = RegNext(boothRef_s2)
 
-  when(io.out_valid) {
-    assert(
-      io.product.asUInt === boothRef_s3,
-      "[SignedMul65x65] Booth-layer FAIL: pipelined product != sum(pp_rows) + correction"
-    )
-  }
+  // Booth-layer check: the pipelined final product must match the pipelined
+  // Booth partial-product sum.  This isolates Booth encoding errors.
+  assert(
+    !io.out_valid || io.product.asUInt === boothRef_s3,
+    "[SignedMul65x65] Booth-layer FAIL: pipelined product != sum(pp_rows) + correction"
+  )
 
   // =========================================================================
   // Elaboration-time summary
