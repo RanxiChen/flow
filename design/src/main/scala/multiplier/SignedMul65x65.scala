@@ -315,7 +315,8 @@ class SignedMul65x65 extends Module {
 
   // Pipeline register S2 → output
   io.out_valid := RegNext(s2Valid, false.B)
-
+  val productWire = RegNext(s2Product)
+  io.product := productWire.asSInt
   // =========================================================================
   // Layered verification assertions
   // =========================================================================
@@ -348,8 +349,9 @@ class SignedMul65x65 extends Module {
 
   // Booth-layer check: the pipelined final product must match the pipelined
   // Booth partial-product sum.  This isolates Booth encoding errors.
+  // Reads productWire instead of io.product to avoid firtool circular-dep check.
   assert(
-    !io.out_valid || io.product.asUInt === boothRef_s3,
+    !io.out_valid || productWire === boothRef_s3,
     "[SignedMul65x65] Booth-layer FAIL: pipelined product != sum(pp_rows) + correction"
   )
 
