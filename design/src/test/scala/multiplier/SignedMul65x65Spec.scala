@@ -327,5 +327,87 @@ class SignedMul65x65Spec extends AnyFreeSpec with Matchers with ChiselSim {
         }
       }
     }
+
+    // ── Pipeline Bubbles ───────────────────────────────────────────────────
+
+    "stream with in_valid bubbles" in {
+      simulate(new SignedMul65x65) { dut =>
+        dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
+
+        // Pattern: valid=1, valid=1, valid=0, valid=0, valid=1
+        val inputs = Seq(
+          (BigInt(3), BigInt(5), true),     // cycle 0
+          (BigInt(7), BigInt(11), true),    // cycle 1
+          (BigInt(0), BigInt(0), false),    // cycle 2 — bubble
+          (BigInt(0), BigInt(0), false),    // cycle 3 — bubble
+          (BigInt(13), BigInt(17), true),   // cycle 4
+        )
+        // Expected results (only for valid inputs)
+        val expected = Seq(golden(3, 5), golden(7, 11), golden(13, 17))
+        val results  = scala.collection.mutable.ArrayBuffer[BigInt]()
+
+        for (cycle <- 0 until inputs.length + 4) {
+          if (cycle < inputs.length) {
+            val (a, b, valid) = inputs(cycle)
+            dut.io.in_valid.poke(valid.B)
+            pokeS65(dut, portA = true, a)
+            pokeS65(dut, portA = false, b)
+          } else {
+            dut.io.in_valid.poke(false.B)
+            dut.io.a.poke(0.S(65.W))
+            dut.io.b.poke(0.S(65.W))
+          }
+
+          dut.clock.step(1)
+
+          if (dut.io.out_valid.peekValue().asBigInt == 1) {
+            results += dut.io.product.peekValue().asBigInt
+          }
+        }
+
+        results.size mustBe 3
+        results.zip(expected).foreach { case (got, exp) => got mustBe exp }
+      }
+    }
+
+    "stream mixed positive and negative signs" in {
+      simulate(new SignedMul65x65) { dut =>
+        dut.reset.poke(true.B); dut.clock.step(1); dut.reset.poke(false.B)
+
+        // Deliberately alternate signs to stress Booth sign extension
+        val neg1 = Mask65
+        val inputs = Seq(
+          (BigInt(42), BigInt(100)),             // pos × pos
+          (BigInt(42), neg1),                    // pos × neg (-1)
+          (neg1, BigInt(100)),                   // neg × pos
+          (neg1, neg1),                          // neg × neg
+          (BigInt("7ffffffffffffffff", 16), BigInt("10000000000000000", 16)), // max_pos × min_neg
+        )
+        val expected = inputs.map { case (a, b) => golden(a, b) }
+        val results  = scala.collection.mutable.ArrayBuffer[BigInt]()
+
+        for (cycle <- 0 until inputs.length + 3) {
+          if (cycle < inputs.length) {
+            val (a, b) = inputs(cycle)
+            dut.io.in_valid.poke(true.B)
+            pokeS65(dut, portA = true, a)
+            pokeS65(dut, portA = false, b)
+          } else {
+            dut.io.in_valid.poke(false.B)
+            dut.io.a.poke(0.S(65.W))
+            dut.io.b.poke(0.S(65.W))
+          }
+
+          dut.clock.step(1)
+
+          if (dut.io.out_valid.peekValue().asBigInt == 1) {
+            results += dut.io.product.peekValue().asBigInt
+          }
+        }
+
+        results.size mustBe inputs.length
+        results.zip(expected).foreach { case (got, exp) => got mustBe exp }
+      }
+    }
   }
 }

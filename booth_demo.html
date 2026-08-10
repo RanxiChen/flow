@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64×64→128 乘法器 — 架构全景</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Noto Sans SC', system-ui, monospace;
+  background: #0d1117; color: #c9d1d9;
+  padding: 24px; max-width: 1100px; margin: 0 auto; line-height: 1.6;
+}
+h1 { color: #58a6ff; font-size: 1.4em; margin-bottom: 4px; }
+.subtitle { color: #8b949e; font-size: 0.85em; margin-bottom: 24px; }
+.specs {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.spec {
+  background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+  padding: 8px 14px; font-size: 0.85em;
+}
+.spec .key { color: #8b949e; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.5px; }
+.spec .val { color: #58a6ff; font-weight: bold; }
+
+.block {
+  border: 2px solid #30363d; border-radius: 10px; padding: 18px;
+  margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s;
+  position: relative;
+}
+.block:hover { border-color: #58a6ff; }
+.block.active { border-color: #f0883e; }
+.block-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+}
+.block-num {
+  background: #58a6ff; color: #0d1117; width: 24px; height: 24px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 0.8em; flex-shrink: 0;
+}
+.block h2 { font-size: 1.05em; color: #58a6ff; }
+.block .tagline { color: #8b949e; font-size: 0.85em; }
+.block .detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #30363d; }
+.block.active .detail { display: block; }
+
+.flow-arrow {
+  text-align: center; color: #f0883e; font-size: 1.2em; padding: 2px 0;
+  font-family: monospace; letter-spacing: 2px;
+}
+
+.pipeline-bar {
+  display: flex; gap: 2px; margin: 20px 0; border-radius: 8px; overflow: hidden;
+}
+.pipe-stage {
+  flex: 1; padding: 10px; text-align: center; font-size: 0.8em; font-weight: bold;
+}
+.pipe-s1 { background: #1a2a3a; color: #58a6ff; }
+.pipe-s2 { background: #1a3a2a; color: #7ee787; }
+.pipe-s3 { background: #3a2a1a; color: #f0883e; }
+
+table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 0.85em; }
+th, td { padding: 6px 10px; border: 1px solid #30363d; }
+th { background: #21262d; color: #8b949e; font-weight: 600; text-align: left; }
+td { background: #0d1117; }
+
+.note { color: #8b949e; font-size: 0.82em; margin: 6px 0; }
+.number { font-family: 'JetBrains Mono', 'Consolas', monospace; color: #7ee787; }
+
+.dataflow {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #161b22; border-radius: 8px; padding: 16px;
+  margin: 12px 0; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85em;
+}
+.dataflow .io { 
+  background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+  padding: 8px 12px; text-align: center;
+}
+.dataflow .io .label { color: #8b949e; font-size: 0.7em; }
+.dataflow .io .val { color: #7ee787; font-weight: bold; }
+.dataflow .arrow { color: #f0883e; font-size: 1.2em; }
+
+.instr-table td:first-child { color: #58a6ff; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>64 × 64 → 128 有符号/无符号乘法器</h1>
+<p class="subtitle">RV64M 完整乘法指令集 · 架构全景图</p>
+
+<div class="specs">
+  <div class="spec"><div class="key">指令集</div><div class="val">RV64M (MUL, MULH, MULHU, MULHSU, MULW)</div></div>
+  <div class="spec"><div class="key">位宽</div><div class="val">64×64 → 128 bit</div></div>
+  <div class="spec"><div class="key">部分积编码</div><div class="val">Radix-4 Booth (33 行)</div></div>
+  <div class="spec"><div class="key">压缩树</div><div class="val">Dadda / Wallace CSA Tree</div></div>
+  <div class="spec"><div class="key">流水级</div><div class="val">3 级 (1 op/cycle)</div></div>
+  <div class="spec"><div class="key">状态</div><div class="val">独立模块 (后续接入 Breeze)</div></div>
+</div>
+
+<!-- PIPELINE OVERLAY -->
+<div class="pipeline-bar">
+  <div class="pipe-stage pipe-s1">Stage 1<br>Booth 编码 + 部分积生成</div>
+  <div class="pipe-stage pipe-s2">Stage 2<br>CSA 压缩树 (前段)</div>
+  <div class="pipe-stage pipe-s3">Stage 3<br>CSA 压缩树 (后段) + 最终加法</div>
+</div>
+
+<!-- BLOCK 1 -->
+<div class="block" onclick="this.classList.toggle('active')">
+  <div class="block-header">
+    <div class="block-num">1</div>
+    <div>
+      <h2>Radix-4 Booth 编码器</h2>
+      <div class="tagline">输入 64-bit 乘数 → 输出 33 个系数 ∈ {−2,−1,0,+1,+2}</div>
+    </div>
+  </div>
+  <div class="detail">
+    <p>乘法本质是做一堆加法。朴素做法：乘数 64 bit → 64 行部分积，太多了。</p>
+    <p><strong>Booth 的想法：</strong>每次看乘数的 3 个 bit（重叠 1 bit），一次处理 2 bit 的乘数，产生一个系数。64 ÷ 2 = 32 次，加边界 1 行 = <span class="number">33 行</span>部分积。砍半。</p>
+    <table>
+      <tr><th>3-bit 模式</th><th>系数</th><th>直觉解释</th></tr>
+      <tr><td>000</td><td>0</td><td>三个零 → 一路平地，不操作</td></tr>
+      <tr><td>001</td><td>+1</td><td>0→1 上升，一串 1 的<strong>结尾</strong> → 加一次</td></tr>
+      <tr><td>010</td><td>+1</td><td>孤立的 1（两边是 0）→ 加一次</td></tr>
+      <tr><td>011</td><td>+2</td><td>两个 1→升到更高位 → 加 2 倍</td></tr>
+      <tr><td>100</td><td>−2</td><td>两个 0→从高往低降 → 减 2 倍</td></tr>
+      <tr><td>101</td><td>−1</td><td>孤立的 0（两边是 1）→ 减一次</td></tr>
+      <tr><td>110</td><td>−1</td><td>1→0 下降，一串 1 的<strong>开头</strong> → 减一次</td></tr>
+      <tr><td>111</td><td>0</td><td>三个一 → 一路高台，不操作</td></tr>
+    </table>
+    <p class="note">系数 ±2 只需要被乘数左移 1 位（免费）。系数为负时：被乘数按位取反 + 末尾补 1（二进制补码）。</p>
+  </div>
+</div>
+
+<div class="flow-arrow">33 个系数 ──────────────────────────────────────────────▶</div>
+
+<!-- BLOCK 2 -->
+<div class="block" onclick="this.classList.toggle('active')">
+  <div class="block-header">
+    <div class="block-num">2</div>
+    <div>
+      <h2>部分积生成器 (Partial Product Generator)</h2>
+      <div class="tagline">33 个系数 × 被乘数 → 33 行 ~130-bit 部分积</div>
+    </div>
+  </div>
+  <div class="detail">
+    <p>每个 Booth 系数驱动一个 MUX，产生一行部分积：</p>
+    <table>
+      <tr><th>系数</th><th>部分积输出</th></tr>
+      <tr><td>0</td><td>全 0</td></tr>
+      <tr><td>+1</td><td>被乘数</td></tr>
+      <tr><td>+2</td><td>被乘数 &lt;&lt; 1</td></tr>
+      <tr><td>−1</td><td>~被乘数（按位取反）</td></tr>
+      <tr><td>−2</td><td>~(被乘数 &lt;&lt; 1)（移位后取反）</td></tr>
+    </table>
+    <p>然后左移 <span class="number">2×i</span> 位（因为每组覆盖乘数的 2 bit）。</p>
+    <p class="note">部分积宽度约 130 bit：64-bit 被乘数 + 符号扩展 + 移位。确切宽度取决于符号处理的 trick（标准实现中约为 128 + 几个校正位）。</p>
+  </div>
+</div>
+
+<div class="flow-arrow">33 行 × ~130 bit ──────────────────────────────────────▶</div>
+
+<!-- BLOCK 3 -->
+<div class="block" onclick="this.classList.toggle('active')">
+  <div class="block-header">
+    <div class="block-num">3</div>
+    <div>
+      <h2>CSA 压缩树 (Dadda / Wallace)</h2>
+      <div class="tagline">33 行 → 多层 3:2 压缩 → 最终 2 行 (sum + carry)</div>
+    </div>
+  </div>
+  <div class="detail">
+    <p><strong>CSA = Carry Save Adder</strong>（进位保存加法器）。一个全加器接收 <strong>3 个同权 bit</strong>，输出 <strong>2 个 bit</strong>（sum + carry），<em>不传播进位</em>。延迟 = 1 个 FA 的门延迟，与位宽无关。</p>
+    <p><strong>每层 CSA</strong> 把行数压缩到原来的 ~2/3：</p>
+    <p class="number" style="font-size:0.9em">
+      33 → 22 → 15 → 10 → 7 → 5 → 4 → 3 → 2
+    </p>
+    <table>
+      <tr><th></th><th>Wallace</th><th>Dadda</th></tr>
+      <tr><td>策略</td><td>每层见 3 就压</td><td>按序列 (2,3,4,6,9,13,19,28,42…) 只在必要时压</td></tr>
+      <tr><td>FA/HA 数量</td><td>较多</td><td>少 ~15-20%</td></tr>
+      <tr><td>布线</td><td>规整</td><td>不规则</td></tr>
+    </table>
+    <p class="note">你的设计写 Dadda/Wallace，表示两者都可。Chisel 生成时，Dadda 省面积；手工布局时 Wallace 更规整。延迟几乎一样（~8 层 FA）。</p>
+  </div>
+</div>
+
+<div class="flow-arrow">2 行 (sum 128b + carry 128b) ──────────────────────────▶</div>
+
+<!-- BLOCK 4 -->
+<div class="block" onclick="this.classList.toggle('active')">
+  <div class="block-header">
+    <div class="block-num">4</div>
+    <div>
+      <h2>最终加法器 (CPA — Carry Propagate Adder)</h2>
+      <div class="tagline">sum + (carry &lt;&lt; 1) → 128-bit 乘积</div>
+    </div>
+  </div>
+  <div class="detail">
+    <p>CSA Tree 输出的是"欠条"——进位一直欠着没还。这里用真正的进位传播加法器一次性偿还。</p>
+    <p>候选：<strong>Kogge-Stone</strong>（前缀加法，log₂N 延迟，~7 级门延迟 at 128b）、Brent-Kung（省面积）、CLA（分块级联）。</p>
+    <p class="note">注意 carry 要左移 1 位：CSA 输出的 carry bit 权值是当前列的 2 倍。</p>
+  </div>
+</div>
+
+<div class="flow-arrow">128-bit 完整乘积 ─────────────────────────────────────▶</div>
+
+<!-- OUTPUT MUX -->
+<div class="block" onclick="this.classList.toggle('active')">
+  <div class="block-header">
+    <div class="block-num">5</div>
+    <div>
+      <h2>结果选择 (输出 MUX)</h2>
+      <div class="tagline">根据指令类型，取乘积的高 64 / 低 64</div>
+    </div>
+  </div>
+  <div class="detail">
+    <p>128-bit 乘积完整计算出来后，不同指令要不同的结果：</p>
+    <table class="instr-table">
+      <tr><th>指令</th><th>操作数符号</th><th>返回</th></tr>
+      <tr><td>MUL rd, rs1, rs2</td><td>有符号 × 有符号</td><td>product[63:0]</td></tr>
+      <tr><td>MULH rd, rs1, rs2</td><td>有符号 × 有符号</td><td>product[127:64]</td></tr>
+      <tr><td>MULHU rd, rs1, rs2</td><td>无符号 × 无符号</td><td>product[127:64]</td></tr>
+      <tr><td>MULHSU rd, rs1, rs2</td><td>有符号 × 无符号</td><td>product[127:64]</td></tr>
+      <tr><td>MULW rd, rs1, rs2</td><td>有符号 × 有符号</td><td>sign-extend(product[31:0])</td></tr>
+    </table>
+    <p class="note">无符号操作数：Booth 编码前在最高位补 0（把无符号数当作正的有符号数）。<br>MULHSU：rs1 用有符号、rs2 最高位补 0 做无符号扩展。</p>
+  </div>
+</div>
+
+<!-- DATA FLOW SUMMARY -->
+<div style="margin-top:24px; background:#161b22; border:1px solid #30363d; border-radius:10px; padding:20px;">
+  <h2 style="color:#58a6ff; font-size:1em; margin-bottom:12px;">数据流总览</h2>
+  <div class="dataflow">
+    <div class="io"><div class="label">被乘数 rs1</div><div class="val">64 bit</div></div>
+    <div class="arrow">────┐</div>
+    <div class="io" style="border-color:#f0883e"><div class="label">Booth 编码</div><div class="val">33 个系数</div></div>
+    <div class="arrow">──▶</div>
+    <div class="io" style="border-color:#f0883e"><div class="label">部分积生成</div><div class="val">33 行 ~130b</div></div>
+    <div class="arrow">──▶</div>
+    <div class="io" style="border-color:#7ee787"><div class="label">CSA Tree</div><div class="val">→ 2 行 128b</div></div>
+    <div class="arrow">──▶</div>
+    <div class="io" style="border-color:#7ee787"><div class="label">CPA</div><div class="val">128b 乘积</div></div>
+    <div class="arrow">──▶</div>
+    <div class="io"><div class="label">输出 MUX</div><div class="val">64 bit</div></div>
+  </div>
+  <div class="dataflow">
+    <div class="io"><div class="label">乘数 rs2</div><div class="val">64 bit</div></div>
+    <div class="arrow">────┘</div>
+    <div style="flex:1"></div>
+    <div style="color:#8b949e;font-size:0.75em;text-align:right;">
+      ◀── Stage 1 ──▶  ◀──── Stage 2 ────▶  ◀────── Stage 3 ───────▶
+    </div>
+  </div>
+</div>
+
+<p class="note" style="margin-top:16px;">
+  <strong>下一步：</strong>这个独立模块先单独实现、仿真验证，确认 RV64M 五条指令的 128-bit 乘积全部正确。<br>
+  之后再接入 Breeze 流水线（ID→EXE→MEM→WB），届时处理 3-cycle 乘法延迟与现有单周期 ALU 的协调。
+</p>
+
+<script>
+// All blocks collapsed by default, expand first one
+document.querySelector('.block').classList.add('active');
+</script>
+</body>
+</html>

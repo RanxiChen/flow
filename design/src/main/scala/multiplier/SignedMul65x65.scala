@@ -315,7 +315,43 @@ class SignedMul65x65 extends Module {
 
   // Pipeline register S2 → output
   io.out_valid := RegNext(s2Valid, false.B)
-  io.product   := RegNext(s2Product).asSInt
+
+  // =========================================================================
+  // Layered verification assertions
+  // =========================================================================
+
+  // Booth-layer check: sum of all partial products + correction must match
+  // the pipelined final product. This isolates Booth encoding errors from
+  // Dadda-tree and CPA errors.
+  //
+  // Uses wrapping adds (chain of 33 × 130-bit additions) for the reference.
+  // The "+%"" chain is verification-only hardware; synthesis tools may
+  // optimize or warn about the long combinational path — that is expected.
+  val boothRef = Wire(UInt(W.W))
+  boothRef := ppRows.foldLeft(0.U(W.W))((acc, pp) => acc +% pp) +% correctionVector
+
+  // Pipeline the reference through 3 stages to align with out_valid
+  val boothRef_s1 = RegEnable(boothRef, io.in_valid)
+  val boothRef_s2 = RegNext(boothRef_s1)
+
+  // CPA-layer check: the Dadda tree output (row0 + row1) must match the
+  // Booth partial-product sum at stage 2. This isolates Dadda compression
+  // errors from pipeline-register or SInt-conversion errors.
+  when(s2Valid) {
+    assert(
+      s2Row0 +& s2Row1 === boothRef_s2,
+      "[SignedMul65x65] CPA-layer FAIL: row0 + row1 != Booth PP sum at stage 2"
+    )
+  }
+
+  val boothRef_s3 = RegNext(boothRef_s2)
+
+  when(io.out_valid) {
+    assert(
+      io.product.asUInt === boothRef_s3,
+      "[SignedMul65x65] Booth-layer FAIL: pipelined product != sum(pp_rows) + correction"
+    )
+  }
 
   // =========================================================================
   // Elaboration-time summary
