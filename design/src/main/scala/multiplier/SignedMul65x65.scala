@@ -339,10 +339,10 @@ class SignedMul65x65 extends Module {
   // Booth partial-product sum at stage 2. This isolates Dadda compression
   // errors from pipeline-register or SInt-conversion errors.
   // Combinational form avoids firtool initialization-analysis issues with
-  // when-guarded assertions.
+  // (wrapping add — same modular semantics as the final product extraction)
   assert(
-    !s2Valid || s2Row0 +& s2Row1 === boothRef_s2,
-    "[SignedMul65x65] CPA-layer FAIL: row0 + row1 != Booth PP sum at stage 2"
+    !s2Valid || (s2Row0 +& s2Row1)(W - 1, 0) === boothRef_s2,
+    "[SignedMul65x65] CPA-layer FAIL: (row0 + row1) mod 2^130 != Booth PP sum at stage 2"
   )
 
   val boothRef_s3 = RegNext(boothRef_s2)
