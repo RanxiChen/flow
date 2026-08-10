@@ -186,7 +186,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mcountinhibit = RegInit(0.U(32.W))
-    val misa_value = (BigInt(2) << 62) | (BigInt(1) << 8) // RV64I
+    val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) // RV64IM
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))

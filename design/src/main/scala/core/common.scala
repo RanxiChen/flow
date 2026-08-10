@@ -111,6 +111,18 @@ object MUL_OP {
    val width = 3
    val XXX = MUL
 }
+object DIV_OP {
+   val DIV   = 0
+   val DIVU  = 1
+   val REM   = 2
+   val REMU  = 3
+   val DIVW  = 4
+   val DIVUW = 5
+   val REMW  = 6
+   val REMUW = 7
+   val width = 3
+   val XXX = DIV
+}
 object OPCODE{
    val LOAD     = "b0000011".U
    val STORE    = "b0100011".U

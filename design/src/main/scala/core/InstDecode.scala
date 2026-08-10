@@ -17,7 +17,10 @@ class EXE_Ctrl extends Bundle {
     val wb_en = Output(Bool())
     val sel_imm = Output(UInt(IMM_TYPE.width.W))
     val is_w = Output(Bool())
+    val mul_valid = Output(Bool())
     val mul_op = Output(UInt(MUL_OP.width.W))
+    val div_valid = Output(Bool())
+    val div_op = Output(UInt(DIV_OP.width.W))
     val csr_addr = Output(UInt(12.W))
     val csr_cmd = Output(UInt(CSR_CMD.width.W))
     val fencei = Output(Bool())
@@ -39,7 +42,10 @@ class RV64IZicsrDecoder extends Module {
     io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
     io.I_ctrl.sel_alu1 := SEL_ALU1.XXX.U
     io.I_ctrl.is_w := false.B
+    io.I_ctrl.mul_valid := false.B
     io.I_ctrl.mul_op := MUL_OP.XXX.U
+    io.I_ctrl.div_valid := false.B
+    io.I_ctrl.div_op := DIV_OP.XXX.U
     io.I_ctrl.bru_op := BRU_OP.XXX.U
     io.I_ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
     io.I_ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
@@ -150,32 +156,36 @@ class RV64IZicsrDecoder extends Module {
                     switch(funct7){
                         is("b0000000".U){io.I_ctrl.alu_op := ALU_OP.ADD.U; io.illegal_inst := false.B} //ADD
                         is("b0100000".U){io.I_ctrl.alu_op := ALU_OP.SUB.U; io.illegal_inst := false.B} //SUB
-                        is("b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_op := MUL_OP.MUL.U; io.illegal_inst := false.B} //MUL
+                        is("b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_valid := true.B; io.I_ctrl.mul_op := MUL_OP.MUL.U; io.illegal_inst := false.B} //MUL
                     }
                 }
                 is("b001".U){
                     when(funct7 === "b0000000".U) {
                         io.I_ctrl.alu_op := ALU_OP.SLL.U; io.illegal_inst := false.B //SLL
                     }.elsewhen(funct7 === "b0000001".U) {
-                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_op := MUL_OP.MULH.U; io.illegal_inst := false.B //MULH
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_valid := true.B; io.I_ctrl.mul_op := MUL_OP.MULH.U; io.illegal_inst := false.B //MULH
                     }
                 }
                 is("b010".U){
                     when(funct7 === "b0000000".U) {
                         io.I_ctrl.alu_op := ALU_OP.SLT.U; io.illegal_inst := false.B //SLT
                     }.elsewhen(funct7 === "b0000001".U) {
-                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_op := MUL_OP.MULHSU.U; io.illegal_inst := false.B //MULHSU
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_valid := true.B; io.I_ctrl.mul_op := MUL_OP.MULHSU.U; io.illegal_inst := false.B //MULHSU
                     }
                 }
                 is("b011".U){
                     when(funct7 === "b0000000".U) {
                         io.I_ctrl.alu_op := ALU_OP.SLTU.U; io.illegal_inst := false.B //SLTU
                     }.elsewhen(funct7 === "b0000001".U) {
-                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_op := MUL_OP.MULHU.U; io.illegal_inst := false.B //MULHU
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_valid := true.B; io.I_ctrl.mul_op := MUL_OP.MULHU.U; io.illegal_inst := false.B //MULHU
                     }
                 }
                 is("b100".U){
-                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.XOR.U; io.illegal_inst := false.B} //XOR
+                    when(funct7 === "b0000000".U) {
+                        io.I_ctrl.alu_op := ALU_OP.XOR.U; io.illegal_inst := false.B //XOR
+                    }.elsewhen(funct7 === "b0000001".U) {
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.DIV.U; io.illegal_inst := false.B //DIV
+                    }
                 }
                 is("b101".U){
                     when(funct7 === "b0000000".U){
@@ -184,13 +194,23 @@ class RV64IZicsrDecoder extends Module {
                     }.elsewhen(funct7 === "b0100000".U){
                         io.I_ctrl.alu_op := ALU_OP.SRA.U //SRA
                         io.illegal_inst := false.B
+                    }.elsewhen(funct7 === "b0000001".U){
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.DIVU.U; io.illegal_inst := false.B //DIVU
                     }
                 }
                 is("b110".U){
-                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.OR.U; io.illegal_inst := false.B} //OR
+                    when(funct7 === "b0000000".U) {
+                        io.I_ctrl.alu_op := ALU_OP.OR.U; io.illegal_inst := false.B //OR
+                    }.elsewhen(funct7 === "b0000001".U) {
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.REM.U; io.illegal_inst := false.B //REM
+                    }
                 }
                 is("b111".U){
-                    when(funct7 === "b0000000".U){io.I_ctrl.alu_op := ALU_OP.AND.U; io.illegal_inst := false.B} //AND
+                    when(funct7 === "b0000000".U) {
+                        io.I_ctrl.alu_op := ALU_OP.AND.U; io.illegal_inst := false.B //AND
+                    }.elsewhen(funct7 === "b0000001".U) {
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.REMU.U; io.illegal_inst := false.B //REMU
+                    }
                 }
             }
         }
@@ -207,7 +227,7 @@ class RV64IZicsrDecoder extends Module {
                     switch(funct7){
                         is("b0000000".U){io.I_ctrl.alu_op := ALU_OP.ADD.U; io.illegal_inst := false.B} //ADDW
                         is("b0100000".U){io.I_ctrl.alu_op := ALU_OP.SUB.U; io.illegal_inst := false.B} //SUBW
-                        is("b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_op := MUL_OP.MULW.U; io.illegal_inst := false.B} //MULW
+                        is("b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.mul_valid := true.B; io.I_ctrl.mul_op := MUL_OP.MULW.U; io.illegal_inst := false.B} //MULW
                     }
                 }
                 is("b001".U){
@@ -223,7 +243,18 @@ class RV64IZicsrDecoder extends Module {
                     }.elsewhen(funct7 === "b0100000".U){
                         io.I_ctrl.alu_op := ALU_OP.SRA.U //SRAW
                         io.illegal_inst := false.B
+                    }.elsewhen(funct7 === "b0000001".U){
+                        io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.DIVUW.U; io.illegal_inst := false.B //DIVUW
                     }
+                }
+                is("b100".U){
+                    when(funct7 === "b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.DIVW.U; io.illegal_inst := false.B} //DIVW
+                }
+                is("b110".U){
+                    when(funct7 === "b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.REMW.U; io.illegal_inst := false.B} //REMW
+                }
+                is("b111".U){
+                    when(funct7 === "b0000001".U){io.I_ctrl.sel_wb := SEL_WB.MUL.U; io.I_ctrl.div_valid := true.B; io.I_ctrl.div_op := DIV_OP.REMUW.U; io.illegal_inst := false.B} //REMUW
                 }
             }
         }
