@@ -98,8 +98,18 @@ object SEL_WB {
    val ALU = 0
    val MEM = 1
    val CSR = 2
+   val MUL = 3
    val width = 2
    val XXX = 0
+}
+object MUL_OP {
+   val MUL    = 0
+   val MULH   = 1
+   val MULHSU = 2
+   val MULHU  = 3
+   val MULW   = 4
+   val width = 3
+   val XXX = MUL
 }
 object OPCODE{
    val LOAD     = "b0000011".U

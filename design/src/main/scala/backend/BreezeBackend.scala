@@ -5,6 +5,7 @@ import chisel3.util._
 import flow.config.BackendConfig
 import flow.interface._
 import flow.core._
+import flow.multiplier.RiscvMulUnit
 import flow.platform.BreezeMcuPlatform
 
 class BreezeBackend(
@@ -107,7 +108,8 @@ class BreezeBackend(
         Seq(
             SEL_WB.ALU.U -> memWbReg.alu_data,
             SEL_WB.MEM.U -> memWbReg.mem_data,
-            SEL_WB.CSR.U -> memWbReg.csr_data
+            SEL_WB.CSR.U -> memWbReg.csr_data,
+            SEL_WB.MUL.U -> memWbReg.mul_data
         )
     )
     regFile.io.rd_data := wbData
@@ -119,6 +121,8 @@ class BreezeBackend(
     val exeRs2Data = Wire(UInt(cfg.VLEN.W))
     val exeSrc1 = Wire(UInt(cfg.VLEN.W))
     val exeSrc2 = Wire(UInt(cfg.VLEN.W))
+    val mulOperandA = Wire(SInt(65.W))
+    val mulOperandB = Wire(SInt(65.W))
     val decodeUsesRs1 = Wire(Bool())
     val decodeUsesRs2 = Wire(Bool())
 
@@ -201,6 +205,7 @@ class BreezeBackend(
         idExeReg.ctrl.wb_en := false.B
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
         idExeReg.ctrl.is_w := false.B
+        idExeReg.ctrl.mul_op := MUL_OP.XXX.U
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
         idExeReg.ctrl.fencei := false.B
@@ -265,6 +270,7 @@ class BreezeBackend(
         idExeReg.ctrl.wb_en := false.B
         idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
         idExeReg.ctrl.is_w := false.B
+        idExeReg.ctrl.mul_op := MUL_OP.XXX.U
         idExeReg.ctrl.csr_addr := 0.U
         idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
         idExeReg.ctrl.fencei := false.B
@@ -302,14 +308,22 @@ class BreezeBackend(
 
     val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN, cfg.ghrLength, cfg.enableTandem)))
     val memWaitingRespReg = RegInit(false.B)
+    val mulWaitingRespReg = RegInit(false.B)
+    val mulUnit = Module(new RiscvMulUnit)
     val memReqIssued = Wire(Bool())
     val memRspFire = Wire(Bool())
+    val mulReqIssued = Wire(Bool())
+    val mulRspFire = Wire(Bool())
     val exeMemIsMem = Wire(Bool())
     val exeMemIsLoad = Wire(Bool())
     val exeMemIsStore = Wire(Bool())
+    val exeMemIsMul = Wire(Bool())
     val memBaseAddr = Wire(UInt(cfg.VLEN.W))
     val memOffset = Wire(UInt(3.W))
     val memRspData = Wire(UInt(cfg.VLEN.W))
+    val completionValid = Wire(Bool())
+    val completionRd = Wire(UInt(5.W))
+    val completionData = Wire(UInt(cfg.VLEN.W))
     val loadAlignBuf = Wire(UInt(64.W))
     val memReqWData = Wire(UInt(64.W))
     val memReqWMask = Wire(UInt(8.W))
@@ -360,7 +374,7 @@ class BreezeBackend(
     exceptionRedirect := memWbReg.valid && wbTrap
     mretRedirect := memWbReg.valid && memWbReg.is_mret
     pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
-        !memWbReg.valid && !memWaitingRespReg
+        !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg
     interruptRedirect := csrFile.io.interruptPending && pipelineEmpty
     frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect ||
         mretRedirect || interruptRedirect
@@ -435,6 +449,8 @@ class BreezeBackend(
         exeMemReg.mem_cmd === MEM_TYPE.SW.U ||
         exeMemReg.mem_cmd === MEM_TYPE.SD.U
     )
+    exeMemIsMul := exeMemReg.valid && exeMemReg.wb_en &&
+        !exeMemReg.instruction_access_fault && (exeMemReg.wb_sel === SEL_WB.MUL.U)
     memAddrMisaligned := MuxLookup(exeMemReg.mem_cmd, false.B)(
         Seq(
             MEM_TYPE.LH.U -> exeMemReg.data(0),
@@ -452,6 +468,14 @@ class BreezeBackend(
     exeMemNeedsDmem := exeMemIsMem && !memAddrMisaligned
     memReqIssued := exeMemNeedsDmem && !memWaitingRespReg
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
+    mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
+        !exceptionRedirect && !mretRedirect && !interruptRedirect && !fenceiFlush
+    mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
+    mulUnit.io.flush := frontendRedirectNeeded
+    mulUnit.io.in_valid := mulReqIssued
+    mulUnit.io.a := exeMemReg.mul_a
+    mulUnit.io.b := exeMemReg.mul_b
+    mulUnit.io.op := exeMemReg.mul_op
     memBaseAddr := (exeMemReg.data >> 3.U) << 3.U
     memOffset := exeMemReg.data(2, 0)
     loadAlignBuf := (io.dmem.rsp.data >> (memOffset << 3.U))(63, 0)
@@ -496,6 +520,15 @@ class BreezeBackend(
         }
     }
 
+    // All register-producing, unknown/fixed-latency backends converge here.
+    // This is both the MEM completion result and the highest-priority EXE bypass.
+    completionValid := (memRspFire && exeMemIsLoad && exeMemReg.wb_en && !io.dmem.rsp.error) ||
+        (mulRspFire && exeMemReg.wb_en)
+    completionRd := exeMemReg.rd_addr
+    completionData := Mux(mulRspFire, mulUnit.io.result, memRspData)
+    assert(!(memRspFire && mulRspFire),
+        "[BreezeBackend] multiple long-latency backends completed in one cycle")
+
     exeRs1Data := idExeReg.rs1_data
     exeRs2Data := idExeReg.rs2_data
 
@@ -529,6 +562,36 @@ class BreezeBackend(
         }
     }
 
+    // A completing load/multiply is younger than MEM/WB and must win the
+    // forwarding priority.  The held ID/EXE instruction can advance in this
+    // same cycle without an extra load-use/multiply-use bubble.
+    when(completionValid && (completionRd =/= 0.U)) {
+        when(idExeReg.rs1_addr === completionRd) {
+            exeRs1Data := completionData
+        }
+        when(idExeReg.rs2_addr === completionRd) {
+            exeRs2Data := completionData
+        }
+    }
+
+    // SignedMul65x65 always consumes signed 65-bit values.  Sign/zero
+    // extension here encodes each RISC-V multiplication variant.
+    mulOperandA := Cat(exeRs1Data(63), exeRs1Data).asSInt
+    mulOperandB := Cat(exeRs2Data(63), exeRs2Data).asSInt
+    switch(idExeReg.ctrl.mul_op) {
+        is(MUL_OP.MULHSU.U) {
+            mulOperandB := Cat(0.U(1.W), exeRs2Data).asSInt
+        }
+        is(MUL_OP.MULHU.U) {
+            mulOperandA := Cat(0.U(1.W), exeRs1Data).asSInt
+            mulOperandB := Cat(0.U(1.W), exeRs2Data).asSInt
+        }
+        is(MUL_OP.MULW.U) {
+            mulOperandA := Cat(Fill(33, exeRs1Data(31)), exeRs1Data(31, 0)).asSInt
+            mulOperandB := Cat(Fill(33, exeRs2Data(31)), exeRs2Data(31, 0)).asSInt
+        }
+    }
+
     exeSrc1 := MuxLookup(idExeReg.ctrl.sel_alu1, 0.U(cfg.VLEN.W))(
         Seq(
             SEL_ALU1.RS1.U -> exeRs1Data,
@@ -546,7 +609,7 @@ class BreezeBackend(
         )
     )
 
-    loadUseHazard := exeMemReg.valid && memWaitingRespReg && exeMemIsLoad && exeMemReg.wb_en && (
+    loadUseHazard := exeMemReg.valid && memWaitingRespReg && !memRspFire && exeMemIsLoad && exeMemReg.wb_en && (
         (idExeReg.rs1_addr =/= 0.U && idExeReg.rs1_addr === exeMemReg.rd_addr) ||
         (idExeReg.rs2_addr =/= 0.U && idExeReg.rs2_addr === exeMemReg.rd_addr)
     )
@@ -611,8 +674,8 @@ class BreezeBackend(
 
     // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
     // overwritten before the outstanding memory operation receives a response.
-    pipelineHold := memReqIssued || (memWaitingRespReg && !io.dmem.rsp.valid) ||
-        fenceiPending || loadUseHazard
+    pipelineHold := memReqIssued || (memWaitingRespReg && !memRspFire) ||
+        mulReqIssued || (mulWaitingRespReg && !mulRspFire) || fenceiPending
 
     csrFile.io.csr_addr := exeMemReg.csr_addr
     csrFile.io.csr_cmd := exeMemReg.csr_cmd
@@ -694,6 +757,9 @@ class BreezeBackend(
         exeMemReg.fencei := false.B
         exeMemReg.data := 0.U
         exeMemReg.rs2_data := 0.U
+        exeMemReg.mul_a := 0.S
+        exeMemReg.mul_b := 0.S
+        exeMemReg.mul_op := MUL_OP.XXX.U
         exeMemReg.mem_cmd := MEM_TYPE.NOT_MEM.U
         exeMemReg.rd_addr := 0.U
         exeMemReg.rs1_addr := 0.U
@@ -721,12 +787,6 @@ class BreezeBackend(
             trace.memWData := 0.U
             trace.memWMask := 0.U
         }
-    }.elsewhen(memRspFire && loadUseHazard) {
-        // The completed load has been consumed by MEM/WB, but its dependent
-        // instruction must remain in ID/EXE for one more cycle. Insert a bubble
-        // here so the completed load cannot be issued again next cycle.
-        exeMemReg.valid := false.B
-        exeMemReg.trace.foreach(_.valid := false.B)
     }.elsewhen(!pipelineHold) {
         exeMemReg.valid := idExeReg.valid
         exeMemReg.pc := idExeReg.pc
@@ -744,6 +804,9 @@ class BreezeBackend(
         // Stores need the forwarded rs2 value, especially for an adjacent
         // load-to-store dependency.
         exeMemReg.rs2_data := exeRs2Data
+        exeMemReg.mul_a := mulOperandA
+        exeMemReg.mul_b := mulOperandB
+        exeMemReg.mul_op := idExeReg.ctrl.mul_op
         exeMemReg.mem_cmd := idExeReg.ctrl.mem_cmd
         exeMemReg.rd_addr := idExeReg.rd_addr
         exeMemReg.rs1_addr := idExeReg.rs1_addr
@@ -784,6 +847,14 @@ class BreezeBackend(
         memWaitingRespReg := true.B
     }
 
+    when(reset.asBool || frontendRedirectNeeded) {
+        mulWaitingRespReg := false.B
+    }.elsewhen(mulRspFire) {
+        mulWaitingRespReg := false.B
+    }.elsewhen(mulReqIssued) {
+        mulWaitingRespReg := true.B
+    }
+
     when(reset.asBool || exceptionRedirect || mretRedirect || interruptRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
@@ -805,6 +876,7 @@ class BreezeBackend(
         memWbReg.alu_data := 0.U
         memWbReg.mem_data := 0.U
         memWbReg.csr_data := 0.U
+        memWbReg.mul_data := 0.U
         memWbReg.csr_addr := 0.U
         memWbReg.csr_new_data := 0.U
         memWbReg.csr_write_en := false.B
@@ -826,7 +898,7 @@ class BreezeBackend(
             trace.memWData := 0.U
             trace.memWMask := 0.U
         }
-    }.elsewhen(!exeMemReg.valid || !exeMemNeedsDmem) {
+    }.elsewhen(!exeMemReg.valid || (!exeMemNeedsDmem && !exeMemIsMul)) {
         // FENCE.I retires only after DCache clean completes and the frontend
         // flush is emitted; do not repeatedly retire it while the cache scans.
         memWbReg.valid := exeMemReg.valid && (!exeMemReg.fencei || fenceiFlush)
@@ -849,6 +921,7 @@ class BreezeBackend(
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := 0.U
         memWbReg.csr_data := csrFile.io.csr_old_data
+        memWbReg.mul_data := 0.U
         memWbReg.csr_addr := exeMemReg.csr_addr
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en && !memAddrMisaligned &&
@@ -862,14 +935,15 @@ class BreezeBackend(
                 Seq(
                     SEL_WB.ALU.U -> exeMemReg.data,
                     SEL_WB.MEM.U -> 0.U(cfg.VLEN.W),
-                    SEL_WB.CSR.U -> csrFile.io.csr_old_data
+                    SEL_WB.CSR.U -> csrFile.io.csr_old_data,
+                    SEL_WB.MUL.U -> 0.U(cfg.VLEN.W)
                 )
             )
             wbTrace.memRData := 0.U
             wbTrace.memWData := Mux(exeTrace.memIsWrite, memReqWData, 0.U)
             wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
         }
-    }.elsewhen(memRspFire) {
+    }.elsewhen(memRspFire || mulRspFire) {
         memWbReg.valid := exeMemReg.valid
         memWbReg.pc := exeMemReg.pc
         memWbReg.nextPc := exeMemReg.nextPc
@@ -882,29 +956,31 @@ class BreezeBackend(
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := false.B
         memWbReg.store_addr_misaligned := false.B
-        memWbReg.load_access_fault := exeMemIsLoad && io.dmem.rsp.error
-        memWbReg.store_access_fault := exeMemIsStore && io.dmem.rsp.error
+        memWbReg.load_access_fault := memRspFire && exeMemIsLoad && io.dmem.rsp.error
+        memWbReg.store_access_fault := memRspFire && exeMemIsStore && io.dmem.rsp.error
         memWbReg.wb_en := exeMemReg.wb_en && !exeMemReg.instruction_access_fault &&
-            !io.dmem.rsp.error
+            !(memRspFire && io.dmem.rsp.error)
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
         memWbReg.alu_data := exeMemReg.data
         memWbReg.mem_data := Mux(exeMemIsLoad && !io.dmem.rsp.error, memRspData, 0.U)
         memWbReg.csr_data := csrFile.io.csr_old_data
+        memWbReg.mul_data := Mux(mulRspFire, mulUnit.io.result, 0.U)
         memWbReg.csr_addr := exeMemReg.csr_addr
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en &&
-            !exeMemReg.instruction_access_fault && !io.dmem.rsp.error
+            !exeMemReg.instruction_access_fault && !(memRspFire && io.dmem.rsp.error)
         memWbReg.prediction_miss := exeMemReg.prediction_miss
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
             wbTrace.valid := exeMemReg.valid
-            wbTrace.rdWriteEn := exeTrace.rdWriteEn && !io.dmem.rsp.error
+            wbTrace.rdWriteEn := exeTrace.rdWriteEn && !(memRspFire && io.dmem.rsp.error)
             wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
                 Seq(
                     SEL_WB.ALU.U -> exeMemReg.data,
                     SEL_WB.MEM.U -> Mux(exeMemIsLoad && !io.dmem.rsp.error, memRspData, 0.U),
-                    SEL_WB.CSR.U -> csrFile.io.csr_old_data
+                    SEL_WB.CSR.U -> csrFile.io.csr_old_data,
+                    SEL_WB.MUL.U -> Mux(mulRspFire, mulUnit.io.result, 0.U)
                 )
             )
             wbTrace.memRData := Mux(exeMemIsLoad && !io.dmem.rsp.error, memRspData, 0.U)
@@ -912,7 +988,8 @@ class BreezeBackend(
             wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
         }
     }.otherwise {
-        // A memory instruction occupies EXE/MEM until its response arrives.
+        // A memory or multiplication instruction occupies EXE/MEM until its
+        // completion arrives.
         // Do not leave the previous MEM/WB entry valid during those wait
         // cycles, otherwise one instruction appears to retire repeatedly.
         memWbReg.valid := false.B
