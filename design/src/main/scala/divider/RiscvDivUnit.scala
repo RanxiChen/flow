@@ -1,6 +1,7 @@
 package flow.divider
 
 import chisel3._
+import chisel3.util._
 
 /** Sign restoration and RV64 W-result wrapper for the unsigned divider core. */
 class RiscvDivUnit extends Module {
