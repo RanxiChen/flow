@@ -8,7 +8,7 @@ import flow.mem.flowSRAM
 import flow.platform.{PMAAccessType, PMAChecker}
 
 object BreezeDCacheState extends ChiselEnum {
-  val Idle, Lookup,
+  val Idle, Lookup, StoreHitWrite,
       UncachedReq, UncachedWait,
       WritebackReq, WritebackWait,
       RefillReq, RefillWait,
@@ -112,6 +112,8 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   val newPlruReg = RegInit(0.U((ways - 1).W))
   val victimTagReg = RegInit(0.U(cfg.tagWidth.W))
   val victimDataReg = RegInit(0.U(cfg.lineWidth.W))
+  val storeMergeReg = RegInit(0.U(cfg.lineWidth.W))
+  val storeHitWayReg = RegInit(0.U(cfg.wayIndexWidth.W))
 
   val responseData = RegInit(0.U(64.W))
   val responseError = RegInit(false.B)
@@ -249,19 +251,15 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
         state := UncachedReq
       }.elsewhen(hit) {
         when(reqIsWrite) {
-          for (w <- 0 until ways) {
-            when(hitWay === w.U) {
-              dataArray(w).io.we := true.B
-              dataArray(w).io.addr := setIndex
-              dataArray(w).io.data_in := mergeStore(dataRdata(hitWay), reqAddr, reqWData, reqWMask)
-            }
-          }
+          storeMergeReg := mergeStore(dataRdata(hitWay), reqAddr, reqWData, reqWMask)
+          storeHitWayReg := hitWay
           metaReg(setIndex) := makeMeta(
             validOf(metaReg(setIndex)),
             dirtyOf(metaReg(setIndex)) | (1.U << hitWay),
             touchWay(plruOf(metaReg(setIndex)), hitWay)
           )
           responseData := 0.U
+          state := StoreHitWrite
         }.otherwise {
           metaReg(setIndex) := makeMeta(
             validOf(metaReg(setIndex)),
@@ -269,9 +267,9 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
             touchWay(plruOf(metaReg(setIndex)), hitWay)
           )
           responseData := lineWord(dataRdata(hitWay), reqAddr)
+          state := Respond
         }
         responseError := false.B
-        state := Respond
       }.otherwise {
         victimWayReg := victimWay
         newValidReg := newValidVec
@@ -285,6 +283,17 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
         }
       }
     }
+    is(StoreHitWrite) {
+      for (w <- 0 until ways) {
+        when(storeHitWayReg === w.U) {
+          dataArray(w).io.we := true.B
+          dataArray(w).io.addr := setIndex
+          dataArray(w).io.data_in := storeMergeReg
+        }
+      }
+      state := Respond
+    }
+
 
     is(UncachedReq) {
       io.nextLevelReq.req := true.B
