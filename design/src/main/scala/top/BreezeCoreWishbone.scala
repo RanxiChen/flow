@@ -16,7 +16,7 @@ import flow.platform.BreezeMcuPlatform
   * independent standard 64-bit instruction and data Wishbone masters to LiteX.
   */
 class BreezeCoreWishbone(
-    val corecfg: BreezeCoreConfig = BreezeCoreConfigs.baseline(),
+    val corecfg: BreezeCoreConfig = BreezeCoreConfigs.gshare(),
     val enabledebug: Boolean = false
 ) extends Module {
   private val iWishboneParams = LiteXWishboneParameters(

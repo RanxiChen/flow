@@ -72,8 +72,8 @@ def main():
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-",
         help="Bare-metal tool prefix (default: riscv64-unknown-elf-).")
     parser.add_argument("--core-preset", choices=("baseline", "gshare"),
-        default="baseline",
-        help="Core RTL preset (default: baseline; GShare is opt-in).")
+        default="gshare",
+        help="Core RTL preset (default: gshare; baseline is explicit).")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the selected BreezeCoreWishbone RTL before simulation.")
     parser.add_argument("--trace", action="store_true",

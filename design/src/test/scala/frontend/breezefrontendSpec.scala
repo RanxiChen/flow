@@ -3,6 +3,7 @@ package flow.frontend
 import chisel3._
 import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.scalatest.ChiselSim
+import flow.config.{BreezeFrontendConfig, NoBranchPredictorConfig}
 import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -47,7 +48,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 
     "BreezeFrontend should correctly work after reset" in {
-        simulate(new BreezeFrontend(enabledebug = true)){dut =>
+        simulate(new BreezeFrontend(BreezeFrontendConfig(branchPredCfg = NoBranchPredictorConfig), enabledebug = true)){dut =>
             dut.io.resetAddr.poke(BootAddr.U)
             dut.io.beRedirect.valid.poke(false.B)
             dut.io.beRedirect.flush.poke(false.B)
@@ -71,7 +72,7 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 
     "BreezeFrontend should follow default flow after reset" in {
-        simulate(new BreezeFrontend(enabledebug = true)){dut =>
+        simulate(new BreezeFrontend(BreezeFrontendConfig(branchPredCfg = NoBranchPredictorConfig), enabledebug = true)){dut =>
             val debug = dut.io.debug.get
             val refillDelayCycles = 6
             val refillInstWords = Seq.tabulate(8)(i => encodeAddi(rd = i + 1, rs1 = 0, imm = i + 1))

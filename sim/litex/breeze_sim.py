@@ -586,7 +586,7 @@ class BreezeSimSoC(SoCCore):
     }
 
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
-                 core_preset="baseline",
+                 core_preset="gshare",
                  debug_fetch=False, fetch_timeout=100,
                  stop_after_first_fetch=False, debug_retire=False,
                  first_retire_timeout=200, stop_after_first_retire=False,
@@ -723,8 +723,8 @@ def main():
     parser.add_argument("--rom-init",
         help="Raw binary loaded at the ROM base address (0x10000000).")
     parser.add_argument("--core-preset", choices=Flow.core_presets,
-        default="baseline",
-        help="BreezeCore RTL preset (default: baseline; GShare is opt-in).")
+        default="gshare",
+        help="BreezeCore RTL preset (default: gshare; baseline is explicit).")
     parser.add_argument("--debug-fetch", action="store_true",
         help="Print and validate the first instruction-cache refill.")
     parser.add_argument("--fetch-timeout", type=int, default=100,

@@ -18,15 +18,8 @@ import flow.config.BreezeCoreConfigs
 object GenerateBreezeCoreWishbone extends App {
   require(args.length <= 1, "usage: GenerateBreezeCoreWishbone [baseline|gshare]")
 
-  private val corePreset = args.headOption.getOrElse("baseline")
-  private val coreConfig = corePreset match {
-    case "baseline" => BreezeCoreConfigs.baseline(enableTandem = true)
-    case "gshare"   => BreezeCoreConfigs.gshare(enableTandem = true)
-    case other =>
-      throw new IllegalArgumentException(
-        s"unsupported core preset: $other (expected baseline or gshare)"
-      )
-  }
+  private val corePreset = args.headOption.getOrElse("gshare")
+  private val coreConfig = BreezeCoreConfigs.fromPreset(corePreset, enableTandem = true)
   private val targetDir = os.pwd / "build" / "rtl" / corePreset
 
   println(s"[BreezeCore RTL] core_preset=$corePreset target_dir=$targetDir")

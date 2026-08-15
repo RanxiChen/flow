@@ -244,7 +244,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 
     def run(
         memory: mutable.Map[BigInt, BigInt],
-        coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false),
+        coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false, useGShare = true),
         maxCycles: Int = 100000,
         imemLatency: Int = 6,
         dmemLatency: Int = 7,
@@ -263,7 +263,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 
     def runWithTandemTrace(
         memory: mutable.Map[BigInt, BigInt],
-        coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false, enableTandem = true),
+        coreCfg: BreezeCoreConfig = BreezeCoreConfig(useFASE = false, enableTandem = true, useGShare = true),
         maxCycles: Int = 100000,
         imemLatency: Int = 6,
         dmemLatency: Int = 7,

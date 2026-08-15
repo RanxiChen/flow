@@ -12,7 +12,7 @@ OBJDUMP := $(RISCV_PREFIX)-objdump
 ARCH ?= rv64im_zicsr
 ABI ?= lp64
 TANDEM_LOG ?= true
-CORE_PRESET ?= baseline
+CORE_PRESET ?= gshare
 
 LD_SCRIPT := $(TEST_DIR)/trap_valid_bug_test.ld
 

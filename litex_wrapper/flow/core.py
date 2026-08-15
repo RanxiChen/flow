@@ -30,7 +30,7 @@ GCC_FLAGS = {
 
 class Flow(CPU):
     core_presets         = ("baseline", "gshare")
-    core_preset          = "baseline"
+    core_preset          = "gshare"
     category             = "softcore"
     family               = "riscv"
     name                 = "flow"

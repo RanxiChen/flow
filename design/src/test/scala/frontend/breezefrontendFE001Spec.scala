@@ -2,6 +2,7 @@ package flow.frontend
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
+import flow.config.{BreezeFrontendConfig, NoBranchPredictorConfig}
 import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -10,7 +11,7 @@ class BreezeFrontendFE001Spec extends AnyFreeSpec with Matchers with ChiselSim {
     private val BootAddr = BreezeMcuPlatform.ResetVector
 
     "BreezeFrontend FE-001 bug replication scenario" in {
-        simulate(new BreezeFrontend(enabledebug = true)){dut =>
+        simulate(new BreezeFrontend(BreezeFrontendConfig(branchPredCfg = NoBranchPredictorConfig), enabledebug = true)){dut =>
             val debug = dut.io.debug.get
 
             // ==================== cycle 0 ====================

@@ -13,7 +13,7 @@ OBJDUMP := $(RISCV_PREFIX)-objdump
 ARCH ?= rv64im
 ABI ?= lp64
 TANDEM_LOG ?= true
-CORE_PRESET ?= baseline
+CORE_PRESET ?= gshare
 
 ASM_SRC := $(TEST_DIR)/$(TEST_NAME).S
 LD_SCRIPT := $(TEST_DIR)/$(TEST_NAME).ld
