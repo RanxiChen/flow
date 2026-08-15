@@ -8,7 +8,8 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.collection.mutable
 
-/** Byte-addressable memory model with deterministic power-on contents. */
+/** Byte-addressable memory model with deterministic power-on contents:
+  * byte(addr) == addr & 0xff. */
 final class DTestMem {
   private val bytes = mutable.Map.empty[BigInt, BigInt]
   private def byte(addr: BigInt): BigInt = bytes.getOrElse(addr, addr & 0xff)
@@ -119,8 +120,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       for (tag <- 0 until 4) {
         val (data, error, _) = runReq(dut, mem, sramAddr(tag, 0), 3, isWrite = false, 0, 0xff, 2)
         error mustBe false
-        // memory[addr] == addr, so a dword load returns the address.
-        data mustBe sramAddr(tag, 0)
+        data mustBe mem.readBytes(sramAddr(tag, 0), 8)
       }
     }
   }
@@ -133,11 +133,11 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       }
       val (data, error, _) = runReq(dut, mem, sramAddr(4, 0), 3, isWrite = false, 0, 0xff, 2)
       error mustBe false
-      data mustBe sramAddr(4, 0)
+      data mustBe mem.readBytes(sramAddr(4, 0), 8)
       // The evicted line (tagLsb 0) is gone: re-accessing it misses and refills.
       val (data2, error2, _) = runReq(dut, mem, sramAddr(0, 0), 3, isWrite = false, 0, 0xff, 2)
       error2 mustBe false
-      data2 mustBe sramAddr(0, 0)
+      data2 mustBe mem.readBytes(sramAddr(0, 0), 8)
     }
   }
 
@@ -150,7 +150,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       runReq(dut, mem, sramAddr(0, 1), 3, isWrite = false, 0, 0xff, 2)
       val (data, error, _) = runReq(dut, mem, sramAddr(0, 0), 3, isWrite = false, 0, 0xff, 2)
       error mustBe false
-      data mustBe sramAddr(0, 0)
+      data mustBe mem.readBytes(sramAddr(0, 0), 8)
     }
   }
 
@@ -158,16 +158,16 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
     simulate(new BreezeDCache(cfg)) { dut =>
       val mem = new DTestMem
       val base = sramAddr(0, 2)
-      runReq(dut, mem, base, 3, isWrite = true, BigInt("0x8899aabbccddeeff", 16), 0xff, 2)
+      runReq(dut, mem, base, 3, isWrite = true, BigInt("8899aabbccddeeff", 16), 0xff, 2)
       val (data, error, _) = runReq(dut, mem, base, 3, isWrite = false, 0, 0xff, 2)
       error mustBe false
-      data mustBe BigInt("0x8899aabbccddeeff", 16)
+      data mustBe BigInt("8899aabbccddeeff", 16)
 
       // Partial (low 4-byte) store overwrites only the selected bytes.
-      runReq(dut, mem, base, 3, isWrite = true, BigInt("0x11111111", 16), 0x0f, 2)
+      runReq(dut, mem, base, 3, isWrite = true, BigInt("11111111", 16), 0x0f, 2)
       val (data2, error2, _) = runReq(dut, mem, base, 3, isWrite = false, 0, 0xff, 2)
       error2 mustBe false
-      data2 mustBe BigInt("0x8899aabb11111111", 16)
+      data2 mustBe BigInt("8899aabb11111111", 16)
     }
   }
 
@@ -175,7 +175,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
     simulate(new BreezeDCache(cfg)) { dut =>
       val mem = new DTestMem
       val storeAddr = sramAddr(0, 3)
-      val storeVal = BigInt("0xfeedfacecafebeef", 16)
+      val storeVal = BigInt("feedfacecafebeef", 16)
       runReq(dut, mem, storeAddr, 3, isWrite = true, storeVal, 0xff, 2)
 
       for (tag <- 1 until 4) {
@@ -184,7 +184,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
 
       val (data, error, _) = runReq(dut, mem, sramAddr(4, 3), 3, isWrite = false, 0, 0xff, 2)
       error mustBe false
-      data mustBe sramAddr(4, 3)
+      data mustBe mem.readBytes(sramAddr(4, 3), 8)
 
       mem.readBytes(storeAddr & ~BigInt(31), 8) mustBe storeVal
     }
@@ -193,7 +193,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
   "DCache should return an error and keep the victim on a refill error" in {
     simulate(new BreezeDCache(cfg)) { dut =>
       val mem = new DTestMem
-      runReq(dut, mem, sramAddr(0, 4), 3, isWrite = true, BigInt("0x1234567890abcdef", 16), 0xff, 2)
+      runReq(dut, mem, sramAddr(0, 4), 3, isWrite = true, BigInt("1234567890abcdef", 16), 0xff, 2)
       for (tag <- 1 until 4) {
         runReq(dut, mem, sramAddr(tag, 4), 3, isWrite = false, 0, 0xff, 2)
       }
@@ -261,8 +261,8 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
   "DCache flush should walk all 256 lines and write back dirty data" in {
     simulate(new BreezeDCache(cfg)) { dut =>
       val mem = new DTestMem
-      runReq(dut, mem, sramAddr(0, 0), 3, isWrite = true, BigInt("0xaaaaaaaaaaaaaaaa", 16), 0xff, 2)
-      runReq(dut, mem, sramAddr(1, 1), 3, isWrite = true, BigInt("0xbbbbbbbbbbbbbbbb", 16), 0xff, 2)
+      runReq(dut, mem, sramAddr(0, 0), 3, isWrite = true, BigInt("aaaaaaaaaaaaaaaa", 16), 0xff, 2)
+      runReq(dut, mem, sramAddr(1, 1), 3, isWrite = true, BigInt("bbbbbbbbbbbbbbbb", 16), 0xff, 2)
 
       dut.io.cpu.req.valid.poke(false.B)
       dut.io.nextLevelRsp.vld.poke(false.B)
@@ -305,8 +305,8 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       }
       done mustBe true
       writebacks mustBe 2
-      mem.readBytes(sramAddr(0, 0), 8) mustBe BigInt("0xaaaaaaaaaaaaaaaa", 16)
-      mem.readBytes(sramAddr(1, 1), 8) mustBe BigInt("0xbbbbbbbbbbbbbbbb", 16)
+      mem.readBytes(sramAddr(0, 0), 8) mustBe BigInt("aaaaaaaaaaaaaaaa", 16)
+      mem.readBytes(sramAddr(1, 1), 8) mustBe BigInt("bbbbbbbbbbbbbbbb", 16)
     }
   }
 
