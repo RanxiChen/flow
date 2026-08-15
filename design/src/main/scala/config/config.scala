@@ -69,21 +69,39 @@ case class BackendConfig(
     val enableTandem: Boolean = false
 ){}
 
-/** Parameters that materially change DCache hardware cost or performance. */
+/** Parameters that materially change DCache hardware cost or performance.
+  *
+  * Frozen L1D geometry: 8192 B, 32 B lines, 4 ways -> 64 sets. The tag width
+  * is derived from the 32-bit physical address slicing (tag=addr[31:11]).
+  */
 case class DefaultDCacheConfig(
     VLEN: Int = 64,
     PLEN: Int = 64,
-    entryNum: Int = 8,
-    lineBytes: Int = 32
+    capacityBytes: Int = 8192,
+    lineBytes: Int = 32,
+    ways: Int = 4
 ) {
-    require(entryNum > 0, "DCache must contain at least one entry")
+    require(capacityBytes > 0 && (capacityBytes & (capacityBytes - 1)) == 0,
+        "DCache capacity must be a positive power of two")
     require(lineBytes >= 8 && (lineBytes & (lineBytes - 1)) == 0,
         "DCache line size must be a power of two and at least 8 bytes")
     require(lineBytes % 8 == 0, "DCache line must contain complete 64-bit words")
+    require(ways > 0 && (ways & (ways - 1)) == 0,
+        "DCache associativity must be a positive power of two")
+    require(capacityBytes % (lineBytes * ways) == 0,
+        "DCache capacity must be divisible by lineBytes * ways")
+
+    val sets: Int = capacityBytes / (lineBytes * ways)
+    require(sets > 0 && (sets & (sets - 1)) == 0,
+        "DCache set count must be a positive power of two")
 
     val lineWidth: Int = lineBytes * 8
     val lineOffsetWidth: Int = log2Ceil(lineBytes)
-    val tagWidth: Int = PLEN - lineOffsetWidth
+    val setIndexWidth: Int = log2Ceil(sets)
+    val wayIndexWidth: Int = log2Ceil(ways)
+    val tagWidth: Int = 32 - lineOffsetWidth - setIndexWidth
+    val plruWidth: Int = ways - 1
+    val metaWidth: Int = 2 * ways + plruWidth
 }
 
 case class BreezeCoreConfig(
@@ -94,8 +112,9 @@ case class BreezeCoreConfig(
     val useGShare: Boolean = true,
     val gshareGhrLength: Int = 8,
     val gshareBtbEntryNum: Int = 16,
-    val dcacheEntryNum: Int = 8,
-    val dcacheLineBytes: Int = 32
+    val dcacheCapacityBytes: Int = 8192,
+    val dcacheLineBytes: Int = 32,
+    val dcacheWays: Int = 4
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -121,8 +140,9 @@ case class BreezeCoreConfig(
     val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
         VLEN = VLEN,
         PLEN = PLEN,
-        entryNum = dcacheEntryNum,
-        lineBytes = dcacheLineBytes
+        capacityBytes = dcacheCapacityBytes,
+        lineBytes = dcacheLineBytes,
+        ways = dcacheWays
     )
 }
 

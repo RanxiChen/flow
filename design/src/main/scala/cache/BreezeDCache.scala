@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import flow.config.DefaultDCacheConfig
 import flow.interface._
+import flow.mem.flowSRAM
 import flow.platform.{PMAAccessType, PMAChecker}
 
 object BreezeDCacheState extends ChiselEnum {
@@ -12,31 +13,57 @@ object BreezeDCacheState extends ChiselEnum {
       WritebackReq, WritebackWait,
       RefillReq, RefillWait,
       Respond,
-      FlushScan, FlushWritebackReq, FlushWritebackWait, FlushRespond,
+      FlushScan, FlushRead, FlushWritebackReq, FlushWritebackWait, FlushRespond,
       Fatal = Value
 }
 
-/** Small blocking, fully-associative L1 data cache.
+/** Blocking, 4-way set-associative, write-back/write-allocate L1 data cache.
   *
-  * Frozen policy for the first implementation:
+  * Frozen geometry: 8192 B capacity, 32 B lines, 4 ways -> 64 sets.
+  * Tag/Data arrays use synchronous-read SRAMs (one-cycle read latency); the
+  * valid/dirty/PLRU metadata is resettable register memory, so every line is
+  * logically invalid after reset without relying on SRAM contents.
+  *
+  * Policy:
   *   - write-back and write-allocate;
-  *   - register-array storage;
-  *   - invalid-first, then round-robin replacement;
+  *   - invalid-first, then tree-PLRU replacement within a set;
   *   - one outstanding CPU operation and one outstanding lower-level request;
   *   - PMA-denied accesses return an access error without reaching the bus;
-  *   - non-cacheable/device accesses bypass the arrays as one scalar request.
+  *   - non-cacheable/device accesses bypass the arrays as one scalar request;
+  *   - a dirty victim is never overwritten until its writeback is acknowledged.
   *
-  * The CPU and lower-level interfaces intentionally retain the project's
-  * pulse protocol. Both sides are dedicated blocking peers and must capture a
-  * request pulse while idle. Assertions catch violations of that contract.
+  * The CPU and lower-level interfaces retain the project's pulse protocol.
+  * Address slicing follows the frozen profile: offset=addr[4:0], set=addr[10:5],
+  * tag=addr[31:11] (32-bit physical tag; PMA rejects wider addresses first).
   */
 class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends Module {
-  private val entryIndexWidth = math.max(1, log2Ceil(cfg.entryNum))
+  private val ways = cfg.ways
+  private val sets = cfg.sets
   private val wordsPerLine = cfg.lineBytes / 8
   private val wordIndexWidth = math.max(1, log2Ceil(wordsPerLine))
 
-  require(cfg.VLEN == 64, "The first Breeze DCache implementation requires RV64")
-  require(cfg.PLEN == 64, "The core-side DCache address is kept as a 64-bit physical address")
+  require(cfg.VLEN == 64, "The Breeze DCache requires RV64")
+  require(ways == 4, "The Breeze DCache PLRU is fixed to 4 ways")
+
+  private val validBits = ways
+  private val dirtyOffset = ways
+  private val plruOffset = 2 * ways
+  private val metaWidth = 2 * ways + (ways - 1)
+
+  private def validOf(meta: UInt): UInt = meta(validBits - 1, 0)
+  private def dirtyOf(meta: UInt): UInt = meta(dirtyOffset + ways - 1, dirtyOffset)
+  private def plruOf(meta: UInt): UInt = meta(metaWidth - 1, plruOffset)
+  private def makeMeta(valid: UInt, dirty: UInt, plru: UInt): UInt =
+    Cat(plru, dirty, valid)
+
+  /** Mark `way` as most-recently-used in a 3-bit tree-PLRU. */
+  private def touchWay(plru: UInt, way: UInt): UInt =
+    MuxLookup(way, plru)(Seq(
+      0.U -> Cat(1.U(1.W), 1.U(1.W), plru(0)),
+      1.U -> Cat(1.U(1.W), 0.U(1.W), plru(0)),
+      2.U -> Cat(0.U(1.W), plru(1), 1.U(1.W)),
+      3.U -> Cat(0.U(1.W), plru(1), 0.U(1.W))
+    ))
 
   val io = IO(new Bundle {
     val cpu = Flipped(new BackendMemIO(cfg.VLEN))
@@ -52,24 +79,44 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
   io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
 
-  val state = RegInit(Idle)
-  val validArray = RegInit(VecInit(Seq.fill(cfg.entryNum)(false.B)))
-  val dirtyArray = RegInit(VecInit(Seq.fill(cfg.entryNum)(false.B)))
-  val tagArray = Reg(Vec(cfg.entryNum, UInt(cfg.tagWidth.W)))
-  val dataArray = Reg(Vec(cfg.entryNum, UInt(cfg.lineWidth.W)))
-  val replacementPtr = RegInit(0.U(entryIndexWidth.W))
+  // ===== Storage =====
+  // Metadata: [plru(3) | dirty(4) | valid(4)] per set, resettable to all-invalid.
+  val metaReg = RegInit(VecInit(Seq.fill(sets)(0.U(metaWidth.W))))
+  val tagArray = Seq.fill(ways)(Module(new flowSRAM(sets, cfg.tagWidth, "tag")))
+  val dataArray = Seq.fill(ways)(Module(new flowSRAM(sets, cfg.lineWidth, "data")))
+  for (w <- 0 until ways) {
+    tagArray(w).io.addr := 0.U
+    tagArray(w).io.data_in := 0.U
+    tagArray(w).io.we := false.B
+    tagArray(w).io.re := false.B
+    tagArray(w).io.id := w.U
+    dataArray(w).io.addr := 0.U
+    dataArray(w).io.data_in := 0.U
+    dataArray(w).io.we := false.B
+    dataArray(w).io.re := false.B
+    dataArray(w).io.id := w.U
+  }
+  val tagRdata = VecInit(tagArray.map(_.io.data_out))
+  val dataRdata = VecInit(dataArray.map(_.io.data_out))
 
+  // ===== Request / state registers =====
+  val state = RegInit(Idle)
   val reqAddr = RegInit(0.U(cfg.VLEN.W))
   val reqIsWrite = RegInit(false.B)
   val reqSizeLog2 = RegInit(0.U(3.W))
   val reqWData = RegInit(0.U(64.W))
   val reqWMask = RegInit(0.U(8.W))
-  val victimIndex = RegInit(0.U(entryIndexWidth.W))
+
+  val victimWayReg = RegInit(0.U(cfg.wayIndexWidth.W))
+  val newValidReg = RegInit(0.U(ways.W))
+  val newPlruReg = RegInit(0.U((ways - 1).W))
+  val victimTagReg = RegInit(0.U(cfg.tagWidth.W))
+  val victimDataReg = RegInit(0.U(cfg.lineWidth.W))
 
   val responseData = RegInit(0.U(64.W))
   val responseError = RegInit(false.B)
   val responseIsWrite = RegInit(false.B)
-  val flushIndex = RegInit(0.U(entryIndexWidth.W))
+  val flushIndex = RegInit(0.U(8.W))
   val fatalErrorReg = RegInit(false.B)
 
   private def lineWord(line: UInt, address: UInt): UInt = {
@@ -97,23 +144,41 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     (line & ~shiftedMask) | (shiftedData & shiftedMask)
   }
 
+  // ===== Address decode (frozen slicing) =====
+  val setIndex = reqAddr(10, 5)
+  val requestTag = reqAddr(31, 11)
+  val requestLineBase64 = Cat(reqAddr(63, 5), 0.U(5.W))
+  val requestBeatBase64 = Cat(reqAddr(63, 3), 0.U(3.W))
+
+  // ===== PMA =====
   val pma = Module(new PMAChecker)
   pma.io.query.addr := reqAddr
   pma.io.query.sizeLog2 := reqSizeLog2
   pma.io.query.accessType := Mux(reqIsWrite, PMAAccessType.Store, PMAAccessType.Load)
 
-  val requestTag = reqAddr(cfg.PLEN - 1, cfg.lineOffsetWidth)
-  val requestLineBase = Cat(requestTag, 0.U(cfg.lineOffsetWidth.W))
-  val requestBeatBase = Cat(reqAddr(cfg.PLEN - 1, 3), 0.U(3.W))
-  val hitVector = VecInit((0 until cfg.entryNum).map { index =>
-    validArray(index) && tagArray(index) === requestTag
+  // ===== SRAM read/write control =====
+  val incomingSetIndex = io.cpu.req.addr(10, 5)
+  val flushSetIndex = flushIndex(7, 2)
+  val arrayReadEnable = (state === Idle && io.cpu.req.valid) || (state === FlushScan)
+  val arrayReadAddr = Mux(state === Idle && io.cpu.req.valid, incomingSetIndex, flushSetIndex)
+  for (w <- 0 until ways) {
+    tagArray(w).io.addr := arrayReadAddr
+    tagArray(w).io.re := arrayReadEnable
+    dataArray(w).io.addr := arrayReadAddr
+    dataArray(w).io.re := arrayReadEnable
+  }
+
+  // ===== Lookup-stage comparison =====
+  val wayHit = VecInit((0 until ways).map { w =>
+    validOf(metaReg(setIndex))(w) && tagRdata(w) === requestTag
   })
-  val hit = hitVector.asUInt.orR
-  val hitIndex = PriorityEncoder(hitVector.asUInt)
-  val invalidVector = VecInit((0 until cfg.entryNum).map(index => !validArray(index)))
-  val hasInvalid = invalidVector.asUInt.orR
-  val firstInvalid = PriorityEncoder(invalidVector.asUInt)
-  val selectedVictim = Mux(hasInvalid, firstInvalid, replacementPtr)
+  val hit = wayHit.asUInt.orR
+  val hitWay = OHToUInt(wayHit.asUInt)
+
+  val (newValidVec, newPlruVec, victimOH) =
+    BreezePLRU.replace_way_select(validOf(metaReg(setIndex)), plruOf(metaReg(setIndex)))
+  val victimWay = OHToUInt(victimOH)
+  val victimIsDirty = dirtyOf(metaReg(setIndex))(victimWay)
 
   val readSelectBase = MuxLookup(reqSizeLog2, "hff".U(8.W))(Seq(
     0.U -> "h01".U(8.W),
@@ -127,6 +192,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     (readSelectBase << reqAddr(2, 0))(7, 0)
   )
 
+  // ===== Outputs =====
   io.cpu.rsp.valid := state === Respond
   io.cpu.rsp.data := Mux(responseError, 0.U, responseData)
   io.cpu.rsp.isWriteAck := responseIsWrite && !responseError
@@ -183,17 +249,36 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
         state := UncachedReq
       }.elsewhen(hit) {
         when(reqIsWrite) {
-          dataArray(hitIndex) := mergeStore(dataArray(hitIndex), reqAddr, reqWData, reqWMask)
-          dirtyArray(hitIndex) := true.B
+          for (w <- 0 until ways) {
+            when(hitWay === w.U) {
+              dataArray(w).io.we := true.B
+              dataArray(w).io.addr := setIndex
+              dataArray(w).io.data_in := mergeStore(dataRdata(hitWay), reqAddr, reqWData, reqWMask)
+            }
+          }
+          metaReg(setIndex) := makeMeta(
+            validOf(metaReg(setIndex)),
+            dirtyOf(metaReg(setIndex)) | (1.U << hitWay),
+            touchWay(plruOf(metaReg(setIndex)), hitWay)
+          )
           responseData := 0.U
         }.otherwise {
-          responseData := lineWord(dataArray(hitIndex), reqAddr)
+          metaReg(setIndex) := makeMeta(
+            validOf(metaReg(setIndex)),
+            dirtyOf(metaReg(setIndex)),
+            touchWay(plruOf(metaReg(setIndex)), hitWay)
+          )
+          responseData := lineWord(dataRdata(hitWay), reqAddr)
         }
         responseError := false.B
         state := Respond
       }.otherwise {
-        victimIndex := selectedVictim
-        when(validArray(selectedVictim) && dirtyArray(selectedVictim)) {
+        victimWayReg := victimWay
+        newValidReg := newValidVec
+        newPlruReg := newPlruVec
+        victimTagReg := tagRdata(victimWay)
+        victimDataReg := dataRdata(victimWay)
+        when(victimIsDirty) {
           state := WritebackReq
         }.otherwise {
           state := RefillReq
@@ -203,7 +288,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
     is(UncachedReq) {
       io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := requestBeatBase
+      io.nextLevelReq.addr := requestBeatBase64
       io.nextLevelReq.isWrite := reqIsWrite
       io.nextLevelReq.isLine := false.B
       io.nextLevelReq.data := reqWData.pad(cfg.lineWidth)
@@ -221,10 +306,10 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
     is(WritebackReq) {
       io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := Cat(tagArray(victimIndex), 0.U(cfg.lineOffsetWidth.W))
+      io.nextLevelReq.addr := Cat(0.U(32.W), victimTagReg, setIndex, 0.U(5.W))
       io.nextLevelReq.isWrite := true.B
       io.nextLevelReq.isLine := true.B
-      io.nextLevelReq.data := dataArray(victimIndex)
+      io.nextLevelReq.data := victimDataReg
       io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
       state := WritebackWait
     }
@@ -232,12 +317,10 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     is(WritebackWait) {
       when(io.nextLevelRsp.vld) {
         when(io.nextLevelRsp.error) {
-          // The line is deliberately kept valid+dirty. The access that caused
-          // the eviction receives the error and may be retried by software.
+          // Keep the line valid+dirty: the data must not be lost.
           responseError := true.B
           state := Respond
         }.otherwise {
-          dirtyArray(victimIndex) := false.B
           state := RefillReq
         }
       }
@@ -245,7 +328,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
     is(RefillReq) {
       io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := requestLineBase
+      io.nextLevelReq.addr := requestLineBase64
       io.nextLevelReq.isWrite := false.B
       io.nextLevelReq.isLine := true.B
       io.nextLevelReq.data := 0.U
@@ -265,15 +348,22 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
             mergeStore(io.nextLevelRsp.data, reqAddr, reqWData, reqWMask),
             io.nextLevelRsp.data
           )
-          tagArray(victimIndex) := requestTag
-          dataArray(victimIndex) := installedLine
-          validArray(victimIndex) := true.B
-          dirtyArray(victimIndex) := reqIsWrite
-          replacementPtr := Mux(
-            victimIndex === (cfg.entryNum - 1).U,
-            0.U,
-            victimIndex + 1.U
+          val newDirty = Mux(
+            reqIsWrite,
+            dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
+            dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg)
           )
+          for (w <- 0 until ways) {
+            when(victimWayReg === w.U) {
+              tagArray(w).io.we := true.B
+              tagArray(w).io.addr := setIndex
+              tagArray(w).io.data_in := requestTag
+              dataArray(w).io.we := true.B
+              dataArray(w).io.addr := setIndex
+              dataArray(w).io.data_in := installedLine
+            }
+          }
+          metaReg(setIndex) := makeMeta(newValidReg, newDirty, newPlruReg)
           responseData := Mux(reqIsWrite, 0.U, lineWord(io.nextLevelRsp.data, reqAddr))
           responseError := false.B
           state := Respond
@@ -286,25 +376,40 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     }
 
     is(FlushScan) {
-      when(validArray(flushIndex) && dirtyArray(flushIndex)) {
+      // Array read is asserted combinationally above for the current flush set.
+      state := FlushRead
+    }
+
+    is(FlushRead) {
+      val set = flushIndex(7, 2)
+      val way = flushIndex(1, 0)
+      when(validOf(metaReg(set))(way) && dirtyOf(metaReg(set))(way)) {
+        victimWayReg := way
+        victimTagReg := tagRdata(way)
+        victimDataReg := dataRdata(way)
         state := FlushWritebackReq
       }.otherwise {
-        validArray(flushIndex) := false.B
-        dirtyArray(flushIndex) := false.B
-        when(flushIndex === (cfg.entryNum - 1).U) {
+        metaReg(set) := makeMeta(
+          validOf(metaReg(set)) & ~(1.U << way),
+          dirtyOf(metaReg(set)) & ~(1.U << way),
+          plruOf(metaReg(set))
+        )
+        when(flushIndex === 255.U) {
           state := FlushRespond
         }.otherwise {
           flushIndex := flushIndex + 1.U
+          state := FlushScan
         }
       }
     }
 
     is(FlushWritebackReq) {
+      val set = flushIndex(7, 2)
       io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := Cat(tagArray(flushIndex), 0.U(cfg.lineOffsetWidth.W))
+      io.nextLevelReq.addr := Cat(0.U(32.W), victimTagReg, set, 0.U(5.W))
       io.nextLevelReq.isWrite := true.B
       io.nextLevelReq.isLine := true.B
-      io.nextLevelReq.data := dataArray(flushIndex)
+      io.nextLevelReq.data := victimDataReg
       io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
       state := FlushWritebackWait
     }
@@ -313,14 +418,17 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
       when(io.nextLevelRsp.vld) {
         when(io.nextLevelRsp.error) {
           // A retired store can no longer take a precise exception here.
-          // Preserve the dirty line and stop in an externally visible fatal
-          // state rather than silently discarding modified data.
           fatalErrorReg := true.B
           state := Fatal
         }.otherwise {
-          validArray(flushIndex) := false.B
-          dirtyArray(flushIndex) := false.B
-          when(flushIndex === (cfg.entryNum - 1).U) {
+          val set = flushIndex(7, 2)
+          val way = flushIndex(1, 0)
+          metaReg(set) := makeMeta(
+            validOf(metaReg(set)) & ~(1.U << way),
+            dirtyOf(metaReg(set)) & ~(1.U << way),
+            plruOf(metaReg(set))
+          )
+          when(flushIndex === 255.U) {
             state := FlushRespond
           }.otherwise {
             flushIndex := flushIndex + 1.U
@@ -335,8 +443,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     }
 
     is(Fatal) {
-      // Sticky until reset. A later machine-error mechanism can consume the
-      // fatalError output without changing the cache/bus protocol.
+      // Sticky until reset.
       state := Fatal
     }
   }
