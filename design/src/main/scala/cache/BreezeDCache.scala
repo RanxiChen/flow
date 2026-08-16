@@ -175,6 +175,9 @@ class BreezeDCache(
 
   // Coherence transaction bookkeeping.
   val txnIdReg = RegInit(0.U(2.W))
+  // The id the in-flight request was sent with; a grant must echo this one
+  // (txnIdReg itself has already moved on to the next id by then).
+  val txnIdPendingReg = RegInit(0.U(2.W))
   val txnLineAddrReg = RegInit(0.U(32.W))
   val probePendingValid = RegInit(false.B)
   val probeTxnIdReg = RegInit(0.U(2.W))
@@ -298,7 +301,7 @@ class BreezeDCache(
 
     // A grant must answer the transaction that is currently outstanding.
     when(coh.grant.valid && coh.grant.ready) {
-      assert(coh.grant.txnId === txnIdReg, "DCache: grant txnId mismatch")
+      assert(coh.grant.txnId === txnIdPendingReg, "DCache: grant txnId mismatch")
       assert(coh.grant.lineAddr === txnLineAddrReg, "DCache: grant lineAddr mismatch")
     }
   }
@@ -489,6 +492,7 @@ class BreezeDCache(
             coh.req.hasData := victimNowDirty
             coh.req.lineData := victimDataReg
             when(coh.req.ready) {
+              txnIdPendingReg := txnIdReg
               txnIdReg := txnIdReg + 1.U
               txnLineAddrReg := Cat(victimTagReg, setIndex, 0.U(5.W))
               state := PutWait
@@ -534,6 +538,7 @@ class BreezeDCache(
           coh.req.lineAddr := requestLineBase32
           coh.req.hasData := false.B
           when(coh.req.ready) {
+            txnIdPendingReg := txnIdReg
             txnIdReg := txnIdReg + 1.U
             txnLineAddrReg := requestLineBase32
             state := UpgradeWait
@@ -584,6 +589,7 @@ class BreezeDCache(
           coh.req.lineAddr := requestLineBase32
           coh.req.hasData := false.B
           when(coh.req.ready) {
+            txnIdPendingReg := txnIdReg
             txnIdReg := txnIdReg + 1.U
             txnLineAddrReg := requestLineBase32
             state := RefillWait
@@ -816,6 +822,7 @@ class BreezeDCache(
             coh.req.hasData := lineDirtyNow
             coh.req.lineData := victimDataReg
             when(coh.req.ready) {
+              txnIdPendingReg := txnIdReg
               txnIdReg := txnIdReg + 1.U
               txnLineAddrReg := Cat(victimTagReg, set, 0.U(5.W))
               state := FlushWritebackWait
