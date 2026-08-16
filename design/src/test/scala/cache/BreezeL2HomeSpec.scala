@@ -51,7 +51,7 @@ final class L2HomeHarness(
   private var grantResult: Option[(BigInt, BigInt, Boolean, Boolean)] = None
 
   // probe response pipeline: (hart, txnId, lineAddr, opcode) pending
-  private var probePending: Option[(Int, BigInt, BigInt, BreezeProbeOpcode.Type)] = None
+  private var probePending: Option[(Int, BigInt, BigInt, BigInt)] = None
   private var probeCountdown = 0
 
   private def grantPort(h: Int) = dut.io.coherenceGrant(h)
@@ -99,13 +99,10 @@ final class L2HomeHarness(
       if (p.valid.peek().litToBoolean && probePending.isEmpty) {
         probeLog += ((h, p.lineAddr.peek().litValue, p.opcode.peek().litValue.toString()))
         probePending = Some((h, p.txnId.peek().litValue, p.lineAddr.peek().litValue,
-          BreezeProbeOpcode(p.opcode.peek().litValue.toInt)))
+          p.opcode.peek().litValue))
         probeCountdown = probeLatency
-        // The DUT holds valid until ready; we never drive probe.ready from the
-        // client side, so "accept" is implicit: the DUT sees ready only via its
-        // own probeResp handshake. Drive nothing here; the response below
-        // completes the pair.
-        probeRespPort(h) // silence unused
+        // "accept" is implicit: the mock observes valid and answers after
+        // probeLatency cycles via the probeResp handshake below.
       }
     }
     // NOTE: the probe channel's ready is driven by the DUT's probe service; the
@@ -133,27 +130,27 @@ final class L2HomeHarness(
   }
 
   /** Mock-L1 probe answer following MESI rules; returns (hasData, data). */
-  private def answerProbe(lineAddr: BigInt, opcode: BreezeProbeOpcode.Type): (Boolean, BigInt) = {
+  private def answerProbe(lineAddr: BigInt, opcode: BigInt): (Boolean, BigInt) = {
     val entry = l1.get(lineAddr)
-    opcode match {
-      case BreezeProbeOpcode.ProbeInv =>
-        entry match {
-          case Some(('M', data)) => l1.remove(lineAddr); (true, data)
-          case Some((s, _)) => assert(s == 'S' || s == 'E', "ProbeInv to M-only rule broken"); l1.remove(lineAddr); (false, BigInt(0))
-          case None => (false, BigInt(0))
-        }
-      case BreezeProbeOpcode.ProbeToS =>
-        entry match {
-          case Some(('M', data)) => l1(lineAddr) = ('S', data); (true, data)
-          case Some(('E', data)) => l1(lineAddr) = ('S', data); (false, BigInt(0))
-          case Some(('S', _)) => (false, BigInt(0))
-          case None => (false, BigInt(0))
-        }
-      case BreezeProbeOpcode.ProbeRecallInv =>
-        entry match {
-          case Some((s, data)) => assert(s == 'M' || s == 'E', "RecallInv to non-owner"); l1.remove(lineAddr); (true, data)
-          case None => (false, BigInt(0))
-        }
+    if (opcode == BreezeProbeOpcode.ProbeInv.litValue) {
+      entry match {
+        case Some(('M', data)) => l1.remove(lineAddr); (true, data)
+        case Some((s, _)) => assert(s == 'S' || s == 'E', "ProbeInv to M-only rule broken"); l1.remove(lineAddr); (false, BigInt(0))
+        case None => (false, BigInt(0))
+      }
+    } else if (opcode == BreezeProbeOpcode.ProbeToS.litValue) {
+      entry match {
+        case Some(('M', data)) => l1(lineAddr) = ('S', data); (true, data)
+        case Some(('E', data)) => l1(lineAddr) = ('S', data); (false, BigInt(0))
+        case Some(('S', _)) => (false, BigInt(0))
+        case None => (false, BigInt(0))
+      }
+    } else {
+      assert(opcode == BreezeProbeOpcode.ProbeRecallInv.litValue, "unknown probe opcode")
+      entry match {
+        case Some((s, data)) => assert(s == 'M' || s == 'E', "RecallInv to non-owner"); l1.remove(lineAddr); (true, data)
+        case None => (false, BigInt(0))
+      }
     }
   }
 
@@ -170,7 +167,7 @@ final class L2HomeHarness(
     reqHart = hart
     val req = dut.io.coherenceReq(hart)
     req.valid.poke(true.B)
-    req.opcode.poke(op.litValue.U)
+    req.opcode.poke(op.litValue)
     req.srcHart.poke(hart.U)
     req.txnId.poke(1.U)
     req.lineAddr.poke(lineAddr.U)
