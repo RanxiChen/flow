@@ -69,15 +69,16 @@ class BreezeMmioArbiter(
   }
 
   // Round-robin selection starting at rrPtr (blocking: one transaction at a
-  // time, so the scan is over a static snapshot).
-  val selValid = WireDefault(false.B)
-  val selNext = WireDefault(0.U(hartIdWidth.W))
-  for (offset <- 0 until numHarts) {
-    val h = (rrPtr + offset.U) % numHarts.U
-    when(!selValid && pendValid(h)) {
-      selValid := true.B
-      selNext := h
-    }
+  // time, so the scan is over a static snapshot). Rotate the pending vector
+  // right by rrPtr so a fixed priority encoder yields rotating priority;
+  // never read a wire that the same combinational block reassigns.
+  val pendVec = pendValid.asUInt
+  val selValid = pendVec.orR
+  val selNext = if (numHarts == 1) {
+    0.U(hartIdWidth.W)
+  } else {
+    val rotated = (Cat(pendVec, pendVec) >> rrPtr)(numHarts - 1, 0)
+    (rrPtr + PriorityEncoder(rotated))(hartIdWidth - 1, 0)
   }
 
   switch(state) {

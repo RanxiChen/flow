@@ -263,26 +263,17 @@ class BreezeL2Home(
   switch(state) {
     is(Idle) {
       // Coherence requests win over pending I$ refills; lowest hart first.
-      val selValid = WireDefault(false.B)
-      val selHart = WireDefault(0.U(hartIdWidth.W))
-      for (h <- 0 until numHarts) {
-        when(!selValid && io.coherenceReq(h).valid) {
-          selValid := true.B
-          selHart := h.U
-        }
-      }
+      // Priority encoders, not read-modify-write wires: a when() loop that
+      // reads the valid wire it also assigns is a combinational cycle.
+      val cohValids = VecInit((0 until numHarts).map(h => io.coherenceReq(h).valid))
+      val selValid = cohValids.asUInt.orR
+      val selHart = if (numHarts == 1) 0.U(hartIdWidth.W) else PriorityEncoder(cohValids.asUInt)
       for (h <- 0 until numHarts) {
         io.coherenceReq(h).ready := selValid && selHart === h.U
       }
 
-      val instrSelValid = WireDefault(false.B)
-      val instrSelHart = WireDefault(0.U(hartIdWidth.W))
-      for (h <- 0 until numHarts) {
-        when(!instrSelValid && instrPendingValid(h)) {
-          instrSelValid := true.B
-          instrSelHart := h.U
-        }
-      }
+      val instrSelValid = instrPendingValid.asUInt.orR
+      val instrSelHart = if (numHarts == 1) 0.U(hartIdWidth.W) else PriorityEncoder(instrPendingValid.asUInt)
 
       when(selValid) {
         reqHart := selHart
