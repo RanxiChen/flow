@@ -50,7 +50,7 @@ final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2
   var hpmMiss = 0
   var hpmUncached = 0
 
-  private var pending: Option[NlTxn] = None
+  private var nlPending: Option[NlTxn] = None
   private var countdown = 0
   private var errPred: NlTxn => Boolean = _ => false
 
@@ -71,8 +71,8 @@ final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2
   /** Advance one cycle: serve the outstanding lower-level transaction, then
     * observe a possible new request pulse. */
   private def step(): Unit = {
-    if (pending.isDefined && countdown == 0) {
-      val t = pending.get
+    if (nlPending.isDefined && countdown == 0) {
+      val t = nlPending.get
       val isErr = errPred(t)
       dut.io.nextLevelRsp.vld.poke(true.B)
       dut.io.nextLevelRsp.error.poke(isErr.B)
@@ -89,11 +89,11 @@ final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2
       } else {
         dut.io.nextLevelRsp.data.poke(mem.readBytes(t.addr, 8).U)
       }
-      pending = None
+      nlPending = None
     } else {
       dut.io.nextLevelRsp.vld.poke(false.B)
       dut.io.nextLevelRsp.error.poke(false.B)
-      if (pending.isDefined) countdown -= 1
+      if (nlPending.isDefined) countdown -= 1
     }
 
     if (dut.io.nextLevelReq.req.peek().litToBoolean) {
@@ -104,10 +104,10 @@ final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2
         dut.io.nextLevelReq.data.peek().litValue,
         dut.io.nextLevelReq.mask.peek().litValue
       )
-      if (pending.isDefined) {
+      if (nlPending.isDefined) {
         fail("DCache issued a second outstanding nextLevel request (protocol violation)")
       }
-      pending = Some(t)
+      nlPending = Some(t)
       countdown = latency
       log += t
     }
