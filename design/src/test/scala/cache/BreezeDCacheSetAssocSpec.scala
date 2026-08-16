@@ -338,7 +338,7 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       // Halfword store into bytes [3:2] of lane 0 (0xbeef at offset 2).
       h.cpu(base + 2, isWrite = true, sizeLog2 = 1, wdata = BigInt("beef0000", 16), wmask = 0x0c)
       val (d1, _, _, _) = h.cpu(base, isWrite = false)
-      d1 mustBe BigInt("8899aabbbefeeeff", 16)
+      d1 mustBe BigInt("8899aabbbeefeeeff", 16)
 
       // Word store into the high half of lane 3 (bytes 28..31).
       h.cpu(base + 28, isWrite = true, sizeLog2 = 2, wdata = BigInt("a1b2c3d400000000", 16), wmask = 0xf0)
