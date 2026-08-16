@@ -288,10 +288,17 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       for (tag <- Seq(0, 1, 3)) {
         h.cpu(sramAddr(tag, 1), isWrite = false)._4 mustBe empty
       }
-      // ... and the evicted tag2 misses and refills on re-access.
+      // ... and the evicted tag2 misses on re-access. The set is full, so the
+      // refill first evicts the tree-PLRU victim: after the touch sequence
+      // (fill w0..w3, touch w0/w1, install w2, touch w0/w1/w3) all PLRU bits
+      // are zero and the victim is way 0 = tag0, which is dirty.
       val (_, _, _, txns2) = h.cpu(sramAddr(2, 1), isWrite = false)
-      txns2.length mustBe 1
-      isRefill(txns2.head) mustBe true
+      txns2.length mustBe 2
+      isWriteback(txns2(0)) mustBe true
+      txns2(0).addr mustBe lineBase(sramAddr(0, 1))
+      (txns2(0).data & BigInt("ffffffffffffffff", 16)) mustBe storedVal(0)
+      isRefill(txns2(1)) mustBe true
+      txns2(1).addr mustBe lineBase(sramAddr(2, 1))
     }
   }
 
@@ -317,12 +324,15 @@ class BreezeDCacheSetAssocSpec extends AnyFreeSpec with Matchers with ChiselSim 
       val h = new DCacheHarness(dut, new DTestMem)
       val base = sramAddr(0, 2)
 
-      // Full dword store, then dword read-back from every 64-bit lane.
+      // Full dword store, then dword read-back from every 64-bit lane. A store
+      // hit updates the cached line only, so lane 0 reads back the stored data
+      // while lanes 1..3 still hold the power-on memory pattern.
       h.cpu(base, isWrite = true, wdata = BigInt("8899aabbccddeeff", 16))
       for (lane <- 0 until 4) {
         val (data, error, _, _) = h.cpu(base + lane * 8, isWrite = false)
         error mustBe false
-        data mustBe h.mem.readBytes(base + lane * 8, 8)
+        if (lane == 0) data mustBe BigInt("8899aabbccddeeff", 16)
+        else data mustBe h.mem.readBytes(base + lane * 8, 8)
       }
 
       // Halfword store into bytes [3:2] of lane 0 (0xbeef at offset 2).
