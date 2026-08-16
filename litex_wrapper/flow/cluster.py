@@ -49,6 +49,26 @@ RETIRE_LAYOUT = [
     ("mem_wmask",        8),
 ]
 
+# migen record field -> Verilog port segment (Chisel camelCase; acronym
+# capitals like WMask/RData make an explicit table safer than a conversion).
+RETIRE_RTL_NAMES = {
+    "valid":            "valid",
+    "pc":               "pc",
+    "inst":             "inst",
+    "next_pc":          "nextPc",
+    "estop":            "estop",
+    "rd_write_en":      "rdWriteEn",
+    "rd_addr":          "rdAddr",
+    "rd_data":          "rdData",
+    "mem_en":           "memEn",
+    "mem_is_write":     "memIsWrite",
+    "mem_addr":         "memAddr",
+    "mem_aligned_addr": "memAlignedAddr",
+    "mem_rdata":        "memRData",
+    "mem_wdata":        "memWData",
+    "mem_wmask":        "memWMask",
+}
+
 
 class FlowCluster(CPU):
     cluster_profile      = "single"
@@ -150,7 +170,8 @@ class FlowCluster(CPU):
             self.cpu_params[f"o_io_hartFatal_{hart}"] = self.hart_fatal[hart]
             self.cpu_params[f"o_io_hartEStop_{hart}"] = self.hart_estop[hart]
             for field_name, _ in RETIRE_LAYOUT:
-                self.cpu_params[f"o_io_retire_{hart}_{field_name}"] = (
+                # Verilog keeps the Chisel camelCase names (rdWriteEn, ...).
+                self.cpu_params[f"o_io_retire_{hart}_{RETIRE_RTL_NAMES[field_name]}"] = (
                     getattr(self.retires[hart], field_name))
 
         self.add_sources(platform)
