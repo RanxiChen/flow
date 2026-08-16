@@ -12,20 +12,26 @@ Frozen CLI (multicore-1-2-4 specification section 22):
       [--timeout N] \
       [--output-dir PATH]
 
-The default core preset is gshare. The runner prints and validates the
-BREEZE_CLUSTER configuration marker, requires the per-test
-[MULTICORE-<PROFILE>-<TEST>-PASS] marker, fails on FAIL/fatal/assertion,
-applies a finite watchdog, and exits non-zero on any missing marker or
-non-zero subprocess.
+The default core preset is gshare. The runner prints the BREEZE_CLUSTER
+configuration marker, requires the elaborated cluster-profile.txt on disk
+to match the requested profile/preset (never the marker it printed
+itself), requires the per-test [MULTICORE-<PROFILE>-<TEST>-PASS] marker,
+fails on FAIL/fatal/assertion, applies a finite wall-clock watchdog over
+the whole subprocess lifetime (SIGKILL on timeout, exit code 124), and
+exits non-zero on any missing marker or non-zero subprocess.
 
 Tests are registered phase by phase as their firmware/oracle land (T2+).
 """
 
 import argparse
 import os
+import queue
 import re
+import signal
 import subprocess
 import sys
+import threading
+import time
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -48,6 +54,9 @@ PASS_MARKER_PATTERN = re.compile(r"\[MULTICORE-(\S+)-(\S+)-PASS\]")
 FAIL_MARKER_PATTERN = re.compile(r"\[MULTICORE-(\S+)-(\S+)-FAIL\]")
 FATAL_PATTERN = re.compile(r"\b(fatal|assertion)\b", re.IGNORECASE)
 
+# Dedicated watchdog exit code, matching timeout(1) semantics.
+TIMEOUT_EXIT_CODE = 124
+
 # Test registry. Each entry is a callable run(args, profile, output_dir)
 # returning the completed subprocess exit code; it must stream output.
 # Registered phase by phase (T2 onward); empty during P0.
@@ -60,6 +69,15 @@ def run_checked(command, cwd=None):
 
 
 def run_streaming(command, cwd=None, timeout=None):
+    """Run *command*, forwarding its combined stdout/stderr line by line.
+
+    A wall-clock deadline covers the entire subprocess lifetime: if
+    *timeout* seconds elapse before the process exits, its process group
+    is killed with SIGKILL, the child is reaped, and the output captured
+    so far is returned with the dedicated exit code 124. Returns
+    (exit_code, captured_output); a failed launch reports 127 instead of
+    raising, so every path yields a controlled non-zero code.
+    """
     print("+", " ".join(command), flush=True)
     try:
         process = subprocess.Popen(
@@ -69,16 +87,63 @@ def run_streaming(command, cwd=None, timeout=None):
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            start_new_session=True,
         )
-    except FileNotFoundError as exc:
+    except OSError as exc:
         print(f"ERROR: cannot launch {command[0]}: {exc}", file=sys.stderr)
         return 127, ""
+
+    # A reader thread owns the blocking read so the watchdog loop below
+    # stays in control even when the child hangs with stdout held open
+    # (no EOF ever arrives in that case).
+    line_queue = queue.Queue()
+
+    def reader():
+        for line in process.stdout:
+            line_queue.put(line)
+
+    reader_thread = threading.Thread(target=reader, daemon=True)
+    reader_thread.start()
+
     captured = []
-    assert process.stdout is not None
-    for line in process.stdout:
-        print(line, end="")
-        captured.append(line)
-    return_code = process.wait(timeout=timeout)
+
+    def drain():
+        while True:
+            try:
+                line = line_queue.get_nowait()
+            except queue.Empty:
+                return
+            print(line, end="", flush=True)
+            captured.append(line)
+
+    deadline = None if timeout is None else time.monotonic() + timeout
+    timed_out = False
+    while True:
+        drain()
+        if process.poll() is not None:
+            break
+        if deadline is not None and time.monotonic() >= deadline:
+            timed_out = True
+            break
+        time.sleep(0.02)
+
+    if timed_out:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except OSError:
+            try:
+                process.kill()
+            except OSError:
+                pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass  # SIGKILL is undeliverable; nothing more we can do.
+        return_code = TIMEOUT_EXIT_CODE
+    else:
+        return_code = process.wait()
+    reader_thread.join(timeout=1.0)
+    drain()
     return return_code, "".join(captured)
 
 
@@ -92,7 +157,7 @@ def git_short_sha():
             check=True,
         )
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
+    except (OSError, subprocess.CalledProcessError):
         return "unknown"
 
 
@@ -167,6 +232,45 @@ def read_cluster_profile(profile, core_preset):
     return values
 
 
+def expected_cluster_profile(profile, core_preset):
+    """Expected cluster-profile.txt contents for a profile/preset pair."""
+    return {
+        "profile": profile,
+        "numHarts": str(PROFILES[profile]["numHarts"]),
+        "l1iBytes": "8192",
+        "l1dBytes": "8192",
+        "l2Bytes": str(PROFILES[profile]["l2Bytes"]),
+        "lineBytes": "32",
+        "l1Ways": "4",
+        "l2Ways": "8",
+        "corePreset": core_preset,
+    }
+
+
+def validate_cluster_profile_file(profile, core_preset):
+    """The elaborated cluster-profile.txt must match this invocation exactly.
+
+    Shared by the --elaborate path (post-generation check) and the plain
+    --test path (pre-run check), so a test can never be validated against
+    a marker the runner printed itself. Missing file or any field
+    mismatch exits non-zero.
+    """
+    try:
+        profile_values = read_cluster_profile(profile, core_preset)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"ERROR: {exc}")
+    expected_profile = expected_cluster_profile(profile, core_preset)
+    mismatches = {
+        key: (profile_values.get(key), value)
+        for key, value in expected_profile.items()
+        if profile_values.get(key) != value
+    }
+    if mismatches:
+        detail = ", ".join(f"{key}: expected={value} actual={actual}"
+                           for key, (actual, value) in sorted(mismatches.items()))
+        raise SystemExit(f"ERROR: cluster-profile.txt mismatch: {detail}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Build and run a 1/2/4-hart Breeze cluster test to finite completion.")
@@ -182,7 +286,8 @@ def main():
     parser.add_argument("--timeout", type=int, default=600,
         help="Simulation watchdog in seconds (default: 600).")
     parser.add_argument("--output-dir",
-        help="LiteX output directory; defaults to a per-profile/preset directory.")
+        help="LiteX output directory; defaults to "
+             "build/litex-cluster/<profile>/<preset>[/<test>]/.")
     args = parser.parse_args()
 
     if args.timeout <= 0:
@@ -190,40 +295,29 @@ def main():
 
     marker = build_cluster_marker(args.profile, args.core_preset)
     print(marker, flush=True)
-    validate_marker(marker, args.profile, args.core_preset)
+    try:
+        validate_marker(marker, args.profile, args.core_preset)
+    except RuntimeError as exc:
+        raise SystemExit(f"ERROR: {exc}")
     print(f"BREEZE_GIT_SHA {git_short_sha()}", flush=True)
 
-    output_dir = os.path.abspath(args.output_dir or os.path.join(
-        FLOW_ROOT, "build", "litex-cluster", args.profile, args.core_preset))
+    output_dir_parts = [FLOW_ROOT, "build", "litex-cluster",
+                        args.profile, args.core_preset]
+    if args.test is not None:
+        output_dir_parts.append(args.test)
+    output_dir = os.path.abspath(args.output_dir or os.path.join(*output_dir_parts))
 
     if args.elaborate:
-        run_checked([
-            "sbt",
-            f"runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-            f"{args.profile} {args.core_preset}",
-        ], cwd=DESIGN_DIR)
+        try:
+            run_checked([
+                "sbt",
+                f"runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
+                f"{args.profile} {args.core_preset}",
+            ], cwd=DESIGN_DIR)
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"ERROR: cluster elaboration failed: {exc}")
         # The elaborated profile marker must match this invocation exactly.
-        profile_values = read_cluster_profile(args.profile, args.core_preset)
-        expected_profile = {
-            "profile": args.profile,
-            "numHarts": str(PROFILES[args.profile]["numHarts"]),
-            "l1iBytes": "8192",
-            "l1dBytes": "8192",
-            "l2Bytes": str(PROFILES[args.profile]["l2Bytes"]),
-            "lineBytes": "32",
-            "l1Ways": "4",
-            "l2Ways": "8",
-            "corePreset": args.core_preset,
-        }
-        mismatches = {
-            key: (profile_values.get(key), value)
-            for key, value in expected_profile.items()
-            if profile_values.get(key) != value
-        }
-        if mismatches:
-            detail = ", ".join(f"{key}: expected={value} actual={actual}"
-                               for key, (actual, value) in sorted(mismatches.items()))
-            raise SystemExit(f"ERROR: cluster-profile.txt mismatch: {detail}")
+        validate_cluster_profile_file(args.profile, args.core_preset)
 
     if args.test is None:
         if args.elaborate:
@@ -239,9 +333,18 @@ def main():
             f"{args.profile!r}; registered tests: {registered}"
         )
 
+    if not args.elaborate:
+        # Do not self-certify: the cluster profile previously elaborated
+        # on disk must match the requested profile/preset before running.
+        validate_cluster_profile_file(args.profile, args.core_preset)
+
     run_test = TEST_REGISTRY[args.test]
     return_code, output = run_streaming(
         run_test(args, output_dir), cwd=FLOW_ROOT, timeout=args.timeout)
+    if return_code == TIMEOUT_EXIT_CODE:
+        print(f"ERROR: test subprocess timed out (watchdog {args.timeout}s)",
+              file=sys.stderr)
+        return TIMEOUT_EXIT_CODE
     if return_code != 0:
         raise SystemExit(f"ERROR: test subprocess exited with {return_code}")
 
