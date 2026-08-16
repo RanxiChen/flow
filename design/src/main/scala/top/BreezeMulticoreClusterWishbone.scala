@@ -24,7 +24,8 @@ import flow.platform.BreezeMcuPlatform
   */
 class BreezeMulticoreClusterWishbone(
     val clusterCfg: BreezeClusterConfig,
-    val enabledebug: Boolean = false
+    val enabledebug: Boolean = false,
+    val enableTandem: Boolean = false
 ) extends Module {
     private val numHarts = clusterCfg.numHarts
     private val memoryWbParams = LiteXWishboneParameters(
@@ -51,7 +52,8 @@ class BreezeMulticoreClusterWishbone(
     })
 
     val tiles = Seq.tabulate(numHarts)(h =>
-        Module(new BreezeHartTile(clusterCfg, hartId = h, enabledebug = enabledebug)))
+        Module(new BreezeHartTile(clusterCfg, hartId = h, enabledebug = enabledebug,
+            enableTandem = enableTandem)))
     val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts))
     val mmioArbiter = Module(new BreezeMmioArbiter(numHarts, clusterCfg.l1d.lineBytes))
     val mmioBridge = Module(new DCacheWishboneBridge(
@@ -97,7 +99,15 @@ class BreezeMulticoreClusterWishbone(
     // L2/Home -> shared memory Wishbone master.
     io.memoryWishbone <> l2Home.io.memoryWishbone
 
-    // The retire trace requires a tandem-enabled core configuration, which the
-    // frozen cluster presets do not enable; keep the debug outputs tied off.
-    io.retire.foreach(_ := 0.U.asTypeOf(new TracePayload(64)))
+    // Retire traces exist only with tandem-enabled cores (the cluster RTL
+    // generator enables them, mirroring the single-core generator, because the
+    // simulation monitors need them - spec section 21). Without tandem the
+    // debug outputs stay tied off.
+    if (enableTandem) {
+        io.retire.zip(tiles).foreach { case (trace, tile) =>
+            trace := tile.io.retire.get
+        }
+    } else {
+        io.retire.foreach(_ := 0.U.asTypeOf(new TracePayload(64)))
+    }
 }

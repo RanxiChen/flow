@@ -22,11 +22,13 @@ import flow.platform.BreezeMcuPlatform
 class BreezeHartTile(
     val clusterCfg: BreezeClusterConfig,
     val hartId: Int,
-    val enabledebug: Boolean = false
+    val enabledebug: Boolean = false,
+    val enableTandem: Boolean = false
 ) extends Module {
   require(hartId >= 0 && hartId < clusterCfg.numHarts, "tile hartId out of range")
 
-  private val coreCfg = BreezeCoreConfigs.fromPreset(clusterCfg.corePreset)
+  private val coreCfg = BreezeCoreConfigs.fromPreset(
+    clusterCfg.corePreset, enableTandem = enableTandem)
   private val plen = BreezeMcuPlatform.AddressWidth
   private val lineBytes = clusterCfg.l1d.lineBytes
 
@@ -47,6 +49,8 @@ class BreezeHartTile(
     val cohProbeResp = new BreezeCoherenceProbeRespIO(plen, lineBytes, clusterCfg.hartIdWidth)
     val fatalError = Output(Bool())
     val estop = Output(Bool())
+    // Architectural retirement trace (simulation debug; spec section 21).
+    val retire = if (enableTandem) Some(Output(new TracePayload(64))) else None
   })
 
   val core = Module(new BreezeCore(coreCfg, enabledebug = enabledebug))
@@ -84,4 +88,7 @@ class BreezeHartTile(
 
   io.fatalError := dcache.io.fatalError
   io.estop := core.io.estop
+  io.retire.zip(core.io.tandem).foreach { case (tileRetire, coreTandem) =>
+    tileRetire := coreTandem
+  }
 }

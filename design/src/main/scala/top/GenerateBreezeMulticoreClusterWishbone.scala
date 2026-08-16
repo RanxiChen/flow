@@ -32,7 +32,7 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
           s"core_preset=$corePreset target_dir=$targetDir"
     )
     ChiselStage.emitSystemVerilogFile(
-        new BreezeMulticoreClusterWishbone(clusterCfg),
+        new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = true),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array(
             "-disable-all-randomization",
