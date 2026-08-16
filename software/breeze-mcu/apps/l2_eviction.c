@@ -35,15 +35,34 @@ int main(void)
         }
     }
 
+    unsigned int mismatches = 0;
+
     for (set = 0; set < NUM_SETS; ++set) {
         for (index = 0; index < LINES_PER_SET; ++index) {
+            uint64_t got;
             line = (volatile uint64_t *)(
                 EVICT_BASE + (uint64_t)set * 32u + (uint64_t)index * LINE_STRIDE);
-            if (*line != pattern(set, index)) {
-                breeze_uart_puts("L2-EVICTION data mismatch\r\n");
-                return 1;
+            got = *line;
+            if (got != pattern(set, index)) {
+                ++mismatches;
+                breeze_uart_puts("L2-EVICTION mismatch set=");
+                breeze_uart_put_hex64(set);
+                breeze_uart_puts(" index=");
+                breeze_uart_put_hex64(index);
+                breeze_uart_puts(" expected=");
+                breeze_uart_put_hex64(pattern(set, index));
+                breeze_uart_puts(" got=");
+                breeze_uart_put_hex64(got);
+                breeze_uart_puts("\r\n");
             }
         }
+    }
+
+    if (mismatches != 0u) {
+        breeze_uart_puts("L2-EVICTION data mismatch count=");
+        breeze_uart_put_hex64(mismatches);
+        breeze_uart_puts("\r\n");
+        return 1;
     }
 
     breeze_uart_puts("L2-EVICTION data intact\r\n");
