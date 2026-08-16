@@ -449,7 +449,7 @@ class BreezeL2Home(
         victimTagReg := tagRdata(victimWay)
         victimDataReg := dataRdata(victimWay)
         victimDirtyReg := meta(setIndex).dirtyToMemory(victimWay)
-        victimDirReg := meta(setIndex).dirState(victimWay)
+        victimDirReg := BreezeDirectoryState(meta(setIndex).dirState(victimWay))
         victimSharersReg := meta(setIndex).sharers(victimWay)
         victimOwnerReg := meta(setIndex).ownerId(victimWay)
 
