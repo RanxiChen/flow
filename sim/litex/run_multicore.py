@@ -52,7 +52,11 @@ CLUSTER_MARKER_PATTERN = re.compile(
 )
 PASS_MARKER_PATTERN = re.compile(r"\[MULTICORE-(\S+)-(\S+)-PASS\]")
 FAIL_MARKER_PATTERN = re.compile(r"\[MULTICORE-(\S+)-(\S+)-FAIL\]")
-FATAL_PATTERN = re.compile(r"\b(fatal|assertion)\b", re.IGNORECASE)
+# Real simulation aborts: Verilator runtime errors ($stop/assert fires) and
+# compiler fatal errors. Deliberately NOT the bare words "fatal"/"assertion":
+# the Verilator command line itself carries -Wno-fatal, which must not trip
+# the check.
+FATAL_PATTERN = re.compile(r"%Error|assertion failed|fatal error:", re.IGNORECASE)
 
 # Dedicated watchdog exit code, matching timeout(1) semantics.
 TIMEOUT_EXIT_CODE = 124
