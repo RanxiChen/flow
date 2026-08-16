@@ -1,6 +1,7 @@
 package flow.cache
 
 import chisel3._
+import chisel3.simulator.PeekPokeAPI
 import chisel3.simulator.scalatest.ChiselSim
 import flow.config.L2CacheGeometry
 import org.scalatest.Assertions
@@ -26,7 +27,7 @@ final class L2HomeHarness(
     numHarts: Int = 1,
     wbLatency: Int = 2,
     probeLatency: Int = 1
-) extends Assertions {
+) extends Assertions with PeekPokeAPI {
 
   // Mock L1 contents: lineAddr -> (state 'S'/'E'/'M', 256-bit line data).
   val l1 = mutable.Map.empty[BigInt, (Char, BigInt)]

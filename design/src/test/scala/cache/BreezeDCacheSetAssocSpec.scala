@@ -1,6 +1,7 @@
 package flow.cache
 
 import chisel3._
+import chisel3.simulator.PeekPokeAPI
 import chisel3.simulator.scalatest.ChiselSim
 import flow.config.DefaultDCacheConfig
 import org.scalatest.Assertions
@@ -43,7 +44,7 @@ case class NlTxn(addr: BigInt, isWrite: Boolean, isLine: Boolean, data: BigInt, 
   *   - every CPU pulse must produce exactly one response; the two cycles after
   *     a response are checked for spurious extra responses.
   */
-final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2) extends Assertions {
+final class DCacheHarness(dut: BreezeDCache, val mem: DTestMem, latency: Int = 2) extends Assertions with PeekPokeAPI {
   val log = mutable.ArrayBuffer.empty[NlTxn]
   var hpmAccess = 0
   var hpmMiss = 0
