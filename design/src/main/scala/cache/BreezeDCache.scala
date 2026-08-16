@@ -12,6 +12,9 @@ object BreezeDCacheState extends ChiselEnum {
       UncachedReq, UncachedWait,
       WritebackReq, WritebackWait,
       RefillReq, RefillWait,
+      UpgradeReq, UpgradeWait,
+      PutReq, PutWait,
+      ProbeRead, ProbeCompare, ProbeRespond,
       Respond,
       FlushScan, FlushRead, FlushWritebackReq, FlushWritebackWait, FlushRespond,
       Fatal = Value
@@ -21,8 +24,9 @@ object BreezeDCacheState extends ChiselEnum {
   *
   * Frozen geometry: 8192 B capacity, 32 B lines, 4 ways -> 64 sets.
   * Tag/Data arrays use synchronous-read SRAMs (one-cycle read latency); the
-  * valid/dirty/PLRU metadata is resettable register memory, so every line is
-  * logically invalid after reset without relying on SRAM contents.
+  * valid/dirty(/exclusive)/PLRU metadata is resettable register memory, so
+  * every line is logically invalid after reset without relying on SRAM
+  * contents.
   *
   * Policy:
   *   - write-back and write-allocate;
@@ -32,11 +36,38 @@ object BreezeDCacheState extends ChiselEnum {
   *   - non-cacheable/device accesses bypass the arrays as one scalar request;
   *   - a dirty victim is never overwritten until its writeback is acknowledged.
   *
-  * The CPU and lower-level interfaces retain the project's pulse protocol.
-  * Address slicing follows the frozen profile: offset=addr[4:0], set=addr[10:5],
-  * tag=addr[31:11] (32-bit physical tag; PMA rejects wider addresses first).
+  * The CPU and uncached lower-level interfaces retain the project's pulse
+  * protocol. Address slicing follows the frozen profile: offset=addr[4:0],
+  * set=addr[10:5], tag=addr[31:11] (32-bit physical tag; PMA rejects wider
+  * addresses first).
+  *
+  * Two lower-level modes:
+  *   - legacy (`coherent = false`, default): cached misses/dirty evictions use
+  *     the blocking line pulse interface (nextLevelReq/nextLevelRsp) exactly as
+  *     the historical single-core design. This mode is bit-compatible with the
+  *     pre-coherence DCache and is what `BreezeCoreWishbone` instantiates.
+  *   - coherent (`coherent = true`): cached operations go through the MESI
+  *     coherence sideband (GetS/GetM/PutS/PutM requests, grants, probes and
+  *     probe responses). The MESI state is encoded on top of the existing
+  *     metadata as valid/exclusive/dirty: I = !valid, S = valid && !excl &&
+  *     !dirty, E = valid && excl && !dirty, M = valid && dirty. Uncached/MMIO
+  *     accesses still use the scalar pulse interface (routed to the cluster
+  *     MMIO arbiter by the tile).
+  *
+  * Coherent-mode probe discipline (spec section 7.4): an incoming probe is
+  * latched into a one-entry pending register (probe.ready =
+  * !probePendingValid); probes are serviced with priority in Idle and in every
+  * state that waits for the Home, and the interrupted state is resumed via
+  * `resumeState`. A local coherence request that has not been handshaken yet
+  * is simply re-asserted after the probe service (ready/valid withdrawal is
+  * legal).
   */
-class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends Module {
+class BreezeDCache(
+    val cfg: DefaultDCacheConfig = DefaultDCacheConfig(),
+    val coherent: Boolean = false,
+    val hartId: Int = 0,
+    val hartIdWidth: Int = 1
+) extends Module {
   private val ways = cfg.ways
   private val sets = cfg.sets
   private val wordsPerLine = cfg.lineBytes / 8
@@ -44,17 +75,30 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
   require(cfg.VLEN == 64, "The Breeze DCache requires RV64")
   require(ways == 4, "The Breeze DCache PLRU is fixed to 4 ways")
+  // The address slicing below is frozen to tag=addr[31:11], set=addr[10:5],
+  // offset=addr[4:0]; other legal DefaultDCacheConfig geometries would be
+  // silently mis-sliced, so reject them at elaboration time.
+  require(cfg.sets == 64 && cfg.lineBytes == 32,
+    "The Breeze DCache address slicing is frozen to 64 sets and 32 B lines")
+  require(hartId >= 0 && hartId < (1 << hartIdWidth), "DCache hartId out of range")
 
+  // Metadata layout: [plru(3) | dirty(4) | (excl(4)) | valid(4)] per set.
   private val validBits = ways
-  private val dirtyOffset = ways
-  private val plruOffset = 2 * ways
-  private val metaWidth = 2 * ways + (ways - 1)
+  private val exclBits = if (coherent) ways else 0
+  private val exclOffset = validBits
+  private val dirtyOffset = validBits + exclBits
+  private val plruOffset = 2 * ways + exclBits
+  private val metaWidth = 2 * ways + exclBits + (ways - 1)
 
   private def validOf(meta: UInt): UInt = meta(validBits - 1, 0)
+  private def exclOf(meta: UInt): UInt =
+    if (coherent) meta(exclOffset + ways - 1, exclOffset) else 0.U(ways.W)
   private def dirtyOf(meta: UInt): UInt = meta(dirtyOffset + ways - 1, dirtyOffset)
   private def plruOf(meta: UInt): UInt = meta(metaWidth - 1, plruOffset)
-  private def makeMeta(valid: UInt, dirty: UInt, plru: UInt): UInt =
-    Cat(plru, dirty, valid)
+  private def makeMeta(valid: UInt, excl: UInt, dirty: UInt, plru: UInt): UInt = {
+    val exclPart = if (coherent) excl else 0.U(0.W)
+    Cat(plru, dirty, exclPart, valid)
+  }
 
   /** Mark `way` as most-recently-used in a 3-bit tree-PLRU. */
   private def touchWay(plru: UInt, way: UInt): UInt =
@@ -73,6 +117,15 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     val hpm = Output(new BreezeHpmEvents)
     val nextLevelReq = new DCacheMemReqIO(cfg.PLEN, cfg.lineBytes)
     val nextLevelRsp = new DCacheMemRespIO(cfg.lineBytes)
+    // Coherence sideband (only present in coherent mode). Directions as seen
+    // from the L1D: req and probeResp are driven by this module; grant and
+    // probe arrive from the Home.
+    val coherence = if (coherent) Some(new Bundle {
+      val req = new BreezeCoherenceReqIO(32, cfg.lineBytes, hartIdWidth)
+      val grant = Flipped(new BreezeCoherenceGrantIO(32, cfg.lineBytes, hartIdWidth))
+      val probe = Flipped(new BreezeCoherenceProbeIO(32, hartIdWidth))
+      val probeResp = new BreezeCoherenceProbeRespIO(32, cfg.lineBytes, hartIdWidth)
+    }) else None
   })
 
   import BreezeDCacheState._
@@ -80,7 +133,6 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
 
   // ===== Storage =====
-  // Metadata: [plru(3) | dirty(4) | valid(4)] per set, resettable to all-invalid.
   val metaReg = RegInit(VecInit(Seq.fill(sets)(0.U(metaWidth.W))))
   val tagArray = Seq.fill(ways)(Module(new flowSRAM(sets, cfg.tagWidth, "tag")))
   val dataArray = Seq.fill(ways)(Module(new flowSRAM(sets, cfg.lineWidth, "data")))
@@ -121,6 +173,17 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   val flushIndex = RegInit(0.U(8.W))
   val fatalErrorReg = RegInit(false.B)
 
+  // Coherence transaction bookkeeping.
+  val txnIdReg = RegInit(0.U(2.W))
+  val txnLineAddrReg = RegInit(0.U(32.W))
+  val probePendingValid = RegInit(false.B)
+  val probeTxnIdReg = RegInit(0.U(2.W))
+  val probeLineAddrReg = RegInit(0.U(32.W))
+  val probeOpcodeReg = RegInit(BreezeProbeOpcode.ProbeToS)
+  val probeHasDataReg = RegInit(false.B)
+  val probeDataReg = RegInit(0.U(cfg.lineWidth.W))
+  val resumeState = RegInit(Idle)
+
   private def lineWord(line: UInt, address: UInt): UInt = {
     val wordIndex = if (wordsPerLine == 1) {
       0.U(wordIndexWidth.W)
@@ -151,6 +214,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   val requestTag = reqAddr(31, 11)
   val requestLineBase64 = Cat(reqAddr(63, 5), 0.U(5.W))
   val requestBeatBase64 = Cat(reqAddr(63, 3), 0.U(3.W))
+  val requestLineBase32 = requestLineBase64(31, 0)
 
   // ===== PMA =====
   val pma = Module(new PMAChecker)
@@ -161,8 +225,15 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   // ===== SRAM read/write control =====
   val incomingSetIndex = io.cpu.req.addr(10, 5)
   val flushSetIndex = flushIndex(7, 2)
-  val arrayReadEnable = (state === Idle && io.cpu.req.valid) || (state === FlushScan)
-  val arrayReadAddr = Mux(state === Idle && io.cpu.req.valid, incomingSetIndex, flushSetIndex)
+  val probeSetIndex = probeLineAddrReg(10, 5)
+  val probeTag = probeLineAddrReg(31, 11)
+  val arrayReadEnable = (state === Idle && io.cpu.req.valid) ||
+    (state === FlushScan) || (state === ProbeRead)
+  val arrayReadAddr = MuxLookup(state, incomingSetIndex)(Seq(
+    Idle -> incomingSetIndex,
+    FlushScan -> flushSetIndex,
+    ProbeRead -> probeSetIndex
+  ))
   for (w <- 0 until ways) {
     tagArray(w).io.addr := arrayReadAddr
     tagArray(w).io.re := arrayReadEnable
@@ -180,6 +251,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
   val (newValidVec, newPlruVec, victimOH) =
     BreezePLRU.replace_way_select(validOf(metaReg(setIndex)), plruOf(metaReg(setIndex)))
   val victimWay = OHToUInt(victimOH)
+  val victimIsValid = validOf(metaReg(setIndex))(victimWay)
   val victimIsDirty = dirtyOf(metaReg(setIndex))(victimWay)
 
   val readSelectBase = MuxLookup(reqSizeLog2, "hff".U(8.W))(Seq(
@@ -193,6 +265,43 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     reqWMask,
     (readSelectBase << reqAddr(2, 0))(7, 0)
   )
+
+  // ===== Coherence sideband defaults and probe latch =====
+  if (coherent) {
+    val coh = io.coherence.get
+    coh.req.valid := false.B
+    coh.req.opcode := BreezeCoherenceOpcode.GetS
+    coh.req.srcHart := hartId.U
+    coh.req.txnId := txnIdReg
+    coh.req.lineAddr := requestLineBase32
+    coh.req.hasData := false.B
+    coh.req.lineData := victimDataReg
+
+    coh.grant.ready := ((state === RefillWait) || (state === UpgradeWait) ||
+      (state === PutWait) || (state === FlushWritebackWait)) && !probePendingValid
+
+    coh.probe.ready := !probePendingValid
+    when(coh.probe.valid && coh.probe.ready) {
+      probePendingValid := true.B
+      probeTxnIdReg := coh.probe.txnId
+      probeLineAddrReg := coh.probe.lineAddr
+      probeOpcodeReg := coh.probe.opcode
+    }
+
+    coh.probeResp.valid := state === ProbeRespond
+    coh.probeResp.srcHart := hartId.U
+    coh.probeResp.txnId := probeTxnIdReg
+    coh.probeResp.lineAddr := probeLineAddrReg
+    coh.probeResp.ack := true.B
+    coh.probeResp.hasData := probeHasDataReg
+    coh.probeResp.lineData := probeDataReg
+
+    // A grant must answer the transaction that is currently outstanding.
+    when(coh.grant.valid && coh.grant.ready) {
+      assert(coh.grant.txnId === txnIdReg, "DCache: grant txnId mismatch")
+      assert(coh.grant.lineAddr === txnLineAddrReg, "DCache: grant lineAddr mismatch")
+    }
+  }
 
   // ===== Outputs =====
   io.cpu.rsp.valid := state === Respond
@@ -227,7 +336,10 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
 
   switch(state) {
     is(Idle) {
-      when(io.flushReq) {
+      when(probePendingValid) {
+        resumeState := Idle
+        state := ProbeRead
+      }.elsewhen(io.flushReq) {
         flushIndex := 0.U
         state := FlushScan
       }.elsewhen(io.cpu.req.valid) {
@@ -251,18 +363,28 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
         state := UncachedReq
       }.elsewhen(hit) {
         when(reqIsWrite) {
+          val hitExcl = exclOf(metaReg(setIndex))(hitWay)
+          val hitDirty = dirtyOf(metaReg(setIndex))(hitWay)
           storeMergeReg := mergeStore(dataRdata(hitWay), reqAddr, reqWData, reqWMask)
           storeHitWayReg := hitWay
-          metaReg(setIndex) := makeMeta(
-            validOf(metaReg(setIndex)),
-            dirtyOf(metaReg(setIndex)) | (1.U << hitWay),
-            touchWay(plruOf(metaReg(setIndex)), hitWay)
-          )
-          responseData := 0.U
-          state := StoreHitWrite
+          when(!coherent.B || hitDirty || hitExcl) {
+            // M hit writes directly; an E hit silently upgrades E->M.
+            metaReg(setIndex) := makeMeta(
+              validOf(metaReg(setIndex)),
+              0.U(ways.W),
+              dirtyOf(metaReg(setIndex)) | (1.U << hitWay),
+              touchWay(plruOf(metaReg(setIndex)), hitWay)
+            )
+            responseData := 0.U
+            state := StoreHitWrite
+          }.otherwise {
+            // S hit: a GetM upgrade is required before writing.
+            state := UpgradeReq
+          }
         }.otherwise {
           metaReg(setIndex) := makeMeta(
             validOf(metaReg(setIndex)),
+            exclOf(metaReg(setIndex)),
             dirtyOf(metaReg(setIndex)),
             touchWay(plruOf(metaReg(setIndex)), hitWay)
           )
@@ -276,10 +398,19 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
         newPlruReg := newPlruVec
         victimTagReg := tagRdata(victimWay)
         victimDataReg := dataRdata(victimWay)
-        when(victimIsDirty) {
-          state := WritebackReq
+        when(!coherent.B) {
+          when(victimIsDirty) {
+            state := WritebackReq
+          }.otherwise {
+            state := RefillReq
+          }
         }.otherwise {
-          state := RefillReq
+          // Coherent eviction releases the victim through the directory first.
+          when(!victimIsValid) {
+            state := RefillReq
+          }.otherwise {
+            state := PutReq
+          }
         }
       }
     }
@@ -293,7 +424,6 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
       }
       state := Respond
     }
-
 
     is(UncachedReq) {
       io.nextLevelReq.req := true.B
@@ -313,6 +443,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
       }
     }
 
+    // ===== Legacy (non-coherent) line writeback =====
     is(WritebackReq) {
       io.nextLevelReq.req := true.B
       io.nextLevelReq.addr := Cat(0.U(32.W), victimTagReg, setIndex, 0.U(5.W))
@@ -335,48 +466,279 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
       }
     }
 
+    // ===== Coherent eviction: PutS/PutM release =====
+    is(PutReq) {
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := PutReq
+          state := ProbeRead
+        }.otherwise {
+          // Re-read the victim's current state: a probe serviced while this
+          // request was parked may have invalidated the victim meanwhile.
+          val victimNowValid = validOf(metaReg(setIndex))(victimWayReg)
+          val victimNowDirty = dirtyOf(metaReg(setIndex))(victimWayReg)
+          when(!victimNowValid) {
+            state := RefillReq
+          }.otherwise {
+            coh.req.valid := true.B
+            coh.req.opcode := Mux(victimNowDirty, BreezeCoherenceOpcode.PutM,
+              BreezeCoherenceOpcode.PutS)
+            coh.req.txnId := txnIdReg
+            coh.req.lineAddr := Cat(victimTagReg, setIndex, 0.U(5.W))
+            coh.req.hasData := victimNowDirty
+            coh.req.lineData := victimDataReg
+            when(coh.req.ready) {
+              txnIdReg := txnIdReg + 1.U
+              txnLineAddrReg := Cat(victimTagReg, setIndex, 0.U(5.W))
+              state := PutWait
+            }
+          }
+        }
+      } else {
+        state := Fatal // unreachable in legacy mode
+      }
+    }
+
+    is(PutWait) {
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := PutWait
+          state := ProbeRead
+        }.elsewhen(coh.grant.valid) {
+          when(coh.grant.error) {
+            // The release failed: keep the victim, report the error.
+            responseError := true.B
+            state := Respond
+          }.otherwise {
+            state := RefillReq
+          }
+        }
+      } else {
+        state := Fatal
+      }
+    }
+
+    // ===== Coherent S->M upgrade for a store hit on an S line =====
+    is(UpgradeReq) {
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := UpgradeReq
+          state := ProbeRead
+        }.otherwise {
+          coh.req.valid := true.B
+          coh.req.opcode := BreezeCoherenceOpcode.GetM
+          coh.req.txnId := txnIdReg
+          coh.req.lineAddr := requestLineBase32
+          coh.req.hasData := false.B
+          when(coh.req.ready) {
+            txnIdReg := txnIdReg + 1.U
+            txnLineAddrReg := requestLineBase32
+            state := UpgradeWait
+          }
+        }
+      } else {
+        state := Fatal
+      }
+    }
+
+    is(UpgradeWait) {
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := UpgradeWait
+          state := ProbeRead
+        }.elsewhen(coh.grant.valid) {
+          when(coh.grant.error) {
+            responseError := true.B
+            state := Respond
+          }.otherwise {
+            // Upgraded to M: the line is now exclusively writable.
+            metaReg(setIndex) := makeMeta(
+              validOf(metaReg(setIndex)),
+              0.U(ways.W),
+              dirtyOf(metaReg(setIndex)) | (1.U << storeHitWayReg),
+              plruOf(metaReg(setIndex))
+            )
+            state := StoreHitWrite
+          }
+        }
+      } else {
+        state := Fatal
+      }
+    }
+
     is(RefillReq) {
-      io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := requestLineBase64
-      io.nextLevelReq.isWrite := false.B
-      io.nextLevelReq.isLine := true.B
-      io.nextLevelReq.data := 0.U
-      io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
-      state := RefillWait
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := RefillReq
+          state := ProbeRead
+        }.otherwise {
+          coh.req.valid := true.B
+          coh.req.opcode := Mux(reqIsWrite, BreezeCoherenceOpcode.GetM,
+            BreezeCoherenceOpcode.GetS)
+          coh.req.txnId := txnIdReg
+          coh.req.lineAddr := requestLineBase32
+          coh.req.hasData := false.B
+          when(coh.req.ready) {
+            txnIdReg := txnIdReg + 1.U
+            txnLineAddrReg := requestLineBase32
+            state := RefillWait
+          }
+        }
+      } else {
+        io.nextLevelReq.req := true.B
+        io.nextLevelReq.addr := requestLineBase64
+        io.nextLevelReq.isWrite := false.B
+        io.nextLevelReq.isLine := true.B
+        io.nextLevelReq.data := 0.U
+        io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
+        state := RefillWait
+      }
     }
 
     is(RefillWait) {
-      when(io.nextLevelRsp.vld) {
-        when(io.nextLevelRsp.error) {
-          // Never overwrite the victim until the refill has completed.
-          responseError := true.B
-          state := Respond
-        }.otherwise {
-          val installedLine = Mux(
-            reqIsWrite,
-            mergeStore(io.nextLevelRsp.data, reqAddr, reqWData, reqWMask),
-            io.nextLevelRsp.data
-          )
-          val newDirty = Mux(
-            reqIsWrite,
-            dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
-            dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg)
-          )
-          for (w <- 0 until ways) {
-            when(victimWayReg === w.U) {
-              tagArray(w).io.we := true.B
-              tagArray(w).io.addr := setIndex
-              tagArray(w).io.data_in := requestTag
-              dataArray(w).io.we := true.B
-              dataArray(w).io.addr := setIndex
-              dataArray(w).io.data_in := installedLine
+      if (coherent) {
+        val coh = io.coherence.get
+        when(probePendingValid) {
+          resumeState := RefillWait
+          state := ProbeRead
+        }.elsewhen(coh.grant.valid) {
+          when(coh.grant.error) {
+            // Never overwrite the victim until the refill has completed.
+            responseError := true.B
+            state := Respond
+          }.otherwise {
+            assert(coh.grant.hasData, "DCache: refill grant without data")
+            val grantedM = coh.grant.grantState === BreezeGrantState.M
+            val grantedE = coh.grant.grantState === BreezeGrantState.E
+            val installedLine = Mux(
+              reqIsWrite,
+              mergeStore(coh.grant.lineData, reqAddr, reqWData, reqWMask),
+              coh.grant.lineData
+            )
+            // The valid bits are recomputed from the current metadata: a probe
+            // serviced while the refill was in flight may have invalidated
+            // another way of this set, and that invalidation must survive the
+            // install. (The PLRU result from Lookup stays valid because probe
+            // handling never touches the PLRU bits.)
+            val newValidNow = validOf(metaReg(setIndex)) | (1.U << victimWayReg)
+            val newExcl = Mux(grantedE, 1.U(ways.W) << victimWayReg, 0.U(ways.W))
+            val newDirty = Mux(reqIsWrite || grantedM, 1.U(ways.W) << victimWayReg, 0.U(ways.W))
+            for (w <- 0 until ways) {
+              when(victimWayReg === w.U) {
+                tagArray(w).io.we := true.B
+                tagArray(w).io.addr := setIndex
+                tagArray(w).io.data_in := requestTag
+                dataArray(w).io.we := true.B
+                dataArray(w).io.addr := setIndex
+                dataArray(w).io.data_in := installedLine
+              }
             }
+            metaReg(setIndex) := makeMeta(newValidNow, newExcl, newDirty, newPlruReg)
+            responseData := Mux(reqIsWrite, 0.U, lineWord(coh.grant.lineData, reqAddr))
+            responseError := false.B
+            state := Respond
           }
-          metaReg(setIndex) := makeMeta(newValidReg, newDirty, newPlruReg)
-          responseData := Mux(reqIsWrite, 0.U, lineWord(io.nextLevelRsp.data, reqAddr))
-          responseError := false.B
-          state := Respond
         }
+      } else {
+        when(io.nextLevelRsp.vld) {
+          when(io.nextLevelRsp.error) {
+            // Never overwrite the victim until the refill has completed.
+            responseError := true.B
+            state := Respond
+          }.otherwise {
+            val installedLine = Mux(
+              reqIsWrite,
+              mergeStore(io.nextLevelRsp.data, reqAddr, reqWData, reqWMask),
+              io.nextLevelRsp.data
+            )
+            val newDirty = Mux(
+              reqIsWrite,
+              dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
+              dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg)
+            )
+            for (w <- 0 until ways) {
+              when(victimWayReg === w.U) {
+                tagArray(w).io.we := true.B
+                tagArray(w).io.addr := setIndex
+                tagArray(w).io.data_in := requestTag
+                dataArray(w).io.we := true.B
+                dataArray(w).io.addr := setIndex
+                dataArray(w).io.data_in := installedLine
+              }
+            }
+            metaReg(setIndex) := makeMeta(newValidReg, 0.U(ways.W), newDirty, newPlruReg)
+            responseData := Mux(reqIsWrite, 0.U, lineWord(io.nextLevelRsp.data, reqAddr))
+            responseError := false.B
+            state := Respond
+          }
+        }
+      }
+    }
+
+    // ===== Probe service =====
+    is(ProbeRead) {
+      // The array read is asserted combinationally for the probe's set.
+      state := ProbeCompare
+    }
+
+    is(ProbeCompare) {
+      if (coherent) {
+        val pHitVec = VecInit((0 until ways).map { w =>
+          validOf(metaReg(probeSetIndex))(w) && tagRdata(w) === probeTag
+        })
+        val pHit = pHitVec.asUInt.orR
+        val pHitWay = OHToUInt(pHitVec.asUInt)
+        val pDirty = dirtyOf(metaReg(probeSetIndex))(pHitWay)
+        val pExcl = exclOf(metaReg(probeSetIndex))(pHitWay)
+        val pValid = validOf(metaReg(probeSetIndex))(pHitWay)
+
+        probeDataReg := dataRdata(pHitWay)
+        probeHasDataReg := pHit && MuxLookup(probeOpcodeReg, false.B)(Seq(
+          // A dirty line is recalled on invalidate/downgrade; a recall of the
+          // UNIQUE owner always carries data (E or M).
+          BreezeProbeOpcode.ProbeInv -> pDirty,
+          BreezeProbeOpcode.ProbeToS -> pDirty,
+          BreezeProbeOpcode.ProbeRecallInv -> (pDirty || pExcl)
+        ))
+
+        when(pHit) {
+          val newValid = MuxLookup(probeOpcodeReg, true.B)(Seq(
+            BreezeProbeOpcode.ProbeInv -> false.B,
+            BreezeProbeOpcode.ProbeRecallInv -> false.B,
+            BreezeProbeOpcode.ProbeToS -> true.B
+          ))
+          val newDirty = dirtyOf(metaReg(probeSetIndex)) & ~(1.U << pHitWay)
+          val newExcl = exclOf(metaReg(probeSetIndex)) & ~(1.U << pHitWay)
+          metaReg(probeSetIndex) := makeMeta(
+            Mux(newValid,
+              validOf(metaReg(probeSetIndex)),
+              validOf(metaReg(probeSetIndex)) & ~(1.U << pHitWay)),
+            newExcl,
+            newDirty,
+            plruOf(metaReg(probeSetIndex))
+          )
+          // A probe against the reservation line clears the reservation (P6).
+        }
+        state := ProbeRespond
+      } else {
+        state := Fatal
+      }
+    }
+
+    is(ProbeRespond) {
+      if (coherent) {
+        val coh = io.coherence.get
+        when(coh.probeResp.ready) {
+          probePendingValid := false.B
+          state := resumeState
+        }
+      } else {
+        state := Fatal
       }
     }
 
@@ -392,7 +754,11 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     is(FlushRead) {
       val set = flushIndex(7, 2)
       val way = flushIndex(1, 0)
-      when(validOf(metaReg(set))(way) && dirtyOf(metaReg(set))(way)) {
+      val lineValid = validOf(metaReg(set))(way)
+      val lineDirty = dirtyOf(metaReg(set))(way)
+      when(lineValid && (lineDirty || coherent.B)) {
+        // Legacy mode only writes back dirty lines; coherent mode releases
+        // every valid line through the directory (PutM for M, PutS for S/E).
         victimWayReg := way
         victimTagReg := tagRdata(way)
         victimDataReg := dataRdata(way)
@@ -400,6 +766,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
       }.otherwise {
         metaReg(set) := makeMeta(
           validOf(metaReg(set)) & ~(1.U << way),
+          0.U(ways.W),
           dirtyOf(metaReg(set)) & ~(1.U << way),
           plruOf(metaReg(set))
         )
@@ -413,18 +780,58 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
     }
 
     is(FlushWritebackReq) {
-      val set = flushIndex(7, 2)
-      io.nextLevelReq.req := true.B
-      io.nextLevelReq.addr := Cat(0.U(32.W), victimTagReg, set, 0.U(5.W))
-      io.nextLevelReq.isWrite := true.B
-      io.nextLevelReq.isLine := true.B
-      io.nextLevelReq.data := victimDataReg
-      io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
-      state := FlushWritebackWait
+      when(probePendingValid && coherent.B) {
+        resumeState := FlushWritebackReq
+        state := ProbeRead
+      }.otherwise {
+        when(!coherent.B) {
+          io.nextLevelReq.req := true.B
+          io.nextLevelReq.addr := Cat(0.U(32.W), victimTagReg, flushIndex(7, 2), 0.U(5.W))
+          io.nextLevelReq.isWrite := true.B
+          io.nextLevelReq.isLine := true.B
+          io.nextLevelReq.data := victimDataReg
+          io.nextLevelReq.mask := Fill(cfg.lineBytes, 1.U(1.W))
+        }
+        if (coherent) {
+          val coh = io.coherence.get
+          val set = flushIndex(7, 2)
+          val way = flushIndex(1, 0)
+          // Re-read the current line state: a probe serviced while this
+          // request was parked may have invalidated the line meanwhile.
+          val lineValidNow = validOf(metaReg(set))(way)
+          val lineDirtyNow = dirtyOf(metaReg(set))(way)
+          when(!lineValidNow) {
+            when(flushIndex === 255.U) {
+              state := FlushRespond
+            }.otherwise {
+              flushIndex := flushIndex + 1.U
+              state := FlushScan
+            }
+          }.otherwise {
+            coh.req.valid := true.B
+            coh.req.opcode := Mux(lineDirtyNow, BreezeCoherenceOpcode.PutM,
+              BreezeCoherenceOpcode.PutS)
+            coh.req.txnId := txnIdReg
+            coh.req.lineAddr := Cat(victimTagReg, set, 0.U(5.W))
+            coh.req.hasData := lineDirtyNow
+            coh.req.lineData := victimDataReg
+            when(coh.req.ready) {
+              txnIdReg := txnIdReg + 1.U
+              txnLineAddrReg := Cat(victimTagReg, set, 0.U(5.W))
+              state := FlushWritebackWait
+            }
+          }
+        } else {
+          state := FlushWritebackWait
+        }
+      }
     }
 
     is(FlushWritebackWait) {
-      when(io.nextLevelRsp.vld) {
+      when(probePendingValid && coherent.B) {
+        resumeState := FlushWritebackWait
+        state := ProbeRead
+      }.elsewhen(!coherent.B && io.nextLevelRsp.vld) {
         when(io.nextLevelRsp.error) {
           // A retired store can no longer take a precise exception here.
           fatalErrorReg := true.B
@@ -434,6 +841,7 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
           val way = flushIndex(1, 0)
           metaReg(set) := makeMeta(
             validOf(metaReg(set)) & ~(1.U << way),
+            0.U(ways.W),
             dirtyOf(metaReg(set)) & ~(1.U << way),
             plruOf(metaReg(set))
           )
@@ -442,6 +850,31 @@ class BreezeDCache(val cfg: DefaultDCacheConfig = DefaultDCacheConfig()) extends
           }.otherwise {
             flushIndex := flushIndex + 1.U
             state := FlushScan
+          }
+        }
+      }.elsewhen(coherent.B) {
+        if (coherent) {
+          val coh = io.coherence.get
+          when(coh.grant.valid) {
+            when(coh.grant.error) {
+              fatalErrorReg := true.B
+              state := Fatal
+            }.otherwise {
+              val set = flushIndex(7, 2)
+              val way = flushIndex(1, 0)
+              metaReg(set) := makeMeta(
+                validOf(metaReg(set)) & ~(1.U << way),
+                0.U(ways.W),
+                dirtyOf(metaReg(set)) & ~(1.U << way),
+                plruOf(metaReg(set))
+              )
+              when(flushIndex === 255.U) {
+                state := FlushRespond
+              }.otherwise {
+                flushIndex := flushIndex + 1.U
+                state := FlushScan
+              }
+            }
           }
         }
       }

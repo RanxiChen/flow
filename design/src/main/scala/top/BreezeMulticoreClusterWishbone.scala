@@ -1,8 +1,8 @@
 package flow.top
 
 import chisel3._
-import chisel3.util._
-import flow.bus.{LiteXWishboneMasterIO, LiteXWishboneParameters}
+import flow.bus.{BreezeMmioArbiter, DCacheWishboneBridge, LiteXWishboneMasterIO, LiteXWishboneParameters}
+import flow.cache.BreezeL2Home
 import flow.config.BreezeClusterConfig
 import flow.interface.TracePayload
 import flow.platform.BreezeMcuPlatform
@@ -17,14 +17,16 @@ import flow.platform.BreezeMcuPlatform
   *   - per-hart fatal/estop and architectural retire trace for simulation;
   *   - a single shared reset address.
   *
-  * P0 skeleton: the profile-parameterized top elaborates with every output
-  * driven to a defined value. The per-hart tiles, shared L2/Home and MMIO
-  * arbiter land in later phases without changing this port list.
+  * P2: the per-hart tiles, the shared L2/Home and the MMIO arbiter are
+  * connected. The msip inputs are not consumed yet (the multi-hart CLINT and
+  * machine software interrupts land in P8); external interrupts reach hart 0
+  * only, per the frozen external-interrupt boundary.
   */
 class BreezeMulticoreClusterWishbone(
     val clusterCfg: BreezeClusterConfig,
     val enabledebug: Boolean = false
 ) extends Module {
+    private val numHarts = clusterCfg.numHarts
     private val memoryWbParams = LiteXWishboneParameters(
         byteAddressWidth = BreezeMcuPlatform.AddressWidth,
         dataWidth = 64
@@ -36,39 +38,66 @@ class BreezeMulticoreClusterWishbone(
 
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(64.W))
-        val msip = Input(Vec(clusterCfg.numHarts, Bool()))
-        val mtip = Input(Vec(clusterCfg.numHarts, Bool()))
+        val msip = Input(Vec(numHarts, Bool()))
+        val mtip = Input(Vec(numHarts, Bool()))
         val externalInterrupts = Input(
-            Vec(clusterCfg.numHarts, UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
+            Vec(numHarts, UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         )
         val memoryWishbone = new LiteXWishboneMasterIO(memoryWbParams)
         val mmioWishbone = new LiteXWishboneMasterIO(mmioWbParams)
-        val hartFatal = Output(Vec(clusterCfg.numHarts, Bool()))
-        val hartEStop = Output(Vec(clusterCfg.numHarts, Bool()))
-        val retire = Output(Vec(clusterCfg.numHarts, new TracePayload(64)))
+        val hartFatal = Output(Vec(numHarts, Bool()))
+        val hartEStop = Output(Vec(numHarts, Bool()))
+        val retire = Output(Vec(numHarts, new TracePayload(64)))
     })
 
-    // P0 skeleton tie-offs. Every output has a defined value so simulation
-    // monitors can be built before the coherence datapath is connected.
-    io.hartFatal.foreach(_ := false.B)
-    io.hartEStop.foreach(_ := false.B)
+    val tiles = Seq.tabulate(numHarts)(h =>
+        Module(new BreezeHartTile(clusterCfg, hartId = h, enabledebug = enabledebug)))
+    val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts))
+    val mmioArbiter = Module(new BreezeMmioArbiter(numHarts, clusterCfg.l1d.lineBytes))
+    val mmioBridge = Module(new DCacheWishboneBridge(
+        physicalAddressWidth = BreezeMcuPlatform.AddressWidth,
+        lineBytes = clusterCfg.l1d.lineBytes,
+        busDataWidth = 64
+    ))
+
+    for (h <- 0 until numHarts) {
+        tiles(h).io.resetAddr := io.resetAddr
+        // Machine timer interrupts are per-hart; msip is wired in P8 with the
+        // CLINT. External interrupts go to hart 0 only (frozen boundary).
+        tiles(h).io.machineTimerInterrupt := io.mtip(h)
+        tiles(h).io.externalInterrupts := (if (h == 0) {
+            io.externalInterrupts(0)
+        } else {
+            0.U(BreezeMcuPlatform.ExternalInterruptWidth.W)
+        })
+
+        // I$ refill path.
+        l2Home.io.instrReq(h) <> tiles(h).io.instrReq
+        tiles(h).io.instrResp <> l2Home.io.instrResp(h)
+
+        // D$ coherence sideband.
+        l2Home.io.coherenceReq(h) <> tiles(h).io.cohReq
+        tiles(h).io.cohGrant <> l2Home.io.coherenceGrant(h)
+        tiles(h).io.cohProbe <> l2Home.io.coherenceProbe(h)
+        l2Home.io.coherenceProbeResp(h) <> tiles(h).io.cohProbeResp
+
+        // D$ uncached/MMIO path.
+        mmioArbiter.io.hartReq(h) <> tiles(h).io.mmioReq
+        tiles(h).io.mmioResp <> mmioArbiter.io.hartResp(h)
+
+        io.hartFatal(h) := tiles(h).io.fatalError
+        io.hartEStop(h) := tiles(h).io.estop
+    }
+
+    // MMIO arbiter -> shared MMIO Wishbone master.
+    mmioBridge.io.cacheReq <> mmioArbiter.io.memReq
+    mmioArbiter.io.memResp <> mmioBridge.io.cacheResp
+    io.mmioWishbone <> mmioBridge.io.wishbone
+
+    // L2/Home -> shared memory Wishbone master.
+    io.memoryWishbone <> l2Home.io.memoryWishbone
+
+    // The retire trace requires a tandem-enabled core configuration, which the
+    // frozen cluster presets do not enable; keep the debug outputs tied off.
     io.retire.foreach(_ := 0.U.asTypeOf(new TracePayload(64)))
-
-    io.memoryWishbone.cyc := false.B
-    io.memoryWishbone.stb := false.B
-    io.memoryWishbone.we := false.B
-    io.memoryWishbone.adr := 0.U
-    io.memoryWishbone.dat_w := 0.U
-    io.memoryWishbone.sel := 0.U
-    io.memoryWishbone.cti := 0.U
-    io.memoryWishbone.bte := 0.U
-
-    io.mmioWishbone.cyc := false.B
-    io.mmioWishbone.stb := false.B
-    io.mmioWishbone.we := false.B
-    io.mmioWishbone.adr := 0.U
-    io.mmioWishbone.dat_w := 0.U
-    io.mmioWishbone.sel := 0.U
-    io.mmioWishbone.cti := 0.U
-    io.mmioWishbone.bte := 0.U
 }
