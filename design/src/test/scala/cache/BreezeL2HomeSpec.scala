@@ -93,21 +93,18 @@ final class L2HomeHarness(
       wbCountdown = wbLatency
     }
 
-    // --- probe channel: latch and schedule the mock-L1 response ---
+    // --- probe channel: accept immediately (ready=1), answer after probeLatency ---
     for (h <- 0 until numHarts) {
       val p = probePort(h)
-      if (p.valid.peek().litToBoolean && probePending.isEmpty) {
+      p.ready.poke(true.B)
+      if (p.valid.peek().litToBoolean) {
+        assert(probePending.isEmpty, "mock L1 supports one outstanding probe")
         probeLog += ((h, p.lineAddr.peek().litValue, p.opcode.peek().litValue.toString()))
         probePending = Some((h, p.txnId.peek().litValue, p.lineAddr.peek().litValue,
           p.opcode.peek().litValue))
         probeCountdown = probeLatency
-        // "accept" is implicit: the mock observes valid and answers after
-        // probeLatency cycles via the probeResp handshake below.
       }
     }
-    // NOTE: the probe channel's ready is driven by the DUT's probe service; the
-    // mock accepts a probe as soon as valid is observed and answers it after
-    // probeLatency cycles.
     dut.io.coherenceProbeResp.zipWithIndex.foreach { case (rsp, h) =>
       val fire = probePending.exists(_._1 == h) && probeCountdown == 0
       rsp.valid.poke(fire.B)
