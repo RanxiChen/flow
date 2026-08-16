@@ -373,7 +373,7 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       data mustBe modified
       // The owner was probed ToS and now holds S.
       h.probeLog.length mustBe 1
-      h.probeLog.head._3 mustBe "ProbeToS"
+      h.probeLog.head._3 mustBe BreezeProbeOpcode.ProbeToS.litValue.toString()
       h.l1(ramAddr(4, 4) & ~BigInt(31))._1 mustBe 'S'
 
       // The line is SHARED now: a D$ GetS hits without probes or memory.
@@ -396,7 +396,7 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.getS(ramAddr(8, 5)) // evicts tag 0, which is SHARED by hart 0
       h.probeLog.length mustBe 1
       h.probeLog.head._2 mustBe (ramAddr(0, 5) & ~BigInt(31))
-      h.probeLog.head._3 mustBe "ProbeInv"
+      h.probeLog.head._3 mustBe BreezeProbeOpcode.ProbeInv.litValue.toString()
       h.l1.contains(ramAddr(0, 5) & ~BigInt(31)) mustBe false
 
       // Re-accessing the evicted line misses and refills from memory again.
