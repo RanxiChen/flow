@@ -386,7 +386,7 @@ class McuCompletionMonitor(Module):
     """Finite pass/fail monitor for the reusable MCU firmware runtime."""
 
     def __init__(self, retire, result_address, perf_address, check_kind="generic", irq_source=None,
-                 expected_vector_pc=None, timeout_cycles=20000):
+                 expected_vector_pc=None, timeout_cycles=20000, label=None):
         if check_kind not in ("generic", "timer", "uart"):
             raise ValueError(f"Unsupported MCU completion kind: {check_kind}")
         if timeout_cycles <= 0:
@@ -394,7 +394,7 @@ class McuCompletionMonitor(Module):
         if check_kind != "generic" and irq_source is None:
             raise ValueError("Interrupt completion checks require an IRQ source")
 
-        label = check_kind.upper()
+        label = check_kind.upper() if label is None else label
         cycle = Signal(32)
         source_seen = Signal(reset=0)
         vector_seen = Signal(reset=0)

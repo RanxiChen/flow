@@ -57,10 +57,36 @@ FATAL_PATTERN = re.compile(r"\b(fatal|assertion)\b", re.IGNORECASE)
 # Dedicated watchdog exit code, matching timeout(1) semantics.
 TIMEOUT_EXIT_CODE = 124
 
-# Test registry. Each entry is a callable run(args, profile, output_dir)
-# returning the completed subprocess exit code; it must stream output.
-# Registered phase by phase (T2 onward); empty during P0.
-TEST_REGISTRY = {}
+# Test registry. Each entry is a callable run(args, output_dir) returning the
+# command list for run_streaming; the command must stream the simulation
+# output (markers included) to its own stdout. Registered phase by phase
+# (T2+); single-profile MCU tests land with P2, dual/small with theirs.
+CLUSTER_MCU_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "run_cluster_mcu.py")
+
+
+def _cluster_mcu_test(test_name):
+    """TEST_REGISTRY factory for the single-profile MCU tests."""
+    def run(args, output_dir):
+        if args.profile != "single":
+            raise SystemExit(
+                f"ERROR: test {test_name!r} is a P2 single-profile test; "
+                f"dual/small variants register with their own phases")
+        command = [
+            sys.executable, CLUSTER_MCU_ENTRY,
+            "--profile", args.profile,
+            "--core-preset", args.core_preset,
+            "--test", test_name,
+            "--output-dir", output_dir,
+        ]
+        if args.trace:
+            command.append("--trace")
+        return command
+    return run
+
+
+TEST_REGISTRY = {
+    name: _cluster_mcu_test(name) for name in ("boot", "generic", "l2-eviction")
+}
 
 
 def run_checked(command, cwd=None):
