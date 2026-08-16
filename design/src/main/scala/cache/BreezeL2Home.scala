@@ -226,7 +226,7 @@ class BreezeL2Home(
   })
   val hit = wayHit.asUInt.orR
   val hitWay = OHToUInt(wayHit.asUInt)
-  val hitDirState = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).dirState(w))))
+  val hitDirState = BreezeDirectoryState(Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).dirState(w)))))
   val hitSharers = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).sharers(w))))
   val hitOwner = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).ownerId(w))))
   val hitDirtyMem = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).dirtyToMemory(w))))
@@ -241,10 +241,10 @@ class BreezeL2Home(
 
   /** Dynamic per-line directory write helper. */
   private def writeDir(set: UInt, way: UInt, valid: Bool, dirty: Bool,
-                       dir: UInt, sharers: UInt, owner: UInt): Unit = {
+                       dir: BreezeDirectoryState.Type, sharers: UInt, owner: UInt): Unit = {
     meta(set).valid(way) := valid
     meta(set).dirtyToMemory(way) := dirty
-    meta(set).dirState(way) := dir
+    meta(set).dirState(way) := dir.asUInt
     meta(set).sharers(way) := sharers
     meta(set).ownerId(way) := owner
   }
@@ -456,12 +456,12 @@ class BreezeL2Home(
         when(!meta(setIndex).valid(victimWay)) {
           memBeat := 0.U
           state := MemRead
-        }.elsewhen(meta(setIndex).dirState(victimWay) === NONE) {
+        }.elsewhen(meta(setIndex).dirState(victimWay) === NONE.asUInt) {
           memBeat := 0.U
           state := Mux(meta(setIndex).dirtyToMemory(victimWay), VictimWrite, MemRead)
         }.otherwise {
           // Inclusive eviction: invalidate SHARED sharers or recall the owner.
-          val isUnique = meta(setIndex).dirState(victimWay) === UNIQUE
+          val isUnique = meta(setIndex).dirState(victimWay) === UNIQUE.asUInt
           val targets = Mux(isUnique,
             hartBit(meta(setIndex).ownerId(victimWay)),
             meta(setIndex).sharers(victimWay))
