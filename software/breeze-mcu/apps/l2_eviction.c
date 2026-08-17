@@ -15,7 +15,9 @@
 #define EVICT_BASE    0x80000000ull
 #define LINE_STRIDE   2048ull  /* keeps addr[10:5] constant, bumps the tag */
 #define NUM_SETS      4u
+#ifndef LINES_PER_SET
 #define LINES_PER_SET 12u      /* 12 > 8 L2 ways: forces L2 eviction */
+#endif
 
 static uint64_t pattern(unsigned int set, unsigned int index)
 {
@@ -45,15 +47,19 @@ int main(void)
             got = *line;
             if (got != pattern(set, index)) {
                 ++mismatches;
-                breeze_uart_puts("L2-EVICTION mismatch set=");
-                breeze_uart_put_hex64(set);
-                breeze_uart_puts(" index=");
-                breeze_uart_put_hex64(index);
-                breeze_uart_puts(" expected=");
-                breeze_uart_put_hex64(pattern(set, index));
-                breeze_uart_puts(" got=");
-                breeze_uart_put_hex64(got);
-                breeze_uart_puts("\r\n");
+                /* UART output costs ~87 cycles/char in simulation: full
+                 * detail for the first few bad lines only, then count. */
+                if (mismatches <= 4u) {
+                    breeze_uart_puts("L2-EVICTION mismatch set=");
+                    breeze_uart_put_hex64(set);
+                    breeze_uart_puts(" index=");
+                    breeze_uart_put_hex64(index);
+                    breeze_uart_puts(" expected=");
+                    breeze_uart_put_hex64(pattern(set, index));
+                    breeze_uart_puts(" got=");
+                    breeze_uart_put_hex64(got);
+                    breeze_uart_puts("\r\n");
+                }
             }
         }
     }

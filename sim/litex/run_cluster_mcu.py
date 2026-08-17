@@ -57,6 +57,8 @@ def main():
         help="LiteX output directory (one per profile/preset/test).")
     parser.add_argument("--trace", action="store_true",
         help="Enable the LiteX/Verilator waveform trace.")
+    parser.add_argument("--extra-cflags", default="",
+        help="Extra CFLAGS forwarded to the firmware make (debug builds).")
     args = parser.parse_args()
 
     main_source = TEST_APPS[args.test]
@@ -74,6 +76,7 @@ def main():
         f"MAIN={main_source}",
         "MTVEC_MODE=0",
         f"CROSS_COMPILE={args.cross_compile}",
+        f"EXTRA_CFLAGS={args.extra_cflags}",
     ])
 
     with open(firmware_prefix + ".bin", "rb") as firmware_file:

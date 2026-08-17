@@ -3,6 +3,7 @@ BUILD_DIR     ?= build
 MAIN          ?= apps/main.c
 MTVEC_MODE    ?= 0
 MARCH         ?= rv64im_zicsr_zifencei
+EXTRA_CFLAGS  ?=
 TARGET         = $(BUILD_DIR)/breeze-mcu
 
 CC      := $(CROSS_COMPILE)gcc
@@ -14,7 +15,7 @@ ARCH_FLAGS = -march=$(MARCH) -mabi=lp64 -mcmodel=medany
 COMMON_FLAGS = $(ARCH_FLAGS) -mno-relax -msmall-data-limit=0 \
 	-ffreestanding -fno-builtin -fno-pic -fno-pie \
 	-ffunction-sections -fdata-sections -Os -Wall -Wextra \
-	-Iinclude -DBREEZE_MTVEC_MODE=$(MTVEC_MODE)
+	-Iinclude -DBREEZE_MTVEC_MODE=$(MTVEC_MODE) $(EXTRA_CFLAGS)
 LINK_FLAGS = $(ARCH_FLAGS) -mno-relax -nostdlib -nostartfiles -no-pie \
 	-Wl,-T,link.ld -Wl,--gc-sections -Wl,-Map,$(TARGET).map
 
