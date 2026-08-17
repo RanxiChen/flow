@@ -48,8 +48,9 @@ int main(void)
             if (got != pattern(set, index)) {
                 ++mismatches;
                 /* UART output costs ~87 cycles/char in simulation: full
-                 * detail for the first few bad lines only, then count. */
-                if (mismatches <= 4u) {
+                 * detail for the first bad line only, then count; the
+                 * complete report must fit the 20000-cycle watchdog. */
+                if (mismatches == 1u) {
                     breeze_uart_puts("L2-EVICTION mismatch set=");
                     breeze_uart_put_hex64(set);
                     breeze_uart_puts(" index=");

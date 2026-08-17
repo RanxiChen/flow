@@ -630,10 +630,17 @@ class BreezeDCache(
             // serviced while the refill was in flight may have invalidated
             // another way of this set, and that invalidation must survive the
             // install. (The PLRU result from Lookup stays valid because probe
-            // handling never touches the PLRU bits.)
+            // handling never touches the PLRU bits.) The dirty/exclusive bits
+            // of the other ways must be preserved exactly the same way: only
+            // the victim way's state is replaced, every other way keeps its
+            // M/E ownership and its dirty data.
             val newValidNow = validOf(metaReg(setIndex)) | (1.U << victimWayReg)
-            val newExcl = Mux(grantedE, 1.U(ways.W) << victimWayReg, 0.U(ways.W))
-            val newDirty = Mux(reqIsWrite || grantedM, 1.U(ways.W) << victimWayReg, 0.U(ways.W))
+            val newExcl = Mux(grantedE,
+              exclOf(metaReg(setIndex)) | (1.U << victimWayReg),
+              exclOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
+            val newDirty = Mux(reqIsWrite || grantedM,
+              dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
+              dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
             for (w <- 0 until ways) {
               when(victimWayReg === w.U) {
                 tagArray(w).io.we := true.B
