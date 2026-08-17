@@ -169,6 +169,7 @@ final class L2HomeHarness(
         case Some(('M', data)) => l1(key) = ('S', data); (true, data)
         case Some(('E', data)) => l1(key) = ('S', data); (false, BigInt(0))
         case Some(('S', _)) => (false, BigInt(0))
+        case Some((state, _)) => fail(s"ProbeToS to invalid state $state")
         case None => (false, BigInt(0))
       }
     } else {
@@ -548,113 +549,89 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "T4 dual GetS should leave both harts sharing the line" in {
+  "T4 dual MSI should cover sharing, upgrades, dirty transfer and serialization" in {
     simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(0, 9)
-      val (_, data0, error0) = h.getS(addr, hart = 0)
-      val (_, data1, error1) = h.getS(addr, hart = 1)
+
+      val sharingAddr = dualRamAddr(0, 9)
+      val (_, data0, error0) = h.getS(sharingAddr, hart = 0)
+      val (_, data1, error1) = h.getS(sharingAddr, hart = 1)
       error0 mustBe false
       error1 mustBe false
       data1 mustBe data0
-      h.l1State(addr, 0) mustBe Some('S')
-      h.l1State(addr, 1) mustBe Some('S')
+      h.l1State(sharingAddr, 0) mustBe Some('S')
+      h.l1State(sharingAddr, 1) mustBe Some('S')
       h.probeLog mustBe empty
-    }
-  }
 
-  "T4 dual S-to-M upgrade should invalidate the other sharer before grant" in {
-    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
-      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(1, 10)
-      h.getS(addr, hart = 0)
-      h.getS(addr, hart = 1)
+      val upgradeAddr = dualRamAddr(1, 10)
+      h.getS(upgradeAddr, hart = 0)
+      h.getS(upgradeAddr, hart = 1)
       h.resetProbeLog()
-      val (_, error) = h.getM(addr, hart = 0)
-      error mustBe false
-      h.probeLog mustBe Seq((1, addr & ~BigInt(31),
+      val (_, upgradeError) = h.getM(upgradeAddr, hart = 0)
+      upgradeError mustBe false
+      h.probeLog mustBe Seq((1, upgradeAddr & ~BigInt(31),
         BreezeProbeOpcode.ProbeInv.litValue.toString()))
-      h.l1State(addr, 0) mustBe Some('M')
-      h.l1Contains(addr, 1) mustBe false
-    }
-  }
+      h.l1State(upgradeAddr, 0) mustBe Some('M')
+      h.l1Contains(upgradeAddr, 1) mustBe false
 
-  "T4 dual dirty owner read should recall latest data and finish S-S" in {
-    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
-      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(2, 11)
+      val dirtyReadAddr = dualRamAddr(2, 11)
       val modified = BigInt("123456789abcdef00112233445566778899aabbccddeeff", 16)
-      h.getM(addr, hart = 0)
-      h.l1Store(addr, modified, hart = 0)
+      h.getM(dirtyReadAddr, hart = 0)
+      h.l1Store(dirtyReadAddr, modified, hart = 0)
       h.resetProbeLog()
-      val (_, data, error) = h.getS(addr, hart = 1)
-      error mustBe false
-      data mustBe modified
-      h.probeLog mustBe Seq((0, addr & ~BigInt(31),
+      val (_, dirtyReadData, dirtyReadError) = h.getS(dirtyReadAddr, hart = 1)
+      dirtyReadError mustBe false
+      dirtyReadData mustBe modified
+      h.probeLog mustBe Seq((0, dirtyReadAddr & ~BigInt(31),
         BreezeProbeOpcode.ProbeToS.litValue.toString()))
-      h.l1State(addr, 0) mustBe Some('S')
-      h.l1State(addr, 1) mustBe Some('S')
-      h.l1Data(addr, 0) mustBe Some(modified)
-      h.l1Data(addr, 1) mustBe Some(modified)
-    }
-  }
+      h.l1State(dirtyReadAddr, 0) mustBe Some('S')
+      h.l1State(dirtyReadAddr, 1) mustBe Some('S')
+      h.l1Data(dirtyReadAddr, 0) mustBe Some(modified)
+      h.l1Data(dirtyReadAddr, 1) mustBe Some(modified)
 
-  "T4 dual dirty owner transfer should invalidate old owner and preserve data" in {
-    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
-      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(3, 12)
+      val transferAddr = dualRamAddr(3, 12)
       val first = BigInt("fedcba98765432100011223344556677", 16)
       val second = BigInt("0badf00d0badf00d8899aabbccddeeff", 16)
-      h.getM(addr, hart = 0)
-      h.l1Store(addr, first, hart = 0)
+      h.getM(transferAddr, hart = 0)
+      h.l1Store(transferAddr, first, hart = 0)
       h.resetProbeLog()
-      val (recalled, error) = h.getM(addr, hart = 1)
-      error mustBe false
+      val (recalled, transferError) = h.getM(transferAddr, hart = 1)
+      transferError mustBe false
       recalled mustBe first
-      h.probeLog mustBe Seq((0, addr & ~BigInt(31),
+      h.probeLog mustBe Seq((0, transferAddr & ~BigInt(31),
         BreezeProbeOpcode.ProbeRecallInv.litValue.toString()))
-      h.l1Contains(addr, 0) mustBe false
-      h.l1State(addr, 1) mustBe Some('M')
-
-      h.l1Store(addr, second, hart = 1)
-      val (_, reread, readError) = h.getS(addr, hart = 0)
+      h.l1Contains(transferAddr, 0) mustBe false
+      h.l1State(transferAddr, 1) mustBe Some('M')
+      h.l1Store(transferAddr, second, hart = 1)
+      val (_, reread, readError) = h.getS(transferAddr, hart = 0)
       readError mustBe false
       reread mustBe second
-      h.l1State(addr, 0) mustBe Some('S')
-      h.l1State(addr, 1) mustBe Some('S')
-    }
-  }
+      h.l1State(transferAddr, 0) mustBe Some('S')
+      h.l1State(transferAddr, 1) mustBe Some('S')
 
-  "T4 coherence should transfer the whole line for different-word stores" in {
-    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
-      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(4, 13)
+      val differentWordAddr = dualRamAddr(4, 13)
       val wordMask = (BigInt(1) << 64) - 1
       val word0 = BigInt("1122334455667788", 16)
       val word1 = BigInt("8877665544332211", 16)
-      h.getM(addr, hart = 0)
-      val initial = h.l1Data(addr, 0).get
-      val afterWord0 = (initial & ~wordMask) | word0
-      h.l1Store(addr, afterWord0, hart = 0)
-      h.getM(addr, hart = 1)
-      val afterWord1 = (h.l1Data(addr, 1).get & ~(wordMask << 64)) | (word1 << 64)
-      h.l1Store(addr, afterWord1, hart = 1)
-      val (_, finalData, error) = h.getS(addr, hart = 0)
-      error mustBe false
+      h.getM(differentWordAddr, hart = 0)
+      val initial = h.l1Data(differentWordAddr, 0).get
+      h.l1Store(differentWordAddr, (initial & ~wordMask) | word0, hart = 0)
+      h.getM(differentWordAddr, hart = 1)
+      val afterWord1 = (h.l1Data(differentWordAddr, 1).get & ~(wordMask << 64)) |
+        (word1 << 64)
+      h.l1Store(differentWordAddr, afterWord1, hart = 1)
+      val (_, finalData, differentWordError) = h.getS(differentWordAddr, hart = 0)
+      differentWordError mustBe false
       (finalData & wordMask) mustBe word0
       ((finalData >> 64) & wordMask) mustBe word1
-    }
-  }
 
-  "T4 simultaneous same-line requests should each complete exactly once" in {
-    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
-      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
-      val addr = dualRamAddr(5, 14)
-      val results = h.simultaneousGetS(addr)
+      val raceAddr = dualRamAddr(5, 14)
+      h.resetWbLog()
+      val results = h.simultaneousGetS(raceAddr)
       results.length mustBe 2
       results.map(_._2).distinct.length mustBe 1
-      h.l1State(addr, 0) mustBe Some('S')
-      h.l1State(addr, 1) mustBe Some('S')
+      h.l1State(raceAddr, 0) mustBe Some('S')
+      h.l1State(raceAddr, 1) mustBe Some('S')
       // Only the first serialized request misses to memory.
       h.wbLog.count(entry => !entry._2) mustBe 4
     }
