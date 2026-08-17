@@ -192,6 +192,58 @@ final class CoherentDCacheHarness(dut: BreezeDCache)
     resident -= lineAddr
     (hasData, data)
   }
+
+  /** Present a CPU request pulse while an unsolicited probe owns the cache
+    * pipeline, then release the probe response and collect the delayed CPU
+    * response.
+    */
+  def cpuDuringProbe(probeAddr: BigInt, cpuAddr: BigInt): (BigInt, Boolean, Boolean) = {
+    coh.probe.valid.poke(true.B)
+    coh.probe.dstHart.poke(0.U)
+    coh.probe.txnId.poke(2.U)
+    coh.probe.lineAddr.poke(lineOf(probeAddr).U)
+    coh.probe.opcode.poke(BreezeProbeOpcode.ProbeInv.litValue)
+    coh.probeResp.ready.poke(false.B)
+    assert(coh.probe.ready.peek().litToBoolean, "coherent DCache did not accept probe")
+    step()
+    coh.probe.valid.poke(false.B)
+
+    // Idle first observes the pending probe and enters ProbeRead. The CPU
+    // pulse then lands in the same busy window seen by the dual-hart system.
+    step()
+    dut.io.cpu.req.valid.poke(true.B)
+    dut.io.cpu.req.addr.poke(cpuAddr.U)
+    dut.io.cpu.req.sizeLog2.poke(3.U)
+    dut.io.cpu.req.isWrite.poke(false.B)
+    dut.io.cpu.req.wdata.poke(0.U)
+    dut.io.cpu.req.wmask.poke("hff".U)
+    step()
+    dut.io.cpu.req.valid.poke(false.B)
+
+    var cycles = 0
+    while (!coh.probeResp.valid.peek().litToBoolean && cycles < 2000) {
+      step()
+      cycles += 1
+    }
+    if (!coh.probeResp.valid.peek().litToBoolean) fail("probe response timed out")
+    coh.probeResp.ready.poke(true.B)
+    step()
+    coh.probeResp.ready.poke(false.B)
+
+    var result: Option[(BigInt, Boolean, Boolean)] = None
+    while (result.isEmpty && cycles < 2000) {
+      if (dut.io.cpu.rsp.valid.peek().litToBoolean) {
+        result = Some((
+          dut.io.cpu.rsp.data.peek().litValue,
+          dut.io.cpu.rsp.error.peek().litToBoolean,
+          dut.io.cpu.rsp.isWriteAck.peek().litToBoolean))
+      }
+      step()
+      cycles += 1
+    }
+    if (result.isEmpty) fail("CPU request queued behind probe timed out")
+    result.get
+  }
 }
 
 class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim {
@@ -248,6 +300,18 @@ class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim 
       val (hasData, lineData) = h.probe(addr, BreezeProbeOpcode.ProbeRecallInv)
       hasData mustBe true
       (lineData & ((BigInt(1) << 64) - 1)) mustBe value
+    }
+  }
+
+  "coherent CPU pulse during an idle-cache probe should be queued" in {
+    simulate(new BreezeDCache(cfg, coherent = true, hartId = 0, hartIdWidth = 1)) { dut =>
+      val h = new CoherentDCacheHarness(dut)
+      val probeAddr = sramAddr(3, 6)
+      val cpuAddr = sramAddr(4, 7)
+      val load = h.cpuDuringProbe(probeAddr, cpuAddr)
+      load._2 mustBe false
+      load._3 mustBe false
+      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
     }
   }
 }

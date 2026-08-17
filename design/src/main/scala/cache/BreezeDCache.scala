@@ -60,7 +60,10 @@ object BreezeDCacheState extends ChiselEnum {
   * state that waits for the Home, and the interrupted state is resumed via
   * `resumeState`. A local coherence request that has not been handshaken yet
   * is simply re-asserted after the probe service (ready/valid withdrawal is
-  * legal).
+  * legal). Because the historical CPU interface is a pulse without `ready`,
+  * one CPU request that arrives while an otherwise-idle cache services an
+  * unsolicited probe is held in a one-entry skid register and started after
+  * the probe response. A second CPU request is still a protocol violation.
   */
 class BreezeDCache(
     val cfg: DefaultDCacheConfig = DefaultDCacheConfig(),
@@ -159,6 +162,15 @@ class BreezeDCache(
   val reqWData = RegInit(0.U(64.W))
   val reqWMask = RegInit(0.U(8.W))
 
+  // An unsolicited coherent probe can temporarily occupy an otherwise-idle
+  // cache. Preserve the one CPU request pulse that can legally race it.
+  val cpuPendingValid = RegInit(false.B)
+  val cpuPendingAddr = RegInit(0.U(cfg.VLEN.W))
+  val cpuPendingIsWrite = RegInit(false.B)
+  val cpuPendingSizeLog2 = RegInit(0.U(3.W))
+  val cpuPendingWData = RegInit(0.U(64.W))
+  val cpuPendingWMask = RegInit(0.U(8.W))
+
   val victimWayReg = RegInit(0.U(cfg.wayIndexWidth.W))
   val newValidReg = RegInit(0.U(ways.W))
   val newPlruReg = RegInit(0.U((ways - 1).W))
@@ -227,13 +239,17 @@ class BreezeDCache(
 
   // ===== SRAM read/write control =====
   val incomingSetIndex = io.cpu.req.addr(10, 5)
+  val pendingCpuSetIndex = cpuPendingAddr(10, 5)
   val flushSetIndex = flushIndex(7, 2)
   val probeSetIndex = probeLineAddrReg(10, 5)
   val probeTag = probeLineAddrReg(31, 11)
-  val arrayReadEnable = (state === Idle && io.cpu.req.valid) ||
+  val cpuArrayRead = state === Idle && !probePendingValid &&
+    (cpuPendingValid || io.cpu.req.valid)
+  val arrayReadEnable = cpuArrayRead ||
     (state === FlushScan) || (state === ProbeRead)
-  val arrayReadAddr = MuxLookup(state, incomingSetIndex)(Seq(
-    Idle -> incomingSetIndex,
+  val cpuArrayReadAddr = Mux(cpuPendingValid, pendingCpuSetIndex, incomingSetIndex)
+  val arrayReadAddr = MuxLookup(state, cpuArrayReadAddr)(Seq(
+    Idle -> cpuArrayReadAddr,
     FlushScan -> flushSetIndex,
     ProbeRead -> probeSetIndex
   ))
@@ -322,15 +338,31 @@ class BreezeDCache(
   io.nextLevelReq.data := 0.U
   io.nextLevelReq.mask := 0.U
 
-  io.hpm.dcacheAccess := state === Idle && io.cpu.req.valid && !io.flushReq
+  io.hpm.dcacheAccess := cpuArrayRead && !io.flushReq
   io.hpm.dcacheMiss := state === Lookup && pma.io.result.allowed &&
     pma.io.result.cacheable && !pma.io.result.device && !hit
   io.hpm.dcacheUncached := state === Lookup && pma.io.result.allowed &&
     (!pma.io.result.cacheable || pma.io.result.device)
 
+  val cpuDirectAccept = state === Idle && !io.flushReq &&
+    !probePendingValid && !cpuPendingValid
+  val probeOnlyWindow = coherent.B && (
+    (state === Idle && probePendingValid) ||
+    ((state === ProbeRead || state === ProbeCompare || state === ProbeRespond) &&
+      resumeState === Idle))
+  val cpuSkidAccept = probeOnlyWindow && !io.flushReq && !cpuPendingValid
+
   when(io.cpu.req.valid) {
-    assert(state === Idle && !io.flushReq,
+    assert(cpuDirectAccept || cpuSkidAccept,
       "DCache CPU request pulse arrived while the blocking DCache was busy")
+    when(cpuSkidAccept) {
+      cpuPendingValid := true.B
+      cpuPendingAddr := io.cpu.req.addr
+      cpuPendingIsWrite := io.cpu.req.isWrite
+      cpuPendingSizeLog2 := io.cpu.req.sizeLog2
+      cpuPendingWData := io.cpu.req.wdata
+      cpuPendingWMask := io.cpu.req.wmask
+    }
   }
   when(io.flushReq) {
     assert(state === Idle,
@@ -345,6 +377,17 @@ class BreezeDCache(
       }.elsewhen(io.flushReq) {
         flushIndex := 0.U
         state := FlushScan
+      }.elsewhen(cpuPendingValid) {
+        reqAddr := cpuPendingAddr
+        reqIsWrite := cpuPendingIsWrite
+        reqSizeLog2 := cpuPendingSizeLog2
+        reqWData := cpuPendingWData
+        reqWMask := cpuPendingWMask
+        responseData := 0.U
+        responseError := false.B
+        responseIsWrite := cpuPendingIsWrite
+        cpuPendingValid := false.B
+        state := Lookup
       }.elsewhen(io.cpu.req.valid) {
         reqAddr := io.cpu.req.addr
         reqIsWrite := io.cpu.req.isWrite
