@@ -150,7 +150,9 @@ object GenerateRegFileVerilogFile extends App {
     )
 }
 
-class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false) extends Module {
+class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false,
+              val hartId:Int=0) extends Module {
+    require(hartId >= 0, "CSRFile hartId must be non-negative")
     val io = IO(new Bundle{
         val csr_addr = Input(UInt(12.W))
         val csr_cmd  = Input(UInt(CSR_CMD.width.W))
@@ -191,7 +193,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))
     val mimpid = RegInit(0.U(XLEN.W))
-    val mhartid = RegInit(0.U(XLEN.W)) // now just single core system
+    val mhartid = RegInit(hartId.U(XLEN.W)) // per-hart elaboration identity (Tile hartId)
     val mepc = RegInit(0.U(XLEN.W))
     val mtvec = RegInit(BigInt("200", 16).U(XLEN.W))
     val mcause = RegInit(0.U(XLEN.W))
@@ -341,7 +343,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             is(CSRMAP.mhartid.U){
                 //currently mhartid is read only
                 if(dumplog){
-                    printf(cf"[INFO] mhartid = 0\n")
+                    printf(cf"[INFO] mhartid = ${mhartid}%x\n")
                 }
             }
             is(CSRMAP.mtvec.U){

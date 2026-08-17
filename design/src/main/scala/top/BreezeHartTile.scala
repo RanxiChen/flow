@@ -53,7 +53,7 @@ class BreezeHartTile(
     val retire = if (enableTandem) Some(Output(new TracePayload(64))) else None
   })
 
-  val core = Module(new BreezeCore(coreCfg, enabledebug = enabledebug))
+  val core = Module(new BreezeCore(coreCfg, enabledebug = enabledebug, hartId = hartId))
   val dcache = Module(new BreezeDCache(
     coreCfg.dcacheCfg,
     coherent = true,

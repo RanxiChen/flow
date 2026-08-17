@@ -61,6 +61,48 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.hpmEvents.loadUseStall.poke(false.B)
     }
 
+    private def driveIdle(dut: CSRFile): Unit = {
+        clearHpmEvents(dut)
+        dut.io.csr_addr.poke(CSRMAP.mhartid.U)
+        dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+        dut.io.csr_reg_data.poke(0.U)
+        dut.io.rs1_id.poke(0.U)
+        dut.io.rd_id.poke(1.U)
+        dut.io.commit_valid.poke(false.B)
+        dut.io.commit_write_en.poke(false.B)
+        dut.io.commit_addr.poke(0.U)
+        dut.io.commit_wdata.poke(0.U)
+        dut.io.retire_valid.poke(false.B)
+        dut.io.machineTimerInterrupt.poke(false.B)
+        dut.io.machineExternalInterrupt.poke(false.B)
+        dut.io.trap.valid.poke(false.B)
+        dut.io.trap.is_interrupt.poke(false.B)
+        dut.io.trap.cause.poke(0.U)
+        dut.io.trap.pc.poke(0.U)
+        dut.io.trap.tval.poke(0.U)
+        dut.io.mret_commit.poke(false.B)
+    }
+
+    "CSRFile should expose the elaborated read-only hart identity" in {
+        simulate(new CSRFile(64, hartId = 1)) { dut =>
+            driveIdle(dut)
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.io.csr_old_data.expect(1.U)
+
+            // A committed CSR write must not alter the read-only mhartid.
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mhartid.U)
+            dut.io.commit_wdata.poke(7.U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.csr_old_data.expect(1.U)
+        }
+    }
+
     "CSRFile should write mtvec via CSRRW (RW command) and read back" in {
         simulate(new CSRFile(64)) { dut =>
             clearHpmEvents(dut)

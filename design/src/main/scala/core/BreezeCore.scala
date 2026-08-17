@@ -10,7 +10,9 @@ import flow.frontend.{BreezeFrontend, BreezeFrontendDebugIO}
 import flow.interface._
 import flow.platform.BreezeMcuPlatform
 
-class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false) extends Module {
+class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false,
+                 val hartId: Int = 0) extends Module {
+    require(hartId >= 0, "core hartId must be non-negative")
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(corecfg.VLEN.W))
         val machineTimerInterrupt = Input(Bool())
@@ -35,7 +37,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
 
     val frontend = Module(new BreezeFrontend(corecfg.frontendCfg, enabledebug = enabledebug))
     val buffer = Module(new FetchBuffer(corecfg.VLEN, 6, corecfg.backendCfg.ghrLength))
-    val backend = Module(new BreezeBackend(corecfg.backendCfg, enabledebug = enabledebug))
+    val backend = Module(new BreezeBackend(corecfg.backendCfg, enabledebug = enabledebug,
+        hartId = hartId))
 
     frontend.io.resetAddr := io.resetAddr
     frontend.io.beRedirect := backend.io.frontendRedirect

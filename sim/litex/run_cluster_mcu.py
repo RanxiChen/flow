@@ -18,11 +18,20 @@ FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SOFTWARE_ROOT = os.path.join(FLOW_ROOT, "software", "breeze-mcu")
 SIM_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "multicore_sim.py")
 
-# Single-profile MCU tests (P2). Multi-hart tests register with their phases.
+PROFILE_HARTS = {"single": 1, "dual": 2, "small": 4}
+
+# (source, directed-case id).  Case ids are consumed by multicore_t4.c; None
+# means the source is a standalone application.
 TEST_APPS = {
-    "boot": os.path.join(SOFTWARE_ROOT, "apps", "multicore_boot.c"),
-    "generic": os.path.join(SOFTWARE_ROOT, "apps", "main.c"),
-    "l2-eviction": os.path.join(SOFTWARE_ROOT, "apps", "l2_eviction.c"),
+    "boot": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_boot.c"), None),
+    "generic": (os.path.join(SOFTWARE_ROOT, "apps", "main.c"), None),
+    "l2-eviction": (os.path.join(SOFTWARE_ROOT, "apps", "l2_eviction.c"), None),
+    "sharing": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 1),
+    "upgrade": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 2),
+    "dirty-read": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 3),
+    "dirty-transfer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 4),
+    "same-line": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 5),
+    "same-line-race": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 6),
 }
 
 
@@ -61,7 +70,9 @@ def main():
         help="Extra CFLAGS forwarded to the firmware make (debug builds).")
     args = parser.parse_args()
 
-    main_source = TEST_APPS[args.test]
+    if args.profile not in PROFILE_HARTS:
+        parser.error(f"unsupported cluster profile: {args.profile}")
+    main_source, case_id = TEST_APPS[args.test]
     if not os.path.isfile(main_source):
         parser.error(f"test application does not exist: {main_source}")
 
@@ -70,13 +81,19 @@ def main():
         f"cluster-{args.test}-{args.profile}-{args.core_preset}")
     firmware_prefix = os.path.join(firmware_build, "breeze-mcu")
 
+    profile_flags = f"-DBREEZE_NUM_HARTS={PROFILE_HARTS[args.profile]}"
+    if case_id is not None:
+        profile_flags += f" -DBREEZE_T4_CASE={case_id}"
+    if args.extra_cflags:
+        profile_flags += f" {args.extra_cflags}"
+
     run_checked([
         "make", "-B", "-C", SOFTWARE_ROOT,
         f"BUILD_DIR={firmware_build}",
         f"MAIN={main_source}",
         "MTVEC_MODE=0",
         f"CROSS_COMPILE={args.cross_compile}",
-        f"EXTRA_CFLAGS={args.extra_cflags}",
+        f"EXTRA_CFLAGS={profile_flags}",
     ])
 
     with open(firmware_prefix + ".bin", "rb") as firmware_file:

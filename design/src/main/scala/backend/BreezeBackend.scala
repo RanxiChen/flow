@@ -11,9 +11,11 @@ import flow.platform.BreezeMcuPlatform
 
 class BreezeBackend(
     val cfg: BackendConfig = BackendConfig(),
-    val enabledebug: Boolean = false
+    val enabledebug: Boolean = false,
+    val hartId: Int = 0
 ) extends Module {
     require(cfg.VLEN == 64, "RV64 M-extension backend requires VLEN=64")
+    require(hartId >= 0, "backend hartId must be non-negative")
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val machineTimerInterrupt = Input(Bool())
@@ -37,7 +39,7 @@ class BreezeBackend(
     val decoder = Module(new Decoder())
     val immGen = Module(new ImmGen(cfg.VLEN))
     val regFile = Module(new RegFile(cfg.VLEN))
-    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug))
+    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug, hartId = hartId))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
     val retireValid = Wire(Bool())
 

@@ -68,13 +68,13 @@ TIMEOUT_EXIT_CODE = 124
 CLUSTER_MCU_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "run_cluster_mcu.py")
 
 
-def _cluster_mcu_test(test_name):
-    """TEST_REGISTRY factory for the single-profile MCU tests."""
+def _cluster_mcu_test(test_name, allowed_profiles):
+    """TEST_REGISTRY factory with an explicit phase/profile allowlist."""
     def run(args, output_dir):
-        if args.profile != "single":
+        if args.profile not in allowed_profiles:
             raise SystemExit(
-                f"ERROR: test {test_name!r} is a P2 single-profile test; "
-                f"dual/small variants register with their own phases")
+                f"ERROR: test {test_name!r} is not registered for profile "
+                f"{args.profile!r}; allowed profiles: {', '.join(allowed_profiles)}")
         command = [
             sys.executable, CLUSTER_MCU_ENTRY,
             "--profile", args.profile,
@@ -89,7 +89,15 @@ def _cluster_mcu_test(test_name):
 
 
 TEST_REGISTRY = {
-    name: _cluster_mcu_test(name) for name in ("boot", "generic", "l2-eviction")
+    "boot": _cluster_mcu_test("boot", ("single", "dual")),
+    "generic": _cluster_mcu_test("generic", ("single",)),
+    "l2-eviction": _cluster_mcu_test("l2-eviction", ("single",)),
+    "sharing": _cluster_mcu_test("sharing", ("dual",)),
+    "upgrade": _cluster_mcu_test("upgrade", ("dual",)),
+    "dirty-read": _cluster_mcu_test("dirty-read", ("dual",)),
+    "dirty-transfer": _cluster_mcu_test("dirty-transfer", ("dual",)),
+    "same-line": _cluster_mcu_test("same-line", ("dual",)),
+    "same-line-race": _cluster_mcu_test("same-line-race", ("dual",)),
 }
 
 

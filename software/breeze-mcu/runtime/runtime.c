@@ -6,6 +6,22 @@
 
 extern int main(void);
 
+/* Multi-hart dispatch: secondary harts (mhartid != 0) never run main(); the
+ * app may override this weak hook to do per-hart work and report through
+ * shared memory. The hook returns normally and the hart then parks itself.
+ */
+__attribute__((weak)) void breeze_secondary_main(uint64_t hart)
+{
+    (void)hart;
+}
+
+static uint64_t breeze_read_mhartid(void)
+{
+    uint64_t value;
+    __asm__ volatile ("csrr %0, mhartid" : "=r"(value));
+    return value;
+}
+
 static void breeze_pmu_prepare(void)
 {
     BREEZE_CSR_WRITE(mcountinhibit, BREEZE_PMU_INHIBIT_MASK);
@@ -78,6 +94,13 @@ void breeze_trap_handler(uint64_t mcause, uint64_t mepc, uint64_t mtval)
 void breeze_runtime_entry(void)
 {
     int result;
+
+    if (breeze_read_mhartid() != 0u) {
+        breeze_secondary_main(breeze_read_mhartid());
+        for (;;) {
+            __asm__ volatile ("nop");
+        }
+    }
 
     breeze_pmu_prepare();
     breeze_report_result(0);
