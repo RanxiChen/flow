@@ -514,9 +514,17 @@ class BreezeL2Home(
             respFired(h) && io.coherenceProbeResp(h).hasData).reduce(_ || _)
           val recallNow = victimDirReg === UNIQUE && (recalledValid || respHasDataThisCycle)
           when(recallNow) {
-            writeDataArray(victimWayReg, setIndex,
-              Mux(recalledValid, recalledData, respDataThisCycle))
+            val recallLine = Mux(recalledValid, recalledData, respDataThisCycle)
+            writeDataArray(victimWayReg, setIndex, recallLine)
+            // The writeback below must carry the recalled dirty data as well:
+            // victimDataReg still holds the pre-recall array contents.
+            victimDataReg := recallLine
           }
+          // A UNIQUE victim whose owner answered without data is a protocol
+          // violation; without this check the stale array line would be
+          // written back to memory as if it were the owner's dirty data.
+          assert(victimDirReg =/= UNIQUE || recallNow,
+            "L2/Home: UNIQUE victim recall completed without owner data")
           memBeat := 0.U
           val nowDirty = victimDirtyReg || victimDirReg === UNIQUE
           state := Mux(nowDirty, VictimWrite, MemRead)
