@@ -53,6 +53,7 @@ final class L2HomeHarness(
   // probe response pipeline: (hart, txnId, lineAddr, opcode) pending
   private var probePending: Option[(Int, BigInt, BigInt, BigInt)] = None
   private var probeCountdown = 0
+  private var probeAnswer: Option[(Boolean, BigInt)] = None
 
   // Deterministic idle values for every client port, including harts a test
   // does not actively drive.
@@ -131,23 +132,35 @@ final class L2HomeHarness(
         probePending = Some((h, p.txnId.peek().litValue, p.lineAddr.peek().litValue,
           p.opcode.peek().litValue))
         probeCountdown = probeLatency
+        probeAnswer = None
       }
     }
+
+    // Advance the response pipeline once per cycle, not once per hart.  Latch
+    // the mock L1's answer exactly once so valid/data remain stable if Home
+    // is still moving from ProbeReq to ProbeWait or applies backpressure.
+    if (probePending.isDefined && probeCountdown > 0) {
+      probeCountdown -= 1
+    } else if (probePending.isDefined && probeAnswer.isEmpty) {
+      val (hart, _, lineAddr, opcode) = probePending.get
+      probeAnswer = Some(answerProbe(hart, lineAddr, opcode))
+    }
     dut.io.coherenceProbeResp.zipWithIndex.foreach { case (rsp, h) =>
-      val fire = probePending.exists(_._1 == h) && probeCountdown == 0
+      val fire = probePending.exists(_._1 == h) && probeAnswer.isDefined
       rsp.valid.poke(fire.B)
       if (fire) {
-        val Some((_, txn, lineAddr, opcode)) = probePending
+        val Some((_, txn, lineAddr, _)) = probePending
         rsp.txnId.poke(txn.U)
         rsp.lineAddr.poke(lineAddr.U)
         rsp.srcHart.poke(h.U)
         rsp.ack.poke(true.B)
-        val (hasData, data) = answerProbe(h, lineAddr, opcode)
+        val (hasData, data) = probeAnswer.get
         rsp.hasData.poke(hasData.B)
         rsp.lineData.poke(data.U)
-        if (rsp.ready.peek().litToBoolean) probePending = None
-      } else if (probePending.isDefined && probeCountdown > 0) {
-        probeCountdown -= 1
+        if (rsp.ready.peek().litToBoolean) {
+          probePending = None
+          probeAnswer = None
+        }
       }
     }
 
