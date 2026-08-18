@@ -68,7 +68,7 @@ final class SmallL2Harness(
 
 
   private val pendProbe = Array.fill[Option[PendProbe]](numHarts)(None)
-  // Payload captured while the Home drives valid && !ready (stability check).
+  private val answer = Array.fill[Option[(Boolean, BigInt)]](numHarts)(None)
   private val preLatch = Array.fill[Option[(BigInt, BigInt, BigInt)]](numHarts)(None)
 
   // Global cycle watchdog: a hang fails the test instead of the CI run.
