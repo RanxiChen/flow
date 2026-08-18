@@ -13,8 +13,9 @@ import scala.collection.mutable
 final case class SmallReqEvent(hart: Int, opcode: BigInt, txnId: BigInt, lineAddr: BigInt)
 final case class SmallProbeEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, opcode: BigInt)
 final case class SmallRespEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, hasData: Boolean, data: BigInt)
+final case class SmallGrantEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, state: BigInt,
+    hasData: Boolean, data: BigInt, error: Boolean)
 final case class PendProbe(txnId: BigInt, lineAddr: BigInt, opcode: BigInt, countdown: Int)
-
 
 /** Four-hart mock L1D clients + a Wishbone memory slave around the L2/Home.
   *
