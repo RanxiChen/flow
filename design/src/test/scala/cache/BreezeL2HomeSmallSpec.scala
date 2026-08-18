@@ -13,8 +13,8 @@ import scala.collection.mutable
 final case class SmallReqEvent(hart: Int, opcode: BigInt, txnId: BigInt, lineAddr: BigInt)
 final case class SmallProbeEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, opcode: BigInt)
 final case class SmallRespEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, hasData: Boolean, data: BigInt)
-final case class SmallGrantEvent(hart: Int, txnId: BigInt, lineAddr: BigInt, state: BigInt,
-    hasData: Boolean, data: BigInt, error: Boolean)
+final case class PendProbe(txnId: BigInt, lineAddr: BigInt, opcode: BigInt, countdown: Int)
+
 
 /** Four-hart mock L1D clients + a Wishbone memory slave around the L2/Home.
   *
@@ -65,9 +65,8 @@ final class SmallL2Harness(
   val probeLatency = Array.fill(numHarts)(1)
   val respOrder = mutable.Queue.empty[Int]
 
-  private final case class PendProbe(txnId: BigInt, lineAddr: BigInt, opcode: BigInt, countdown: Int)
+
   private val pendProbe = Array.fill[Option[PendProbe]](numHarts)(None)
-  private val answer = Array.fill[Option[(Boolean, BigInt)]](numHarts)(None)
   // Payload captured while the Home drives valid && !ready (stability check).
   private val preLatch = Array.fill[Option[(BigInt, BigInt, BigInt)]](numHarts)(None)
 
@@ -412,7 +411,7 @@ final class SmallL2Harness(
       req.valid.poke(true.B)
       req.opcode.poke(BreezeCoherenceOpcode.GetS.litValue)
       req.srcHart.poke(h.U)
-      req.txnId.poke((h + 1).U)
+      req.txnId.poke(h.U)
       req.lineAddr.poke(line.U)
       req.hasData.poke(false.B)
       req.lineData.poke(0.U)
@@ -500,7 +499,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.wbLog.map(_._2).foreach(_ mustBe false)
       h.wbLog.map(_._1) mustBe (0 until 4).map(i => line + i * 8)
       // Every grant echoes the request txnId of its own hart (1..4).
-      h.grantLog.map(_.txnId).sorted mustBe Seq[BigInt](1, 2, 3, 4)
+      h.grantLog.map(_.txnId).sorted mustBe Seq[BigInt](0, 1, 2, 3)
     }
   }
 
@@ -522,7 +521,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.probeLatency(3) = 1
       h.respOrder ++= Seq(3, 1, 2)
 
-      h.beginRequest(BreezeCoherenceOpcode.GetM, line, hart = 0, txnId = 7)
+      h.beginRequest(BreezeCoherenceOpcode.GetM, line, hart = 0, txnId = 3)
       h.grantPortReady(0, ready = true)
       for (target <- Seq(1, 2, 3)) {
         h.probeReadyMask(target) = true
@@ -532,7 +531,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
           assert(!h.grantValid(0), "hart0 received a grant before the last probe Ack")
           h.step()
           cycles += 1
-          accepted = h.probeLog.exists(e => e.hart == target && e.txnId == BigInt(7))
+          accepted = h.probeLog.exists(e => e.hart == target && e.txnId == BigInt(3))
         }
         assert(accepted, s"probe for hart $target was never accepted")
         h.probeReadyMask(target) = false
@@ -541,7 +540,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // Exactly three ProbeInv to harts 1..3, nothing to the requester.
       h.probeLog.map(_.hart).toSet mustBe Set(1, 2, 3)
       h.probeLog.map(_.opcode).foreach(_ mustBe BreezeProbeOpcode.ProbeInv.litValue)
-      h.probeLog.map(_.txnId).foreach(_ mustBe BigInt(7))
+      h.probeLog.map(_.txnId).foreach(_ mustBe BigInt(3))
       h.probeLog.map(_.lineAddr).foreach(_ mustBe line)
 
       // Before the last Ack handshakes, no grant may appear, cycle by cycle.
@@ -557,14 +556,14 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
       // Responses arrived in 3, 1, 2 order and each hart answered exactly once.
       h.respLog.map(_.hart) mustBe Seq(3, 1, 2)
-      h.respLog.map(e => (e.txnId, e.lineAddr)).foreach(_ mustBe ((BigInt(7), line)))
+      h.respLog.map(e => (e.txnId, e.lineAddr)).foreach(_ mustBe ((BigInt(3), line)))
       h.respLog.map(_.hasData).foreach(_ mustBe false)
 
       // Exactly one M grant to hart0, and nothing afterwards.
       val g = h.waitGrantEvent(0)
       g.error mustBe false
       g.state mustBe BreezeGrantState.M.litValue
-      g.txnId mustBe BigInt(7)
+      g.txnId mustBe BigInt(3)
       g.lineAddr mustBe line
       if (g.hasData) g.data mustBe h.mem.readLine(line)
       for (_ <- 0 until 8) {
@@ -593,12 +592,12 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.l1Store(line, modified, hart = 3)
 
       h.resetAllLogs()
-      val (transferred, transferErr) = h.getM(line, hart = 1, txnId = 5)
+      val (transferred, transferErr) = h.getM(line, hart = 1, txnId = 2)
       transferErr mustBe false
       transferred mustBe modified
       // Only hart 3 was recalled, and its response carried the latest line.
-      h.probeLog mustBe Seq(SmallProbeEvent(3, 5, line, BreezeProbeOpcode.ProbeRecallInv.litValue))
-      h.respLog mustBe Seq(SmallRespEvent(3, 5, line, hasData = true, data = modified))
+      h.probeLog mustBe Seq(SmallProbeEvent(3, 2, line, BreezeProbeOpcode.ProbeRecallInv.litValue))
+      h.respLog mustBe Seq(SmallRespEvent(3, 2, line, hasData = true, data = modified))
       h.l1Contains(line, 3) mustBe false
       h.l1State(line, 1) mustBe Some('M')
       h.l1Data(line, 1) mustBe Some(modified)
@@ -607,11 +606,11 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
       // hart 2 reads next: the Home must recall hart 1 and end with S/S.
       h.resetAllLogs()
-      val (_, shared, shareErr) = h.getS(line, hart = 2, txnId = 6)
+      val (_, shared, shareErr) = h.getS(line, hart = 2, txnId = 3)
       shareErr mustBe false
       shared mustBe modified
-      h.probeLog mustBe Seq(SmallProbeEvent(1, 6, line, BreezeProbeOpcode.ProbeToS.litValue))
-      h.respLog mustBe Seq(SmallRespEvent(1, 6, line, hasData = true, data = modified))
+      h.probeLog mustBe Seq(SmallProbeEvent(1, 3, line, BreezeProbeOpcode.ProbeToS.litValue))
+      h.respLog mustBe Seq(SmallRespEvent(1, 3, line, hasData = true, data = modified))
       h.l1State(line, 1) mustBe Some('S')
       h.l1State(line, 2) mustBe Some('S')
       h.l1Data(line, 2) mustBe Some(modified)
@@ -628,7 +627,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       for (tag <- 1 until 8) h.getS(smallRamAddr(tag, 3)) // fills the 7 other ways
 
       h.resetAllLogs()
-      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 9)
+      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 2)
       h.grantPortReady(0, ready = true)
 
       var cycles = 0
@@ -645,7 +644,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.probeLog.length mustBe 4
       h.probeLog.map(_.hart).toSet mustBe Set(0, 1, 2, 3)
       h.probeLog.map(_.opcode).foreach(_ mustBe BreezeProbeOpcode.ProbeInv.litValue)
-      h.probeLog.map(_.txnId).foreach(_ mustBe BigInt(9))
+      h.probeLog.map(_.txnId).foreach(_ mustBe BigInt(2))
       h.probeLog.map(_.lineAddr).foreach(_ mustBe target)
 
       val g = h.waitGrantEvent(0)
@@ -678,7 +677,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       for (tag <- 1 until 8) h.getS(smallRamAddr(tag, 4))
 
       h.resetAllLogs()
-      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 11)
+      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 1)
       h.grantPortReady(0, ready = true)
 
       var cycles = 0
@@ -692,8 +691,8 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
       if (!allAcked) fail("victim recall never completed")
 
-      h.probeLog mustBe Seq(SmallProbeEvent(3, 11, victim, BreezeProbeOpcode.ProbeRecallInv.litValue))
-      h.respLog mustBe Seq(SmallRespEvent(3, 11, victim, hasData = true, data = dirty))
+      h.probeLog mustBe Seq(SmallProbeEvent(3, 1, victim, BreezeProbeOpcode.ProbeRecallInv.litValue))
+      h.respLog mustBe Seq(SmallRespEvent(3, 1, victim, hasData = true, data = dirty))
 
       val g = h.waitGrantEvent(0)
       g.error mustBe false
@@ -724,7 +723,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
       h.resetAllLogs()
       h.errorOnAddresses = (0 until 4).map(i => victim + i * 8).toSet
-      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 12)
+      h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 2)
       h.grantPortReady(0, ready = true)
       val g = h.waitGrantEvent(0)
       g.error mustBe true
@@ -749,7 +748,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.resetAllLogs()
       // Occupy the Home with a slow refill, then pulse all four I$ ports in
       // the same busy window (their latches must capture unconditionally).
-      h.beginRequest(BreezeCoherenceOpcode.GetS, filler, hart = 0, txnId = 13)
+      h.beginRequest(BreezeCoherenceOpcode.GetS, filler, hart = 0, txnId = 3)
       h.step() // state = LookupRead, definitely not Idle
       for (hart <- 0 until 4) h.pulseInstr(hart, target)
       h.step()
