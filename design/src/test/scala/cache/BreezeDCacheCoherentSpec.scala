@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.collection.mutable
 
-final case class CoherentReq(opcode: BigInt, lineAddr: BigInt, txnId: BigInt)
+final case class CoherentReq(opcode: BigInt, lineAddr: BigInt, txnId: BigInt, srcHart: BigInt)
 final case class PendingGrant(
     delay: Int,
     txnId: BigInt,
@@ -18,6 +18,8 @@ final case class PendingGrant(
     state: BigInt,
     hasData: Boolean,
     data: BigInt)
+final case class DetailedProbeResp(srcHart: BigInt, txnId: BigInt, lineAddr: BigInt,
+    hasData: Boolean, data: BigInt)
 
 /** Minimal Home model for the coherent L1D interface.
   *
@@ -85,13 +87,13 @@ final class CoherentDCacheHarness(dut: BreezeDCache)
       coh.grant.ready.peek().litToBoolean
     val reqFire = coh.req.valid.peek().litToBoolean &&
       coh.req.ready.peek().litToBoolean
-
     if (reqFire) {
       assert(pendingGrant.isEmpty, "coherent DCache issued a second request")
       val opcode = coh.req.opcode.peek().litValue
       val lineAddr = coh.req.lineAddr.peek().litValue
       val txnId = coh.req.txnId.peek().litValue
-      reqLog += CoherentReq(opcode, lineAddr, txnId)
+      val srcHart = coh.req.srcHart.peek().litValue
+      reqLog += CoherentReq(opcode, lineAddr, txnId, srcHart)
 
       val getS = opcode == BreezeCoherenceOpcode.GetS.litValue
       val getM = opcode == BreezeCoherenceOpcode.GetM.litValue
@@ -150,6 +152,13 @@ final class CoherentDCacheHarness(dut: BreezeDCache)
   /** Send a probe, hold response ready low for two cycles, and return the
     * stable (hasData, lineData) response. */
   def probe(addr: BigInt, opcode: BreezeProbeOpcode.Type): (Boolean, BigInt) = {
+    val r = probeDetailed(addr, opcode)
+    (r.hasData, r.data)
+  }
+
+  /** Like probe(), but also captures the full response payload so directed
+    * tests can check the srcHart and the txnId/lineAddr echo. */
+  def probeDetailed(addr: BigInt, opcode: BreezeProbeOpcode.Type): DetailedProbeResp = {
     val lineAddr = lineOf(addr)
     coh.probe.valid.poke(true.B)
     coh.probe.dstHart.poke(0.U)
@@ -176,6 +185,9 @@ final class CoherentDCacheHarness(dut: BreezeDCache)
 
     val hasData = coh.probeResp.hasData.peek().litToBoolean
     val data = coh.probeResp.lineData.peek().litValue
+    val srcHart = coh.probeResp.srcHart.peek().litValue
+    val rspTxnId = coh.probeResp.txnId.peek().litValue
+    val rspLineAddr = coh.probeResp.lineAddr.peek().litValue
     for (_ <- 0 until 2) {
       step()
       assert(coh.probeResp.valid.peek().litToBoolean,
@@ -184,13 +196,19 @@ final class CoherentDCacheHarness(dut: BreezeDCache)
         "probe response hasData changed under backpressure")
       assert(coh.probeResp.lineData.peek().litValue == data,
         "probe response data changed under backpressure")
+      assert(coh.probeResp.srcHart.peek().litValue == srcHart,
+        "probe response srcHart changed under backpressure")
+      assert(coh.probeResp.txnId.peek().litValue == rspTxnId,
+        "probe response txnId changed under backpressure")
+      assert(coh.probeResp.lineAddr.peek().litValue == rspLineAddr,
+        "probe response lineAddr changed under backpressure")
     }
 
     coh.probeResp.ready.poke(true.B)
     step()
     coh.probeResp.ready.poke(false.B)
     resident -= lineAddr
-    (hasData, data)
+    DetailedProbeResp(srcHart, rspTxnId, rspLineAddr, hasData, data)
   }
 
   /** Present a CPU request pulse while an unsolicited probe owns the cache
@@ -312,6 +330,35 @@ class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim 
       load._2 mustBe false
       load._3 mustBe false
       h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
+    }
+  }
+
+  "coherent dcache with 2-bit hart id 3 should tag requests and probe responses with srcHart 3" in {
+    simulate(new BreezeDCache(cfg, coherent = true, hartId = 3, hartIdWidth = 2)) { dut =>
+      val h = new CoherentDCacheHarness(dut)
+      val addr = sramAddr(5, 8)
+      val load = h.cpu(addr, isWrite = false)
+      load._2 mustBe false
+      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
+      h.reqLog.head.srcHart mustBe 3
+      h.reqLog.head.lineAddr mustBe (addr & ~BigInt(31))
+
+      val value = BigInt("1122334455667788", 16)
+      val store = h.cpu(addr, isWrite = true, wdata = value)
+      store._2 mustBe false
+      h.reqLog.map(_.opcode) mustBe Seq(
+        BreezeCoherenceOpcode.GetS.litValue,
+        BreezeCoherenceOpcode.GetM.litValue)
+      h.reqLog(1).srcHart mustBe 3
+
+      // The probe response must echo the probe txnId/lineAddr and carry the
+      // modified full line with srcHart == 3 (2-bit).
+      val r = h.probeDetailed(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r.srcHart mustBe 3
+      r.txnId mustBe 3
+      r.lineAddr mustBe (addr & ~BigInt(31))
+      r.hasData mustBe true
+      (r.data & ((BigInt(1) << 64) - 1)) mustBe value
     }
   }
 }
