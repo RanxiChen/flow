@@ -66,7 +66,7 @@ final class SmallL2Harness(
   val respOrder = mutable.Queue.empty[Int]
 
   private final case class PendProbe(txnId: BigInt, lineAddr: BigInt, opcode: BigInt, countdown: Int)
-  private val pending = Array.fill[Option[PendProbe]](numHarts)(None)
+  private val pendProbe = Array.fill[Option[PendProbe]](numHarts)(None)
   private val answer = Array.fill[Option[(Boolean, BigInt)]](numHarts)(None)
   // Payload captured while the Home drives valid && !ready (stability check).
   private val preLatch = Array.fill[Option[(BigInt, BigInt, BigInt)]](numHarts)(None)
@@ -156,10 +156,10 @@ final class SmallL2Harness(
           case None => preLatch(h) = Some((txn, la, op))
         }
       } else if (vld && probeReadyMask(h)) {
-        assert(pending(h).isEmpty, s"hart $h has an outstanding probe already")
+        assert(pendProbe(h).isEmpty, s"hart $h has an outstanding probe already")
         preLatch(h) = None
         probeLog += SmallProbeEvent(h, txn, la, op)
-        pending(h) = Some(PendProbe(txn, la, op, probeLatency(h)))
+        pendProbe(h) = Some(PendProbe(txn, la, op, probeLatency(h)))
       } else {
         preLatch(h) = None
       }
@@ -167,9 +167,9 @@ final class SmallL2Harness(
 
     // --- advance per-hart response latency, latch each answer once ---
     for (h <- 0 until numHarts) {
-      pending(h) match {
+      pendProbe(h) match {
         case Some(p) if p.countdown > 0 =>
-          pending(h) = Some(p.copy(countdown = p.countdown - 1))
+          pendProbe(h) = Some(p.copy(countdown = p.countdown - 1))
         case Some(p) if answer(h).isEmpty =>
           answer(h) = Some(answerProbe(h, p.lineAddr, p.opcode))
         case _ =>
@@ -187,7 +187,7 @@ final class SmallL2Harness(
         (0 until numHarts).find(h => answer(h).isDefined)
       }
     candidate.foreach { h =>
-      val p = pending(h).get
+      val p = pendProbe(h).get
       val (hasData, data) = answer(h).get
       val rsp = dut.io.coherenceProbeResp(h)
       rsp.valid.poke(true.B)
@@ -202,7 +202,7 @@ final class SmallL2Harness(
           assert(respOrder.head == h, "response order queue head mismatch")
           respOrder.dequeue()
         }
-        pending(h) = None
+        pendProbe(h) = None
         answer(h) = None
       }
     }
