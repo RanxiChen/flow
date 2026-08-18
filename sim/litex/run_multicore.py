@@ -89,7 +89,7 @@ def _cluster_mcu_test(test_name, allowed_profiles):
 
 
 TEST_REGISTRY = {
-    "boot": _cluster_mcu_test("boot", ("single", "dual")),
+    "boot": _cluster_mcu_test("boot", ("single", "dual", "small")),
     "generic": _cluster_mcu_test("generic", ("single",)),
     "l2-eviction": _cluster_mcu_test("l2-eviction", ("single",)),
     "sharing": _cluster_mcu_test("sharing", ("dual",)),
@@ -98,6 +98,12 @@ TEST_REGISTRY = {
     "dirty-transfer": _cluster_mcu_test("dirty-transfer", ("dual",)),
     "same-line": _cluster_mcu_test("same-line", ("dual",)),
     "same-line-race": _cluster_mcu_test("same-line-race", ("dual",)),
+    "small-sharing": _cluster_mcu_test("small-sharing", ("small",)),
+    "small-upgrade": _cluster_mcu_test("small-upgrade", ("small",)),
+    "small-dirty-transfer": _cluster_mcu_test("small-dirty-transfer", ("small",)),
+    "small-same-line": _cluster_mcu_test("small-same-line", ("small",)),
+    "small-same-line-race": _cluster_mcu_test("small-same-line-race", ("small",)),
+    "small-l2-eviction": _cluster_mcu_test("small-l2-eviction", ("small",)),
 }
 
 

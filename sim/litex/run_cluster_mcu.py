@@ -20,18 +20,25 @@ SIM_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "multicore_sim.py")
 
 PROFILE_HARTS = {"single": 1, "dual": 2, "small": 4}
 
-# (source, directed-case id).  Case ids are consumed by multicore_t4.c; None
-# means the source is a standalone application.
+# (source, case macro, directed-case id).  case macro is None for standalone
+# applications; the id is consumed by the matching firmware (multicore_t4.c
+# for the dual tests, multicore_t5.c for the four-hart small tests).
 TEST_APPS = {
-    "boot": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_boot.c"), None),
-    "generic": (os.path.join(SOFTWARE_ROOT, "apps", "main.c"), None),
-    "l2-eviction": (os.path.join(SOFTWARE_ROOT, "apps", "l2_eviction.c"), None),
-    "sharing": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 1),
-    "upgrade": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 2),
-    "dirty-read": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 3),
-    "dirty-transfer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 4),
-    "same-line": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 5),
-    "same-line-race": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), 6),
+    "boot": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_boot.c"), None, None),
+    "generic": (os.path.join(SOFTWARE_ROOT, "apps", "main.c"), None, None),
+    "l2-eviction": (os.path.join(SOFTWARE_ROOT, "apps", "l2_eviction.c"), None, None),
+    "sharing": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 1),
+    "upgrade": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 2),
+    "dirty-read": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 3),
+    "dirty-transfer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 4),
+    "same-line": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 5),
+    "same-line-race": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t4.c"), "BREEZE_T4_CASE", 6),
+    "small-sharing": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 1),
+    "small-upgrade": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 2),
+    "small-dirty-transfer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 3),
+    "small-same-line": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 4),
+    "small-same-line-race": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 5),
+    "small-l2-eviction": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 6),
 }
 
 
@@ -72,7 +79,7 @@ def main():
 
     if args.profile not in PROFILE_HARTS:
         parser.error(f"unsupported cluster profile: {args.profile}")
-    main_source, case_id = TEST_APPS[args.test]
+    main_source, case_macro, case_id = TEST_APPS[args.test]
     if not os.path.isfile(main_source):
         parser.error(f"test application does not exist: {main_source}")
 
@@ -81,9 +88,14 @@ def main():
         f"cluster-{args.test}-{args.profile}-{args.core_preset}")
     firmware_prefix = os.path.join(firmware_build, "breeze-mcu")
 
+    # Frozen L2 formula: numHarts * 2 * L1D bytes.  The firmware derives its
+    # set stride from this so the eviction pressure really matches the
+    # elaborated L2 geometry (single 2048, dual 4096, small 8192).
+    l2_bytes = PROFILE_HARTS[args.profile] * 2 * 8192
     profile_flags = f"-DBREEZE_NUM_HARTS={PROFILE_HARTS[args.profile]}"
-    if case_id is not None:
-        profile_flags += f" -DBREEZE_T4_CASE={case_id}"
+    profile_flags += f" -DBREEZE_L2_BYTES={l2_bytes}"
+    if case_macro is not None:
+        profile_flags += f" -D{case_macro}={case_id}"
     if args.extra_cflags:
         profile_flags += f" {args.extra_cflags}"
 

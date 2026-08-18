@@ -40,9 +40,10 @@ WRAPPER_SOURCE = textwrap.dedent(
     import run_multicore
 
     run_multicore.DESIGN_DIR = os.environ["TEST_DESIGN_DIR"]
-    for _name, _command in json.loads(os.environ["TEST_FAKE_REGISTRY"]).items():
-        run_multicore.TEST_REGISTRY[_name] = (
-            lambda command: (lambda args, output_dir: command))(_command)
+    if os.environ.get("TEST_KEEP_REAL_REGISTRY") != "1":
+        for _name, _command in json.loads(os.environ["TEST_FAKE_REGISTRY"]).items():
+            run_multicore.TEST_REGISTRY[_name] = (
+                lambda command: (lambda args, output_dir: command))(_command)
     sys.exit(run_multicore.main())
     """
 )
@@ -59,6 +60,21 @@ VALID_PROFILE_VALUES = {
     "l2Ways": "8",
     "corePreset": "gshare",
 }
+
+# Matches expected_cluster_profile("small", "gshare") in the runner.
+SMALL_PROFILE_VALUES = {
+    "profile": "small",
+    "numHarts": "4",
+    "l1iBytes": "8192",
+    "l1dBytes": "8192",
+    "l2Bytes": "65536",
+    "lineBytes": "32",
+    "l1Ways": "4",
+    "l2Ways": "8",
+    "corePreset": "gshare",
+}
+
+
 
 PASS_MARKER = "[MULTICORE-SINGLE-SMOKE-PASS]"
 
@@ -83,15 +99,15 @@ class RunMulticoreTest(unittest.TestCase):
         with open(self.wrapper_path, "w", encoding="utf-8") as handle:
             handle.write(WRAPPER_SOURCE)
 
-    def profile_file_path(self):
+    def profile_file_path(self, profile="single", preset="gshare"):
         return os.path.join(
-            self.design_dir, "build", "rtl", "cluster", "single", "gshare",
+            self.design_dir, "build", "rtl", "cluster", profile, preset,
             "cluster-profile.txt")
 
-    def write_cluster_profile(self, values):
-        profile_dir = os.path.dirname(self.profile_file_path())
+    def write_cluster_profile(self, values, profile="single", preset="gshare"):
+        profile_dir = os.path.dirname(self.profile_file_path(profile, preset))
         os.makedirs(profile_dir, exist_ok=True)
-        with open(self.profile_file_path(), "w", encoding="utf-8") as handle:
+        with open(self.profile_file_path(profile, preset), "w", encoding="utf-8") as handle:
             for key, value in values.items():
                 handle.write(f"{key}={value}\n")
 
@@ -102,15 +118,18 @@ class RunMulticoreTest(unittest.TestCase):
             handle.write(textwrap.dedent(body))
         return path
 
-    def run_runner(self, child_command, extra_args=(), wall_timeout=30):
+    def run_runner(self, child_command, extra_args=(), wall_timeout=30,
+                   profile="single", test="smoke", keep_real_registry=False):
         env = dict(os.environ)
         env["TEST_SIM_LITEX_DIR"] = SIM_LITEX_DIR
         env["TEST_DESIGN_DIR"] = self.design_dir
         env["TEST_FAKE_REGISTRY"] = json.dumps({"smoke": child_command})
+        if keep_real_registry:
+            env["TEST_KEEP_REAL_REGISTRY"] = "1"
         started = time.monotonic()
         result = subprocess.run(
             [sys.executable, self.wrapper_path,
-             "--profile", "single", "--test", "smoke", *extra_args],
+             "--profile", profile, "--test", test, *extra_args],
             capture_output=True, text=True, env=env, timeout=wall_timeout,
         )
         result.elapsed = time.monotonic() - started
@@ -201,6 +220,45 @@ class RunMulticoreTest(unittest.TestCase):
         result = self.run_runner([sys.executable, child])
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("has not been elaborated", result.stderr)
+
+    # -- small profile -------------------------------------------------
+
+    def test_small_profile_marker_and_fake_child(self):
+        self.write_cluster_profile(SMALL_PROFILE_VALUES, profile="small")
+        child = self.write_child("smallok.py", """
+            print("simulation banner")
+            print("[MULTICORE-SMALL-SMOKE-PASS]")
+        """)
+        result = self.run_runner([sys.executable, child], profile="small")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("BREEZE_CLUSTER profile=small harts=4", result.stdout)
+        self.assertIn("l2_bytes=65536", result.stdout)
+        self.assertIn("[MULTICORE-SMALL-SMOKE-PASS] verified", result.stdout)
+
+    def test_small_profile_file_missing(self):
+        child = self.write_child("smallok.py", 'print("[MULTICORE-SMALL-SMOKE-PASS]")')
+        result = self.run_runner([sys.executable, child], profile="small")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("has not been elaborated", result.stderr)
+
+    def test_small_profile_file_mismatch(self):
+        tampered = dict(SMALL_PROFILE_VALUES, numHarts="2")
+        self.write_cluster_profile(tampered, profile="small")
+        child = self.write_child("smallok.py", 'print("[MULTICORE-SMALL-SMOKE-PASS]")')
+        result = self.run_runner([sys.executable, child], profile="small")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("cluster-profile.txt mismatch", result.stderr)
+        self.assertIn("numHarts", result.stderr)
+
+    def test_dual_only_test_rejected_for_small(self):
+        # The real TEST_REGISTRY allowlists "sharing" to the dual profile; a
+        # small invocation must exit non-zero before any child runs.
+        self.write_cluster_profile(SMALL_PROFILE_VALUES, profile="small")
+        child = self.write_child("unused.py", 'print("should never run")')
+        result = self.run_runner([sys.executable, child], profile="small",
+                                 test="sharing", keep_real_registry=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not registered for profile 'small'", result.stderr)
 
 
 if __name__ == "__main__":
