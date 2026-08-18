@@ -271,6 +271,9 @@ final class SmallL2Harness(
     }
     if (!req.ready.peek().litToBoolean) fail("L2/Home never accepted the coherence request")
     reqLog += SmallReqEvent(hart, op.litValue, txnId, lineAddr)
+    // One more edge with valid && ready so the Home actually latches the
+    // request before the payload is withdrawn.
+    step()
     req.valid.poke(false.B)
   }
 
