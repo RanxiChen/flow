@@ -104,6 +104,16 @@ TEST_REGISTRY = {
     "small-same-line": _cluster_mcu_test("small-same-line", ("small",)),
     "small-same-line-race": _cluster_mcu_test("small-same-line-race", ("small",)),
     "small-l2-eviction": _cluster_mcu_test("small-l2-eviction", ("small",)),
+    # RV64A: the directed vectors and an uncontended LR/SC run on every
+    # profile; the contention shapes need at least two harts.
+    "amo-directed": _cluster_mcu_test("amo-directed", ("single", "dual", "small")),
+    "amo-contention": _cluster_mcu_test("amo-contention", ("dual", "small")),
+    "lrsc-success": _cluster_mcu_test("lrsc-success", ("single", "dual", "small")),
+    "lrsc-fail": _cluster_mcu_test("lrsc-fail", ("dual", "small")),
+    # CLINT: the single profile exercises the self-IPI / own-timer shapes.
+    "ipi": _cluster_mcu_test("ipi", ("single", "dual", "small")),
+    "remote-fencei": _cluster_mcu_test("remote-fencei", ("single", "dual", "small")),
+    "per-hart-timer": _cluster_mcu_test("per-hart-timer", ("single", "dual", "small")),
 }
 
 

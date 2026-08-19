@@ -1,216 +1,24 @@
-"""LiteX CPU integration wrapper for BreezeCore.
+"""Legacy single-core LiteX CPU entry.
 
-This module only adapts generated RTL to LiteX's CPU API. Generate the selected
-RTL preset separately before constructing a SoC.
+The dedicated single-core top (BreezeCoreWishbone) was deleted: the Flow CPU
+is now simply the single-profile Breeze cluster (one hart whose D$ and I$
+refills go through the shared L2/Home, exposing one memory Wishbone master
+and one MMIO Wishbone master). This shim keeps the historical `flow` CPU
+name, the `set_core_preset` entry point and the `core_presets` attribute so
+existing runners stay source-compatible, while all RTL loading, profile
+marker cross-checking and per-hart CLINT wiring live in `flow.cluster`.
 """
 
-import os
-from migen import ClockSignal, Constant, Instance, Record, ResetSignal, Signal
+from flow.cluster import FlowCluster
 
-from litex.soc.interconnect import wishbone
 
-from litex.soc.cores.cpu import CPU, CPU_GCC_TRIPLE_RISCV64
-
-# Variants -----------------------------------------------------------------------------------------
-
-CPU_VARIANTS = ["minimal"]
-
-# GCC Flags ----------------------------------------------------------------------------------------
-
-GCC_FLAGS = {
-    #                               /------------ Base ISA
-    #                               |    /------- Hardware Multiply + Divide
-    #                               |    |/----- Atomics
-    #                               |    ||/---- Compressed ISA
-    #                               |    |||/--- Single-Precision Floating-Point
-    #                               |    ||||/-- Double-Precision Floating-Point
-    #                               i    macfd
-    "minimal":          "-march=rv64i2p0       -mabi=lp64 "
-}
-
-class Flow(CPU):
-    core_presets         = ("baseline", "gshare")
-    core_preset          = "gshare"
-    category             = "softcore"
-    family               = "riscv"
-    name                 = "flow"
-    human_name           = "Flow"
-    variants             = CPU_VARIANTS
-    data_width           = 64
-    endianness           = "little"
-    gcc_triple           = CPU_GCC_TRIPLE_RISCV64
-    linker_output_format = "elf64-littleriscv"
-    nop                  = "nop"
-    mem_map              = {
-        "rom"      : 0x1000_0000,
-        "sram"     : 0x1100_0000,
-        "csr"      : 0x1200_0000,
-        "main_ram" : 0x8000_0000,
-    }
-    io_regions           = {
-        0x0200_0000: 0x0001_0000,  # Machine timer.
-        0x1200_0000: 0x0100_0000,  # LiteX MMIO window.
-    }
-    # GCC Flags.
-    @property
-    def gcc_flags(self):
-        flags = "-mno-save-restore "
-        flags += GCC_FLAGS[self.variant]
-        flags += " -D__flow__ "
-        flags += "-mcmodel=medany"
-        return flags
-
-    def __init__(self, platform, variant="minimal"):
-        self.platform     = platform
-        self.variant      = variant
-        self.human_name   = f"Flow-{variant.upper()}"
-        self.reset        = Signal()
-        self.ibus         = ibus = wishbone.Interface(
-            data_width=64, address_width=32, addressing="word")
-        self.dbus         = dbus = wishbone.Interface(
-            data_width=64, address_width=32, addressing="word")
-        self.periph_buses = [ibus, dbus] # Independent instruction/data masters.
-        self.memory_buses = [] # No bus bypasses the shared LiteX interconnect.
-        self.dcache_fatal_error = Signal()
-        self.estop = Signal()
-        self.interrupt = Signal(8)
-        self.mtip = Signal()
-        self.retire = Record([
-            ("valid",            1),
-            ("pc",              64),
-            ("inst",            32),
-            ("next_pc",         64),
-            ("estop",            1),
-            ("rd_write_en",      1),
-            ("rd_addr",          5),
-            ("rd_data",         64),
-            ("mem_en",           1),
-            ("mem_is_write",     1),
-            ("mem_addr",        64),
-            ("mem_aligned_addr", 64),
-            ("mem_rdata",       64),
-            ("mem_wdata",       64),
-            ("mem_wmask",        8),
-        ])
-
-        self.cpu_params = dict(
-            # Clk / Rst.
-            i_clock = ClockSignal("sys"),
-            i_reset = ResetSignal("sys") | self.reset,
-            i_io_machineTimerInterrupt = self.mtip,
-            i_io_externalInterrupts    = self.interrupt,
-
-            # Instruction Wishbone master.
-            o_io_iWishbone_adr   = ibus.adr,
-            o_io_iWishbone_dat_w = ibus.dat_w,
-            i_io_iWishbone_dat_r = ibus.dat_r,
-            o_io_iWishbone_sel   = ibus.sel,
-            o_io_iWishbone_cyc   = ibus.cyc,
-            o_io_iWishbone_stb   = ibus.stb,
-            i_io_iWishbone_ack   = ibus.ack,
-            o_io_iWishbone_we    = ibus.we,
-            o_io_iWishbone_cti   = ibus.cti,
-            o_io_iWishbone_bte   = ibus.bte,
-            i_io_iWishbone_err   = ibus.err,
-
-            # Data Wishbone master.
-            o_io_dWishbone_adr   = dbus.adr,
-            o_io_dWishbone_dat_w = dbus.dat_w,
-            i_io_dWishbone_dat_r = dbus.dat_r,
-            o_io_dWishbone_sel   = dbus.sel,
-            o_io_dWishbone_cyc   = dbus.cyc,
-            o_io_dWishbone_stb   = dbus.stb,
-            i_io_dWishbone_ack   = dbus.ack,
-            o_io_dWishbone_we    = dbus.we,
-            o_io_dWishbone_cti   = dbus.cti,
-            o_io_dWishbone_bte   = dbus.bte,
-            i_io_dWishbone_err   = dbus.err,
-            o_io_dcacheFatalError = self.dcache_fatal_error,
-            o_io_estop = self.estop,
-
-            # Architectural retirement trace.
-            o_io_tandem_valid          = self.retire.valid,
-            o_io_tandem_pc             = self.retire.pc,
-            o_io_tandem_inst           = self.retire.inst,
-            o_io_tandem_nextPc         = self.retire.next_pc,
-            o_io_tandem_estop          = self.retire.estop,
-            o_io_tandem_rdWriteEn      = self.retire.rd_write_en,
-            o_io_tandem_rdAddr         = self.retire.rd_addr,
-            o_io_tandem_rdData         = self.retire.rd_data,
-            o_io_tandem_memEn          = self.retire.mem_en,
-            o_io_tandem_memIsWrite     = self.retire.mem_is_write,
-            o_io_tandem_memAddr        = self.retire.mem_addr,
-            o_io_tandem_memAlignedAddr = self.retire.mem_aligned_addr,
-            o_io_tandem_memRData       = self.retire.mem_rdata,
-            o_io_tandem_memWData       = self.retire.mem_wdata,
-            o_io_tandem_memWMask       = self.retire.mem_wmask,
-            i_io_resetAddr = Constant(0, 64),
-        )
-
-        self.add_sources(platform)
+class Flow(FlowCluster):
+    cluster_profile = "single"
+    core_preset     = "gshare"
+    name            = "flow"
+    human_name      = "Flow"
+    core_presets    = ("baseline", "gshare")
 
     @classmethod
     def set_core_preset(cls, core_preset):
-        if core_preset not in cls.core_presets:
-            expected = " or ".join(cls.core_presets)
-            raise ValueError(
-                f"Unsupported BreezeCore preset {core_preset!r}; expected {expected}")
-        cls.core_preset = core_preset
-
-    def set_reset_address(self, reset_address):
-        self.reset_address = reset_address
-        self.cpu_params.update(i_io_resetAddr=Constant(reset_address, 64))
-
-    @classmethod
-    def add_sources(cls, platform):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        flow_root_dir = os.path.dirname(os.path.dirname(current_dir))
-        rtl_dir = os.path.join(
-            flow_root_dir, "design", "build", "rtl", cls.core_preset)
-        filelist = os.path.join(rtl_dir, "filelist.f")
-        preset_marker = os.path.join(rtl_dir, "core-preset.txt")
-        if not os.path.exists(filelist):
-            raise FileNotFoundError(
-                "BreezeCore RTL manifest has not been elaborated. Expected:\n"
-                f"  {filelist}\n"
-                "Generate it with:\n"
-                f"  cd {os.path.join(flow_root_dir, 'design')} && "
-                f"sbt \"runMain flow.top.GenerateBreezeCoreWishbone {cls.core_preset}\""
-            )
-        if not os.path.isfile(preset_marker):
-            raise FileNotFoundError(
-                "BreezeCore RTL preset marker is missing:\n"
-                f"  {preset_marker}\n"
-                "Regenerate the selected RTL preset before simulation."
-            )
-        with open(preset_marker, encoding="utf-8") as marker_file:
-            generated_preset = marker_file.read().strip()
-        if generated_preset != cls.core_preset:
-            raise RuntimeError(
-                "BreezeCore RTL preset mismatch: "
-                f"requested={cls.core_preset} generated={generated_preset!r}")
-
-        with open(filelist, encoding="utf-8") as rtl_manifest:
-            rtl_names = [
-                line.split("#", 1)[0].strip()
-                for line in rtl_manifest
-                if line.split("#", 1)[0].strip()
-            ]
-
-        if not rtl_names:
-            raise RuntimeError(f"BreezeCore RTL manifest is empty: {filelist}")
-
-        rtl_files = [os.path.join(rtl_dir, name) for name in rtl_names]
-        missing_files = [path for path in rtl_files if not os.path.isfile(path)]
-        if missing_files:
-            missing = "\n".join(f"  {path}" for path in missing_files)
-            raise FileNotFoundError(
-                "BreezeCore RTL manifest references missing files:\n" + missing
-            )
-
-        for rtl_file in rtl_files:
-            platform.add_source(rtl_file)
-
-    def do_finalize(self):
-        assert hasattr(self, "reset_address")
-        self.specials += Instance("BreezeCoreWishbone", **self.cpu_params)
+        cls.set_cluster_config("single", core_preset)

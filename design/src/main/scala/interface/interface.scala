@@ -53,6 +53,22 @@ class NativeRespIO(val data_width: Int) extends Bundle {
     val data = UInt(data_width.W)
 }
 
+/** CPU memory operation kind carried on the Backend->D$ request.
+  *
+  * Load/Store keep the historical semantics. Lr/Sc/Amo are the RV64A
+  * operations; they are only legal on naturally aligned W/D addresses in a
+  * cacheable, non-device PMA region (the D$ returns an access error
+  * otherwise and the backend maps it to cause 5/7).
+  */
+object BreezeMemOp extends ChiselEnum {
+    val Load, Store, Lr, Sc, Amo = Value
+}
+
+/** RV64A AMO function, decoded from funct5. */
+object BreezeAmoFunc extends ChiselEnum {
+    val Swap, Add, Xor, And, Or, Min, Max, MinU, MaxU = Value
+}
+
 class BackendMemReq(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
     val valid = Bool()
     val isWrite = Bool()
@@ -62,6 +78,22 @@ class BackendMemReq(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
     val sizeLog2 = UInt(3.W)
     val wdata = UInt(64.W)
     val wmask = UInt(8.W)
+    // RV64A sideband. memOp=Load/Store leaves the historical behaviour
+    // untouched (isWrite must equal memOp===Store then).
+    //   Lr : like a load; additionally sets the hart's reservation.
+    //   Sc : wdata/wmask are pre-positioned like a store; rsp.data = 0 on
+    //        success, 1 on failure (no extraction in the backend).
+    //   Amo: wdata carries the RAW rs2 value (not shifted); wmask is ignored,
+    //        the D$ positions the operand itself. rsp.data returns the
+    //        pre-modification aligned 64-bit word, extracted/sign-extended by
+    //        the backend exactly like a load of the same size.
+    val memOp = BreezeMemOp()
+    val amoFunc = BreezeAmoFunc()
+    // Fence semantics of the atomic (aq/rl). The blocking single-outstanding
+    // backend enforces them by construction; the bits are carried so the
+    // ordering point stays explicit and assertable.
+    val aq = Bool()
+    val rl = Bool()
 }
 
 class BackendMemResp extends Bundle {

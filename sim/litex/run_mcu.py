@@ -75,7 +75,7 @@ def main():
         default="gshare",
         help="Core RTL preset (default: gshare; baseline is explicit).")
     parser.add_argument("--elaborate", action="store_true",
-        help="Regenerate the selected BreezeCoreWishbone RTL before simulation.")
+        help="Regenerate the single-profile cluster RTL before simulation.")
     parser.add_argument("--trace", action="store_true",
         help="Enable the LiteX/Verilator waveform trace.")
     parser.add_argument("--mcu-timeout", type=int, default=20000,
@@ -111,7 +111,8 @@ def main():
     if args.elaborate:
         run_checked([
             "sbt",
-            "runMain flow.top.GenerateBreezeCoreWishbone " + args.core_preset,
+            "runMain flow.top.GenerateBreezeMulticoreClusterWishbone single "
+            + args.core_preset,
         ], cwd=os.path.join(FLOW_ROOT, "design"))
 
     run_checked([

@@ -2,38 +2,38 @@ package flow.top
 
 import chisel3._
 import flow.bus.{BreezeMmioArbiter, DCacheWishboneBridge, LiteXWishboneMasterIO, LiteXWishboneParameters}
-import flow.cache.BreezeL2Home
+import flow.cache.{BreezeDCache, BreezeL2Home}
 import flow.config.BreezeClusterConfig
 import flow.interface.TracePayload
 import flow.platform.BreezeMcuPlatform
 
-/** SoC-facing wrapper of a 1/2/4-hart Breeze cluster.
+/** SoC-facing wrapper of a 1/2/4-hart Breeze cluster - the only memory-system
+  * top level of the design (the single profile is simply numHarts=1; there is
+  * no separate single-core top any more).
   *
   * Interface contract (frozen by the multicore specification):
   *   - one shared 64-bit memory Wishbone master (L2/Home -> RAM);
   *   - one shared 64-bit MMIO Wishbone master (per-hart uncached requests
   *     through the blocking round-robin arbiter -> CLINT/UART/GPIO);
-  *   - per-hart msip/mtip/external-interrupt inputs;
+  *   - per-hart msip/mtip/external-interrupt inputs (msip/mtip are driven by
+  *     the LiteX-side CLINT; external interrupts reach hart 0 only, per the
+  *     frozen external-interrupt boundary);
   *   - per-hart fatal/estop and architectural retire trace for simulation;
   *   - a single shared reset address.
   *
-  * P2: the per-hart tiles, the shared L2/Home and the MMIO arbiter are
-  * connected. The msip inputs are not consumed yet (the multi-hart CLINT and
-  * machine software interrupts land in P8); external interrupts reach hart 0
-  * only, per the frozen external-interrupt boundary.
+  * Per hart the wrapper instantiates BreezeCore (with its private L1I inside
+  * the frontend) and a private coherent L1D; all L1D coherence traffic and
+  * every I$ refill go through the shared L2/Home.
   */
 class BreezeMulticoreClusterWishbone(
     val clusterCfg: BreezeClusterConfig,
-    val enabledebug: Boolean = false,
     val enableTandem: Boolean = false
 ) extends Module {
     private val numHarts = clusterCfg.numHarts
-    private val memoryWbParams = LiteXWishboneParameters(
-        byteAddressWidth = BreezeMcuPlatform.AddressWidth,
-        dataWidth = 64
-    )
-    private val mmioWbParams = LiteXWishboneParameters(
-        byteAddressWidth = BreezeMcuPlatform.AddressWidth,
+    private val coreCfg = clusterCfg.coreCfg(enableTandem = enableTandem)
+    private val plen = BreezeMcuPlatform.AddressWidth
+    private val wbParams = LiteXWishboneParameters(
+        byteAddressWidth = plen,
         dataWidth = 64
     )
 
@@ -44,51 +44,74 @@ class BreezeMulticoreClusterWishbone(
         val externalInterrupts = Input(
             Vec(numHarts, UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         )
-        val memoryWishbone = new LiteXWishboneMasterIO(memoryWbParams)
-        val mmioWishbone = new LiteXWishboneMasterIO(mmioWbParams)
+        val memoryWishbone = new LiteXWishboneMasterIO(wbParams)
+        val mmioWishbone = new LiteXWishboneMasterIO(wbParams)
         val hartFatal = Output(Vec(numHarts, Bool()))
         val hartEStop = Output(Vec(numHarts, Bool()))
         val retire = Output(Vec(numHarts, new TracePayload(64)))
     })
 
-    val tiles = Seq.tabulate(numHarts)(h =>
-        Module(new BreezeHartTile(clusterCfg, hartId = h, enabledebug = enabledebug,
-            enableTandem = enableTandem)))
     val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts))
     val mmioArbiter = Module(new BreezeMmioArbiter(numHarts, clusterCfg.l1d.lineBytes))
     val mmioBridge = Module(new DCacheWishboneBridge(
-        physicalAddressWidth = BreezeMcuPlatform.AddressWidth,
+        physicalAddressWidth = plen,
         lineBytes = clusterCfg.l1d.lineBytes,
         busDataWidth = 64
     ))
 
+    val cores = Seq.tabulate(numHarts) { h =>
+        Module(new flow.core.BreezeCore(coreCfg, hartId = h))
+    }
+    val dcaches = Seq.tabulate(numHarts) { h =>
+        Module(new BreezeDCache(
+            coreCfg.dcacheCfg,
+            hartId = h,
+            hartIdWidth = clusterCfg.hartIdWidth,
+            txnIdWidth = clusterCfg.txnIdWidth
+        ))
+    }
+
     for (h <- 0 until numHarts) {
-        tiles(h).io.resetAddr := io.resetAddr
-        // Machine timer interrupts are per-hart; msip is wired in P8 with the
-        // CLINT. External interrupts go to hart 0 only (frozen boundary).
-        tiles(h).io.machineTimerInterrupt := io.mtip(h)
-        tiles(h).io.externalInterrupts := (if (h == 0) {
+        val core = cores(h)
+        val dcache = dcaches(h)
+
+        core.io.resetAddr := io.resetAddr
+        core.io.machineTimerInterrupt := io.mtip(h)
+        core.io.machineSoftwareInterrupt := io.msip(h)
+        // External interrupts go to hart 0 only (frozen boundary; no PLIC).
+        core.io.externalInterrupts := (if (h == 0) {
             io.externalInterrupts(0)
         } else {
             0.U(BreezeMcuPlatform.ExternalInterruptWidth.W)
         })
 
-        // I$ refill path.
-        l2Home.io.instrReq(h) <> tiles(h).io.instrReq
-        tiles(h).io.instrResp <> l2Home.io.instrResp(h)
+        // I$ refill goes to the unified L2 (GetInstr semantics: the I$ never
+        // joins the directory). The core emits 64-bit physical addresses; the
+        // frontend PMA already rejected anything wider than the implemented
+        // 32-bit physical space, so the slice is safe.
+        l2Home.io.instrReq(h).req := core.io.nextLevelReq.req
+        l2Home.io.instrReq(h).paddr := core.io.nextLevelReq.paddr(plen - 1, 0)
+        core.io.nextLevelRsp <> l2Home.io.instrResp(h)
+
+        // D$ CPU-facing and flush wiring (unchanged pulse semantics).
+        dcache.io.cpu <> core.io.dmem
+        dcache.io.flushReq := core.io.dcacheFlushReq
+        core.io.dcacheFlushDone := dcache.io.flushDone
+        core.io.dcacheHpm := dcache.io.hpm
+        dcache.io.resKill := core.io.reservationKill
 
         // D$ coherence sideband.
-        l2Home.io.coherenceReq(h) <> tiles(h).io.cohReq
-        tiles(h).io.cohGrant <> l2Home.io.coherenceGrant(h)
-        tiles(h).io.cohProbe <> l2Home.io.coherenceProbe(h)
-        l2Home.io.coherenceProbeResp(h) <> tiles(h).io.cohProbeResp
+        l2Home.io.coherenceReq(h) <> dcache.io.coherence.req
+        dcache.io.coherence.grant <> l2Home.io.coherenceGrant(h)
+        dcache.io.coherence.probe <> l2Home.io.coherenceProbe(h)
+        l2Home.io.coherenceProbeResp(h) <> dcache.io.coherence.probeResp
 
         // D$ uncached/MMIO path.
-        mmioArbiter.io.hartReq(h) <> tiles(h).io.mmioReq
-        tiles(h).io.mmioResp <> mmioArbiter.io.hartResp(h)
+        mmioArbiter.io.hartReq(h) <> dcache.io.mmioReq
+        dcache.io.mmioRsp <> mmioArbiter.io.hartResp(h)
 
-        io.hartFatal(h) := tiles(h).io.fatalError
-        io.hartEStop(h) := tiles(h).io.estop
+        io.hartFatal(h) := dcache.io.fatalError
+        io.hartEStop(h) := core.io.estop
     }
 
     // MMIO arbiter -> shared MMIO Wishbone master.
@@ -100,12 +123,10 @@ class BreezeMulticoreClusterWishbone(
     io.memoryWishbone <> l2Home.io.memoryWishbone
 
     // Retire traces exist only with tandem-enabled cores (the cluster RTL
-    // generator enables them, mirroring the single-core generator, because the
-    // simulation monitors need them - spec section 21). Without tandem the
-    // debug outputs stay tied off.
+    // generator enables them because the simulation monitors need them).
     if (enableTandem) {
-        io.retire.zip(tiles).foreach { case (trace, tile) =>
-            trace := tile.io.retire.get
+        io.retire.zip(cores).foreach { case (trace, core) =>
+            trace := core.io.tandem.get
         }
     } else {
         io.retire.foreach(_ := 0.U.asTypeOf(new TracePayload(64)))

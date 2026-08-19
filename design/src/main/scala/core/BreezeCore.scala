@@ -16,6 +16,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(corecfg.VLEN.W))
         val machineTimerInterrupt = Input(Bool())
+        val machineSoftwareInterrupt = Input(Bool())
         val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
@@ -23,6 +24,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val dcacheFlushReq = Output(Bool())
         val dcacheFlushDone = Input(Bool())
         val dcacheHpm = Input(new BreezeHpmEvents)
+        // One-cycle pulse on every taken trap; clears the D$ LR/SC reservation.
+        val reservationKill = Output(Bool())
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
         val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
@@ -53,7 +56,9 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
 
     backend.io.resetAddr := io.resetAddr
     backend.io.machineTimerInterrupt := io.machineTimerInterrupt
+    backend.io.machineSoftwareInterrupt := io.machineSoftwareInterrupt
     backend.io.externalInterrupts := io.externalInterrupts
+    io.reservationKill := backend.io.reservationKill
     io.estop := backend.io.estop
     io.dmem <> backend.io.dmem
     io.dcacheFlushReq := backend.io.dcacheFlushReq

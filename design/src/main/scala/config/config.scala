@@ -146,6 +146,23 @@ case class BreezeCoreConfig(
     )
 }
 
+/** The two supported core presets. Every generator, wrapper and runner
+  * defaults to GShare; `baseline` (no branch predictor) is only reachable by
+  * naming it explicitly. Name parsing lives here and nowhere else.
+  */
+sealed abstract class CorePreset(val name: String)
+object CorePreset {
+    case object Gshare extends CorePreset("gshare")
+    case object Baseline extends CorePreset("baseline")
+
+    val all: Seq[CorePreset] = Seq(Gshare, Baseline)
+
+    def fromName(name: String): CorePreset =
+        all.find(_.name == name).getOrElse(
+            throw new IllegalArgumentException(
+                s"unsupported core preset: $name (expected gshare or baseline)"))
+}
+
 object BreezeCoreConfigs {
     def baseline(enableTandem: Boolean = false): BreezeCoreConfig =
         BreezeCoreConfig(
@@ -161,49 +178,18 @@ object BreezeCoreConfigs {
             useGShare = true
         )
 
-    /** Resolve a generator/CLI core preset name to a core configuration.
-      *
-      * Both the single-core and the multicore-cluster generators use this so
-      * that a default-less caller always lands on GShare and `baseline` is
-      * only reachable explicitly.
+    def fromPreset(preset: CorePreset, enableTandem: Boolean): BreezeCoreConfig =
+        preset match {
+            case CorePreset.Baseline => baseline(enableTandem = enableTandem)
+            case CorePreset.Gshare   => gshare(enableTandem = enableTandem)
+        }
+
+    /** Resolve a generator/CLI core preset name to a core configuration; a
+      * default-less caller always lands on GShare and `baseline` is only
+      * reachable explicitly.
       */
     def fromPreset(preset: String, enableTandem: Boolean = false): BreezeCoreConfig =
-        preset match {
-            case "baseline" => baseline(enableTandem = enableTandem)
-            case "gshare"   => gshare(enableTandem = enableTandem)
-            case other =>
-                throw new IllegalArgumentException(
-                    s"unsupported core preset: $other (expected baseline or gshare)"
-                )
-        }
-}
-
-/** Private L1 cache geometry shared by every hart (L1I and L1D).
-  *
-  * Frozen 1/2/4-core profile: 8192 B, 32 B lines, 4 ways -> 64 sets.
-  */
-final case class L1CacheGeometry(
-    capacityBytes: Int = 8192,
-    lineBytes: Int = 32,
-    ways: Int = 4
-) {
-    require(capacityBytes > 0 && (capacityBytes & (capacityBytes - 1)) == 0,
-        s"L1 capacity must be a positive power of two, got $capacityBytes")
-    require(lineBytes > 0 && (lineBytes & (lineBytes - 1)) == 0,
-        s"L1 line size must be a positive power of two, got $lineBytes")
-    require(ways > 0 && (ways & (ways - 1)) == 0,
-        s"L1 associativity must be a positive power of two, got $ways")
-    require(capacityBytes % (lineBytes * ways) == 0,
-        s"L1 capacity $capacityBytes must be divisible by lineBytes*ways ${lineBytes * ways}")
-
-    val sets: Int = capacityBytes / (lineBytes * ways)
-    require(sets > 0 && (sets & (sets - 1)) == 0,
-        s"L1 set count must be a positive power of two, got $sets")
-
-    val lineWidth: Int = lineBytes * 8
-    val lineOffsetWidth: Int = log2Ceil(lineBytes)
-    val setIndexWidth: Int = log2Ceil(sets)
-    val wayIndexWidth: Int = log2Ceil(ways)
+        fromPreset(CorePreset.fromName(preset), enableTandem)
 }
 
 /** Shared single-bank L2 geometry.
@@ -237,37 +223,51 @@ final case class L2CacheGeometry(
     val wayIndexWidth: Int = log2Ceil(ways)
 }
 
-/** One elaborated multicore-cluster configuration.
+/** One elaborated multicore-cluster configuration - the single configuration
+  * entry point of the whole design.
   *
-  * The three frozen profiles are single (1 hart), dual (2 harts) and small
-  * (4 harts). 8/16-hart configurations are NOT supported and are rejected by
-  * the requires below; no parser or preset accepts standard/max.
+  * Everything is derived from (profileName, numHarts, corePreset): the L1
+  * geometries come from the per-core configuration (one source of truth, no
+  * parallel geometry case classes), the L2 capacity follows the frozen
+  * formula numHarts * 2 * L1D bytes, and the coherence widths follow the
+  * hart count. The three frozen profiles are single (1 hart), dual (2 harts)
+  * and small (4 harts). 8/16-hart configurations are NOT supported and are
+  * rejected by the requires below; no parser or preset accepts standard/max.
   */
 final case class BreezeClusterConfig(
     profileName: String,
     numHarts: Int,
-    l1i: L1CacheGeometry,
-    l1d: L1CacheGeometry,
-    l2: L2CacheGeometry,
-    corePreset: String = "gshare"
+    corePreset: CorePreset = CorePreset.Gshare
 ) {
     require(Set(1, 2, 4).contains(numHarts),
         s"cluster profile $profileName requires numHarts in {1,2,4}; got $numHarts. " +
           "8/16-core configurations are not supported by this release")
-    require(l1i == l1d,
+
+    /** Per-hart core configuration for this profile. */
+    def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem)
+
+    /** L1 geometries, taken from the core configuration (single source). */
+    val l1i: DefaultICacheConfig = coreCfg().frontendCfg.cacheCfg
+    val l1d: DefaultDCacheConfig = coreCfg().dcacheCfg
+
+    private val l1iCapacityBytes =
+        l1i.ICACHE_SET_NUM * l1i.ICACHE_WAY_NUM * l1i.ICACHE_LINE_BYTES
+    require(l1iCapacityBytes == l1d.capacityBytes &&
+        l1i.ICACHE_LINE_BYTES == l1d.lineBytes &&
+        l1i.ICACHE_WAY_NUM == l1d.ways,
         s"L1I and L1D geometry must match for profile $profileName")
-    require(l1i.lineBytes == l2.lineBytes,
-        s"all cache levels must share lineBytes; L1=$l1i.lineBytes L2=${l2.lineBytes}")
-    require(l2.capacityBytes == numHarts * 2 * l1d.capacityBytes,
-        s"L2 capacity must equal numHarts * 2 * L1D bytes " +
-          s"($numHarts * 2 * ${l1d.capacityBytes} = ${numHarts * 2 * l1d.capacityBytes}); " +
-          s"got ${l2.capacityBytes}")
-    require(corePreset == "gshare" || corePreset == "baseline",
-        s"unsupported core preset: $corePreset (expected gshare or baseline)")
+
+    /** Shared L2, frozen formula: numHarts * 2 * L1D bytes. */
+    val l2: L2CacheGeometry =
+        L2CacheGeometry(capacityBytes = numHarts * 2 * l1d.capacityBytes)
+    require(l1d.lineBytes == l2.lineBytes,
+        s"all cache levels must share lineBytes; L1=${l1d.lineBytes} L2=${l2.lineBytes}")
 
     /** max(1, ceil(log2(numHarts))) per the frozen profile rules. */
     val hartIdWidth: Int = math.max(1, log2Ceil(numHarts))
     val sharerWidth: Int = numHarts
+    val txnIdWidth: Int = 2
 }
 
 /** The three publicly supported cluster profiles.
@@ -277,18 +277,9 @@ final case class BreezeClusterConfig(
   * the default of a preset, generator, wrapper or runner.
   */
 object BreezeClusterPresets {
-    private def build(profileName: String, numHarts: Int): BreezeClusterConfig =
-        BreezeClusterConfig(
-            profileName = profileName,
-            numHarts = numHarts,
-            l1i = L1CacheGeometry(),
-            l1d = L1CacheGeometry(),
-            l2 = L2CacheGeometry(capacityBytes = numHarts * 2 * L1CacheGeometry().capacityBytes)
-        )
-
-    val single: BreezeClusterConfig = build("single", 1)
-    val dual: BreezeClusterConfig = build("dual", 2)
-    val small: BreezeClusterConfig = build("small", 4)
+    val single: BreezeClusterConfig = BreezeClusterConfig("single", 1)
+    val dual: BreezeClusterConfig = BreezeClusterConfig("dual", 2)
+    val small: BreezeClusterConfig = BreezeClusterConfig("small", 4)
 
     /** Resolve a generator CLI profile name; unknown names fail fast. */
     def fromName(name: String): BreezeClusterConfig = name match {

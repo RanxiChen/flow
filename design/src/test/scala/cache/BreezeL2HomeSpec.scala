@@ -14,12 +14,13 @@ import scala.collection.mutable
   *
   * Oracle discipline (T3):
   *   - every Wishbone beat is logged (byte address, isWrite), so writeback
-  *     beats must appear exactly once, in ascending order (W-02/W-04
-  *     regressions);
+  *     beats must appear exactly once, in ascending order;
   *   - every probe is logged with (hart, lineAddr, opcode) so inclusive
   *     eviction and owner recall are directly observable;
-  *   - the mock L1 tracks (state, data) per line, answers probes according to
-  *     MESI rules, and records grant outcomes.
+  *   - the mock L1 tracks (state, data) per line and answers probes with the
+  *     MESI data rule: only a dirty M line carries data, a clean E or S copy
+  *     acks without data (the L2 array data is current then);
+  *   - grant outcomes are recorded per hart.
   */
 final class L2HomeHarness(
     dut: BreezeL2Home,
@@ -44,11 +45,6 @@ final class L2HomeHarness(
   private var wbWe = false
   private var wbData = BigInt(0)
   private var wbJustAcked = false
-
-  // ----- coherence client state (per hart) -----
-  private var reqActive = false
-  private var reqHart = 0
-  private var grantResult: Option[(BigInt, BigInt, Boolean, Boolean)] = None
 
   // probe response pipeline: (hart, txnId, lineAddr, opcode) pending
   private var probePending: Option[(Int, BigInt, BigInt, BigInt)] = None
@@ -85,10 +81,9 @@ final class L2HomeHarness(
 
   private def grantPort(h: Int) = dut.io.coherenceGrant(h)
   private def probePort(h: Int) = dut.io.coherenceProbe(h)
-  private def probeRespPort(h: Int) = dut.io.coherenceProbeResp(h)
 
   /** Advance one cycle, servicing the Wishbone slave and any pending probe. */
-  private def step(): Unit = {
+  def step(): Unit = {
     // --- Wishbone slave ---
     val wb = dut.io.memoryWishbone
     wb.ack.poke(false.B)
@@ -136,7 +131,7 @@ final class L2HomeHarness(
       }
     }
 
-    // Advance the response pipeline once per cycle, not once per hart.  Latch
+    // Advance the response pipeline once per cycle, not once per hart. Latch
     // the mock L1's answer exactly once so valid/data remain stable if Home
     // is still moving from ProbeReq to ProbeWait or applies backpressure.
     if (probePending.isDefined && probeCountdown > 0) {
@@ -167,7 +162,10 @@ final class L2HomeHarness(
     dut.clock.step(1)
   }
 
-  /** Mock-L1 probe answer following MESI rules; returns (hasData, data). */
+  /** Mock-L1 probe answer with the MESI data rule; returns (hasData, data).
+    * Only a dirty M line carries data; clean E and S copies ack without data
+    * because the L2 array line is current by construction.
+    */
   private def answerProbe(hart: Int, lineAddr: BigInt, opcode: BigInt): (Boolean, BigInt) = {
     val key = (hart, lineAddr)
     val entry = l1.get(key)
@@ -188,47 +186,48 @@ final class L2HomeHarness(
     } else {
       assert(opcode == BreezeProbeOpcode.ProbeRecallInv.litValue, "unknown probe opcode")
       entry match {
-        case Some((s, data)) => assert(s == 'M' || s == 'E', "RecallInv to non-owner"); l1.remove(key); (true, data)
+        case Some(('M', data)) => l1.remove(key); (true, data)
+        case Some(('E', _)) => l1.remove(key); (false, BigInt(0))
+        case Some((state, _)) => fail(s"RecallInv to non-owner state $state")
         case None => (false, BigInt(0))
       }
     }
   }
 
-  /** Drive one coherence request and wait for the grant. */
-  private def request(
+  /** Drive a request until accepted; the transaction then runs unattended. */
+  def beginRequest(
       op: BreezeCoherenceOpcode.Type,
       lineAddr: BigInt,
       hart: Int = 0,
+      txnId: BigInt = 1,
       hasData: Boolean = false,
       data: BigInt = 0
-  ): (BigInt, BigInt, Boolean, Boolean) = {
-    assert(!reqActive, "harness supports one outstanding client request")
-    reqActive = true
-    reqHart = hart
+  ): Unit = {
     val req = dut.io.coherenceReq(hart)
     req.valid.poke(true.B)
     req.opcode.poke(op.litValue)
     req.srcHart.poke(hart.U)
-    req.txnId.poke(1.U)
+    req.txnId.poke(txnId.U)
     req.lineAddr.poke(lineAddr.U)
     req.hasData.poke(hasData.B)
     req.lineData.poke(data.U)
-
     var cycles = 0
-    var fired = false
-    while (!fired && cycles < 4000) {
-      if (req.ready.peek().litToBoolean) fired = true
+    while (!req.ready.peek().litToBoolean && cycles < 4000) {
       step()
       cycles += 1
     }
-    if (!fired) fail("L2/Home never accepted the coherence request")
+    if (!req.ready.peek().litToBoolean) fail("L2/Home never accepted the coherence request")
+    // One more edge with valid && ready so the Home latches the request.
+    step()
     req.valid.poke(false.B)
+  }
 
-    // Wait for the grant.
+  /** Wait for the grant on one hart; returns (state, data, hasData, error). */
+  def waitGrant(hart: Int): (BigInt, BigInt, Boolean, Boolean) = {
     val grant = grantPort(hart)
     grant.ready.poke(true.B)
     var result: Option[(BigInt, BigInt, Boolean, Boolean)] = None
-    cycles = 0
+    var cycles = 0
     while (result.isEmpty && cycles < 4000) {
       if (grant.valid.peek().litToBoolean) {
         result = Some((
@@ -242,27 +241,41 @@ final class L2HomeHarness(
       cycles += 1
     }
     grant.ready.poke(false.B)
-    reqActive = false
     if (result.isEmpty) fail("L2/Home never granted the coherence request")
     result.get
   }
 
+  /** Drive one coherence request and wait for the grant. */
+  private def request(
+      op: BreezeCoherenceOpcode.Type,
+      lineAddr: BigInt,
+      hart: Int = 0,
+      hasData: Boolean = false,
+      data: BigInt = 0
+  ): (BigInt, BigInt, Boolean, Boolean) = {
+    beginRequest(op, lineAddr, hart, txnId = 1, hasData = hasData, data = data)
+    waitGrant(hart)
+  }
+
   private def lineOf(addr: BigInt): BigInt = addr & ~BigInt(31)
+
+  private def stateChar(state: BigInt): Char =
+    if (state == BreezeGrantState.M.litValue) 'M'
+    else if (state == BreezeGrantState.E.litValue) 'E' else 'S'
 
   def getS(addr: BigInt, hart: Int = 0): (BigInt, BigInt, Boolean) = {
     val (state, data, hasData, error) = request(BreezeCoherenceOpcode.GetS, lineOf(addr), hart)
     if (!error) {
       assert(hasData, "GetS grant must carry data")
-      l1((hart, lineOf(addr))) = (if (state == BreezeGrantState.M.litValue) 'M'
-        else if (state == BreezeGrantState.E.litValue) 'E' else 'S', data)
+      l1((hart, lineOf(addr))) = (stateChar(state), data)
     }
     (state, data, error)
   }
 
   def getM(addr: BigInt, hart: Int = 0): (BigInt, Boolean) = {
-    val (state, data, hasData, error) = request(BreezeCoherenceOpcode.GetM, lineOf(addr), hart)
+    val (_, data, hasData, error) = request(BreezeCoherenceOpcode.GetM, lineOf(addr), hart)
     if (!error) {
-      // An upgrade grant may omit the data; the mock L1 keeps its copy.
+      // An owner-confirmation grant may omit the data; the mock keeps its copy.
       val key = (hart, lineOf(addr))
       val merged = if (hasData) data else l1.getOrElse(key, ('S', BigInt(0)))._2
       l1(key) = ('M', merged)
@@ -283,11 +296,12 @@ final class L2HomeHarness(
     error
   }
 
-  /** Mock a local store inside the L1 (line must be held in M). */
+  /** Mock a local store inside the L1. E silently upgrades to M. */
   def l1Store(addr: BigInt, newData: BigInt, hart: Int = 0): Unit = {
     val line = lineOf(addr)
     val key = (hart, line)
-    assert(l1.get(key).exists(_._1 == 'M'), "l1Store requires an M line")
+    assert(l1.get(key).exists(e => e._1 == 'M' || e._1 == 'E'),
+      "l1Store requires an M or E line")
     l1(key) = ('M', newData)
   }
 
@@ -300,9 +314,11 @@ final class L2HomeHarness(
   def l1Contains(addr: BigInt, hart: Int): Boolean =
     l1.contains((hart, lineOf(addr)))
 
-  /** Present two GetS requests together and prove that each is accepted and
-    * granted exactly once while the blocking Home serializes them. */
-  def simultaneousGetS(addr: BigInt): Seq[(BigInt, BigInt, Boolean, Boolean)] = {
+  /** Present two GetS requests together: the Home serializes them, the first
+    * one wins E, the ProbeToS of the second downgrades it, and both end S
+    * with identical data. Returns the granted states.
+    */
+  def simultaneousGetS(addr: BigInt): Seq[BigInt] = {
     assert(numHarts == 2, "simultaneousGetS is the dual-hart T4 helper")
     val line = lineOf(addr)
     val accepted = Array(false, false)
@@ -327,9 +343,14 @@ final class L2HomeHarness(
         val grant = dut.io.coherenceGrant(h)
         if (grant.valid.peek().litToBoolean) {
           assert(results(h).isEmpty, s"hart $h received a duplicate grant")
-          results(h) = Some((grant.grantState.peek().litValue,
+          val r = (grant.grantState.peek().litValue,
             grant.lineData.peek().litValue, grant.hasData.peek().litToBoolean,
-            grant.error.peek().litToBoolean))
+            grant.error.peek().litToBoolean)
+          results(h) = Some(r)
+          // Install immediately: the second transaction's ProbeToS must see
+          // (and downgrade) the first winner's E copy in the mock L1.
+          assert(r._3 && !r._4, s"hart $h GetS grant must carry data without error")
+          l1((h, line)) = (stateChar(r._1), r._2)
         }
       }
       step()
@@ -341,21 +362,24 @@ final class L2HomeHarness(
     }
     assert(accepted.forall(identity), "both simultaneous requests must be accepted")
     if (results.exists(_.isEmpty)) fail("dual simultaneous GetS timed out")
-    for (h <- 0 until 2) {
-      dut.io.coherenceGrant(h).ready.poke(false.B)
-      val result = results(h).get
-      assert(result._3 && !result._4, s"hart $h GetS grant must carry data without error")
-      l1((h, line)) = ('S', result._2)
-    }
-    results.map(_.get).toSeq
+    for (h <- 0 until 2) dut.io.coherenceGrant(h).ready.poke(false.B)
+    results.map(_.get._1).toSeq
   }
 
-  /** I$ refill pulse; waits for the response. Returns (data, error). */
-  def instr(addr: BigInt, hart: Int = 0): (BigInt, Boolean) = {
+  /** Pulse an I$ refill request without waiting (for arbitration tests). */
+  def pulseInstr(addr: BigInt, hart: Int = 0): Unit = {
     dut.io.instrReq(hart).paddr.poke(lineOf(addr).U)
     dut.io.instrReq(hart).req.poke(true.B)
     step()
     dut.io.instrReq(hart).req.poke(false.B)
+  }
+
+  def instrRespValid(hart: Int = 0): Boolean =
+    dut.io.instrResp(hart).vld.peek().litToBoolean
+
+  /** I$ refill pulse; waits for the response. Returns (data, error). */
+  def instr(addr: BigInt, hart: Int = 0): (BigInt, Boolean) = {
+    pulseInstr(addr, hart)
     var cycles = 0
     var result: Option[(BigInt, Boolean)] = None
     while (result.isEmpty && cycles < 4000) {
@@ -378,6 +402,9 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val l2Cfg = L2CacheGeometry(capacityBytes = 16384)
   private val dualL2Cfg = L2CacheGeometry(capacityBytes = 32768)
 
+  private val E = BreezeGrantState.E.litValue
+  private val S = BreezeGrantState.S.litValue
+
   // main_ram region; set = addr[10:5], tag = addr[31:11].
   private def ramAddr(tagLsb: Int, set: Int, offset: Int = 0): BigInt =
     BigInt(0x80000000L) + (BigInt(tagLsb) << 11) + (BigInt(set) << 5) + offset
@@ -386,28 +413,31 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private def dualRamAddr(tagLsb: Int, set: Int, offset: Int = 0): BigInt =
     BigInt(0x80000000L) + (BigInt(tagLsb) << 12) + (BigInt(set) << 5) + offset
 
-  "L2/Home should refill a GetS miss from memory with all four beats" in {
+  "a GetS miss refills from memory with four beats and grants E (MESI)" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val (state, data, error) = h.getS(ramAddr(0, 0))
       error mustBe false
-      state mustBe BreezeGrantState.S.litValue
+      state mustBe E
       data mustBe h.mem.readLine(ramAddr(0, 0))
-      // Exactly four read beats at ascending word addresses (W-02/W-04).
+      // Exactly four read beats at ascending word addresses.
       h.wbLog.length mustBe 4
       h.wbLog.map(_._2).foreach(_ mustBe false)
       h.wbLog.map(_._1) mustBe (0 until 4).map(i => ramAddr(0, 0) + i * 8)
 
-      // A second GetS hits in the L2: no memory traffic at all.
+      // The owner releases its clean E copy with PutS; re-reading is an L2
+      // hit that grants E again without memory traffic.
+      h.putS(ramAddr(0, 0)) mustBe false
       h.resetWbLog()
-      val (_, data2, error2) = h.getS(ramAddr(0, 0))
+      val (state2, data2, error2) = h.getS(ramAddr(0, 0))
       error2 mustBe false
+      state2 mustBe E
       data2 mustBe h.mem.readLine(ramAddr(0, 0))
       h.wbLog mustBe empty
     }
   }
 
-  "L2/Home should keep a dirty PutM line in the L2 without memory traffic" in {
+  "a dirty PutM line stays in the L2 without memory traffic" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val (_, errorM) = h.getM(ramAddr(1, 1))
@@ -418,22 +448,24 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.wbLog mustBe empty
 
       // The line is now dir=NONE/dirtyToMemory: a GetS hit returns the dirty
-      // data straight from the L2, still without memory traffic.
-      val (_, data, error) = h.getS(ramAddr(1, 1))
+      // data straight from the L2 (as an E grant), still without memory.
+      val (state, data, error) = h.getS(ramAddr(1, 1))
       error mustBe false
+      state mustBe E
       data mustBe newData
       h.wbLog mustBe empty
     }
   }
 
-  "L2/Home should write back a dirty victim with ascending beats" in {
+  "a dirty NONE victim is written back with ascending beats" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val dirty = BigInt("ffeeddccbbaa99001122334455667700", 16)
       h.getM(ramAddr(0, 2))
       h.putM(ramAddr(0, 2), dirty) // dir=NONE, dirtyToMemory=1
-      // Fill the remaining 7 ways of set 2, then overflow it with tag 8.
-      for (tag <- 1 until 8) h.getS(ramAddr(tag, 2))
+      // Fill the remaining 7 ways of set 2, releasing each E copy so the
+      // subsequent eviction of way 0 needs no probes.
+      for (tag <- 1 until 8) { h.getS(ramAddr(tag, 2)); h.putS(ramAddr(tag, 2)) }
       h.resetWbLog()
       h.getS(ramAddr(8, 2))
       // The dirty victim is written back before the refill: 4 ascending write
@@ -448,7 +480,25 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "I$ refill should allocate in the L2 but never join the D$ directory" in {
+  "an evicted clean E victim is recalled without data and without writeback" in {
+    simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
+      val h = new L2HomeHarness(dut, new DTestMem)
+      h.getS(ramAddr(0, 8)) // clean E owner, dir=UNIQUE
+      for (tag <- 1 until 8) { h.getS(ramAddr(tag, 8)); h.putS(ramAddr(tag, 8)) }
+      h.resetWbLog()
+      h.resetProbeLog()
+      h.getS(ramAddr(8, 8)) // evicts way 0: recall the clean E owner
+      h.probeLog.head._2 mustBe (ramAddr(0, 8) & ~BigInt(31))
+      h.probeLog.head._3 mustBe BreezeProbeOpcode.ProbeRecallInv.litValue.toString()
+      h.l1Contains(ramAddr(0, 8), 0) mustBe false
+      // The owner answered without data (clean E): the L2 data is current and
+      // nothing is written back - only the 4 refill read beats appear.
+      h.wbLog.length mustBe 4
+      h.wbLog.map(_._2).foreach(_ mustBe false)
+    }
+  }
+
+  "I$ refill allocates in the L2 but never joins the D$ directory" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val (data, error) = h.instr(ramAddr(3, 3))
@@ -460,16 +510,18 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.instr(ramAddr(3, 3))._2 mustBe false
       h.wbLog mustBe empty
 
-      // The I$ line is dir=NONE: a D$ GetS hits without probing anyone.
+      // The I$ line is dir=NONE: a D$ GetS hits without probing anyone and
+      // is granted E.
       h.resetProbeLog()
-      val (_, data2, error2) = h.getS(ramAddr(3, 3))
+      val (state, data2, error2) = h.getS(ramAddr(3, 3))
       error2 mustBe false
+      state mustBe E
       data2 mustBe h.mem.readLine(ramAddr(3, 3))
       h.probeLog mustBe empty
     }
   }
 
-  "I$ refill of a UNIQUE line should recall the D$ owner's data" in {
+  "I$ refill of a UNIQUE line recalls the D$ owner's data via ProbeToS" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       h.getM(ramAddr(4, 4))
@@ -485,24 +537,28 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.probeLog.head._3 mustBe BreezeProbeOpcode.ProbeToS.litValue.toString()
       h.l1State(ramAddr(4, 4), 0) mustBe Some('S')
 
-      // The line is SHARED now: a D$ GetS hits without probes or memory.
+      // The line is SHARED now: a D$ GetS joins as S without probes/memory.
       h.resetWbLog()
       h.resetProbeLog()
-      val (_, data2, error2) = h.getS(ramAddr(4, 4))
+      val (state, data2, error2) = h.getS(ramAddr(4, 4))
       error2 mustBe false
+      state mustBe S
       data2 mustBe modified
       h.probeLog mustBe empty
       h.wbLog mustBe empty
     }
   }
 
-  "L2/Home eviction of a SHARED victim should invalidate the L1 sharer" in {
+  "eviction of a SHARED victim invalidates the L1 sharer" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
-      h.getS(ramAddr(0, 5)) // dir=SHARED{0}
-      for (tag <- 1 until 8) h.getS(ramAddr(tag, 5))
+      // Make the line SHARED: D$ owner (E) downgraded by an I$ refill.
+      h.getS(ramAddr(0, 5))
+      h.instr(ramAddr(0, 5))._2 mustBe false // ProbeToS -> dir SHARED{0}
+      h.l1State(ramAddr(0, 5), 0) mustBe Some('S')
+      for (tag <- 1 until 8) { h.getS(ramAddr(tag, 5)); h.putS(ramAddr(tag, 5)) }
       h.resetProbeLog()
-      h.getS(ramAddr(8, 5)) // evicts tag 0, which is SHARED by hart 0
+      h.getS(ramAddr(8, 5)) // evicts tag 0, SHARED by hart 0
       h.probeLog.length mustBe 1
       h.probeLog.head._2 mustBe (ramAddr(0, 5) & ~BigInt(31))
       h.probeLog.head._3 mustBe BreezeProbeOpcode.ProbeInv.litValue.toString()
@@ -511,17 +567,17 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // Re-accessing the evicted line misses and refills from memory again.
       h.resetWbLog()
       h.getS(ramAddr(0, 5))
-      h.wbLog.length mustBe 4
+      h.wbLog.count(!_._2) mustBe 4
     }
   }
 
-  "A refill error should not install and should not lose the evicted victim" in {
+  "a refill error does not install and does not lose the evicted victim" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val dirty = BigInt("0badf00ddeadbeef0011223344556677", 16)
       h.getM(ramAddr(0, 6))
       h.putM(ramAddr(0, 6), dirty) // dirty line in L2, dir=NONE
-      for (tag <- 1 until 8) h.getS(ramAddr(tag, 6))
+      for (tag <- 1 until 8) { h.getS(ramAddr(tag, 6)); h.putS(ramAddr(tag, 6)) }
 
       // The 9th line overflows the set: victim writeback succeeds, refill fails.
       h.errorOnAddresses = (0 until 4).map(i => ramAddr(8, 6) + i * 8).toSet
@@ -538,13 +594,13 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "A victim writeback error should preserve the dirty victim in the L2" in {
+  "a victim writeback error preserves the dirty victim in the L2" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)
       val dirty = BigInt("5a5a5a5a5a5a5a5aa5a5a5a5a5a5a5a5", 16)
       h.getM(ramAddr(0, 7))
       h.putM(ramAddr(0, 7), dirty)
-      for (tag <- 1 until 8) h.getS(ramAddr(tag, 7))
+      for (tag <- 1 until 8) { h.getS(ramAddr(tag, 7)); h.putS(ramAddr(tag, 7)) }
 
       // Overflow the set, but the victim writeback fails.
       h.errorOnAddresses = (0 until 4).map(i => ramAddr(0, 7) + i * 8).toSet
@@ -562,20 +618,119 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "T4 dual MSI should cover sharing, upgrades, dirty transfer and serialization" in {
+  "Idle arbitration is round-robin between the harts" in {
+    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
+      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
+      // Both harts request continuously (three distinct lines each, released
+      // right away by the harness bookkeeping being irrelevant here); record
+      // the order in which requests are accepted.
+      val acceptOrder = mutable.ArrayBuffer.empty[Int]
+      val pendingLines = Array(
+        mutable.Queue(dualRamAddr(0, 20), dualRamAddr(1, 21), dualRamAddr(2, 22)),
+        mutable.Queue(dualRamAddr(3, 23), dualRamAddr(4, 24), dualRamAddr(5, 25)))
+      val granted = Array(0, 0)
+      for (hart <- 0 until 2) {
+        val req = dut.io.coherenceReq(hart)
+        req.valid.poke(true.B)
+        req.opcode.poke(BreezeCoherenceOpcode.GetS.litValue)
+        req.srcHart.poke(hart.U)
+        req.txnId.poke(1.U)
+        req.lineAddr.poke(pendingLines(hart).head.U)
+        req.hasData.poke(false.B)
+        req.lineData.poke(0.U)
+        dut.io.coherenceGrant(hart).ready.poke(true.B)
+      }
+      var cycles = 0
+      while ((granted(0) < 3 || granted(1) < 3) && cycles < 8000) {
+        val fires = (0 until 2).map(hart =>
+          dut.io.coherenceReq(hart).valid.peek().litToBoolean &&
+            dut.io.coherenceReq(hart).ready.peek().litToBoolean)
+        for (hart <- 0 until 2 if dut.io.coherenceGrant(hart).valid.peek().litToBoolean) {
+          granted(hart) += 1
+        }
+        h.step()
+        for (hart <- 0 until 2 if fires(hart)) {
+          acceptOrder += hart
+          pendingLines(hart).dequeue()
+          if (pendingLines(hart).isEmpty) {
+            dut.io.coherenceReq(hart).valid.poke(false.B)
+          } else {
+            dut.io.coherenceReq(hart).lineAddr.poke(pendingLines(hart).head.U)
+          }
+        }
+        cycles += 1
+      }
+      granted.toSeq mustBe Seq(3, 3)
+      // With both harts always ready, service alternates strictly.
+      acceptOrder.length mustBe 6
+      for (i <- 1 until acceptOrder.length) {
+        acceptOrder(i) must not be acceptOrder(i - 1)
+      }
+    }
+  }
+
+  "a pending I$ refill is not starved by back-to-back coherence requests" in {
+    simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
+      val h = new L2HomeHarness(dut, new DTestMem)
+      // Occupy the Home, then latch an I$ refill pulse while it is busy.
+      h.beginRequest(BreezeCoherenceOpcode.GetS, ramAddr(0, 30) & ~BigInt(31))
+      h.pulseInstr(ramAddr(1, 31))
+      // Keep the D$ request port busy with the next request immediately.
+      val req = dut.io.coherenceReq(0)
+      dut.io.coherenceGrant(0).ready.poke(true.B)
+      var firstGrantSeen = false
+      var secondAccepted = false
+      var instrServed = false
+      var cyclesToInstr = Int.MaxValue
+      var cyclesToSecond = Int.MaxValue
+      var cycles = 0
+      while (!(instrServed && secondAccepted) && cycles < 8000) {
+        if (dut.io.coherenceGrant(0).valid.peek().litToBoolean && !firstGrantSeen) {
+          firstGrantSeen = true
+          // The moment the first transaction completes, present the next one.
+          req.valid.poke(true.B)
+          req.opcode.poke(BreezeCoherenceOpcode.GetS.litValue)
+          req.txnId.poke(2.U)
+          req.lineAddr.poke((ramAddr(2, 32) & ~BigInt(31)).U)
+        }
+        if (h.instrRespValid(0) && !instrServed) { instrServed = true; cyclesToInstr = cycles }
+        val fires = firstGrantSeen && !secondAccepted &&
+          req.valid.peek().litToBoolean && req.ready.peek().litToBoolean
+        h.step()
+        if (fires) { secondAccepted = true; cyclesToSecond = cycles }
+        if (secondAccepted) req.valid.poke(false.B)
+        cycles += 1
+      }
+      instrServed mustBe true
+      secondAccepted mustBe true
+      // Round-robin: the latched I$ refill wins the arbitration immediately
+      // after the first coherence transaction, before the second one.
+      assert(cyclesToInstr < cyclesToSecond,
+        s"I$$ refill served at $cyclesToInstr, after the second coherence request at $cyclesToSecond")
+    }
+  }
+
+  "T4 dual: sharing, upgrades, dirty transfer and serialization under MESI" in {
     simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
 
+      // Read sharing: the first reader gets E, the second reader's GetS
+      // recalls it ToS and both end in S with identical data.
       val sharingAddr = dualRamAddr(0, 9)
-      val (_, data0, error0) = h.getS(sharingAddr, hart = 0)
-      val (_, data1, error1) = h.getS(sharingAddr, hart = 1)
+      val (state0, data0, error0) = h.getS(sharingAddr, hart = 0)
+      state0 mustBe E
+      h.resetProbeLog()
+      val (state1, data1, error1) = h.getS(sharingAddr, hart = 1)
       error0 mustBe false
       error1 mustBe false
+      state1 mustBe S
       data1 mustBe data0
+      h.probeLog mustBe Seq((0, sharingAddr & ~BigInt(31),
+        BreezeProbeOpcode.ProbeToS.litValue.toString()))
       h.l1State(sharingAddr, 0) mustBe Some('S')
       h.l1State(sharingAddr, 1) mustBe Some('S')
-      h.probeLog mustBe empty
 
+      // Store upgrade: invalidate the other sharer, then M.
       val upgradeAddr = dualRamAddr(1, 10)
       h.getS(upgradeAddr, hart = 0)
       h.getS(upgradeAddr, hart = 1)
@@ -587,6 +742,7 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.l1State(upgradeAddr, 0) mustBe Some('M')
       h.l1Contains(upgradeAddr, 1) mustBe false
 
+      // Dirty owner read: recall ToS, both S with the modified data.
       val dirtyReadAddr = dualRamAddr(2, 11)
       val modified = BigInt("123456789abcdef00112233445566778899aabbccddeeff", 16)
       h.getM(dirtyReadAddr, hart = 0)
@@ -602,6 +758,7 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.l1Data(dirtyReadAddr, 0) mustBe Some(modified)
       h.l1Data(dirtyReadAddr, 1) mustBe Some(modified)
 
+      // Dirty owner write transfer: RecallInv, the new owner gets the data.
       val transferAddr = dualRamAddr(3, 12)
       val first = BigInt("fedcba98765432100011223344556677", 16)
       val second = BigInt("0badf00d0badf00d8899aabbccddeeff", 16)
@@ -622,6 +779,8 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.l1State(transferAddr, 0) mustBe Some('S')
       h.l1State(transferAddr, 1) mustBe Some('S')
 
+      // Same line, different words: line-granule invalidation still merges
+      // both words through the recall chain.
       val differentWordAddr = dualRamAddr(4, 13)
       val wordMask = (BigInt(1) << 64) - 1
       val word0 = BigInt("1122334455667788", 16)
@@ -638,14 +797,15 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       (finalData & wordMask) mustBe word0
       ((finalData >> 64) & wordMask) mustBe word1
 
+      // Serialization: simultaneous GetS -> one E winner, one S joiner,
+      // identical data, exactly one memory refill.
       val raceAddr = dualRamAddr(5, 14)
       h.resetWbLog()
-      val results = h.simultaneousGetS(raceAddr)
-      results.length mustBe 2
-      results.map(_._2).distinct.length mustBe 1
+      val states = h.simultaneousGetS(raceAddr)
+      states.count(_ == E) mustBe 1
+      states.count(_ == S) mustBe 1
       h.l1State(raceAddr, 0) mustBe Some('S')
       h.l1State(raceAddr, 1) mustBe Some('S')
-      // Only the first serialized request misses to memory.
       h.wbLog.count(entry => !entry._2) mustBe 4
     }
   }

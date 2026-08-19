@@ -3,7 +3,7 @@ package flow.cache
 import chisel3._
 import chisel3.simulator.PeekPokeAPI
 import chisel3.simulator.scalatest.ChiselSim
-import flow.config.L2CacheGeometry
+import flow.config.BreezeClusterPresets
 import org.scalatest.Assertions
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -28,9 +28,12 @@ final case class PendProbe(txnId: BigInt, lineAddr: BigInt, opcode: BigInt, coun
   *     for stability every cycle until it is accepted;
   *   - `probeLatency(h)` and `respOrder` control when and in which order the
   *     mock L1s answer, so three Acks can be forced to return out of order;
+  *   - the mock L1 tracks (state, data) per line and answers probes with the
+  *     MESI data rule: only a dirty M line carries data, a clean E or S copy
+  *     acks without data (the L2 array data is current then);
   *   - every request/grant/probe/response/Wishbone beat is logged, grants are
-  *     counted per hart, and the mock L1 tracks (state, data) per line;
-  *   - a global cycle watchdog fails the test instead of hanging.
+  *     counted per hart, and a global cycle watchdog fails the test instead
+  *     of hanging.
   */
 final class SmallL2Harness(
     dut: BreezeL2Home,
@@ -217,7 +220,10 @@ final class SmallL2Harness(
     assert(cycleCount < cycleWatchdog, "small harness cycle watchdog exceeded")
   }
 
-  /** Mock-L1 probe answer following MESI rules; returns (hasData, data). */
+  /** Mock-L1 probe answer with the MESI data rule; returns (hasData, data).
+    * Only a dirty M line carries data; clean E and S copies ack without data
+    * because the L2 array line is current by construction.
+    */
   private def answerProbe(hart: Int, lineAddr: BigInt, opcode: BigInt): (Boolean, BigInt) = {
     val key = (hart, lineAddr)
     val entry = l1.get(key)
@@ -238,13 +244,19 @@ final class SmallL2Harness(
     } else {
       assert(opcode == BreezeProbeOpcode.ProbeRecallInv.litValue, "unknown probe opcode")
       entry match {
-        case Some((s, data)) => assert(s == 'M' || s == 'E', "RecallInv to non-owner"); l1.remove(key); (true, data)
+        case Some(('M', data)) => l1.remove(key); (true, data)
+        case Some(('E', _)) => l1.remove(key); (false, BigInt(0))
+        case Some((state, _)) => fail(s"RecallInv to non-owner state $state")
         case None => (false, BigInt(0))
       }
     }
   }
 
   private def lineOf(addr: BigInt): BigInt = addr & ~BigInt(31)
+
+  private def stateChar(state: BigInt): Char =
+    if (state == BreezeGrantState.M.litValue) 'M'
+    else if (state == BreezeGrantState.E.litValue) 'E' else 'S'
 
   /** Drive a request until accepted; the transaction then runs unattended. */
   def beginRequest(
@@ -328,8 +340,7 @@ final class SmallL2Harness(
     val g = request(BreezeCoherenceOpcode.GetS, lineOf(addr), hart, txnId)
     if (!g.error) {
       assert(g.hasData, "GetS grant must carry data")
-      l1((hart, lineOf(addr))) = (if (g.state == BreezeGrantState.M.litValue) 'M'
-        else if (g.state == BreezeGrantState.E.litValue) 'E' else 'S', g.data)
+      l1((hart, lineOf(addr))) = (stateChar(g.state), g.data)
     }
     (g.state, g.data, g.error)
   }
@@ -337,7 +348,7 @@ final class SmallL2Harness(
   def getM(addr: BigInt, hart: Int = 0, txnId: BigInt = 1): (BigInt, Boolean) = {
     val g = request(BreezeCoherenceOpcode.GetM, lineOf(addr), hart, txnId)
     if (!g.error) {
-      // An upgrade grant may omit the data; the mock L1 keeps its copy.
+      // An owner-confirmation grant may omit the data; the mock keeps its copy.
       val key = (hart, lineOf(addr))
       val merged = if (g.hasData) g.data else l1.getOrElse(key, ('S', BigInt(0)))._2
       l1(key) = ('M', merged)
@@ -357,11 +368,12 @@ final class SmallL2Harness(
     g.error
   }
 
-  /** Mock a local store inside the L1 (line must be held in M). */
+  /** Mock a local store inside the L1. E silently upgrades to M. */
   def l1Store(addr: BigInt, newData: BigInt, hart: Int = 0): Unit = {
     val line = lineOf(addr)
     val key = (hart, line)
-    assert(l1.get(key).exists(_._1 == 'M'), "l1Store requires an M line")
+    assert(l1.get(key).exists(e => e._1 == 'M' || e._1 == 'E'),
+      "l1Store requires an M or E line")
     l1(key) = ('M', newData)
   }
 
@@ -404,11 +416,16 @@ final class SmallL2Harness(
     result.get
   }
 
-  /** Present GetS requests from all `harts` in the same cycle and prove that
-    * each is accepted and granted exactly once while the Home serializes. */
-  def simultaneousGetS(addr: BigInt, harts: Seq[Int]): Unit = {
+  /** Present GetS requests from all `harts` in the same cycle (txnId = hart id)
+    * and prove that each is accepted and granted exactly once while the Home
+    * serializes. Every grant is installed into the mock L1 immediately, so a
+    * later transaction's ProbeToS finds (and downgrades) the first winner's E
+    * copy. Returns the accept order and the per-hart grant events.
+    */
+  def simultaneousGetS(addr: BigInt, harts: Seq[Int]): (Seq[Int], Map[Int, SmallGrantEvent]) = {
     val line = lineOf(addr)
     val accepted = Array.fill(numHarts)(false)
+    val acceptOrder = mutable.ArrayBuffer.empty[Int]
     val results = Array.fill[Option[SmallGrantEvent]](numHarts)(None)
     for (h <- harts) {
       val req = dut.io.coherenceReq(h)
@@ -423,8 +440,9 @@ final class SmallL2Harness(
     }
 
     var cycles = 0
-    while (results.exists(_.isEmpty) && cycles < 8000) {
-      val fires = harts.map(h => !accepted(h) && dut.io.coherenceReq(h).ready.peek().litToBoolean)
+    while (harts.exists(h => results(h).isEmpty) && cycles < 8000) {
+      val fires = harts.filter(h =>
+        !accepted(h) && dut.io.coherenceReq(h).ready.peek().litToBoolean)
       for (h <- harts) {
         val grant = dut.io.coherenceGrant(h)
         if (grant.valid.peek().litToBoolean) {
@@ -441,24 +459,24 @@ final class SmallL2Harness(
           grantCount(h) += 1
           grantLog += g
           results(h) = Some(g)
+          // Install immediately: a later transaction's ProbeToS must see (and
+          // downgrade) the winner's E copy in the mock L1.
+          assert(g.hasData && !g.error, s"hart $h GetS grant must carry data without error")
+          l1((h, line)) = (stateChar(g.state), g.data)
         }
       }
       step()
-      for (h <- harts if fires(h)) {
+      for (h <- fires) {
         accepted(h) = true
+        acceptOrder += h
         dut.io.coherenceReq(h).valid.poke(false.B)
       }
       cycles += 1
     }
-    assert(accepted.forall(identity), "all simultaneous requests must be accepted")
-    if (results.exists(_.isEmpty)) fail("simultaneous GetS timed out")
-    for (h <- harts) {
-      dut.io.coherenceGrant(h).ready.poke(false.B)
-      val g = results(h).get
-      assert(g.hasData && !g.error, s"hart $h GetS grant must carry data without error")
-      assert(g.state == BreezeGrantState.S.litValue, s"hart $h GetS grant must be S in MSI")
-      l1((h, line)) = ('S', g.data)
-    }
+    assert(harts.forall(accepted(_)), "all simultaneous requests must be accepted")
+    if (harts.exists(h => results(h).isEmpty)) fail("simultaneous GetS timed out")
+    for (h <- harts) dut.io.coherenceGrant(h).ready.poke(false.B)
+    (acceptOrder.toSeq, harts.map(h => h -> results(h).get).toMap)
   }
 
   def resetWbLog(): Unit = { wbLog.clear(); wbDataLog.clear() }
@@ -475,7 +493,15 @@ final class SmallL2Harness(
 }
 
 class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private val smallL2Cfg = L2CacheGeometry(capacityBytes = 65536)
+  // small profile: 4 harts, shared L2 = 64 KiB / 8 ways / 32 B lines -> 256
+  // sets, single bank (BreezeClusterConfig("small", 4).l2).
+  private val smallCfg = BreezeClusterPresets.small
+  private val smallL2Cfg = smallCfg.l2
+  private val numHarts = smallCfg.numHarts
+
+  private val S = BreezeGrantState.S.litValue
+  private val E = BreezeGrantState.E.litValue
+  private val M = BreezeGrantState.M.litValue
 
   // small: 256 sets -> set = addr[12:5], tag = addr[31:13], stride = 8192 B.
   private def smallRamAddr(tagLsb: Int, set: Int, offset: Int = 0): BigInt =
@@ -484,37 +510,71 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private def beatOf(line: BigInt, i: Int): BigInt =
     (line >> (64 * i)) & ((BigInt(1) << 64) - 1)
 
-  "S1 four simultaneous GetS requests must each be accepted and granted exactly once" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+  "S1 four simultaneous GetS requests serialize into one E owner and three S joiners" in {
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val line = smallRamAddr(0, 0) & ~BigInt(31)
       h.resetAllLogs()
-      h.simultaneousGetS(line, 0 until 4)
+      val (order, grants) = h.simultaneousGetS(line, 0 until 4)
+      order.sorted mustBe Seq(0, 1, 2, 3)
+
+      // MESI serialization: exactly the first accepted requester wins E (the
+      // directory was NONE); every later joiner is granted S.
+      grants(order.head).state mustBe E
+      order.tail.foreach(hart => grants(hart).state mustBe S)
+
       for (hart <- 0 until 4) {
         h.grantCount(hart) mustBe 1
+        // The E winner has been downgraded by the second requester's ProbeToS.
         h.l1State(line, hart) mustBe Some('S')
         h.l1Data(line, hart) mustBe Some(h.mem.readLine(line))
       }
-      // All four data grants must agree with memory and with each other.
-      h.grantLog.map(_.data).distinct.length mustBe 1
-      h.grantLog.map(_.data).head mustBe h.mem.readLine(line)
-      // Only the first serialized request missed to memory: 4 read beats.
+      h.grantLog.map(_.data).distinct mustBe Seq(h.mem.readLine(line))
+
+      // Exactly one probe in total: the second transaction's ProbeToS to the
+      // clean E winner, answered without data (only a dirty M copy carries
+      // data). The third and fourth requesters join the SHARED line probeless.
+      h.probeLog mustBe Seq(SmallProbeEvent(order.head, order(1), line,
+        BreezeProbeOpcode.ProbeToS.litValue))
+      h.respLog mustBe Seq(SmallRespEvent(order.head, order(1), line,
+        hasData = false, data = 0))
+
+      // Only the first serialized request missed: exactly one memory refill
+      // of 4 ascending read beats.
       h.wbLog.length mustBe 4
       h.wbLog.map(_._2).foreach(_ mustBe false)
       h.wbLog.map(_._1) mustBe (0 until 4).map(i => line + i * 8)
-      // Every grant echoes the request txnId of its own hart (1..4).
+      // Every grant echoes the request txnId of its own hart (txnId = hart).
       h.grantLog.map(_.txnId).sorted mustBe Seq[BigInt](0, 1, 2, 3)
     }
   }
 
   "S2 a four-way SHARED line upgrade must wait for all three probe Acks before GrantM" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val line = smallRamAddr(0, 1) & ~BigInt(31)
-      for (hart <- 0 until 4) {
-        h.getS(line, hart)
-        h.l1State(line, hart) mustBe Some('S')
+
+      // MESI establishment of sharers=1111: the first reader takes E, the
+      // second reader's ProbeToS downgrades the clean E owner (no data),
+      // readers three and four join the SHARED line without any probe.
+      val (st0, _, e0) = h.getS(line, hart = 0)
+      e0 mustBe false
+      st0 mustBe E
+      h.resetProbeLog(); h.resetRespLog()
+      val (st1, _, e1) = h.getS(line, hart = 1)
+      e1 mustBe false
+      st1 mustBe S
+      h.probeLog mustBe Seq(SmallProbeEvent(0, 1, line,
+        BreezeProbeOpcode.ProbeToS.litValue))
+      h.respLog mustBe Seq(SmallRespEvent(0, 1, line, hasData = false, data = 0))
+      h.resetProbeLog()
+      for (hart <- Seq(2, 3)) {
+        val (st, _, err) = h.getS(line, hart)
+        err mustBe false
+        st mustBe S
       }
+      h.probeLog mustBe empty
+      for (hart <- 0 until 4) h.l1State(line, hart) mustBe Some('S')
 
       // Stage the upgrade: probes accepted one hart at a time on different
       // cycles; responses forced to return in 3, 1, 2 order.
@@ -558,18 +618,23 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
       if (!allAcked) fail("probe responses never completed")
 
-      // Responses arrived in 3, 1, 2 order and each hart answered exactly once.
+      // Responses arrived in 3, 1, 2 order; clean S copies never carry data.
       h.respLog.map(_.hart) mustBe Seq(3, 1, 2)
       h.respLog.map(e => (e.txnId, e.lineAddr)).foreach(_ mustBe ((BigInt(3), line)))
       h.respLog.map(_.hasData).foreach(_ mustBe false)
 
-      // Exactly one M grant to hart0, and nothing afterwards.
+      // Exactly one M grant to hart0, carrying the line data (a GetM grant is
+      // only dataless on the UNIQUE owner==requester confirmation path).
       val g = h.waitGrantEvent(0)
       g.error mustBe false
-      g.state mustBe BreezeGrantState.M.litValue
+      g.state mustBe M
       g.txnId mustBe BigInt(3)
       g.lineAddr mustBe line
-      if (g.hasData) g.data mustBe h.mem.readLine(line)
+      g.hasData mustBe true
+      g.data mustBe h.mem.readLine(line)
+      // Bypass bookkeeping: the grant above was collected without the getM
+      // helper, so install hart0's M copy into the mock L1 by hand.
+      h.l1((0, line)) = ('M', g.data)
       for (_ <- 0 until 8) {
         assert(!h.grantValid(0), "hart0 received a duplicate grant")
         h.step()
@@ -587,20 +652,27 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "S3 a dirty owner on hart 3 must transfer the latest full line to hart 1 and then share with hart 2" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val line = smallRamAddr(0, 2) & ~BigInt(31)
       val modified = BigInt("0badf00d0badf00d0011223344556677", 16)
 
+      // hart 3: GetM miss grants M with the refill data; the store dirties it.
       h.getM(line, hart = 3)
+      h.grantLog.last.state mustBe M
+      h.grantLog.last.hasData mustBe true
       h.l1Store(line, modified, hart = 3)
 
+      // hart 1 GetM: RecallInv pulls hart 3's dirty line; the grant must carry
+      // the recalled (latest) data.
       h.resetAllLogs()
       val (transferred, transferErr) = h.getM(line, hart = 1, txnId = 2)
       transferErr mustBe false
       transferred mustBe modified
-      // Only hart 3 was recalled, and its response carried the latest line.
-      h.probeLog mustBe Seq(SmallProbeEvent(3, 2, line, BreezeProbeOpcode.ProbeRecallInv.litValue))
+      h.grantLog.last.state mustBe M
+      h.grantLog.last.hasData mustBe true
+      h.probeLog mustBe Seq(SmallProbeEvent(3, 2, line,
+        BreezeProbeOpcode.ProbeRecallInv.litValue))
       h.respLog mustBe Seq(SmallRespEvent(3, 2, line, hasData = true, data = modified))
       h.l1Contains(line, 3) mustBe false
       h.l1State(line, 1) mustBe Some('M')
@@ -608,12 +680,25 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // A pure ownership transfer never touches memory.
       h.wbLog mustBe empty
 
-      // hart 2 reads next: the Home must recall hart 1 and end with S/S.
+      // Owner confirmation: a GetM from the current UNIQUE owner is the only
+      // GetM grant without data, and it probes nobody.
       h.resetAllLogs()
-      val (_, shared, shareErr) = h.getS(line, hart = 2, txnId = 3)
+      val (_, confirmErr) = h.getM(line, hart = 1, txnId = 1)
+      confirmErr mustBe false
+      h.grantLog.last.state mustBe M
+      h.grantLog.last.hasData mustBe false
+      h.probeLog mustBe empty
+      h.l1Data(line, 1) mustBe Some(modified)
+
+      // hart 2 reads next: ProbeToS recalls hart 1's dirty M copy (with data),
+      // and both end in S with the modified line.
+      h.resetAllLogs()
+      val (shareState, shared, shareErr) = h.getS(line, hart = 2, txnId = 3)
       shareErr mustBe false
+      shareState mustBe S
       shared mustBe modified
-      h.probeLog mustBe Seq(SmallProbeEvent(1, 3, line, BreezeProbeOpcode.ProbeToS.litValue))
+      h.probeLog mustBe Seq(SmallProbeEvent(1, 3, line,
+        BreezeProbeOpcode.ProbeToS.litValue))
       h.respLog mustBe Seq(SmallRespEvent(1, 3, line, hasData = true, data = modified))
       h.l1State(line, 1) mustBe Some('S')
       h.l1State(line, 2) mustBe Some('S')
@@ -623,12 +708,16 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "S4 inclusive eviction of a four-sharer line must invalidate every L1 and refill on re-access" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val target = smallRamAddr(0, 3) & ~BigInt(31)
       val newLine = smallRamAddr(8, 3) & ~BigInt(31)
+      // sharers=1111 (the first reader's E is downgraded by the second GetS).
       for (hart <- 0 until 4) h.getS(target, hart)
-      for (tag <- 1 until 8) h.getS(smallRamAddr(tag, 3)) // fills the 7 other ways
+      for (hart <- 0 until 4) h.l1State(target, hart) mustBe Some('S')
+      // Fill the 7 other ways, releasing each clean E copy with PutS so the
+      // eviction below only probes the four-sharer victim.
+      for (tag <- 1 until 8) { h.getS(smallRamAddr(tag, 3)); h.putS(smallRamAddr(tag, 3)) }
 
       h.resetAllLogs()
       h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 2)
@@ -650,10 +739,13 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       h.probeLog.map(_.opcode).foreach(_ mustBe BreezeProbeOpcode.ProbeInv.litValue)
       h.probeLog.map(_.txnId).foreach(_ mustBe BigInt(2))
       h.probeLog.map(_.lineAddr).foreach(_ mustBe target)
+      // Clean S copies answer without data.
+      h.respLog.map(_.hasData).foreach(_ mustBe false)
 
       val g = h.waitGrantEvent(0)
       g.error mustBe false
       g.lineAddr mustBe newLine
+      g.state mustBe E // fresh refill of an untracked line grants E
       // Clean SHARED victim: no writeback, exactly 4 ascending read beats.
       h.wbLog.length mustBe 4
       h.wbLog.map(_._2).foreach(_ mustBe false)
@@ -661,24 +753,27 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
       for (hart <- 0 until 4) h.l1Contains(target, hart) mustBe false
 
-      // Re-accessing the evicted line must refill from memory again.
+      // Re-accessing the evicted line must refill from memory again (and, as
+      // the sole fresh copy, is granted E).
       h.resetWbLog()
-      h.getS(target, hart = 0)
+      val (st2, _, err2) = h.getS(target, hart = 0)
+      err2 mustBe false
+      st2 mustBe E
       h.wbLog.length mustBe 4
       h.wbLog.map(_._2).foreach(_ mustBe false)
     }
   }
 
-  "S5 eviction of a hart-3 dirty UNIQUE victim must write back the recalled line, preserving it on error" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+  "S5 eviction of a hart-3 dirty UNIQUE victim must write back the recalled line" in {
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val victim = smallRamAddr(0, 4) & ~BigInt(31)
       val newLine = smallRamAddr(8, 4) & ~BigInt(31)
       val dirty = BigInt("5a5aa5a55a5aa5a5fedcba9876543210", 16)
 
       h.getM(victim, hart = 3)
       h.l1Store(victim, dirty, hart = 3)
-      for (tag <- 1 until 8) h.getS(smallRamAddr(tag, 4))
+      for (tag <- 1 until 8) { h.getS(smallRamAddr(tag, 4)); h.putS(smallRamAddr(tag, 4)) }
 
       h.resetAllLogs()
       h.beginRequest(BreezeCoherenceOpcode.GetS, newLine, hart = 0, txnId = 1)
@@ -695,11 +790,14 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
       if (!allAcked) fail("victim recall never completed")
 
-      h.probeLog mustBe Seq(SmallProbeEvent(3, 1, victim, BreezeProbeOpcode.ProbeRecallInv.litValue))
+      h.probeLog mustBe Seq(SmallProbeEvent(3, 1, victim,
+        BreezeProbeOpcode.ProbeRecallInv.litValue))
+      // A dirty M owner must return its data on RecallInv.
       h.respLog mustBe Seq(SmallRespEvent(3, 1, victim, hasData = true, data = dirty))
 
       val g = h.waitGrantEvent(0)
       g.error mustBe false
+      g.state mustBe E
       // Dirty victim: 4 ascending write beats carrying the recalled line,
       // then 4 ascending read beats for the refill.
       h.wbLog.length mustBe 8
@@ -715,15 +813,16 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "S5-error a failed writeback must keep the dirty UNIQUE victim readable instead of losing it" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val victim = smallRamAddr(0, 5) & ~BigInt(31)
       val newLine = smallRamAddr(8, 5) & ~BigInt(31)
       val dirty = BigInt("0f0f0f0f0f0f0f0ffedcba9876543210", 16)
+      val originalMem = h.mem.readLine(victim)
 
       h.getM(victim, hart = 3)
       h.l1Store(victim, dirty, hart = 3)
-      for (tag <- 1 until 8) h.getS(smallRamAddr(tag, 5))
+      for (tag <- 1 until 8) { h.getS(smallRamAddr(tag, 5)); h.putS(smallRamAddr(tag, 5)) }
 
       h.resetAllLogs()
       h.errorOnAddresses = (0 until 4).map(i => victim + i * 8).toSet
@@ -732,11 +831,17 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       val g = h.waitGrantEvent(0)
       g.error mustBe true
       h.errorOnAddresses = Set.empty
-      // The recall data was landed in the L2 before the failed writeback, so
-      // the victim survives as a clean directory hit with the dirty data.
+      // The failed writeback never reached memory.
+      h.mem.readLine(victim) mustBe originalMem
+
+      // The recall data was landed in the L2 array before the writeback could
+      // fail, so the victim survives (dir NONE + dirtyToMemory): a GetS hit
+      // returns the dirty data as a fresh E grant, probeless and without
+      // memory traffic.
       h.resetAllLogs()
-      val (_, data, err2) = h.getS(victim, hart = 2)
+      val (st, data, err2) = h.getS(victim, hart = 2)
       err2 mustBe false
+      st mustBe E
       data mustBe dirty
       h.probeLog mustBe empty
       h.wbLog mustBe empty
@@ -744,8 +849,8 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "S6 four I$ refill pulses captured while busy must answer once each and never join the D$ sharers" in {
-    simulate(new BreezeL2Home(smallL2Cfg, numHarts = 4)) { dut =>
-      val h = new SmallL2Harness(dut, new DTestMem, numHarts = 4)
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
       val target = smallRamAddr(0, 6) & ~BigInt(31)
       val filler = smallRamAddr(1, 6) & ~BigInt(31)
 
@@ -753,7 +858,7 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // Occupy the Home with a slow refill, then pulse all four I$ ports in
       // the same busy window (their latches must capture unconditionally).
       h.beginRequest(BreezeCoherenceOpcode.GetS, filler, hart = 0, txnId = 3)
-      h.step() // state = LookupRead, definitely not Idle
+      h.step() // definitely past Idle
       for (hart <- 0 until 4) h.pulseInstr(hart, target)
       h.step()
       for (hart <- 0 until 4) h.dropInstr(hart)
@@ -768,14 +873,72 @@ class BreezeL2HomeSmallSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
       for (hart <- 0 until 4) h.instrRespCount(hart) mustBe 1
 
-      // The I$ line is dir=NONE: a D$ GetM hits without probing anyone.
+      // The I$ line stays dir=NONE: a D$ GetM hits without probing anyone and
+      // is granted M with the line data.
       h.resetProbeLog()
       h.resetWbLog()
       val (mData, mErr) = h.getM(target, hart = 2)
       mErr mustBe false
       mData mustBe h.mem.readLine(target)
+      h.grantLog.last.state mustBe M
+      h.grantLog.last.hasData mustBe true
       h.probeLog mustBe empty
       h.wbLog mustBe empty
+    }
+  }
+
+  "S7 Idle arbitration rotates over four continuously requesting harts without starvation" in {
+    simulate(new BreezeL2Home(smallL2Cfg, numHarts = numHarts)) { dut =>
+      val h = new SmallL2Harness(dut, new DTestMem, numHarts = numHarts)
+      // Each hart issues three GetS to private lines (distinct sets, so no
+      // eviction and no coherence interference). With no I$ pending latch
+      // valid, the 2N-source round-robin degenerates to a strict rotation
+      // over the four D$ ports.
+      val perHart = 3
+      val acceptOrder = mutable.ArrayBuffer.empty[Int]
+      val pendingLines = Array.tabulate(numHarts)(hart =>
+        mutable.Queue.tabulate(perHart)(i =>
+          smallRamAddr(0, 40 + hart * perHart + i) & ~BigInt(31)))
+      val granted = Array.fill(numHarts)(0)
+      for (hart <- 0 until numHarts) {
+        val req = dut.io.coherenceReq(hart)
+        req.valid.poke(true.B)
+        req.opcode.poke(BreezeCoherenceOpcode.GetS.litValue)
+        req.srcHart.poke(hart.U)
+        req.txnId.poke(1.U)
+        req.lineAddr.poke(pendingLines(hart).head.U)
+        req.hasData.poke(false.B)
+        req.lineData.poke(0.U)
+        dut.io.coherenceGrant(hart).ready.poke(true.B)
+      }
+      var cycles = 0
+      while (granted.exists(_ < perHart) && cycles < 8000) {
+        val fires = (0 until numHarts).map(hart =>
+          dut.io.coherenceReq(hart).valid.peek().litToBoolean &&
+            dut.io.coherenceReq(hart).ready.peek().litToBoolean)
+        for (hart <- 0 until numHarts
+             if dut.io.coherenceGrant(hart).valid.peek().litToBoolean) {
+          granted(hart) += 1
+        }
+        h.step()
+        for (hart <- 0 until numHarts if fires(hart)) {
+          acceptOrder += hart
+          pendingLines(hart).dequeue()
+          if (pendingLines(hart).isEmpty) {
+            dut.io.coherenceReq(hart).valid.poke(false.B)
+          } else {
+            dut.io.coherenceReq(hart).lineAddr.poke(pendingLines(hart).head.U)
+          }
+        }
+        cycles += 1
+      }
+      granted.toSeq mustBe Seq.fill(numHarts)(perHart)
+      // With all four harts continuously requesting, acceptance rotates
+      // strictly: each accept goes to the successor of the previous one.
+      acceptOrder.length mustBe numHarts * perHart
+      for (i <- 1 until acceptOrder.length) {
+        acceptOrder(i) mustBe ((acceptOrder(i - 1) + 1) % numHarts)
+      }
     }
   }
 }

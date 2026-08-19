@@ -121,7 +121,9 @@ class FlowCluster(CPU):
         self.periph_buses = [ibus, dbus] # Memory + MMIO masters.
         self.memory_buses = [] # No bus bypasses the shared LiteX interconnect.
         self.interrupt    = Signal(8)
-        self.mtip         = Signal() # Broadcast; per-hart CLINT lands with P8.
+        # Per-hart CLINT inputs, driven by the SoC-side BreezeClint slave.
+        self.msip         = Signal(num_harts)
+        self.mtip         = Signal(num_harts)
         self.hart_fatal   = Signal(num_harts)
         self.hart_estop   = Signal(num_harts)
         self.retires      = [Record(RETIRE_LAYOUT) for _ in range(num_harts)]
@@ -162,8 +164,8 @@ class FlowCluster(CPU):
         )
 
         for hart in range(num_harts):
-            self.cpu_params[f"i_io_msip_{hart}"] = Constant(0)
-            self.cpu_params[f"i_io_mtip_{hart}"] = self.mtip
+            self.cpu_params[f"i_io_msip_{hart}"] = self.msip[hart]
+            self.cpu_params[f"i_io_mtip_{hart}"] = self.mtip[hart]
             # External interrupts go to hart 0 only (spec section 19.3).
             self.cpu_params[f"i_io_externalInterrupts_{hart}"] = (
                 self.interrupt if hart == 0 else Constant(0, 8))

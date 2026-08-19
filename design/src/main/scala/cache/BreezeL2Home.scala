@@ -166,6 +166,9 @@ class BreezeL2Home(
   val instrPendingValid = RegInit(VecInit(Seq.fill(numHarts)(false.B)))
   val instrPendingAddr = Reg(Vec(numHarts, UInt(physicalAddressWidth.W)))
 
+  // Idle-arbitration round-robin pointer over the 2N request sources.
+  val arbPtr = RegInit(0.U(math.max(1, log2Ceil(2 * numHarts)).W))
+
   // ===== Output defaults =====
   for (h <- 0 until numHarts) {
     io.coherenceReq(h).ready := false.B
@@ -262,41 +265,51 @@ class BreezeL2Home(
   // ===== FSM =====
   switch(state) {
     is(Idle) {
-      // Coherence requests win over pending I$ refills; lowest hart first.
-      // Priority encoders, not read-modify-write wires: a when() loop that
-      // reads the valid wire it also assigns is a combinational cycle.
-      val cohValids = VecInit((0 until numHarts).map(h => io.coherenceReq(h).valid))
-      val selValid = cohValids.asUInt.orR
-      val selHart = if (numHarts == 1) 0.U(hartIdWidth.W) else PriorityEncoder(cohValids.asUInt)
+      // Round-robin over 2N request sources (N D$ coherence ports followed by
+      // N latched I$ refill ports) so neither a low-numbered hart nor the
+      // coherence class can starve the others. The rotate-then-priority-encode
+      // trick avoids read-modify-write wires (a when() loop that reads the
+      // valid wire it also assigns is a combinational cycle).
+      val srcValids = Cat(instrPendingValid.asUInt,
+        VecInit((0 until numHarts).map(h => io.coherenceReq(h).valid)).asUInt)
+      val numSrcs = 2 * numHarts
+      val selValid = srcValids.orR
+      val selSrc = if (numSrcs == 1) {
+        0.U(1.W)
+      } else {
+        val rotated = (Cat(srcValids, srcValids) >> arbPtr)(numSrcs - 1, 0)
+        (arbPtr + PriorityEncoder(rotated))(log2Ceil(numSrcs) - 1, 0)
+      }
+      val selIsInstr = if (numSrcs == 1) false.B else selSrc >= numHarts.U
+      val selHart = (if (numSrcs == 1) 0.U else Mux(selIsInstr,
+        selSrc - numHarts.U, selSrc))(hartIdWidth - 1, 0)
       for (h <- 0 until numHarts) {
-        io.coherenceReq(h).ready := selValid && selHart === h.U
+        io.coherenceReq(h).ready := selValid && !selIsInstr && selHart === h.U
       }
 
-      val instrSelValid = instrPendingValid.asUInt.orR
-      val instrSelHart = if (numHarts == 1) 0.U(hartIdWidth.W) else PriorityEncoder(instrPendingValid.asUInt)
-
       when(selValid) {
+        arbPtr := Mux(selSrc === (numSrcs - 1).U, 0.U, selSrc + 1.U)
         reqHart := selHart
-        reqOp := io.coherenceReq(selHart).opcode
-        reqTxnId := io.coherenceReq(selHart).txnId
-        reqLineAddr := Cat(
-          io.coherenceReq(selHart).lineAddr(physicalAddressWidth - 1, lineOffsetWidth),
-          0.U(lineOffsetWidth.W))
-        reqData := io.coherenceReq(selHart).lineData
-        reqIsInstr := false.B
         grantErrorReg := false.B
+        grantHasDataReg := false.B
         state := LookupRead
-      }.elsewhen(instrSelValid) {
-        reqHart := instrSelHart
-        reqOp := GetInstr
-        reqTxnId := 0.U
-        reqLineAddr := Cat(
-          instrPendingAddr(instrSelHart)(physicalAddressWidth - 1, lineOffsetWidth),
-          0.U(lineOffsetWidth.W))
-        reqData := 0.U
-        reqIsInstr := true.B
-        grantErrorReg := false.B
-        state := LookupRead
+        when(selIsInstr) {
+          reqOp := GetInstr
+          reqTxnId := 0.U
+          reqLineAddr := Cat(
+            instrPendingAddr(selHart)(physicalAddressWidth - 1, lineOffsetWidth),
+            0.U(lineOffsetWidth.W))
+          reqData := 0.U
+          reqIsInstr := true.B
+        }.otherwise {
+          reqOp := io.coherenceReq(selHart).opcode
+          reqTxnId := io.coherenceReq(selHart).txnId
+          reqLineAddr := Cat(
+            io.coherenceReq(selHart).lineAddr(physicalAddressWidth - 1, lineOffsetWidth),
+            0.U(lineOffsetWidth.W))
+          reqData := io.coherenceReq(selHart).lineData
+          reqIsInstr := false.B
+        }
       }
     }
 
@@ -362,11 +375,12 @@ class BreezeL2Home(
           }
         }.elsewhen(reqOp === GetS) {
           when(hitDirState === NONE) {
-            // Line present but no coherent copy: grant S (MSI phase; the MESI
-            // E grant arrives in a later phase).
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem, SHARED, hartBit(reqHart), 0.U)
+            // MESI: the first D$ reader of an untracked line gets E; it may
+            // silently upgrade to M, so the directory goes UNIQUE and never
+            // assumes the L2 data stays current.
+            writeDir(setIndex, hitWay, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
             grantDataReg := hitData
-            grantStateReg := BreezeGrantState.S
+            grantStateReg := BreezeGrantState.E
             grantHasDataReg := true.B
             state := SendGrant
           }.elsewhen(hitDirState === SHARED) {
@@ -508,6 +522,8 @@ class BreezeL2Home(
           // any memory operation can fail, so the dirty data is never stranded
           // in a transaction register. The final response may carry the data
           // this very cycle; earlier responses already latched recalledData.
+          // An owner that answers WITHOUT data held a clean E copy - then the
+          // L2 array line is current by construction and nothing is written.
           val respDataThisCycle = Mux1H((0 until sharerWidth).map(h =>
             (respFired(h), io.coherenceProbeResp(h).lineData)))
           val respHasDataThisCycle = (0 until sharerWidth).map(h =>
@@ -520,13 +536,8 @@ class BreezeL2Home(
             // victimDataReg still holds the pre-recall array contents.
             victimDataReg := recallLine
           }
-          // A UNIQUE victim whose owner answered without data is a protocol
-          // violation; without this check the stale array line would be
-          // written back to memory as if it were the owner's dirty data.
-          assert(victimDirReg =/= UNIQUE || recallNow,
-            "L2/Home: UNIQUE victim recall completed without owner data")
           memBeat := 0.U
-          val nowDirty = victimDirtyReg || victimDirReg === UNIQUE
+          val nowDirty = victimDirtyReg || recallNow
           state := Mux(nowDirty, VictimWrite, MemRead)
         }.otherwise {
           state := HitUpdate
@@ -535,39 +546,31 @@ class BreezeL2Home(
     }
 
     is(HitUpdate) {
-      // Post-probe completion of a GetS/GetM/GetInstr hit.
+      // Post-probe completion of a GetS/GetM/GetInstr hit. A probed owner only
+      // returns data when it held M; a clean E owner acks without data and the
+      // L2 array line is already current.
       val finalData = Mux(recalledValid, recalledData, hitDataReg)
+      when(recalledValid) {
+        writeDataArray(hitWayReg, setIndex, recalledData)
+      }
       when(reqOp === GetS || reqOp === GetInstr) {
-        // ProbeToS on the UNIQUE owner: owner becomes a D$ sharer; recalled
-        // data updates the line and sets dirtyToMemory.
-        when(recalledValid) {
-          writeDataArray(hitWayReg, setIndex, recalledData)
-        }
+        // ProbeToS on the UNIQUE owner: the old owner becomes a D$ sharer.
+        // A GetS requester joins the sharer bitmap; the I$ never joins.
+        val sharersAfter = Mux(reqOp === GetS,
+          hartBit(hitOwnerReg) | hartBit(reqHart), hartBit(hitOwnerReg))
         writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg || recalledValid,
-          SHARED, hartBit(hitOwnerReg), 0.U)
+          SHARED, sharersAfter, 0.U)
+        grantStateReg := BreezeGrantState.S
         grantDataReg := finalData
         grantHasDataReg := true.B
-        // GetInstr: owner becomes a D$ sharer but the I$ itself never joins.
-        when(reqOp === GetS) {
-          writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg || recalledValid,
-            SHARED, hartBit(hitOwnerReg) | hartBit(reqHart), 0.U)
-          grantStateReg := BreezeGrantState.S
-        }
         state := SendGrant
       }.otherwise {
-        // GetM
-        when(hitDirReg === SHARED) {
-          // All other sharers invalidated; the L2 data is current.
-          writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg, UNIQUE, 0.U, reqHart)
-          grantDataReg := hitDataReg
-        }.otherwise {
-          // Recalled from the previous owner: install the dirty data, hand M
-          // to the requester.
-          writeDataArray(hitWayReg, setIndex, recalledData)
-          writeDir(setIndex, hitWayReg, true.B, true.B, UNIQUE, 0.U, reqHart)
-          grantDataReg := recalledData
-        }
+        // GetM: every other copy is gone (SHARED sharers invalidated, or the
+        // UNIQUE owner recalled); hand M to the requester with the latest data.
+        writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg || recalledValid,
+          UNIQUE, 0.U, reqHart)
         grantStateReg := BreezeGrantState.M
+        grantDataReg := finalData
         grantHasDataReg := true.B
         state := SendGrant
       }
@@ -632,8 +635,9 @@ class BreezeL2Home(
             writeDir(setIndex, victimWayReg, true.B, false.B, UNIQUE, 0.U, reqHart)
             grantStateReg := BreezeGrantState.M
           }.otherwise {
-            writeDir(setIndex, victimWayReg, true.B, false.B, SHARED, hartBit(reqHart), 0.U)
-            grantStateReg := BreezeGrantState.S
+            // MESI: a fresh D$ GetS refill is granted E (sole copy).
+            writeDir(setIndex, victimWayReg, true.B, false.B, UNIQUE, 0.U, reqHart)
+            grantStateReg := BreezeGrantState.E
           }
           meta(setIndex).roundRobin := Mux(victimWayReg === (ways - 1).U, 0.U, victimWayReg + 1.U)
           grantDataReg := installedLine

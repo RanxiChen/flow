@@ -39,6 +39,16 @@ TEST_APPS = {
     "small-same-line": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 4),
     "small-same-line-race": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 5),
     "small-l2-eviction": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_t5.c"), "BREEZE_T5_CASE", 6),
+    # RV64A (T6/T7) and CLINT/IPI/remote FENCE.I (T8/T9). The atomic and CLINT
+    # firmware is profile-generic: the single profile runs the self-test shape
+    # of each case (self-IPI, own timer, uncontended LR/SC).
+    "amo-directed": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_atomic.c"), "BREEZE_ATOMIC_CASE", 1),
+    "amo-contention": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_atomic.c"), "BREEZE_ATOMIC_CASE", 2),
+    "lrsc-success": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_atomic.c"), "BREEZE_ATOMIC_CASE", 3),
+    "lrsc-fail": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_atomic.c"), "BREEZE_ATOMIC_CASE", 4),
+    "ipi": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 1),
+    "remote-fencei": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 2),
+    "per-hart-timer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 3),
 }
 
 

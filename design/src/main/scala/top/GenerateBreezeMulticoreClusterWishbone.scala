@@ -1,9 +1,9 @@
 package flow.top
 
 import _root_.circt.stage.ChiselStage
-import flow.config.BreezeClusterPresets
+import flow.config.{BreezeClusterPresets, CorePreset}
 
-/** Cluster RTL generator.
+/** Cluster RTL generator - the single RTL entry point of the design.
   *
   *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single'
   *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone dual'
@@ -19,17 +19,15 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
     require(args.length >= 1 && args.length <= 2,
         "usage: GenerateBreezeMulticoreClusterWishbone <single|dual|small> [gshare|baseline]")
 
-    private val profile = BreezeClusterPresets.fromName(args(0))
-    private val corePreset = args.lift(1).getOrElse("gshare")
-    require(corePreset == "gshare" || corePreset == "baseline",
-        s"unsupported core preset: $corePreset (expected gshare or baseline)")
-
-    private val clusterCfg = profile.copy(corePreset = corePreset)
-    private val targetDir = os.pwd / "build" / "rtl" / "cluster" / profile.profileName / corePreset
+    private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
+    private val clusterCfg =
+        BreezeClusterPresets.fromName(args(0)).copy(corePreset = corePreset)
+    private val targetDir =
+        os.pwd / "build" / "rtl" / "cluster" / clusterCfg.profileName / corePreset.name
 
     println(
-        s"[BreezeCluster RTL] profile=${profile.profileName} harts=${profile.numHarts} " +
-          s"core_preset=$corePreset target_dir=$targetDir"
+        s"[BreezeCluster RTL] profile=${clusterCfg.profileName} harts=${clusterCfg.numHarts} " +
+          s"core_preset=${corePreset.name} target_dir=$targetDir"
     )
     ChiselStage.emitSystemVerilogFile(
         new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = true),
@@ -47,17 +45,19 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
     require(svFiles.nonEmpty, s"no SystemVerilog files emitted into $targetDir")
     os.write.over(targetDir / "filelist.f", svFiles.mkString("", "\n", "\n"))
 
+    private val l1iBytes = clusterCfg.l1i.ICACHE_SET_NUM *
+        clusterCfg.l1i.ICACHE_WAY_NUM * clusterCfg.l1i.ICACHE_LINE_BYTES
     private val profileText =
-        s"""profile=${profile.profileName}
-           |numHarts=${profile.numHarts}
-           |l1iBytes=${profile.l1i.capacityBytes}
-           |l1dBytes=${profile.l1d.capacityBytes}
-           |l2Bytes=${profile.l2.capacityBytes}
-           |lineBytes=${profile.l1i.lineBytes}
-           |l1Ways=${profile.l1i.ways}
-           |l2Ways=${profile.l2.ways}
-           |corePreset=$corePreset
+        s"""profile=${clusterCfg.profileName}
+           |numHarts=${clusterCfg.numHarts}
+           |l1iBytes=$l1iBytes
+           |l1dBytes=${clusterCfg.l1d.capacityBytes}
+           |l2Bytes=${clusterCfg.l2.capacityBytes}
+           |lineBytes=${clusterCfg.l1d.lineBytes}
+           |l1Ways=${clusterCfg.l1d.ways}
+           |l2Ways=${clusterCfg.l2.ways}
+           |corePreset=${corePreset.name}
            |""".stripMargin
     os.write.over(targetDir / "cluster-profile.txt", profileText)
-    os.write.over(targetDir / "core-preset.txt", s"$corePreset\n")
+    os.write.over(targetDir / "core-preset.txt", s"${corePreset.name}\n")
 }

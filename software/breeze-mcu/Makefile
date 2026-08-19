@@ -2,7 +2,7 @@ CROSS_COMPILE ?= riscv64-unknown-elf-
 BUILD_DIR     ?= build
 MAIN          ?= apps/main.c
 MTVEC_MODE    ?= 0
-MARCH         ?= rv64im_zicsr_zifencei
+MARCH         ?= rv64ima_zicsr_zifencei
 EXTRA_CFLAGS  ?=
 TARGET         = $(BUILD_DIR)/breeze-mcu
 

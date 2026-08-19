@@ -32,9 +32,9 @@ from flow.cluster import (  # noqa: E402
     CLUSTER_L2_BYTES, CLUSTER_NUM_HARTS, CLUSTER_PROFILES, CORE_PRESETS,
     FlowCluster,
 )
-from flow.machine_timer import BreezeMachineTimer  # noqa: E402
+from flow.clint import BreezeClint  # noqa: E402
 from breeze_sim import (  # noqa: E402
-    MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MTIME_FREQUENCY_HZ,
+    MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MSIP_OFFSET, MTIME_FREQUENCY_HZ,
     MTIMECMP_OFFSET, MTIME_OFFSET, McuCompletionMonitor, Platform,
 )
 
@@ -99,12 +99,15 @@ class MulticoreSimSoC(SoCCore):
             **kwargs,
         )
 
-        self.submodules.machine_timer = BreezeMachineTimer(
+        # Parameterized CLINT: per-hart msip (IPI) and mtimecmp, shared mtime.
+        self.submodules.machine_timer = BreezeClint(
             sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQUENCY_HZ,
+            num_harts=self.cpu.num_harts,
             region_size=MACHINE_TIMER_SIZE,
-            mtime_offset=MTIME_OFFSET,
+            msip_offset=MSIP_OFFSET,
             mtimecmp_offset=MTIMECMP_OFFSET,
+            mtime_offset=MTIME_OFFSET,
         )
         self.bus.add_slave(
             name="machine_timer",
@@ -115,7 +118,11 @@ class MulticoreSimSoC(SoCCore):
                 cached=False,
             ),
         )
-        self.comb += self.cpu.mtip.eq(self.machine_timer.mtip)
+        self.comb += [
+            self.cpu.mtip.eq(self.machine_timer.mtip),
+            self.cpu.msip.eq(self.machine_timer.msip),
+        ]
+        self.add_constant("BREEZE_MSIP", MACHINE_TIMER_ORIGIN + MSIP_OFFSET)
         self.add_constant("BREEZE_MTIME", MACHINE_TIMER_ORIGIN + MTIME_OFFSET)
         self.add_constant("BREEZE_MTIMECMP", MACHINE_TIMER_ORIGIN + MTIMECMP_OFFSET)
         self.add_constant("BREEZE_MTIME_FREQUENCY", MTIME_FREQUENCY_HZ)

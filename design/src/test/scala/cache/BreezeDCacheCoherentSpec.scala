@@ -1,364 +1,408 @@
 package flow.cache
 
 import chisel3._
-import chisel3.simulator.PeekPokeAPI
 import chisel3.simulator.scalatest.ChiselSim
 import flow.config.DefaultDCacheConfig
-import org.scalatest.Assertions
+import flow.interface.{BreezeAmoFunc, BreezeMemOp}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-import scala.collection.mutable
-
-final case class CoherentReq(opcode: BigInt, lineAddr: BigInt, txnId: BigInt, srcHart: BigInt)
-final case class PendingGrant(
-    delay: Int,
-    txnId: BigInt,
-    lineAddr: BigInt,
-    state: BigInt,
-    hasData: Boolean,
-    data: BigInt)
-final case class DetailedProbeResp(srcHart: BigInt, txnId: BigInt, lineAddr: BigInt,
-    hasData: Boolean, data: BigInt)
-
-/** Minimal Home model for the coherent L1D interface.
-  *
-  * It deliberately models only one blocking transaction, matching the P3
-  * Home contract, while checking the request opcode and returning full-line
-  * data for misses.  Probes are driven independently so the tests cover the
-  * L1D's pending-probe latch and response backpressure behavior as well as
-  * normal refill/upgrade traffic.
+/** Coherence-protocol and RV64A behaviors of the L1D: MESI states, probe
+  * responses, the three transient races (upgrade race, Put cancel, SC
+  * reservation kill), LR/SC and AMO. CPU-side geometry/MMIO/flush behaviors
+  * live in BreezeDCacheSetAssocSpec; the harness is shared.
   */
-final class CoherentDCacheHarness(dut: BreezeDCache)
-    extends Assertions with PeekPokeAPI {
-  private val mem = new DTestMem
-  private var pendingGrant: Option[PendingGrant] = None
-  private val resident = mutable.Set.empty[BigInt]
-  val reqLog = mutable.ArrayBuffer.empty[CoherentReq]
-
-  private val coh = dut.io.coherence.get
-
-  dut.io.cpu.req.valid.poke(false.B)
-  dut.io.cpu.req.addr.poke(0.U)
-  dut.io.cpu.req.sizeLog2.poke(3.U)
-  dut.io.cpu.req.isWrite.poke(false.B)
-  dut.io.cpu.req.wdata.poke(0.U)
-  dut.io.cpu.req.wmask.poke("hff".U)
-  dut.io.flushReq.poke(false.B)
-  dut.io.nextLevelRsp.vld.poke(false.B)
-  dut.io.nextLevelRsp.data.poke(0.U)
-  dut.io.nextLevelRsp.error.poke(false.B)
-
-  coh.req.ready.poke(true.B)
-  coh.grant.valid.poke(false.B)
-  coh.grant.dstHart.poke(0.U)
-  coh.grant.txnId.poke(0.U)
-  coh.grant.lineAddr.poke(0.U)
-  coh.grant.grantState.poke(BreezeGrantState.S.litValue)
-  coh.grant.hasData.poke(false.B)
-  coh.grant.lineData.poke(0.U)
-  coh.grant.error.poke(false.B)
-  coh.probe.valid.poke(false.B)
-  coh.probe.dstHart.poke(0.U)
-  coh.probe.txnId.poke(0.U)
-  coh.probe.lineAddr.poke(0.U)
-  coh.probe.opcode.poke(BreezeProbeOpcode.ProbeInv.litValue)
-  coh.probeResp.ready.poke(false.B)
-
-  private def lineOf(addr: BigInt): BigInt = addr & ~BigInt(31)
-
-  private def step(): Unit = {
-    coh.grant.valid.poke(false.B)
-
-    pendingGrant match {
-      case Some(grant) if grant.delay == 0 =>
-        coh.grant.valid.poke(true.B)
-        coh.grant.dstHart.poke(0.U)
-        coh.grant.txnId.poke(grant.txnId.U)
-        coh.grant.lineAddr.poke(grant.lineAddr.U)
-        coh.grant.grantState.poke(grant.state)
-        coh.grant.hasData.poke(grant.hasData.B)
-        coh.grant.lineData.poke(grant.data.U)
-        coh.grant.error.poke(false.B)
-      case _ =>
-    }
-
-    val grantFire = pendingGrant.exists(_.delay == 0) &&
-      coh.grant.ready.peek().litToBoolean
-    val reqFire = coh.req.valid.peek().litToBoolean &&
-      coh.req.ready.peek().litToBoolean
-    if (reqFire) {
-      assert(pendingGrant.isEmpty, "coherent DCache issued a second request")
-      val opcode = coh.req.opcode.peek().litValue
-      val lineAddr = coh.req.lineAddr.peek().litValue
-      val txnId = coh.req.txnId.peek().litValue
-      val srcHart = coh.req.srcHart.peek().litValue
-      reqLog += CoherentReq(opcode, lineAddr, txnId, srcHart)
-
-      val getS = opcode == BreezeCoherenceOpcode.GetS.litValue
-      val getM = opcode == BreezeCoherenceOpcode.GetM.litValue
-      assert(getS || getM, s"unexpected request opcode $opcode")
-      val miss = !resident.contains(lineAddr)
-      pendingGrant = Some(PendingGrant(
-        delay = 1,
-        txnId = txnId,
-        lineAddr = lineAddr,
-        state = (if (getM) BreezeGrantState.M else BreezeGrantState.S).litValue,
-        hasData = getS || miss,
-        data = mem.readLine(lineAddr)))
-    }
-
-    dut.clock.step(1)
-
-    if (grantFire) {
-      resident += pendingGrant.get.lineAddr
-      pendingGrant = None
-    } else {
-      pendingGrant = pendingGrant.map(g => g.copy(delay = math.max(0, g.delay - 1)))
-    }
-  }
-
-  def cpu(
-      addr: BigInt,
-      isWrite: Boolean,
-      wdata: BigInt = 0,
-      wmask: BigInt = 0xff
-  ): (BigInt, Boolean, Boolean) = {
-    dut.io.cpu.req.valid.poke(true.B)
-    dut.io.cpu.req.addr.poke(addr.U)
-    dut.io.cpu.req.sizeLog2.poke(3.U)
-    dut.io.cpu.req.isWrite.poke(isWrite.B)
-    dut.io.cpu.req.wdata.poke(wdata.U)
-    dut.io.cpu.req.wmask.poke(wmask.U)
-    step()
-    dut.io.cpu.req.valid.poke(false.B)
-
-    var result: Option[(BigInt, Boolean, Boolean)] = None
-    var cycles = 0
-    while (result.isEmpty && cycles < 2000) {
-      if (dut.io.cpu.rsp.valid.peek().litToBoolean) {
-        result = Some((
-          dut.io.cpu.rsp.data.peek().litValue,
-          dut.io.cpu.rsp.error.peek().litToBoolean,
-          dut.io.cpu.rsp.isWriteAck.peek().litToBoolean))
-      }
-      step()
-      cycles += 1
-    }
-    if (result.isEmpty) fail("coherent DCache CPU request timed out")
-    result.get
-  }
-
-  /** Send a probe, hold response ready low for two cycles, and return the
-    * stable (hasData, lineData) response. */
-  def probe(addr: BigInt, opcode: BreezeProbeOpcode.Type): (Boolean, BigInt) = {
-    val r = probeDetailed(addr, opcode)
-    (r.hasData, r.data)
-  }
-
-  /** Like probe(), but also captures the full response payload so directed
-    * tests can check the srcHart and the txnId/lineAddr echo. */
-  def probeDetailed(addr: BigInt, opcode: BreezeProbeOpcode.Type): DetailedProbeResp = {
-    val lineAddr = lineOf(addr)
-    coh.probe.valid.poke(true.B)
-    coh.probe.dstHart.poke(0.U)
-    coh.probe.txnId.poke(3.U)
-    coh.probe.lineAddr.poke(lineAddr.U)
-    coh.probe.opcode.poke(opcode.litValue)
-    coh.probeResp.ready.poke(false.B)
-
-    var accepted = false
-    var cycles = 0
-    while (!accepted && cycles < 2000) {
-      accepted = coh.probe.ready.peek().litToBoolean
-      step()
-      cycles += 1
-    }
-    if (!accepted) fail("coherent DCache did not accept probe")
-    coh.probe.valid.poke(false.B)
-
-    while (!coh.probeResp.valid.peek().litToBoolean && cycles < 2000) {
-      step()
-      cycles += 1
-    }
-    if (!coh.probeResp.valid.peek().litToBoolean) fail("probe response timed out")
-
-    val hasData = coh.probeResp.hasData.peek().litToBoolean
-    val data = coh.probeResp.lineData.peek().litValue
-    val srcHart = coh.probeResp.srcHart.peek().litValue
-    val rspTxnId = coh.probeResp.txnId.peek().litValue
-    val rspLineAddr = coh.probeResp.lineAddr.peek().litValue
-    for (_ <- 0 until 2) {
-      step()
-      assert(coh.probeResp.valid.peek().litToBoolean,
-        "probe response valid dropped under backpressure")
-      assert(coh.probeResp.hasData.peek().litToBoolean == hasData,
-        "probe response hasData changed under backpressure")
-      assert(coh.probeResp.lineData.peek().litValue == data,
-        "probe response data changed under backpressure")
-      assert(coh.probeResp.srcHart.peek().litValue == srcHart,
-        "probe response srcHart changed under backpressure")
-      assert(coh.probeResp.txnId.peek().litValue == rspTxnId,
-        "probe response txnId changed under backpressure")
-      assert(coh.probeResp.lineAddr.peek().litValue == rspLineAddr,
-        "probe response lineAddr changed under backpressure")
-    }
-
-    coh.probeResp.ready.poke(true.B)
-    step()
-    coh.probeResp.ready.poke(false.B)
-    resident -= lineAddr
-    DetailedProbeResp(srcHart, rspTxnId, rspLineAddr, hasData, data)
-  }
-
-  /** Present a CPU request pulse while an unsolicited probe owns the cache
-    * pipeline, then release the probe response and collect the delayed CPU
-    * response.
-    */
-  def cpuDuringProbe(probeAddr: BigInt, cpuAddr: BigInt): (BigInt, Boolean, Boolean) = {
-    coh.probe.valid.poke(true.B)
-    coh.probe.dstHart.poke(0.U)
-    coh.probe.txnId.poke(2.U)
-    coh.probe.lineAddr.poke(lineOf(probeAddr).U)
-    coh.probe.opcode.poke(BreezeProbeOpcode.ProbeInv.litValue)
-    coh.probeResp.ready.poke(false.B)
-    assert(coh.probe.ready.peek().litToBoolean, "coherent DCache did not accept probe")
-    step()
-    coh.probe.valid.poke(false.B)
-
-    // Idle first observes the pending probe and enters ProbeRead. The CPU
-    // pulse then lands in the same busy window seen by the dual-hart system.
-    step()
-    dut.io.cpu.req.valid.poke(true.B)
-    dut.io.cpu.req.addr.poke(cpuAddr.U)
-    dut.io.cpu.req.sizeLog2.poke(3.U)
-    dut.io.cpu.req.isWrite.poke(false.B)
-    dut.io.cpu.req.wdata.poke(0.U)
-    dut.io.cpu.req.wmask.poke("hff".U)
-    step()
-    dut.io.cpu.req.valid.poke(false.B)
-
-    var cycles = 0
-    while (!coh.probeResp.valid.peek().litToBoolean && cycles < 2000) {
-      step()
-      cycles += 1
-    }
-    if (!coh.probeResp.valid.peek().litToBoolean) fail("probe response timed out")
-    coh.probeResp.ready.poke(true.B)
-    step()
-    coh.probeResp.ready.poke(false.B)
-
-    var result: Option[(BigInt, Boolean, Boolean)] = None
-    while (result.isEmpty && cycles < 2000) {
-      if (dut.io.cpu.rsp.valid.peek().litToBoolean) {
-        result = Some((
-          dut.io.cpu.rsp.data.peek().litValue,
-          dut.io.cpu.rsp.error.peek().litToBoolean,
-          dut.io.cpu.rsp.isWriteAck.peek().litToBoolean))
-      }
-      step()
-      cycles += 1
-    }
-    if (result.isEmpty) fail("CPU request queued behind probe timed out")
-    result.get
-  }
-}
-
 class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim {
+  import DCacheTestOps._
   private val cfg = DefaultDCacheConfig()
+  private val word = BigInt("ffffffffffffffff", 16)
+
   private def sramAddr(tagLsb: Int, set: Int, offset: Int = 0): BigInt =
     BigInt(0x11000000L) + (BigInt(tagLsb) << 11) + (BigInt(set) << 5) + offset
+  private def lineBase(addr: BigInt): BigInt = addr & ~BigInt(31)
+  private def newDut(hartId: Int = 0, hartIdWidth: Int = 1) =
+    new BreezeDCache(cfg, hartId = hartId, hartIdWidth = hartIdWidth)
 
-  "coherent load should install S and ProbeInv should invalidate it" in {
-    simulate(new BreezeDCache(cfg, coherent = true, hartId = 0, hartIdWidth = 1)) { dut =>
-      val h = new CoherentDCacheHarness(dut)
+  // ===== MESI stable states =====
+
+  "GetS grants E; a store on the E line silently upgrades to M without GetM" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
       val addr = sramAddr(0, 3)
-      val first = h.cpu(addr, isWrite = false)
-      first._2 mustBe false
-      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
-
-      val (hasData, _) = h.probe(addr, BreezeProbeOpcode.ProbeInv)
-      hasData mustBe false
-      h.cpu(addr, isWrite = false)._2 mustBe false
-      h.reqLog.map(_.opcode) mustBe Seq(
-        BreezeCoherenceOpcode.GetS.litValue,
-        BreezeCoherenceOpcode.GetS.litValue)
-    }
-  }
-
-  "coherent dirty owner should return modified data on ProbeRecallInv" in {
-    simulate(new BreezeDCache(cfg, coherent = true, hartId = 0, hartIdWidth = 1)) { dut =>
-      val h = new CoherentDCacheHarness(dut)
-      val addr = sramAddr(1, 4)
+      h.load(addr)._4.map(_.opcode) mustBe Seq(GetS)
       val value = BigInt("0123456789abcdef", 16)
-      val store = h.cpu(addr, isWrite = true, wdata = value)
-      store._2 mustBe false
-      store._3 mustBe true
-      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetM.litValue)
-
-      val (hasData, lineData) = h.probe(addr, BreezeProbeOpcode.ProbeRecallInv)
-      hasData mustBe true
-      (lineData & ((BigInt(1) << 64) - 1)) mustBe value
+      // Silent E->M: no coherence traffic at all.
+      h.store(addr, value)._4 mustBe empty
+      // The silently-upgraded M line answers a recall with its dirty data.
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r.hasData mustBe true
+      (r.data & word) mustBe value
     }
   }
 
-  "coherent S-line store should request GetM before modifying the line" in {
-    simulate(new BreezeDCache(cfg, coherent = true, hartId = 0, hartIdWidth = 1)) { dut =>
-      val h = new CoherentDCacheHarness(dut)
-      val addr = sramAddr(2, 5)
+  "a clean E line answers ProbeToS without data and degrades to S" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(1, 4)
+      h.load(addr) // E
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeToS)
+      r.hasData mustBe false
+      // The line is S now: a store must issue a GetM upgrade.
       val value = BigInt("fedcba9876543210", 16)
-      h.cpu(addr, isWrite = false)._2 mustBe false
-      val store = h.cpu(addr, isWrite = true, wdata = value)
-      store._2 mustBe false
-      store._3 mustBe true
-      h.reqLog.map(_.opcode) mustBe Seq(
-        BreezeCoherenceOpcode.GetS.litValue,
-        BreezeCoherenceOpcode.GetM.litValue)
-
-      val (hasData, lineData) = h.probe(addr, BreezeProbeOpcode.ProbeRecallInv)
-      hasData mustBe true
-      (lineData & ((BigInt(1) << 64) - 1)) mustBe value
+      h.store(addr, value)._4.map(_.opcode) mustBe Seq(GetM)
+      val r2 = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r2.hasData mustBe true
+      (r2.data & word) mustBe value
     }
   }
 
-  "coherent CPU pulse during an idle-cache probe should be queued" in {
-    simulate(new BreezeDCache(cfg, coherent = true, hartId = 0, hartIdWidth = 1)) { dut =>
-      val h = new CoherentDCacheHarness(dut)
-      val probeAddr = sramAddr(3, 6)
-      val cpuAddr = sramAddr(4, 7)
-      val load = h.cpuDuringProbe(probeAddr, cpuAddr)
-      load._2 mustBe false
-      load._3 mustBe false
-      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
-    }
-  }
-
-  "coherent dcache with 2-bit hart id 3 should tag requests and probe responses with srcHart 3" in {
-    simulate(new BreezeDCache(cfg, coherent = true, hartId = 3, hartIdWidth = 2)) { dut =>
-      val h = new CoherentDCacheHarness(dut)
-      val addr = sramAddr(5, 8)
-      val load = h.cpu(addr, isWrite = false)
-      load._2 mustBe false
-      h.reqLog.map(_.opcode) mustBe Seq(BreezeCoherenceOpcode.GetS.litValue)
-      h.reqLog.head.srcHart mustBe 3
-      h.reqLog.head.lineAddr mustBe (addr & ~BigInt(31))
-
+  "a dirty M line answers ProbeInv with data and is invalidated" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(2, 5)
       val value = BigInt("1122334455667788", 16)
-      val store = h.cpu(addr, isWrite = true, wdata = value)
-      store._2 mustBe false
-      h.reqLog.map(_.opcode) mustBe Seq(
-        BreezeCoherenceOpcode.GetS.litValue,
-        BreezeCoherenceOpcode.GetM.litValue)
-      h.reqLog(1).srcHart mustBe 3
+      h.store(addr, value)
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeInv)
+      r.hasData mustBe true
+      (r.data & word) mustBe value
+      r.lineAddr mustBe lineBase(addr)
+      // Invalidated: the next access misses again.
+      h.load(addr)._4.map(_.opcode) mustBe Seq(GetS)
+    }
+  }
 
-      // The probe response must echo the probe txnId/lineAddr and carry the
-      // modified full line with srcHart == 3 (2-bit).
-      val r = h.probeDetailed(addr, BreezeProbeOpcode.ProbeRecallInv)
+  "an S line store issues GetM and completes with a dataless upgrade grant" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      h.grantStateForGetS = BreezeGrantState.S.litValue
+      h.getMHasData = false
+      val addr = sramAddr(3, 6)
+      h.load(addr)._4.map(_.opcode) mustBe Seq(GetS)
+      val value = BigInt("00ddccbbaa998877", 16)
+      h.store(addr, value)._4.map(_.opcode) mustBe Seq(GetM)
+      h.load(addr)._1 mustBe value
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r.hasData mustBe true
+      (r.data & word) mustBe value
+    }
+  }
+
+  "srcHart tags requests and probe responses with the configured hart id" in {
+    simulate(newDut(hartId = 3, hartIdWidth = 2)) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(4, 7)
+      val value = BigInt("a5a5a5a5a5a5a5a5", 16)
+      h.store(addr, value)
+      h.reqLog.head.srcHart mustBe 3
+      h.reqLog.head.lineAddr mustBe lineBase(addr)
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv, txnId = 3)
       r.srcHart mustBe 3
       r.txnId mustBe 3
-      r.lineAddr mustBe (addr & ~BigInt(31))
+      (r.data & word) mustBe value
+    }
+  }
+
+  // ===== Transient races =====
+
+  "upgrade race: a probe kills the S copy while GetM waits; the data grant repairs it" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      h.grantStateForGetS = BreezeGrantState.S.litValue
+      val addr = sramAddr(0, 8)
+      h.load(addr) // S
+      val value = BigInt("deadbeefcafebabe", 16)
+
+      h.holdGrant = true
+      val logStart = h.reqLog.length
+      h.cpuStart(addr, BreezeMemOp.Store, wdata = value)
+      var cycles = 0
+      while (h.reqLog.length == logStart && cycles < 200) { h.step(); cycles += 1 }
+      h.reqLog(logStart).opcode mustBe GetM
+
+      // Another hart's transaction invalidated our S copy first.
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeInv)
+      r.hasData mustBe false
+
+      // The Home saw the requester was no longer a sharer: GrantM carries data.
+      h.holdGrant = false
+      val (_, error, ack) = h.cpuWait()
+      error mustBe false
+      ack mustBe true
+      // The store merged into the GRANT data, not into the dead local copy.
+      h.load(addr)._1 mustBe value
+      val r2 = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r2.hasData mustBe true
+      (r2.data & word) mustBe value
+    }
+  }
+
+  "Put cancel: a probe that takes the parked victim cancels the PutM" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      def storedVal(tag: Int): BigInt = BigInt(tag + 1) * BigInt("1111111111111111", 16) / 15
+      for (tag <- 0 until 4) h.store(sramAddr(tag, 9), storedVal(tag))
+
+      // The fifth line forces an eviction; park the request channel so the
+      // PutM cannot be handshaken yet.
+      h.holdReqReady = true
+      val logStart = h.reqLog.length
+      h.cpuStart(sramAddr(4, 9), BreezeMemOp.Load)
+      val victimLine = h.peekParkedRequest(BreezeCoherenceOpcode.PutM)
+      val victimTag = ((victimLine - BigInt(0x11000000L)) >> 11).toInt
+
+      // The Home recalls exactly that victim for another transaction.
+      val r = h.injectProbe(victimLine, BreezeProbeOpcode.ProbeRecallInv)
       r.hasData mustBe true
-      (r.data & ((BigInt(1) << 64) - 1)) mustBe value
+      (r.data & word) mustBe storedVal(victimTag)
+
+      // The parked PutM is cancelled (never fires); the miss proceeds.
+      h.holdReqReady = false
+      val (data, error, _) = h.cpuWait()
+      error mustBe false
+      data mustBe h.mem.readBytes(sramAddr(4, 9), 8)
+      val delta = h.reqLog.slice(logStart, h.reqLog.length)
+      delta.count(x => x.opcode == PutM || x.opcode == PutS) mustBe 0
+      delta.map(_.opcode) mustBe Seq(GetS)
+    }
+  }
+
+  "CPU pulse arriving during an unsolicited probe is queued and served after it" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val coh = dut.io.coherence
+      val probeAddr = sramAddr(1, 10)
+      val cpuAddr = sramAddr(2, 11)
+
+      coh.probe.valid.poke(true.B)
+      coh.probe.txnId.poke(2.U)
+      coh.probe.lineAddr.poke(lineBase(probeAddr).U)
+      coh.probe.opcode.poke(BreezeProbeOpcode.ProbeInv.litValue)
+      assert(coh.probe.ready.peek().litToBoolean)
+      h.step()
+      coh.probe.valid.poke(false.B)
+      h.step() // Idle observes the pending probe and enters the probe FSM.
+
+      h.cpuStart(cpuAddr, BreezeMemOp.Load)
+
+      var cycles = 0
+      while (!coh.probeResp.valid.peek().litToBoolean && cycles < 200) { h.step(); cycles += 1 }
+      assert(coh.probeResp.valid.peek().litToBoolean, "probe response timed out")
+      coh.probeResp.ready.poke(true.B)
+      h.step()
+      coh.probeResp.ready.poke(false.B)
+
+      val (data, error, _) = h.cpuWait()
+      error mustBe false
+      data mustBe h.mem.readBytes(cpuAddr, 8)
+    }
+  }
+
+  // ===== LR/SC =====
+
+  "LR/SC succeeds locally on an E line without a GetM" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(0, 12)
+      val value = BigInt("0102030405060708", 16)
+      val (old, err, _, reqsLr) = h.cpu(addr, BreezeMemOp.Lr)
+      err mustBe false
+      old mustBe h.mem.readBytes(addr, 8)
+      reqsLr.map(_.opcode) mustBe Seq(GetS)
+      val (sc, scErr, _, reqsSc) = h.cpu(addr, BreezeMemOp.Sc, wdata = value)
+      scErr mustBe false
+      sc mustBe 0
+      reqsSc mustBe empty // E hit: the SC write is purely local
+      h.load(addr)._1 mustBe value
+    }
+  }
+
+  "LR/SC succeeds through a GetM upgrade on an S line" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      h.grantStateForGetS = BreezeGrantState.S.litValue
+      val addr = sramAddr(1, 13)
+      val value = BigInt("1112131415161718", 16)
+      h.cpu(addr, BreezeMemOp.Lr)._2 mustBe false
+      val (sc, _, _, reqs) = h.cpu(addr, BreezeMemOp.Sc, wdata = value)
+      sc mustBe 0
+      reqs.map(_.opcode) mustBe Seq(GetM)
+      h.load(addr)._1 mustBe value
+    }
+  }
+
+  "SC without a reservation fails fast with no traffic and no write" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(2, 14)
+      val before = h.mem.readBytes(addr, 8)
+      val (sc, err, ack, reqs) = h.cpu(addr, BreezeMemOp.Sc, wdata = BigInt(0x5555))
+      err mustBe false
+      ack mustBe false
+      sc mustBe 1
+      reqs mustBe empty
+      h.load(addr)._1 mustBe before
+    }
+  }
+
+  "SC with a mismatching size fails even at the reserved address" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(3, 15)
+      h.cpu(addr, BreezeMemOp.Lr, sizeLog2 = 2)._2 mustBe false // LR.W
+      val (sc, _, _, reqs) = h.cpu(addr, BreezeMemOp.Sc, sizeLog2 = 3, wdata = 1) // SC.D
+      sc mustBe 1
+      reqs mustBe empty
+    }
+  }
+
+  "a probe on the reserved line clears the reservation (SC fails without GetM)" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(4, 16)
+      h.cpu(addr, BreezeMemOp.Lr)._2 mustBe false // E line + reservation
+      h.injectProbe(addr, BreezeProbeOpcode.ProbeToS).hasData mustBe false
+      // Line still resident (S), but the reservation died with the probe.
+      val before = h.mem.readBytes(addr, 8)
+      val (sc, _, _, reqs) = h.cpu(addr, BreezeMemOp.Sc, wdata = BigInt(0x7777))
+      sc mustBe 1
+      reqs mustBe empty
+      h.load(addr)._1 mustBe before
+    }
+  }
+
+  "SC reservation killed while the GetM waits: fail, no write, clean E install" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      h.grantStateForGetS = BreezeGrantState.S.litValue
+      val addr = sramAddr(5, 17)
+      val before = h.mem.readBytes(addr, 8)
+      h.cpu(addr, BreezeMemOp.Lr)._2 mustBe false // S line + reservation
+
+      h.holdGrant = true
+      val logStart = h.reqLog.length
+      h.cpuStart(addr, BreezeMemOp.Sc, wdata = BigInt(0x9999))
+      var cycles = 0
+      while (h.reqLog.length == logStart && cycles < 200) { h.step(); cycles += 1 }
+      h.reqLog(logStart).opcode mustBe GetM
+
+      h.injectProbe(addr, BreezeProbeOpcode.ProbeInv) // kills copy + reservation
+      h.holdGrant = false
+      val (sc, err, _) = h.cpuWait()
+      err mustBe false
+      sc mustBe 1
+      // No write happened; the granted line was installed as a clean E copy:
+      // the read hits the grant data and a store stays silent (no GetM).
+      val delta = h.reqLog.slice(logStart, h.reqLog.length)
+      delta.map(_.opcode) mustBe Seq(GetM)
+      h.load(addr)._1 mustBe before
+      h.store(addr, BigInt(0xabcd))._4 mustBe empty
+    }
+  }
+
+  "resKill clears the reservation" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(0, 18)
+      h.cpu(addr, BreezeMemOp.Lr)._2 mustBe false
+      h.resKillPulse()
+      val (sc, _, _, reqs) = h.cpu(addr, BreezeMemOp.Sc, wdata = 1)
+      sc mustBe 1
+      reqs mustBe empty
+    }
+  }
+
+  // ===== AMO =====
+
+  "AMO hit on E: old value returned, new value written, no coherence traffic" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(1, 19)
+      h.load(addr) // E
+      val old = h.mem.readBytes(addr, 8)
+      val (data, err, _, reqs) = h.cpu(addr, BreezeMemOp.Amo, wdata = BigInt(5),
+        amoFunc = BreezeAmoFunc.Add)
+      err mustBe false
+      data mustBe old
+      reqs mustBe empty // E hit: silent upgrade, local RMW
+      h.load(addr)._1 mustBe ((old + 5) & word)
+      // The RMW made the line M: a recall returns the merged data.
+      val r = h.injectProbe(addr, BreezeProbeOpcode.ProbeRecallInv)
+      r.hasData mustBe true
+      (r.data & word) mustBe ((old + 5) & word)
+    }
+  }
+
+  "AMO.W modifies only the addressed 32-bit half and returns the aligned old word" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(2, 20)
+      h.load(addr)
+      val old = h.mem.readBytes(addr, 8)
+      // AMOADD.W on the HIGH half (addr+4).
+      val (data, err, _, _) = h.cpu(addr + 4, BreezeMemOp.Amo, sizeLog2 = 2,
+        wdata = BigInt(1), amoFunc = BreezeAmoFunc.Add)
+      err mustBe false
+      data mustBe old // the raw aligned 64-bit old word (backend extracts)
+      val expectedHigh = ((old >> 32) + 1) & ((BigInt(1) << 32) - 1)
+      h.load(addr)._1 mustBe ((expectedHigh << 32) | (old & ((BigInt(1) << 32) - 1)))
+    }
+  }
+
+  "AMO miss allocates with GetM and returns the pre-modification word" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(3, 21)
+      val old = h.mem.readBytes(addr, 8)
+      val swapped = BigInt("00000000cafebabe", 16)
+      val (data, err, _, reqs) = h.cpu(addr, BreezeMemOp.Amo, wdata = swapped,
+        amoFunc = BreezeAmoFunc.Swap)
+      err mustBe false
+      data mustBe old
+      reqs.map(_.opcode) mustBe Seq(GetM)
+      h.load(addr)._1 mustBe swapped
+    }
+  }
+
+  "AMO on an S line upgrades with GetM before the RMW" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      h.grantStateForGetS = BreezeGrantState.S.litValue
+      val addr = sramAddr(4, 22)
+      h.load(addr) // S
+      val old = h.mem.readBytes(addr, 8)
+      val (data, err, _, reqs) = h.cpu(addr, BreezeMemOp.Amo, wdata = old,
+        amoFunc = BreezeAmoFunc.MaxU)
+      err mustBe false
+      data mustBe old
+      reqs.map(_.opcode) mustBe Seq(GetM)
+      h.load(addr)._1 mustBe old // maxu(old, old) == old
+    }
+  }
+
+  "atomics on a device region fail with an access error and no traffic" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      for (op <- Seq(BreezeMemOp.Lr, BreezeMemOp.Sc, BreezeMemOp.Amo)) {
+        val (_, err, _, reqs) = h.cpu(BigInt("02000000", 16), op, wdata = 1)
+        err mustBe true
+        reqs mustBe empty
+      }
+      h.mmioLog mustBe empty
+    }
+  }
+
+  "eviction of the reserved line clears the reservation" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(0, 23)
+      h.cpu(addr, BreezeMemOp.Lr)._2 mustBe false
+      // Fill the set with three more lines, then overflow it so the reserved
+      // line (way 0, PLRU victim after the touches) is evicted.
+      for (tag <- 1 until 4) h.load(sramAddr(tag, 23))
+      h.load(sramAddr(4, 23)) // evicts way 0 = the reserved line
+      val (sc, _, _, reqs) = h.cpu(addr, BreezeMemOp.Sc, wdata = 1)
+      sc mustBe 1
+      reqs mustBe empty
     }
   }
 }

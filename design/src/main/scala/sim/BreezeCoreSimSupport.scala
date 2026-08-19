@@ -311,6 +311,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 
             dut.io.resetAddr.poke(bootAddr.U)
             dut.io.machineTimerInterrupt.poke(false.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.io.nextLevelRsp.data.poke(0.U)

@@ -354,6 +354,7 @@ object SIM_SYSTEM {
 }
 
 object MACHINE_INTERRUPT_CAUSE {
+   val SOFTWARE = 3
    val TIMER    = 7
    val EXTERNAL = 11
 }

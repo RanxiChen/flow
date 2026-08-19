@@ -2,6 +2,7 @@ package flow.core
 import chisel3._
 import chisel3.util._
 import flow.core.IMM_TYPE.CSR_Type
+import flow.interface.{BreezeAmoFunc, BreezeMemOp}
 
 class EXE_Ctrl extends Bundle {
     val alu_op = Output(UInt(ALU_OP.width.W))
@@ -26,6 +27,13 @@ class EXE_Ctrl extends Bundle {
     val fencei = Output(Bool())
     val is_ecall = Output(Bool())
     val is_mret  = Output(Bool())
+    // RV64A sideband. mem_cmd still carries the element size and steers the
+    // load/store data paths; mem_op is what distinguishes LR/SC/AMO from the
+    // plain Load/Store they otherwise resemble.
+    val mem_op = Output(BreezeMemOp())
+    val amo_func = Output(BreezeAmoFunc())
+    val amo_aq = Output(Bool())
+    val amo_rl = Output(Bool())
 }
 
 class RV64IZicsrDecoder extends Module {
@@ -57,12 +65,17 @@ class RV64IZicsrDecoder extends Module {
     io.I_ctrl.fencei := false.B
     io.I_ctrl.is_ecall := false.B
     io.I_ctrl.is_mret := false.B
+    io.I_ctrl.mem_op := BreezeMemOp.Load
+    io.I_ctrl.amo_func := BreezeAmoFunc.Swap
+    io.I_ctrl.amo_aq := false.B
+    io.I_ctrl.amo_rl := false.B
     io.illegal_inst := true.B
     //manual decode
     val opcode = io.inst(6,0)
     val funct3 = io.inst(14,12)
     val funct7 = io.inst(31,25)
     val funct6 = io.inst(31,26)
+    val funct5 = io.inst(31,27)
     switch(opcode){
         is(OPCODE.OP_IMM){
             //I-type ALU instructions
@@ -324,11 +337,68 @@ class RV64IZicsrDecoder extends Module {
             io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
             io.I_ctrl.sel_alu2 := SEL_ALU2.IMM.U
             io.I_ctrl.alu_op := ALU_OP.ADD.U
+            io.I_ctrl.mem_op := BreezeMemOp.Store
             switch(funct3){
                 is("b000".U){io.I_ctrl.mem_cmd := MEM_TYPE.SB.U; io.illegal_inst := false.B} //SB
                 is("b001".U){io.I_ctrl.mem_cmd := MEM_TYPE.SH.U; io.illegal_inst := false.B} //SH
                 is("b010".U){io.I_ctrl.mem_cmd := MEM_TYPE.SW.U; io.illegal_inst := false.B} //SW
                 is("b011".U){io.I_ctrl.mem_cmd := MEM_TYPE.SD.U; io.illegal_inst := false.B} //SD
+            }
+        }
+        is(OPCODE.AMO){
+            // RV64A. The address is rs1 with no immediate offset; every
+            // operation (including SC) writes rd through the MEM writeback
+            // path. mem_cmd reuses the load/store encodings purely for the
+            // element size, alignment predicate and data-path steering:
+            //   LR/AMO -> LW/LD (the response is extracted/sign-extended
+            //             like a load of the same size),
+            //   SC     -> SW/SD (rs2 is pre-positioned like a store; the
+            //             0/1 result is written back unextracted).
+            // Unknown funct3/funct5 combinations keep mem_cmd=NOT_MEM and
+            // stay illegal - they never degrade into a plain load/store.
+            io.I_ctrl.wb_en := true.B
+            io.I_ctrl.sel_wb := SEL_WB.MEM.U
+            io.I_ctrl.sel_alu1 := SEL_ALU1.RS1.U
+            io.I_ctrl.sel_alu2 := SEL_ALU2.CONST0.U
+            io.I_ctrl.alu_op := ALU_OP.ADD.U
+            io.I_ctrl.amo_aq := io.inst(26)
+            io.I_ctrl.amo_rl := io.inst(25)
+            when(funct3 === "b010".U || funct3 === "b011".U) {
+                val isWord = funct3 === "b010".U
+                val loadCmd = Mux(isWord, MEM_TYPE.LW.U(MEM_TYPE.width.W),
+                    MEM_TYPE.LD.U(MEM_TYPE.width.W))
+                val storeCmd = Mux(isWord, MEM_TYPE.SW.U(MEM_TYPE.width.W),
+                    MEM_TYPE.SD.U(MEM_TYPE.width.W))
+                def amo(func: BreezeAmoFunc.Type): Unit = {
+                    io.I_ctrl.mem_cmd := loadCmd
+                    io.I_ctrl.mem_op := BreezeMemOp.Amo
+                    io.I_ctrl.amo_func := func
+                    io.illegal_inst := false.B
+                }
+                switch(funct5){
+                    is("b00010".U){
+                        // LR requires rs2=0, otherwise illegal instruction.
+                        when(io.inst(24, 20) === 0.U) {
+                            io.I_ctrl.mem_cmd := loadCmd
+                            io.I_ctrl.mem_op := BreezeMemOp.Lr
+                            io.illegal_inst := false.B
+                        }
+                    } //LR.W/D
+                    is("b00011".U){
+                        io.I_ctrl.mem_cmd := storeCmd
+                        io.I_ctrl.mem_op := BreezeMemOp.Sc
+                        io.illegal_inst := false.B
+                    } //SC.W/D
+                    is("b00000".U){ amo(BreezeAmoFunc.Add) }  //AMOADD.W/D
+                    is("b00001".U){ amo(BreezeAmoFunc.Swap) } //AMOSWAP.W/D
+                    is("b00100".U){ amo(BreezeAmoFunc.Xor) }  //AMOXOR.W/D
+                    is("b01000".U){ amo(BreezeAmoFunc.Or) }   //AMOOR.W/D
+                    is("b01100".U){ amo(BreezeAmoFunc.And) }  //AMOAND.W/D
+                    is("b10000".U){ amo(BreezeAmoFunc.Min) }  //AMOMIN.W/D
+                    is("b10100".U){ amo(BreezeAmoFunc.Max) }  //AMOMAX.W/D
+                    is("b11000".U){ amo(BreezeAmoFunc.MinU) } //AMOMINU.W/D
+                    is("b11100".U){ amo(BreezeAmoFunc.MaxU) } //AMOMAXU.W/D
+                }
             }
         }
         is(OPCODE.MISC_MEM){

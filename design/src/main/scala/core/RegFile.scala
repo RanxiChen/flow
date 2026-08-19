@@ -2,7 +2,6 @@ package flow.core
 
 import chisel3._
 import chisel3.util._
-import flow.top._
 import flow.interface._
 /**
   * Register File, used to store general purpose registers
@@ -169,6 +168,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val retire_valid = Input(Bool())
         val hpmEvents = Input(new BreezeHpmEvents)
         val machineTimerInterrupt = Input(Bool())
+        val machineSoftwareInterrupt = Input(Bool())
         val machineExternalInterrupt = Input(Bool())
         val trap = Input(new CSRTrapInfo(XLEN))
         val mret_commit = Input(Bool())
@@ -188,7 +188,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mcountinhibit = RegInit(0.U(32.W))
-    val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) // RV64IM
+    val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
+        BigInt(1) // RV64IMA (bit 0 = A, bit 8 = I, bit 12 = M)
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))
@@ -203,6 +204,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
     val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
     val mstatus_MPP  = RegInit("b11".U(2.W)) // bits 12-11: machine previous privilege (always M=3)
+    val mie_MSIE = RegInit(false.B)          // bit 3:  machine software interrupt enable
     val mie_MTIE = RegInit(false.B)          // bit 7:  machine timer interrupt enable
     val mie_MEIE = RegInit(false.B)          // bit 11: machine external interrupt enable
     val mstatus_read = Wire(UInt(XLEN.W))
@@ -219,17 +221,21 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mip_read = Wire(UInt(XLEN.W))
     mie_read := Cat(
         0.U((XLEN - 12).W),
-        mie_MEIE,
-        0.U(3.W),
-        mie_MTIE,
-        0.U(7.W)
+        mie_MEIE,         // [11] MEIE
+        0.U(3.W),         // [10:8]
+        mie_MTIE,         // [7]  MTIE
+        0.U(3.W),         // [6:4]
+        mie_MSIE,         // [3]  MSIE
+        0.U(3.W)          // [2:0]
     )
     mip_read := Cat(
         0.U((XLEN - 12).W),
-        io.machineExternalInterrupt,
-        0.U(3.W),
-        io.machineTimerInterrupt,
-        0.U(7.W)
+        io.machineExternalInterrupt,  // [11] MEIP (read-only input)
+        0.U(3.W),                     // [10:8]
+        io.machineTimerInterrupt,     // [7]  MTIP (read-only input)
+        0.U(3.W),                     // [6:4]
+        io.machineSoftwareInterrupt,  // [3]  MSIP (read-only input; cleared
+        0.U(3.W)                      //      by writing the CLINT msip word)
     )
     def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
     val csrFile = Seq(
@@ -389,11 +395,13 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.mie.U){
+                mie_MSIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.SOFTWARE)
                 mie_MTIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.TIMER)
                 mie_MEIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.EXTERNAL)
             }
             is(CSRMAP.mip.U){
-                // MTIP and MEIP are read-only reflections of platform inputs.
+                // MSIP, MTIP and MEIP are read-only reflections of platform
+                // inputs (software clears MSIP through the CLINT msip word).
             }
             is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
                 // Updated below so an explicit CSR write has priority over
@@ -476,14 +484,16 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.csr_write_en := write_csr
     io.mtvec := mtvec
     io.mepc_out := mepc
+    // Fixed interrupt priority: MEI > MSI > MTI.
     val externalInterruptPending = mstatus_MIE && mie_MEIE && io.machineExternalInterrupt
+    val softwareInterruptPending = mstatus_MIE && mie_MSIE && io.machineSoftwareInterrupt
     val timerInterruptPending = mstatus_MIE && mie_MTIE && io.machineTimerInterrupt
-    io.interruptPending := externalInterruptPending || timerInterruptPending
-    io.interruptCause := Mux(
-        externalInterruptPending,
-        MACHINE_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
-        MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W)
-    )
+    io.interruptPending := externalInterruptPending || softwareInterruptPending ||
+        timerInterruptPending
+    io.interruptCause := MuxCase(MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W), Seq(
+        externalInterruptPending -> MACHINE_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
+        softwareInterruptPending -> MACHINE_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W)
+    ))
     io.debug.foreach { debug =>
         debug.mcause := mcause
         debug.mepc  := mepc

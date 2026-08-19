@@ -25,7 +25,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, LITEX_WRAPPER_ROOT)
 
 from flow.core import Flow
-from flow.machine_timer import BreezeMachineTimer
+from flow.clint import BreezeClint
 
 
 # Do not rely on LiteX's current-working-directory based CPU discovery.
@@ -53,6 +53,8 @@ MACHINE_TIMER_ORIGIN = _platform_int(MACHINE_TIMER_REGION["origin"])
 MACHINE_TIMER_SIZE = _platform_int(MACHINE_TIMER_REGION["size"])
 MTIMECMP_OFFSET = _platform_int(MACHINE_TIMER_CONFIG["mtimecmpOffset"])
 MTIME_OFFSET = _platform_int(MACHINE_TIMER_CONFIG["mtimeOffset"])
+# Classic CLINT layout: msip[h] sits at the region base (base + 4*h).
+MSIP_OFFSET = 0x0000
 MTIME_FREQUENCY_HZ = _platform_int(MACHINE_TIMER_CONFIG["mtimeFrequencyHz"])
 RESET_VECTOR = _platform_int(PLATFORM_CONFIG["resetVector"])
 
@@ -653,12 +655,16 @@ class BreezeSimSoC(SoCCore):
                 retire_stall_timeout=retire_stall_timeout,
             )
 
-        self.submodules.machine_timer = BreezeMachineTimer(
+        # Parameterized CLINT (msip/mtimecmp/mtime) replaces the single-hart
+        # machine timer; the region and mtime/mtimecmp offsets are unchanged.
+        self.submodules.machine_timer = BreezeClint(
             sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQUENCY_HZ,
+            num_harts=self.cpu.num_harts,
             region_size=MACHINE_TIMER_SIZE,
-            mtime_offset=MTIME_OFFSET,
+            msip_offset=MSIP_OFFSET,
             mtimecmp_offset=MTIMECMP_OFFSET,
+            mtime_offset=MTIME_OFFSET,
         )
         self.bus.add_slave(
             name="machine_timer",
@@ -669,7 +675,11 @@ class BreezeSimSoC(SoCCore):
                 cached=False,
             ),
         )
-        self.comb += self.cpu.mtip.eq(self.machine_timer.mtip)
+        self.comb += [
+            self.cpu.mtip.eq(self.machine_timer.mtip),
+            self.cpu.msip.eq(self.machine_timer.msip),
+        ]
+        self.add_constant("BREEZE_MSIP", MACHINE_TIMER_ORIGIN + MSIP_OFFSET)
         self.add_constant("BREEZE_MTIME", MACHINE_TIMER_ORIGIN + MTIME_OFFSET)
         self.add_constant("BREEZE_MTIMECMP", MACHINE_TIMER_ORIGIN + MTIMECMP_OFFSET)
         self.add_constant("BREEZE_MTIME_FREQUENCY", MTIME_FREQUENCY_HZ)

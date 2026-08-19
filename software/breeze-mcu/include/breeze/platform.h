@@ -5,6 +5,8 @@
 
 #define BREEZE_MTIME_ADDR          UINT64_C(0x0200bff8)
 #define BREEZE_MTIMECMP_ADDR       UINT64_C(0x02004000)
+/* Classic CLINT layout: msip[h] = base + 4*h, mtimecmp[h] = base + 8*h. */
+#define BREEZE_MSIP_ADDR           UINT64_C(0x02000000)
 
 #define BREEZE_UART_BASE           UINT64_C(0x12001000)
 #define BREEZE_UART_RXTX_ADDR      (BREEZE_UART_BASE + UINT64_C(0x00))
