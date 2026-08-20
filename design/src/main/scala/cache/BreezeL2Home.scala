@@ -9,26 +9,38 @@ import flow.mem.flowSRAM
 import flow.platform.BreezeMcuPlatform
 
 object BreezeL2HomeState extends ChiselEnum {
-  val Idle, LookupRead, Compare,
+  val Init, Idle, LookupRead, Compare,
       ProbeReq, ProbeWait, HitUpdate,
       VictimWrite, MemRead,
       SendGrant, SendPutAck, SendError = Value
 }
 
-/** Per-set directory metadata for the L2/Home.
+/** Directory state for one way of one L2 set.
   *
-  * dirState encodes BreezeDirectoryState (NONE=0, SHARED=1, UNIQUE=2). The
-  * whole bundle resets to zero, leaving every line logically invalid and every
-  * directory state NONE. roundRobin is the per-set replacement pointer used
-  * when no invalid way exists.
+  * dirState encodes BreezeDirectoryState (NONE=0, SHARED=1, UNIQUE=2), so an
+  * all-zero entry is exactly "invalid line, directory NONE" - which is what the
+  * post-reset walker writes into every way of every set.
   */
-class L2SetMeta(val ways: Int, val sharerWidth: Int, val hartIdWidth: Int) extends Bundle {
-  val valid = Vec(ways, Bool())
-  val dirtyToMemory = Vec(ways, Bool())
-  val dirState = Vec(ways, UInt(2.W))
-  val sharers = Vec(ways, UInt(sharerWidth.W))
-  val ownerId = Vec(ways, UInt(hartIdWidth.W))
-  val roundRobin = UInt(math.max(1, log2Ceil(ways)).W)
+class L2WayDir(val sharerWidth: Int, val hartIdWidth: Int) extends Bundle {
+  val valid = Bool()
+  val dirtyToMemory = Bool()
+  val dirState = UInt(2.W)
+  val sharers = UInt(sharerWidth.W)
+  val ownerId = UInt(hartIdWidth.W)
+}
+
+/** One directory SRAM word: a way's tag and its directory state together.
+  *
+  * Keeping the two halves of a lookup in one word means a probe of the set
+  * reads both with a single SRAM access, and a directory update rewrites
+  * exactly one word - no read-modify-write of the neighbouring ways. Holding
+  * the state in a register array indexed by setIndex instead costs
+  * sets*ways*entryBits flip-flops plus a sets:1 mux at every access point,
+  * which is what this layout replaces.
+  */
+class L2DirEntry(val tagWidth: Int, val sharerWidth: Int, val hartIdWidth: Int) extends Bundle {
+  val dir = new L2WayDir(sharerWidth, hartIdWidth)
+  val tag = UInt(tagWidth.W)
 }
 
 /** Single-bank, blocking, directory-based inclusive L2/Home.
@@ -48,6 +60,14 @@ class L2SetMeta(val ways: Int, val sharerWidth: Int, val hartIdWidth: Int) exten
   *     while the Home is busy is not lost;
   *   - probe responses are matched against the pending bitmap and checked
   *     against txnId/lineAddr.
+  *
+  * Storage: tag and directory state share one SRAM word per way (`L2DirEntry`),
+  * so a lookup is one SRAM read and a directory update one SRAM write. Only the
+  * per-set replacement pointer stays in flip-flops. Because SyncReadMem has no
+  * reset, the FSM starts in `Init` and clears every set before Idle accepts a
+  * request - `sets` cycles after reset, during which coherenceReq.ready stays
+  * low. Directory writes are recorded by `writeDir` and hit the array one cycle
+  * later; see the deferred-write comment for why that is required and safe.
   *
   * Memory beats advance the Wishbone word address per beat and the final read
   * beat is merged combinationally into the installed line (no stale-beat bug).
@@ -93,26 +113,34 @@ class BreezeL2Home(
   import BreezeProbeOpcode._
 
   // ===== Storage =====
-  val meta = RegInit(VecInit(Seq.fill(sets)(0.U.asTypeOf(new L2SetMeta(ways, sharerWidth, hartIdWidth)))))
-  val tagArray = Seq.fill(ways)(Module(new flowSRAM(sets, tagWidth, "l2tag")))
+  // Tag and directory state share one SRAM word per way (see L2DirEntry). The
+  // only per-set state left in flip-flops is the replacement pointer, which has
+  // exactly two access points and so costs one sets:1 mux, not seventeen.
+  private def dirEntryType = new L2DirEntry(tagWidth, sharerWidth, hartIdWidth)
+  private val dirEntryWidth = dirEntryType.getWidth
+  val dirArray = Seq.fill(ways)(Module(new flowSRAM(sets, dirEntryWidth, "l2dir")))
   val dataArray = Seq.fill(ways)(Module(new flowSRAM(sets, lineWidth, "l2data")))
+  val roundRobin = RegInit(VecInit(Seq.fill(sets)(0.U(math.max(1, wayIndexWidth).W))))
   for (w <- 0 until ways) {
-    tagArray(w).io.addr := 0.U
-    tagArray(w).io.data_in := 0.U
-    tagArray(w).io.we := false.B
-    tagArray(w).io.re := false.B
-    tagArray(w).io.id := w.U
+    dirArray(w).io.addr := 0.U
+    dirArray(w).io.data_in := 0.U
+    dirArray(w).io.we := false.B
+    dirArray(w).io.re := false.B
+    dirArray(w).io.id := w.U
     dataArray(w).io.addr := 0.U
     dataArray(w).io.data_in := 0.U
     dataArray(w).io.we := false.B
     dataArray(w).io.re := false.B
     dataArray(w).io.id := w.U
   }
-  val tagRdata = VecInit(tagArray.map(_.io.data_out))
+  val dirRdata = VecInit(dirArray.map(_.io.data_out.asTypeOf(dirEntryType)))
   val dataRdata = VecInit(dataArray.map(_.io.data_out))
 
   // ===== Transaction context (frozen until the transaction completes) =====
-  val state = RegInit(Idle)
+  // SyncReadMem has no reset, so the valid bits come up undefined. The FSM
+  // starts in Init and clears every set before Idle can accept a request.
+  val state = RegInit(Init)
+  val initSet = RegInit(0.U(setIndexWidth.W))
   val reqHart = RegInit(0.U(hartIdWidth.W))
   val reqOp = RegInit(GetS)
   val reqTxnId = RegInit(0.U(2.W))
@@ -215,41 +243,98 @@ class BreezeL2Home(
   }
 
   // ===== SRAM read: issued for one cycle in LookupRead =====
+  // The write blocks below re-drive addr/we on top of these defaults; flowSRAM
+  // has a single address port and a write suppresses the read for that cycle.
   val arrayReadEnable = state === LookupRead
   for (w <- 0 until ways) {
-    tagArray(w).io.addr := setIndex
-    tagArray(w).io.re := arrayReadEnable
+    dirArray(w).io.addr := setIndex
+    dirArray(w).io.re := arrayReadEnable
     dataArray(w).io.addr := setIndex
     dataArray(w).io.re := arrayReadEnable
   }
 
-  // ===== Compare-stage lookup (meta is a register, tag/data arrive now) =====
+  // ===== Deferred directory write =====
+  // A directory update is decided in the same cycle as the lookup it depends
+  // on: Compare reads valid/tag/dirState and writes them straight back. Because
+  // flowSRAM is single-port and forces data_out to zero while `we` is high,
+  // driving the array in that cycle would feed zeros back into the very
+  // comparison that produced the write - a combinational cycle. So writeDir
+  // records the update and the array write fires one cycle later.
+  //
+  // This is safe because no two directory writes are ever one cycle apart
+  // (Compare, HitUpdate, VictimWrite and MemRead each issue at most one, and
+  // none of those states are adjacent), and the next array read is the
+  // following transaction's LookupRead - always at least two cycles after any
+  // update, since every path back to Idle passes through a SendX state.
+  val dirWrPending = RegInit(false.B)
+  val dirWrSet = Reg(UInt(setIndexWidth.W))
+  val dirWrWay = Reg(UInt(wayIndexWidth.W))
+  val dirWrEntry = Reg(dirEntryType)
+  dirWrPending := false.B
+
+  when(state === Init) {
+    for (w <- 0 until ways) {
+      dirArray(w).io.we := true.B
+      dirArray(w).io.addr := initSet
+      dirArray(w).io.data_in := 0.U
+    }
+  }.elsewhen(dirWrPending) {
+    for (w <- 0 until ways) {
+      when(dirWrWay === w.U) {
+        dirArray(w).io.we := true.B
+        dirArray(w).io.addr := dirWrSet
+        dirArray(w).io.data_in := dirWrEntry.asUInt
+      }
+    }
+  }
+
+  // ===== Compare-stage lookup (tag, directory state and data all arrive now) =====
   val wayHit = VecInit((0 until ways).map { w =>
-    meta(setIndex).valid(w) && tagRdata(w) === requestTag
+    dirRdata(w).dir.valid && dirRdata(w).tag === requestTag
   })
   val hit = wayHit.asUInt.orR
   val hitWay = OHToUInt(wayHit.asUInt)
-  val hitDirState = BreezeDirectoryState(Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).dirState(w)))))
-  val hitSharers = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).sharers(w))))
-  val hitOwner = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).ownerId(w))))
-  val hitDirtyMem = Mux1H((0 until ways).map(w => (wayHit(w), meta(setIndex).dirtyToMemory(w))))
+  val (hitDirState, hitDirStateLegal) =
+    BreezeDirectoryState.safe(Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.dirState))))
+  val hitSharers = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.sharers)))
+  val hitOwner = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.ownerId)))
+  val hitDirtyMem = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.dirtyToMemory)))
   val hitData = Mux1H((0 until ways).map(w => (wayHit(w), dataRdata(w))))
 
-  val invalidVector = VecInit((0 until ways).map(w => !meta(setIndex).valid(w)))
+  val invalidVector = VecInit((0 until ways).map(w => !dirRdata(w).dir.valid))
   val hasInvalid = invalidVector.asUInt.orR
   val firstInvalid = OHToUInt(PriorityEncoderOH(invalidVector.asUInt))
-  val victimWay = Mux(hasInvalid, firstInvalid, meta(setIndex).roundRobin)
+  val victimWay = Mux(hasInvalid, firstInvalid, roundRobin(setIndex))
+
+  // hitWay is decoded with a bare OHToUInt, which returns a silently wrong way
+  // if two ways ever carry the same tag; the Mux1H lookups above would fold
+  // both entries together in the same situation. dirState only ever holds an
+  // encoding written by writeDir, so the fourth code point must stay unused.
+  when(state === Compare) {
+    assert(PopCount(wayHit.asUInt) <= 1.U,
+      "L2/Home: more than one way matched the request tag")
+    assert(!hit || hitDirStateLegal,
+      "L2/Home: hit line carries a reserved directory-state encoding")
+  }
 
   private def hartBit(h: UInt): UInt = (1.U(sharerWidth.W) << h)
 
-  /** Dynamic per-line directory write helper. */
-  private def writeDir(set: UInt, way: UInt, valid: Bool, dirty: Bool,
+  /** Record a directory update for one way; the array write fires next cycle. */
+  private def writeDir(set: UInt, way: UInt, tag: UInt, valid: Bool, dirty: Bool,
                        dir: BreezeDirectoryState.Type, sharers: UInt, owner: UInt): Unit = {
-    meta(set).valid(way) := valid
-    meta(set).dirtyToMemory(way) := dirty
-    meta(set).dirState(way) := dir.asUInt
-    meta(set).sharers(way) := sharers
-    meta(set).ownerId(way) := owner
+    dirWrPending := true.B
+    dirWrSet := set
+    dirWrWay := way
+    dirWrEntry.tag := tag
+    dirWrEntry.dir.valid := valid
+    dirWrEntry.dir.dirtyToMemory := dirty
+    dirWrEntry.dir.dirState := dir.asUInt
+    dirWrEntry.dir.sharers := sharers
+    dirWrEntry.dir.ownerId := owner
+    // SHARED with an empty bitmap would send the victim-eviction path into
+    // ProbeReq with no targets, and ProbeWait can never leave a zero bitmap.
+    assert(dir =/= SHARED || sharers =/= 0.U,
+      "L2/Home: SHARED directory entry with an empty sharer bitmap")
   }
 
   private def writeDataArray(way: UInt, set: UInt, data: UInt): Unit = {
@@ -264,6 +349,15 @@ class BreezeL2Home(
 
   // ===== FSM =====
   switch(state) {
+    is(Init) {
+      // One set per cycle; the write itself is driven by the block above.
+      when(initSet === (sets - 1).U) {
+        state := Idle
+      }.otherwise {
+        initSet := initSet + 1.U
+      }
+    }
+
     is(Idle) {
       // Round-robin over 2N request sources (N D$ coherence ports followed by
       // N latched I$ refill ports) so neither a low-numbered hart nor the
@@ -335,11 +429,11 @@ class BreezeL2Home(
           when(hitDirState === SHARED) {
             assert(hitSharers(reqHart), "L2/Home: PutS from a hart that is not a sharer")
             val remaining = hitSharers & ~hartBit(reqHart)
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem,
+            writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem,
               Mux(remaining === 0.U, NONE, SHARED), remaining, 0.U)
           }.elsewhen(hitDirState === UNIQUE) {
             assert(hitOwner === reqHart, "L2/Home: PutS from a hart that is not the owner")
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem, NONE, 0.U, 0.U)
+            writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, NONE, 0.U, 0.U)
           }.otherwise {
             assert(false.B, "L2/Home: PutS for a NONE directory line")
           }
@@ -348,7 +442,7 @@ class BreezeL2Home(
           // PutM: only the current UNIQUE owner may release dirty data.
           when(hitDirState === UNIQUE && hitOwner === reqHart) {
             writeDataArray(hitWay, setIndex, reqData)
-            writeDir(setIndex, hitWay, true.B, true.B, NONE, 0.U, 0.U)
+            writeDir(setIndex, hitWay, requestTag, true.B, true.B, NONE, 0.U, 0.U)
           }.otherwise {
             assert(false.B, "L2/Home: PutM from a hart that is not the UNIQUE owner")
           }
@@ -378,13 +472,13 @@ class BreezeL2Home(
             // MESI: the first D$ reader of an untracked line gets E; it may
             // silently upgrade to M, so the directory goes UNIQUE and never
             // assumes the L2 data stays current.
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
+            writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
             grantDataReg := hitData
             grantStateReg := BreezeGrantState.E
             grantHasDataReg := true.B
             state := SendGrant
           }.elsewhen(hitDirState === SHARED) {
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem,
+            writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem,
               SHARED, hitSharers | hartBit(reqHart), 0.U)
             grantDataReg := hitData
             grantStateReg := BreezeGrantState.S
@@ -407,7 +501,7 @@ class BreezeL2Home(
         }.otherwise {
           // GetM
           when(hitDirState === NONE) {
-            writeDir(setIndex, hitWay, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
+            writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
             grantDataReg := hitData
             grantStateReg := BreezeGrantState.M
             grantHasDataReg := true.B
@@ -415,7 +509,7 @@ class BreezeL2Home(
           }.elsewhen(hitDirState === SHARED) {
             val targets = hitSharers & ~hartBit(reqHart)
             when(targets === 0.U) {
-              writeDir(setIndex, hitWay, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
+              writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
               grantDataReg := hitData
               grantStateReg := BreezeGrantState.M
               grantHasDataReg := true.B
@@ -449,31 +543,40 @@ class BreezeL2Home(
         }
       }.otherwise {
         // ---- Miss: capture the victim, then route ----
+        val victimEntry = dirRdata(victimWay)
         victimWayReg := victimWay
-        victimValidReg := meta(setIndex).valid(victimWay)
-        victimTagReg := tagRdata(victimWay)
+        victimValidReg := victimEntry.dir.valid
+        victimTagReg := victimEntry.tag
         victimDataReg := dataRdata(victimWay)
-        victimDirtyReg := meta(setIndex).dirtyToMemory(victimWay)
-        victimDirReg := BreezeDirectoryState(meta(setIndex).dirState(victimWay))
-        victimSharersReg := meta(setIndex).sharers(victimWay)
-        victimOwnerReg := meta(setIndex).ownerId(victimWay)
+        victimDirtyReg := victimEntry.dir.dirtyToMemory
+        val (victimDirDecoded, victimDirLegal) =
+          BreezeDirectoryState.safe(victimEntry.dir.dirState)
+        assert(victimDirLegal,
+          "L2/Home: victim line carries a reserved directory-state encoding")
+        victimDirReg := victimDirDecoded
+        victimSharersReg := victimEntry.dir.sharers
+        victimOwnerReg := victimEntry.dir.ownerId
 
-        when(!meta(setIndex).valid(victimWay)) {
+        when(!victimEntry.dir.valid) {
           memBeat := 0.U
           state := MemRead
-        }.elsewhen(meta(setIndex).dirState(victimWay) === NONE.asUInt) {
+        }.elsewhen(victimEntry.dir.dirState === NONE.asUInt) {
           memBeat := 0.U
-          state := Mux(meta(setIndex).dirtyToMemory(victimWay), VictimWrite, MemRead)
+          state := Mux(victimEntry.dir.dirtyToMemory, VictimWrite, MemRead)
         }.otherwise {
           // Inclusive eviction: invalidate SHARED sharers or recall the owner.
-          val isUnique = meta(setIndex).dirState(victimWay) === UNIQUE.asUInt
+          val isUnique = victimEntry.dir.dirState === UNIQUE.asUInt
           val targets = Mux(isUnique,
-            hartBit(meta(setIndex).ownerId(victimWay)),
-            meta(setIndex).sharers(victimWay))
+            hartBit(victimEntry.dir.ownerId),
+            victimEntry.dir.sharers)
+          // An empty target set would enter ProbeReq and then hang in ProbeWait,
+          // whose exit condition needs at least one response to fire.
+          assert(targets =/= 0.U,
+            "L2/Home: inclusive eviction with an empty probe target set")
           probeBitmap := targets
           probeAckBitmap := targets
           probeOpcodeReg := Mux(isUnique, ProbeRecallInv, ProbeInv)
-          probeLineAddrReg := Cat(tagRdata(victimWay), setIndex, 0.U(lineOffsetWidth.W))
+          probeLineAddrReg := Cat(victimEntry.tag, setIndex, 0.U(lineOffsetWidth.W))
           expectProbeData := isUnique
           probeForVictim := true.B
           recalledValid := false.B
@@ -558,7 +661,7 @@ class BreezeL2Home(
         // A GetS requester joins the sharer bitmap; the I$ never joins.
         val sharersAfter = Mux(reqOp === GetS,
           hartBit(hitOwnerReg) | hartBit(reqHart), hartBit(hitOwnerReg))
-        writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg || recalledValid,
+        writeDir(setIndex, hitWayReg, requestTag, true.B, hitDirtyMemReg || recalledValid,
           SHARED, sharersAfter, 0.U)
         grantStateReg := BreezeGrantState.S
         grantDataReg := finalData
@@ -567,7 +670,7 @@ class BreezeL2Home(
       }.otherwise {
         // GetM: every other copy is gone (SHARED sharers invalidated, or the
         // UNIQUE owner recalled); hand M to the requester with the latest data.
-        writeDir(setIndex, hitWayReg, true.B, hitDirtyMemReg || recalledValid,
+        writeDir(setIndex, hitWayReg, requestTag, true.B, hitDirtyMemReg || recalledValid,
           UNIQUE, 0.U, reqHart)
         grantStateReg := BreezeGrantState.M
         grantDataReg := finalData
@@ -587,7 +690,7 @@ class BreezeL2Home(
         // The victim's L1 copies are already gone; keep the victim tag/data
         // valid in the arrays with the only consistent directory state
         // (NONE + dirtyToMemory). Nothing is overwritten by the new line.
-        writeDir(setIndex, victimWayReg, true.B, true.B, NONE, 0.U, 0.U)
+        writeDir(setIndex, victimWayReg, victimTagReg, true.B, true.B, NONE, 0.U, 0.U)
         grantErrorReg := true.B
         state := SendError
       }.elsewhen(io.memoryWishbone.ack) {
@@ -608,7 +711,7 @@ class BreezeL2Home(
       when(io.memoryWishbone.err) {
         // Refill failed: do not install. The victim (if any) was already
         // evicted and written back, so its slot is simply dropped.
-        writeDir(setIndex, victimWayReg, false.B, false.B, NONE, 0.U, 0.U)
+        writeDir(setIndex, victimWayReg, victimTagReg, false.B, false.B, NONE, 0.U, 0.U)
         grantErrorReg := true.B
         state := SendError
       }.elsewhen(io.memoryWishbone.ack) {
@@ -620,26 +723,21 @@ class BreezeL2Home(
             finalBeats(b) := Mux(memBeat === b.U, io.memoryWishbone.dat_r, readBeats(b))
           }
           val installedLine = finalBeats.asUInt
-          for (w <- 0 until ways) {
-            when(victimWayReg === w.U) {
-              tagArray(w).io.we := true.B
-              tagArray(w).io.addr := setIndex
-              tagArray(w).io.data_in := requestTag
-            }
-          }
+          // The new tag rides along in the directory write - tag and state are
+          // one SRAM word, so installing a line is a single update.
           writeDataArray(victimWayReg, setIndex, installedLine)
           when(reqIsInstr) {
             // I$ lines allocate in the L2 but never join the D$ directory.
-            writeDir(setIndex, victimWayReg, true.B, false.B, NONE, 0.U, 0.U)
+            writeDir(setIndex, victimWayReg, requestTag, true.B, false.B, NONE, 0.U, 0.U)
           }.elsewhen(reqOp === GetM) {
-            writeDir(setIndex, victimWayReg, true.B, false.B, UNIQUE, 0.U, reqHart)
+            writeDir(setIndex, victimWayReg, requestTag, true.B, false.B, UNIQUE, 0.U, reqHart)
             grantStateReg := BreezeGrantState.M
           }.otherwise {
             // MESI: a fresh D$ GetS refill is granted E (sole copy).
-            writeDir(setIndex, victimWayReg, true.B, false.B, UNIQUE, 0.U, reqHart)
+            writeDir(setIndex, victimWayReg, requestTag, true.B, false.B, UNIQUE, 0.U, reqHart)
             grantStateReg := BreezeGrantState.E
           }
-          meta(setIndex).roundRobin := Mux(victimWayReg === (ways - 1).U, 0.U, victimWayReg + 1.U)
+          roundRobin(setIndex) := Mux(victimWayReg === (ways - 1).U, 0.U, victimWayReg + 1.U)
           grantDataReg := installedLine
           grantHasDataReg := true.B
           state := SendGrant
@@ -663,9 +761,13 @@ class BreezeL2Home(
     }
 
     is(SendPutAck) {
-      // A Put acknowledgement carries no data; override the stale grant
-      // registers combinationally instead of re-timing them.
+      // A Put acknowledgement carries no data and confers no permission;
+      // override every stale grant register combinationally instead of
+      // re-timing them. grantState is driven to S rather than left holding the
+      // previous transaction's value - the L1D ignores it on this path today,
+      // but a released line must never appear to carry E/M.
       io.coherenceGrant(reqHart).valid := true.B
+      io.coherenceGrant(reqHart).grantState := BreezeGrantState.S
       io.coherenceGrant(reqHart).hasData := false.B
       io.coherenceGrant(reqHart).error := false.B
       when(io.coherenceGrant(reqHart).ready) {

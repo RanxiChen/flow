@@ -61,6 +61,12 @@ FATAL_PATTERN = re.compile(r"%Error|assertion failed|fatal error:", re.IGNORECAS
 # Dedicated watchdog exit code, matching timeout(1) semantics.
 TIMEOUT_EXIT_CODE = 124
 
+# Firmware cross-toolchain prefix. The firmware is freestanding (-nostdlib
+# -nostartfiles), so any RV64 prefix providing gcc/objcopy/objdump/nm works;
+# $CROSS_COMPILE overrides the newlib default when only a linux-gnu prefixed
+# toolchain is installed.
+DEFAULT_CROSS_COMPILE = os.environ.get("CROSS_COMPILE", "riscv64-unknown-elf-")
+
 # Test registry. Each entry is a callable run(args, output_dir) returning the
 # command list for run_streaming; the command must stream the simulation
 # output (markers included) to its own stdout. Registered phase by phase
@@ -80,6 +86,7 @@ def _cluster_mcu_test(test_name, allowed_profiles):
             "--profile", args.profile,
             "--core-preset", args.core_preset,
             "--test", test_name,
+            "--cross-compile", args.cross_compile,
             "--output-dir", output_dir,
         ]
         if args.trace:
@@ -337,6 +344,11 @@ def main():
         help="Regenerate the cluster RTL for the profile/preset before running.")
     parser.add_argument("--trace", action="store_true",
         help="Enable the LiteX/Verilator waveform trace.")
+    parser.add_argument("--cross-compile", default=DEFAULT_CROSS_COMPILE,
+        help="Bare-metal tool prefix for the firmware build "
+             f"(default: {DEFAULT_CROSS_COMPILE}; override with $CROSS_COMPILE). "
+             "The firmware is freestanding/-nostdlib, so a linux-gnu "
+             "prefixed cross toolchain works as well as a newlib one.")
     parser.add_argument("--timeout", type=int, default=600,
         help="Simulation watchdog in seconds (default: 600).")
     parser.add_argument("--output-dir",
