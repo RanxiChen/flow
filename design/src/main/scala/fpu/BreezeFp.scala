@@ -352,11 +352,14 @@ class BreezeFpUnit extends Module {
         val busy = Output(Bool())
     })
     val impl = Module(new FlowFpnewBlackBox)
+    val responseValid = RegInit(false.B)
+    val responseResult = RegInit(0.U(64.W))
+    val responseStatus = RegInit(0.U(5.W))
     impl.io.clk_i := clock
     impl.io.reset_i := reset.asBool
     impl.io.flush_i := io.flush
     impl.io.in_valid_i := io.inValid
-    io.inReady := impl.io.in_ready_o
+    io.inReady := impl.io.in_ready_o && !responseValid
     impl.io.operand_a_i := io.operandA
     impl.io.operand_b_i := io.operandB
     impl.io.operand_c_i := io.operandC
@@ -366,9 +369,23 @@ class BreezeFpUnit extends Module {
     impl.io.src_fmt_i := io.srcFmt
     impl.io.dst_fmt_i := io.dstFmt
     impl.io.int_fmt_i := io.intFmt
-    impl.io.out_ready_i := true.B
-    io.outValid := impl.io.out_valid_o
-    io.result := impl.io.result_o
-    io.status := impl.io.status_o
-    io.busy := impl.io.busy_o
+    // FPnew may produce and consume a short response pulse while its output is
+    // permanently ready.  Buffer completion once so BreezeBackend's registered
+    // request state cannot miss it, and expose one stable completion cycle.
+    impl.io.out_ready_i := !responseValid
+    when(reset.asBool || io.flush) {
+        responseValid := false.B
+        responseResult := 0.U
+        responseStatus := 0.U
+    }.elsewhen(impl.io.out_valid_o && impl.io.out_ready_i) {
+        responseValid := true.B
+        responseResult := impl.io.result_o
+        responseStatus := impl.io.status_o
+    }.elsewhen(responseValid) {
+        responseValid := false.B
+    }
+    io.outValid := responseValid
+    io.result := responseResult
+    io.status := responseStatus
+    io.busy := impl.io.busy_o || responseValid
 }
