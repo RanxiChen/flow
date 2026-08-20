@@ -1,6 +1,7 @@
 package flow.fpu
 
 import chisel3.simulator.scalatest.ChiselSim
+import org.scalatest.TestSuite
 import svsim.{CommonCompilationSettings, CommonSettingsModifications}
 
 /** Add CVFPU's header directory to every ChiselSim compilation that contains
@@ -8,6 +9,7 @@ import svsim.{CommonCompilationSettings, CommonSettingsModifications}
   * HasBlackBoxPath annotations on FlowFpnewBlackBox.
   */
 trait BreezeFpChiselSim extends ChiselSim {
+  this: TestSuite =>
   abstract override implicit def commonSettingsModifications: CommonSettingsModifications = {
     val inherited = super.commonSettingsModifications
     (settings: CommonCompilationSettings) => {

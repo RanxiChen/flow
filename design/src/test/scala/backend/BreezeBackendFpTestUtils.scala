@@ -1,10 +1,11 @@
 package flow.backend
 
 import chisel3._
+import chisel3.simulator.PeekPokeAPI
 import flow.interface.FrontendPredType
 import org.scalatest.Assertions.fail
 
-private[backend] object BreezeBackendFpTestUtils {
+private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
   val Mask64: BigInt = (BigInt(1) << 64) - 1
 
   def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt =
