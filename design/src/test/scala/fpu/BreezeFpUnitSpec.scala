@@ -10,6 +10,7 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
   private def idle(dut: BreezeFpUnit): Unit = {
     dut.io.flush.poke(false.B)
     dut.io.inValid.poke(false.B)
+    dut.io.outReady.poke(false.B)
     dut.io.operandA.poke(0.U)
     dut.io.operandB.poke(0.U)
     dut.io.operandC.poke(0.U)
@@ -51,8 +52,12 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
       fail(s"FPnew response timeout: operation=$operation fmt=$fmt " +
         s"busy=${dut.io.busy.peek().litToBoolean} inReady=${dut.io.inReady.peek().litToBoolean}")
     }
-    Response(dut.io.result.peekValue().asBigInt,
+    val response = Response(dut.io.result.peekValue().asBigInt,
       dut.io.status.peekValue().asBigInt)
+    dut.io.outReady.poke(true.B)
+    dut.clock.step(1)
+    dut.io.outReady.poke(false.B)
+    response
   }
 
   "execute exact FP32/FP64 arithmetic and report IEEE exception flags" in {

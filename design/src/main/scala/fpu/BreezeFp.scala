@@ -347,6 +347,7 @@ class BreezeFpUnit extends Module {
         val dstFmt = Input(UInt(3.W))
         val intFmt = Input(UInt(2.W))
         val outValid = Output(Bool())
+        val outReady = Input(Bool())
         val result = Output(UInt(64.W))
         val status = Output(UInt(5.W))
         val busy = Output(Bool())
@@ -377,12 +378,14 @@ class BreezeFpUnit extends Module {
         responseValid := false.B
         responseResult := 0.U
         responseStatus := 0.U
+    }.elsewhen(responseValid) {
+        when(io.outReady) {
+            responseValid := false.B
+        }
     }.elsewhen(impl.io.out_valid_o && impl.io.out_ready_i) {
         responseValid := true.B
         responseResult := impl.io.result_o
         responseStatus := impl.io.status_o
-    }.elsewhen(responseValid) {
-        responseValid := false.B
     }
     io.outValid := responseValid
     io.result := responseResult

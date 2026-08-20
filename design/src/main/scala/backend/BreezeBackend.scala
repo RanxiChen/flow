@@ -637,6 +637,7 @@ class BreezeBackend(
     fpUnit.io.flush := reset.asBool || fenceiFlush || exceptionRedirect ||
         mretRedirect || interruptRedirect
     fpUnit.io.inValid := fpReqIssued
+    fpUnit.io.outReady := fpWaitingRespReg
     fpUnit.io.operandA := exeFpOperand1
     fpUnit.io.operandB := exeFpOperand2
     fpUnit.io.operandC := exeFpOperand3
