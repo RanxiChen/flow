@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import flow.config.{BreezeCoreConfig, BreezeCoreConfigs}
 import flow.core.BreezeCore
+import flow.fpu.BreezeFpSources
+import svsim.{CommonCompilationSettings, CommonSettingsModifications}
 
 import java.io.File
 import scala.collection.mutable
@@ -207,6 +209,13 @@ object BreezeCoreSimMemoryLoader {
 }
 
 object BreezeCoreSimRunner extends PeekPokeAPI {
+    private implicit val fpnewCompilationSettings: CommonSettingsModifications =
+        (settings: CommonCompilationSettings) => {
+            val include = BreezeFpSources.includeDir.toString
+            val includes = settings.includeDirs.getOrElse(Seq.empty)
+            settings.copy(includeDirs = Some((includes :+ include).distinct))
+        }
+
     def run(
         memory: mutable.Map[BigInt, BigInt],
         coreCfg: BreezeCoreConfig,
