@@ -2,6 +2,7 @@ package flow.fpu
 
 import chisel3._
 import chisel3.util._
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 
 /** Encodings intentionally match fpnew_pkg.sv.  Keeping the project-owned
@@ -285,11 +286,26 @@ object BreezeFpSources {
             path
         }.toSeq :+ wrapper
     }
+
+    /** HasBlackBoxPath copies every registered file into ChiselSim's source
+      * directory, whose enumeration order is not dependency order.  FPnew's
+      * package must precede all consumers, so register one compilation unit
+      * that includes the manifest in its checked-in order instead.
+      */
+    val aggregate: Path = {
+        val path = designRoot.resolve("build/fpnew/FlowFpnewSources.sv")
+        Files.createDirectories(path.getParent)
+        val body = sourceFiles.map(source =>
+            s"`include \"${source.toString}\""
+        ).mkString("// Generated from cvfpu-files.f; do not edit.\n", "\n", "\n")
+        Files.write(path, body.getBytes(StandardCharsets.UTF_8))
+        path
+    }
 }
 
 class FlowFpnewBlackBox extends BlackBox with HasBlackBoxPath {
     override def desiredName = "FlowFpnewWrapper"
-    BreezeFpSources.sourceFiles.foreach(path => addPath(path.toString))
+    addPath(BreezeFpSources.aggregate.toString)
     val io = IO(new Bundle {
         val clk_i = Input(Clock())
         val reset_i = Input(Bool())

@@ -56,7 +56,8 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
     // below, so exclude those copies from the firtool-emitted design list.
     private val fpSourceNames = os.read.lines(fpManifest).map(_.trim).filter(line =>
         line.nonEmpty && !line.startsWith("#") && !line.startsWith("+incdir+")
-    ).map(line => os.RelPath(line).last).toSet + fpWrapper.last
+    ).map(line => os.RelPath(line).last).toSet ++
+        Set(fpWrapper.last, "FlowFpnewSources.sv")
     private val svFiles = os.list(targetDir).filter(path =>
         path.ext == "sv" && !fpSourceNames.contains(path.last)
     ).map(_.last).sorted
