@@ -47,7 +47,10 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
       dut.clock.step(1)
       cycles += 1
     }
-    dut.io.outValid.expect(true.B)
+    if (cycles == 1000) {
+      fail(s"FPnew response timeout: operation=$operation fmt=$fmt " +
+        s"busy=${dut.io.busy.peek().litToBoolean} inReady=${dut.io.inReady.peek().litToBoolean}")
+    }
     Response(dut.io.result.peekValue().asBigInt,
       dut.io.status.peekValue().asBigInt)
   }
