@@ -4,8 +4,10 @@ import chisel3._
 import chisel3.util._
 import flow.interface._
 
-class BreezePHT(val vlen: Int = 64, val ghrLength: Int = 8) extends Module {
-    require(vlen > 2, "PHT vlen must be greater than 2 for 32-bit aligned PC indexing")
+class BreezePHT(val vlen: Int = 64, val ghrLength: Int = 8,
+                val pcShift: Int = 2) extends Module {
+    require(pcShift == 1 || pcShift == 2)
+    require(vlen > pcShift)
     require(ghrLength > 0, "PHT ghrLength must be greater than 0")
 
     private val entryNum = 1 << ghrLength
@@ -19,7 +21,7 @@ class BreezePHT(val vlen: Int = 64, val ghrLength: Int = 8) extends Module {
 
     val table = RegInit(VecInit(Seq.fill(entryNum)(weaklyNotTaken)))
 
-    val alignedPc = io.predict.pc(vlen - 1, 2)
+    val alignedPc = io.predict.pc(vlen - 1, pcShift)
     val pcIdx = alignedPc(ghrLength - 1, 0)
     val predictIdx = pcIdx ^ io.predict.ghr
     val predictCounter = table(predictIdx)

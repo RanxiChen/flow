@@ -133,23 +133,26 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     io.drsp.bits.vaddr := 0xdeadbeefL.U
     io.drsp.bits.data := 0xdeadbeefL.U
     io.drsp.bits.accessFault := false.B
+    io.drsp.bits.pageFault := false.B
     //next level req
     io.next_level_req.req := false.B
     io.next_level_req.paddr := 0xdeadbeefL.U
 
     val s0_valid = io.dreq.fire
     val s0_vaddr = io.dreq.bits.vaddr
+    val s0_paddr = io.dreq.bits.paddr
 
     // PMA classification runs in parallel with the normal s0 cache-array
     // request. This MCU only caches instruction fetches from executable,
     // cacheable physical regions.
     val fetchPma = Module(new PMAChecker)
-    fetchPma.io.query.addr := io.dreq.bits.vaddr
+    fetchPma.io.query.addr := io.dreq.bits.paddr
     fetchPma.io.query.sizeLog2 := 2.U // RV64I instruction fetch: 4 bytes
     fetchPma.io.query.accessType := PMAAccessType.Fetch
 
     val s1_valid = RegInit(false.B)
     val s1_vaddr = RegInit(0.U(cacheConfig.VLEN.W))
+    val s1_paddr = RegInit(0.U(cacheConfig.PLEN.W))
     val s1_pma_allowed = RegInit(false.B)
     val s1_pma_cacheable = RegInit(false.B)
     when(io.flush) {
@@ -159,6 +162,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }.otherwise {
         s1_valid := s0_valid
         s1_vaddr := s0_vaddr
+        s1_paddr := s0_paddr
         s1_pma_allowed := s0_valid && fetchPma.io.result.allowed
         s1_pma_cacheable := s0_valid && fetchPma.io.result.cacheable
     }
@@ -201,7 +205,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s1_way_dout(i) := data_array_rdata(i) >> (s1_word_offset * cacheConfig.FETCH_WIDTH.U)
     }
     //s1 compare tag
-    val desired_tag = s1_vaddr(cacheConfig.VLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
+    val desired_tag = s1_paddr(cacheConfig.PLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         val s1_index = index_pos(s1_vaddr, cacheConfig)
         val s1_vld = metaReg(s1_index)(i) // valid bit
@@ -217,6 +221,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     //val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
     val s2_valid = RegInit(false.B)
     val s2_vaddr = RegInit(0.U(cacheConfig.VLEN.W))
+    val s2_paddr = RegInit(0.U(cacheConfig.PLEN.W))
     val s2_word_offset = RegInit(0.U(s1_word_offset.getWidth.W))
     val s2_req_pulse_done = RegInit(false.B) //标志当前这笔 miss 是否已经发出过请求脉冲
     val wait_rsp = RegInit(false.B) //cache正在等待下一级的响应
@@ -237,6 +242,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         }.otherwise{
             s2_valid := true.B
             s2_vaddr := s1_vaddr
+            s2_paddr := s1_paddr
             s2_word_offset := s1_word_offset
             s2_flush_seen := false.B
         }
@@ -246,7 +252,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     //val s2_vaddr = RegNext(s1_vaddr)
     val line_addr = WireDefault(0.U(cacheConfig.PLEN.W))
-    line_addr := s2_vaddr & ~((cacheConfig.ICACHE_LINE_BYTES - 1).U(cacheConfig.PLEN.W)) // cache line对齐
+    line_addr := s2_paddr & ~((cacheConfig.ICACHE_LINE_BYTES - 1).U(cacheConfig.PLEN.W)) // cache line对齐
     //在s2选择要替换到那一个way
     val s2_index = index_pos(s2_vaddr, cacheConfig)
     val s2_replace_way = RegInit(0.U(log2Ceil(cacheConfig.ICACHE_WAY_NUM).W))
@@ -262,7 +268,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         s2_new_valid_vec := new_valid_vec
         s2_new_plru_vec := new_plru_vec
         s2_wt_en_OH := wb_en_OH
-        s2_refill_tag := s2_vaddr(cacheConfig.VLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
+        s2_refill_tag := s2_paddr(cacheConfig.PLEN - 1, cacheConfig.ICACHE_INDEX_WIDTH + cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
     }
     //当s1 miss时，发出miss请求
     //当请求进入s2以后，先发送一个脉冲式的请求，然后就是等待cache line返回
@@ -347,21 +353,25 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         io.drsp.bits.vaddr := s2_vaddr
         io.drsp.bits.data := Mux(s2_refill_error, 0.U, s2_dout)
         io.drsp.bits.accessFault := s2_refill_error
+        io.drsp.bits.pageFault := false.B
     }.elsewhen(!io.flush && s1_pma_fault){
         io.drsp.valid := true.B
         io.drsp.bits.vaddr := s1_vaddr
         io.drsp.bits.data := 0.U
         io.drsp.bits.accessFault := true.B
+        io.drsp.bits.pageFault := false.B
     }.elsewhen(!io.flush && s1_valid && s1_hit){
         io.drsp.valid := true.B
         io.drsp.bits.vaddr := s1_vaddr
         io.drsp.bits.data := s1_dout
         io.drsp.bits.accessFault := false.B
+        io.drsp.bits.pageFault := false.B
     }.otherwise{
         io.drsp.valid := false.B
         io.drsp.bits.vaddr := 0.U
         io.drsp.bits.data := 0.U
         io.drsp.bits.accessFault := false.B
+        io.drsp.bits.pageFault := false.B
     }
 
     if(enabledebug){

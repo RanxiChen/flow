@@ -33,6 +33,8 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.machineTimerInterrupt.poke(false.B)
     dut.io.machineSoftwareInterrupt.poke(false.B)
     dut.io.machineExternalInterrupt.poke(false.B)
+    dut.io.supervisorExternalInterrupt.poke(false.B)
+    dut.io.time.poke(0.U)
     dut.io.trap.valid.poke(false.B)
     dut.io.trap.is_interrupt.poke(false.B)
     dut.io.trap.cause.poke(0.U)
@@ -139,7 +141,7 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
       commit(dut, CSRMAP.satp, BigInt("8000000000001234", 16))
       selectRead(dut, CSRMAP.satp)
-      dut.io.csr_old_data.expect(0.U)
+      dut.io.csr_old_data.expect(BigInt("8000000000001234", 16).U)
     }
   }
 
@@ -210,6 +212,28 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.io.illegal_inst.expect(false.B)
       dut.io.I_ctrl.is_wfi.expect(false.B)
       dut.io.I_ctrl.is_sfence_vma.expect(true.B)
+    }
+  }
+
+  "implement PMP CSRs and Sstc time/stimecmp pending state" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      commit(dut, CSRMAP.pmpaddr0, (BigInt(1) << 54) - 1)
+      commit(dut, CSRMAP.pmpcfg0, 0x0f)
+      selectRead(dut, CSRMAP.pmpaddr0)
+      dut.io.csr_old_data.expect(((BigInt(1) << 54) - 1).U)
+      selectRead(dut, CSRMAP.pmpcfg0)
+      dut.io.csr_old_data.expect(0x0f.U)
+
+      commit(dut, CSRMAP.menvcfg, (BigInt(1) << 63) | (BigInt(1) << 61))
+      commit(dut, CSRMAP.mideleg, BigInt(1) << SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+      commit(dut, CSRMAP.stimecmp, 100)
+      dut.io.time.poke(99.U)
+      selectRead(dut, CSRMAP.sip)
+      dut.io.csr_old_data.expect(0.U)
+      dut.io.time.poke(100.U)
+      selectRead(dut, CSRMAP.sip)
+      assert((dut.io.csr_old_data.peekValue().asBigInt & (BigInt(1) << 5)) != 0)
     }
   }
 }

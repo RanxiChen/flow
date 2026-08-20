@@ -41,9 +41,11 @@ class BreezeMulticoreClusterWishbone(
         val resetAddr = Input(UInt(64.W))
         val msip = Input(Vec(numHarts, Bool()))
         val mtip = Input(Vec(numHarts, Bool()))
+        val time = Input(UInt(64.W))
         val externalInterrupts = Input(
             Vec(numHarts, UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
         )
+        val supervisorExternalInterrupts = Input(Vec(numHarts, Bool()))
         val memoryWishbone = new LiteXWishboneMasterIO(wbParams)
         val mmioWishbone = new LiteXWishboneMasterIO(wbParams)
         val hartFatal = Output(Vec(numHarts, Bool()))
@@ -78,12 +80,9 @@ class BreezeMulticoreClusterWishbone(
         core.io.resetAddr := io.resetAddr
         core.io.machineTimerInterrupt := io.mtip(h)
         core.io.machineSoftwareInterrupt := io.msip(h)
-        // External interrupts go to hart 0 only (frozen boundary; no PLIC).
-        core.io.externalInterrupts := (if (h == 0) {
-            io.externalInterrupts(0)
-        } else {
-            0.U(BreezeMcuPlatform.ExternalInterruptWidth.W)
-        })
+        core.io.time := io.time
+        core.io.externalInterrupts := io.externalInterrupts(h)
+        core.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
 
         // I$ refill goes to the unified L2 (GetInstr semantics: the I$ never
         // joins the directory). The core emits 64-bit physical addresses; the

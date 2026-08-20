@@ -21,7 +21,9 @@ class BreezeBackend(
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val machineTimerInterrupt = Input(Bool())
         val machineSoftwareInterrupt = Input(Bool())
+        val time = Input(UInt(cfg.VLEN.W))
         val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
+        val supervisorExternalInterrupt = Input(Bool())
         val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN, cfg.ghrLength)))
         val dmem = new BackendMemIO(cfg.VLEN)
         val dcacheFlushReq = Output(Bool())
@@ -31,6 +33,8 @@ class BreezeBackend(
         val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
         val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
         val frontendRedirect = Output(new FrontendRedirectIO(cfg.VLEN))
+        val mmuContext = Output(new BreezeMmuContext(cfg.VLEN))
+        val sfence = Output(new BreezeSfenceReq(cfg.VLEN))
         // One-cycle pulse on every taken trap (exception or interrupt); the
         // D$ clears its LR/SC reservation on it.
         val reservationKill = Output(Bool())
@@ -47,7 +51,8 @@ class BreezeBackend(
     val regFile = Module(new RegFile(cfg.VLEN))
     val fpRegFile = Module(new BreezeFpRegFile)
     val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug,
-        hartId = hartId, privilegeProfile = cfg.privilegeProfile))
+        hartId = hartId, privilegeProfile = cfg.privilegeProfile,
+        enableCompressed = cfg.enableCompressed))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
     val retireValid = Wire(Bool())
 
@@ -56,7 +61,14 @@ class BreezeBackend(
     val decodeValid = io.fetchBuffer.valid
     val decodePc = Mux(decodeValid, io.fetchBuffer.bits.pc, 0.U(cfg.VLEN.W))
     val decodeInst = Mux(decodeValid, io.fetchBuffer.bits.inst, nopInst)
+    val decodeRawInst = Mux(decodeValid, io.fetchBuffer.bits.rawInst, nopInst)
+    // The architectural instruction length is either 2 (RV64C) or 4 bytes.
+    // Treat every other value as 4 so legacy producers, reset bubbles, and
+    // malformed metadata can never create a zero-length sequential PC.
+    val decodeInstLen = Mux(decodeValid && io.fetchBuffer.bits.instLen === 2.U, 2.U(3.W), 4.U(3.W))
     val decodeInstructionAccessFault = decodeValid && io.fetchBuffer.bits.instructionAccessFault
+    val decodeInstructionPageFault = decodeValid && io.fetchBuffer.bits.instructionPageFault
+    val decodeInstructionFault = decodeInstructionAccessFault || decodeInstructionPageFault
     val decodeEstop = Wire(Bool())
 
     val rs1Addr = decodeInst(19, 15)
@@ -86,10 +98,11 @@ class BreezeBackend(
     csrFile.io.fp_commit_valid := false.B
     csrFile.io.fp_flags := 0.U
     retireValid := memWbReg.valid &&
-        !memWbReg.instruction_access_fault &&
+        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
         !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
         !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
-        !memWbReg.load_access_fault && !memWbReg.store_access_fault
+        !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
+        !memWbReg.load_page_fault && !memWbReg.store_page_fault
     csrFile.io.retire_valid := retireValid
     csrFile.io.hpmEvents := io.hpmEvents
     val retiredOpcode = memWbReg.inst(6, 0)
@@ -97,12 +110,14 @@ class BreezeBackend(
         retiredOpcode === OPCODE.JAL || retiredOpcode === OPCODE.JALR
     csrFile.io.hpmEvents.controlRetired := retireValid && retiredControl
     csrFile.io.hpmEvents.controlTaken := retireValid && retiredControl &&
-        memWbReg.nextPc =/= (memWbReg.pc + 4.U)
+        memWbReg.nextPc =/= (memWbReg.pc + memWbReg.instLen)
     csrFile.io.hpmEvents.predictionMiss := retireValid && retiredControl &&
         memWbReg.prediction_miss
     csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
     csrFile.io.machineSoftwareInterrupt := io.machineSoftwareInterrupt
+    csrFile.io.time := io.time
     csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
+    csrFile.io.supervisorExternalInterrupt := io.supervisorExternalInterrupt
     csrFile.io.trap.valid := false.B
     csrFile.io.trap.is_interrupt := false.B
     csrFile.io.trap.cause := 0.U
@@ -117,10 +132,11 @@ class BreezeBackend(
     regFile.io.rs2_addr := rs2Addr
     regFile.io.rd_addr := memWbReg.rd_addr
     regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en &&
-        !memWbReg.instruction_access_fault &&
+        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
         !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
         !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
-        !memWbReg.load_access_fault && !memWbReg.store_access_fault
+        !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
+        !memWbReg.load_page_fault && !memWbReg.store_page_fault
     wbData := MuxLookup(memWbReg.wb_sel, 0.U(cfg.VLEN.W))(
         Seq(
             SEL_WB.ALU.U -> memWbReg.alu_data,
@@ -140,8 +156,10 @@ class BreezeBackend(
     fpRegFile.io.rdAddr := memWbReg.rd_addr
     fpRegFile.io.rdData := memWbFpData
     fpRegFile.io.rdEn := memWbReg.valid && memWbFpWrite &&
-        !memWbReg.instruction_access_fault && !memWbReg.illegal_inst &&
-        !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault
+        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
+        !memWbReg.illegal_inst &&
+        !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
+        !memWbReg.load_page_fault
     estopCommitted := memWbReg.valid && memWbReg.estop
 
     val src1 = Wire(UInt(cfg.VLEN.W))
@@ -192,18 +210,20 @@ class BreezeBackend(
         Seq(
             SEL_ALU2.RS2.U -> regFile.io.rs2_data,
             SEL_ALU2.IMM.U -> immGen.io.imm,
-            SEL_ALU2.CONST4.U -> 4.U(cfg.VLEN.W),
+            SEL_ALU2.CONST4.U -> decodeInstLen,
             SEL_ALU2.CONST0.U -> 0.U(cfg.VLEN.W)
         )
     )
 
     decodeUsesRs1 := decoder.io.exe_ctrl.sel_alu1 === SEL_ALU1.RS1.U ||
         decoder.io.exe_ctrl.bru_inst ||
+        decoder.io.exe_ctrl.is_sfence_vma ||
         decoder.io.exe_ctrl.sel_jpc_i === SEL_JPC_I.RS1.U ||
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RW.U ||
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RS.U ||
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RC.U
-    decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U || decoder.io.exe_ctrl.bru_inst
+    decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U ||
+        decoder.io.exe_ctrl.bru_inst || decoder.io.exe_ctrl.is_sfence_vma
 
     val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
     fpImmediate := Mux(
@@ -227,6 +247,8 @@ class BreezeBackend(
     val fenceiPending = Wire(Bool())
     val fenceiFlushIssuedReg = RegInit(false.B)
     val frontendRedirectNeeded = Wire(Bool())
+    val sfenceExecute = Wire(Bool())
+    val satpCommit = Wire(Bool())
     val predictionMiss = Wire(Bool())
     val pipelineHold = Wire(Bool())
     val csrHold = Wire(Bool())
@@ -250,7 +272,10 @@ class BreezeBackend(
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
+        idExeReg.rawInst := nopInst
+        idExeReg.instLen := 4.U
         idExeReg.instruction_access_fault := false.B
+        idExeReg.instruction_page_fault := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_mret := false.B
@@ -296,22 +321,26 @@ class BreezeBackend(
         idExeReg.valid := true.B
         idExeReg.pc := decodePc
         idExeReg.inst := decodeInst
+        idExeReg.rawInst := decodeRawInst
+        idExeReg.instLen := decodeInstLen
         idExeReg.instruction_access_fault := decodeInstructionAccessFault
-        idExeReg.illegal_inst := ((decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
+        idExeReg.instruction_page_fault := decodeInstructionPageFault
+        idExeReg.illegal_inst := (io.fetchBuffer.bits.illegalCompressed ||
+            (decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
             (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled) ||
             (decoder.io.exe_ctrl.is_mret && csrFile.io.mret_illegal) ||
             (decoder.io.exe_ctrl.is_sret && csrFile.io.sret_illegal) ||
             (decoder.io.exe_ctrl.is_wfi && csrFile.io.wfi_illegal) ||
             (decoder.io.exe_ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)) &&
-            !decodeInstructionAccessFault
-        idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall && !decodeInstructionAccessFault
+            !decodeInstructionFault
+        idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall && !decodeInstructionFault
         idExeReg.is_mret := decoder.io.exe_ctrl.is_mret && !csrFile.io.mret_illegal &&
-            !decodeInstructionAccessFault
+            !decodeInstructionFault
         idExeReg.is_sret := decoder.io.exe_ctrl.is_sret && !csrFile.io.sret_illegal &&
-            !decodeInstructionAccessFault
+            !decodeInstructionFault
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
-        when(decodeInstructionAccessFault) {
+        when(decodeInstructionFault) {
             idExeReg.ctrl.redir_inst := false.B
             idExeReg.ctrl.bru_inst := false.B
             idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
@@ -322,7 +351,7 @@ class BreezeBackend(
             idExeReg.ctrl.fencei := false.B
             idExeReg.ctrl.mem_op := BreezeMemOp.Load
         }
-        idExeReg.estop := decodeEstop && !decodeInstructionAccessFault
+        idExeReg.estop := decodeEstop && !decodeInstructionFault
         idExeReg.rs1_addr := rs1Addr
         idExeReg.rs2_addr := rs2Addr
         idExeReg.rd_addr := rdAddr
@@ -335,7 +364,10 @@ class BreezeBackend(
         idExeReg.valid := false.B
         idExeReg.pc := 0.U
         idExeReg.inst := nopInst
+        idExeReg.rawInst := nopInst
+        idExeReg.instLen := 4.U
         idExeReg.instruction_access_fault := false.B
+        idExeReg.instruction_page_fault := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_mret := false.B
@@ -395,7 +427,7 @@ class BreezeBackend(
         idFpOperand3 := 0.U
     }.elsewhen(decodeFire) {
         idFpCtrl := fpDecoder.io.ctrl
-        when(decodeInstructionAccessFault ||
+        when(decodeInstructionFault ||
             (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled)) {
             idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
         }
@@ -481,23 +513,25 @@ class BreezeBackend(
         idExeReg.ctrl.redir_inst
     )
     actualTarget := jau.io.jmp_addr
-    exeNextPc := Mux(actualTaken, actualTarget, idExeReg.pc + 4.U)
+    exeNextPc := Mux(actualTaken, actualTarget, idExeReg.pc + idExeReg.instLen)
 
     // ID/EXE remains valid while an older memory operation holds the pipeline.
     // Do not resolve or train a branch until that instruction can advance: a
     // dependent branch may still contain the pre-load register value here.
     redirectDirectionMismatch := idExeReg.valid && !pipelineHold &&
-        !idExeReg.instruction_access_fault &&
+        !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault &&
         (actualTaken =/= idExeReg.pred.predTaken)
     redirectTargetMismatch := idExeReg.valid && !pipelineHold &&
-        !idExeReg.instruction_access_fault &&
+        !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault &&
         actualTaken && idExeReg.pred.predTaken &&
         (actualTarget =/= idExeReg.pred.predPc)
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
-    val wbTrap = memWbReg.instruction_access_fault || memWbReg.illegal_inst ||
+    val wbTrap = memWbReg.instruction_access_fault || memWbReg.instruction_page_fault ||
+        memWbReg.illegal_inst ||
         memWbReg.csr_illegal || memWbReg.is_ecall ||
         memWbReg.load_addr_misaligned || memWbReg.store_addr_misaligned ||
-        memWbReg.load_access_fault || memWbReg.store_access_fault
+        memWbReg.load_access_fault || memWbReg.store_access_fault ||
+        memWbReg.load_page_fault || memWbReg.store_page_fault
     val mretRedirect = Wire(Bool())
     val sretRedirect = Wire(Bool())
     val xretRedirect = Wire(Bool())
@@ -505,12 +539,17 @@ class BreezeBackend(
     mretRedirect := memWbReg.valid && memWbReg.is_mret
     sretRedirect := memWbReg.valid && memWbReg.is_sret
     xretRedirect := mretRedirect || sretRedirect
+    sfenceExecute := idExeReg.valid && idExeReg.ctrl.is_sfence_vma &&
+        !pipelineHold && !idExeReg.illegal_inst && !idExeReg.instruction_access_fault &&
+        !idExeReg.instruction_page_fault
+    satpCommit := memWbReg.valid && memWbReg.csr_write_en &&
+        memWbReg.csr_addr === CSRMAP.satp.U && !memWbReg.csr_illegal
     pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
         !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg &&
         !divWaitingRespReg && !fpWaitingRespReg
     interruptRedirect := csrFile.io.interruptPending && pipelineEmpty
-    frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect ||
-        xretRedirect || interruptRedirect
+    frontendRedirectNeeded := fenceiFlush || sfenceExecute || satpCommit ||
+        redirectNeeded || exceptionRedirect || xretRedirect || interruptRedirect
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -529,7 +568,8 @@ class BreezeBackend(
     frontendPhtUpdateValid := false.B
 
     if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
-        when(idExeReg.valid && !pipelineHold && !idExeReg.instruction_access_fault) {
+        when(idExeReg.valid && !pipelineHold && !idExeReg.instruction_access_fault &&
+            !idExeReg.instruction_page_fault) {
             switch(idExeReg.pred.predType) {
                 is(FrontendPredType.BR) {
                     frontendBtbUpdateValid := true.B
@@ -583,11 +623,12 @@ class BreezeBackend(
         exeMemReg.mem_cmd === MEM_TYPE.SD.U
     )
     exeMemIsMul := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.mul_valid &&
-        !exeMemReg.instruction_access_fault
+        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
     exeMemIsDiv := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.div_valid &&
-        !exeMemReg.instruction_access_fault
+        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
     exeMemIsFp := exeMemReg.valid && exeFpCtrl.fpuValid &&
-        !exeMemReg.instruction_access_fault && !exeMemReg.illegal_inst
+        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault &&
+        !exeMemReg.illegal_inst
     // LR/AMO carry a load-type mem_cmd (LW/LD) and SC a store-type one
     // (SW/SD), so exeMemIsLoad/exeMemIsStore include them; the wires below
     // single the atomics out where the classification differs.
@@ -850,7 +891,7 @@ class BreezeBackend(
         Seq(
             SEL_ALU2.RS2.U -> exeRs2Data,
             SEL_ALU2.IMM.U -> idExeReg.imm,
-            SEL_ALU2.CONST4.U -> 4.U(cfg.VLEN.W),
+            SEL_ALU2.CONST4.U -> idExeReg.instLen,
             SEL_ALU2.CONST0.U -> 0.U(cfg.VLEN.W)
         )
     )
@@ -964,10 +1005,13 @@ class BreezeBackend(
     val mcauseVal = Wire(UInt(cfg.VLEN.W))
     mcauseVal := Mux1H(Seq(
         memWbReg.instruction_access_fault -> BigInt(1).U(cfg.VLEN.W),
+        memWbReg.instruction_page_fault -> BigInt(12).U(cfg.VLEN.W),
         memWbReg.store_addr_misaligned -> BigInt(6).U(cfg.VLEN.W),
         memWbReg.load_addr_misaligned  -> BigInt(4).U(cfg.VLEN.W),
         memWbReg.store_access_fault    -> BigInt(7).U(cfg.VLEN.W),
         memWbReg.load_access_fault     -> BigInt(5).U(cfg.VLEN.W),
+        memWbReg.store_page_fault      -> BigInt(15).U(cfg.VLEN.W),
+        memWbReg.load_page_fault       -> BigInt(13).U(cfg.VLEN.W),
         memWbReg.is_ecall              -> ecallCause,
         memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
         memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W),
@@ -978,13 +1022,16 @@ class BreezeBackend(
     val mtvalVal = Wire(UInt(cfg.VLEN.W))
     mtvalVal := Mux1H(Seq(
         memWbReg.instruction_access_fault -> memWbReg.pc,
+        memWbReg.instruction_page_fault -> memWbReg.pc,
         memWbReg.store_addr_misaligned -> memWbReg.alu_data,
         memWbReg.load_addr_misaligned  -> memWbReg.alu_data,
         memWbReg.store_access_fault    -> memWbReg.alu_data,
         memWbReg.load_access_fault     -> memWbReg.alu_data,
+        memWbReg.store_page_fault      -> memWbReg.alu_data,
+        memWbReg.load_page_fault       -> memWbReg.alu_data,
         memWbReg.is_ecall              -> 0.U(cfg.VLEN.W),
         memWbReg.csr_illegal           -> 0.U(cfg.VLEN.W),
-        memWbReg.illegal_inst          -> 0.U(cfg.VLEN.W),
+        memWbReg.illegal_inst          -> memWbReg.rawInst,
         true.B                         -> 0.U(cfg.VLEN.W)
     ))
 
@@ -1008,18 +1055,21 @@ class BreezeBackend(
     io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg
     fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect) {
         fenceiFlushIssuedReg := false.B
     }.elsewhen(io.dcacheFlushReq) {
         fenceiFlushIssuedReg := true.B
     }
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.nextPc := 0.U
         exeMemReg.inst := nopInst
+        exeMemReg.rawInst := nopInst
+        exeMemReg.instLen := 4.U
         exeMemReg.instruction_access_fault := false.B
+        exeMemReg.instruction_page_fault := false.B
         exeMemReg.illegal_inst := false.B
         exeMemReg.is_ecall := false.B
         exeMemReg.is_mret := false.B
@@ -1082,12 +1132,16 @@ class BreezeBackend(
         exeMemReg.pc := idExeReg.pc
         exeMemReg.nextPc := exeNextPc
         exeMemReg.inst := idExeReg.inst
+        exeMemReg.rawInst := idExeReg.rawInst
+        exeMemReg.instLen := idExeReg.instLen
         exeMemReg.instruction_access_fault := idExeReg.instruction_access_fault
+        exeMemReg.instruction_page_fault := idExeReg.instruction_page_fault
         exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.is_ecall := idExeReg.is_ecall
         exeMemReg.is_mret := idExeReg.is_mret
         exeMemReg.is_sret := idExeReg.is_sret
-        exeMemReg.csr_illegal := csrFile.io.csr_illegal && !idExeReg.instruction_access_fault
+        exeMemReg.csr_illegal := csrFile.io.csr_illegal &&
+            !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
         exeMemReg.fencei := idExeReg.ctrl.fencei
@@ -1135,7 +1189,7 @@ class BreezeBackend(
         exeMemReg.trace.foreach { trace =>
             trace.valid := idExeReg.valid
             trace.pc := idExeReg.pc
-            trace.inst := idExeReg.inst
+            trace.inst := idExeReg.rawInst
             trace.nextPc := exeNextPc
             trace.estop := idExeReg.estop
             trace.rdWriteEn := idExeReg.ctrl.wb_en && (idExeReg.rd_addr =/= 0.U)
@@ -1155,7 +1209,7 @@ class BreezeBackend(
         }
     }
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect) {
         exeFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
         exeFpOperand1 := 0.U
         exeFpOperand2 := 0.U
@@ -1205,12 +1259,15 @@ class BreezeBackend(
         fpWaitingRespReg := true.B
     }
 
-    when(reset.asBool || exceptionRedirect || xretRedirect || interruptRedirect) {
+    when(reset.asBool || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.nextPc := 0.U
         memWbReg.inst := nopInst
+        memWbReg.rawInst := nopInst
+        memWbReg.instLen := 4.U
         memWbReg.instruction_access_fault := false.B
+        memWbReg.instruction_page_fault := false.B
         memWbReg.illegal_inst := false.B
         memWbReg.is_ecall := false.B
         memWbReg.is_mret := false.B
@@ -1220,6 +1277,8 @@ class BreezeBackend(
         memWbReg.store_addr_misaligned := false.B
         memWbReg.load_access_fault := false.B
         memWbReg.store_access_fault := false.B
+        memWbReg.load_page_fault := false.B
+        memWbReg.store_page_fault := false.B
         memWbReg.estop := false.B
         memWbReg.wb_en := false.B
         memWbReg.wb_sel := SEL_WB.XXX.U
@@ -1256,7 +1315,10 @@ class BreezeBackend(
         memWbReg.pc := exeMemReg.pc
         memWbReg.nextPc := exeMemReg.nextPc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.rawInst := exeMemReg.rawInst
+        memWbReg.instLen := exeMemReg.instLen
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
+        memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_mret := exeMemReg.is_mret
@@ -1267,7 +1329,10 @@ class BreezeBackend(
         memWbReg.store_addr_misaligned := storeAddrMisaligned
         memWbReg.load_access_fault := false.B
         memWbReg.store_access_fault := false.B
-        memWbReg.wb_en := exeMemReg.wb_en && !memAddrMisaligned && !exeMemReg.instruction_access_fault
+        memWbReg.load_page_fault := false.B
+        memWbReg.store_page_fault := false.B
+        memWbReg.wb_en := exeMemReg.wb_en && !memAddrMisaligned &&
+            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
         memWbReg.alu_data := exeMemReg.data
@@ -1277,7 +1342,7 @@ class BreezeBackend(
         memWbReg.csr_addr := exeMemReg.csr_addr
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en && !memAddrMisaligned &&
-            !exeMemReg.instruction_access_fault
+            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
         memWbReg.prediction_miss := exeMemReg.prediction_miss
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
@@ -1300,7 +1365,10 @@ class BreezeBackend(
         memWbReg.pc := exeMemReg.pc
         memWbReg.nextPc := exeMemReg.nextPc
         memWbReg.inst := exeMemReg.inst
+        memWbReg.rawInst := exeMemReg.rawInst
+        memWbReg.instLen := exeMemReg.instLen
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
+        memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_mret := exeMemReg.is_mret
@@ -1312,10 +1380,15 @@ class BreezeBackend(
         // AMO faults classify as store/AMO access faults (cause 7) despite the
         // load-typed mem_cmd; LR stays a load access fault (cause 5).
         memWbReg.load_access_fault := memRspFire && exeMemIsLoad && !exeMemIsAmo &&
-            io.dmem.rsp.error
+            io.dmem.rsp.error && !io.dmem.rsp.pageFault
         memWbReg.store_access_fault := memRspFire && (exeMemIsStore || exeMemIsAmo) &&
-            io.dmem.rsp.error
+            io.dmem.rsp.error && !io.dmem.rsp.pageFault
+        memWbReg.load_page_fault := memRspFire && exeMemIsLoad && !exeMemIsAmo &&
+            io.dmem.rsp.pageFault
+        memWbReg.store_page_fault := memRspFire && (exeMemIsStore || exeMemIsAmo) &&
+            io.dmem.rsp.pageFault
         memWbReg.wb_en := exeMemReg.wb_en && !exeMemReg.instruction_access_fault &&
+            !exeMemReg.instruction_page_fault &&
             !(memRspFire && io.dmem.rsp.error)
         memWbReg.wb_sel := exeMemReg.wb_sel
         memWbReg.rd_addr := exeMemReg.rd_addr
@@ -1332,7 +1405,8 @@ class BreezeBackend(
         memWbReg.csr_addr := exeMemReg.csr_addr
         memWbReg.csr_new_data := csrFile.io.csr_new_data
         memWbReg.csr_write_en := csrFile.io.csr_write_en &&
-            !exeMemReg.instruction_access_fault && !(memRspFire && io.dmem.rsp.error)
+            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault &&
+            !(memRspFire && io.dmem.rsp.error)
         memWbReg.prediction_miss := exeMemReg.prediction_miss
         memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
             wbTrace := exeTrace
@@ -1370,7 +1444,7 @@ class BreezeBackend(
     // Floating-point writeback sideband, aligned with the common MEM/WB
     // register above.  FPR writes and accrued flags become architectural only
     // when memWbReg.valid commits on the following cycle.
-    when(reset.asBool || exceptionRedirect || xretRedirect || interruptRedirect) {
+    when(reset.asBool || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect) {
         memWbFpWrite := false.B
         memWbFpData := 0.U
         memWbFpFlagsValid := false.B
@@ -1398,8 +1472,10 @@ class BreezeBackend(
     }
 
     csrFile.io.fp_commit_valid := memWbReg.valid &&
-        !memWbReg.instruction_access_fault && !memWbReg.illegal_inst &&
+        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
+        !memWbReg.illegal_inst &&
         !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
+        !memWbReg.load_page_fault &&
         (memWbFpWrite || memWbFpFlagsValid)
     csrFile.io.fp_flags := Mux(memWbFpFlagsValid, memWbFpFlags, 0.U)
 
@@ -1435,6 +1511,12 @@ class BreezeBackend(
     // the D$; mret needs no kill because SC after a trap round-trip already
     // fails through the cleared reservation.
     io.reservationKill := exceptionRedirect || interruptRedirect
+    io.mmuContext := csrFile.io.mmu_context
+    io.sfence.valid := sfenceExecute
+    io.sfence.vaddr := exeRs1Data
+    io.sfence.asid := exeRs2Data(15, 0)
+    io.sfence.useVaddr := idExeReg.rs1_addr =/= 0.U
+    io.sfence.useAsid := idExeReg.rs2_addr =/= 0.U
 
     csrFile.io.hpmEvents.memStallCycle := memReqIssued ||
         (memWaitingRespReg && !io.dmem.rsp.valid)
@@ -1444,7 +1526,9 @@ class BreezeBackend(
     io.frontendRedirect.flush := frontendRedirectNeeded
     io.frontendRedirect.cacheFlush := fenceiFlush
     io.frontendRedirect.target := Mux1H(Seq(
-        fenceiFlush        -> (exeMemReg.pc + 4.U),
+        fenceiFlush        -> (exeMemReg.pc + exeMemReg.instLen),
+        sfenceExecute      -> (idExeReg.pc + idExeReg.instLen),
+        satpCommit         -> memWbReg.nextPc,
         xretRedirect       -> csrFile.io.xret_target,
         interruptRedirect  -> csrFile.io.trap_target,
         exceptionRedirect  -> csrFile.io.trap_target,
@@ -1491,7 +1575,8 @@ class BreezeBackend(
         debug.csrMtvec       := csrFile.io.mtvec
         debug.csrMcause      := csrFile.io.debug.get.mcause
         debug.csrMepc        := csrFile.io.debug.get.mepc
-        debug.memWbException := memWbReg.instruction_access_fault || memWbReg.illegal_inst
+        debug.memWbException := memWbReg.instruction_access_fault ||
+            memWbReg.instruction_page_fault || memWbReg.illegal_inst
         debug.memWbTrapValid := wbTrap || interruptRedirect
         debug.memWbIsEcall := memWbReg.is_ecall
         debug.memWbIsMret := memWbReg.is_mret

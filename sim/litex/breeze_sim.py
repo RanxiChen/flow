@@ -26,6 +26,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
 
 from flow.core import Flow
 from flow.clint import BreezeClint
+from flow.plic import BreezePlic
 
 
 # Do not rely on LiteX's current-working-directory based CPU discovery.
@@ -56,6 +57,9 @@ MTIME_OFFSET = _platform_int(MACHINE_TIMER_CONFIG["mtimeOffset"])
 # Classic CLINT layout: msip[h] sits at the region base (base + 4*h).
 MSIP_OFFSET = 0x0000
 MTIME_FREQUENCY_HZ = _platform_int(MACHINE_TIMER_CONFIG["mtimeFrequencyHz"])
+PLIC_REGION = next(region for region in PLATFORM_CONFIG["regions"] if region["name"] == "plic")
+PLIC_ORIGIN = _platform_int(PLIC_REGION["origin"])
+PLIC_SIZE = _platform_int(PLIC_REGION["size"])
 RESET_VECTOR = _platform_int(PLATFORM_CONFIG["resetVector"])
 
 IBUS_DATA_WIDTH = 64
@@ -678,6 +682,16 @@ class BreezeSimSoC(SoCCore):
         self.comb += [
             self.cpu.mtip.eq(self.machine_timer.mtip),
             self.cpu.msip.eq(self.machine_timer.msip),
+            self.cpu.time.eq(self.machine_timer.mtime),
+        ]
+        self.submodules.plic = BreezePlic(num_harts=self.cpu.num_harts, num_sources=31)
+        self.bus.add_slave(
+            name="plic", slave=self.plic.bus,
+            region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
+        self.comb += [
+            self.plic.sources.eq(self.cpu.interrupt << 9),
+            self.cpu.meip.eq(self.plic.meip),
+            self.cpu.seip.eq(self.plic.seip),
         ]
         self.add_constant("BREEZE_MSIP", MACHINE_TIMER_ORIGIN + MSIP_OFFSET)
         self.add_constant("BREEZE_MTIME", MACHINE_TIMER_ORIGIN + MTIME_OFFSET)

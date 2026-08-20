@@ -101,6 +101,8 @@ class BackendMemResp extends Bundle {
     val data = UInt(64.W)
     val isWriteAck = Bool()
     val error = Bool()
+    val pageFault = Bool()
+    val faultAddr = UInt(64.W)
 }
 
 class BackendMemIO(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
@@ -179,7 +181,12 @@ class BreezeBTBUpdateReq(val vlen: Int) extends Bundle {
 class FrontendFetchBundle(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundle {
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val rawInst = UInt(32.W)
+    val instLen = UInt(3.W)
+    val isCompressed = Bool()
+    val illegalCompressed = Bool()
     val instructionAccessFault = Bool()
+    val instructionPageFault = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
 }
 
@@ -254,6 +261,49 @@ class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
     val tval         = UInt(XLEN.W)
 }
 
+/** Privileged translation state exported by the CSR file. */
+class BreezeMmuContext(val XLEN: Int = 64) extends Bundle {
+    val satp = UInt(XLEN.W)
+    val privilege = UInt(PRIV_MODE.width.W)
+    val mprv = Bool()
+    val mpp = UInt(PRIV_MODE.width.W)
+    val sum = Bool()
+    val mxr = Bool()
+    val adue = Bool()
+    val pmpcfg = Vec(16, UInt(8.W))
+    val pmpaddr = Vec(16, UInt(54.W))
+}
+
+class BreezeSfenceReq(val XLEN: Int = 64) extends Bundle {
+    val valid = Bool()
+    val vaddr = UInt(XLEN.W)
+    val asid = UInt(16.W)
+    val useVaddr = Bool()
+    val useAsid = Bool()
+}
+
+object BreezeMmuAccess extends ChiselEnum {
+    val Fetch, Load, Store = Value
+}
+
+class BreezeTranslationReq(val XLEN: Int = 64) extends Bundle {
+    val vaddr = UInt(XLEN.W)
+    val access = BreezeMmuAccess()
+    val sizeLog2 = UInt(3.W)
+}
+
+class BreezeTranslationResp(val XLEN: Int = 64) extends Bundle {
+    val vaddr = UInt(XLEN.W)
+    val paddr = UInt(XLEN.W)
+    val pageFault = Bool()
+    val accessFault = Bool()
+}
+
+class BreezeTranslationPort(val XLEN: Int = 64) extends Bundle {
+    val req = Flipped(Decoupled(new BreezeTranslationReq(XLEN)))
+    val resp = Decoupled(new BreezeTranslationResp(XLEN))
+}
+
 /** One-cycle occurrence pulses plus per-cycle stall levels consumed by HPM. */
 class BreezeHpmEvents extends Bundle {
     val controlRetired = Bool()
@@ -277,7 +327,10 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
     val valid = Bool()
     val pc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val rawInst = UInt(32.W)
+    val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
+    val instruction_page_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
@@ -300,7 +353,10 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val pc = UInt(VLEN.W)
     val nextPc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val rawInst = UInt(32.W)
+    val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
+    val instruction_page_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
@@ -342,7 +398,10 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val pc = UInt(VLEN.W)
     val nextPc = UInt(VLEN.W)
     val inst = UInt(32.W)
+    val rawInst = UInt(32.W)
+    val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
+    val instruction_page_fault = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_mret  = Bool()
@@ -352,6 +411,8 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val store_addr_misaligned = Bool()
     val load_access_fault = Bool()
     val store_access_fault = Bool()
+    val load_page_fault = Bool()
+    val store_page_fault = Bool()
     val estop = Bool()
     val wb_en = Bool()
     val wb_sel = UInt(SEL_WB.width.W)
@@ -437,12 +498,14 @@ class Frontend_Instruction_Bunlde(val pc_width: Int = 64) extends Bundle{
 
 class BreezeCacheReqIO(val VLEN:Int =64) extends Bundle{
     val vaddr = UInt(VLEN.W)
+    val paddr = UInt(VLEN.W)
 }
 
 class BreezeCacheRespIO(val VLEN:Int = 64,val FETCH_WIDTH:Int = 32) extends Bundle{
     val data = UInt(FETCH_WIDTH.W)
     val vaddr = UInt(VLEN.W)
     val accessFault = Bool()
+    val pageFault = Bool()
 }
 /**
   * L1 ICache当miss的时候，向下级cache发出请求的接口

@@ -220,6 +220,7 @@ object CSRMAP{
    val scause      = 0x142
    val stval       = 0x143
    val sip         = 0x144
+   val stimecmp    = 0x14d
    val scountovf   = 0xDA0
    val satp        = 0x180
    val scontext    = 0x5A8

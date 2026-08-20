@@ -357,6 +357,8 @@ class BreezeDCache(
   io.cpu.rsp.data := Mux(responseError, 0.U, responseData)
   io.cpu.rsp.isWriteAck := responseIsWrite && !responseError
   io.cpu.rsp.error := responseError
+  io.cpu.rsp.pageFault := false.B
+  io.cpu.rsp.faultAddr := 0.U
 
   io.flushDone := state === FlushRespond
   io.fatalError := fatalErrorReg

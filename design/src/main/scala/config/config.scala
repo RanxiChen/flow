@@ -53,7 +53,9 @@ case class GShareBranchPredictorConfig(
 
 case class BreezeFrontendConfig(
     VLEN: Int = 64,
-    branchPredCfg: FrontendBranchPredictorConfig = GShareBranchPredictorConfig()
+    branchPredCfg: FrontendBranchPredictorConfig = GShareBranchPredictorConfig(),
+    enableCompressed: Boolean = false,
+    enableMmu: Boolean = false
 ) {
     val cacheCfg: DefaultICacheConfig = DefaultICacheConfig(
         VLEN = VLEN,
@@ -67,7 +69,9 @@ case class BackendConfig(
     val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare,
     val ghrLength: Int = 8,
     val enableTandem: Boolean = false,
-    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    val enableCompressed: Boolean = false,
+    val enableMmu: Boolean = false
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -137,7 +141,9 @@ case class BreezeCoreConfig(
     val dcacheCapacityBytes: Int = 8192,
     val dcacheLineBytes: Int = 32,
     val dcacheWays: Int = 4,
-    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    val enableCompressed: Boolean = false,
+    val enableMmu: Boolean = false
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -151,7 +157,9 @@ case class BreezeCoreConfig(
 
     val frontendCfg: BreezeFrontendConfig = BreezeFrontendConfig(
         VLEN = VLEN,
-        branchPredCfg = branchPredCfg
+        branchPredCfg = branchPredCfg,
+        enableCompressed = enableCompressed,
+        enableMmu = enableMmu
     )
     val backendCfg: BackendConfig = BackendConfig(
         VLEN = VLEN,
@@ -159,7 +167,9 @@ case class BreezeCoreConfig(
         branchPredKind = frontendCfg.branchPredCfg.kind,
         ghrLength = frontendCfg.branchPredCfg.ghrLength,
         enableTandem = enableTandem,
-        privilegeProfile = privilegeProfile
+        privilegeProfile = privilegeProfile,
+        enableCompressed = enableCompressed,
+        enableMmu = enableMmu
     )
     val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
         VLEN = VLEN,
@@ -196,7 +206,9 @@ object BreezeCoreConfigs {
             useFASE = false,
             enableTandem = enableTandem,
             useGShare = false,
-            privilegeProfile = privilegeProfile
+            privilegeProfile = privilegeProfile,
+            enableCompressed = privilegeProfile.enableSupervisorUser,
+            enableMmu = privilegeProfile.enableSupervisorUser
         )
 
     def gshare(
@@ -207,7 +219,9 @@ object BreezeCoreConfigs {
             useFASE = false,
             enableTandem = enableTandem,
             useGShare = true,
-            privilegeProfile = privilegeProfile
+            privilegeProfile = privilegeProfile,
+            enableCompressed = privilegeProfile.enableSupervisorUser,
+            enableMmu = privilegeProfile.enableSupervisorUser
         )
 
     def fromPreset(

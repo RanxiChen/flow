@@ -33,9 +33,13 @@ from flow.cluster import (  # noqa: E402
     FlowCluster,
 )
 from flow.clint import BreezeClint  # noqa: E402
+from flow.plic import BreezePlic  # noqa: E402
+from flow.uart16550 import BreezeUart16550  # noqa: E402
+from litex.soc.cores.uart import RS232PHYModel
 from breeze_sim import (  # noqa: E402
     MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MSIP_OFFSET, MTIME_FREQUENCY_HZ,
-    MTIMECMP_OFFSET, MTIME_OFFSET, McuCompletionMonitor, Platform,
+    MTIMECMP_OFFSET, MTIME_OFFSET, PLIC_ORIGIN, PLIC_SIZE,
+    McuCompletionMonitor, Platform,
 )
 
 
@@ -66,10 +70,14 @@ class MulticoreSimSoC(SoCCore):
 
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
                  cluster_profile="single", core_preset="gshare",
+                 privilege_profile="mcu",
                  completion_label=None, mcu_result_address=None,
                  mcu_perf_address=None, mcu_timeout=20000, **kwargs):
         platform = Platform()
-        FlowCluster.set_cluster_config(cluster_profile, core_preset)
+        FlowCluster.set_cluster_config(cluster_profile, core_preset, privilege_profile)
+        self.mem_map = dict(type(self).mem_map)
+        if privilege_profile == "linux":
+            self.mem_map["rom"] = 0x1001_0000
         # LiteX's CRG supplies the power-on reset pulse required by the
         # synchronous-reset Chisel core.
         self.submodules.crg = CRG(platform.request("sys_clk"))
@@ -93,7 +101,7 @@ class MulticoreSimSoC(SoCCore):
             csr_address_width=14,
             csr_paging=0x1000,
             with_ctrl=True,
-            with_uart=True,
+            with_uart=(privilege_profile == "mcu"),
             uart_name="sim",
             with_timer=False,
             **kwargs,
@@ -121,6 +129,26 @@ class MulticoreSimSoC(SoCCore):
         self.comb += [
             self.cpu.mtip.eq(self.machine_timer.mtip),
             self.cpu.msip.eq(self.machine_timer.msip),
+            self.cpu.time.eq(self.machine_timer.mtime),
+        ]
+        self.submodules.plic = BreezePlic(num_harts=self.cpu.num_harts, num_sources=31)
+        self.bus.add_slave(
+            name="plic", slave=self.plic.bus,
+            region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
+        linux_uart_irq = 0
+        if privilege_profile == "linux":
+            self.submodules.uart16550_phy = RS232PHYModel(platform.request("serial"))
+            self.submodules.uart16550 = BreezeUart16550()
+            self.comb += self.uart16550.tx.connect(self.uart16550_phy.sink)
+            self.comb += self.uart16550_phy.source.connect(self.uart16550.rx)
+            self.bus.add_slave(
+                name="uart16550", slave=self.uart16550.bus,
+                region=SoCRegion(origin=0x1000_0000, size=0x100, cached=False))
+            linux_uart_irq = self.uart16550.interrupt
+        self.comb += [
+            self.plic.sources.eq((self.cpu.interrupt << 9) | (linux_uart_irq << 9)),
+            self.cpu.meip.eq(self.plic.meip),
+            self.cpu.seip.eq(self.plic.seip),
         ]
         self.add_constant("BREEZE_MSIP", MACHINE_TIMER_ORIGIN + MSIP_OFFSET)
         self.add_constant("BREEZE_MTIME", MACHINE_TIMER_ORIGIN + MTIME_OFFSET)
@@ -151,6 +179,7 @@ def main():
         help="Cluster profile: single (1 hart), dual (2 harts) or small (4 harts).")
     parser.add_argument("--core-preset", choices=CORE_PRESETS, default="gshare",
         help="Core RTL preset (default: gshare; baseline is explicit).")
+    parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
     parser.add_argument("--test-name", required=True,
         help="Registered multicore test name; forms the completion marker label.")
     parser.add_argument("--rom-init", required=True,
@@ -198,6 +227,7 @@ def main():
         rom_init=rom_init,
         cluster_profile=args.profile,
         core_preset=args.core_preset,
+        privilege_profile=args.privilege,
         completion_label=label,
         mcu_result_address=args.mcu_result_address,
         mcu_perf_address=args.mcu_perf_address,

@@ -78,6 +78,8 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.retire_valid.poke(false.B)
         dut.io.machineTimerInterrupt.poke(false.B)
         dut.io.machineExternalInterrupt.poke(false.B)
+        dut.io.supervisorExternalInterrupt.poke(false.B)
+        dut.io.time.poke(0.U)
         dut.io.trap.valid.poke(false.B)
         dut.io.trap.is_interrupt.poke(false.B)
         dut.io.trap.cause.poke(0.U)

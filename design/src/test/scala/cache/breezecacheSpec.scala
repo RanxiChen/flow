@@ -69,6 +69,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     def sendCacheReq(dut: BreezeCache, vaddr: BigInt): Unit = {
         dut.io.dreq.valid.poke(true.B)
         dut.io.dreq.bits.vaddr.poke(vaddr.U)
+        dut.io.dreq.bits.paddr.poke(vaddr.U)
         println(s"[INFO] Sending request for vaddr: 0x${vaddr.toString(16)}")
     }
     "BreezeCache should miss after reset" in {
@@ -155,6 +156,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , send a new request 0x4 while s2_done is high")
             dut.io.dreq.valid.poke(true.B)
             dut.io.dreq.bits.vaddr.poke((lineBase + 4).U)
+            dut.io.dreq.bits.paddr.poke((lineBase + 4).U)
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , check 0x4 enters cache while miss result is returned")
             dut.io.debug.get.s0_valid.expect(true.B)
             dut.io.debug.get.s1_valid.expect(false.B)
@@ -168,6 +170,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             println(s"[INFO] cycle ${cycle_count} , send next request 0x8 and check hit pipeline state")
             dut.io.dreq.valid.poke(true.B)
             dut.io.dreq.bits.vaddr.poke((lineBase + 8).U)
+            dut.io.dreq.bits.paddr.poke((lineBase + 8).U)
             val s1Meta = dut.io.debug.get.s1_meta.peek().litValue
             val s1ValidVec = s1Meta & 0xf
             val s1Plru = (s1Meta >> 4) & 0x7
@@ -186,6 +189,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.flush.poke(false.B)
             dut.io.dreq.valid.poke(false.B)
             dut.io.dreq.bits.vaddr.poke(0.U)
+            dut.io.dreq.bits.paddr.poke(0.U)
             dut.io.drsp.ready.poke(true.B)
             dut.io.next_level_rsp.vld.poke(false.B)
             dut.io.next_level_rsp.data.poke(0.U)
@@ -209,6 +213,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // Launch a miss for 0x320.
             dut.io.dreq.valid.poke(true.B)
             dut.io.dreq.bits.vaddr.poke(missedAddr.U)
+            dut.io.dreq.bits.paddr.poke(missedAddr.U)
             dut.io.dreq.ready.expect(true.B)
             dut.clock.step()
             dut.io.debug.get.s1_vaddr.expect(missedAddr.U)
@@ -218,6 +223,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // changed address must not become the SRAM address for the refill.
             dut.io.dreq.valid.poke(false.B)
             dut.io.dreq.bits.vaddr.poke(redirectedAddr.U)
+            dut.io.dreq.bits.paddr.poke(redirectedAddr.U)
             dut.clock.step()
             dut.io.next_level_req.req.expect(true.B)
             dut.io.next_level_req.paddr.expect(missedAddr.U)
@@ -237,6 +243,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // address, including its requested word.
             dut.io.dreq.valid.poke(true.B)
             dut.io.dreq.bits.vaddr.poke(missedAddr.U)
+            dut.io.dreq.bits.paddr.poke(missedAddr.U)
             dut.io.dreq.ready.expect(true.B)
             dut.clock.step()
             dut.io.debug.get.s1_vaddr.expect(missedAddr.U)
@@ -248,6 +255,7 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             // hit here would prove that the 0x320 line was written into the
             // redirect target's set.
             dut.io.dreq.bits.vaddr.poke(redirectedAddr.U)
+            dut.io.dreq.bits.paddr.poke(redirectedAddr.U)
             dut.io.dreq.ready.expect(true.B)
             dut.clock.step()
             dut.io.debug.get.s1_vaddr.expect(redirectedAddr.U)

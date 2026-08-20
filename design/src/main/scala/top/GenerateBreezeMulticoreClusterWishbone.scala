@@ -102,7 +102,8 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |l2Ways=${clusterCfg.l2.ways}
            |corePreset=${corePreset.name}
            |privilegeProfile=${privilegeProfile.name}
-           |addressTranslation=bare
+           |compressed=${clusterCfg.coreCfg().enableCompressed}
+           |addressTranslation=${if (clusterCfg.coreCfg().enableMmu) "bare,sv39" else "bare"}
            |""".stripMargin
     os.write.over(targetDir / "cluster-profile.txt", profileText)
     os.write.over(targetDir / "core-preset.txt", s"${corePreset.name}\n")

@@ -8,7 +8,7 @@ cluster RTL profile separately before constructing a SoC.
 """
 
 import os
-from migen import ClockSignal, Constant, Instance, Record, ResetSignal, Signal
+from migen import Cat, ClockSignal, Constant, Instance, Record, ResetSignal, Signal
 
 from litex.soc.interconnect import wishbone
 
@@ -73,6 +73,7 @@ RETIRE_RTL_NAMES = {
 class FlowCluster(CPU):
     cluster_profile      = "single"
     core_preset          = "gshare"
+    privilege_profile    = "mcu"
     category             = "softcore"
     family               = "riscv"
     name                 = "flow_cluster"
@@ -91,6 +92,7 @@ class FlowCluster(CPU):
     }
     io_regions           = {
         0x0200_0000: 0x0001_0000,  # Machine timer.
+        0x0c00_0000: 0x0400_0000,  # PLIC.
         0x1200_0000: 0x0100_0000,  # LiteX MMIO window.
     }
 
@@ -124,6 +126,9 @@ class FlowCluster(CPU):
         # Per-hart CLINT inputs, driven by the SoC-side BreezeClint slave.
         self.msip         = Signal(num_harts)
         self.mtip         = Signal(num_harts)
+        self.time         = Signal(64)
+        self.meip         = Signal(num_harts)
+        self.seip         = Signal(num_harts)
         self.hart_fatal   = Signal(num_harts)
         self.hart_estop   = Signal(num_harts)
         self.retires      = [Record(RETIRE_LAYOUT) for _ in range(num_harts)]
@@ -135,6 +140,7 @@ class FlowCluster(CPU):
             i_clock = ClockSignal("sys"),
             i_reset = ResetSignal("sys") | self.reset,
             i_io_resetAddr = Constant(0, 64),
+            i_io_time = self.time,
 
             # Memory Wishbone master (L2/Home side).
             o_io_memoryWishbone_adr   = ibus.adr,
@@ -166,9 +172,14 @@ class FlowCluster(CPU):
         for hart in range(num_harts):
             self.cpu_params[f"i_io_msip_{hart}"] = self.msip[hart]
             self.cpu_params[f"i_io_mtip_{hart}"] = self.mtip[hart]
-            # External interrupts go to hart 0 only (spec section 19.3).
-            self.cpu_params[f"i_io_externalInterrupts_{hart}"] = (
-                self.interrupt if hart == 0 else Constant(0, 8))
+            if self.privilege_profile == "linux":
+                self.cpu_params[f"i_io_externalInterrupts_{hart}"] = (
+                    Cat(self.meip[hart], Constant(0, 7)))
+                self.cpu_params[f"i_io_supervisorExternalInterrupts_{hart}"] = self.seip[hart]
+            else:
+                self.cpu_params[f"i_io_externalInterrupts_{hart}"] = (
+                    self.interrupt if hart == 0 else Constant(0, 8))
+                self.cpu_params[f"i_io_supervisorExternalInterrupts_{hart}"] = Constant(0)
             self.cpu_params[f"o_io_hartFatal_{hart}"] = self.hart_fatal[hart]
             self.cpu_params[f"o_io_hartEStop_{hart}"] = self.hart_estop[hart]
             for field_name, _ in RETIRE_LAYOUT:
@@ -179,7 +190,7 @@ class FlowCluster(CPU):
         self.add_sources(platform)
 
     @classmethod
-    def set_cluster_config(cls, cluster_profile, core_preset):
+    def set_cluster_config(cls, cluster_profile, core_preset, privilege_profile="mcu"):
         if cluster_profile not in CLUSTER_PROFILES:
             expected = " or ".join(CLUSTER_PROFILES)
             raise ValueError(
@@ -188,8 +199,24 @@ class FlowCluster(CPU):
             expected = " or ".join(CORE_PRESETS)
             raise ValueError(
                 f"Unsupported core preset {core_preset!r}; expected {expected}")
+        if privilege_profile not in ("mcu", "linux"):
+            raise ValueError("privilege profile must be 'mcu' or 'linux'")
         cls.cluster_profile = cluster_profile
         cls.core_preset = core_preset
+        cls.privilege_profile = privilege_profile
+        cls.mem_map = {
+            "rom": 0x1001_0000 if privilege_profile == "linux" else 0x1000_0000,
+            "sram": 0x1100_0000,
+            "csr": 0x1200_0000,
+            "main_ram": 0x8000_0000,
+        }
+        cls.io_regions = {
+            0x0200_0000: 0x0001_0000,
+            0x0c00_0000: 0x0400_0000,
+            0x1200_0000: 0x0100_0000,
+        }
+        if privilege_profile == "linux":
+            cls.io_regions[0x1000_0000] = 0x0000_0100
 
     def set_reset_address(self, reset_address):
         self.reset_address = reset_address
@@ -202,9 +229,10 @@ class FlowCluster(CPU):
 
     @classmethod
     def rtl_dir(cls):
-        return os.path.join(
+        base = os.path.join(
             cls.flow_root_dir(), "design", "build", "rtl", "cluster",
             cls.cluster_profile, cls.core_preset)
+        return base if cls.privilege_profile == "mcu" else os.path.join(base, cls.privilege_profile)
 
     @classmethod
     def add_sources(cls, platform):
@@ -218,7 +246,7 @@ class FlowCluster(CPU):
                 "Generate it with:\n"
                 f"  cd {os.path.join(cls.flow_root_dir(), 'design')} && "
                 f"sbt \"runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-                f"{cls.cluster_profile} {cls.core_preset}\""
+                f"{cls.cluster_profile} {cls.core_preset} {cls.privilege_profile}\""
             )
         if not os.path.isfile(profile_marker):
             raise FileNotFoundError(
@@ -247,6 +275,7 @@ class FlowCluster(CPU):
             "l1Ways": "4",
             "l2Ways": "8",
             "corePreset": cls.core_preset,
+            "privilegeProfile": cls.privilege_profile,
         }
         mismatches = {
             key: (values.get(key), value)

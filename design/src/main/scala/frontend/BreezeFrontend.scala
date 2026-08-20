@@ -91,6 +91,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         val btbUpdate = Input(new BreezeBTBUpdateReq(cfg.VLEN))
         val phtUpdate = Input(new BreezePHTUpdateReq(cfg.branchPredCfg.ghrLength.max(1)))
         val ghrUpdate = Input(new BreezeGHRUpdateReq)
+        val translateReq = Decoupled(new BreezeTranslationReq(cfg.VLEN))
+        val translateRsp = Flipped(Decoupled(new BreezeTranslationResp(cfg.VLEN)))
         val fetchBuffer = new FrontendFetchBufferIO(cfg.VLEN, cfg.branchPredCfg.ghrLength)
         val nextLevelReq = new L1CacheMissReqIO(cfg.cacheCfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(cfg.cacheCfg.ICACHE_LINE_WIDTH)
@@ -102,14 +104,23 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     // ===== Module Instances =====
     val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
+    val realigner = if (cfg.enableCompressed) Some(Module(new BreezeInstrRealigner(cfg.VLEN))) else None
+    val decompressor = if (cfg.enableCompressed) Some(Module(new BreezeCompressedDecoder(enableDouble = true))) else None
+    val fetchTranslator = if (cfg.enableMmu) Some(Module(new BreezeFetchTranslator(cfg.VLEN))) else None
+    io.translateReq.valid := false.B
+    io.translateReq.bits := 0.U.asTypeOf(new BreezeTranslationReq(cfg.VLEN))
+    io.translateRsp.ready := false.B
     io.hpm := icache.io.hpm
     val isGShare = cfg.branchPredCfg.kind == FrontendBranchPredictorKind.GShare
 
     // ===== GShare Optional State =====
     val miniDecode = if (isGShare) Some(Module(new MiniDecode(cfg.VLEN))) else None
     val ghrReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
-    val btb = if (isGShare) Some(Module(new BreezeBTB(cfg.VLEN, cfg.branchPredCfg.btbEntryNum))) else None
-    val pht = if (isGShare) Some(Module(new BreezePHT(cfg.VLEN, cfg.branchPredCfg.ghrLength))) else None
+    private val predictorPcShift = if (cfg.enableCompressed) 1 else 2
+    val btb = if (isGShare) Some(Module(new BreezeBTB(
+        cfg.VLEN, cfg.branchPredCfg.btbEntryNum, predictorPcShift))) else None
+    val pht = if (isGShare) Some(Module(new BreezePHT(
+        cfg.VLEN, cfg.branchPredCfg.ghrLength, predictorPcShift))) else None
 
     // ===== S1: Stage State =====
     val s1_validReg = RegInit(true.B)
@@ -135,7 +146,12 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s3_validReg = RegInit(false.B)
     val s3_pcReg = Reg(UInt(cfg.VLEN.W))
     val s3_instReg = RegInit(0.U(32.W))
+    val s3_rawInstReg = RegInit(0.U(32.W))
+    val s3_instLenReg = RegInit(4.U(3.W))
+    val s3_compressedReg = RegInit(false.B)
+    val s3_illegalCompressedReg = RegInit(false.B)
     val s3_accessFaultReg = RegInit(false.B)
+    val s3_pageFaultReg = RegInit(false.B)
 
     // ===== GShare S3 Metadata =====
     val s3_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
@@ -164,8 +180,18 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s0_fallThroughSel = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
     val s2_respValid = Wire(Bool())
+    val fetchRespValid = Wire(Bool())
+    val fetchRespPc = Wire(UInt(cfg.VLEN.W))
+    val fetchRespRawInst = Wire(UInt(32.W))
+    val fetchRespInst = Wire(UInt(32.W))
+    val fetchRespInstLen = Wire(UInt(3.W))
+    val fetchRespCompressed = Wire(Bool())
+    val fetchRespIllegalCompressed = Wire(Bool())
+    val fetchRespAccessFault = Wire(Bool())
+    val fetchRespPageFault = Wire(Bool())
 
-    s0_defaultNextPc := s1_pcReg + 4.U
+    s0_defaultNextPc := Mux(cfg.enableCompressed.B && s2_respValid,
+        s2_pcReg + fetchRespInstLen, s1_pcReg + 4.U)
     redirectValid := io.beRedirect.valid || s3_fastRedirectValid
     redirectTarget := Mux(io.beRedirect.valid, io.beRedirect.target, s3_fastRedirectTarget)
     s0_fallThroughSel := !redirectValid
@@ -213,11 +239,88 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             }
         }
 
-        s0_defaultNextPc := s1_predPc
+        if (!cfg.enableCompressed) s0_defaultNextPc := s1_predPc
     }
 
     // ===== GShare Update Path =====
-    s1_fire := icache.io.dreq.fire
+    fetchRespValid := false.B
+    fetchRespPc := 0.U
+    fetchRespRawInst := 0.U
+    fetchRespInst := 0.U
+    fetchRespInstLen := 4.U
+    fetchRespCompressed := false.B
+    fetchRespIllegalCompressed := false.B
+    fetchRespAccessFault := false.B
+    fetchRespPageFault := false.B
+
+    if (cfg.enableCompressed) {
+        val r = realigner.get
+        val d = decompressor.get
+        r.io.redirect := redirectValid
+        r.io.req.valid := s1_validReg && io.fetchBuffer.canAccept3 && !s2_validReg
+        r.io.req.bits.pc := s1_pcReg
+        if (cfg.enableMmu) {
+            val t = fetchTranslator.get
+            t.io.inReq <> r.io.wordReq
+            r.io.wordRsp <> t.io.inRsp
+            icache.io.dreq <> t.io.cacheReq
+            t.io.cacheRsp <> icache.io.drsp
+            io.translateReq <> t.io.translateReq
+            t.io.translateRsp <> io.translateRsp
+            t.io.kill := redirectValid
+        } else {
+            icache.io.dreq.valid := r.io.wordReq.valid
+            icache.io.dreq.bits.vaddr := r.io.wordReq.bits.vaddr
+            icache.io.dreq.bits.paddr := r.io.wordReq.bits.vaddr
+            r.io.wordReq.ready := icache.io.dreq.ready
+            r.io.wordRsp <> icache.io.drsp
+        }
+        r.io.resp.ready := s2_validReg && !redirectValid
+        d.io.in := r.io.resp.bits.rawInst(15, 0)
+
+        s1_fire := r.io.req.fire
+        fetchRespValid := r.io.resp.valid
+        fetchRespPc := r.io.resp.bits.pc
+        fetchRespRawInst := r.io.resp.bits.rawInst
+        fetchRespInst := Mux(r.io.resp.bits.isCompressed, d.io.out, r.io.resp.bits.rawInst)
+        fetchRespInstLen := r.io.resp.bits.instLen
+        fetchRespCompressed := r.io.resp.bits.isCompressed
+        fetchRespIllegalCompressed := r.io.resp.bits.isCompressed && d.io.illegal
+        fetchRespAccessFault := r.io.resp.bits.accessFault
+        fetchRespPageFault := r.io.resp.bits.pageFault
+    } else {
+        if (cfg.enableMmu) {
+            val t = fetchTranslator.get
+            t.io.inReq.valid := s1_validReg && io.fetchBuffer.canAccept3
+            t.io.inReq.bits.vaddr := s1_pcReg
+            t.io.inReq.bits.paddr := 0.U
+            t.io.inRsp.ready := s2_validReg
+            icache.io.dreq <> t.io.cacheReq
+            t.io.cacheRsp <> icache.io.drsp
+            io.translateReq <> t.io.translateReq
+            t.io.translateRsp <> io.translateRsp
+            t.io.kill := redirectValid
+            s1_fire := t.io.inReq.fire
+            fetchRespValid := t.io.inRsp.valid
+            fetchRespPc := t.io.inRsp.bits.vaddr
+            fetchRespRawInst := t.io.inRsp.bits.data
+            fetchRespInst := t.io.inRsp.bits.data
+            fetchRespAccessFault := t.io.inRsp.bits.accessFault
+            fetchRespPageFault := t.io.inRsp.bits.pageFault
+        } else {
+            icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
+            icache.io.dreq.bits.vaddr := s1_pcReg
+            icache.io.dreq.bits.paddr := s1_pcReg
+            icache.io.drsp.ready := s2_validReg
+            s1_fire := icache.io.dreq.fire
+            fetchRespValid := icache.io.drsp.valid
+            fetchRespPc := icache.io.drsp.bits.vaddr
+            fetchRespRawInst := icache.io.drsp.bits.data
+            fetchRespInst := icache.io.drsp.bits.data
+            fetchRespAccessFault := icache.io.drsp.bits.accessFault
+            fetchRespPageFault := icache.io.drsp.bits.pageFault
+        }
+    }
 
     if (isGShare) {
         when(reset.asBool) {
@@ -233,21 +336,24 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         s1_pcReg := io.resetAddr
     }.elsewhen(redirectValid) {
         s1_pcReg := redirectTarget
-    }.elsewhen(s1_fire) {
+    }.elsewhen(cfg.enableCompressed.B && s2_respValid) {
+        val sequentialPc = s2_pcReg + fetchRespInstLen
+        val predictedPc = if (isGShare) {
+            Mux(s2_predTakenReg.get, s2_predPcReg.get, sequentialPc)
+        } else sequentialPc
+        s1_pcReg := predictedPc
+    }.elsewhen(!cfg.enableCompressed.B && s1_fire) {
         s1_pcReg := s0_nextPc
     }
 
     // ===== S1: Cache Request =====
     icache.io.flush := io.beRedirect.cacheFlush
-    icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
-    icache.io.dreq.bits.vaddr := s1_pcReg
 
     // ===== S2: Cache Request Tracking =====
     // A redirect can cancel the frontend request while an ICache miss is still
     // completing.  Only pair a response with the exact request that created
     // the current s2 context; a late wrong-path refill is simply discarded.
-    s2_respValid := s2_validReg && icache.io.drsp.valid &&
-        (icache.io.drsp.bits.vaddr === s2_pcReg)
+    s2_respValid := s2_validReg && fetchRespValid && (fetchRespPc === s2_pcReg)
 
     when(reset.asBool || redirectValid) {
         s2_validReg := false.B
@@ -259,7 +365,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             s2_predTypeReg.get := FrontendPredType.NONE
             s2_phtIdxReg.get := 0.U
         }
-    }.elsewhen(icache.io.dreq.fire) {
+    }.elsewhen(s1_fire) {
         s2_validReg := s1_validReg
         s2_pcReg := s1_pcReg
         if (isGShare) {
@@ -280,19 +386,22 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         }
     }
 
-    // ===== S2: Cache Response =====
-    icache.io.drsp.ready := s2_validReg
-
     // ===== S3: Cache Response Registers =====
     // S3 不接受背压：当 S2 的返回有效时就装载；否则本拍拉低 valid。
     // 如果下一拍又有新的返回，S3 会直接被新的返回覆盖。
     s3_validReg := false.B
     s3_accessFaultReg := false.B
+    s3_pageFaultReg := false.B
     when(!reset.asBool && !redirectValid && s2_respValid) {
         s3_validReg := true.B
         s3_pcReg := s2_pcReg
-        s3_instReg := icache.io.drsp.bits.data
-        s3_accessFaultReg := icache.io.drsp.bits.accessFault
+        s3_instReg := fetchRespInst
+        s3_rawInstReg := fetchRespRawInst
+        s3_instLenReg := fetchRespInstLen
+        s3_compressedReg := fetchRespCompressed
+        s3_illegalCompressedReg := fetchRespIllegalCompressed
+        s3_accessFaultReg := fetchRespAccessFault
+        s3_pageFaultReg := fetchRespPageFault
         if (isGShare) {
             s3_ghrSnapshotReg.get := s2_ghrSnapshotReg.get
             s3_predTakenReg.get := s2_predTakenReg.get
@@ -314,7 +423,12 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     io.fetchBuffer.valid := s3_validReg
     io.fetchBuffer.bits.pc := s3_pcReg
     io.fetchBuffer.bits.inst := s3_instReg
+    io.fetchBuffer.bits.rawInst := s3_rawInstReg
+    io.fetchBuffer.bits.instLen := s3_instLenReg
+    io.fetchBuffer.bits.isCompressed := s3_compressedReg
+    io.fetchBuffer.bits.illegalCompressed := s3_illegalCompressedReg
     io.fetchBuffer.bits.instructionAccessFault := s3_accessFaultReg
+    io.fetchBuffer.bits.instructionPageFault := s3_pageFaultReg
 
     io.fetchBuffer.bits.pred.predType := s3_finalPredType
     io.fetchBuffer.bits.pred.predTaken := s3_finalPredTaken

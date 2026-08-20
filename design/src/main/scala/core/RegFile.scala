@@ -152,7 +152,8 @@ object GenerateRegFileVerilogFile extends App {
 
 class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false,
               val hartId:Int=0,
-              val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu) extends Module {
+              val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+              val enableCompressed: Boolean = false) extends Module {
     require(hartId >= 0, "CSRFile hartId must be non-negative")
     val io = IO(new Bundle{
         val csr_addr = Input(UInt(12.W))
@@ -178,6 +179,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val machineTimerInterrupt = Input(Bool())
         val machineSoftwareInterrupt = Input(Bool())
         val machineExternalInterrupt = Input(Bool())
+        val supervisorExternalInterrupt = Input(Bool())
+        val time = Input(UInt(XLEN.W))
         val trap = Input(new CSRTrapInfo(XLEN))
         val mret_commit = Input(Bool())
         val sret_commit = Input(Bool())
@@ -190,6 +193,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val sret_illegal = Output(Bool())
         val wfi_illegal = Output(Bool())
         val sfence_vma_illegal = Output(Bool())
+        val mmu_context = Output(new BreezeMmuContext(XLEN))
         val interruptPending = Output(Bool())
         val interruptCause = Output(UInt(XLEN.W))
         val csr_illegal = Output(Bool())
@@ -204,9 +208,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mcountinhibit = RegInit(0.U(32.W))
+    val menvcfg = RegInit(0.U(XLEN.W))
     private val enableSupervisorUser = privilegeProfile.enableSupervisorUser
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
         (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) |
+        (if (enableCompressed) BigInt(1) << 2 else BigInt(0)) |
         (if (enableSupervisorUser) (BigInt(1) << 18) | (BigInt(1) << 20) else BigInt(0))
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
@@ -225,7 +231,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val scause = RegInit(0.U(XLEN.W))
     val stval = RegInit(0.U(XLEN.W))
     val sscratch = RegInit(0.U(XLEN.W))
+    val satp = RegInit(0.U(XLEN.W))
+    val pmpcfg = RegInit(VecInit(Seq.fill(16)(0.U(8.W))))
+    val pmpaddr = RegInit(VecInit(Seq.fill(16)(0.U(54.W))))
     val scounteren = RegInit(0.U(32.W))
+    val stimecmp = RegInit(Fill(XLEN, 1.U(1.W)))
     val mcounteren = RegInit(0.U(32.W))
     val currentPrivilege = RegInit(PRIV_MODE.M.U(PRIV_MODE.width.W))
     // mstatus: distributed fields, assembled on read, disassembled on write
@@ -239,6 +249,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mstatus_TVM  = RegInit(false.B)      // bit 20: trap S-mode satp/SFENCE.VMA
     val mstatus_TW   = RegInit(false.B)      // bit 21: trap S-mode WFI
     val mstatus_TSR  = RegInit(false.B)      // bit 22: trap S-mode SRET
+    val mstatus_MPRV = RegInit(false.B)
+    val mstatus_SUM  = RegInit(false.B)
+    val mstatus_MXR  = RegInit(false.B)
     val fflags = RegInit(0.U(5.W))
     val frm = RegInit(0.U(3.W))
     val mie_MSIE = RegInit(false.B)          // bit 3:  machine software interrupt enable
@@ -253,8 +266,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         ((BigInt(2) << 34) | (BigInt(2) << 32)).U(XLEN.W)
     } else 0.U(XLEN.W)
     mstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
-        linuxXlenFields | (mstatus_TSR.asUInt << 22) |
-        (mstatus_TW.asUInt << 21) | (mstatus_TVM.asUInt << 20) |
+        linuxXlenFields | (mstatus_TSR.asUInt << 22) | (mstatus_TW.asUInt << 21) |
+        (mstatus_TVM.asUInt << 20) | (mstatus_MXR.asUInt << 19) |
+        (mstatus_SUM.asUInt << 18) | (mstatus_MPRV.asUInt << 17) |
         (mstatus_FS << 13) | (mstatus_MPP << 11) |
         (mstatus_SPP.asUInt << 8) | (mstatus_MPIE.asUInt << 7) |
         (mstatus_SPIE.asUInt << 5) | (mstatus_MIE.asUInt << 3) |
@@ -262,6 +276,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val sstatus_read = Wire(UInt(XLEN.W))
     sstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
         (if (enableSupervisorUser) (BigInt(2) << 32).U(XLEN.W) else 0.U(XLEN.W)) |
+        (mstatus_MXR.asUInt << 19) | (mstatus_SUM.asUInt << 18) |
         (mstatus_FS << 13) | (mstatus_SPP.asUInt << 8) |
         (mstatus_SPIE.asUInt << 5) | (mstatus_SIE.asUInt << 1)
     val mie_read = Wire(UInt(XLEN.W))
@@ -275,6 +290,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     mip_read := (io.machineExternalInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.EXTERNAL) |
         (io.machineTimerInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
         (io.machineSoftwareInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
+        (io.supervisorExternalInterrupt.asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) |
+        ((menvcfg(63) && io.time >= stimecmp).asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
         (sip_SSIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
     val sie_read = mie_read & mideleg
     val sip_read = mip_read & mideleg
@@ -304,9 +321,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         csrPattern(CSRMAP.mcycle)   -> mcycle,
         csrPattern(CSRMAP.minstret) -> minstret,
         csrPattern(CSRMAP.cycle)    -> mcycle,
+        csrPattern(CSRMAP.time)     -> io.time,
         csrPattern(CSRMAP.instret)  -> minstret,
-        csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit
-    )
+        csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit,
+        csrPattern(CSRMAP.menvcfg) -> menvcfg,
+        csrPattern(CSRMAP.pmpcfg0) -> Cat(pmpcfg.slice(0, 8).reverse),
+        csrPattern(CSRMAP.pmpcfg2) -> Cat(pmpcfg.slice(8, 16).reverse)
+    ) ++ (0 until 16).map(index =>
+        csrPattern(CSRMAP.pmpaddr0 + index) -> pmpaddr(index))
     val supervisorCsrFile = if (enableSupervisorUser) Seq(
         csrPattern(CSRMAP.sstatus) -> sstatus_read,
         csrPattern(CSRMAP.sie) -> sie_read,
@@ -317,7 +339,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         csrPattern(CSRMAP.scause) -> scause,
         csrPattern(CSRMAP.stval) -> stval,
         csrPattern(CSRMAP.sip) -> sip_read,
-        csrPattern(CSRMAP.satp) -> 0.U(XLEN.W)
+        csrPattern(CSRMAP.stimecmp) -> stimecmp,
+        csrPattern(CSRMAP.satp) -> satp
     ) else Seq.empty
     val csrFile = machineCsrFile ++ supervisorCsrFile ++
       (0 until implementedHpmCounters).flatMap { index => Seq(
@@ -346,15 +369,16 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
         CSRMAP.mstatus, CSRMAP.medeleg, CSRMAP.mideleg, CSRMAP.mie, CSRMAP.mtvec,
         CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
-        CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.instret,
-        CSRMAP.mcountinhibit) ++
+        CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
+        CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2) ++
+        (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
         (0 until implementedHpmCounters).flatMap(index => Seq(
             CSRMAP.mhpmcounter3 + index, CSRMAP.hpmcounter3 + index,
             CSRMAP.mhpmevent3 + index))
     val supervisorAddresses = Seq(
         CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
         CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval,
-        CSRMAP.sip, CSRMAP.satp)
+        CSRMAP.sip, CSRMAP.stimecmp, CSRMAP.satp)
     val implementedAddresses = machineAddresses ++
         (if (enableSupervisorUser) supervisorAddresses else Seq.empty)
     val csrImplemented = implementedAddresses.map(address =>
@@ -367,13 +391,15 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         (io.csr_addr === CSRMAP.printer.U || io.csr_addr === CSRMAP.coreinst.U)
     val satpDenied = currentPrivilege === PRIV_MODE.S.U && mstatus_TVM &&
         io.csr_addr === CSRMAP.satp.U
+    val sstcDenied = io.csr_addr === CSRMAP.stimecmp.U && !menvcfg(63)
     val readOnlyWrite = io.csr_addr(11, 10) === 3.U && write_csr
     val counterIndex = MuxLookup(io.csr_addr, 0.U(5.W))(Seq(
         CSRMAP.cycle.U -> 0.U,
+        CSRMAP.time.U -> 1.U,
         CSRMAP.instret.U -> 2.U
     ) ++ (0 until implementedHpmCounters).map(index =>
         (CSRMAP.hpmcounter3 + index).U -> (index + 3).U))
-    val userCounterAccess = io.csr_addr === CSRMAP.cycle.U ||
+    val userCounterAccess = io.csr_addr === CSRMAP.cycle.U || io.csr_addr === CSRMAP.time.U ||
         io.csr_addr === CSRMAP.instret.U ||
         (io.csr_addr >= CSRMAP.hpmcounter3.U &&
           io.csr_addr < (CSRMAP.hpmcounter3 + implementedHpmCounters).U)
@@ -384,7 +410,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             !mcounteren(counterIndex) || !scounteren(counterIndex), false.B))
     if (enableSupervisorUser) {
         io.csr_illegal := csrAccess && (
-            !csrImplemented || privilegeDenied || customCsrDenied || satpDenied ||
+            !csrImplemented || privilegeDenied || customCsrDenied || satpDenied || sstcDenied ||
             readOnlyWrite || counterDenied ||
             (fpCsrAccess && mstatus_FS === 0.U))
     } else {
@@ -440,7 +466,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }
 
     // Zicsr对寄存器的写在wb阶段提交
-    val medelegMask = Seq(1, 2, 4, 5, 6, 7, 8, 9)
+    val medelegMask = Seq(1, 2, 4, 5, 6, 7, 8, 9, 12, 13, 15)
         .map(bit => BigInt(1) << bit).reduce(_ | _).U(XLEN.W)
     val midelegMask = Seq(
         SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE,
@@ -502,7 +528,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.mepc.U){
-                mepc := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
+                mepc := (if (enableCompressed) Cat(io.commit_wdata(XLEN - 1, 1), 0.U(1.W))
+                    else Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W)))
                 if(dumplog){
                     printf(cf"[INFO] mepc = 0x${io.commit_wdata}%x\n")
                 }
@@ -538,6 +565,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     mstatus_TVM := io.commit_wdata(20)
                     mstatus_TW := io.commit_wdata(21)
                     mstatus_TSR := io.commit_wdata(22)
+                    mstatus_MPRV := io.commit_wdata(17)
+                    mstatus_SUM := io.commit_wdata(18)
+                    mstatus_MXR := io.commit_wdata(19)
                 } else {
                     mstatus_MPP := io.commit_wdata(12, 11)
                 }
@@ -577,6 +607,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     mstatus_SIE := io.commit_wdata(1)
                     mstatus_SPIE := io.commit_wdata(5)
                     mstatus_SPP := io.commit_wdata(8)
+                    mstatus_SUM := io.commit_wdata(18)
+                    mstatus_MXR := io.commit_wdata(19)
                     mstatus_FS := io.commit_wdata(14, 13)
                 }
             }
@@ -603,7 +635,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 if (enableSupervisorUser) sscratch := io.commit_wdata
             }
             is(CSRMAP.sepc.U) {
-                if (enableSupervisorUser) sepc := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
+                if (enableSupervisorUser) {
+                    sepc := (if (enableCompressed) Cat(io.commit_wdata(XLEN - 1, 1), 0.U(1.W))
+                        else Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W)))
+                }
             }
             is(CSRMAP.scause.U) {
                 if (enableSupervisorUser) scause := io.commit_wdata
@@ -618,7 +653,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.satp.U) {
-                // Bare-only in this profile. Sv39 is added with the MMU stage.
+                if (enableSupervisorUser) {
+                    // RV64 satp implements Bare (0) and Sv39 (8), ASID[15:0]
+                    // and the 44-bit root PPN. Unsupported MODE writes become Bare.
+                    satp := Mux(io.commit_wdata(63, 60) === 8.U,
+                        Cat(8.U(4.W), io.commit_wdata(59, 0)), 0.U)
+                }
             }
             is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
                 // Updated below so an explicit CSR write has priority over
@@ -628,6 +668,38 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 val supportedMask = ((BigInt(1) << 0) | (BigInt(1) << 2) |
                     ((BigInt(1) << implementedHpmCounters) - 1) << 3).U(32.W)
                 mcountinhibit := io.commit_wdata(31, 0) & supportedMask
+            }
+            is(CSRMAP.menvcfg.U) {
+                if (enableSupervisorUser) {
+                    // Sstc STCE and Svade ADUE are the implemented fields.
+                    menvcfg := io.commit_wdata & ((BigInt(1) << 63) | (BigInt(1) << 61)).U
+                }
+            }
+            is(CSRMAP.stimecmp.U) {
+                if (enableSupervisorUser) {
+                    when(menvcfg(63)) { stimecmp := io.commit_wdata }
+                }
+            }
+            is(CSRMAP.pmpcfg0.U, CSRMAP.pmpcfg2.U) {
+                val base = Mux(io.commit_addr === CSRMAP.pmpcfg0.U, 0.U, 8.U)
+                for (index <- 0 until 16) {
+                    when(base === (index & 8).U) {
+                        val lane = index & 7
+                        val requested = io.commit_wdata(8 * lane + 7, 8 * lane)
+                        val legal = Cat(requested(7), 0.U(2.W), requested(4, 3),
+                            requested(2), Mux(requested(0), requested(1), false.B), requested(0))
+                        when(!pmpcfg(index)(7)) { pmpcfg(index) := legal }
+                    }
+                }
+            }
+        }
+        for (index <- 0 until 16) {
+            val ownLocked = pmpcfg(index)(7)
+            val nextTorLocked = if (index == 15) false.B else
+                pmpcfg(index + 1)(7) && pmpcfg(index + 1)(4, 3) === 1.U
+            when(io.commit_addr === (CSRMAP.pmpaddr0 + index).U &&
+                !ownLocked && !nextTorLocked) {
+                pmpaddr(index) := io.commit_wdata(53, 0)
             }
         }
     }
@@ -696,7 +768,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     // Trap entry is precise at WB. A trap raised in M is never delegated.
     when(io.trap.valid){
         when(trapDelegated) {
-            sepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
+            sepc := (if (enableCompressed) Cat(io.trap.pc(XLEN - 1, 1), 0.U(1.W))
+                else Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W)))
             scause := io.trap.cause | (io.trap.is_interrupt.asUInt << (XLEN - 1))
             stval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
             mstatus_SPIE := mstatus_SIE
@@ -704,7 +777,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             mstatus_SPP := currentPrivilege === PRIV_MODE.S.U
             currentPrivilege := PRIV_MODE.S.U
         }.otherwise {
-            mepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
+            mepc := (if (enableCompressed) Cat(io.trap.pc(XLEN - 1, 1), 0.U(1.W))
+                else Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W)))
             mcause := io.trap.cause | (io.trap.is_interrupt.asUInt << (XLEN - 1))
             mtval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
             mstatus_MPIE := mstatus_MIE
@@ -720,6 +794,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         mstatus_MPIE := true.B
         if (enableSupervisorUser) {
             currentPrivilege := mstatus_MPP
+            when(mstatus_MPP =/= PRIV_MODE.M.U) { mstatus_MPRV := false.B }
             mstatus_MPP := PRIV_MODE.U.U
         } else {
             currentPrivilege := PRIV_MODE.M.U
@@ -750,6 +825,15 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.sfence_vma_illegal := !enableSupervisorUser.B ||
         currentPrivilege === PRIV_MODE.U.U ||
         (currentPrivilege === PRIV_MODE.S.U && mstatus_TVM)
+    io.mmu_context.satp := satp
+    io.mmu_context.privilege := currentPrivilege
+    io.mmu_context.mprv := mstatus_MPRV
+    io.mmu_context.mpp := mstatus_MPP
+    io.mmu_context.sum := mstatus_SUM
+    io.mmu_context.mxr := mstatus_MXR
+    io.mmu_context.adue := menvcfg(61)
+    io.mmu_context.pmpcfg := pmpcfg
+    io.mmu_context.pmpaddr := pmpaddr
     io.frm := frm
     io.fp_enabled := mstatus_FS =/= 0.U
     // Fixed priority: MEI > MSI > MTI > SEI > SSI > STI. xIE gates an

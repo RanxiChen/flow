@@ -78,6 +78,7 @@ def main():
         help="Cluster profile (single/dual/small).")
     parser.add_argument("--core-preset", default="gshare",
         help="Core RTL preset (default: gshare).")
+    parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
     parser.add_argument("--test", required=True, choices=sorted(TEST_APPS),
         help="Registered test name.")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-",
@@ -139,6 +140,7 @@ def main():
         SIM_ENTRY,
         "--profile", args.profile,
         "--core-preset", args.core_preset,
+        "--privilege", args.privilege,
         "--test-name", args.test,
         "--rom-init", firmware_prefix + ".bin",
         "--mcu-result-address", hex(result_address),

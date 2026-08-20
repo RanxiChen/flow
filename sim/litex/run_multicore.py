@@ -85,6 +85,7 @@ def _cluster_mcu_test(test_name, allowed_profiles):
             sys.executable, CLUSTER_MCU_ENTRY,
             "--profile", args.profile,
             "--core-preset", args.core_preset,
+            "--privilege", args.privilege,
             "--test", test_name,
             "--cross-compile", args.cross_compile,
             "--output-dir", output_dir,
@@ -272,9 +273,10 @@ def validate_marker(marker, profile, core_preset):
     return fields
 
 
-def read_cluster_profile(profile, core_preset):
+def read_cluster_profile(profile, core_preset, privilege="mcu"):
+    suffix = [] if privilege == "mcu" else [privilege]
     profile_file = os.path.join(
-        DESIGN_DIR, "build", "rtl", "cluster", profile, core_preset,
+        DESIGN_DIR, "build", "rtl", "cluster", profile, core_preset, *suffix,
         "cluster-profile.txt",
     )
     if not os.path.isfile(profile_file):
@@ -283,7 +285,7 @@ def read_cluster_profile(profile, core_preset):
             f"  {profile_file}\n"
             "Generate it with:\n"
             f"  cd {DESIGN_DIR} && sbt "
-            f'"runMain flow.top.GenerateBreezeMulticoreClusterWishbone {profile} {core_preset}"'
+            f'"runMain flow.top.GenerateBreezeMulticoreClusterWishbone {profile} {core_preset} {privilege}"'
         )
     values = {}
     with open(profile_file, encoding="utf-8") as handle:
@@ -296,7 +298,7 @@ def read_cluster_profile(profile, core_preset):
     return values
 
 
-def expected_cluster_profile(profile, core_preset):
+def expected_cluster_profile(profile, core_preset, privilege="mcu"):
     """Expected cluster-profile.txt contents for a profile/preset pair."""
     return {
         "profile": profile,
@@ -308,10 +310,11 @@ def expected_cluster_profile(profile, core_preset):
         "l1Ways": "4",
         "l2Ways": "8",
         "corePreset": core_preset,
+        "privilegeProfile": privilege,
     }
 
 
-def validate_cluster_profile_file(profile, core_preset):
+def validate_cluster_profile_file(profile, core_preset, privilege="mcu"):
     """The elaborated cluster-profile.txt must match this invocation exactly.
 
     Shared by the --elaborate path (post-generation check) and the plain
@@ -320,10 +323,10 @@ def validate_cluster_profile_file(profile, core_preset):
     mismatch exits non-zero.
     """
     try:
-        profile_values = read_cluster_profile(profile, core_preset)
+        profile_values = read_cluster_profile(profile, core_preset, privilege)
     except FileNotFoundError as exc:
         raise SystemExit(f"ERROR: {exc}")
-    expected_profile = expected_cluster_profile(profile, core_preset)
+    expected_profile = expected_cluster_profile(profile, core_preset, privilege)
     mismatches = {
         key: (profile_values.get(key), value)
         for key, value in expected_profile.items()
@@ -343,6 +346,7 @@ def main():
     parser.add_argument("--test", help="Registered test name (see TEST_REGISTRY).")
     parser.add_argument("--core-preset", choices=CORE_PRESETS, default="gshare",
         help="Core RTL preset (default: gshare; baseline is explicit).")
+    parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the cluster RTL for the profile/preset before running.")
     parser.add_argument("--trace", action="store_true",
@@ -372,6 +376,8 @@ def main():
 
     output_dir_parts = [FLOW_ROOT, "build", "litex-cluster",
                         args.profile, args.core_preset]
+    if args.privilege != "mcu":
+        output_dir_parts.append(args.privilege)
     if args.test is not None:
         output_dir_parts.append(args.test)
     output_dir = os.path.abspath(args.output_dir or os.path.join(*output_dir_parts))
@@ -381,12 +387,12 @@ def main():
             run_checked([
                 "sbt",
                 f"runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-                f"{args.profile} {args.core_preset}",
+                f"{args.profile} {args.core_preset} {args.privilege}",
             ], cwd=DESIGN_DIR)
         except (OSError, subprocess.CalledProcessError) as exc:
             raise SystemExit(f"ERROR: cluster elaboration failed: {exc}")
         # The elaborated profile marker must match this invocation exactly.
-        validate_cluster_profile_file(args.profile, args.core_preset)
+        validate_cluster_profile_file(args.profile, args.core_preset, args.privilege)
 
     if args.test is None:
         if args.elaborate:
@@ -405,7 +411,7 @@ def main():
     if not args.elaborate:
         # Do not self-certify: the cluster profile previously elaborated
         # on disk must match the requested profile/preset before running.
-        validate_cluster_profile_file(args.profile, args.core_preset)
+        validate_cluster_profile_file(args.profile, args.core_preset, args.privilege)
 
     run_test = TEST_REGISTRY[args.test]
     return_code, output = run_streaming(

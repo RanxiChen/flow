@@ -5,17 +5,19 @@ import chisel3.util._
 
 import flow.interface._
 
-class BreezeBTBEntry(val vlen: Int) extends Bundle {
+class BreezeBTBEntry(val vlen: Int, val pcShift: Int) extends Bundle {
     val valid = Bool()
-    val pcKey = UInt((vlen - 2).W)
+    val pcKey = UInt((vlen - pcShift).W)
     val target = UInt(vlen.W)
     val predType = FrontendPredType()
     val taken = Bool()
 }
 
-class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16) extends Module {
+class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16,
+                val pcShift: Int = 2) extends Module {
     require(entryNum > 0, "BTB entryNum must be greater than 0")
-    require(vlen > 2, "BTB vlen must be greater than 2 for 32-bit aligned PC compare")
+    require(pcShift == 1 || pcShift == 2)
+    require(vlen > pcShift)
 
     val io = IO(new Bundle {
         val lookup = Input(new BreezeBTBLookupReq(vlen))
@@ -23,10 +25,11 @@ class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16) extends Module {
         val update = Input(new BreezeBTBUpdateReq(vlen))
     })
 
-    val entries = RegInit(VecInit(Seq.fill(entryNum)(0.U.asTypeOf(new BreezeBTBEntry(vlen)))))
+    val entries = RegInit(VecInit(Seq.fill(entryNum)(
+        0.U.asTypeOf(new BreezeBTBEntry(vlen, pcShift)))))
     val rrPtr = RegInit(0.U(log2Ceil(entryNum).W))
 
-    val lookupKey = io.lookup.pc(vlen - 1, 2)
+    val lookupKey = io.lookup.pc(vlen - 1, pcShift)
     val matchVec = Wire(Vec(entryNum, Bool()))
     val hit = Wire(Bool())
     val hitIdx = Wire(UInt(log2Ceil(entryNum).W))
@@ -49,7 +52,7 @@ class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16) extends Module {
         io.resp.target := entries(hitIdx).target
     }
 
-    val updateKey = io.update.pc(vlen - 1, 2)
+    val updateKey = io.update.pc(vlen - 1, pcShift)
     val updateMatchVec = Wire(Vec(entryNum, Bool()))
     val emptyVec = Wire(Vec(entryNum, Bool()))
     val updateHit = Wire(Bool())
