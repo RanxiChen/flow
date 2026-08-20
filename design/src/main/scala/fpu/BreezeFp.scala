@@ -295,9 +295,12 @@ object BreezeFpSources {
     val aggregate: Path = {
         val path = designRoot.resolve("build/fpnew/FlowFpnewSources.sv")
         Files.createDirectories(path.getParent)
-        val body = sourceFiles.map(source =>
-            s"`include \"${source.toString}\""
-        ).mkString("// Generated from cvfpu-files.f; do not edit.\n", "\n", "\n")
+        val lintKinds = Seq("ASCRANGE", "WIDTHEXPAND", "WIDTHTRUNC", "UNSIGNED", "UNOPTFLAT")
+        val lintOff = lintKinds.map(kind => s"/* verilator lint_off $kind */").mkString("\n")
+        val lintOn = lintKinds.reverse.map(kind => s"/* verilator lint_on $kind */").mkString("\n")
+        val includes = sourceFiles.map(source => s"`include \"${source.toString}\"").mkString("\n")
+        val body =
+            s"// Generated from cvfpu-files.f; do not edit.\n$lintOff\n$includes\n$lintOn\n"
         Files.write(path, body.getBytes(StandardCharsets.UTF_8))
         path
     }
