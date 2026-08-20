@@ -49,7 +49,12 @@ TEST_APPS = {
     "ipi": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 1),
     "remote-fencei": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 2),
     "per-hart-timer": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"), "BREEZE_IPI_CASE", 3),
+    "fp-smoke": (os.path.join(SOFTWARE_ROOT, "apps", "fp_smoke.c"), None, None),
+    "fp-multihart": (os.path.join(SOFTWARE_ROOT, "apps", "multicore_fp.c"), None, None),
 }
+
+FP_TESTS = {"fp-smoke", "fp-multihart"}
+FP_MCU_TIMEOUTS = {"fp-smoke": 50000, "fp-multihart": 100000}
 
 
 def run_checked(command, cwd=None):
@@ -109,14 +114,17 @@ def main():
     if args.extra_cflags:
         profile_flags += f" {args.extra_cflags}"
 
-    run_checked([
+    firmware_command = [
         "make", "-B", "-C", SOFTWARE_ROOT,
         f"BUILD_DIR={firmware_build}",
         f"MAIN={main_source}",
         "MTVEC_MODE=0",
         f"CROSS_COMPILE={args.cross_compile}",
         f"EXTRA_CFLAGS={profile_flags}",
-    ])
+    ]
+    if args.test in FP_TESTS:
+        firmware_command.append("MARCH=rv64imafd_zicsr_zifencei")
+    run_checked(firmware_command)
 
     with open(firmware_prefix + ".bin", "rb") as firmware_file:
         firmware_sha = hashlib.sha256(firmware_file.read()).hexdigest()[:16]
@@ -135,7 +143,7 @@ def main():
         "--rom-init", firmware_prefix + ".bin",
         "--mcu-result-address", hex(result_address),
         "--mcu-perf-address", hex(perf_address),
-        "--mcu-timeout", str(args.mcu_timeout),
+        "--mcu-timeout", str(FP_MCU_TIMEOUTS.get(args.test, args.mcu_timeout)),
         "--output-dir", args.output_dir,
         "--non-interactive",
         "--build",

@@ -165,6 +165,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val commit_addr = Input(UInt(12.W))
         val commit_wdata = Input(UInt(XLEN.W))
         val commit_write_en = Input(Bool())
+        // Floating-point architectural state is updated only at the common
+        // WB commit point. fp_flags are ordered NV,DZ,OF,UF,NX.
+        val fp_commit_valid = Input(Bool())
+        val fp_flags = Input(UInt(5.W))
+        val frm = Output(UInt(3.W))
+        val fp_enabled = Output(Bool())
         val retire_valid = Input(Bool())
         val hpmEvents = Input(new BreezeHpmEvents)
         val machineTimerInterrupt = Input(Bool())
@@ -189,7 +195,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mcountinhibit = RegInit(0.U(32.W))
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
-        BigInt(1) // RV64IMA (bit 0 = A, bit 8 = I, bit 12 = M)
+        (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) // RV64IMAFD
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))
@@ -204,18 +210,23 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
     val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
     val mstatus_MPP  = RegInit("b11".U(2.W)) // bits 12-11: machine previous privilege (always M=3)
+    val mstatus_FS   = RegInit(0.U(2.W))     // bits 14-13: Off/Initial/Clean/Dirty
+    val fflags = RegInit(0.U(5.W))
+    val frm = RegInit(0.U(3.W))
     val mie_MSIE = RegInit(false.B)          // bit 3:  machine software interrupt enable
     val mie_MTIE = RegInit(false.B)          // bit 7:  machine timer interrupt enable
     val mie_MEIE = RegInit(false.B)          // bit 11: machine external interrupt enable
     val mstatus_read = Wire(UInt(XLEN.W))
     mstatus_read := Cat(
-        0.U(61.W),       // [63:13] read-only zero
-        mstatus_MPP,      // [12:11]
-        0.U(3.W),        // [10:8]
-        mstatus_MPIE,     // [7]
-        0.U(3.W),        // [6:4]
-        mstatus_MIE,      // [3]
-        0.U(3.W)         // [2:0]
+        mstatus_FS === "b11".U, // SD
+        0.U(48.W),
+        mstatus_FS,
+        mstatus_MPP,
+        0.U(3.W),
+        mstatus_MPIE,
+        0.U(3.W),
+        mstatus_MIE,
+        0.U(3.W)
     )
     val mie_read = Wire(UInt(XLEN.W))
     val mip_read = Wire(UInt(XLEN.W))
@@ -239,6 +250,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     )
     def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
     val csrFile = Seq(
+        csrPattern(CSRMAP.fflags)  -> fflags,
+        csrPattern(CSRMAP.frm)     -> frm,
+        csrPattern(CSRMAP.fcsr)    -> Cat(frm, fflags),
         csrPattern(CSRMAP.printer) -> printer,
         csrPattern(CSRMAP.coreinst) -> coreinst,
         csrPattern(CSRMAP.misa)    -> misa,
@@ -278,7 +292,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         old_csr_val := 0.U
     }
     val csr_illegal_addr = ILLEGAL_CSR_ADDRS.addrs.map(a => io.csr_addr === a.U(12.W)).reduce(_ || _)
-    io.csr_illegal := read_csr && csr_illegal_addr
+    val fpCsrAccess = io.csr_addr === CSRMAP.fflags.U ||
+        io.csr_addr === CSRMAP.frm.U || io.csr_addr === CSRMAP.fcsr.U
+    io.csr_illegal := (read_csr && csr_illegal_addr) ||
+        ((io.csr_cmd =/= CSR_CMD.NOP.U) && fpCsrAccess && mstatus_FS === 0.U)
 
     when(!io.trap.valid){
         switch(io.csr_cmd){
@@ -320,9 +337,29 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         }
     }
     }
+    // FP arithmetic flags are sticky. A killed instruction never asserts
+    // fp_commit_valid, so speculative FPnew responses cannot alter CSR state.
+    when(io.fp_commit_valid) {
+        fflags := fflags | io.fp_flags
+        mstatus_FS := "b11".U
+    }
+
     // Zicsr对寄存器的写在wb阶段提交
     when(io.commit_valid && io.commit_write_en && !io.trap.valid){
         switch(io.commit_addr){
+            is(CSRMAP.fflags.U) {
+                fflags := io.commit_wdata(4, 0)
+                mstatus_FS := "b11".U
+            }
+            is(CSRMAP.frm.U) {
+                frm := Mux(io.commit_wdata(2, 0) <= 4.U, io.commit_wdata(2, 0), 0.U)
+                mstatus_FS := "b11".U
+            }
+            is(CSRMAP.fcsr.U) {
+                fflags := io.commit_wdata(4, 0)
+                frm := Mux(io.commit_wdata(7, 5) <= 4.U, io.commit_wdata(7, 5), 0.U)
+                mstatus_FS := "b11".U
+            }
             is(CSRMAP.printer.U){
                 printer := io.commit_wdata
                 if(dumplog){
@@ -390,6 +427,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 mstatus_MIE  := io.commit_wdata(3)
                 mstatus_MPIE := io.commit_wdata(7)
                 mstatus_MPP  := io.commit_wdata(12, 11)
+                mstatus_FS   := io.commit_wdata(14, 13)
                 if(dumplog){
                     printf(cf"[INFO] mstatus write: MIE=${io.commit_wdata(3)} MPIE=${io.commit_wdata(7)} MPP=${io.commit_wdata(12,11)}\n")
                 }
@@ -484,6 +522,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.csr_write_en := write_csr
     io.mtvec := mtvec
     io.mepc_out := mepc
+    io.frm := frm
+    io.fp_enabled := mstatus_FS =/= 0.U
     // Fixed interrupt priority: MEI > MSI > MTI.
     val externalInterruptPending = mstatus_MIE && mie_MEIE && io.machineExternalInterrupt
     val softwareInterruptPending = mstatus_MIE && mie_MSIE && io.machineSoftwareInterrupt

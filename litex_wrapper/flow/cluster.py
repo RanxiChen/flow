@@ -261,15 +261,24 @@ class FlowCluster(CPU):
                 f"Breeze cluster profile mismatch: {detail}")
 
         with open(filelist, encoding="utf-8") as rtl_manifest:
-            rtl_names = [
+            manifest_entries = [
                 line.split("#", 1)[0].strip()
                 for line in rtl_manifest
                 if line.split("#", 1)[0].strip()
             ]
 
-        if not rtl_names:
+        if not manifest_entries:
             raise RuntimeError(f"Breeze cluster RTL manifest is empty: {filelist}")
 
+        include_paths = [
+            entry[len("+incdir+"):]
+            for entry in manifest_entries
+            if entry.startswith("+incdir+")
+        ]
+        rtl_names = [
+            entry for entry in manifest_entries
+            if not entry.startswith("+incdir+")
+        ]
         rtl_files = [os.path.join(rtl_dir, name) for name in rtl_names]
         missing_files = [path for path in rtl_files if not os.path.isfile(path)]
         if missing_files:
@@ -277,6 +286,12 @@ class FlowCluster(CPU):
             raise FileNotFoundError(
                 "Breeze cluster RTL manifest references missing files:\n" + missing
             )
+
+        for include_path in include_paths:
+            if not os.path.isdir(include_path):
+                raise FileNotFoundError(
+                    f"Breeze cluster RTL include path is missing: {include_path}")
+            platform.add_verilog_include_path(include_path)
 
         for rtl_file in rtl_files:
             platform.add_source(rtl_file)

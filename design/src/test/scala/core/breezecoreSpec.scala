@@ -3,6 +3,7 @@ package flow.core
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import flow.config.BreezeCoreConfig
+import flow.fpu.BreezeFpChiselSim
 import flow.platform.BreezeMcuPlatform
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -59,6 +60,8 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.hpmEvents.dcacheUncached.poke(false.B)
         dut.io.hpmEvents.memStallCycle.poke(false.B)
         dut.io.hpmEvents.loadUseStall.poke(false.B)
+        dut.io.fp_commit_valid.poke(false.B)
+        dut.io.fp_flags.poke(0.U)
     }
 
     private def driveIdle(dut: CSRFile): Unit = {
@@ -81,6 +84,49 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dut.io.trap.pc.poke(0.U)
         dut.io.trap.tval.poke(0.U)
         dut.io.mret_commit.poke(false.B)
+    }
+
+    "CSRFile should gate FP with mstatus.FS and keep fcsr flags sticky" in {
+        simulate(new CSRFile(64)) { dut =>
+            driveIdle(dut)
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            dut.io.fp_enabled.expect(false.B)
+
+            // Enable FP with FS=Initial.
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.mstatus.U)
+            dut.io.commit_wdata.poke((BigInt(1) << 13).U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.fp_enabled.expect(true.B)
+
+            // fcsr write: frm=RUP(3), fflags=NX(1).
+            dut.io.commit_valid.poke(true.B)
+            dut.io.commit_write_en.poke(true.B)
+            dut.io.commit_addr.poke(CSRMAP.fcsr.U)
+            dut.io.commit_wdata.poke(((BigInt(3) << 5) | 1).U)
+            dut.clock.step(1)
+            dut.io.commit_valid.poke(false.B)
+            dut.io.commit_write_en.poke(false.B)
+            dut.io.frm.expect(3.U)
+
+            // A committed divide-by-zero ORs DZ into NX and marks FS Dirty.
+            dut.io.fp_commit_valid.poke(true.B)
+            dut.io.fp_flags.poke(8.U)
+            dut.clock.step(1)
+            dut.io.fp_commit_valid.poke(false.B)
+            dut.io.fp_flags.poke(0.U)
+            dut.io.csr_addr.poke(CSRMAP.fcsr.U)
+            dut.io.csr_cmd.poke(CSR_CMD.RS.U)
+            dut.io.csr_reg_data.poke(0.U)
+            dut.io.rs1_id.poke(0.U)
+            dut.io.rd_id.poke(1.U)
+            dut.io.csr_old_data.expect(((BigInt(3) << 5) | 9).U)
+        }
     }
 
     "CSRFile should expose the elaborated read-only hart identity" in {
@@ -346,7 +392,7 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 }
 
-class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeCoreSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val nopInst = BigInt("00000013", 16)
     private val mask64 = (BigInt(1) << 64) - 1
 
@@ -1184,7 +1230,7 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 }
 
-class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val estopInst = BigInt("7ff00073", 16)
 
     private def initCore(dut: BreezeCore): Unit = {
@@ -1291,7 +1337,7 @@ class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim
     }
 }
 
-class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val RomBase = BreezeMcuPlatform.ResetVector
     private val nopInst = BigInt("00000013", 16)
     private val estopInst = BigInt("7ff00073", 16)
@@ -1462,7 +1508,7 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Chi
     }
 }
 
-class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val RomBase = BreezeMcuPlatform.ResetVector
     private val mask64 = (BigInt(1) << 64) - 1
     private val nopInst = BigInt("00000013", 16)

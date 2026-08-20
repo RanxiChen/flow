@@ -121,6 +121,9 @@ TEST_REGISTRY = {
     "ipi": _cluster_mcu_test("ipi", ("single", "dual", "small")),
     "remote-fencei": _cluster_mcu_test("remote-fencei", ("single", "dual", "small")),
     "per-hart-timer": _cluster_mcu_test("per-hart-timer", ("single", "dual", "small")),
+    # RV64F/RV64D handwritten architectural and per-hart-state tests.
+    "fp-smoke": _cluster_mcu_test("fp-smoke", ("single",)),
+    "fp-multihart": _cluster_mcu_test("fp-multihart", ("small",)),
 }
 
 

@@ -1,13 +1,13 @@
 package flow.backend
 
 import chisel3._
-import chisel3.simulator.scalatest.ChiselSim
 import flow.config.{BackendConfig, FrontendBranchPredictorKind}
+import flow.fpu.BreezeFpChiselSim
 import flow.interface.FrontendPredType
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val GhrLength = 4
     private val cfg = BackendConfig(
       branchPredKind = FrontendBranchPredictorKind.GShare,

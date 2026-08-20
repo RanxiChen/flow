@@ -1,13 +1,13 @@
 package flow.backend
 
 import chisel3._
-import chisel3.simulator.scalatest.ChiselSim
 import flow.config.BackendConfig
+import flow.fpu.BreezeFpChiselSim
 import flow.interface.FrontendPredType
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   private val Mask64 = (BigInt(1) << 64) - 1
 
   private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt =

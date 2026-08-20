@@ -41,9 +41,38 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
 
     // The split SystemVerilog manifest is generated from what firtool actually
     // emitted, so the LiteX wrapper always loads the exact files of this run.
-    private val svFiles = os.list(targetDir).filter(_.ext == "sv").map(_.last).sorted
+    private val designRoot = os.pwd
+    private val flowRoot = designRoot / os.up
+    private val cvfpuRoot = flowRoot / "third_party" / "cvfpu"
+    private val fpManifest = designRoot / "src" / "main" / "resources" /
+        "vsrc" / "fpnew" / "cvfpu-files.f"
+    private val fpWrapper = designRoot / "src" / "main" / "resources" /
+        "vsrc" / "fpnew" / "FlowFpnewWrapper.sv"
+    require(os.isDir(cvfpuRoot), s"CVFPU submodule is missing: $cvfpuRoot")
+    require(os.isFile(fpManifest), s"CVFPU manifest is missing: $fpManifest")
+    require(os.isFile(fpWrapper), s"FPnew wrapper is missing: $fpWrapper")
+    // HasBlackBoxPath copies the same FPnew sources into the elaboration
+    // directory for ChiselSim.  LiteX deliberately consumes the originals
+    // below, so exclude those copies from the firtool-emitted design list.
+    private val fpSourceNames = os.read.lines(fpManifest).map(_.trim).filter(line =>
+        line.nonEmpty && !line.startsWith("#") && !line.startsWith("+incdir+")
+    ).map(line => os.RelPath(line).last).toSet + fpWrapper.last
+    private val svFiles = os.list(targetDir).filter(path =>
+        path.ext == "sv" && !fpSourceNames.contains(path.last)
+    ).map(_.last).sorted
     require(svFiles.nonEmpty, s"no SystemVerilog files emitted into $targetDir")
-    os.write.over(targetDir / "filelist.f", svFiles.mkString("", "\n", "\n"))
+    private val fpEntries = os.read.lines(fpManifest).map(_.trim).filter(line =>
+        line.nonEmpty && !line.startsWith("#")).map { line =>
+        if (line.startsWith("+incdir+")) {
+            s"+incdir+${(cvfpuRoot / os.RelPath(line.stripPrefix("+incdir+"))).toString}"
+        } else {
+            val source = cvfpuRoot / os.RelPath(line)
+            require(os.isFile(source), s"CVFPU source is missing: $source")
+            source.toString
+        }
+    }
+    private val completeFilelist = fpEntries ++ Seq(fpWrapper.toString) ++ svFiles
+    os.write.over(targetDir / "filelist.f", completeFilelist.mkString("", "\n", "\n"))
 
     private val l1iBytes = clusterCfg.l1i.ICACHE_SET_NUM *
         clusterCfg.l1i.ICACHE_WAY_NUM * clusterCfg.l1i.ICACHE_LINE_BYTES
