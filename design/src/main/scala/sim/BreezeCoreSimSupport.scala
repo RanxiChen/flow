@@ -1,8 +1,9 @@
 package flow.sim
 
 import chisel3._
-import chisel3.simulator.EphemeralSimulator
+import chisel3.simulator.ChiselSim
 import chisel3.simulator.PeekPokeAPI
+import chisel3.testing.HasTestingDirectory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import flow.config.{BreezeCoreConfig, BreezeCoreConfigs}
@@ -209,6 +210,8 @@ object BreezeCoreSimMemoryLoader {
 }
 
 object BreezeCoreSimRunner extends PeekPokeAPI {
+    private object CoreSimulator extends ChiselSim
+
     private implicit val fpnewCompilationSettings: CommonSettingsModifications =
         (settings: CommonCompilationSettings) => {
             val include = BreezeFpSources.includeDir.toString
@@ -304,7 +307,9 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
 
-        EphemeralSimulator.simulate(new BreezeCore(coreCfg, enabledebug = true)) { dut =>
+        implicit val temporary: HasTestingDirectory =
+            HasTestingDirectory.temporary(deleteOnExit = true)
+        CoreSimulator.simulateRaw(new BreezeCore(coreCfg, enabledebug = true)) { dut =>
             val cacheLineBytes = coreCfg.frontendCfg.cacheCfg.ICACHE_LINE_BYTES
 
             var cycleCount = 0
