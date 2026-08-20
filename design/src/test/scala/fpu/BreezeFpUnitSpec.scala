@@ -84,8 +84,10 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
 
       val invalid = transact(dut, BreezeFpOp.SQRT,
         a = BigInt("bff0000000000000", 16)) // sqrt(-1)
-      (invalid.result & BigInt("7ff8000000000000", 16)) mustBe
-        BigInt("7ff8000000000000", 16)
+      if (invalid.result != BigInt("7ff8000000000000", 16)) {
+        fail(s"FSQRT.D(-1) non-canonical result=0x${invalid.result.toString(16)} " +
+          s"status=0x${invalid.status.toString(16)}")
+      }
       invalid.status mustBe 16 // NV
     }
   }
