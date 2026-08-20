@@ -66,8 +66,30 @@ case class BackendConfig(
     val PLEN: Int = 64,
     val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare,
     val ghrLength: Int = 8,
-    val enableTandem: Boolean = false
+    val enableTandem: Boolean = false,
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
 ){}
+
+/** Compile-time privileged-architecture profile.  `mcu` preserves the
+  * machine-only core used by the existing firmware.  `linux` enables the
+  * M/S/U trap and CSR architecture while address translation remains Bare;
+  * Sv39 is a later, orthogonal extension.
+  */
+sealed abstract class PrivilegeProfile(
+    val name: String,
+    val enableSupervisorUser: Boolean
+)
+object PrivilegeProfile {
+    case object Mcu extends PrivilegeProfile("mcu", enableSupervisorUser = false)
+    case object Linux extends PrivilegeProfile("linux", enableSupervisorUser = true)
+
+    val all: Seq[PrivilegeProfile] = Seq(Mcu, Linux)
+
+    def fromName(name: String): PrivilegeProfile =
+        all.find(_.name == name).getOrElse(
+            throw new IllegalArgumentException(
+                s"unsupported privilege profile: $name (expected mcu or linux)"))
+}
 
 /** Parameters that materially change DCache hardware cost or performance.
   *
@@ -114,7 +136,8 @@ case class BreezeCoreConfig(
     val gshareBtbEntryNum: Int = 16,
     val dcacheCapacityBytes: Int = 8192,
     val dcacheLineBytes: Int = 32,
-    val dcacheWays: Int = 4
+    val dcacheWays: Int = 4,
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -135,7 +158,8 @@ case class BreezeCoreConfig(
         PLEN = PLEN,
         branchPredKind = frontendCfg.branchPredCfg.kind,
         ghrLength = frontendCfg.branchPredCfg.ghrLength,
-        enableTandem = enableTandem
+        enableTandem = enableTandem,
+        privilegeProfile = privilegeProfile
     )
     val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
         VLEN = VLEN,
@@ -164,32 +188,51 @@ object CorePreset {
 }
 
 object BreezeCoreConfigs {
-    def baseline(enableTandem: Boolean = false): BreezeCoreConfig =
+    def baseline(
+        enableTandem: Boolean = false,
+        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    ): BreezeCoreConfig =
         BreezeCoreConfig(
             useFASE = false,
             enableTandem = enableTandem,
-            useGShare = false
+            useGShare = false,
+            privilegeProfile = privilegeProfile
         )
 
-    def gshare(enableTandem: Boolean = false): BreezeCoreConfig =
+    def gshare(
+        enableTandem: Boolean = false,
+        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    ): BreezeCoreConfig =
         BreezeCoreConfig(
             useFASE = false,
             enableTandem = enableTandem,
-            useGShare = true
+            useGShare = true,
+            privilegeProfile = privilegeProfile
         )
+
+    def fromPreset(
+        preset: CorePreset,
+        enableTandem: Boolean,
+        privilegeProfile: PrivilegeProfile
+    ): BreezeCoreConfig =
+        preset match {
+            case CorePreset.Baseline => baseline(enableTandem, privilegeProfile)
+            case CorePreset.Gshare   => gshare(enableTandem, privilegeProfile)
+        }
 
     def fromPreset(preset: CorePreset, enableTandem: Boolean): BreezeCoreConfig =
-        preset match {
-            case CorePreset.Baseline => baseline(enableTandem = enableTandem)
-            case CorePreset.Gshare   => gshare(enableTandem = enableTandem)
-        }
+        fromPreset(preset, enableTandem, PrivilegeProfile.Mcu)
 
     /** Resolve a generator/CLI core preset name to a core configuration; a
       * default-less caller always lands on GShare and `baseline` is only
       * reachable explicitly.
       */
-    def fromPreset(preset: String, enableTandem: Boolean = false): BreezeCoreConfig =
-        fromPreset(CorePreset.fromName(preset), enableTandem)
+    def fromPreset(
+        preset: String,
+        enableTandem: Boolean = false,
+        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    ): BreezeCoreConfig =
+        fromPreset(CorePreset.fromName(preset), enableTandem, privilegeProfile)
 }
 
 /** Shared single-bank L2 geometry.
@@ -237,7 +280,8 @@ final case class L2CacheGeometry(
 final case class BreezeClusterConfig(
     profileName: String,
     numHarts: Int,
-    corePreset: CorePreset = CorePreset.Gshare
+    corePreset: CorePreset = CorePreset.Gshare,
+    privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
 ) {
     require(Set(1, 2, 4).contains(numHarts),
         s"cluster profile $profileName requires numHarts in {1,2,4}; got $numHarts. " +
@@ -245,7 +289,7 @@ final case class BreezeClusterConfig(
 
     /** Per-hart core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile)
 
     /** L1 geometries, taken from the core configuration (single source). */
     val l1i: DefaultICacheConfig = coreCfg().frontendCfg.cacheCfg

@@ -350,7 +350,22 @@ object BREEZE_HPM_EVENT {
 object SIM_SYSTEM {
    val ESTOP_IMM12 = "h7ff".U(12.W)
    val ECALL_IMM12  = "h000".U(12.W)
+   val SRET_IMM12   = "h102".U(12.W)
    val MRET_IMM12   = "h302".U(12.W)
+   val WFI_IMM12    = "h105".U(12.W)
+}
+
+object PRIV_MODE {
+   val U = 0
+   val S = 1
+   val M = 3
+   val width = 2
+}
+
+object SUPERVISOR_INTERRUPT_CAUSE {
+   val SOFTWARE = 1
+   val TIMER    = 5
+   val EXTERNAL = 9
 }
 
 object MACHINE_INTERRUPT_CAUSE {

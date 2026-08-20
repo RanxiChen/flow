@@ -1,33 +1,47 @@
 package flow.top
 
 import _root_.circt.stage.ChiselStage
-import flow.config.{BreezeClusterPresets, CorePreset}
+import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 
 /** Cluster RTL generator - the single RTL entry point of the design.
   *
   *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single'
   *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone dual'
   *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone small'
-  *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single baseline'
+  *   sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single baseline linux'
   *
-  * The optional second argument is the core preset, defaulting to gshare.
+  * The optional second argument is the core preset, defaulting to gshare. The
+  * optional third argument is the privilege profile, defaulting to mcu.
   * Unknown profiles or presets exit non-zero. Outputs land in
   * build/rtl/cluster/<profile>/<preset>/ with BreezeMulticoreClusterWishbone.sv,
   * filelist.f and cluster-profile.txt; presets never overwrite each other.
   */
 object GenerateBreezeMulticoreClusterWishbone extends App {
-    require(args.length >= 1 && args.length <= 2,
-        "usage: GenerateBreezeMulticoreClusterWishbone <single|dual|small> [gshare|baseline]")
+    require(args.length >= 1 && args.length <= 3,
+        "usage: GenerateBreezeMulticoreClusterWishbone " +
+          "<single|dual|small> [gshare|baseline] [mcu|linux]")
 
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
+    private val privilegeProfile =
+        PrivilegeProfile.fromName(args.lift(2).getOrElse("mcu"))
     private val clusterCfg =
-        BreezeClusterPresets.fromName(args(0)).copy(corePreset = corePreset)
-    private val targetDir =
+        BreezeClusterPresets.fromName(args(0)).copy(
+            corePreset = corePreset,
+            privilegeProfile = privilegeProfile)
+    // Preserve the historical MCU output path for every existing runner.
+    // Linux/Bare elaborations are isolated so they can never overwrite MCU RTL.
+    private val targetDirBase =
         os.pwd / "build" / "rtl" / "cluster" / clusterCfg.profileName / corePreset.name
+    private val targetDir = if (privilegeProfile == PrivilegeProfile.Mcu) {
+        targetDirBase
+    } else {
+        targetDirBase / privilegeProfile.name
+    }
 
     println(
         s"[BreezeCluster RTL] profile=${clusterCfg.profileName} harts=${clusterCfg.numHarts} " +
-          s"core_preset=${corePreset.name} target_dir=$targetDir"
+          s"core_preset=${corePreset.name} privilege=${privilegeProfile.name} " +
+          s"target_dir=$targetDir"
     )
     ChiselStage.emitSystemVerilogFile(
         new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = true),
@@ -87,7 +101,10 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |l1Ways=${clusterCfg.l1d.ways}
            |l2Ways=${clusterCfg.l2.ways}
            |corePreset=${corePreset.name}
+           |privilegeProfile=${privilegeProfile.name}
+           |addressTranslation=bare
            |""".stripMargin
     os.write.over(targetDir / "cluster-profile.txt", profileText)
     os.write.over(targetDir / "core-preset.txt", s"${corePreset.name}\n")
+    os.write.over(targetDir / "privilege-profile.txt", s"${privilegeProfile.name}\n")
 }

@@ -4,6 +4,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
+    "privilege profiles should keep MCU as default and enable Linux Bare mode explicitly" in {
+        PrivilegeProfile.fromName("mcu") mustBe PrivilegeProfile.Mcu
+        PrivilegeProfile.fromName("linux") mustBe PrivilegeProfile.Linux
+        an[IllegalArgumentException] must be thrownBy PrivilegeProfile.fromName("sv39")
+        BreezeCoreConfig().privilegeProfile mustBe PrivilegeProfile.Mcu
+        BreezeCoreConfig(privilegeProfile = PrivilegeProfile.Linux)
+            .backendCfg.privilegeProfile mustBe PrivilegeProfile.Linux
+        BreezeClusterPresets.small.copy(privilegeProfile = PrivilegeProfile.Linux)
+            .coreCfg().privilegeProfile mustBe PrivilegeProfile.Linux
+    }
+
     "BreezeCoreConfig should derive baseline frontend and backend branch predictor settings when requested" in {
         val cfg = BreezeCoreConfig(useFASE = false, useGShare = false)
 

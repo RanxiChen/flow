@@ -27,6 +27,9 @@ class EXE_Ctrl extends Bundle {
     val fencei = Output(Bool())
     val is_ecall = Output(Bool())
     val is_mret  = Output(Bool())
+    val is_sret  = Output(Bool())
+    val is_wfi = Output(Bool())
+    val is_sfence_vma = Output(Bool())
     // RV64A sideband. mem_cmd still carries the element size and steers the
     // load/store data paths; mem_op is what distinguishes LR/SC/AMO from the
     // plain Load/Store they otherwise resemble.
@@ -65,6 +68,9 @@ class RV64IZicsrDecoder extends Module {
     io.I_ctrl.fencei := false.B
     io.I_ctrl.is_ecall := false.B
     io.I_ctrl.is_mret := false.B
+    io.I_ctrl.is_sret := false.B
+    io.I_ctrl.is_wfi := false.B
+    io.I_ctrl.is_sfence_vma := false.B
     io.I_ctrl.mem_op := BreezeMemOp.Load
     io.I_ctrl.amo_func := BreezeAmoFunc.Swap
     io.I_ctrl.amo_aq := false.B
@@ -465,6 +471,15 @@ class RV64IZicsrDecoder extends Module {
                         io.I_ctrl.is_ecall := true.B
                         io.illegal_inst := false.B
                     }.elsewhen(
+                        io.inst(31, 20) === SIM_SYSTEM.SRET_IMM12 &&
+                        io.inst(19, 15) === 0.U &&
+                        io.inst(11, 7) === 0.U
+                    ) {
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.I_ctrl.wb_en := false.B
+                        io.I_ctrl.is_sret := true.B
+                        io.illegal_inst := false.B
+                    }.elsewhen(
                         io.inst(31, 20) === SIM_SYSTEM.MRET_IMM12 &&
                         io.inst(19, 15) === 0.U &&
                         io.inst(11, 7) === 0.U
@@ -473,6 +488,27 @@ class RV64IZicsrDecoder extends Module {
                         io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
                         io.I_ctrl.wb_en := false.B
                         io.I_ctrl.is_mret := true.B
+                        io.illegal_inst := false.B
+                    }.elsewhen(
+                        io.inst(31, 20) === SIM_SYSTEM.WFI_IMM12 &&
+                        io.inst(19, 15) === 0.U &&
+                        io.inst(11, 7) === 0.U
+                    ) {
+                        // WFI may legally resume immediately; this first-stage
+                        // implementation therefore treats it as a privilege-
+                        // checked architectural no-op.
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.I_ctrl.wb_en := false.B
+                        io.I_ctrl.is_wfi := true.B
+                        io.illegal_inst := false.B
+                    }.elsewhen(
+                        funct7 === "b0001001".U && io.inst(11, 7) === 0.U
+                    ) {
+                        // Address translation is Bare. SFENCE.VMA still has to
+                        // decode and pass privilege checks, but has no TLB to flush.
+                        io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
+                        io.I_ctrl.wb_en := false.B
+                        io.I_ctrl.is_sfence_vma := true.B
                         io.illegal_inst := false.B
                     }
                 }

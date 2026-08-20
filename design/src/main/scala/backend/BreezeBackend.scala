@@ -46,7 +46,8 @@ class BreezeBackend(
     val immGen = Module(new ImmGen(cfg.VLEN))
     val regFile = Module(new RegFile(cfg.VLEN))
     val fpRegFile = Module(new BreezeFpRegFile)
-    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug, hartId = hartId))
+    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug,
+        hartId = hartId, privilegeProfile = cfg.privilegeProfile))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
     val retireValid = Wire(Bool())
 
@@ -81,6 +82,7 @@ class BreezeBackend(
     csrFile.io.commit_addr := 0.U
     csrFile.io.commit_wdata := 0.U
     csrFile.io.commit_write_en := false.B
+    csrFile.io.sret_commit := false.B
     csrFile.io.fp_commit_valid := false.B
     csrFile.io.fp_flags := 0.U
     retireValid := memWbReg.valid &&
@@ -252,6 +254,7 @@ class BreezeBackend(
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_mret := false.B
+        idExeReg.is_sret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -295,10 +298,17 @@ class BreezeBackend(
         idExeReg.inst := decodeInst
         idExeReg.instruction_access_fault := decodeInstructionAccessFault
         idExeReg.illegal_inst := ((decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
-            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled)) &&
+            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled) ||
+            (decoder.io.exe_ctrl.is_mret && csrFile.io.mret_illegal) ||
+            (decoder.io.exe_ctrl.is_sret && csrFile.io.sret_illegal) ||
+            (decoder.io.exe_ctrl.is_wfi && csrFile.io.wfi_illegal) ||
+            (decoder.io.exe_ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)) &&
             !decodeInstructionAccessFault
         idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall && !decodeInstructionAccessFault
-        idExeReg.is_mret := decoder.io.exe_ctrl.is_mret && !decodeInstructionAccessFault
+        idExeReg.is_mret := decoder.io.exe_ctrl.is_mret && !csrFile.io.mret_illegal &&
+            !decodeInstructionAccessFault
+        idExeReg.is_sret := decoder.io.exe_ctrl.is_sret && !csrFile.io.sret_illegal &&
+            !decodeInstructionAccessFault
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
         when(decodeInstructionAccessFault) {
@@ -329,6 +339,7 @@ class BreezeBackend(
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_mret := false.B
+        idExeReg.is_sret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
         idExeReg.pred.predTaken := false.B
         idExeReg.pred.predPc := 0.U
@@ -463,15 +474,6 @@ class BreezeBackend(
     val pipelineEmpty = Wire(Bool())
     val architecturalNextPc = RegInit(0.U(cfg.VLEN.W))
     val exeNextPc = Wire(UInt(cfg.VLEN.W))
-    val mtvecBase = Wire(UInt(cfg.VLEN.W))
-    val interruptTrapTarget = Wire(UInt(cfg.VLEN.W))
-
-    mtvecBase := Cat(csrFile.io.mtvec(cfg.VLEN - 1, 2), 0.U(2.W))
-    interruptTrapTarget := Mux(
-        csrFile.io.mtvec(1, 0) === 1.U,
-        mtvecBase + (csrFile.io.interruptCause << 2),
-        mtvecBase
-    )
 
     actualTaken := Mux(
         idExeReg.ctrl.bru_inst,
@@ -497,14 +499,18 @@ class BreezeBackend(
         memWbReg.load_addr_misaligned || memWbReg.store_addr_misaligned ||
         memWbReg.load_access_fault || memWbReg.store_access_fault
     val mretRedirect = Wire(Bool())
+    val sretRedirect = Wire(Bool())
+    val xretRedirect = Wire(Bool())
     exceptionRedirect := memWbReg.valid && wbTrap
     mretRedirect := memWbReg.valid && memWbReg.is_mret
+    sretRedirect := memWbReg.valid && memWbReg.is_sret
+    xretRedirect := mretRedirect || sretRedirect
     pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
         !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg &&
         !divWaitingRespReg && !fpWaitingRespReg
     interruptRedirect := csrFile.io.interruptPending && pipelineEmpty
     frontendRedirectNeeded := fenceiFlush || redirectNeeded || exceptionRedirect ||
-        mretRedirect || interruptRedirect
+        xretRedirect || interruptRedirect
     predictionMiss := redirectNeeded
 
     io.frontendBtbUpdate.valid := false.B
@@ -608,7 +614,7 @@ class BreezeBackend(
     memReqIssued := exeMemNeedsDmem && !memWaitingRespReg
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
     mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
-        !exceptionRedirect && !mretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
     mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
     mulUnit.io.flush := frontendRedirectNeeded
     mulUnit.io.in_valid := mulReqIssued
@@ -617,7 +623,7 @@ class BreezeBackend(
     mulUnit.io.op := exeMemReg.mul_op
     divFastCompletion := exeMemIsDiv && exeMemReg.div_fast
     divReqIssued := exeMemIsDiv && !exeMemReg.div_fast && !divWaitingRespReg &&
-        !exceptionRedirect && !mretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
     divRspFire := divWaitingRespReg && divUnit.io.out_valid
     divUnit.io.flush := frontendRedirectNeeded
     divUnit.io.in_valid := divReqIssued
@@ -628,14 +634,14 @@ class BreezeBackend(
     divUnit.io.is_remainder := exeMemReg.div_is_remainder
     divUnit.io.is_word := exeMemReg.div_is_word
     fpReqIssued := exeMemIsFp && !fpWaitingRespReg &&
-        !exceptionRedirect && !mretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
     fpReqAccepted := fpReqIssued && fpUnit.io.inReady
     fpRspFire := fpWaitingRespReg && fpUnit.io.outValid
     // A younger branch may resolve in the same cycle that an older FP result
     // completes and is forwarded.  Do not feed that redirect back into FPnew:
     // the older result must commit before the younger redirect takes effect.
     fpUnit.io.flush := reset.asBool || fenceiFlush || exceptionRedirect ||
-        mretRedirect || interruptRedirect
+        xretRedirect || interruptRedirect
     fpUnit.io.inValid := fpReqIssued
     fpUnit.io.outReady := fpWaitingRespReg
     fpUnit.io.operandA := exeFpOperand1
@@ -948,8 +954,13 @@ class BreezeBackend(
     csrFile.io.commit_valid := memWbReg.valid
     csrFile.io.commit_addr := memWbReg.csr_addr
     csrFile.io.commit_wdata := memWbReg.csr_new_data
-    csrFile.io.commit_write_en := memWbReg.csr_write_en
+    csrFile.io.commit_write_en := memWbReg.csr_write_en &&
+        !memWbReg.csr_illegal && !memWbReg.illegal_inst
     // Compute trap cause at WB stage: priority-encode the exception bools
+    val ecallCause = MuxLookup(csrFile.io.current_privilege, BigInt(11).U(cfg.VLEN.W))(Seq(
+        PRIV_MODE.U.U -> BigInt(8).U(cfg.VLEN.W),
+        PRIV_MODE.S.U -> BigInt(9).U(cfg.VLEN.W)
+    ))
     val mcauseVal = Wire(UInt(cfg.VLEN.W))
     mcauseVal := Mux1H(Seq(
         memWbReg.instruction_access_fault -> BigInt(1).U(cfg.VLEN.W),
@@ -957,7 +968,7 @@ class BreezeBackend(
         memWbReg.load_addr_misaligned  -> BigInt(4).U(cfg.VLEN.W),
         memWbReg.store_access_fault    -> BigInt(7).U(cfg.VLEN.W),
         memWbReg.load_access_fault     -> BigInt(5).U(cfg.VLEN.W),
-        memWbReg.is_ecall              -> BigInt(11).U(cfg.VLEN.W),
+        memWbReg.is_ecall              -> ecallCause,
         memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
         memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W),
         true.B                         -> 0.U(cfg.VLEN.W)
@@ -983,11 +994,12 @@ class BreezeBackend(
     csrFile.io.trap.pc           := Mux(interruptRedirect, architecturalNextPc, memWbReg.pc)
     csrFile.io.trap.tval         := Mux(interruptRedirect, 0.U, mtvalVal)
     csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
+    csrFile.io.sret_commit       := memWbReg.valid && memWbReg.is_sret
 
     when(reset.asBool) {
         architecturalNextPc := io.resetAddr
-    }.elsewhen(mretRedirect) {
-        architecturalNextPc := csrFile.io.mepc_out
+    }.elsewhen(xretRedirect) {
+        architecturalNextPc := csrFile.io.xret_target
     }.elsewhen(memWbReg.valid && !wbTrap) {
         architecturalNextPc := memWbReg.nextPc
     }
@@ -996,13 +1008,13 @@ class BreezeBackend(
     io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg
     fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
         fenceiFlushIssuedReg := false.B
     }.elsewhen(io.dcacheFlushReq) {
         fenceiFlushIssuedReg := true.B
     }
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
         exeMemReg.valid := false.B
         exeMemReg.pc := 0.U
         exeMemReg.nextPc := 0.U
@@ -1011,6 +1023,7 @@ class BreezeBackend(
         exeMemReg.illegal_inst := false.B
         exeMemReg.is_ecall := false.B
         exeMemReg.is_mret := false.B
+        exeMemReg.is_sret := false.B
         exeMemReg.csr_illegal := false.B
         exeMemReg.pred.predType := FrontendPredType.NONE
         exeMemReg.pred.predTaken := false.B
@@ -1073,6 +1086,7 @@ class BreezeBackend(
         exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.is_ecall := idExeReg.is_ecall
         exeMemReg.is_mret := idExeReg.is_mret
+        exeMemReg.is_sret := idExeReg.is_sret
         exeMemReg.csr_illegal := csrFile.io.csr_illegal && !idExeReg.instruction_access_fault
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
@@ -1141,7 +1155,7 @@ class BreezeBackend(
         }
     }
 
-    when(reset.asBool || fenceiFlush || exceptionRedirect || mretRedirect || interruptRedirect) {
+    when(reset.asBool || fenceiFlush || exceptionRedirect || xretRedirect || interruptRedirect) {
         exeFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
         exeFpOperand1 := 0.U
         exeFpOperand2 := 0.U
@@ -1191,7 +1205,7 @@ class BreezeBackend(
         fpWaitingRespReg := true.B
     }
 
-    when(reset.asBool || exceptionRedirect || mretRedirect || interruptRedirect) {
+    when(reset.asBool || exceptionRedirect || xretRedirect || interruptRedirect) {
         memWbReg.valid := false.B
         memWbReg.pc := 0.U
         memWbReg.nextPc := 0.U
@@ -1200,6 +1214,7 @@ class BreezeBackend(
         memWbReg.illegal_inst := false.B
         memWbReg.is_ecall := false.B
         memWbReg.is_mret := false.B
+        memWbReg.is_sret := false.B
         memWbReg.csr_illegal := false.B
         memWbReg.load_addr_misaligned := false.B
         memWbReg.store_addr_misaligned := false.B
@@ -1245,6 +1260,7 @@ class BreezeBackend(
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_mret := exeMemReg.is_mret
+        memWbReg.is_sret := exeMemReg.is_sret
         memWbReg.csr_illegal := exeMemReg.csr_illegal
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := loadAddrMisaligned
@@ -1288,6 +1304,7 @@ class BreezeBackend(
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_mret := exeMemReg.is_mret
+        memWbReg.is_sret := exeMemReg.is_sret
         memWbReg.csr_illegal := exeMemReg.csr_illegal
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := false.B
@@ -1353,7 +1370,7 @@ class BreezeBackend(
     // Floating-point writeback sideband, aligned with the common MEM/WB
     // register above.  FPR writes and accrued flags become architectural only
     // when memWbReg.valid commits on the following cycle.
-    when(reset.asBool || exceptionRedirect || mretRedirect || interruptRedirect) {
+    when(reset.asBool || exceptionRedirect || xretRedirect || interruptRedirect) {
         memWbFpWrite := false.B
         memWbFpData := 0.U
         memWbFpFlagsValid := false.B
@@ -1428,9 +1445,9 @@ class BreezeBackend(
     io.frontendRedirect.cacheFlush := fenceiFlush
     io.frontendRedirect.target := Mux1H(Seq(
         fenceiFlush        -> (exeMemReg.pc + 4.U),
-        mretRedirect       -> csrFile.io.mepc_out,
-        interruptRedirect  -> interruptTrapTarget,
-        exceptionRedirect  -> mtvecBase,
+        xretRedirect       -> csrFile.io.xret_target,
+        interruptRedirect  -> csrFile.io.trap_target,
+        exceptionRedirect  -> csrFile.io.trap_target,
         // Direction mispredicts can be either not-taken -> taken or
         // taken -> not-taken. exeNextPc selects the architecturally correct
         // destination for both cases; actualTarget alone would incorrectly

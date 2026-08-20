@@ -2,6 +2,7 @@ package flow.core
 
 import chisel3._
 import chisel3.util._
+import flow.config.PrivilegeProfile
 import flow.interface._
 /**
   * Register File, used to store general purpose registers
@@ -150,7 +151,8 @@ object GenerateRegFileVerilogFile extends App {
 }
 
 class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false,
-              val hartId:Int=0) extends Module {
+              val hartId:Int=0,
+              val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu) extends Module {
     require(hartId >= 0, "CSRFile hartId must be non-negative")
     val io = IO(new Bundle{
         val csr_addr = Input(UInt(12.W))
@@ -178,8 +180,16 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val machineExternalInterrupt = Input(Bool())
         val trap = Input(new CSRTrapInfo(XLEN))
         val mret_commit = Input(Bool())
+        val sret_commit = Input(Bool())
         val mtvec = Output(UInt(XLEN.W))
         val mepc_out = Output(UInt(XLEN.W))
+        val trap_target = Output(UInt(XLEN.W))
+        val xret_target = Output(UInt(XLEN.W))
+        val current_privilege = Output(UInt(PRIV_MODE.width.W))
+        val mret_illegal = Output(Bool())
+        val sret_illegal = Output(Bool())
+        val wfi_illegal = Output(Bool())
+        val sfence_vma_illegal = Output(Bool())
         val interruptPending = Output(Bool())
         val interruptCause = Output(UInt(XLEN.W))
         val csr_illegal = Output(Bool())
@@ -194,8 +204,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
     val mcountinhibit = RegInit(0.U(32.W))
+    private val enableSupervisorUser = privilegeProfile.enableSupervisorUser
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
-        (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) // RV64IMAFD
+        (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) |
+        (if (enableSupervisorUser) (BigInt(1) << 18) | (BigInt(1) << 20) else BigInt(0))
     val misa = WireDefault(misa_value.U(XLEN.W))
     val mvendorid = RegInit(0.U(32.W))
     val marchid = RegInit(0.U(XLEN.W))
@@ -206,50 +218,68 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mcause = RegInit(0.U(XLEN.W))
     val mtval = RegInit(0.U(XLEN.W))
     val mscratch = RegInit(0.U(XLEN.W))
+    val medeleg = RegInit(0.U(XLEN.W))
+    val mideleg = RegInit(0.U(XLEN.W))
+    val stvec = RegInit(0.U(XLEN.W))
+    val sepc = RegInit(0.U(XLEN.W))
+    val scause = RegInit(0.U(XLEN.W))
+    val stval = RegInit(0.U(XLEN.W))
+    val sscratch = RegInit(0.U(XLEN.W))
+    val scounteren = RegInit(0.U(32.W))
+    val mcounteren = RegInit(0.U(32.W))
+    val currentPrivilege = RegInit(PRIV_MODE.M.U(PRIV_MODE.width.W))
     // mstatus: distributed fields, assembled on read, disassembled on write
     val mstatus_MIE  = RegInit(false.B)      // bit 3:  machine interrupt enable
     val mstatus_MPIE = RegInit(false.B)      // bit 7:  machine previous interrupt enable
-    val mstatus_MPP  = RegInit("b11".U(2.W)) // bits 12-11: machine previous privilege (always M=3)
+    val mstatus_MPP  = RegInit(PRIV_MODE.M.U(2.W))
+    val mstatus_SIE  = RegInit(false.B)
+    val mstatus_SPIE = RegInit(false.B)
+    val mstatus_SPP  = RegInit(false.B)
     val mstatus_FS   = RegInit(0.U(2.W))     // bits 14-13: Off/Initial/Clean/Dirty
+    val mstatus_TVM  = RegInit(false.B)      // bit 20: trap S-mode satp/SFENCE.VMA
+    val mstatus_TW   = RegInit(false.B)      // bit 21: trap S-mode WFI
+    val mstatus_TSR  = RegInit(false.B)      // bit 22: trap S-mode SRET
     val fflags = RegInit(0.U(5.W))
     val frm = RegInit(0.U(3.W))
     val mie_MSIE = RegInit(false.B)          // bit 3:  machine software interrupt enable
     val mie_MTIE = RegInit(false.B)          // bit 7:  machine timer interrupt enable
     val mie_MEIE = RegInit(false.B)          // bit 11: machine external interrupt enable
+    val mie_SSIE = RegInit(false.B)
+    val mie_STIE = RegInit(false.B)
+    val mie_SEIE = RegInit(false.B)
+    val sip_SSIP = RegInit(false.B)
     val mstatus_read = Wire(UInt(XLEN.W))
-    mstatus_read := Cat(
-        mstatus_FS === "b11".U, // SD
-        0.U(48.W),
-        mstatus_FS,
-        mstatus_MPP,
-        0.U(3.W),
-        mstatus_MPIE,
-        0.U(3.W),
-        mstatus_MIE,
-        0.U(3.W)
-    )
+    val linuxXlenFields = if (enableSupervisorUser) {
+        ((BigInt(2) << 34) | (BigInt(2) << 32)).U(XLEN.W)
+    } else 0.U(XLEN.W)
+    mstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
+        linuxXlenFields | (mstatus_TSR.asUInt << 22) |
+        (mstatus_TW.asUInt << 21) | (mstatus_TVM.asUInt << 20) |
+        (mstatus_FS << 13) | (mstatus_MPP << 11) |
+        (mstatus_SPP.asUInt << 8) | (mstatus_MPIE.asUInt << 7) |
+        (mstatus_SPIE.asUInt << 5) | (mstatus_MIE.asUInt << 3) |
+        (mstatus_SIE.asUInt << 1)
+    val sstatus_read = Wire(UInt(XLEN.W))
+    sstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
+        (if (enableSupervisorUser) (BigInt(2) << 32).U(XLEN.W) else 0.U(XLEN.W)) |
+        (mstatus_FS << 13) | (mstatus_SPP.asUInt << 8) |
+        (mstatus_SPIE.asUInt << 5) | (mstatus_SIE.asUInt << 1)
     val mie_read = Wire(UInt(XLEN.W))
     val mip_read = Wire(UInt(XLEN.W))
-    mie_read := Cat(
-        0.U((XLEN - 12).W),
-        mie_MEIE,         // [11] MEIE
-        0.U(3.W),         // [10:8]
-        mie_MTIE,         // [7]  MTIE
-        0.U(3.W),         // [6:4]
-        mie_MSIE,         // [3]  MSIE
-        0.U(3.W)          // [2:0]
-    )
-    mip_read := Cat(
-        0.U((XLEN - 12).W),
-        io.machineExternalInterrupt,  // [11] MEIP (read-only input)
-        0.U(3.W),                     // [10:8]
-        io.machineTimerInterrupt,     // [7]  MTIP (read-only input)
-        0.U(3.W),                     // [6:4]
-        io.machineSoftwareInterrupt,  // [3]  MSIP (read-only input; cleared
-        0.U(3.W)                      //      by writing the CLINT msip word)
-    )
+    mie_read := (mie_MEIE.asUInt << MACHINE_INTERRUPT_CAUSE.EXTERNAL) |
+        (mie_MTIE.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
+        (mie_MSIE.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
+        (mie_SEIE.asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) |
+        (mie_STIE.asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
+        (mie_SSIE.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+    mip_read := (io.machineExternalInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.EXTERNAL) |
+        (io.machineTimerInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
+        (io.machineSoftwareInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
+        (sip_SSIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+    val sie_read = mie_read & mideleg
+    val sip_read = mip_read & mideleg
     def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
-    val csrFile = Seq(
+    val machineCsrFile = Seq(
         csrPattern(CSRMAP.fflags)  -> fflags,
         csrPattern(CSRMAP.frm)     -> frm,
         csrPattern(CSRMAP.fcsr)    -> Cat(frm, fflags),
@@ -266,14 +296,31 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         csrPattern(CSRMAP.mtval)    -> mtval,
         csrPattern(CSRMAP.mscratch) -> mscratch,
         csrPattern(CSRMAP.mstatus)  -> mstatus_read,
+        csrPattern(CSRMAP.medeleg)  -> medeleg,
+        csrPattern(CSRMAP.mideleg)  -> mideleg,
         csrPattern(CSRMAP.mie)      -> mie_read,
         csrPattern(CSRMAP.mip)      -> mip_read,
+        csrPattern(CSRMAP.mcounteren) -> mcounteren,
         csrPattern(CSRMAP.mcycle)   -> mcycle,
         csrPattern(CSRMAP.minstret) -> minstret,
         csrPattern(CSRMAP.cycle)    -> mcycle,
         csrPattern(CSRMAP.instret)  -> minstret,
         csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit
-    ) ++ (0 until implementedHpmCounters).flatMap { index => Seq(
+    )
+    val supervisorCsrFile = if (enableSupervisorUser) Seq(
+        csrPattern(CSRMAP.sstatus) -> sstatus_read,
+        csrPattern(CSRMAP.sie) -> sie_read,
+        csrPattern(CSRMAP.stvec) -> stvec,
+        csrPattern(CSRMAP.scounteren) -> scounteren,
+        csrPattern(CSRMAP.sscratch) -> sscratch,
+        csrPattern(CSRMAP.sepc) -> sepc,
+        csrPattern(CSRMAP.scause) -> scause,
+        csrPattern(CSRMAP.stval) -> stval,
+        csrPattern(CSRMAP.sip) -> sip_read,
+        csrPattern(CSRMAP.satp) -> 0.U(XLEN.W)
+    ) else Seq.empty
+    val csrFile = machineCsrFile ++ supervisorCsrFile ++
+      (0 until implementedHpmCounters).flatMap { index => Seq(
         csrPattern(CSRMAP.mhpmcounter3 + index) -> mhpmcounter(index),
         csrPattern(CSRMAP.hpmcounter3 + index) -> mhpmcounter(index),
         csrPattern(CSRMAP.mhpmevent3 + index) -> mhpmevent(index)
@@ -294,8 +341,56 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val csr_illegal_addr = ILLEGAL_CSR_ADDRS.addrs.map(a => io.csr_addr === a.U(12.W)).reduce(_ || _)
     val fpCsrAccess = io.csr_addr === CSRMAP.fflags.U ||
         io.csr_addr === CSRMAP.frm.U || io.csr_addr === CSRMAP.fcsr.U
-    io.csr_illegal := (read_csr && csr_illegal_addr) ||
-        ((io.csr_cmd =/= CSR_CMD.NOP.U) && fpCsrAccess && mstatus_FS === 0.U)
+    val machineAddresses = Seq(
+        CSRMAP.fflags, CSRMAP.frm, CSRMAP.fcsr, CSRMAP.printer, CSRMAP.coreinst,
+        CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
+        CSRMAP.mstatus, CSRMAP.medeleg, CSRMAP.mideleg, CSRMAP.mie, CSRMAP.mtvec,
+        CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
+        CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.instret,
+        CSRMAP.mcountinhibit) ++
+        (0 until implementedHpmCounters).flatMap(index => Seq(
+            CSRMAP.mhpmcounter3 + index, CSRMAP.hpmcounter3 + index,
+            CSRMAP.mhpmevent3 + index))
+    val supervisorAddresses = Seq(
+        CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
+        CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval,
+        CSRMAP.sip, CSRMAP.satp)
+    val implementedAddresses = machineAddresses ++
+        (if (enableSupervisorUser) supervisorAddresses else Seq.empty)
+    val csrImplemented = implementedAddresses.map(address =>
+        io.csr_addr === address.U(12.W)).reduce(_ || _)
+    val csrAccess = io.csr_cmd =/= CSR_CMD.NOP.U
+    val privilegeDenied = currentPrivilege < io.csr_addr(9, 8)
+    // These simulation-only CSRs live in a non-standard U-privilege address
+    // range, but remain machine-only in the Linux profile.
+    val customCsrDenied = currentPrivilege =/= PRIV_MODE.M.U &&
+        (io.csr_addr === CSRMAP.printer.U || io.csr_addr === CSRMAP.coreinst.U)
+    val satpDenied = currentPrivilege === PRIV_MODE.S.U && mstatus_TVM &&
+        io.csr_addr === CSRMAP.satp.U
+    val readOnlyWrite = io.csr_addr(11, 10) === 3.U && write_csr
+    val counterIndex = MuxLookup(io.csr_addr, 0.U(5.W))(Seq(
+        CSRMAP.cycle.U -> 0.U,
+        CSRMAP.instret.U -> 2.U
+    ) ++ (0 until implementedHpmCounters).map(index =>
+        (CSRMAP.hpmcounter3 + index).U -> (index + 3).U))
+    val userCounterAccess = io.csr_addr === CSRMAP.cycle.U ||
+        io.csr_addr === CSRMAP.instret.U ||
+        (io.csr_addr >= CSRMAP.hpmcounter3.U &&
+          io.csr_addr < (CSRMAP.hpmcounter3 + implementedHpmCounters).U)
+    val counterDenied = userCounterAccess && Mux(
+        currentPrivilege === PRIV_MODE.S.U,
+        !mcounteren(counterIndex),
+        Mux(currentPrivilege === PRIV_MODE.U.U,
+            !mcounteren(counterIndex) || !scounteren(counterIndex), false.B))
+    if (enableSupervisorUser) {
+        io.csr_illegal := csrAccess && (
+            !csrImplemented || privilegeDenied || customCsrDenied || satpDenied ||
+            readOnlyWrite || counterDenied ||
+            (fpCsrAccess && mstatus_FS === 0.U))
+    } else {
+        io.csr_illegal := (read_csr && csr_illegal_addr) ||
+            (csrAccess && fpCsrAccess && mstatus_FS === 0.U)
+    }
 
     when(!io.trap.valid){
         switch(io.csr_cmd){
@@ -345,6 +440,13 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }
 
     // Zicsr对寄存器的写在wb阶段提交
+    val medelegMask = Seq(1, 2, 4, 5, 6, 7, 8, 9)
+        .map(bit => BigInt(1) << bit).reduce(_ | _).U(XLEN.W)
+    val midelegMask = Seq(
+        SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE,
+        SUPERVISOR_INTERRUPT_CAUSE.TIMER,
+        SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+        .map(bit => BigInt(1) << bit).reduce(_ | _).U(XLEN.W)
     when(io.commit_valid && io.commit_write_en && !io.trap.valid){
         switch(io.commit_addr){
             is(CSRMAP.fflags.U) {
@@ -426,20 +528,97 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             is(CSRMAP.mstatus.U){
                 mstatus_MIE  := io.commit_wdata(3)
                 mstatus_MPIE := io.commit_wdata(7)
-                mstatus_MPP  := io.commit_wdata(12, 11)
+                if (enableSupervisorUser) {
+                    mstatus_SIE := io.commit_wdata(1)
+                    mstatus_SPIE := io.commit_wdata(5)
+                    mstatus_SPP := io.commit_wdata(8)
+                    val requestedMpp = io.commit_wdata(12, 11)
+                    mstatus_MPP := Mux(requestedMpp === 2.U,
+                        PRIV_MODE.U.U, requestedMpp)
+                    mstatus_TVM := io.commit_wdata(20)
+                    mstatus_TW := io.commit_wdata(21)
+                    mstatus_TSR := io.commit_wdata(22)
+                } else {
+                    mstatus_MPP := io.commit_wdata(12, 11)
+                }
                 mstatus_FS   := io.commit_wdata(14, 13)
                 if(dumplog){
                     printf(cf"[INFO] mstatus write: MIE=${io.commit_wdata(3)} MPIE=${io.commit_wdata(7)} MPP=${io.commit_wdata(12,11)}\n")
                 }
             }
+            is(CSRMAP.medeleg.U) {
+                if (enableSupervisorUser) medeleg := io.commit_wdata & medelegMask
+            }
+            is(CSRMAP.mideleg.U) {
+                if (enableSupervisorUser) mideleg := io.commit_wdata & midelegMask
+            }
             is(CSRMAP.mie.U){
                 mie_MSIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.SOFTWARE)
                 mie_MTIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.TIMER)
                 mie_MEIE := io.commit_wdata(MACHINE_INTERRUPT_CAUSE.EXTERNAL)
+                if (enableSupervisorUser) {
+                    mie_SSIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    mie_STIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+                    mie_SEIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+                }
             }
             is(CSRMAP.mip.U){
                 // MSIP, MTIP and MEIP are read-only reflections of platform
                 // inputs (software clears MSIP through the CLINT msip word).
+                if (enableSupervisorUser) {
+                    sip_SSIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                }
+            }
+            is(CSRMAP.mcounteren.U) {
+                if (enableSupervisorUser) mcounteren := io.commit_wdata(31, 0)
+            }
+            is(CSRMAP.sstatus.U) {
+                if (enableSupervisorUser) {
+                    mstatus_SIE := io.commit_wdata(1)
+                    mstatus_SPIE := io.commit_wdata(5)
+                    mstatus_SPP := io.commit_wdata(8)
+                    mstatus_FS := io.commit_wdata(14, 13)
+                }
+            }
+            is(CSRMAP.sie.U) {
+                if (enableSupervisorUser) {
+                    mie_SSIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) &&
+                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    mie_STIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.TIMER) &&
+                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+                    mie_SEIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) &&
+                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+                }
+            }
+            is(CSRMAP.stvec.U) {
+                if (enableSupervisorUser) {
+                    val legalMode = Mux(io.commit_wdata(1, 0) === 1.U, 1.U(2.W), 0.U(2.W))
+                    stvec := Cat(io.commit_wdata(XLEN - 1, 2), legalMode)
+                }
+            }
+            is(CSRMAP.scounteren.U) {
+                if (enableSupervisorUser) scounteren := io.commit_wdata(31, 0)
+            }
+            is(CSRMAP.sscratch.U) {
+                if (enableSupervisorUser) sscratch := io.commit_wdata
+            }
+            is(CSRMAP.sepc.U) {
+                if (enableSupervisorUser) sepc := Cat(io.commit_wdata(XLEN - 1, 2), 0.U(2.W))
+            }
+            is(CSRMAP.scause.U) {
+                if (enableSupervisorUser) scause := io.commit_wdata
+            }
+            is(CSRMAP.stval.U) {
+                if (enableSupervisorUser) stval := io.commit_wdata
+            }
+            is(CSRMAP.sip.U) {
+                if (enableSupervisorUser) {
+                    sip_SSIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) &&
+                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                }
+            }
+            is(CSRMAP.satp.U) {
+                // Bare-only in this profile. Sv39 is added with the MMU stage.
             }
             is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
                 // Updated below so an explicit CSR write has priority over
@@ -501,38 +680,105 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             mhpmcounter(index) := mhpmcounter(index) + 1.U
         }
     }
-    // Trap entry: record pc/cause, update mstatus
+    val trapDelegated = if (enableSupervisorUser) {
+        currentPrivilege =/= PRIV_MODE.M.U && Mux(
+            io.trap.is_interrupt,
+            mideleg(io.trap.cause(5, 0)),
+            medeleg(io.trap.cause(5, 0)))
+    } else false.B
+    val mtvecBase = Cat(mtvec(XLEN - 1, 2), 0.U(2.W))
+    val stvecBase = Cat(stvec(XLEN - 1, 2), 0.U(2.W))
+    val machineTrapTarget = Mux(io.trap.is_interrupt && mtvec(1, 0) === 1.U,
+        mtvecBase + (io.trap.cause << 2), mtvecBase)
+    val supervisorTrapTarget = Mux(io.trap.is_interrupt && stvec(1, 0) === 1.U,
+        stvecBase + (io.trap.cause << 2), stvecBase)
+
+    // Trap entry is precise at WB. A trap raised in M is never delegated.
     when(io.trap.valid){
-        mepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
-        mcause := io.trap.cause |
-            (io.trap.is_interrupt.asUInt << (XLEN - 1))
-        mtval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
-        mstatus_MPIE := mstatus_MIE
-        mstatus_MIE  := false.B
-        mstatus_MPP  := "b11".U
+        when(trapDelegated) {
+            sepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
+            scause := io.trap.cause | (io.trap.is_interrupt.asUInt << (XLEN - 1))
+            stval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
+            mstatus_SPIE := mstatus_SIE
+            mstatus_SIE := false.B
+            mstatus_SPP := currentPrivilege === PRIV_MODE.S.U
+            currentPrivilege := PRIV_MODE.S.U
+        }.otherwise {
+            mepc := Cat(io.trap.pc(XLEN - 1, 2), 0.U(2.W))
+            mcause := io.trap.cause | (io.trap.is_interrupt.asUInt << (XLEN - 1))
+            mtval := Mux(io.trap.is_interrupt, 0.U, io.trap.tval)
+            mstatus_MPIE := mstatus_MIE
+            mstatus_MIE  := false.B
+            mstatus_MPP  := Mux(enableSupervisorUser.B,
+                currentPrivilege, PRIV_MODE.M.U)
+            currentPrivilege := PRIV_MODE.M.U
+        }
     }
     // MRET: restore mstatus from saved state
     when(io.mret_commit){
         mstatus_MIE  := mstatus_MPIE
         mstatus_MPIE := true.B
-        mstatus_MPP  := "b11".U
+        if (enableSupervisorUser) {
+            currentPrivilege := mstatus_MPP
+            mstatus_MPP := PRIV_MODE.U.U
+        } else {
+            currentPrivilege := PRIV_MODE.M.U
+            mstatus_MPP := PRIV_MODE.M.U
+        }
+    }
+    when(io.sret_commit && enableSupervisorUser.B) {
+        mstatus_SIE := mstatus_SPIE
+        mstatus_SPIE := true.B
+        currentPrivilege := Mux(mstatus_SPP, PRIV_MODE.S.U, PRIV_MODE.U.U)
+        mstatus_SPP := false.B
     }
     io.csr_old_data := old_csr_val
     io.csr_new_data := new_csr_val
     io.csr_write_en := write_csr
     io.mtvec := mtvec
     io.mepc_out := mepc
+    io.trap_target := Mux(trapDelegated, supervisorTrapTarget, machineTrapTarget)
+    io.xret_target := Mux(io.sret_commit, sepc, mepc)
+    io.current_privilege := currentPrivilege
+    io.mret_illegal := enableSupervisorUser.B && currentPrivilege =/= PRIV_MODE.M.U
+    io.sret_illegal := !enableSupervisorUser.B ||
+        currentPrivilege === PRIV_MODE.U.U ||
+        (currentPrivilege === PRIV_MODE.S.U && mstatus_TSR)
+    io.wfi_illegal := !enableSupervisorUser.B ||
+        currentPrivilege === PRIV_MODE.U.U ||
+        (currentPrivilege === PRIV_MODE.S.U && mstatus_TW)
+    io.sfence_vma_illegal := !enableSupervisorUser.B ||
+        currentPrivilege === PRIV_MODE.U.U ||
+        (currentPrivilege === PRIV_MODE.S.U && mstatus_TVM)
     io.frm := frm
     io.fp_enabled := mstatus_FS =/= 0.U
-    // Fixed interrupt priority: MEI > MSI > MTI.
-    val externalInterruptPending = mstatus_MIE && mie_MEIE && io.machineExternalInterrupt
-    val softwareInterruptPending = mstatus_MIE && mie_MSIE && io.machineSoftwareInterrupt
-    val timerInterruptPending = mstatus_MIE && mie_MTIE && io.machineTimerInterrupt
+    // Fixed priority: MEI > MSI > MTI > SEI > SSI > STI. xIE gates an
+    // interrupt only while executing at that same privilege level.
+    val machineGlobalEnable = currentPrivilege =/= PRIV_MODE.M.U || mstatus_MIE
+    val supervisorGlobalEnable = enableSupervisorUser.B &&
+        (currentPrivilege === PRIV_MODE.U.U ||
+          (currentPrivilege === PRIV_MODE.S.U && mstatus_SIE))
+    val externalInterruptPending = machineGlobalEnable && mie_MEIE && io.machineExternalInterrupt
+    val softwareInterruptPending = machineGlobalEnable && mie_MSIE && io.machineSoftwareInterrupt
+    val timerInterruptPending = machineGlobalEnable && mie_MTIE && io.machineTimerInterrupt
+    val supervisorExternalPending = supervisorGlobalEnable && mie_SEIE &&
+        mideleg(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) &&
+        mip_read(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+    val supervisorSoftwarePending = supervisorGlobalEnable && mie_SSIE &&
+        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) && sip_SSIP
+    val supervisorTimerPending = supervisorGlobalEnable && mie_STIE &&
+        mideleg(SUPERVISOR_INTERRUPT_CAUSE.TIMER) &&
+        mip_read(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
     io.interruptPending := externalInterruptPending || softwareInterruptPending ||
-        timerInterruptPending
+        timerInterruptPending || supervisorExternalPending ||
+        supervisorSoftwarePending || supervisorTimerPending
     io.interruptCause := MuxCase(MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W), Seq(
         externalInterruptPending -> MACHINE_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
-        softwareInterruptPending -> MACHINE_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W)
+        softwareInterruptPending -> MACHINE_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W),
+        timerInterruptPending -> MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W),
+        supervisorExternalPending -> SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
+        supervisorSoftwarePending -> SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W),
+        supervisorTimerPending -> SUPERVISOR_INTERRUPT_CAUSE.TIMER.U(XLEN.W)
     ))
     io.debug.foreach { debug =>
         debug.mcause := mcause
