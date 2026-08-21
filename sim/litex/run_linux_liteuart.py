@@ -10,7 +10,7 @@ import sys
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SOFTWARE_ROOT = os.path.join(FLOW_ROOT, "software", "breeze-mcu")
 SIM_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "multicore_sim.py")
-TRACE_PREFIXES = ("[MEM-RETIRE]", "[DCACHE-", "[WB-")
+TRACE_PREFIXES = ("[MEM-RETIRE]", "[DCACHE-", "[WB-", "[IRQ-CHAIN]")
 TESTS = {
     "csr": os.path.join(SOFTWARE_ROOT, "apps", "linux_liteuart_smoke.c"),
     "plic": os.path.join(

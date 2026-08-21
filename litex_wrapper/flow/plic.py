@@ -62,6 +62,11 @@ class BreezePlic(Module):
             target = read_high if (byte_offset & 4) else read_low
             self.comb += If(word == target_word, target.eq(priority[source]))
         pending_bits = Cat(*pending)
+        # Read-only Python-level handles for passive simulation monitors.
+        # These are aliases of the architectural PLIC state, not additional
+        # registers and do not drive or otherwise alter the interrupt path.
+        self.pending_bits = pending_bits
+        self.claims = claim
         self.comb += If(word == (0x1000 // 8), read_low.eq(pending_bits))
         for c in range(contexts):
             enable_word = (0x2000 + 0x80 * c) // 8

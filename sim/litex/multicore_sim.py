@@ -43,6 +43,7 @@ from breeze_sim import (  # noqa: E402
     McuCompletionMonitor, Platform,
 )
 from memory_monitor import FlowMemoryMonitor  # noqa: E402
+from interrupt_monitor import FlowInterruptChainMonitor  # noqa: E402
 
 
 # Do not rely on LiteX's current-working-directory based CPU discovery.
@@ -197,6 +198,18 @@ class MulticoreSimSoC(SoCCore):
                 timeout_cycles=mcu_timeout,
                 label=completion_label,
             )
+            if completion_label.endswith("LITEUART-PLIC"):
+                self.submodules.interrupt_chain_monitor = (
+                    FlowInterruptChainMonitor(
+                        uart=self.uart,
+                        plic=self.plic,
+                        cpu=self.cpu,
+                        retire=self.cpu.retires[0],
+                        source_id=10,
+                        hart=0,
+                        context=0,
+                    )
+                )
 
         if memory_trace:
             trace_buses = [

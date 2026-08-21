@@ -13,6 +13,10 @@ from litex.soc.interconnect import wishbone
 
 
 SIM_DIR = os.path.dirname(os.path.abspath(__file__))
+FLOW_ROOT = os.path.abspath(os.path.join(SIM_DIR, "..", ".."))
+WRAPPER_ROOT = os.path.join(FLOW_ROOT, "litex_wrapper")
+if WRAPPER_ROOT not in sys.path:
+    sys.path.insert(0, WRAPPER_ROOT)
 if SIM_DIR not in sys.path:
     sys.path.insert(0, SIM_DIR)
 

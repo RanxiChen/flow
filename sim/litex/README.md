@@ -89,7 +89,16 @@ SBT=sbt python3 sim/litex/run_linux_liteuart.py --test plic
 ```
 
 Its marker is `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]`. A timeout or missing
-marker is a failure. Only after both CPU stages pass should the four-hart
+marker is a failure. This test also enables the passive `[IRQ-CHAIN]` observer.
+It records the native UART event enable/status/pending bits, UART IRQ, PLIC
+source 10, PLIC pending/claim/MEIP, the CPU MEIP input, and the last retired
+instruction. Thus a timeout can be assigned to the UART event, PLIC, or CPU
+interrupt boundary without changing or acknowledging the device. The record
+is also retained in `memory-trace.log`.
+
+The standalone `test_plic_interrupt_path.py` test drives source 10 through
+priority, enable, pending, MEIP, claim, and completion without involving the
+CPU. Only after both CPU stages pass should the four-hart
 OpenSBI handoff probe run. The Linux boot monitor prints at most the first 32
 acknowledged accesses in the LiteUART CSR page as `[LINUX-UART-READ]` or
 `[LINUX-UART-MMIO]`.
