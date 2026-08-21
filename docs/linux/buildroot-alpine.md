@@ -161,6 +161,12 @@ python3 sim/litex/linux_sim.py \
 `debug-cycles` 只是上限，不代表在较小周期数内一定能看到交接。RTL 仿真速度远低于
 真实 CPU，OpenSBI 多 hart 初始化可能需要数百万到数千万周期。
 
+Linux 长跑若持续退休但没有 UART，不应只继续扩大 timeout。debug RTL 在精确 trap
+点直接打印 `[CORE-TRAP]`，其中包含 hart、interrupt、cause、PC、tval、特权级、trap
+target 和当时的 MSIP/MTIP/MEIP/SEIP 输入。它只读取现有核心信号，不增加接口或回压。
+每个 hart 最多打印前 256 次，避免 trap storm 淹没日志。修改后必须带 `--elaborate`，
+不能复用旧的生成 RTL。
+
 ## 7. 运行 Buildroot 和 Alpine
 
 handoff smoke 通过后，把 `--kernel` 分别换成：

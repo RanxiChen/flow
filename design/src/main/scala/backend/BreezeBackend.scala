@@ -1050,6 +1050,14 @@ class BreezeBackend(
     csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
     csrFile.io.sret_commit       := memWbReg.valid && memWbReg.is_sret
 
+    if (cfg.enableTandem) {
+        val trapTraceCount = RegInit(0.U(9.W))
+        when(csrFile.io.trap.valid && trapTraceCount < 256.U) {
+            printf(cf"[CORE-TRAP] hart=${hartId.U} interrupt=${csrFile.io.trap.is_interrupt} cause=0x${csrFile.io.trap.cause}%x pc=0x${csrFile.io.trap.pc}%x tval=0x${csrFile.io.trap.tval}%x privilege=${csrFile.io.current_privilege} target=0x${csrFile.io.trap_target}%x msip=${io.machineSoftwareInterrupt} mtip=${io.machineTimerInterrupt} meip=${io.externalInterrupts.orR} seip=${io.supervisorExternalInterrupt}\n")
+            trapTraceCount := trapTraceCount + 1.U
+        }
+    }
+
     when(reset.asBool) {
         architecturalNextPc := io.resetAddr
     }.elsewhen(xretRedirect) {

@@ -83,6 +83,19 @@
 - Alpine 尚未取得 `/init` 或 shell 日志；
 - 尚未运行真实块设备、网络或 FPGA 板级验证。
 
+### 2026-08-22 Buildroot 首次长跑定位
+
+在 `6352366` 的四 hart Buildroot 运行中，Verilator 的主仿真线程保持约 100% CPU，约 6100 万
+周期内四个 hart 都持续退休且没有 `LINUX-FATAL`，但没有任何 UART MMIO、OpenSBI
+banner 或 Linux console 输出。符号定位显示 hart 0/2/3 位于 OpenSBI HSM wait，boot
+hart 1 后期反复位于 `_trap_handler`、`sbi_trap_handler` 和 `sbi_trap_redirect`。
+这证明仿真器没有机械卡死，但软件启动进度异常；旧日志缺少 trap cause/epc/tval、
+特权级和中断输入，因此不能据此把根因判给 CPU、CLINT/PLIC 或 kernel。
+
+debug RTL 现已在核心精确 trap 点直接打印 `[CORE-TRAP]`，不增加顶层接口或额外
+monitor。下一次运行应先用约 3500 万周期取得 trap 序列，再根据 cause、PC、特权级、
+target 和中断输入决定修 CPU 还是 SoC，不再盲目等待一亿周期。
+
 因此当前项目状态是：**硬件平台与镜像构建已实现，长时间 Linux 运行验证待完成**。
 
 ## 已纠正的误区

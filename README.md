@@ -67,6 +67,7 @@ LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
 
 `sim/litex/linux_sim.py` 会检查镜像范围和重叠，然后把三段镜像装入 LiteDRAM。它不
 创建 VirtIO 磁盘，Buildroot 和 Alpine 的根文件系统均内嵌在 kernel Image 中。
+debug RTL 会在精确 trap 点额外打印 `[CORE-TRAP]`，不增加总线接口或回压路径。
 
 ## 快速阅读顺序
 
