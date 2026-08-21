@@ -48,7 +48,11 @@ class FlowClintVerilogContractTest(unittest.TestCase):
         self.assertIn('PROFILE_HARTS = {"single": 1, "dual": 2, "small": 4}',
             integration)
         self.assertIn('"per-hart-timer"', integration)
-        self.assertIn('f"{args.profile} {args.core_preset} linux"', integration)
+        self.assertIn(
+            'f"{args.profile} {args.core_preset} linux debug"', integration)
+        self.assertIn("require_debug_rtl(args.profile, args.core_preset)",
+            integration)
+        self.assertIn('"rtlMode": "debug"', integration)
 
 
 if __name__ == "__main__":

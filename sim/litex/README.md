@@ -148,6 +148,9 @@ The required markers are `[MULTICORE-SMALL-CLINT-IPI-PASS]` and
 `[MULTICORE-SMALL-CLINT-PER-HART-TIMER-PASS]`. The IPI test addresses every
 hart in turn and rejects shared-word MSIP aliasing. The timer test first arms
 only hart 3, then arms all four harts, rejecting a broadcast MTIP implementation.
+The runner rejects stale or production cluster RTL before Verilator. Pass
+`--elaborate` once when switching to a profile whose current Linux debug RTL
+has not yet been generated.
 
 The standalone `test_plic_interrupt_path.py` test drives source 10 through
 priority, enable, pending, MEIP, claim, and completion without involving the

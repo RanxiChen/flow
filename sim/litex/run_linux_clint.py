@@ -62,6 +62,39 @@ def run_streaming(command, cwd=None):
     return process.wait(), "".join(captured)
 
 
+def require_debug_rtl(profile, core_preset):
+    rtl_dir = os.path.join(
+        FLOW_ROOT, "design", "build", "rtl", "cluster",
+        profile, core_preset, "linux")
+    marker_path = os.path.join(rtl_dir, "cluster-profile.txt")
+    values = {}
+    if os.path.isfile(marker_path):
+        with open(marker_path, encoding="utf-8") as marker_file:
+            for line in marker_file:
+                key, separator, value = line.strip().partition("=")
+                if separator:
+                    values[key] = value
+    required = {
+        "profile": profile,
+        "corePreset": core_preset,
+        "privilegeProfile": "linux",
+        "rtlMode": "debug",
+        "tandem": "true",
+    }
+    mismatches = {
+        key: (values.get(key), expected)
+        for key, expected in required.items()
+        if values.get(key) != expected
+    }
+    if mismatches:
+        detail = ", ".join(
+            f"{key}=expected:{expected}/actual:{actual}"
+            for key, (actual, expected) in sorted(mismatches.items()))
+        raise RuntimeError(
+            "Linux CLINT tracing requires current debug cluster RTL; "
+            f"{detail}. Re-run this command with --elaborate.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run a bounded Linux-profile CLINT integration test.")
@@ -97,8 +130,9 @@ def main():
         run_checked([
             sbt,
             "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-            f"{args.profile} {args.core_preset} linux",
+            f"{args.profile} {args.core_preset} linux debug",
         ], cwd=os.path.join(FLOW_ROOT, "design"))
+    require_debug_rtl(args.profile, args.core_preset)
 
     firmware_build = os.path.join(
         SOFTWARE_ROOT, "build", f"linux-clint-{args.test}-{args.profile}")
