@@ -18,6 +18,8 @@ from litex.soc.integration.builder import Builder
 from litex.soc.integration.common import get_mem_data
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.soc_core import SoCCore
+from litedram.modules import MT41K64M16
+from litedram.phy.model import SDRAMPHYModel, sdram_module_nphases
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -71,6 +73,7 @@ class MulticoreSimSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(1e6), rom_init=None,
                  cluster_profile="single", core_preset="gshare",
                  privilege_profile="mcu",
+                 with_litedram=False,
                  completion_label=None, mcu_result_address=None,
                  mcu_perf_address=None, mcu_timeout=20000, **kwargs):
         platform = Platform()
@@ -96,7 +99,7 @@ class MulticoreSimSoC(SoCCore):
             integrated_rom_size=0x0001_0000,
             integrated_rom_init=[] if rom_init is None else rom_init,
             integrated_sram_size=0x0004_0000,
-            integrated_main_ram_size=0x0200_0000,
+            integrated_main_ram_size=0 if with_litedram else 0x0200_0000,
             csr_data_width=32,
             csr_address_width=14,
             csr_paging=0x1000,
@@ -106,6 +109,28 @@ class MulticoreSimSoC(SoCCore):
             with_timer=False,
             **kwargs,
         )
+
+        # Linux simulations use the same LiteDRAM controller path that a
+        # future FPGA target will use, backed here by a behavioral DDR3 PHY.
+        # The Flow cluster already owns the coherent L2, so do not insert a
+        # second LiteX L2 cache in front of memory.
+        if with_litedram:
+            sdram_clk_freq = int(100e6)
+            sdram_rate = "1:{}".format(sdram_module_nphases[MT41K64M16.memtype])
+            sdram_module = MT41K64M16(sdram_clk_freq, sdram_rate)
+            self.submodules.sdrphy = SDRAMPHYModel(
+                module=sdram_module,
+                data_width=32,
+                clk_freq=sdram_clk_freq,
+            )
+            self.add_sdram(
+                name="sdram",
+                phy=self.sdrphy,
+                module=sdram_module,
+                size=0x1000_0000,
+                l2_cache_size=0,
+            )
+            self.add_constant("BREEZE_LITEDRAM", 1)
 
         # Parameterized CLINT: per-hart msip (IPI) and mtimecmp, shared mtime.
         self.submodules.machine_timer = BreezeClint(
@@ -180,6 +205,8 @@ def main():
     parser.add_argument("--core-preset", choices=CORE_PRESETS, default="gshare",
         help="Core RTL preset (default: gshare; baseline is explicit).")
     parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
+    parser.add_argument("--with-litedram", action="store_true",
+        help="Replace the 32 MiB integrated RAM with a 256 MiB modeled DDR3/LiteDRAM backend.")
     parser.add_argument("--test-name", required=True,
         help="Registered multicore test name; forms the completion marker label.")
     parser.add_argument("--rom-init", required=True,
@@ -228,6 +255,7 @@ def main():
         cluster_profile=args.profile,
         core_preset=args.core_preset,
         privilege_profile=args.privilege,
+        with_litedram=args.with_litedram,
         completion_label=label,
         mcu_result_address=args.mcu_result_address,
         mcu_perf_address=args.mcu_perf_address,
