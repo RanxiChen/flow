@@ -11,5 +11,5 @@ make BR2_EXTERNAL=/path/to/flow/linux/buildroot-external flow_small_defconfig
 make -j$(nproc)
 ```
 
-The simulator consumes `output/images/Image`, `flow/flow-small.dtb`, and
+The simulator consumes `output/images/Image`, `flow-small.dtb`, and
 `fw_jump.bin` at 0x80200000, 0x80100000, and 0x80000000 respectively.
