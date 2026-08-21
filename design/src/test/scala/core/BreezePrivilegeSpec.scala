@@ -215,6 +215,19 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "decode EBREAK as a breakpoint exception instead of an illegal instruction" in {
+    simulate(new RV64IZicsrDecoder) { dut =>
+      dut.io.inst.poke("h00100073".U)
+      dut.io.illegal_inst.expect(false.B)
+      dut.io.I_ctrl.is_ebreak.expect(true.B)
+      dut.io.I_ctrl.is_ecall.expect(false.B)
+
+      dut.io.inst.poke("h00108073".U) // Reserved encoding: rs1 must be x0.
+      dut.io.illegal_inst.expect(true.B)
+      dut.io.I_ctrl.is_ebreak.expect(false.B)
+    }
+  }
+
   "implement PMP CSRs and Sstc time/stimecmp pending state" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

@@ -10,7 +10,8 @@
     {"name": "linux_boot_rom", "origin": "0x10010000", "size": "0x00010000", "readable": true, "writable": false, "executable": true, "cacheable": true, "device": false},
     {"name": "sram", "origin": "0x11000000", "size": "0x00040000", "readable": true, "writable": true, "executable": true, "cacheable": true, "device": false},
     {"name": "litex_mmio", "origin": "0x12000000", "size": "0x01000000", "readable": true, "writable": true, "executable": false, "cacheable": false, "device": true},
-    {"name": "main_ram", "origin": "0x80000000", "size": "0x02000000", "readable": true, "writable": true, "executable": true, "cacheable": true, "device": false}
+    {"name": "linux_uart16550", "origin": "0x13000000", "size": "0x00010000", "readable": true, "writable": true, "executable": false, "cacheable": false, "device": true},
+    {"name": "main_ram", "origin": "0x80000000", "size": "0x10000000", "readable": true, "writable": true, "executable": true, "cacheable": true, "device": false}
   ],
   "reservedRegions": [],
   "machineTimer": {

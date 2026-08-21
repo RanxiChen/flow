@@ -99,7 +99,8 @@ class BreezeBackend(
     csrFile.io.fp_flags := 0.U
     retireValid := memWbReg.valid &&
         !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
+        !memWbReg.illegal_inst && !memWbReg.csr_illegal &&
+        !memWbReg.is_ecall && !memWbReg.is_ebreak &&
         !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
         !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
         !memWbReg.load_page_fault && !memWbReg.store_page_fault
@@ -133,7 +134,8 @@ class BreezeBackend(
     regFile.io.rd_addr := memWbReg.rd_addr
     regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en &&
         !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst && !memWbReg.csr_illegal && !memWbReg.is_ecall &&
+        !memWbReg.illegal_inst && !memWbReg.csr_illegal &&
+        !memWbReg.is_ecall && !memWbReg.is_ebreak &&
         !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
         !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
         !memWbReg.load_page_fault && !memWbReg.store_page_fault
@@ -278,6 +280,7 @@ class BreezeBackend(
         idExeReg.instruction_page_fault := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
+        idExeReg.is_ebreak := false.B
         idExeReg.is_mret := false.B
         idExeReg.is_sret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
@@ -334,6 +337,7 @@ class BreezeBackend(
             (decoder.io.exe_ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)) &&
             !decodeInstructionFault
         idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall && !decodeInstructionFault
+        idExeReg.is_ebreak := decoder.io.exe_ctrl.is_ebreak && !decodeInstructionFault
         idExeReg.is_mret := decoder.io.exe_ctrl.is_mret && !csrFile.io.mret_illegal &&
             !decodeInstructionFault
         idExeReg.is_sret := decoder.io.exe_ctrl.is_sret && !csrFile.io.sret_illegal &&
@@ -370,6 +374,7 @@ class BreezeBackend(
         idExeReg.instruction_page_fault := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
+        idExeReg.is_ebreak := false.B
         idExeReg.is_mret := false.B
         idExeReg.is_sret := false.B
         idExeReg.pred.predType := FrontendPredType.NONE
@@ -528,7 +533,7 @@ class BreezeBackend(
     redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
     val wbTrap = memWbReg.instruction_access_fault || memWbReg.instruction_page_fault ||
         memWbReg.illegal_inst ||
-        memWbReg.csr_illegal || memWbReg.is_ecall ||
+        memWbReg.csr_illegal || memWbReg.is_ecall || memWbReg.is_ebreak ||
         memWbReg.load_addr_misaligned || memWbReg.store_addr_misaligned ||
         memWbReg.load_access_fault || memWbReg.store_access_fault ||
         memWbReg.load_page_fault || memWbReg.store_page_fault
@@ -1013,6 +1018,7 @@ class BreezeBackend(
         memWbReg.store_page_fault      -> BigInt(15).U(cfg.VLEN.W),
         memWbReg.load_page_fault       -> BigInt(13).U(cfg.VLEN.W),
         memWbReg.is_ecall              -> ecallCause,
+        memWbReg.is_ebreak             -> BigInt(3).U(cfg.VLEN.W),
         memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
         memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W),
         true.B                         -> 0.U(cfg.VLEN.W)
@@ -1030,6 +1036,7 @@ class BreezeBackend(
         memWbReg.store_page_fault      -> memWbReg.alu_data,
         memWbReg.load_page_fault       -> memWbReg.alu_data,
         memWbReg.is_ecall              -> 0.U(cfg.VLEN.W),
+        memWbReg.is_ebreak             -> 0.U(cfg.VLEN.W),
         memWbReg.csr_illegal           -> 0.U(cfg.VLEN.W),
         memWbReg.illegal_inst          -> memWbReg.rawInst,
         true.B                         -> 0.U(cfg.VLEN.W)
@@ -1072,6 +1079,7 @@ class BreezeBackend(
         exeMemReg.instruction_page_fault := false.B
         exeMemReg.illegal_inst := false.B
         exeMemReg.is_ecall := false.B
+        exeMemReg.is_ebreak := false.B
         exeMemReg.is_mret := false.B
         exeMemReg.is_sret := false.B
         exeMemReg.csr_illegal := false.B
@@ -1138,6 +1146,7 @@ class BreezeBackend(
         exeMemReg.instruction_page_fault := idExeReg.instruction_page_fault
         exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.is_ecall := idExeReg.is_ecall
+        exeMemReg.is_ebreak := idExeReg.is_ebreak
         exeMemReg.is_mret := idExeReg.is_mret
         exeMemReg.is_sret := idExeReg.is_sret
         exeMemReg.csr_illegal := csrFile.io.csr_illegal &&
@@ -1270,6 +1279,7 @@ class BreezeBackend(
         memWbReg.instruction_page_fault := false.B
         memWbReg.illegal_inst := false.B
         memWbReg.is_ecall := false.B
+        memWbReg.is_ebreak := false.B
         memWbReg.is_mret := false.B
         memWbReg.is_sret := false.B
         memWbReg.csr_illegal := false.B
@@ -1321,6 +1331,7 @@ class BreezeBackend(
         memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
+        memWbReg.is_ebreak := exeMemReg.is_ebreak
         memWbReg.is_mret := exeMemReg.is_mret
         memWbReg.is_sret := exeMemReg.is_sret
         memWbReg.csr_illegal := exeMemReg.csr_illegal
@@ -1371,6 +1382,7 @@ class BreezeBackend(
         memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
+        memWbReg.is_ebreak := exeMemReg.is_ebreak
         memWbReg.is_mret := exeMemReg.is_mret
         memWbReg.is_sret := exeMemReg.is_sret
         memWbReg.csr_illegal := exeMemReg.csr_illegal
