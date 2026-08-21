@@ -59,6 +59,7 @@ VALID_PROFILE_VALUES = {
     "l1Ways": "4",
     "l2Ways": "8",
     "corePreset": "gshare",
+    "privilegeProfile": "mcu",
 }
 
 # Matches expected_cluster_profile("small", "gshare") in the runner.
@@ -72,6 +73,7 @@ SMALL_PROFILE_VALUES = {
     "l1Ways": "4",
     "l2Ways": "8",
     "corePreset": "gshare",
+    "privilegeProfile": "mcu",
 }
 
 

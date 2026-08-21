@@ -91,8 +91,11 @@ PLIC 支持 31 个外部 source，并为每个 hart 提供 M-mode 和 S-mode con
 - LSR 的 THRE/TEMT；
 - RX 和 TX interrupt 条件。
 
-当前是单字节 stream 端点模型，不是带真实波特率时序的完整 UART macro。设备树将其
-描述为 `ns16550a`，clock 1.8432 MHz、115200 baud、`reg-io-width=1`。
+TX/RX 内部直接复用 LiteX UART 同类的 16-entry buffered `stream.SyncFIFO`，状态位
+描述本地 FIFO，而不是下游 PHY 的组合 `ready`。这样即使仿真 backend 只在看到
+`valid` 后拉高 `ready`，OpenSBI 也能观察到复位后的 THRE/TEMT 并发送第一个字符。
+串行 PHY 仍由 LiteX 提供；设备树将寄存器前端描述为 `ns16550a`，clock 1.8432 MHz、
+115200 baud、`reg-io-width=1`。
 
 ## 7. Boot contract
 
