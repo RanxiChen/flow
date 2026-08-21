@@ -136,6 +136,19 @@ Their required markers are `[MULTICORE-SINGLE-CLINT-MSIP-PASS]` and
 `[MULTICORE-SINGLE-CLINT-MTIP-PASS]`. Each output directory retains a filtered
 `memory-trace.log` for the `0x0200_0000..0x0200_ffff` CLINT region.
 
+After both single-hart tests pass, validate cross-hart addressing and distinct
+per-hart timer outputs with the four-hart Linux profile:
+
+```bash
+python3 sim/litex/run_linux_clint.py --profile small --test ipi
+python3 sim/litex/run_linux_clint.py --profile small --test per-hart-timer
+```
+
+The required markers are `[MULTICORE-SMALL-CLINT-IPI-PASS]` and
+`[MULTICORE-SMALL-CLINT-PER-HART-TIMER-PASS]`. The IPI test addresses every
+hart in turn and rejects shared-word MSIP aliasing. The timer test first arms
+only hart 3, then arms all four harts, rejecting a broadcast MTIP implementation.
+
 The standalone `test_plic_interrupt_path.py` test drives source 10 through
 priority, enable, pending, MEIP, claim, and completion without involving the
 CPU. Only after both CPU stages pass should the four-hart

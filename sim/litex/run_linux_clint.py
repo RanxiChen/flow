@@ -11,14 +11,27 @@ FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SOFTWARE_ROOT = os.path.join(FLOW_ROOT, "software", "breeze-mcu")
 SIM_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "multicore_sim.py")
 TRACE_PREFIXES = ("[MEM-RETIRE]", "[DCACHE-", "[WB-")
+PROFILE_HARTS = {"single": 1, "dual": 2, "small": 4}
 TESTS = {
     "msip": {
         "source": os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"),
-        "cflags": "-DBREEZE_NUM_HARTS=1 -DBREEZE_IPI_CASE=1",
+        "case": 1,
+        "profiles": ("single",),
     },
     "mtip": {
         "source": os.path.join(SOFTWARE_ROOT, "apps", "timer_irq_smoke.c"),
-        "cflags": "-DBREEZE_NUM_HARTS=1",
+        "case": None,
+        "profiles": ("single",),
+    },
+    "ipi": {
+        "source": os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"),
+        "case": 1,
+        "profiles": ("dual", "small"),
+    },
+    "per-hart-timer": {
+        "source": os.path.join(SOFTWARE_ROOT, "apps", "multicore_ipi.c"),
+        "case": 3,
+        "profiles": ("dual", "small"),
     },
 }
 
@@ -51,13 +64,15 @@ def run_streaming(command, cwd=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run a bounded single-hart Linux-profile CLINT test.")
+        description="Run a bounded Linux-profile CLINT integration test.")
     parser.add_argument("--test", choices=sorted(TESTS), required=True)
+    parser.add_argument("--profile", choices=sorted(PROFILE_HARTS),
+        default="single")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-")
     parser.add_argument("--core-preset", choices=("baseline", "gshare"),
         default="gshare")
     parser.add_argument("--elaborate", action="store_true",
-        help="Regenerate the single-hart Linux-profile cluster RTL.")
+        help="Regenerate the selected Linux-profile cluster RTL.")
     parser.add_argument("--mcu-timeout", type=int, default=200000)
     parser.add_argument("--output-dir")
     parser.add_argument("--mem-trace-file")
@@ -68,29 +83,36 @@ def main():
         parser.error("--mcu-timeout must be greater than zero")
     if args.mem_trace_max_events <= 0:
         parser.error("--mem-trace-max-events must be greater than zero")
+    test = TESTS[args.test]
+    if args.profile not in test["profiles"]:
+        parser.error(
+            f"test {args.test!r} supports profiles {test['profiles']}, "
+            f"not {args.profile!r}")
     if args.output_dir is None:
         args.output_dir = os.path.join(
-            FLOW_ROOT, "build", f"linux-clint-{args.test}-single")
+            FLOW_ROOT, "build", f"linux-clint-{args.test}-{args.profile}")
 
     if args.elaborate:
         sbt = os.environ.get("SBT", "sbt")
         run_checked([
             sbt,
             "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-            f"single {args.core_preset} linux",
+            f"{args.profile} {args.core_preset} linux",
         ], cwd=os.path.join(FLOW_ROOT, "design"))
 
-    test = TESTS[args.test]
     firmware_build = os.path.join(
-        SOFTWARE_ROOT, "build", f"linux-clint-{args.test}")
+        SOFTWARE_ROOT, "build", f"linux-clint-{args.test}-{args.profile}")
     firmware_prefix = os.path.join(firmware_build, "breeze-mcu")
+    extra_cflags = f"-DBREEZE_NUM_HARTS={PROFILE_HARTS[args.profile]}"
+    if test["case"] is not None:
+        extra_cflags += f" -DBREEZE_IPI_CASE={test['case']}"
     run_checked([
         "make", "-B", "-C", SOFTWARE_ROOT,
         f"BUILD_DIR={firmware_build}",
         f"MAIN={test['source']}",
         "LINK_SCRIPT=link-linux.ld",
         f"CROSS_COMPILE={args.cross_compile}",
-        f"EXTRA_CFLAGS={test['cflags']}",
+        f"EXTRA_CFLAGS={extra_cflags}",
     ])
 
     result_address = read_symbol(firmware_prefix + ".sym", "__breeze_result")
@@ -98,7 +120,7 @@ def main():
         firmware_prefix + ".sym", "__breeze_pmu_snapshot")
     command = [
         sys.executable, SIM_ENTRY,
-        "--profile", "single",
+        "--profile", args.profile,
         "--core-preset", args.core_preset,
         "--privilege", "linux",
         "--test-name", f"clint-{args.test}",
@@ -128,7 +150,8 @@ def main():
     if return_code != 0:
         raise SystemExit(return_code)
 
-    marker = f"[MULTICORE-SINGLE-CLINT-{args.test.upper()}-PASS]"
+    marker = (
+        f"[MULTICORE-{args.profile.upper()}-CLINT-{args.test.upper()}-PASS]")
     if marker not in output:
         print(f"ERROR: simulator did not report {marker}", file=sys.stderr)
         raise SystemExit(1)

@@ -45,6 +45,10 @@ class FlowClintVerilogContractTest(unittest.TestCase):
         self.assertIn('"--privilege", "linux"', integration)
         self.assertIn('"LINK_SCRIPT=link-linux.ld"', integration)
         self.assertIn('"--mem-trace-address-start", "0x02000000"', integration)
+        self.assertIn('PROFILE_HARTS = {"single": 1, "dual": 2, "small": 4}',
+            integration)
+        self.assertIn('"per-hart-timer"', integration)
+        self.assertIn('f"{args.profile} {args.core_preset} linux"', integration)
 
 
 if __name__ == "__main__":
