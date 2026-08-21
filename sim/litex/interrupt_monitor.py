@@ -31,23 +31,34 @@ class FlowInterruptChainMonitor(Module):
         uart_status = uart.ev.status.status
         uart_pending = uart.ev.pending.status
         uart_irq = uart.ev.irq
-        plic_source = plic.sources[source_id - 1]
-        plic_pending = plic.pending_bits[source_id]
+        # Migen's Display special cannot serialize a raw _Slice and otherwise
+        # emits its Python repr into Verilog.  Give every displayed slice a
+        # named one-bit signal first.
+        plic_source = Signal(name="irq_chain_plic_source")
+        plic_pending = Signal(name="irq_chain_plic_pending")
         plic_claim = plic.claims[context]
-        plic_meip = plic.meip[hart]
-        cpu_meip = cpu.meip[hart]
+        plic_claim_matches = Signal(name="irq_chain_plic_claim_matches")
+        plic_meip = Signal(name="irq_chain_plic_meip")
+        cpu_meip = Signal(name="irq_chain_cpu_meip")
 
-        self.comb += state.eq(Cat(
-            uart_enable,
-            uart_status,
-            uart_pending,
-            uart_irq,
-            plic_source,
-            plic_pending,
-            plic_claim == source_id,
-            plic_meip,
-            cpu_meip,
-        ))
+        self.comb += [
+            plic_source.eq(plic.sources[source_id - 1]),
+            plic_pending.eq(plic.pending_bits[source_id]),
+            plic_claim_matches.eq(plic_claim == source_id),
+            plic_meip.eq(plic.meip[hart]),
+            cpu_meip.eq(cpu.meip[hart]),
+            state.eq(Cat(
+                uart_enable,
+                uart_status,
+                uart_pending,
+                uart_irq,
+                plic_source,
+                plic_pending,
+                plic_claim_matches,
+                plic_meip,
+                cpu_meip,
+            )),
+        ]
         self.sync += [
             cycle.eq(cycle + 1),
             If(retire.valid,
