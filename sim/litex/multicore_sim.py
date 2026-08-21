@@ -35,6 +35,7 @@ from flow.cluster import (  # noqa: E402
     FlowCluster,
 )
 from flow.clint import BreezeClint  # noqa: E402
+from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic import BreezePlic  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
@@ -142,8 +143,11 @@ class MulticoreSimSoC(SoCCore):
             )
             self.add_constant("BREEZE_LITEDRAM", 1)
 
-        # Parameterized CLINT: per-hart msip (IPI) and mtimecmp, shared mtime.
-        self.submodules.machine_timer = BreezeClint(
+        # Linux uses standalone CLINT RTL; retain the old Migen block for the
+        # established MCU regressions and as a reference during migration.
+        clint_class = (
+            BreezeClintVerilog if privilege_profile == "linux" else BreezeClint)
+        clint_args = dict(
             sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQUENCY_HZ,
             num_harts=self.cpu.num_harts,
@@ -152,6 +156,9 @@ class MulticoreSimSoC(SoCCore):
             mtimecmp_offset=MTIMECMP_OFFSET,
             mtime_offset=MTIME_OFFSET,
         )
+        if privilege_profile == "linux":
+            clint_args["platform"] = platform
+        self.submodules.machine_timer = clint_class(**clint_args)
         self.bus.add_slave(
             name="machine_timer",
             slave=self.machine_timer.bus,

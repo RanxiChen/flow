@@ -109,6 +109,33 @@ Its required marker is `[FLOW-PLIC-PASS]`. The test drives global LiteX
 Wishbone addresses and covers 32-bit high/low lanes, source 10, M/S contexts,
 multiple harts, level-gateway behavior, claim, and complete.
 
+Linux profiles likewise instantiate standalone
+`litex_wrapper/flow/rtl/FlowClint.sv`, while the legacy Migen `BreezeClint`
+remains selected by MCU profiles. Run its direct test on Alan before any
+CPU-integrated IPI or timer test:
+
+```bash
+sim/rtl/run_flow_clint_test.sh
+```
+
+Its required marker is `[FLOW-CLINT-PASS]`. It covers global address
+localization, shared-word `msip[0]/msip[1]` byte-lane isolation, partial
+`mtimecmp` writes, the divided timebase, per-hart MTIP, and RAZ behavior for
+unimplemented offsets.
+
+Only after that marker passes, run the two bounded CPU-integrated tests in
+order. Both use the Linux privilege profile and `link-linux.ld`, so they test
+the new RTL rather than the retained MCU/Migen path:
+
+```bash
+python3 sim/litex/run_linux_clint.py --test msip
+python3 sim/litex/run_linux_clint.py --test mtip
+```
+
+Their required markers are `[MULTICORE-SINGLE-CLINT-MSIP-PASS]` and
+`[MULTICORE-SINGLE-CLINT-MTIP-PASS]`. Each output directory retains a filtered
+`memory-trace.log` for the `0x0200_0000..0x0200_ffff` CLINT region.
+
 The standalone `test_plic_interrupt_path.py` test drives source 10 through
 priority, enable, pending, MEIP, claim, and completion without involving the
 CPU. Only after both CPU stages pass should the four-hart
