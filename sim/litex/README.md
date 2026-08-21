@@ -3,6 +3,60 @@
 This directory owns the concrete LiteX simulation SoC. The reusable CPU API
 adapter remains in `litex_wrapper/flow/core.py`.
 
+## Four-hart Linux simulation
+
+The Linux path is separate from the legacy MCU runner. It uses the `small`
+four-hart cluster, the `linux` privilege profile, a 256 MiB LiteDRAM/DDR3
+model, CLINT, PLIC, and a dedicated ns16550a UART at `0x13000000`.
+
+Build the reset ROM, DTB, and the S-mode handoff probe first:
+
+```bash
+make -C software/breeze-linux
+```
+
+The simulator loads three host files into modeled DDR:
+
+```text
+OpenSBI  0x80000000
+DTB      0x80100000
+payload  0x80200000
+```
+
+Run the handoff probe before a full Linux image:
+
+```bash
+BUILDROOT_OUT=build/buildroot-flow
+
+python3 sim/litex/linux_sim.py \
+    --opensbi "$BUILDROOT_OUT/images/fw_jump.bin" \
+    --kernel software/breeze-linux/build/handoff-smoke.bin \
+    --dtb "$BUILDROOT_OUT/images/flow-small.dtb" \
+    --bootrom software/breeze-linux/build/bootrom.bin \
+    --output-dir build/linux-handoff \
+    --elaborate --build --non-interactive \
+    --debug-cycles 50000000 \
+    --opt-level O3 --jobs "$(nproc)"
+```
+
+`debug` RTL exposes per-hart retirement. The monitor prints the initial
+retirements, a progress snapshot every one million cycles, UART MMIO writes,
+fatal events, and a final per-hart summary. OpenSBI handoff is proven only when
+the payload writes `K`; reaching the timeout without a fatal is progress
+evidence, not a PASS.
+
+Do not use `bootrom.bin` as `--kernel`. It contains reset code that jumps to
+OpenSBI, so placing it at the payload address causes OpenSBI re-entry instead
+of an S-mode handoff.
+
+After the handoff probe passes, replace `--kernel` with the Buildroot `Image`
+or Alpine `Image-alpine`. These runs are intentionally diskless: initramfs is
+embedded in the kernel image, and no VirtIO device is required.
+
+See `docs/linux/hardware-platform.md`, `docs/linux/buildroot-alpine.md`, and
+`docs/linux/verification-status.md` for the platform contract and current
+evidence boundary.
+
 Generate the baseline core RTL and the standalone ROM image first:
 
 ```bash

@@ -1,332 +1,139 @@
-# Breeze MCU
+# Flow / Breeze RISC-V Processor
 
-Breeze MCU 是一个基于 BreezeCore 和 LiteX 的 64 位 RISC-V 仿真 MCU。
-当前版本已经打通从用户 `main.c`、裸机 runtime、RTL elaboration 到
-LiteX/Verilator SoC 仿真的完整流程。用户只需要提供 `int main(void)`，脚本会完成
-交叉编译、链接、ROM 加载、仿真运行和有限结束判断。
+Flow 是一个使用 Chisel 实现的 64 位 RISC-V 处理器与多核 SoC 项目。当前开发主线
+已经从裸机 MCU 扩展到四核 Linux：CPU 具备 M/S/U 特权级、Sv39、PMP、RV64A 和
+压缩指令，多核系统包含私有 L1、共享一致性 L2、CLINT、PLIC、16550 UART，以及由
+LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
 
-目前的主要目标是贴近真实 SoC 集成过程的可执行仿真，而不是 FPGA 上板。核心通过
-Wishbone 访问 LiteX 提供的 ROM、SRAM、主存和 MMIO 外设；后续上板将单独建立板级
-时钟、约束、存储和固件流程。
+现阶段优先在 LiteX/Verilator 中完成可重复的软件仿真，再进行 FPGA 板级适配。Linux
+启动不依赖 VirtIO：OpenSBI、DTB 和内嵌 initramfs 的 Linux `Image` 由宿主机直接装入
+模拟 DDR，持久化块设备留到后续阶段。
 
-## 当前能力
+## 最新进展
 
-- RV64 单发射、顺序执行、五级流水线，按 `IF / ID / EX / MEM / WB` 组织；
-- `RV64IM_Zicsr_Zifencei`，little-endian，完整支持 RV64M 乘除法指令；
-- 仅 Machine mode，不包含 MMU、TLB、页表、S-mode 和 U-mode；
-- Machine-mode exception、interrupt、Direct/Vectored `mtvec` 和 `mret`；
-- 独立 ICache、DCache 和 64-bit instruction/data Wishbone master；
-- LiteX 仿真 SoC：Boot ROM、SRAM、main RAM、UART 和 machine timer；
-- 通用裸机 runtime：启动、栈、`.data`/`.bss`、trap frame、UART/Timer API；
-- `main()` 返回后通过 SRAM completion mailbox 结束仿真，不依赖 UART 文本解析，
-  也不引入自定义停止指令或 IPC MMIO。
-- M-mode PMU 提供 `mcycle`、`minstret` 和 8 个可编程 HPM counter，统计控制流、
-  预测失败、Cache miss、uncached 访问和访存停顿；runner 自动计算 IPC。
+截至 2026-08-21，仓库已经完成：
 
-默认 LiteX 顶层使用 `baseline` 配置，不启用分支预测。GShare 必须通过
-`--core-preset gshare` 显式选择；两套 RTL 和 Verilator 产物使用独立目录，切换配置
-不会复用另一套产物。
+- 1/2/4 hart 可参数化集群，四核 `small` profile 使用 64 KiB 共享 L2；
+- Linux profile：M/S/U trap/CSR、delegation、PMP、Sv39、TLB、`SFENCE.VMA`、
+  `FENCE.I`、RV64C、RV64A LR/SC/AMO，以及 Linux 所需异常分类；
+- 精确识别 `EBREAK`，产生 breakpoint exception（`mcause=3`、`mtval=0`）；
+- Linux PMA：256 MiB DDR、CLINT、PLIC、LiteX CSR 和独立 16550 UART 区域；
+- LiteX 仿真中的 LiteDRAM DDR3 控制器路径，关闭额外 LiteX L2，避免绕过 Flow 的
+  一致性 home/L2；
+- 四核 reset ROM、OpenSBI `fw_jump`、DTB 和 kernel 的固定装载契约；
+- 全新 Buildroot external tree，可生成四核、musl、initramfs Linux 镜像；
+- 基于 Alpine 官方 RISC-V minirootfs 的无盘 `Image-alpine` 构建脚本；
+- Linux bring-up 进度、每 hart retirement、fatal 和 16550 MMIO 诊断；
+- Chisel 完整回归 43 个 suite、181 个测试全部通过。
 
-## 微架构参数
+当前边界也要明确：Buildroot 和 Alpine 镜像已经真实构建成功，四核 ROM 到 OpenSBI
+的执行路径也已进入实际 RTL 仿真；但尚未取得 Linux kernel 与用户空间完整启动的
+终端日志。长仿真应从 OpenSBI handoff smoke 开始，再运行真实 `Image`，不能把“镜像
+成功装入 DDR”当成“Linux 已启动”。详细证据见
+[`docs/linux/verification-status.md`](docs/linux/verification-status.md)。
 
-| 项目 | 当前默认配置 |
+## 结构概览
+
+| 层级 | 当前实现 |
 | --- | --- |
-| 核心 | RV64，单发射，顺序执行，五级流水线 |
-| ISA | `RV64IM_Zicsr_Zifencei` |
-| 特权级 | Machine mode only |
-| 地址 | 核内 64-bit 地址；当前 MCU 平台使用 32-bit 物理地址空间 |
-| 分支预测 | 默认关闭；可显式选择 GShare，具体参数见下节 |
-| ICache | 8 KiB，4-way，64 sets，32 B line，32-bit fetch，pseudo-LRU |
-| DCache | 256 B，8-entry fully-associative，32 B line |
-| DCache 策略 | blocking、write-back、write-allocate、invalid-first/round-robin replacement |
-| MMIO | PMA 标记为 device/non-cacheable，由 DCache bypass |
+| Core | RV64、单发射、顺序五级流水，GShare/BTB 可选 |
+| ISA | RV64IMAFDC、Zicsr、Zifencei；Linux profile 启用 A/C/F/D 路径 |
+| Privilege | 可选 MCU（M-only）或 Linux（M/S/U）profile |
+| MMU | Sv39、私有 I/D TLB、硬件 page-table walk、PMP、`SFENCE.VMA` |
+| L1 | 每 hart 8 KiB 4-way ICache + 8 KiB 4-way DCache，32 B line |
+| Coherence | 私有 coherent L1D + 共享 L2/home，支持 1/2/4 hart 与 LR/SC/AMO |
+| Linux SoC | 4 hart、256 MiB LiteDRAM、CLINT、PLIC、16550 UART、reset ROM |
+| Firmware | OpenSBI 1.9 `fw_jump`，DTB 位于固定 DDR 地址 |
+| Rootfs | Buildroot initramfs；Alpine minirootfs 重新内嵌进独立 kernel Image |
 
-ICache 和 DCache miss 都采用阻塞式处理。一个 32-byte cache line 会在 64-bit
-Wishbone 上拆成 4 个 beat。DCache 同时支持带 byte select 的单 beat MMIO/scalar
-访问和多 beat cache-line refill/writeback。
+硬件和启动地址的权威说明在
+[`docs/linux/hardware-platform.md`](docs/linux/hardware-platform.md)。
 
-## RV64M 乘除法支持
+## Linux 启动契约
 
-当前核心支持 RV64M 的全部整数乘除法指令：
-
-- 乘法：`MUL`、`MULH`、`MULHSU`、`MULHU`、`MULW`；
-- 除法与取余：`DIV`、`DIVU`、`REM`、`REMU`、`DIVW`、`DIVUW`、`REMW`、
-  `REMUW`。
-
-乘法器使用 65-bit 有符号统一数据通路，根据指令在 EX 阶段完成符号或零扩展。除法器
-采用单请求 radix-4 迭代实现，每周期生成 2 个商位，RV64 最坏为 32 次迭代，并通过
-前导位对齐支持可变延迟和 early-out。除零以及有符号 `MIN_INT / -1` 溢出在 EX 阶段
-直接生成架构规定结果，不进入迭代器。
-
-load、multiply 和 divide 在 MEM 完成点共用长延迟结果旁路。运算单元返回的周期会解除
-流水线 hold、只生成一次 MEM/WB valid，并允许紧随其后的相关指令直接使用返回值。
-当前尚未实现 RISC-V 规范建议的乘除法指令融合。
-
-## GShare 配置
-
-LiteX 仿真支持两套核心 preset：
-
-- `baseline`：默认配置，不实例化分支预测器；
-- `gshare`：显式 opt-in，实例化 GShare 方向预测器和 BTB。
-
-当前 `gshare` preset 使用以下固定参数：
-
-| 参数 | 配置 |
-| --- | --- |
-| GHR | 8 bit，实际分支结果每次移入 1 bit |
-| PHT | 256 entries，每项为 2-bit 饱和计数器 |
-| PHT 初始状态 | weakly not-taken |
-| PHT 索引 | `PC[9:2] xor GHR` |
-| BTB | 16 entries，使用完整对齐 PC tag |
-| BTB 控制流类型 | conditional branch、JAL、JALR |
-| BTB replacement | 优先使用无效 entry，满表后 round-robin |
-
-预测元数据随取指和后端流水传递。实际控制流结果与预测不一致时，后端重定向前端；
-训练以一次有效执行为单位，流水停顿不会重复更新。GShare 目前完成的是正确性 v1
-验收，IPC 只作为测量结果报告，不是 PASS/FAIL 门槛。
-
-## 总线与仿真 SoC
-
-BreezeCore 对外提供相互独立的 instruction 和 data Wishbone master：数据宽度
-64 bit，平台地址宽度 32 bit，`adr` 使用 8-byte word address。LiteX 将两路 master
-接入共享 Wishbone interconnect，并负责存储和 MMIO 地址译码。
-
-| 区域 | 地址 | 大小 | 属性 |
-| --- | ---: | ---: | --- |
-| Machine timer | `0x0200_0000` | 64 KiB | device，non-cacheable |
-| Boot ROM | `0x1000_0000` | 64 KiB | read/execute，cacheable |
-| SRAM | `0x1100_0000` | 256 KiB | read/write/execute，cacheable |
-| LiteX MMIO | `0x1200_0000` | 16 MiB | device，non-cacheable |
-| Main RAM | `0x8000_0000` | 32 MiB | read/write/execute，cacheable |
-
-复位 PC 为 `0x1000_0000`。程序地址直接作为物理地址使用。
-
-## UART 与 Timer
-
-UART 使用 LiteX UART，基地址为 `0x1200_1000`。固件可通过
-`breeze_uart_putc()`、`breeze_uart_puts()` 和 `breeze_uart_put_hex64()` 输出调试
-信息，字符会直接显示在仿真终端。UART 也连接到 external interrupt source 0，最终
-汇聚为 Machine External Interrupt。
-
-Timer 是项目自有的 64-bit machine timer，而不是 LiteX CSR timer：
-
-| 寄存器 | 地址 | 说明 |
+| 内容 | 地址 | 说明 |
 | --- | ---: | --- |
-| `mtimecmp` | `0x0200_4000` | 64-bit read/write compare value |
-| `mtime` | `0x0200_bff8` | 64-bit read/write counter |
+| Reset ROM | `0x1001_0000` | 设置 `a0=mhartid`、`a1=DTB`，跳到 OpenSBI |
+| OpenSBI | `0x8000_0000` | `fw_jump.bin` |
+| DTB | `0x8010_0000` | 四核 Flow 平台描述 |
+| Linux / payload | `0x8020_0000` | Buildroot `Image`、`Image-alpine` 或 handoff smoke |
+| DDR | `0x8000_0000` | 256 MiB，结束于 `0x9000_0000` |
 
-Timer timebase 为 1 MHz，比较命中后直接产生 `mtip`，对应 Machine Timer
-Interrupt。固件可使用 `breeze_timer_read()` 和 `breeze_timer_set_compare()`。
+`sim/litex/linux_sim.py` 会检查镜像范围和重叠，然后把三段镜像装入 LiteDRAM。它不
+创建 VirtIO 磁盘，Buildroot 和 Alpine 的根文件系统均内嵌在 kernel Image 中。
 
-## 环境准备
+## 快速阅读顺序
 
-仿真需要 Python 3、LiteX/Migen、Verilator、Java/sbt、GNU Make，以及提供
-`riscv64-unknown-elf-*` 的 RISC-V 裸机工具链。LiteX 可按
-[官方安装说明](https://github.com/enjoy-digital/litex/wiki/Installation) 安装；本项目
-只使用 LiteX/Migen 和 Verilator 仿真，不需要 FPGA 厂商工具。
+后续开发者或 Agent 建议按以下顺序阅读：
 
-可以先检查主要命令：
+1. 本 README：项目目标和当前边界；
+2. [`docs/linux/hardware-platform.md`](docs/linux/hardware-platform.md)：CPU、SoC、
+   地址与中断契约；
+3. [`docs/linux/buildroot-alpine.md`](docs/linux/buildroot-alpine.md)：从干净源码构建
+   OpenSBI、Buildroot 和 Alpine；
+4. [`docs/linux/verification-status.md`](docs/linux/verification-status.md)：已验证项、
+   未完成门槛和已知陷阱；
+5. [`sim/litex/README.md`](sim/litex/README.md)：仿真命令和诊断选项；
+6. `design/src/main/scala/config/config.scala`、
+   `design/src/main/scala/top/BreezeMulticoreClusterWishbone.scala` 和
+   `sim/litex/multicore_sim.py`：实现源代码。
 
-```bash
-python3 -c 'import litex, migen'
-verilator --version
-sbt --version
-riscv64-unknown-elf-gcc --version
-```
+## 构建 Linux 辅助镜像
 
-## 编写并运行 `main.c`
-
-用户程序只需要实现 `int main(void)`。例如新建 `hello.c`：
-
-```c
-#include "breeze/uart.h"
-
-int main(void)
-{
-    breeze_uart_puts("Hello from Breeze MCU!\r\n");
-    return 0;
-}
-```
-
-在仓库根目录运行：
+先生成 reset ROM、handoff smoke 和 DTB：
 
 ```bash
-python3 sim/litex/run_mcu.py --main hello.c --elaborate
+make -C software/breeze-linux
 ```
 
-`--elaborate` 会先通过 sbt 重新生成 `BreezeCoreWishbone` RTL。RTL 没有变化时，
-后续仿真可以省略它：
+handoff smoke 链接到 `0x8020_0000`。OpenSBI 成功进入 S-mode payload 后，它会向
+Linux 16550 UART 写出字符 `K`，随后留在 `WFI` 循环。它用于把“OpenSBI 仍在运行”
+和“OpenSBI 已完成交接”区分开。
+
+生成四核 Linux debug RTL：
 
 ```bash
-python3 sim/litex/run_mcu.py --main hello.c
+cd design
+sbt "runMain flow.top.GenerateBreezeMulticoreClusterWishbone small gshare linux debug"
+cd ..
 ```
 
-默认命令使用 baseline。显式启用 GShare 并重新生成对应 RTL：
+`debug` 保留 retirement 接口；最终综合准备可使用 `production`，它关闭 tandem
+trace，减少非产品端口和逻辑。
 
-```bash
-python3 sim/litex/run_mcu.py --main hello.c \
-    --core-preset gshare --elaborate
-```
+Buildroot、Alpine 和完整仿真命令见
+[`docs/linux/buildroot-alpine.md`](docs/linux/buildroot-alpine.md)。这些仿真可能运行很
+久，建议使用独立输出目录和可持久保存的日志。
 
-脚本会依次完成：
+## MCU 与回归
 
-1. 将用户 `main.c` 与项目 runtime、trap、UART、Timer 代码一起编译；
-2. 按 `RV64IM_Zicsr_Zifencei` 链接固件并生成 ELF、binary、反汇编和符号表；
-3. 将 binary 加载到 `0x1000_0000` Boot ROM；
-4. 生成并运行 LiteX/Verilator 仿真；
-5. 等待 `main()` 返回以及 completion store 退休，输出 PASS/FAIL、PMU 和 IPC 并结束。
-
-`main()` 返回 `0` 表示成功，非零表示失败。正常结束时可以看到：
-
-```text
-BREEZE_PERF cycles=<cycles> instructions=<instructions>
-BREEZE_PMU cycles=<cycles> instructions=<instructions> control=<count> taken=<count> pred_miss=<count> icache_miss=<count> dcache_access=<count> dcache_miss=<count> uncached=<count> mem_stall=<cycles>
-[GENERIC-PASS] MCU firmware completed
-BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
-BREEZE_METRICS prediction_miss_rate=<ratio> icache_mpki=<value> dcache_miss_rate=<ratio> memory_stall_ratio=<ratio>
-```
-
-runtime 通过 `mcountinhibit` 在 `main()` 前配置、清零并启动架构 PMU，在 `main()` 返回后
-冻结计数器并把快照写入 linker 保留的 SRAM。monitor 捕获这些退休 store 后打印结果；
-统计不经过 UART，也不影响 completion 判定。IPC 使用 PMU 的 `minstret/mcycle`，包含
-调用/返回 `main()` 的固定少量胶水指令，适合相同固件和 SoC 参数下的相对比较。
-
-UART 文本只用于观察程序行为，不决定仿真是否成功。若要生成波形，可增加
-`--trace`：
-
-```bash
-python3 sim/litex/run_mcu.py --main hello.c --trace
-```
-
-## Example：计算 Fibonacci 数列
-
-仓库提供了一个完整的计算型程序
-[`software/breeze-mcu/apps/fibonacci.c`](software/breeze-mcu/apps/fibonacci.c)。它在目标
-核上循环计算 `fib(40)`，通过 UART 输出结果，并在结果等于十进制 `102334155` 时
-从 `main()` 返回 0。输入迭代次数使用 `volatile`，避免编译器把整个计算折叠为常量。
-
-程序的核心内容是：
-
-```c
-static uint64_t fibonacci(uint32_t count)
-{
-    uint64_t previous = 0;
-    uint64_t current = 1;
-
-    for (uint32_t index = 0; index < count; ++index) {
-        uint64_t next = previous + current;
-        previous = current;
-        current = next;
-    }
-    return previous;
-}
-```
-
-先运行默认 baseline：
+Linux profile 没有删除原有 MCU 流程。裸机程序仍可使用：
 
 ```bash
 python3 sim/litex/run_mcu.py \
-    --main software/breeze-mcu/apps/fibonacci.c \
-    --core-preset baseline \
-    --elaborate
-```
-
-再显式启用 GShare：
-
-```bash
-python3 sim/litex/run_mcu.py \
-    --main software/breeze-mcu/apps/fibonacci.c \
+    --main software/breeze-mcu/apps/main.c \
     --core-preset gshare \
     --elaborate
 ```
 
-两次运行都会编译同一份 C 程序、生成所选 preset 的 RTL、构建 LiteX/Verilator SoC，
-然后启动固件。UART 应输出：
-
-```text
-Breeze MCU Fibonacci example
-fib(40) = 0x0000000006197ecb
-```
-
-之后 monitor 会输出 completion、PMU 和 IPC，最终出现：
-
-```text
-[GENERIC-PASS] MCU firmware completed
-BREEZE_IPC cycles=<cycles> instructions=<instructions> ipc=<ipc>
-```
-
-也可以用一个命令让同一固件依次运行 baseline 和 GShare，并自动检查固件 SHA256、
-completion、PMU/IPC 字段和退休指令数是否一致：
+主要回归入口：
 
 ```bash
-python3 sim/litex/run_gshare_regression.py \
-    --main software/breeze-mcu/apps/fibonacci.c \
-    --elaborate
+cd design
+sbt test
 ```
 
-脚本最后会分别打印两套配置的 cycles、instructions 和 IPC；这些数值用于观察，不设
-性能通过门槛。当前版本在 chen 的 LiteX/Verilator 环境中实测输出为：
-
-```text
-BREEZE_GSHARE_REGRESSION app=fibonacci mtvec=direct firmware_sha256=3ba36095e8ca1fdf95f189b0680dc2275477eabf53c744c81392bd8da91613ff PASS
-BREEZE_GSHARE_RESULT preset=baseline cycles=3905 instructions=1226 ipc=0.313956
-BREEZE_GSHARE_RESULT preset=gshare cycles=2748 instructions=1226 ipc=0.446143
-```
-
-这里最重要的正确性证据是两套核心运行同一 SHA256 固件、退休相同数量的指令并都
-完成 PASS。cycles 和 IPC 会受工具版本与 SoC 参数影响，这一组数值只是典型执行记录。
-
-## Example：RV64M 乘法 workload
-
-[`software/breeze-mcu/apps/multiply.c`](software/breeze-mcu/apps/multiply.c) 使用
-volatile 输入执行 64 轮八元素有符号点积，共包含 512 次动态乘法。volatile 数组可防止
-编译器把点积折叠成常量；循环中的乘法结果立即参与累加，也会覆盖乘法完成旁路路径。
-
-在 baseline 核心上运行：
-
-```bash
-python3 sim/litex/run_mcu.py \
-    --main software/breeze-mcu/apps/multiply.c \
-    --core-preset baseline \
-    --elaborate
-```
-
-固件应输出：
-
-```text
-Breeze MCU RV64M multiply workload
-dot-product checksum = 0x0000000000005080
-[GENERIC-PASS] MCU firmware completed
-```
-
-其中 checksum `0x5080` 等于十进制 `20608`。可以在生成的
-`software/breeze-mcu/build/multiply-direct/breeze-mcu.dis` 中检查 `mul` 指令，确认
-乘法没有被编译期消除。固件 Makefile 默认使用 `-march=rv64im_zicsr_zifencei`。
-
-如果交叉工具链使用其他前缀，可显式指定，例如：
-
-```bash
-python3 sim/litex/run_mcu.py \
-    --main hello.c \
-    --cross-compile /usr/bin/riscv64-linux-gnu-
-```
-
-仓库自带的默认程序位于
-[`software/breeze-mcu/apps/main.c`](software/breeze-mcu/apps/main.c)。Timer/UART
-中断回归可以这样运行：
-
-```bash
-python3 sim/litex/run_mcu.py --smoke timer --mtvec-mode direct --elaborate
-python3 sim/litex/run_mcu.py --smoke uart  --mtvec-mode direct
-python3 sim/litex/run_mcu.py --smoke timer --mtvec-mode vectored
-python3 sim/litex/run_mcu.py --smoke uart  --mtvec-mode vectored
-```
+定向仿真、GShare、Timer/UART、1/2/4 hart 测试见
+[`sim/litex/README.md`](sim/litex/README.md) 和
+[`software/breeze-mcu/README.md`](software/breeze-mcu/README.md)。
 
 ## 更多文档
 
+- [Linux 硬件平台](docs/linux/hardware-platform.md)
+- [Buildroot 与 Alpine](docs/linux/buildroot-alpine.md)
+- [Linux 验证状态](docs/linux/verification-status.md)
+- [LiteX 仿真](sim/litex/README.md)
 - [MCU 总体目标](docs/breeze-mcu-target.md)
-- [LiteX 仿真和调试选项](sim/litex/README.md)
-- [裸机 runtime 与固件模板](software/breeze-mcu/README.md)
-- [GShare 当前状态](docs/gshare-status.md)
-- [M-mode PMU 与事件定义](docs/pmu.md)
-- [开发记录](docs/worklog.md)
+- [GShare](docs/gshare-status.md)
+- [PMU](docs/pmu.md)
+- [Tandem trace](docs/tandem-trace.md)
