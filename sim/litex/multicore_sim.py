@@ -36,6 +36,7 @@ from flow.cluster import (  # noqa: E402
 )
 from flow.clint import BreezeClint  # noqa: E402
 from flow.plic import BreezePlic  # noqa: E402
+from flow.wiring import pack_plic_sources  # noqa: E402
 from breeze_sim import (  # noqa: E402
     MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MSIP_OFFSET, MTIME_FREQUENCY_HZ,
     MTIMECMP_OFFSET, MTIME_OFFSET, PLIC_ORIGIN, PLIC_SIZE,
@@ -172,7 +173,7 @@ class MulticoreSimSoC(SoCCore):
         # vector into one architecturally described PLIC source.
         linux_uart_irq = self.uart.ev.irq if privilege_profile == "linux" else 0
         self.comb += [
-            self.plic.sources.eq(linux_uart_irq << 9),
+            self.plic.sources.eq(pack_plic_sources(linux_uart_irq)),
             self.cpu.meip.eq(self.plic.meip),
             self.cpu.seip.eq(self.plic.seip),
         ]

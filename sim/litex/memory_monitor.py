@@ -2,6 +2,8 @@
 
 from migen import Display, If, Module, Signal
 
+from flow.wiring import wishbone_byte_address
+
 
 def _address_filter(address, start, end):
     condition = 1
@@ -19,8 +21,6 @@ class FlowWishboneMonitor(Module):
                  address_start=None, address_end=None):
         if max_events <= 0:
             raise ValueError("Wishbone trace max_events must be positive")
-        data_bytes = bus.data_width // 8
-        byte_shift = (data_bytes - 1).bit_length()
         cycle = Signal(64)
         active = Signal()
         traced = Signal()
@@ -35,7 +35,7 @@ class FlowWishboneMonitor(Module):
         should_trace = in_range & (events < max_events)
 
         self.comb += [
-            byte_address.eq(bus.adr << byte_shift),
+            byte_address.eq(wishbone_byte_address(bus.adr, bus.data_width)),
             latency.eq(cycle - started),
         ]
         self.sync += cycle.eq(cycle + 1)

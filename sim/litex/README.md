@@ -64,8 +64,13 @@ DTS and Buildroot contract checks:
 ```bash
 python3 -m unittest \
     sim/litex/test_liteuart.py \
-    sim/litex/test_liteuart_contract.py -v
+    sim/litex/test_liteuart_contract.py \
+    sim/litex/test_migen_width_contract.py -v
 ```
+
+The width-contract test converts a representative module to Verilog and bans
+Signal left shifts in project Migen code. Interrupt vectors and Wishbone byte
+addresses must use explicit-width `Cat` packing.
 
 The first CPU stage boots one Linux-profile hart directly from the Linux reset
 ROM. It uses the same byte accesses as OpenSBI (`TXFULL`, `RXEMPTY`,

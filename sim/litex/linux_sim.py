@@ -18,6 +18,7 @@ if SIM_DIR not in sys.path:
     sys.path.insert(0, SIM_DIR)
 
 from multicore_sim import MulticoreSimSoC  # noqa: E402
+from flow.wiring import wishbone_byte_address  # noqa: E402
 
 
 DDR_BASE = 0x8000_0000
@@ -42,7 +43,8 @@ class LinuxBootMonitor(Module):
         uart_address = Signal(64)
         uart_access = Signal()
         self.comb += [
-            uart_address.eq(mmio_bus.adr << 3),
+            uart_address.eq(wishbone_byte_address(
+                mmio_bus.adr, mmio_bus.data_width)),
             uart_access.eq(
                 (uart_address >= 0x1200_1000) &
                 (uart_address < 0x1200_2000)),

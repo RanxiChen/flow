@@ -27,6 +27,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
 from flow.core import Flow
 from flow.clint import BreezeClint
 from flow.plic import BreezePlic
+from flow.wiring import pack_plic_sources, wishbone_byte_address
 
 
 # Do not rely on LiteX's current-working-directory based CPU discovery.
@@ -119,7 +120,7 @@ class FetchWishboneMonitor(Module):
 
         self.comb += [
             active.eq(ibus.cyc & ibus.stb),
-            byte_address.eq(ibus.adr << 3),
+            byte_address.eq(wishbone_byte_address(ibus.adr, ibus.data_width)),
             expected_word_address_signal.eq(expected_word_address),
             expected_first_word_signal.eq(expected_first_word),
         ]
@@ -689,7 +690,7 @@ class BreezeSimSoC(SoCCore):
             name="plic", slave=self.plic.bus,
             region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
         self.comb += [
-            self.plic.sources.eq(self.cpu.interrupt << 9),
+            self.plic.sources.eq(pack_plic_sources(self.cpu.interrupt)),
             self.cpu.meip.eq(self.plic.meip),
             self.cpu.seip.eq(self.plic.seip),
         ]

@@ -79,6 +79,11 @@
 实际把动态移位量截断，真实CPU短测读回零。该结果证明旧测试模型不能作为生成RTL的
 证据，也是迁移到原生 LiteUART的直接原因。
 
+第一次 LiteUART PLIC短测进一步发现 `1-bit irq << 9` 在生成 Verilog后仍按1-bit
+求值，使 PLIC sources恒为零。接线已改为显式31-bit `Cat`；同次审计也替换了旧单核
+SoC的8-bit IRQ移位和所有调试监控中的 Wishbone地址移位，并加入生成Verilog位宽测试
+及项目 Migen Signal-left-shift禁入检查。修复后的 PLIC短测仍需目标机复验。
+
 ## 下一次验证顺序
 
 1. 在目标 commit上运行完整 `sbt test`；
