@@ -69,6 +69,38 @@ RETIRE_RTL_NAMES = {
     "mem_wmask":        "memWMask",
 }
 
+DCACHE_TRACE_LAYOUT = [
+    ("request_valid",   1),
+    ("response_valid",  1),
+    ("address",        64),
+    ("size_log2",       3),
+    ("is_write",        1),
+    ("write_data",     64),
+    ("mask",            8),
+    ("pma_allowed",     1),
+    ("pma_cacheable",   1),
+    ("pma_device",      1),
+    ("cache_hit",       1),
+    ("response_data",  64),
+    ("response_error",  1),
+]
+
+DCACHE_TRACE_RTL_NAMES = {
+    "request_valid":  "requestValid",
+    "response_valid": "responseValid",
+    "address":        "address",
+    "size_log2":      "sizeLog2",
+    "is_write":       "isWrite",
+    "write_data":     "writeData",
+    "mask":           "mask",
+    "pma_allowed":    "pmaAllowed",
+    "pma_cacheable":  "pmaCacheable",
+    "pma_device":     "pmaDevice",
+    "cache_hit":      "cacheHit",
+    "response_data":  "responseData",
+    "response_error": "responseError",
+}
+
 
 class FlowCluster(CPU):
     cluster_profile      = "single"
@@ -132,6 +164,7 @@ class FlowCluster(CPU):
         self.hart_fatal   = Signal(num_harts)
         self.hart_estop   = Signal(num_harts)
         self.retires      = [Record(RETIRE_LAYOUT) for _ in range(num_harts)]
+        self.dcache_traces = [Record(DCACHE_TRACE_LAYOUT) for _ in range(num_harts)]
         # Hart0 alias keeps single-profile monitors source-compatible.
         self.retire       = self.retires[0]
 
@@ -186,6 +219,10 @@ class FlowCluster(CPU):
                 # Verilog keeps the Chisel camelCase names (rdWriteEn, ...).
                 self.cpu_params[f"o_io_retire_{hart}_{RETIRE_RTL_NAMES[field_name]}"] = (
                     getattr(self.retires[hart], field_name))
+            for field_name, _ in DCACHE_TRACE_LAYOUT:
+                self.cpu_params[
+                    f"o_io_dcacheTrace_{hart}_{DCACHE_TRACE_RTL_NAMES[field_name]}"
+                ] = getattr(self.dcache_traces[hart], field_name)
 
         self.add_sources(platform)
 

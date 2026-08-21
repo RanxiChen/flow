@@ -43,6 +43,7 @@ from breeze_sim import (  # noqa: E402
     MTIMECMP_OFFSET, MTIME_OFFSET, PLIC_ORIGIN, PLIC_SIZE,
     McuCompletionMonitor, Platform,
 )
+from memory_monitor import FlowMemoryMonitor  # noqa: E402
 
 
 # Do not rely on LiteX's current-working-directory based CPU discovery.
@@ -76,7 +77,10 @@ class MulticoreSimSoC(SoCCore):
                  with_litedram=False,
                  sdram_init=None,
                  completion_label=None, mcu_result_address=None,
-                 mcu_perf_address=None, mcu_timeout=20000, **kwargs):
+                 mcu_perf_address=None, mcu_timeout=20000,
+                 memory_trace=False, memory_trace_max_events=1024,
+                 memory_trace_address_start=None,
+                 memory_trace_address_end=None, **kwargs):
         platform = Platform()
         FlowCluster.set_cluster_config(cluster_profile, core_preset, privilege_profile)
         self.mem_map = dict(type(self).mem_map)
@@ -201,6 +205,21 @@ class MulticoreSimSoC(SoCCore):
                 label=completion_label,
             )
 
+        if memory_trace:
+            trace_buses = [
+                ("cpu-mmio", self.cpu.dbus),
+                ("cpu-memory", self.cpu.ibus),
+            ]
+            if privilege_profile == "linux":
+                trace_buses.append(("uart16550", self.uart16550.bus))
+            self.submodules.memory_monitor = FlowMemoryMonitor(
+                self.cpu,
+                wishbone_buses=trace_buses,
+                max_events=memory_trace_max_events,
+                address_start=memory_trace_address_start,
+                address_end=memory_trace_address_end,
+            )
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -230,10 +249,24 @@ def main():
         help="Enable simulator waveform tracing.")
     parser.add_argument("--non-interactive", action="store_true",
         help="Run without attaching simulator stdin to a terminal.")
+    parser.add_argument("--mem-trace", action="store_true",
+        help="Enable passive Tandem/DCache/Wishbone memory tracing.")
+    parser.add_argument("--mem-trace-max-events", type=int, default=1024,
+        help="Maximum traced transactions per observer (default: 1024).")
+    parser.add_argument("--mem-trace-address-start", type=lambda value: int(value, 0),
+        help="Inclusive byte-address filter for memory tracing.")
+    parser.add_argument("--mem-trace-address-end", type=lambda value: int(value, 0),
+        help="Exclusive byte-address filter for memory tracing.")
     args = parser.parse_args()
 
     if args.mcu_timeout <= 0:
         parser.error("--mcu-timeout must be greater than zero")
+    if args.mem_trace_max_events <= 0:
+        parser.error("--mem-trace-max-events must be greater than zero")
+    if (args.mem_trace_address_start is not None and
+            args.mem_trace_address_end is not None and
+            args.mem_trace_address_start >= args.mem_trace_address_end):
+        parser.error("memory trace address start must be below its end")
 
     label = f"MULTICORE-{args.profile.upper()}-{args.test_name.upper()}"
     print(
@@ -265,6 +298,10 @@ def main():
         mcu_result_address=args.mcu_result_address,
         mcu_perf_address=args.mcu_perf_address,
         mcu_timeout=args.mcu_timeout,
+        memory_trace=args.mem_trace,
+        memory_trace_max_events=args.mem_trace_max_events,
+        memory_trace_address_start=args.mem_trace_address_start,
+        memory_trace_address_end=args.mem_trace_address_end,
     )
     builder = Builder(soc, output_dir=args.output_dir, compile_software=False)
     builder.build(

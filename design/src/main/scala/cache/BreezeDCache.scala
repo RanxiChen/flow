@@ -71,7 +71,8 @@ class BreezeDCache(
     val cfg: DefaultDCacheConfig = DefaultDCacheConfig(),
     val hartId: Int = 0,
     val hartIdWidth: Int = 1,
-    val txnIdWidth: Int = 2
+    val txnIdWidth: Int = 2,
+    val enableTrace: Boolean = false
 ) extends Module {
   private val ways = cfg.ways
   private val sets = cfg.sets
@@ -119,6 +120,9 @@ class BreezeDCache(
     val resKill = Input(Bool())
     val fatalError = Output(Bool())
     val hpm = Output(new BreezeHpmEvents)
+    // Passive debug trace; top-level production generation disconnects and
+    // eliminates it together with the Tandem outputs.
+    val trace = if (enableTrace) Some(Output(new DCacheTracePayload(cfg.VLEN))) else None
     // Uncached/MMIO scalar path (pulse protocol, served by the MMIO arbiter).
     val mmioReq = new DCacheMemReqIO(cfg.PLEN, cfg.lineBytes)
     val mmioRsp = new DCacheMemRespIO(cfg.lineBytes)
@@ -375,6 +379,22 @@ class BreezeDCache(
     pma.io.result.cacheable && !pma.io.result.device && !hit
   io.hpm.dcacheUncached := state === Lookup && pma.io.result.allowed &&
     (!pma.io.result.cacheable || pma.io.result.device)
+
+  io.trace.foreach { trace =>
+    trace.requestValid := state === Lookup
+    trace.responseValid := state === Respond
+    trace.address := reqAddr
+    trace.sizeLog2 := reqSizeLog2
+    trace.isWrite := reqIsWrite
+    trace.writeData := reqWData
+    trace.mask := scalarMask
+    trace.pmaAllowed := pma.io.result.allowed
+    trace.pmaCacheable := pma.io.result.cacheable
+    trace.pmaDevice := pma.io.result.device
+    trace.cacheHit := hit
+    trace.responseData := responseData
+    trace.responseError := responseError
+  }
 
   val cpuDirectAccept = state === Idle && !io.flushReq &&
     !probePendingValid && !cpuPendingValid

@@ -4,7 +4,7 @@ import chisel3._
 import flow.bus.{BreezeMmioArbiter, DCacheWishboneBridge, LiteXWishboneMasterIO, LiteXWishboneParameters}
 import flow.cache.{BreezeDCache, BreezeL2Home}
 import flow.config.BreezeClusterConfig
-import flow.interface.TracePayload
+import flow.interface.{DCacheTracePayload, TracePayload}
 import flow.platform.BreezeMcuPlatform
 
 /** SoC-facing wrapper of a 1/2/4-hart Breeze cluster - the only memory-system
@@ -51,6 +51,7 @@ class BreezeMulticoreClusterWishbone(
         val hartFatal = Output(Vec(numHarts, Bool()))
         val hartEStop = Output(Vec(numHarts, Bool()))
         val retire = Output(Vec(numHarts, new TracePayload(64)))
+        val dcacheTrace = Output(Vec(numHarts, new DCacheTracePayload(64)))
     })
 
     val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts))
@@ -69,7 +70,8 @@ class BreezeMulticoreClusterWishbone(
             coreCfg.dcacheCfg,
             hartId = h,
             hartIdWidth = clusterCfg.hartIdWidth,
-            txnIdWidth = clusterCfg.txnIdWidth
+            txnIdWidth = clusterCfg.txnIdWidth,
+            enableTrace = enableTandem
         ))
     }
 
@@ -127,7 +129,11 @@ class BreezeMulticoreClusterWishbone(
         io.retire.zip(cores).foreach { case (trace, core) =>
             trace := core.io.tandem.get
         }
+        io.dcacheTrace.zip(dcaches).foreach { case (trace, dcache) =>
+            trace := dcache.io.trace.get
+        }
     } else {
         io.retire.foreach(_ := 0.U.asTypeOf(new TracePayload(64)))
+        io.dcacheTrace.foreach(_ := 0.U.asTypeOf(new DCacheTracePayload(64)))
     }
 }

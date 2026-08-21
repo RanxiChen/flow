@@ -24,12 +24,15 @@ LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
 - 全新 Buildroot external tree，可生成四核、musl、initramfs Linux 镜像；
 - 基于 Alpine 官方 RISC-V minirootfs 的无盘 `Image-alpine` 构建脚本；
 - Linux bring-up 进度、每 hart retirement、fatal 和 16550 MMIO 诊断；
+- 可复用的三层存储 monitor：Tandem 退休结果、DCache PMA/route、Wishbone
+  request/response，并支持地址过滤和独立 trace 文件；
 - Chisel 完整回归 43 个 suite、181 个测试全部通过。
 
 当前边界也要明确：Buildroot 和 Alpine 镜像已经真实构建成功，四核 ROM 到 OpenSBI
-的执行路径也已进入实际 RTL 仿真；但尚未取得 Linux kernel 与用户空间完整启动的
-终端日志。长仿真应从 OpenSBI handoff smoke 开始，再运行真实 `Image`，不能把“镜像
-成功装入 DDR”当成“Linux 已启动”。详细证据见
+的执行路径也已进入实际 RTL 仿真；但 OpenSBI early console 当前仍停在 16550 LSR
+轮询，尚未取得 handoff、Linux kernel 与用户空间完整启动日志。应先用单核短测试和
+三层 memory trace 定位 CPU 到 SoC 的 byte-MMIO 返回路径，再继续 handoff 和真实
+`Image`，不能把“镜像成功装入 DDR”当成“Linux 已启动”。详细证据见
 [`docs/linux/verification-status.md`](docs/linux/verification-status.md)。
 
 ## 结构概览

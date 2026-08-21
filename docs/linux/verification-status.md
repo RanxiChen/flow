@@ -16,6 +16,9 @@
 ### SoC
 
 - 四个 hart 都能从 Linux reset ROM `0x1001_0000` 启动；
+- debug RTL 和 LiteX 仿真已接入统一三层 memory monitor：Tandem 退休内存结果、
+  DCache PMA/route/response、CPU memory/MMIO 与 UART slave Wishbone request/response；
+  monitor 只读信号，支持地址和事件数量过滤；
 - ROM UART 探针能通过共享 Wishbone/PMA 向 `0x1300_0000` 写字符；
 - LiteDRAM DDR3 模型按 256 MiB 建立，OpenSBI/DTB/payload 能完成范围与重叠检查；
 - CLINT、PLIC 和 16550 都进入 Linux SoC 地址图；

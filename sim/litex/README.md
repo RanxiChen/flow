@@ -72,6 +72,40 @@ most the first 32 acknowledged UART reads as `[LINUX-UART-READ]`, including
 the raw 64-bit `dat_r`, so an LSR polling failure can be localized without an
 unbounded log.
 
+### Reusable memory-path monitor
+
+Debug cluster RTL exports the existing Tandem retirement records plus a
+passive DCache route record. `sim/litex/memory_monitor.py` combines those
+records with passive observers on the CPU memory/MMIO Wishbone masters and,
+for Linux simulations, the 16550 slave. No observer drives a ready, valid,
+acknowledge, or data signal.
+
+The stable marker families are:
+
+```text
+[MEM-RETIRE]  final architectural load/store result from Tandem
+[DCACHE-REQ]  PMA attributes, hit result, byte mask and request metadata
+[DCACHE-RSP]  blocking L1D response data/error
+[WB-REQ]      actual byte address, Wishbone word address, select and write data
+[WB-RSP]      acknowledge/error, raw read data and latency
+```
+
+The UART LSR runner enables all three layers, restricts them to the 16550
+window, and writes the extracted records to
+`<output-dir>/memory-trace.log`. General multicore and Linux simulations can
+enable the same observer with:
+
+```text
+--mem-trace
+--mem-trace-max-events 1024
+--mem-trace-address-start 0x13000000
+--mem-trace-address-end 0x13000100
+```
+
+The address end is exclusive and limits apply independently to each observer.
+Production cluster generation drives the debug records to zero and firtool
+eliminates the disconnected DCache trace logic.
+
 After the handoff probe passes, replace `--kernel` with the Buildroot `Image`
 or Alpine `Image-alpine`. These runs are intentionally diskless: initramfs is
 embedded in the kernel image, and no VirtIO device is required.

@@ -253,6 +253,30 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
     val memWMask = UInt(8.W)
 }
 
+/** Simulation/debug view of one blocking L1D transaction.
+  *
+  * The payload is observational only: it has no ready input and cannot add
+  * backpressure to the cache. `requestValid` pulses in Lookup after the PMA
+  * and tag result are available; `responseValid` pulses when the CPU response
+  * is presented. Since the cache is blocking, at most one transaction per
+  * hart is represented between those pulses.
+  */
+class DCacheTracePayload(val VLEN: Int = 64) extends Bundle {
+    val requestValid = Bool()
+    val responseValid = Bool()
+    val address = UInt(VLEN.W)
+    val sizeLog2 = UInt(3.W)
+    val isWrite = Bool()
+    val writeData = UInt(64.W)
+    val mask = UInt(8.W)
+    val pmaAllowed = Bool()
+    val pmaCacheable = Bool()
+    val pmaDevice = Bool()
+    val cacheHit = Bool()
+    val responseData = UInt(64.W)
+    val responseError = Bool()
+}
+
 class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
     val valid        = Bool()
     val is_interrupt = Bool()

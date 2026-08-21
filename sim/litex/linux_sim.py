@@ -160,6 +160,11 @@ def main():
         help="Parallel Verilator build jobs (default: host CPU count).")
     parser.add_argument("--debug-cycles", type=int, default=0,
         help="Stop after N cycles and print initial per-hart retirements (0 disables).")
+    parser.add_argument("--mem-trace", action="store_true",
+        help="Enable passive Tandem/DCache/Wishbone memory tracing.")
+    parser.add_argument("--mem-trace-max-events", type=int, default=1024)
+    parser.add_argument("--mem-trace-address-start", type=lambda value: int(value, 0))
+    parser.add_argument("--mem-trace-address-end", type=lambda value: int(value, 0))
     args = parser.parse_args()
 
     for path in (args.opensbi, args.kernel, args.dtb, args.bootrom):
@@ -167,6 +172,12 @@ def main():
             parser.error(f"image does not exist: {path}")
     if args.elaborate:
         elaborate(args.profile, args.core_preset, bool(args.debug_cycles))
+    if args.mem_trace_max_events <= 0:
+        parser.error("--mem-trace-max-events must be greater than zero")
+    if (args.mem_trace_address_start is not None and
+            args.mem_trace_address_end is not None and
+            args.mem_trace_address_start >= args.mem_trace_address_end):
+        parser.error("memory trace address start must be below its end")
 
     ddr_init = pack_ddr([
         ("opensbi", OPENSBI_ADDR, args.opensbi),
@@ -190,6 +201,10 @@ def main():
         privilege_profile="linux",
         with_litedram=True,
         sdram_init=ddr_init,
+        memory_trace=args.mem_trace,
+        memory_trace_max_events=args.mem_trace_max_events,
+        memory_trace_address_start=args.mem_trace_address_start,
+        memory_trace_address_end=args.mem_trace_address_end,
     )
     if args.debug_cycles < 0:
         parser.error("--debug-cycles must not be negative")
