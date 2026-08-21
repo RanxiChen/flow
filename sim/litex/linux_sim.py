@@ -31,12 +31,29 @@ ROM_SIZE = 0x0001_0000
 class LinuxBootMonitor(Module):
     """Bounded, opt-in retirement trace for Linux bring-up failures."""
 
-    def __init__(self, cpu, max_cycles, log_limit=64):
+    def __init__(self, cpu, uart_bus, max_cycles, log_limit=64,
+                 progress_cycles=1_000_000):
         cycle = Signal(64)
         logged = Signal(32)
+        progress = Signal(max=progress_cycles, reset=progress_cycles - 1)
         retire_counts = [Signal(64) for _ in cpu.retires]
         last_pcs = [Signal(64) for _ in cpu.retires]
-        statements = [cycle.eq(cycle + 1)]
+        statements = [
+            cycle.eq(cycle + 1),
+            If(progress == 0,
+                progress.eq(progress_cycles - 1),
+                Display("[LINUX-PROGRESS] cycle=%d", cycle),
+                *[
+                    Display(
+                        f"[LINUX-PROGRESS-HART] hart={hart} retires=%d last_pc=0x%x",
+                        retire_counts[hart], last_pcs[hart])
+                    for hart in range(len(cpu.retires))
+                ]).Else(progress.eq(progress - 1)),
+            If(uart_bus.ack & uart_bus.we,
+                Display(
+                    "[LINUX-UART-MMIO] cycle=%d adr=0x%x sel=0x%x data=0x%x",
+                    cycle, uart_bus.adr, uart_bus.sel, uart_bus.dat_w)),
+        ]
         for hart, retire in enumerate(cpu.retires):
             statements.append(
                 If(retire.valid,
@@ -174,7 +191,7 @@ def main():
         parser.error("--jobs must be greater than zero")
     if args.debug_cycles:
         soc.submodules.linux_boot_monitor = LinuxBootMonitor(
-            soc.cpu, args.debug_cycles)
+            soc.cpu, soc.uart16550.bus, args.debug_cycles)
     print(
         f"BREEZE_LINUX_SOC harts={soc.cpu.num_harts} ram=0x{DDR_BASE:08x}+0x{DDR_SIZE:x} "
         f"opensbi=0x{OPENSBI_ADDR:08x} dtb=0x{DTB_ADDR:08x} kernel=0x{KERNEL_ADDR:08x}",
