@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "FLOW_BUILDROOT_BOOT_OK"
+echo "online_cpus=$(cat /sys/devices/system/cpu/online 2>/dev/null || echo unknown)"
