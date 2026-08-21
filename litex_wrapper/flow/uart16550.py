@@ -14,6 +14,8 @@ class BreezeUart16550(Module):
 
         ier = Signal(4)
         lcr = Signal(8, reset=0x03)
+        mcr = Signal(8)
+        scr = Signal(8)
         dll = Signal(8, reset=1)
         dlm = Signal(8)
         dlab = lcr[7]
@@ -50,11 +52,19 @@ class BreezeUart16550(Module):
                         read_byte.eq(Mux(dlab, dll, self.rx.data))) \
             .Elif(reg_offset == 1, read_byte.eq(Mux(dlab, dlm, ier))) \
             .Elif(reg_offset == 2,
-                  read_byte.eq(Mux(ier[0] & self.rx.valid, 0x04,
-                               Mux(ier[1] & self.tx.ready, 0x02, 0x01)))) \
+                  # IIR[7:6]=11 advertises a 16550A FIFO. The FIFO-control
+                  # write is accepted below; this simulation UART remains a
+                  # single-byte stream endpoint.
+                  read_byte.eq(0xC0 | Mux(ier[0] & self.rx.valid, 0x04,
+                                      Mux(ier[1] & self.tx.ready, 0x02, 0x01)))) \
             .Elif(reg_offset == 3, read_byte.eq(lcr)) \
+            .Elif(reg_offset == 4, read_byte.eq(mcr)) \
             .Elif(reg_offset == 5,
-                  read_byte.eq(self.rx.valid | (self.tx.ready << 5) | (self.tx.ready << 6)))
+                  read_byte.eq(self.rx.valid | (self.tx.ready << 5) | (self.tx.ready << 6))) \
+            .Elif(reg_offset == 6,
+                  # CTS, DSR and DCD asserted: no external modem model.
+                  read_byte.eq(0xB0)) \
+            .Elif(reg_offset == 7, read_byte.eq(scr))
 
         self.sync += [
             If(request & ~responding & can_respond,
@@ -64,6 +74,9 @@ class BreezeUart16550(Module):
                      If(dlab, dll.eq(write_data)))
                   .Elif(reg_offset == 1,
                         If(dlab, dlm.eq(write_data)).Else(ier.eq(write_data[:4])))
-                  .Elif(reg_offset == 3, lcr.eq(write_data))))
+                  # FCR (offset 2) is deliberately accepted as a no-op.
+                  .Elif(reg_offset == 3, lcr.eq(write_data))
+                  .Elif(reg_offset == 4, mcr.eq(write_data))
+                  .Elif(reg_offset == 7, scr.eq(write_data))))
             .Elif(~bus.cyc | ~bus.stb, responding.eq(0))
         ]

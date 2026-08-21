@@ -17,13 +17,17 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
   * filelist.f and cluster-profile.txt; presets never overwrite each other.
   */
 object GenerateBreezeMulticoreClusterWishbone extends App {
-    require(args.length >= 1 && args.length <= 3,
+    require(args.length >= 1 && args.length <= 4,
         "usage: GenerateBreezeMulticoreClusterWishbone " +
-          "<single|dual|small> [gshare|baseline] [mcu|linux]")
+          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production]")
 
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
     private val privilegeProfile =
         PrivilegeProfile.fromName(args.lift(2).getOrElse("mcu"))
+    private val rtlMode = args.lift(3).getOrElse("debug")
+    require(Set("debug", "production").contains(rtlMode),
+        s"RTL mode must be debug or production, got: $rtlMode")
+    private val enableTandem = rtlMode == "debug"
     private val clusterCfg =
         BreezeClusterPresets.fromName(args(0)).copy(
             corePreset = corePreset,
@@ -40,11 +44,11 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
 
     println(
         s"[BreezeCluster RTL] profile=${clusterCfg.profileName} harts=${clusterCfg.numHarts} " +
-          s"core_preset=${corePreset.name} privilege=${privilegeProfile.name} " +
+          s"core_preset=${corePreset.name} privilege=${privilegeProfile.name} mode=$rtlMode " +
           s"target_dir=$targetDir"
     )
     ChiselStage.emitSystemVerilogFile(
-        new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = true),
+        new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = enableTandem),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array(
             "-disable-all-randomization",
@@ -102,6 +106,8 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |l2Ways=${clusterCfg.l2.ways}
            |corePreset=${corePreset.name}
            |privilegeProfile=${privilegeProfile.name}
+           |rtlMode=$rtlMode
+           |tandem=$enableTandem
            |compressed=${clusterCfg.coreCfg().enableCompressed}
            |addressTranslation=${if (clusterCfg.coreCfg().enableMmu) "bare,sv39" else "bare"}
            |""".stripMargin

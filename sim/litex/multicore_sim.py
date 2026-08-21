@@ -74,6 +74,7 @@ class MulticoreSimSoC(SoCCore):
                  cluster_profile="single", core_preset="gshare",
                  privilege_profile="mcu",
                  with_litedram=False,
+                 sdram_init=None,
                  completion_label=None, mcu_result_address=None,
                  mcu_perf_address=None, mcu_timeout=20000, **kwargs):
         platform = Platform()
@@ -122,6 +123,7 @@ class MulticoreSimSoC(SoCCore):
                 module=sdram_module,
                 data_width=32,
                 clk_freq=sdram_clk_freq,
+                init=[] if sdram_init is None else sdram_init,
             )
             self.add_sdram(
                 name="sdram",
@@ -168,10 +170,13 @@ class MulticoreSimSoC(SoCCore):
             self.comb += self.uart16550_phy.source.connect(self.uart16550.rx)
             self.bus.add_slave(
                 name="uart16550", slave=self.uart16550.bus,
-                region=SoCRegion(origin=0x1000_0000, size=0x100, cached=False))
+                region=SoCRegion(origin=0x1300_0000, size=0x100, cached=False))
             linux_uart_irq = self.uart16550.interrupt
         self.comb += [
-            self.plic.sources.eq((self.cpu.interrupt << 9) | (linux_uart_irq << 9)),
+            # PLIC source 10 is the Linux-visible 16550 UART.  Do not fold
+            # LiteX's internal interrupt vector into the same source bit:
+            # that aliases unrelated devices and cannot be described by DT.
+            self.plic.sources.eq(linux_uart_irq << 9),
             self.cpu.meip.eq(self.plic.meip),
             self.cpu.seip.eq(self.plic.seip),
         ]

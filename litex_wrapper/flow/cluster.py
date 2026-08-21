@@ -216,7 +216,7 @@ class FlowCluster(CPU):
             0x1200_0000: 0x0100_0000,
         }
         if privilege_profile == "linux":
-            cls.io_regions[0x1000_0000] = 0x0000_0100
+            cls.io_regions[0x1300_0000] = 0x0000_0100
 
     def set_reset_address(self, reset_address):
         self.reset_address = reset_address
