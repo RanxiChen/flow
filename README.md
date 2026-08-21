@@ -32,10 +32,10 @@ LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
 的执行路径也已进入实际 RTL 仿真。旧自研 16550 已被原生 LiteUART 取代，仓库已经
 加入 CSR byte-access 和 PLIC source 10 两个短测试。Linux profile 的 PLIC 已从 Migen
 实现切换为独立的 `FlowPlic.sv`，并通过模块级与 CPU 集成级中断测试；CLINT 也已切换
-为独立的 `FlowClint.sv`，等待目标机运行其定向测试。LiteX 只负责实例化和总线接线，
-两者的旧 Migen 实现仍保留给 MCU 回归和对照。后续 handoff、Linux kernel 与用户空间
-仍需要目标机 Verilator 运行证据。不能把“镜像成功装入 DDR”或“Python 单元测试通过”
-当成“Linux 已启动”。详细证据见
+为独立的 `FlowClint.sv`，通过模块级、单 hart MSIP/MTIP、四 hart IPI 和 per-hart timer
+测试。LiteX 只负责实例化和总线接线，两者的旧 Migen 实现仍保留给 MCU 回归和对照。
+后续 handoff、Linux kernel 与用户空间仍需要目标机 Verilator 运行证据。不能把这些外设
+短测试当成“Linux 已启动”。详细证据见
 [`docs/linux/verification-status.md`](docs/linux/verification-status.md)。
 
 ## 结构概览

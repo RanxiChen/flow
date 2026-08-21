@@ -23,10 +23,32 @@
 - LiteDRAM DDR3 模型按 256 MiB 建立，OpenSBI/DTB/payload 能完成范围与重叠检查；
 - CLINT、PLIC 和原生 LiteUART 都进入 Linux SoC地址图；
 - LiteUART CSR位于 `0x1200_1000`，其 `ev.irq` 单独连接 PLIC source 10；
+- 独立 `FlowPlic.sv` 模块测试取得 `[FLOW-PLIC-PASS]`；单 hart CPU集成测试取得
+  `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]`，日志闭环覆盖 UART event、PLIC source 10、
+  pending、MEIP、claim/complete、handler 和 `MRET`；
+- 独立 `FlowClint.sv` 模块测试取得 `[FLOW-CLINT-PASS]`；Linux profile 进一步取得
+  `[MULTICORE-SINGLE-CLINT-MSIP-PASS]`、`[MULTICORE-SINGLE-CLINT-MTIP-PASS]`、
+  `[MULTICORE-SMALL-CLINT-IPI-PASS]` 和
+  `[MULTICORE-SMALL-CLINT-PER-HART-TIMER-PASS]`；
+- 四 hart IPI逐 hart寻址通过，`msip[0..3]` 未出现共享总线字 lane别名；per-hart
+  timer先只触发 hart 3，再分别触发全部 hart，排除了 MTIP广播实现；
 - 原生 LiteUART FIFO/status/raw-event Python单元测试、SoC/DTS/Buildroot契约测试和
   memory monitor单元测试通过；
 - LiteUART CSR与PLIC两个短固件、reset ROM、handoff smoke和 DTB 均完成编译；
 - DTB声明 `litex,liteuart`，kernel fragment和 getty名称与上游驱动契约一致。
+
+上述独立中断控制器的目标机运行提交为：
+
+| 门槛 | Commit | Required marker |
+| --- | --- | --- |
+| PLIC 模块级 | `31acc63` | `[FLOW-PLIC-PASS]` |
+| LiteUART→PLIC→CPU | `31acc63` | `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]` |
+| CLINT 模块级 | `47c769b` | `[FLOW-CLINT-PASS]` |
+| 单 hart MSIP/MTIP | `47c769b` | `[MULTICORE-SINGLE-CLINT-MSIP-PASS]`、`[MULTICORE-SINGLE-CLINT-MTIP-PASS]` |
+| 四 hart IPI | `43ef995` | `[MULTICORE-SMALL-CLINT-IPI-PASS]` |
+| 四 hart 独立 timer | `43ef995` | `[MULTICORE-SMALL-CLINT-PER-HART-TIMER-PASS]` |
+
+这些 marker 证明外设与 CPU 中断闭环，不证明 OpenSBI、kernel 或用户空间启动。
 
 ### 软件构建
 
@@ -55,8 +77,6 @@
 - 当前提交尚未取得目标机完整 `sbt test`结果；
 - 新的单核 Linux-profile LiteUART CSR短测试尚未取得
   `[MULTICORE-SINGLE-LITEUART-CSR-PASS]` Verilator运行证据；
-- 新的 LiteUART→PLIC source 10短测试尚未取得
-  `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]` Verilator运行证据；
 - LiteUART迁移后的 handoff smoke尚未运行，尚未输出 `K`；
 - OpenSBI UART banner 尚未取得；
 - Buildroot Linux kernel 尚未取得 earlycon、SMP 和用户空间启动日志；
@@ -82,15 +102,15 @@
 第一次 LiteUART PLIC短测进一步发现 `1-bit irq << 9` 在生成 Verilog后仍按1-bit
 求值，使 PLIC sources恒为零。接线已改为显式31-bit `Cat`；同次审计也替换了旧单核
 SoC的8-bit IRQ移位和所有调试监控中的 Wishbone地址移位，并加入生成Verilog位宽测试
-及项目 Migen Signal-left-shift禁入检查。修复后的 PLIC短测仍需目标机复验。
+及项目 Migen Signal-left-shift禁入检查。该接线随后被独立 `FlowPlic.sv` 取代，并已
+取得模块级和 CPU集成级 PASS；上述旧路径问题不再属于当前 Linux profile。
 
 ## 下一次验证顺序
 
 1. 在目标 commit上运行完整 `sbt test`；
 2. 运行 LiteUART CSR短测，要求独立 PASS marker；
-3. 运行 LiteUART PLIC短测，要求 claim/complete和独立 PASS marker；
-4. 重新构建 Buildroot，使 OpenSBI、DTB、kernel和 getty全部切到 LiteUART；
-5. 用足够长 watchdog运行 handoff smoke，保存 `K`、UART MMIO和 per-hart progress；
-6. handoff通过后依次运行 Buildroot `Image`和 `Image-alpine`；
-7. 每一步单独保存命令、commit SHA、镜像 SHA、退出码和 fatal/panic扫描；
-8. 在仿真完全闭环前不进入 FPGA上板或持久化存储实现。
+3. 重新构建 Buildroot，使 OpenSBI、DTB、kernel和 getty全部切到 LiteUART；
+4. 用足够长 watchdog运行 handoff smoke，保存 `K`、UART MMIO和 per-hart progress；
+5. handoff通过后依次运行 Buildroot `Image`和 `Image-alpine`；
+6. 每一步单独保存命令、commit SHA、镜像 SHA、退出码和 fatal/panic扫描；
+7. 在仿真完全闭环前不进入 FPGA上板或持久化存储实现。

@@ -76,9 +76,17 @@ CLINT 提供：
 - 每 hart `mtimecmp`；
 - 全局 64-bit `mtime`，timebase 为 1 MHz。
 
+Linux profile 使用独立 SystemVerilog `FlowClint.sv`，覆盖标准全局地址到本地寄存器
+偏移、64-bit Wishbone byte select、timebase 分频和每 hart 独立中断输出。旧 Migen
+CLINT 保留给 MCU 回归和实现对照。
+
 PLIC 支持 31 个外部 source，并为每个 hart 提供 M-mode 和 S-mode context。Linux
 LiteUART 固定使用 PLIC source 10。LiteX 内部 CSR interrupt vector 不与 source 10
 做 OR，避免设备树无法表达的中断别名。
+
+Linux profile 的 PLIC 同样使用独立 SystemVerilog `FlowPlic.sv`。priority、pending、
+enable、threshold、claim/complete 和 level gateway 均在 RTL 内实现；LiteX 只实例化
+模块并连接 Wishbone 与中断线。旧 Migen PLIC 继续服务 MCU profile。
 
 ## 6. LiteUART
 
