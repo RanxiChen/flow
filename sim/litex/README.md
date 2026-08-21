@@ -49,6 +49,29 @@ Do not use `bootrom.bin` as `--kernel`. It contains reset code that jumps to
 OpenSBI, so placing it at the payload address causes OpenSBI re-entry instead
 of an S-mode handoff.
 
+Before spending time on an OpenSBI run, validate the Linux UART read path in
+two bounded stages.  The first stage drives the same 64-bit Wishbone address
+and byte select through LiteX's shared interconnect and expects LSR `0x60`:
+
+```bash
+python3 -m unittest sim/litex/test_uart16550_interconnect.py -v
+```
+
+The second stage boots one Linux-profile hart directly from the Linux reset
+ROM, executes an `LBU` from `0x13000005`, and reports PASS through the retire
+completion monitor rather than through the UART under test:
+
+```bash
+SBT=sbt python3 sim/litex/run_linux_uart_lsr.py --elaborate
+```
+
+Its required marker is `[MULTICORE-SINGLE-UART-LSR-PASS]`.  A timeout or a
+missing PASS marker is a failure.  Only after both stages pass should the
+four-hart OpenSBI handoff probe be run.  The Linux boot monitor also prints at
+most the first 32 acknowledged UART reads as `[LINUX-UART-READ]`, including
+the raw 64-bit `dat_r`, so an LSR polling failure can be localized without an
+unbounded log.
+
 After the handoff probe passes, replace `--kernel` with the Buildroot `Image`
 or Alpine `Image-alpine`. These runs are intentionally diskless: initramfs is
 embedded in the kernel image, and no VirtIO device is required.

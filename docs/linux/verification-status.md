@@ -20,6 +20,9 @@
 - LiteDRAM DDR3 模型按 256 MiB 建立，OpenSBI/DTB/payload 能完成范围与重叠检查；
 - CLINT、PLIC 和 16550 都进入 Linux SoC 地址图；
 - PLIC source 10 只连接 Linux 16550 UART，没有 LiteX internal IRQ alias。
+- Linux 16550 的独立模块测试和 LiteX shared-interconnect LSR 读回测试均已通过；
+  后者用与 `LBU 0x13000005` 相同的 64-bit Wishbone 地址和 `sel=0x20`，读回
+  `dat_r[47:40]=0x60`。
 
 ### 软件构建
 
@@ -45,8 +48,11 @@
 
 ## 尚未通过
 
-- 正确 handoff smoke 在已运行的 600 万周期窗口内尚未输出 `K`；该窗口不足以宣布
-  失败，也不能宣布交接成功；
+- 单核 Linux-profile CPU 的端到端 `LBU 0x13000005` 短测试已经加入，但尚未取得
+  `[MULTICORE-SINGLE-UART-LSR-PASS]` 运行证据；
+- 正确 handoff smoke 在 5000 万周期窗口内因 watchdog 结束，尚未输出 `K`；启动
+  hart 停留在 OpenSBI `uart8250_device_putc()` 的 LSR THRE 轮询，其他 hart 仍在
+  HSM/atomic wait 路径；这不是全局停机，但 handoff 明确尚未通过；
 - OpenSBI UART banner 尚未取得；
 - Buildroot Linux kernel 尚未取得 earlycon、SMP 和用户空间启动日志；
 - Alpine 尚未取得 `/init` 或 shell 日志；

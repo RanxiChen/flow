@@ -35,6 +35,7 @@ class LinuxBootMonitor(Module):
                  progress_cycles=1_000_000):
         cycle = Signal(64)
         logged = Signal(32)
+        uart_reads_logged = Signal(6)
         progress = Signal(max=progress_cycles, reset=progress_cycles - 1)
         retire_counts = [Signal(64) for _ in cpu.retires]
         last_pcs = [Signal(64) for _ in cpu.retires]
@@ -53,6 +54,11 @@ class LinuxBootMonitor(Module):
                 Display(
                     "[LINUX-UART-MMIO] cycle=%d adr=0x%x sel=0x%x data=0x%x",
                     cycle, uart_bus.adr, uart_bus.sel, uart_bus.dat_w)),
+            If(uart_bus.ack & ~uart_bus.we & (uart_reads_logged < 32),
+                Display(
+                    "[LINUX-UART-READ] cycle=%d adr=0x%x sel=0x%x data=0x%x",
+                    cycle, uart_bus.adr, uart_bus.sel, uart_bus.dat_r),
+                uart_reads_logged.eq(uart_reads_logged + 1)),
         ]
         for hart, retire in enumerate(cpu.retires):
             statements.append(

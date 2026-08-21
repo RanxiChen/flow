@@ -4,6 +4,7 @@ MAIN          ?= apps/main.c
 MTVEC_MODE    ?= 0
 MARCH         ?= rv64ima_zicsr_zifencei
 EXTRA_CFLAGS  ?=
+LINK_SCRIPT   ?= link.ld
 TARGET         = $(BUILD_DIR)/breeze-mcu
 
 CC      := $(CROSS_COMPILE)gcc
@@ -17,7 +18,7 @@ COMMON_FLAGS = $(ARCH_FLAGS) -mno-relax -msmall-data-limit=0 \
 	-ffunction-sections -fdata-sections -Os -Wall -Wextra \
 	-Iinclude -DBREEZE_MTVEC_MODE=$(MTVEC_MODE) $(EXTRA_CFLAGS)
 LINK_FLAGS = $(ARCH_FLAGS) -mno-relax -nostdlib -nostartfiles -no-pie \
-	-Wl,-T,link.ld -Wl,--gc-sections -Wl,-Map,$(TARGET).map
+	-Wl,-T,$(LINK_SCRIPT) -Wl,--gc-sections -Wl,-Map,$(TARGET).map
 
 OBJECTS = \
 	$(BUILD_DIR)/start.o \
@@ -52,7 +53,7 @@ $(BUILD_DIR)/timer.o: lib/timer.c | $(BUILD_DIR)
 $(BUILD_DIR)/main.o: $(MAIN) | $(BUILD_DIR)
 	$(CC) $(COMMON_FLAGS) -std=c11 -c $< -o $@
 
-$(TARGET).elf: $(OBJECTS) link.ld
+$(TARGET).elf: $(OBJECTS) $(LINK_SCRIPT)
 	$(CC) $(LINK_FLAGS) $(OBJECTS) -o $@
 
 $(TARGET).bin: $(TARGET).elf
