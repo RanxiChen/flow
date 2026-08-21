@@ -3,8 +3,9 @@
 module flow_plic_tb;
     localparam [31:0] PLIC_BASE = 32'h0c00_0000;
 
-    reg clk = 1'b0;
+    reg clk;
     reg rst = 1'b1;
+    initial clk = 1'b0;
     always #5 clk = ~clk;
 
     reg [31:0] wb_adr = 32'b0;

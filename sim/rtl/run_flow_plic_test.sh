@@ -10,7 +10,6 @@ verilator \
   --timing \
   -Wall \
   -Wno-fatal \
-  -Wno-PROCASSINIT \
   -Wno-UNUSEDSIGNAL \
   --top-module flow_plic_tb \
   --Mdir "${build_dir}/obj_dir" \
