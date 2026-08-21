@@ -7,7 +7,7 @@ adapter remains in `litex_wrapper/flow/core.py`.
 
 The Linux path is separate from the legacy MCU runner. It uses the `small`
 four-hart cluster, the `linux` privilege profile, a 256 MiB LiteDRAM/DDR3
-model, CLINT, PLIC, and a dedicated ns16550a UART at `0x13000000`.
+model, CLINT, PLIC, and LiteX's native LiteUART CSR page at `0x12001000`.
 
 Build the reset ROM, DTB, and the S-mode handoff probe first:
 
@@ -49,36 +49,54 @@ Do not use `bootrom.bin` as `--kernel`. It contains reset code that jumps to
 OpenSBI, so placing it at the payload address causes OpenSBI re-entry instead
 of an S-mode handoff.
 
-Before spending time on an OpenSBI run, validate the Linux UART read path in
-two bounded stages.  The first stage drives the same 64-bit Wishbone address
-and byte select through LiteX's shared interconnect and expects LSR `0x60`:
+Before spending time on an OpenSBI run, validate LiteUART in bounded stages.
+On the target machine, start with the complete Chisel regression:
 
 ```bash
-python3 -m unittest sim/litex/test_uart16550_interconnect.py -v
+cd design
+sbt test
+cd ..
 ```
 
-The second stage boots one Linux-profile hart directly from the Linux reset
-ROM, executes an `LBU` from `0x13000005`, and reports PASS through the retire
-completion monitor rather than through the UART under test:
+First run the native FIFO/status/raw-event unit test and the cross-file address,
+DTS and Buildroot contract checks:
 
 ```bash
-SBT=sbt python3 sim/litex/run_linux_uart_lsr.py --elaborate
+python3 -m unittest \
+    sim/litex/test_liteuart.py \
+    sim/litex/test_liteuart_contract.py -v
 ```
 
-Its required marker is `[MULTICORE-SINGLE-UART-LSR-PASS]`.  A timeout or a
-missing PASS marker is a failure.  Only after both stages pass should the
-four-hart OpenSBI handoff probe be run.  The Linux boot monitor also prints at
-most the first 32 acknowledged UART reads as `[LINUX-UART-READ]`, including
-the raw 64-bit `dat_r`, so an LSR polling failure can be localized without an
-unbounded log.
+The first CPU stage boots one Linux-profile hart directly from the Linux reset
+ROM. It uses the same byte accesses as OpenSBI (`TXFULL`, `RXEMPTY`,
+`EV_ENABLE`, `RXTX`) and reports PASS through the completion monitor:
+
+```bash
+SBT=sbt python3 sim/litex/run_linux_liteuart.py --test csr --elaborate
+```
+
+Its marker is `[MULTICORE-SINGLE-LITEUART-CSR-PASS]`. Then validate the
+interrupt route, including PLIC source 10 priority/enable/threshold,
+claim and complete:
+
+```bash
+SBT=sbt python3 sim/litex/run_linux_liteuart.py --test plic
+```
+
+Its marker is `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]`. A timeout or missing
+marker is a failure. Only after both CPU stages pass should the four-hart
+OpenSBI handoff probe run. The Linux boot monitor prints at most the first 32
+acknowledged accesses in the LiteUART CSR page as `[LINUX-UART-READ]` or
+`[LINUX-UART-MMIO]`.
 
 ### Reusable memory-path monitor
 
 Debug cluster RTL exports the existing Tandem retirement records plus a
 passive DCache route record. `sim/litex/memory_monitor.py` combines those
-records with passive observers on the CPU memory/MMIO Wishbone masters and,
-for Linux simulations, the 16550 slave. No observer drives a ready, valid,
-acknowledge, or data signal.
+records with passive observers on the CPU memory/MMIO Wishbone masters. The
+native LiteUART is behind LiteX's Wishbone-to-CSR bridge, so the CPU MMIO
+observer is the reusable source of truth. No observer drives ready, valid,
+acknowledge, or data.
 
 The stable marker families are:
 
@@ -90,16 +108,16 @@ The stable marker families are:
 [WB-RSP]      acknowledge/error, raw read data and latency
 ```
 
-The UART LSR runner enables all three layers, restricts them to the 16550
-window, and writes the extracted records to
+The LiteUART runner enables all three layers, restricts them to the relevant
+LiteUART or PLIC window, and writes the extracted records to
 `<output-dir>/memory-trace.log`. General multicore and Linux simulations can
 enable the same observer with:
 
 ```text
 --mem-trace
 --mem-trace-max-events 1024
---mem-trace-address-start 0x13000000
---mem-trace-address-end 0x13000100
+--mem-trace-address-start 0x12001000
+--mem-trace-address-end 0x12002000
 ```
 
 The address end is exclusive and limits apply independently to each observer.

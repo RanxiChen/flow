@@ -7,8 +7,9 @@
 
 ### CPU/RTL
 
-- 完整 Chisel 回归：43 suite、181 tests，全部通过；
-- Linux PMA 定向测试：DDR、UART 和非法区域分类通过；
+- 迁移前基线完整 Chisel 回归：43 suite、181 tests，全部通过；
+- LiteUART迁移后的 Linux PMA定向测试：3 tests通过，覆盖 DDR、LiteUART CSR页面和
+  MCU boot ROM；当前提交的完整 Chisel回归留给目标机执行，不能沿用旧基线替代；
 - DCache 定向测试：12 tests 通过；
 - 精确 EBREAK decode 与 breakpoint trap 测试通过；
 - 四核 Linux debug RTL 和关闭 tandem 的 production RTL 均成功 elaboration。
@@ -17,15 +18,15 @@
 
 - 四个 hart 都能从 Linux reset ROM `0x1001_0000` 启动；
 - debug RTL 和 LiteX 仿真已接入统一三层 memory monitor：Tandem 退休内存结果、
-  DCache PMA/route/response、CPU memory/MMIO 与 UART slave Wishbone request/response；
+  DCache PMA/route/response、CPU memory/MMIO Wishbone request/response；
   monitor 只读信号，支持地址和事件数量过滤；
-- ROM UART 探针能通过共享 Wishbone/PMA 向 `0x1300_0000` 写字符；
 - LiteDRAM DDR3 模型按 256 MiB 建立，OpenSBI/DTB/payload 能完成范围与重叠检查；
-- CLINT、PLIC 和 16550 都进入 Linux SoC 地址图；
-- PLIC source 10 只连接 Linux 16550 UART，没有 LiteX internal IRQ alias。
-- Linux 16550 的独立模块测试和 LiteX shared-interconnect LSR 读回测试均已通过；
-  后者用与 `LBU 0x13000005` 相同的 64-bit Wishbone 地址和 `sel=0x20`，读回
-  `dat_r[47:40]=0x60`。
+- CLINT、PLIC 和原生 LiteUART 都进入 Linux SoC地址图；
+- LiteUART CSR位于 `0x1200_1000`，其 `ev.irq` 单独连接 PLIC source 10；
+- 原生 LiteUART FIFO/status/raw-event Python单元测试、SoC/DTS/Buildroot契约测试和
+  memory monitor单元测试通过；
+- LiteUART CSR与PLIC两个短固件、reset ROM、handoff smoke和 DTB 均完成编译；
+- DTB声明 `litex,liteuart`，kernel fragment和 getty名称与上游驱动契约一致。
 
 ### 软件构建
 
@@ -51,11 +52,12 @@
 
 ## 尚未通过
 
-- 单核 Linux-profile CPU 的端到端 `LBU 0x13000005` 短测试已经加入，但尚未取得
-  `[MULTICORE-SINGLE-UART-LSR-PASS]` 运行证据；
-- 正确 handoff smoke 在 5000 万周期窗口内因 watchdog 结束，尚未输出 `K`；启动
-  hart 停留在 OpenSBI `uart8250_device_putc()` 的 LSR THRE 轮询，其他 hart 仍在
-  HSM/atomic wait 路径；这不是全局停机，但 handoff 明确尚未通过；
+- 当前提交尚未取得目标机完整 `sbt test`结果；
+- 新的单核 Linux-profile LiteUART CSR短测试尚未取得
+  `[MULTICORE-SINGLE-LITEUART-CSR-PASS]` Verilator运行证据；
+- 新的 LiteUART→PLIC source 10短测试尚未取得
+  `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]` Verilator运行证据；
+- LiteUART迁移后的 handoff smoke尚未运行，尚未输出 `K`；
 - OpenSBI UART banner 尚未取得；
 - Buildroot Linux kernel 尚未取得 earlycon、SMP 和用户空间启动日志；
 - Alpine 尚未取得 `/init` 或 shell 日志；
@@ -70,15 +72,20 @@
 `0x8000_0000`”的 reset 逻辑，造成 OpenSBI 重入。由此产生的 2000 万周期运行只可
 用于证明四核和 OpenSBI 持续执行，不能证明 S-mode handoff。
 
-仓库已经加入正确的 `handoff-smoke.bin`：入口链接到 `0x8020_0000`，向 16550 写
-`K` 后停在 WFI。后续应以 `K` 为 OpenSBI 交接门槛。
+仓库已经加入正确的 `handoff-smoke.bin`：入口链接到 `0x8020_0000`，轮询 LiteUART
+`TXFULL`、写 `K` 后停在 WFI。后续应以 `K` 为 OpenSBI交接门槛。
+
+旧自研16550路径曾在 Python/Migen测试中显示 LSR byte lane正确，但生成后的 Verilog
+实际把动态移位量截断，真实CPU短测读回零。该结果证明旧测试模型不能作为生成RTL的
+证据，也是迁移到原生 LiteUART的直接原因。
 
 ## 下一次验证顺序
 
-1. 在目标 commit 上运行完整 `sbt test`；
-2. 构建 `software/breeze-linux`；
-3. 用足够长 watchdog 运行 handoff smoke，保存 `K`、UART MMIO 和 per-hart progress；
-4. handoff 通过后运行 Buildroot `Image`；
-5. Buildroot 用户空间通过后运行 `Image-alpine`；
-6. 每一步单独保存命令、commit SHA、镜像 SHA、退出码和 fatal/panic 扫描；
-7. 在仿真完全闭环前不进入 FPGA 上板或持久化存储实现。
+1. 在目标 commit上运行完整 `sbt test`；
+2. 运行 LiteUART CSR短测，要求独立 PASS marker；
+3. 运行 LiteUART PLIC短测，要求 claim/complete和独立 PASS marker；
+4. 重新构建 Buildroot，使 OpenSBI、DTB、kernel和 getty全部切到 LiteUART；
+5. 用足够长 watchdog运行 handoff smoke，保存 `K`、UART MMIO和 per-hart progress；
+6. handoff通过后依次运行 Buildroot `Image`和 `Image-alpine`；
+7. 每一步单独保存命令、commit SHA、镜像 SHA、退出码和 fatal/panic扫描；
+8. 在仿真完全闭环前不进入 FPGA上板或持久化存储实现。

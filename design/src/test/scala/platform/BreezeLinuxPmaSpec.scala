@@ -13,18 +13,18 @@ class BreezeLinuxPmaSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.query.accessType.poke(access)
   }
 
-  "Linux 16550 region should be readable and writable device memory" in {
+  "native LiteUART CSR page should be readable and writable device memory" in {
     simulate(new PMAChecker) { dut =>
-      query(dut, BigInt("13000000", 16), 0, PMAAccessType.Load)
+      query(dut, BigInt("12001000", 16), 0, PMAAccessType.Load)
       dut.io.result.regionHit.expect(true.B)
       dut.io.result.allowed.expect(true.B)
       dut.io.result.cacheable.expect(false.B)
       dut.io.result.device.expect(true.B)
 
-      query(dut, BigInt("13000007", 16), 0, PMAAccessType.Store)
+      query(dut, BigInt("12001014", 16), 0, PMAAccessType.Store)
       dut.io.result.allowed.expect(true.B)
 
-      query(dut, BigInt("13000000", 16), 2, PMAAccessType.Fetch)
+      query(dut, BigInt("12001000", 16), 2, PMAAccessType.Fetch)
       dut.io.result.allowed.expect(false.B)
     }
   }

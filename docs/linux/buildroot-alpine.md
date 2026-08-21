@@ -75,7 +75,7 @@ Buildroot 把 `rootfs.cpio` 内嵌到 Linux `Image`。仿真只装载 `Image`，
 - RVC；
 - initramfs/initrd；
 - devtmpfs 自动挂载；
-- 8250、console、OF platform；
+- LiteX core、LiteUART及其 console；
 - early printk。
 
 Buildroot 最终配置还应保留 RISC-V INTC、PLIC、proc、sysfs 和 tmpfs。构建后应直接
@@ -93,7 +93,21 @@ linux/buildroot-external/board/flow/dts/flow/flow-small.dts
 ```
 
 它必须与 `software/breeze-linux/flow-small.dts` 保持语义一致：四个 CPU、Sv39、
-256 MiB RAM、CLINT、PLIC 和 `0x1300_0000` 的 ns16550a UART。
+256 MiB RAM、CLINT、PLIC 和 `0x1200_1000` 的 LiteUART。
+
+构建后的 kernel `.config` 必须实际包含：
+
+```text
+CONFIG_LITEX=y
+CONFIG_LITEX_SOC_CONTROLLER=y
+CONFIG_SERIAL_LITEUART=y
+CONFIG_SERIAL_LITEUART_CONSOLE=y
+```
+
+设备树使用 `compatible = "litex,liteuart"`，启动参数为
+`earlycon=liteuart,0x12001000 console=liteuart`，Buildroot getty设备为 `ttyLXU0`。
+OpenSBI 1.9源码也必须包含 `litex,liteuart` FDT serial驱动；缺任一项时停止，不进入
+长仿真。
 
 ## 5. 生成 Alpine Image
 

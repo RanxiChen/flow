@@ -36,8 +36,6 @@ from flow.cluster import (  # noqa: E402
 )
 from flow.clint import BreezeClint  # noqa: E402
 from flow.plic import BreezePlic  # noqa: E402
-from flow.uart16550 import BreezeUart16550  # noqa: E402
-from litex.soc.cores.uart import RS232PHYModel
 from breeze_sim import (  # noqa: E402
     MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MSIP_OFFSET, MTIME_FREQUENCY_HZ,
     MTIMECMP_OFFSET, MTIME_OFFSET, PLIC_ORIGIN, PLIC_SIZE,
@@ -109,7 +107,10 @@ class MulticoreSimSoC(SoCCore):
             csr_address_width=14,
             csr_paging=0x1000,
             with_ctrl=True,
-            with_uart=(privilege_profile == "mcu"),
+            # MCU and Linux deliberately share LiteX's native LiteUART.  This
+            # keeps the simulated and future FPGA UART/CSR implementation on
+            # one maintained path instead of carrying a private 16550 model.
+            with_uart=True,
             uart_name="sim",
             with_timer=False,
             **kwargs,
@@ -166,20 +167,11 @@ class MulticoreSimSoC(SoCCore):
         self.bus.add_slave(
             name="plic", slave=self.plic.bus,
             region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
-        linux_uart_irq = 0
-        if privilege_profile == "linux":
-            self.submodules.uart16550_phy = RS232PHYModel(platform.request("serial"))
-            self.submodules.uart16550 = BreezeUart16550()
-            self.comb += self.uart16550.tx.connect(self.uart16550_phy.sink)
-            self.comb += self.uart16550_phy.source.connect(self.uart16550.rx)
-            self.bus.add_slave(
-                name="uart16550", slave=self.uart16550.bus,
-                region=SoCRegion(origin=0x1300_0000, size=0x100, cached=False))
-            linux_uart_irq = self.uart16550.interrupt
+        # LiteUART is CSR page 1 at 0x1200_1000.  Linux receives only this
+        # device on PLIC source 10; do not alias LiteX's complete internal IRQ
+        # vector into one architecturally described PLIC source.
+        linux_uart_irq = self.uart.ev.irq if privilege_profile == "linux" else 0
         self.comb += [
-            # PLIC source 10 is the Linux-visible 16550 UART.  Do not fold
-            # LiteX's internal interrupt vector into the same source bit:
-            # that aliases unrelated devices and cannot be described by DT.
             self.plic.sources.eq(linux_uart_irq << 9),
             self.cpu.meip.eq(self.plic.meip),
             self.cpu.seip.eq(self.plic.seip),
@@ -210,8 +202,6 @@ class MulticoreSimSoC(SoCCore):
                 ("cpu-mmio", self.cpu.dbus),
                 ("cpu-memory", self.cpu.ibus),
             ]
-            if privilege_profile == "linux":
-                trace_buses.append(("uart16550", self.uart16550.bus))
             self.submodules.memory_monitor = FlowMemoryMonitor(
                 self.cpu,
                 wishbone_buses=trace_buses,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and run the single-hart Linux-profile UART LSR smoke test."""
+"""Build/run the bounded Linux-profile LiteUART CSR and PLIC smoke tests."""
 
 import argparse
 import os
@@ -9,9 +9,13 @@ import sys
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SOFTWARE_ROOT = os.path.join(FLOW_ROOT, "software", "breeze-mcu")
-MAIN_SOURCE = os.path.join(SOFTWARE_ROOT, "apps", "linux_uart_lsr_smoke.c")
 SIM_ENTRY = os.path.join(FLOW_ROOT, "sim", "litex", "multicore_sim.py")
 TRACE_PREFIXES = ("[MEM-RETIRE]", "[DCACHE-", "[WB-")
+TESTS = {
+    "csr": os.path.join(SOFTWARE_ROOT, "apps", "linux_liteuart_smoke.c"),
+    "plic": os.path.join(
+        SOFTWARE_ROOT, "apps", "linux_liteuart_plic_smoke.c"),
+}
 
 
 def run_checked(command, cwd=None):
@@ -42,15 +46,17 @@ def run_streaming(command, cwd=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run an end-to-end CPU LBU from the Linux ns16550a LSR.")
+        description="Run a bounded Linux-profile LiteUART validation.")
+    parser.add_argument("--test", choices=sorted(TESTS), default="csr",
+        help="CSR data-path or PLIC source-10 interrupt test (default: csr).")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-")
     parser.add_argument("--core-preset", choices=("baseline", "gshare"),
         default="gshare")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the single-hart Linux-profile cluster RTL.")
     parser.add_argument("--mcu-timeout", type=int, default=200000)
-    parser.add_argument("--output-dir", default=os.path.join(
-        FLOW_ROOT, "build", "linux-uart-lsr-single"))
+    parser.add_argument("--output-dir",
+        help="LiteX output directory (default: one directory per test).")
     parser.add_argument("--mem-trace-file",
         help="Trace output path (default: <output-dir>/memory-trace.log).")
     parser.add_argument("--mem-trace-max-events", type=int, default=64)
@@ -60,6 +66,9 @@ def main():
         parser.error("--mcu-timeout must be greater than zero")
     if args.mem_trace_max_events <= 0:
         parser.error("--mem-trace-max-events must be greater than zero")
+    if args.output_dir is None:
+        args.output_dir = os.path.join(
+            FLOW_ROOT, "build", f"linux-liteuart-{args.test}-single")
 
     if args.elaborate:
         sbt = os.environ.get("SBT", "sbt")
@@ -70,12 +79,12 @@ def main():
         ], cwd=os.path.join(FLOW_ROOT, "design"))
 
     firmware_build = os.path.join(
-        SOFTWARE_ROOT, "build", "linux-uart-lsr")
+        SOFTWARE_ROOT, "build", f"linux-liteuart-{args.test}")
     firmware_prefix = os.path.join(firmware_build, "breeze-mcu")
     run_checked([
         "make", "-B", "-C", SOFTWARE_ROOT,
         f"BUILD_DIR={firmware_build}",
-        f"MAIN={MAIN_SOURCE}",
+        f"MAIN={TESTS[args.test]}",
         "LINK_SCRIPT=link-linux.ld",
         f"CROSS_COMPILE={args.cross_compile}",
     ])
@@ -88,7 +97,7 @@ def main():
         "--profile", "single",
         "--core-preset", args.core_preset,
         "--privilege", "linux",
-        "--test-name", "uart-lsr",
+        "--test-name", f"liteuart-{args.test}",
         "--rom-init", firmware_prefix + ".bin",
         "--mcu-result-address", hex(result_address),
         "--mcu-perf-address", hex(perf_address),
@@ -96,8 +105,10 @@ def main():
         "--output-dir", os.path.abspath(args.output_dir),
         "--non-interactive",
         "--mem-trace",
-        "--mem-trace-address-start", "0x13000000",
-        "--mem-trace-address-end", "0x13000100",
+        "--mem-trace-address-start", (
+            "0x0c000000" if args.test == "plic" else "0x12001000"),
+        "--mem-trace-address-end", (
+            "0x10000000" if args.test == "plic" else "0x12002000"),
         "--mem-trace-max-events", str(args.mem_trace_max_events),
         "--build",
     ]
@@ -114,7 +125,7 @@ def main():
     if return_code != 0:
         raise SystemExit(return_code)
 
-    pass_marker = "[MULTICORE-SINGLE-UART-LSR-PASS]"
+    pass_marker = f"[MULTICORE-SINGLE-LITEUART-{args.test.upper()}-PASS]"
     if pass_marker not in output:
         print(
             f"ERROR: simulator did not report {pass_marker}",

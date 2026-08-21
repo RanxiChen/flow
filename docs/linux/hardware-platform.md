@@ -61,12 +61,12 @@ Linux 仿真复用 LiteX 的 SoC 集成和 LiteDRAM 控制器结构：
 | Linux reset ROM | `0x1001_0000` | 64 KiB | cacheable, R/X |
 | SRAM | `0x1100_0000` | 256 KiB | cacheable, R/W/X |
 | LiteX CSR | `0x1200_0000` | 16 MiB window | device, R/W |
-| ns16550a UART | `0x1300_0000` | 256 B | device, R/W |
+| LiteUART CSR page | `0x1200_1000` | 4 KiB page | device, R/W |
 | DDR | `0x8000_0000` | 256 MiB | cacheable, R/W/X |
 
-Linux UART 从早期的 `0x1000_0000` 移到 `0x1300_0000`，避免与真实 reset/ROM 地址
-规划冲突。PMA 对 DDR 覆盖整个 `0x8000_0000..0x8fff_ffff`，不能继续保留早期
-32 MiB RAM 上限。
+LiteUART 使用 LiteX 固定 CSR ID 1，因此基址为 `0x1200_1000`。它已经包含在
+`0x1200_0000` 的 device PMA 窗口内，不再维护额外 UART PMA 区域。PMA 对 DDR 覆盖
+整个 `0x8000_0000..0x8fff_ffff`，不能继续保留早期 32 MiB RAM 上限。
 
 ## 5. 中断控制器
 
@@ -77,25 +77,30 @@ CLINT 提供：
 - 全局 64-bit `mtime`，timebase 为 1 MHz。
 
 PLIC 支持 31 个外部 source，并为每个 hart 提供 M-mode 和 S-mode context。Linux
-16550 UART 固定使用 PLIC source 10。LiteX 内部 CSR interrupt vector 不与 source 10
+LiteUART 固定使用 PLIC source 10。LiteX 内部 CSR interrupt vector 不与 source 10
 做 OR，避免设备树无法表达的中断别名。
 
-## 6. 16550 UART
+## 6. LiteUART
 
-`litex_wrapper/flow/uart16550.py` 实现 Linux/OpenSBI bring-up 所需寄存器：
+MCU 和 Linux 统一使用 LiteX 原生 `UART`、FIFO、event manager 和仿真/FPGA PHY，
+不再维护私有 16550 寄存器模型。CSR按32位对齐：
 
-- RBR/THR 和 DLAB 下的 DLL；
-- IER/DLM；
-- IIR 与 FCR 接受；
-- LCR、MCR、LSR、MSR、SCR；
-- LSR 的 THRE/TEMT；
-- RX 和 TX interrupt 条件。
+| 寄存器 | 地址 |
+| --- | ---: |
+| RXTX | `0x1200_1000` |
+| TXFULL | `0x1200_1004` |
+| RXEMPTY | `0x1200_1008` |
+| EV_STATUS | `0x1200_100c` |
+| EV_PENDING | `0x1200_1010` |
+| EV_ENABLE | `0x1200_1014` |
 
-TX/RX 内部直接复用 LiteX UART 同类的 16-entry buffered `stream.SyncFIFO`，状态位
-描述本地 FIFO，而不是下游 PHY 的组合 `ready`。这样即使仿真 backend 只在看到
-`valid` 后拉高 `ready`，OpenSBI 也能观察到复位后的 THRE/TEMT 并发送第一个字符。
-串行 PHY 仍由 LiteX 提供；设备树将寄存器前端描述为 `ns16550a`，clock 1.8432 MHz、
-115200 baud、`reg-io-width=1`。
+设备树使用 `compatible = "litex,liteuart"`。OpenSBI generic platform 通过 FDT选择
+LiteUART console；Linux启用 `CONFIG_LITEX`、`CONFIG_SERIAL_LITEUART` 和 console，
+运行时设备名为 `ttyLXU0`。LiteUART `ev.irq` 单独连接 PLIC source 10。
+
+迁移原因不是地址变化，而是旧私有 16550 在生成后 Verilog暴露了动态移位位宽错误，
+且此前已经出现 FIFO/PHY handshake 问题。继续补齐完整16550语义风险高于复用 LiteX
+及其上游软件驱动。
 
 ## 7. Boot contract
 

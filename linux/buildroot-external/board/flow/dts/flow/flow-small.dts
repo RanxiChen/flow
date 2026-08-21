@@ -5,10 +5,13 @@
 	#size-cells = <2>;
 	compatible = "flow,breeze-litex";
 	model = "Flow Breeze four-hart LiteX simulation";
+	aliases {
+		serial0 = &uart0;
+	};
 
 	chosen {
-		stdout-path = "/soc/serial@13000000";
-		bootargs = "earlycon=uart8250,mmio,0x13000000 console=ttyS0,115200n8";
+		stdout-path = "/soc/serial@12001000";
+		bootargs = "earlycon=liteuart,0x12001000 console=liteuart";
 	};
 
 	cpus {
@@ -24,6 +27,7 @@
 			riscv,isa = "rv64imafdc_zicsr_zifencei";
 			mmu-type = "riscv,sv39";
 			cpu0_intc: interrupt-controller {
+				#address-cells = <0>;
 				#interrupt-cells = <1>;
 				interrupt-controller;
 				compatible = "riscv,cpu-intc";
@@ -38,6 +42,7 @@
 			riscv,isa = "rv64imafdc_zicsr_zifencei";
 			mmu-type = "riscv,sv39";
 			cpu1_intc: interrupt-controller {
+				#address-cells = <0>;
 				#interrupt-cells = <1>;
 				interrupt-controller;
 				compatible = "riscv,cpu-intc";
@@ -52,6 +57,7 @@
 			riscv,isa = "rv64imafdc_zicsr_zifencei";
 			mmu-type = "riscv,sv39";
 			cpu2_intc: interrupt-controller {
+				#address-cells = <0>;
 				#interrupt-cells = <1>;
 				interrupt-controller;
 				compatible = "riscv,cpu-intc";
@@ -66,6 +72,7 @@
 			riscv,isa = "rv64imafdc_zicsr_zifencei";
 			mmu-type = "riscv,sv39";
 			cpu3_intc: interrupt-controller {
+				#address-cells = <0>;
 				#interrupt-cells = <1>;
 				interrupt-controller;
 				compatible = "riscv,cpu-intc";
@@ -84,6 +91,12 @@
 		compatible = "simple-bus";
 		ranges;
 
+		soc_ctrl0: soc-controller@12000000 {
+			compatible = "litex,soc-controller";
+			reg = <0x0 0x12000000 0x0 0x0c>;
+			status = "okay";
+		};
+
 		clint: timer@2000000 {
 			compatible = "riscv,clint0";
 			reg = <0x0 0x02000000 0x0 0x00010000>;
@@ -96,6 +109,7 @@
 		};
 
 		plic: interrupt-controller@c000000 {
+			#address-cells = <0>;
 			compatible = "riscv,plic0";
 			reg = <0x0 0x0c000000 0x0 0x04000000>;
 			#interrupt-cells = <1>;
@@ -110,15 +124,12 @@
 			>;
 		};
 
-		serial@13000000 {
-			compatible = "ns16550a";
-			reg = <0x0 0x13000000 0x0 0x100>;
-			clock-frequency = <1843200>;
-			current-speed = <115200>;
-			reg-shift = <0>;
-			reg-io-width = <1>;
+		uart0: serial@12001000 {
+			compatible = "litex,liteuart";
+			reg = <0x0 0x12001000 0x0 0x100>;
 			interrupt-parent = <&plic>;
 			interrupts = <10>;
+			status = "okay";
 		};
 	};
 };
