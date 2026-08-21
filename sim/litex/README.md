@@ -91,10 +91,23 @@ SBT=sbt python3 sim/litex/run_linux_liteuart.py --test plic
 Its marker is `[MULTICORE-SINGLE-LITEUART-PLIC-PASS]`. A timeout or missing
 marker is a failure. This test also enables the passive `[IRQ-CHAIN]` observer.
 It records the native UART event enable/status/pending bits, UART IRQ, PLIC
-source 10, PLIC pending/claim/MEIP, the CPU MEIP input, and the last retired
-instruction. Thus a timeout can be assigned to the UART event, PLIC, or CPU
-interrupt boundary without changing or acknowledging the device. The record
-is also retained in `memory-trace.log`.
+source 10, PLIC pending/priority/enable/threshold/claim/MEIP, the CPU MEIP
+input, and the last retired instruction. Thus a timeout can be assigned to the
+UART event, PLIC selection, or CPU interrupt boundary without changing or
+acknowledging the device. The record is also retained in `memory-trace.log`.
+
+Linux profiles instantiate the standalone
+`litex_wrapper/flow/rtl/FlowPlic.sv`; the old Migen `BreezePlic` remains intact
+for legacy MCU regressions and comparison. Before the CPU-integrated test, run
+the direct SystemVerilog test on Alan:
+
+```bash
+sim/rtl/run_flow_plic_test.sh
+```
+
+Its required marker is `[FLOW-PLIC-PASS]`. The test drives global LiteX
+Wishbone addresses and covers 32-bit high/low lanes, source 10, M/S contexts,
+multiple harts, level-gateway behavior, claim, and complete.
 
 The standalone `test_plic_interrupt_path.py` test drives source 10 through
 priority, enable, pending, MEIP, claim, and completion without involving the

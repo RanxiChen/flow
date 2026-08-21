@@ -27,6 +27,9 @@ class InterruptMonitorDut(Module):
         self.plic_pending = Signal(32)
         self.plic_claim = Signal(32)
         self.plic_meip = Signal()
+        self.plic_priorities = Signal(31 * 3)
+        self.plic_enables = Signal(2 * 32)
+        self.plic_thresholds = Signal(2 * 3)
         self.cpu_meip = Signal()
         self.retire_valid = Signal()
         self.retire_pc = Signal(64)
@@ -43,6 +46,9 @@ class InterruptMonitorDut(Module):
             pending_bits=self.plic_pending,
             claims=[self.plic_claim, Signal(32)],
             meip=self.plic_meip,
+            debug_priorities=self.plic_priorities,
+            debug_enables=self.plic_enables,
+            debug_thresholds=self.plic_thresholds,
         )
         cpu = SimpleNamespace(meip=self.cpu_meip)
         retire = SimpleNamespace(
@@ -60,8 +66,9 @@ class InterruptMonitorVerilogTest(unittest.TestCase):
         ios = {
             dut.uart_enable, dut.uart_status, dut.uart_pending, dut.uart_irq,
             dut.plic_sources, dut.plic_pending, dut.plic_claim,
-            dut.plic_meip, dut.cpu_meip, dut.retire_valid, dut.retire_pc,
-            dut.retire_inst,
+            dut.plic_meip, dut.plic_priorities, dut.plic_enables,
+            dut.plic_thresholds, dut.cpu_meip, dut.retire_valid,
+            dut.retire_pc, dut.retire_inst,
         }
         source = str(verilog.convert(dut, ios=ios))
         self.assertNotIn("<migen.", source)

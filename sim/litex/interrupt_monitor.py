@@ -24,8 +24,8 @@ class FlowInterruptChainMonitor(Module):
         retire_count = Signal(64)
         last_pc = Signal(64)
         last_inst = Signal(32)
-        state = Signal(12)
-        previous_state = Signal(12, reset=(1 << 12) - 1)
+        state = Signal(19)
+        previous_state = Signal(19, reset=(1 << 19) - 1)
 
         uart_enable = uart.ev.enable.storage
         uart_status = uart.ev.status.status
@@ -40,6 +40,9 @@ class FlowInterruptChainMonitor(Module):
         plic_claim_matches = Signal(name="irq_chain_plic_claim_matches")
         plic_meip = Signal(name="irq_chain_plic_meip")
         cpu_meip = Signal(name="irq_chain_cpu_meip")
+        plic_priority = Signal(3, name="irq_chain_plic_priority")
+        plic_enabled = Signal(name="irq_chain_plic_enabled")
+        plic_threshold = Signal(3, name="irq_chain_plic_threshold")
 
         self.comb += [
             plic_source.eq(plic.sources[source_id - 1]),
@@ -47,6 +50,11 @@ class FlowInterruptChainMonitor(Module):
             plic_claim_matches.eq(plic_claim == source_id),
             plic_meip.eq(plic.meip[hart]),
             cpu_meip.eq(cpu.meip[hart]),
+            plic_priority.eq(
+                plic.debug_priorities[3*(source_id - 1):3*source_id]),
+            plic_enabled.eq(plic.debug_enables[32*context + source_id]),
+            plic_threshold.eq(
+                plic.debug_thresholds[3*context:3*(context + 1)]),
             state.eq(Cat(
                 uart_enable,
                 uart_status,
@@ -57,6 +65,9 @@ class FlowInterruptChainMonitor(Module):
                 plic_claim_matches,
                 plic_meip,
                 cpu_meip,
+                plic_priority,
+                plic_enabled,
+                plic_threshold,
             )),
         ]
         self.sync += [
@@ -72,11 +83,13 @@ class FlowInterruptChainMonitor(Module):
                     "[IRQ-CHAIN] cycle=%d uart_enable=0x%x "
                     "uart_status=0x%x uart_pending=0x%x uart_irq=%d "
                     "plic_source=%d plic_pending=%d claim=%d "
+                    "priority=%d enabled=%d threshold=%d "
                     "plic_meip=%d cpu_meip=%d retires=%d "
                     "last_pc=0x%x last_inst=0x%x",
                     cycle, uart_enable, uart_status, uart_pending, uart_irq,
-                    plic_source, plic_pending, plic_claim, plic_meip,
-                    cpu_meip, retire_count, last_pc, last_inst),
+                    plic_source, plic_pending, plic_claim,
+                    plic_priority, plic_enabled, plic_threshold,
+                    plic_meip, cpu_meip, retire_count, last_pc, last_inst),
                 previous_state.eq(state),
             ),
         ]

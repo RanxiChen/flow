@@ -36,6 +36,7 @@ from flow.cluster import (  # noqa: E402
 )
 from flow.clint import BreezeClint  # noqa: E402
 from flow.plic import BreezePlic  # noqa: E402
+from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
 from breeze_sim import (  # noqa: E402
     MACHINE_TIMER_ORIGIN, MACHINE_TIMER_SIZE, MSIP_OFFSET, MTIME_FREQUENCY_HZ,
@@ -165,7 +166,16 @@ class MulticoreSimSoC(SoCCore):
             self.cpu.msip.eq(self.machine_timer.msip),
             self.cpu.time.eq(self.machine_timer.mtime),
         ]
-        self.submodules.plic = BreezePlic(num_harts=self.cpu.num_harts, num_sources=31)
+        # Keep the legacy Migen PLIC for MCU regressions.  Linux uses the
+        # standalone SystemVerilog implementation through a thin LiteX wrapper
+        # so priority/enable/claim behavior is verified as real RTL rather than
+        # being intertwined with Migen SoC elaboration.
+        if privilege_profile == "linux":
+            self.submodules.plic = BreezePlicVerilog(
+                platform, num_harts=self.cpu.num_harts, num_sources=31)
+        else:
+            self.submodules.plic = BreezePlic(
+                num_harts=self.cpu.num_harts, num_sources=31)
         self.bus.add_slave(
             name="plic", slave=self.plic.bus,
             region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
