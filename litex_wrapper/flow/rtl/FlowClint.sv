@@ -5,7 +5,7 @@
 // register, timebase, software-interrupt and timer-interrupt semantics.
 module FlowClint #(
     parameter integer NUM_HARTS       = 4,
-    parameter integer SYS_CLK_FREQ    = 1000000,
+    parameter integer SYS_CLK_FREQ    = 50000000,
     parameter integer TIMEBASE_FREQ   = 1000000,
     parameter integer REGION_BYTES    = 65536,
     parameter integer MSIP_OFFSET     = 32'h0000,

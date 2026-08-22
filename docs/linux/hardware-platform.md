@@ -74,7 +74,8 @@ CLINT 提供：
 
 - 每 hart `msip`，用于 IPI；
 - 每 hart `mtimecmp`；
-- 全局 64-bit `mtime`，timebase 为 1 MHz。
+- 全局 64-bit `mtime`，timebase 为 1 MHz；
+- 当前无板 Linux 平台的 `sys_clk` 为 50 MHz，因此 `mtime` 每 50 个系统周期增加一次。
 
 Linux profile 使用独立 SystemVerilog `FlowClint.sv`，覆盖标准全局地址到本地寄存器
 偏移、64-bit Wishbone byte select、timebase 分频和每 hart 独立中断输出。旧 Migen

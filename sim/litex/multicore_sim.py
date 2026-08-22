@@ -125,7 +125,7 @@ class MulticoreSimSoC(SoCCore):
         # The Flow cluster already owns the coherent L2, so do not insert a
         # second LiteX L2 cache in front of memory.
         if with_litedram:
-            sdram_clk_freq = int(100e6)
+            sdram_clk_freq = int(sys_clk_freq)
             sdram_rate = "1:{}".format(sdram_module_nphases[MT41K64M16.memtype])
             sdram_module = MT41K64M16(sdram_clk_freq, sdram_rate)
             self.submodules.sdrphy = SDRAMPHYModel(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Static integration contract for the standalone FlowClint RTL."""
 
+import json
 import os
 import unittest
 
@@ -14,6 +15,31 @@ def read_text(relative_path):
 
 
 class FlowClintVerilogContractTest(unittest.TestCase):
+    def test_linux_clock_and_timebase_contract_stays_synchronized(self):
+        linux_sim = read_text("sim/litex/linux_sim.py")
+        multicore_sim = read_text("sim/litex/multicore_sim.py")
+        rtl = read_text("litex_wrapper/flow/rtl/FlowClint.sv")
+        with open(os.path.join(FLOW_ROOT, "config", "breeze_mcu_platform.json"),
+                  encoding="utf-8") as handle:
+            platform = json.load(handle)
+
+        self.assertEqual(platform["machineTimer"]["mtimeFrequencyHz"], 1_000_000)
+        self.assertIn("LINUX_SYS_CLK_FREQUENCY_HZ = 50_000_000", linux_sim)
+        self.assertIn(
+            'sim_config.add_clocker("sys_clk", freq_hz=LINUX_SYS_CLK_FREQUENCY_HZ)',
+            linux_sim)
+        self.assertIn("sys_clk_freq=LINUX_SYS_CLK_FREQUENCY_HZ", linux_sim)
+        self.assertIn("sdram_clk_freq = int(sys_clk_freq)", multicore_sim)
+        self.assertIn("parameter integer SYS_CLK_FREQ    = 50000000", rtl)
+        self.assertIn("parameter integer TIMEBASE_FREQ   = 1000000", rtl)
+
+        for path in (
+                "software/breeze-linux/flow-small.dts",
+                "linux/buildroot-external/board/flow/dts/flow/flow-small.dts"):
+            dts = read_text(path)
+            self.assertEqual(dts.count("clock-frequency = <50000000>;"), 4, path)
+            self.assertEqual(dts.count("timebase-frequency = <1000000>;"), 1, path)
+
     def test_linux_selects_verilog_clint_and_keeps_legacy_source(self):
         sim = read_text("sim/litex/multicore_sim.py")
         wrapper = read_text("litex_wrapper/flow/clint_verilog.py")

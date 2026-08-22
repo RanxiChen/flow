@@ -17,7 +17,7 @@ FLOW_ROOT = os.path.abspath(os.path.join(SIM_DIR, "..", ".."))
 if SIM_DIR not in sys.path:
     sys.path.insert(0, SIM_DIR)
 
-from multicore_sim import MulticoreSimSoC  # noqa: E402
+from multicore_sim import MTIME_FREQUENCY_HZ, MulticoreSimSoC  # noqa: E402
 from flow.wiring import wishbone_byte_address  # noqa: E402
 
 
@@ -27,6 +27,7 @@ OPENSBI_ADDR = 0x8000_0000
 DTB_ADDR = 0x8010_0000
 KERNEL_ADDR = 0x8020_0000
 ROM_SIZE = 0x0001_0000
+LINUX_SYS_CLK_FREQUENCY_HZ = 50_000_000
 
 
 class LinuxBootMonitor(Module):
@@ -207,9 +208,10 @@ def main():
     )
 
     sim_config = SimConfig()
-    sim_config.add_clocker("sys_clk", freq_hz=int(1e6))
+    sim_config.add_clocker("sys_clk", freq_hz=LINUX_SYS_CLK_FREQUENCY_HZ)
     sim_config.add_module("serial2console", "serial")
     soc = MulticoreSimSoC(
+        sys_clk_freq=LINUX_SYS_CLK_FREQUENCY_HZ,
         rom_init=rom_init,
         cluster_profile=args.profile,
         core_preset=args.core_preset,
@@ -230,6 +232,8 @@ def main():
             soc.cpu, soc.cpu.dbus, args.debug_cycles)
     print(
         f"BREEZE_LINUX_SOC harts={soc.cpu.num_harts} ram=0x{DDR_BASE:08x}+0x{DDR_SIZE:x} "
+        f"sys_clk_hz={LINUX_SYS_CLK_FREQUENCY_HZ} "
+        f"timebase_hz={MTIME_FREQUENCY_HZ} "
         f"opensbi=0x{OPENSBI_ADDR:08x} dtb=0x{DTB_ADDR:08x} kernel=0x{KERNEL_ADDR:08x}",
         flush=True,
     )
