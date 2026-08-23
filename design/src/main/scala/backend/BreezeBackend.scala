@@ -224,8 +224,13 @@ class BreezeBackend(
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RW.U ||
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RS.U ||
         decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RC.U
+    // Stores and AMOs use rs2 as write data even though the ALU's second
+    // operand is an immediate/constant. Keep that architectural source in the
+    // dependency model so a CSR/load result is not sampled one value early.
     decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U ||
-        decoder.io.exe_ctrl.bru_inst || decoder.io.exe_ctrl.is_sfence_vma
+        decoder.io.exe_ctrl.bru_inst || decoder.io.exe_ctrl.is_sfence_vma ||
+        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Store ||
+        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Amo
 
     val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
     fpImmediate := Mux(
