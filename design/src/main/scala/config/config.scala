@@ -55,11 +55,13 @@ case class BreezeFrontendConfig(
     VLEN: Int = 64,
     branchPredCfg: FrontendBranchPredictorConfig = GShareBranchPredictorConfig(),
     enableCompressed: Boolean = false,
-    enableMmu: Boolean = false
+    enableMmu: Boolean = false,
+    icacheSetNum: Int = 64
 ) {
     val cacheCfg: DefaultICacheConfig = DefaultICacheConfig(
         VLEN = VLEN,
-        PLEN = VLEN
+        PLEN = VLEN,
+        ICACHE_SET_NUM = icacheSetNum
     )
 }
 
@@ -71,7 +73,8 @@ case class BackendConfig(
     val enableTandem: Boolean = false,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
-    val enableMmu: Boolean = false
+    val enableMmu: Boolean = false,
+    val tinyFpga: Boolean = false
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -143,7 +146,9 @@ case class BreezeCoreConfig(
     val dcacheWays: Int = 4,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
-    val enableMmu: Boolean = false
+    val enableMmu: Boolean = false,
+    val icacheSetNum: Int = 64,
+    val tinyFpga: Boolean = false
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -159,7 +164,8 @@ case class BreezeCoreConfig(
         VLEN = VLEN,
         branchPredCfg = branchPredCfg,
         enableCompressed = enableCompressed,
-        enableMmu = enableMmu
+        enableMmu = enableMmu,
+        icacheSetNum = icacheSetNum
     )
     val backendCfg: BackendConfig = BackendConfig(
         VLEN = VLEN,
@@ -169,7 +175,8 @@ case class BreezeCoreConfig(
         enableTandem = enableTandem,
         privilegeProfile = privilegeProfile,
         enableCompressed = enableCompressed,
-        enableMmu = enableMmu
+        enableMmu = enableMmu,
+        tinyFpga = tinyFpga
     )
     val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
         VLEN = VLEN,
@@ -188,6 +195,9 @@ sealed abstract class CorePreset(val name: String)
 object CorePreset {
     case object Gshare extends CorePreset("gshare")
     case object Baseline extends CorePreset("baseline")
+    // Fixed EP4CE10 resource experiment. Deliberately excluded from the
+    // public preset parser: only GenerateBreezeTinyFpga selects it.
+    private[flow] case object TinyFpga extends CorePreset("tiny-fpga")
 
     val all: Seq[CorePreset] = Seq(Gshare, Baseline)
 
@@ -224,6 +234,29 @@ object BreezeCoreConfigs {
             enableMmu = privilegeProfile.enableSupervisorUser
         )
 
+    /** Fixed first-pass EP4CE10 resource probe.
+      *
+      * Keep the proven CPU/cache/coherence structure intact and reduce only
+      * storage geometry: 2 KiB L1I + 2 KiB L1D; the existing cluster formula
+      * consequently produces a 4 KiB L2 for one hart. The fixed tiny mode
+      * emits RV64I + Zicsr + Zifencei only; M/A/F/D are illegal instructions
+      * and their dedicated execution units are not elaborated.
+      */
+    private[flow] def tinyFpga(enableTandem: Boolean = false): BreezeCoreConfig =
+        BreezeCoreConfig(
+            useFASE = false,
+            enableTandem = enableTandem,
+            useGShare = true,
+            dcacheCapacityBytes = 2048,
+            dcacheLineBytes = 32,
+            dcacheWays = 4,
+            privilegeProfile = PrivilegeProfile.Mcu,
+            enableCompressed = false,
+            enableMmu = false,
+            icacheSetNum = 16,
+            tinyFpga = true
+        )
+
     def fromPreset(
         preset: CorePreset,
         enableTandem: Boolean,
@@ -232,6 +265,10 @@ object BreezeCoreConfigs {
         preset match {
             case CorePreset.Baseline => baseline(enableTandem, privilegeProfile)
             case CorePreset.Gshare   => gshare(enableTandem, privilegeProfile)
+            case CorePreset.TinyFpga =>
+                require(privilegeProfile == PrivilegeProfile.Mcu,
+                    "tiny-fpga is a fixed machine-mode profile")
+                tinyFpga(enableTandem)
         }
 
     def fromPreset(preset: CorePreset, enableTandem: Boolean): BreezeCoreConfig =
@@ -338,6 +375,12 @@ object BreezeClusterPresets {
     val single: BreezeClusterConfig = BreezeClusterConfig("single", 1)
     val dual: BreezeClusterConfig = BreezeClusterConfig("dual", 2)
     val small: BreezeClusterConfig = BreezeClusterConfig("small", 4)
+    private[flow] val tinyFpga: BreezeClusterConfig = BreezeClusterConfig(
+        profileName = "tiny-fpga",
+        numHarts = 1,
+        corePreset = CorePreset.TinyFpga,
+        privilegeProfile = PrivilegeProfile.Mcu
+    )
 
     /** Resolve a generator CLI profile name; unknown names fail fast. */
     def fromName(name: String): BreezeClusterConfig = name match {

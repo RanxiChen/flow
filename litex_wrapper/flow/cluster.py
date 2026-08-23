@@ -27,8 +27,11 @@ GCC_FLAGS = {
 # Frozen cluster profiles (spec section 3.3) --------------------------------------------------------
 
 CLUSTER_PROFILES = ("single", "dual", "small")
-CLUSTER_NUM_HARTS = {"single": 1, "dual": 2, "small": 4}
-CLUSTER_L2_BYTES = {"single": 16384, "dual": 32768, "small": 65536}
+TINY_FPGA_PROFILE = "tiny-fpga"
+TINY_FPGA_CORE_PRESET = "tiny-fpga"
+CLUSTER_NUM_HARTS = {"single": 1, "dual": 2, "small": 4, TINY_FPGA_PROFILE: 1}
+CLUSTER_L1_BYTES = {"single": 8192, "dual": 8192, "small": 8192, TINY_FPGA_PROFILE: 2048}
+CLUSTER_L2_BYTES = {"single": 16384, "dual": 32768, "small": 65536, TINY_FPGA_PROFILE: 4096}
 CORE_PRESETS = ("baseline", "gshare")
 
 RETIRE_LAYOUT = [
@@ -228,11 +231,16 @@ class FlowCluster(CPU):
 
     @classmethod
     def set_cluster_config(cls, cluster_profile, core_preset, privilege_profile="mcu"):
-        if cluster_profile not in CLUSTER_PROFILES:
+        tiny_fpga = (
+            cluster_profile == TINY_FPGA_PROFILE and
+            core_preset == TINY_FPGA_CORE_PRESET and
+            privilege_profile == "mcu"
+        )
+        if cluster_profile not in CLUSTER_PROFILES and not tiny_fpga:
             expected = " or ".join(CLUSTER_PROFILES)
             raise ValueError(
                 f"Unsupported cluster profile {cluster_profile!r}; expected {expected}")
-        if core_preset not in CORE_PRESETS:
+        if core_preset not in CORE_PRESETS and not tiny_fpga:
             expected = " or ".join(CORE_PRESETS)
             raise ValueError(
                 f"Unsupported core preset {core_preset!r}; expected {expected}")
@@ -303,8 +311,8 @@ class FlowCluster(CPU):
         expected = {
             "profile": cls.cluster_profile,
             "numHarts": str(CLUSTER_NUM_HARTS[cls.cluster_profile]),
-            "l1iBytes": "8192",
-            "l1dBytes": "8192",
+            "l1iBytes": str(CLUSTER_L1_BYTES[cls.cluster_profile]),
+            "l1dBytes": str(CLUSTER_L1_BYTES[cls.cluster_profile]),
             "l2Bytes": str(CLUSTER_L2_BYTES[cls.cluster_profile]),
             "lineBytes": "32",
             "l1Ways": "4",
@@ -358,7 +366,13 @@ class FlowCluster(CPU):
             platform.add_verilog_include_path(include_path)
 
         for rtl_file in rtl_files:
-            platform.add_source(rtl_file)
+            # The EP4CE10 build is driven by Windows Quartus from a WSL
+            # checkout. Copy this one fixed probe's sources beside the QSF so
+            # the generated project contains no Linux-only absolute paths.
+            platform.add_source(
+                rtl_file,
+                copy=(cls.cluster_profile == TINY_FPGA_PROFILE),
+            )
 
     def do_finalize(self):
         assert hasattr(self, "reset_address")

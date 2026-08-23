@@ -71,7 +71,8 @@ class BreezeMulticoreClusterWishbone(
             hartId = h,
             hartIdWidth = clusterCfg.hartIdWidth,
             txnIdWidth = clusterCfg.txnIdWidth,
-            enableTrace = enableTandem
+            enableTrace = enableTandem,
+            enableAtomics = !coreCfg.tinyFpga
         ))
     }
 

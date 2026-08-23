@@ -15,7 +15,7 @@ class BreezeBackend(
     val enabledebug: Boolean = false,
     val hartId: Int = 0
 ) extends Module {
-    require(cfg.VLEN == 64, "RV64 M-extension backend requires VLEN=64")
+    require(cfg.VLEN == 64, "The Breeze backend requires VLEN=64")
     require(hartId >= 0, "backend hartId must be non-negative")
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
@@ -46,10 +46,11 @@ class BreezeBackend(
     val nopInst = "h00000013".U(32.W)
 
     val decoder = Module(new Decoder())
-    val fpDecoder = Module(new BreezeFpDecoder)
+    val fpDecoder = if (cfg.tinyFpga) None else Some(Module(new BreezeFpDecoder))
+    val fpDecodeCtrl = WireDefault(0.U.asTypeOf(new BreezeFpCtrl))
     val immGen = Module(new ImmGen(cfg.VLEN))
     val regFile = Module(new RegFile(cfg.VLEN))
-    val fpRegFile = Module(new BreezeFpRegFile)
+    val fpRegFile = if (cfg.tinyFpga) None else Some(Module(new BreezeFpRegFile))
     val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug,
         hartId = hartId, privilegeProfile = cfg.privilegeProfile,
         enableCompressed = cfg.enableCompressed))
@@ -81,7 +82,10 @@ class BreezeBackend(
         decodeInst(11, 7) === 0.U
 
     decoder.io.inst := decodeInst
-    fpDecoder.io.inst := decodeInst
+    fpDecoder.foreach { unit =>
+        unit.io.inst := decodeInst
+        fpDecodeCtrl := unit.io.ctrl
+    }
     immGen.io.inst := decodeInst
     immGen.io.type_sel := decoder.io.exe_ctrl.sel_imm
 
@@ -152,16 +156,24 @@ class BreezeBackend(
     val memWbFpData = RegInit(0.U(64.W))
     val memWbFpFlagsValid = RegInit(false.B)
     val memWbFpFlags = RegInit(0.U(5.W))
-    fpRegFile.io.rs1Addr := rs1Addr
-    fpRegFile.io.rs2Addr := rs2Addr
-    fpRegFile.io.rs3Addr := decodeInst(31, 27)
-    fpRegFile.io.rdAddr := memWbReg.rd_addr
-    fpRegFile.io.rdData := memWbFpData
-    fpRegFile.io.rdEn := memWbReg.valid && memWbFpWrite &&
-        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst &&
-        !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
-        !memWbReg.load_page_fault
+    val fpRs1Data = WireDefault(0.U(64.W))
+    val fpRs2Data = WireDefault(0.U(64.W))
+    val fpRs3Data = WireDefault(0.U(64.W))
+    fpRegFile.foreach { file =>
+        file.io.rs1Addr := rs1Addr
+        file.io.rs2Addr := rs2Addr
+        file.io.rs3Addr := decodeInst(31, 27)
+        file.io.rdAddr := memWbReg.rd_addr
+        file.io.rdData := memWbFpData
+        file.io.rdEn := memWbReg.valid && memWbFpWrite &&
+            !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
+            !memWbReg.illegal_inst &&
+            !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
+            !memWbReg.load_page_fault
+        fpRs1Data := file.io.rs1Data
+        fpRs2Data := file.io.rs2Data
+        fpRs3Data := file.io.rs3Data
+    }
     estopCommitted := memWbReg.valid && memWbReg.estop
 
     val src1 = Wire(UInt(cfg.VLEN.W))
@@ -329,8 +341,13 @@ class BreezeBackend(
         idExeReg.instruction_access_fault := decodeInstructionAccessFault
         idExeReg.instruction_page_fault := decodeInstructionPageFault
         idExeReg.illegal_inst := (io.fetchBuffer.bits.illegalCompressed ||
-            (decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
-            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled) ||
+            (decoder.io.illegal_inst && !fpDecodeCtrl.valid) ||
+            (fpDecodeCtrl.valid && !csrFile.io.fp_enabled) ||
+            (cfg.tinyFpga.B && (
+                decoder.io.exe_ctrl.mul_valid || decoder.io.exe_ctrl.div_valid ||
+                decoder.io.exe_ctrl.mem_op === BreezeMemOp.Lr ||
+                decoder.io.exe_ctrl.mem_op === BreezeMemOp.Sc ||
+                decoder.io.exe_ctrl.mem_op === BreezeMemOp.Amo)) ||
             (decoder.io.exe_ctrl.is_mret && csrFile.io.mret_illegal) ||
             (decoder.io.exe_ctrl.is_sret && csrFile.io.sret_illegal) ||
             (decoder.io.exe_ctrl.is_wfi && csrFile.io.wfi_illegal) ||
@@ -344,7 +361,11 @@ class BreezeBackend(
             !decodeInstructionFault
         idExeReg.pred := io.fetchBuffer.bits.pred
         idExeReg.ctrl := decoder.io.exe_ctrl
-        when(decodeInstructionFault) {
+        when(decodeInstructionFault || (cfg.tinyFpga.B && (
+            decoder.io.exe_ctrl.mul_valid || decoder.io.exe_ctrl.div_valid ||
+            decoder.io.exe_ctrl.mem_op === BreezeMemOp.Lr ||
+            decoder.io.exe_ctrl.mem_op === BreezeMemOp.Sc ||
+            decoder.io.exe_ctrl.mem_op === BreezeMemOp.Amo))) {
             idExeReg.ctrl.redir_inst := false.B
             idExeReg.ctrl.bru_inst := false.B
             idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
@@ -431,14 +452,14 @@ class BreezeBackend(
         idFpOperand2 := 0.U
         idFpOperand3 := 0.U
     }.elsewhen(decodeFire) {
-        idFpCtrl := fpDecoder.io.ctrl
+        idFpCtrl := fpDecodeCtrl
         when(decodeInstructionFault ||
-            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled)) {
+            (fpDecodeCtrl.valid && !csrFile.io.fp_enabled)) {
             idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
         }
-        idFpOperand1 := fpRegFile.io.rs1Data
-        idFpOperand2 := fpRegFile.io.rs2Data
-        idFpOperand3 := fpRegFile.io.rs3Data
+        idFpOperand1 := fpRs1Data
+        idFpOperand2 := fpRs2Data
+        idFpOperand3 := fpRs3Data
     }.elsewhen(decodeReady || !pipelineHold) {
         idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
         idFpOperand1 := 0.U
@@ -473,9 +494,17 @@ class BreezeBackend(
     val mulWaitingRespReg = RegInit(false.B)
     val divWaitingRespReg = RegInit(false.B)
     val fpWaitingRespReg = RegInit(false.B)
-    val mulUnit = Module(new RiscvMulUnit)
-    val divUnit = Module(new RiscvDivUnit)
-    val fpUnit = Module(new BreezeFpUnit)
+    val mulUnit = if (cfg.tinyFpga) None else Some(Module(new RiscvMulUnit))
+    val divUnit = if (cfg.tinyFpga) None else Some(Module(new RiscvDivUnit))
+    val fpUnit = if (cfg.tinyFpga) None else Some(Module(new BreezeFpUnit))
+    val mulOutValid = WireDefault(false.B)
+    val mulResult = WireDefault(0.U(64.W))
+    val divOutValid = WireDefault(false.B)
+    val divResult = WireDefault(0.U(64.W))
+    val fpInReady = WireDefault(false.B)
+    val fpOutValid = WireDefault(false.B)
+    val fpResult = WireDefault(0.U(64.W))
+    val fpStatus = WireDefault(0.U(5.W))
     val memReqIssued = Wire(Bool())
     val memRspFire = Wire(Bool())
     val mulReqIssued = Wire(Bool())
@@ -627,11 +656,11 @@ class BreezeBackend(
         exeMemReg.mem_cmd === MEM_TYPE.SW.U ||
         exeMemReg.mem_cmd === MEM_TYPE.SD.U
     )
-    exeMemIsMul := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.mul_valid &&
+    exeMemIsMul := !cfg.tinyFpga.B && exeMemReg.valid && exeMemReg.wb_en && exeMemReg.mul_valid &&
         !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-    exeMemIsDiv := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.div_valid &&
+    exeMemIsDiv := !cfg.tinyFpga.B && exeMemReg.valid && exeMemReg.wb_en && exeMemReg.div_valid &&
         !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-    exeMemIsFp := exeMemReg.valid && exeFpCtrl.fpuValid &&
+    exeMemIsFp := !cfg.tinyFpga.B && exeMemReg.valid && exeFpCtrl.fpuValid &&
         !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault &&
         !exeMemReg.illegal_inst
     // LR/AMO carry a load-type mem_cmd (LW/LD) and SC a store-type one
@@ -661,44 +690,58 @@ class BreezeBackend(
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
     mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
         !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
-    mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
-    mulUnit.io.flush := frontendRedirectNeeded
-    mulUnit.io.in_valid := mulReqIssued
-    mulUnit.io.a := exeMemReg.mul_a
-    mulUnit.io.b := exeMemReg.mul_b
-    mulUnit.io.op := exeMemReg.mul_op
+    mulRspFire := mulWaitingRespReg && mulOutValid
+    mulUnit.foreach { unit =>
+        unit.io.flush := frontendRedirectNeeded
+        unit.io.in_valid := mulReqIssued
+        unit.io.a := exeMemReg.mul_a
+        unit.io.b := exeMemReg.mul_b
+        unit.io.op := exeMemReg.mul_op
+        mulOutValid := unit.io.out_valid
+        mulResult := unit.io.result
+    }
     divFastCompletion := exeMemIsDiv && exeMemReg.div_fast
     divReqIssued := exeMemIsDiv && !exeMemReg.div_fast && !divWaitingRespReg &&
         !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
-    divRspFire := divWaitingRespReg && divUnit.io.out_valid
-    divUnit.io.flush := frontendRedirectNeeded
-    divUnit.io.in_valid := divReqIssued
-    divUnit.io.dividend_mag := exeMemReg.div_dividend_mag
-    divUnit.io.divisor_mag := exeMemReg.div_divisor_mag
-    divUnit.io.quotient_neg := exeMemReg.div_quotient_neg
-    divUnit.io.remainder_neg := exeMemReg.div_remainder_neg
-    divUnit.io.is_remainder := exeMemReg.div_is_remainder
-    divUnit.io.is_word := exeMemReg.div_is_word
+    divRspFire := divWaitingRespReg && divOutValid
+    divUnit.foreach { unit =>
+        unit.io.flush := frontendRedirectNeeded
+        unit.io.in_valid := divReqIssued
+        unit.io.dividend_mag := exeMemReg.div_dividend_mag
+        unit.io.divisor_mag := exeMemReg.div_divisor_mag
+        unit.io.quotient_neg := exeMemReg.div_quotient_neg
+        unit.io.remainder_neg := exeMemReg.div_remainder_neg
+        unit.io.is_remainder := exeMemReg.div_is_remainder
+        unit.io.is_word := exeMemReg.div_is_word
+        divOutValid := unit.io.out_valid
+        divResult := unit.io.result
+    }
     fpReqIssued := exeMemIsFp && !fpWaitingRespReg &&
         !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
-    fpReqAccepted := fpReqIssued && fpUnit.io.inReady
-    fpRspFire := fpWaitingRespReg && fpUnit.io.outValid
+    fpReqAccepted := fpReqIssued && fpInReady
+    fpRspFire := fpWaitingRespReg && fpOutValid
     // A younger branch may resolve in the same cycle that an older FP result
     // completes and is forwarded.  Do not feed that redirect back into FPnew:
     // the older result must commit before the younger redirect takes effect.
-    fpUnit.io.flush := reset.asBool || fenceiFlush || exceptionRedirect ||
-        xretRedirect || interruptRedirect
-    fpUnit.io.inValid := fpReqIssued
-    fpUnit.io.outReady := fpWaitingRespReg
-    fpUnit.io.operandA := exeFpOperand1
-    fpUnit.io.operandB := exeFpOperand2
-    fpUnit.io.operandC := exeFpOperand3
-    fpUnit.io.rm := exeFpRm
-    fpUnit.io.operation := exeFpCtrl.operation
-    fpUnit.io.opMod := exeFpCtrl.opMod
-    fpUnit.io.srcFmt := exeFpCtrl.srcFmt
-    fpUnit.io.dstFmt := exeFpCtrl.dstFmt
-    fpUnit.io.intFmt := exeFpCtrl.intFmt
+    fpUnit.foreach { unit =>
+        unit.io.flush := reset.asBool || fenceiFlush || exceptionRedirect ||
+            xretRedirect || interruptRedirect
+        unit.io.inValid := fpReqIssued
+        unit.io.outReady := fpWaitingRespReg
+        unit.io.operandA := exeFpOperand1
+        unit.io.operandB := exeFpOperand2
+        unit.io.operandC := exeFpOperand3
+        unit.io.rm := exeFpRm
+        unit.io.operation := exeFpCtrl.operation
+        unit.io.opMod := exeFpCtrl.opMod
+        unit.io.srcFmt := exeFpCtrl.srcFmt
+        unit.io.dstFmt := exeFpCtrl.dstFmt
+        unit.io.intFmt := exeFpCtrl.intFmt
+        fpInReady := unit.io.inReady
+        fpOutValid := unit.io.outValid
+        fpResult := unit.io.result
+        fpStatus := unit.io.status
+    }
     memBaseAddr := (exeMemReg.data >> 3.U) << 3.U
     memOffset := exeMemReg.data(2, 0)
     loadAlignBuf := (io.dmem.rsp.data >> (memOffset << 3.U))(63, 0)
@@ -761,10 +804,10 @@ class BreezeBackend(
         (fpRspFire && exeFpCtrl.writesGpr)
     completionRd := exeMemReg.rd_addr
     completionData := MuxCase(memCompletionData, Seq(
-        mulRspFire -> mulUnit.io.result,
+        mulRspFire -> mulResult,
         divFastCompletion -> exeMemReg.div_fast_result,
-        divRspFire -> divUnit.io.result,
-        fpRspFire -> fpUnit.io.result
+        divRspFire -> divResult,
+        fpRspFire -> fpResult
     ))
     assert(PopCount(Seq(memRspFire, mulRspFire, divFastCompletion, divRspFire, fpRspFire)) <= 1.U,
         "[BreezeBackend] multiple long-latency backends completed in one cycle")
@@ -969,9 +1012,9 @@ class BreezeBackend(
         (ctrl.usesFpr1 && rs1Addr === rd) ||
         (ctrl.usesFpr2 && rs2Addr === rd) ||
         (ctrl.usesFpr3 && decodeInst(31, 27) === rd)
-    fpRegHazard := fpDecoder.io.ctrl.valid && (
-        (idExeReg.valid && idFpCtrl.writesFpr && fpSourceMatches(fpDecoder.io.ctrl, idExeReg.rd_addr)) ||
-        (exeMemReg.valid && exeFpCtrl.writesFpr && fpSourceMatches(fpDecoder.io.ctrl, exeMemReg.rd_addr))
+    fpRegHazard := fpDecodeCtrl.valid && (
+        (idExeReg.valid && idFpCtrl.writesFpr && fpSourceMatches(fpDecodeCtrl, idExeReg.rd_addr)) ||
+        (exeMemReg.valid && exeFpCtrl.writesFpr && fpSourceMatches(fpDecodeCtrl, exeMemReg.rd_addr))
     )
     val idCsrAffectsFp = idExeReg.ctrl.csr_addr === CSRMAP.mstatus.U ||
         idExeReg.ctrl.csr_addr === CSRMAP.frm.U || idExeReg.ctrl.csr_addr === CSRMAP.fcsr.U
@@ -979,7 +1022,7 @@ class BreezeBackend(
         exeMemReg.csr_addr === CSRMAP.frm.U || exeMemReg.csr_addr === CSRMAP.fcsr.U
     val memWbCsrAffectsFp = memWbReg.csr_addr === CSRMAP.mstatus.U ||
         memWbReg.csr_addr === CSRMAP.frm.U || memWbReg.csr_addr === CSRMAP.fcsr.U
-    fpCsrHazard := fpDecoder.io.ctrl.valid && (
+    fpCsrHazard := fpDecodeCtrl.valid && (
         (idExePendingCsrState && idCsrAffectsFp) ||
         (exeMemPendingCsrState && exeCsrAffectsFp) ||
         (memWbReg.valid && memWbReg.csr_write_en && memWbCsrAffectsFp)
@@ -1417,10 +1460,10 @@ class BreezeBackend(
             memCompletionData, 0.U)
         memWbReg.csr_data := csrFile.io.csr_old_data
         memWbReg.mul_data := MuxCase(0.U(cfg.VLEN.W), Seq(
-            mulRspFire -> mulUnit.io.result,
+            mulRspFire -> mulResult,
             divFastCompletion -> exeMemReg.div_fast_result,
-            divRspFire -> divUnit.io.result,
-            fpRspFire -> fpUnit.io.result
+            divRspFire -> divResult,
+            fpRspFire -> fpResult
         ))
         memWbReg.csr_addr := exeMemReg.csr_addr
         memWbReg.csr_new_data := csrFile.io.csr_new_data
@@ -1439,10 +1482,10 @@ class BreezeBackend(
                         memCompletionData, 0.U),
                     SEL_WB.CSR.U -> csrFile.io.csr_old_data,
                     SEL_WB.MUL.U -> MuxCase(0.U(cfg.VLEN.W), Seq(
-                        mulRspFire -> mulUnit.io.result,
+                        mulRspFire -> mulResult,
                         divFastCompletion -> exeMemReg.div_fast_result,
-                        divRspFire -> divUnit.io.result,
-                        fpRspFire -> fpUnit.io.result
+                        divRspFire -> divResult,
+                        fpRspFire -> fpResult
                     ))
                 )
             )
@@ -1482,10 +1525,10 @@ class BreezeBackend(
             memRspFire && exeFpCtrl.isLoad,
             Mux(exeFpCtrl.isDouble, io.dmem.rsp.data,
                 Cat("hffffffff".U(32.W), loadAlignBuf(31, 0))),
-            fpUnit.io.result
+            fpResult
         )
         memWbFpFlagsValid := fpRspFire && exeFpCtrl.writeFlags
-        memWbFpFlags := Mux(fpRspFire, fpUnit.io.status, 0.U)
+        memWbFpFlags := Mux(fpRspFire, fpStatus, 0.U)
     }.otherwise {
         memWbFpWrite := false.B
         memWbFpFlagsValid := false.B

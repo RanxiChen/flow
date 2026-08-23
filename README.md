@@ -9,6 +9,17 @@ LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
 启动不依赖 VirtIO：OpenSBI、DTB 和内嵌 initramfs 的 Linux `Image` 由宿主机直接装入
 模拟 DDR，持久化块设备留到后续阶段。
 
+当前无板 Linux 平台冻结为 50 MHz `sys_clk` 和 1 MHz `mtime` timebase。该契约涉及
+LiteX 仿真时钟、CLINT 分频、LiteDRAM 时序频率、DTS 中每 hart 的 `clock-frequency`
+和 `/cpus/timebase-frequency`，以及 OpenSBI/Linux 对时间的解释；Chisel CPU 核心不因
+此改变。未来板级晶振、PLL、DDR PHY 和 timing closure 属于尚未绑定的 FPGA 平台边界。
+
+另有一个固定的 EP4CE10 MCU 配置用于真实小板资源验证：单 hart
+RV64I+Zicsr+Zifencei、2 KiB L1I、2 KiB L1D、4 KiB L2、8 KiB ROM、16 KiB
+SRAM、1 MHz CLINT 和 115200 8N1 LiteUART。ROM 固件每分钟由机器定时器中断
+发送一次 `Hello World`。生成、Quartus 编译和烧录入口见
+`fpga/ep4ce10_tiny/README.md`。
+
 ## 最新进展
 
 截至 2026-08-21，仓库已经完成：

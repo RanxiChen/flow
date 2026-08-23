@@ -22,7 +22,7 @@ object BreezeDCacheState extends ChiselEnum {
 /** Blocking, 4-way set-associative, write-back/write-allocate coherent L1
   * data cache with RV64A support.
   *
-  * Frozen geometry: 8192 B capacity, 32 B lines, 4 ways -> 64 sets.
+  * Default geometry: 8192 B capacity, 32 B lines, 4 ways -> 64 sets.
   * Tag/Data arrays use synchronous-read SRAMs (one-cycle read latency); the
   * valid/exclusive/dirty/PLRU metadata is resettable register memory, so every
   * line is logically invalid after reset without relying on SRAM contents.
@@ -64,15 +64,16 @@ object BreezeDCacheState extends ChiselEnum {
   *
   * The CPU interface and the MMIO lower-level interface retain the project's
   * pulse protocol; the one CPU pulse that can legally race an unsolicited
-  * probe is held in a one-entry skid register. Address slicing is frozen:
-  * offset=addr[4:0], set=addr[10:5], tag=addr[31:11].
+  * probe is held in a one-entry skid register. Address slicing is derived
+  * from the configured set count while 32 B lines and four ways stay fixed.
   */
 class BreezeDCache(
     val cfg: DefaultDCacheConfig = DefaultDCacheConfig(),
     val hartId: Int = 0,
     val hartIdWidth: Int = 1,
     val txnIdWidth: Int = 2,
-    val enableTrace: Boolean = false
+    val enableTrace: Boolean = false,
+    val enableAtomics: Boolean = true
 ) extends Module {
   private val ways = cfg.ways
   private val sets = cfg.sets
@@ -82,11 +83,7 @@ class BreezeDCache(
 
   require(cfg.VLEN == 64, "The Breeze DCache requires RV64")
   require(ways == 4, "The Breeze DCache PLRU is fixed to 4 ways")
-  // The address slicing below is frozen to tag=addr[31:11], set=addr[10:5],
-  // offset=addr[4:0]; other legal DefaultDCacheConfig geometries would be
-  // silently mis-sliced, so reject them at elaboration time.
-  require(cfg.sets == 64 && cfg.lineBytes == 32,
-    "The Breeze DCache address slicing is frozen to 64 sets and 32 B lines")
+  require(cfg.lineBytes == 32, "The Breeze DCache line size is fixed to 32 B")
   require(hartId >= 0 && hartId < (1 << hartIdWidth), "DCache hartId out of range")
 
   // Metadata layout: [plru(3) | dirty(4) | excl(4) | valid(4)] per set.
@@ -188,14 +185,16 @@ class BreezeDCache(
   val responseData = RegInit(0.U(64.W))
   val responseError = RegInit(false.B)
   val responseIsWrite = RegInit(false.B)
-  val flushIndex = RegInit(0.U(8.W))
+  private val flushIndexWidth = cfg.setIndexWidth + cfg.wayIndexWidth
+  private val flushLast = (sets * ways - 1).U(flushIndexWidth.W)
+  val flushIndex = RegInit(0.U(flushIndexWidth.W))
   val fatalErrorReg = RegInit(false.B)
 
   // ===== Reservation (LR/SC), one set per hart =====
   val resValid = RegInit(false.B)
   val resAddr = RegInit(0.U(cfg.VLEN.W))     // naturally aligned W/D address
   val resSizeLog2 = RegInit(0.U(3.W))
-  val resLineAddr = RegInit(0.U((plen - 5).W)) // 32 B line granule, addr[31:5]
+  val resLineAddr = RegInit(0.U((plen - cfg.lineOffsetWidth).W))
 
   // Coherence transaction bookkeeping.
   val txnIdReg = RegInit(0.U(txnIdWidth.W))
@@ -236,30 +235,41 @@ class BreezeDCache(
     (line & ~shiftedMask) | (shiftedData & shiftedMask)
   }
 
-  // ===== Address decode (frozen slicing) =====
-  val setIndex = reqAddr(10, 5)
-  val requestTag = reqAddr(31, 11)
+  // ===== Address decode =====
+  val setIndex = reqAddr(
+    cfg.lineOffsetWidth + cfg.setIndexWidth - 1,
+    cfg.lineOffsetWidth)
+  val requestTag = reqAddr(31, cfg.lineOffsetWidth + cfg.setIndexWidth)
   val requestBeatBase64 = Cat(reqAddr(63, 3), 0.U(3.W))
-  val requestLineBase32 = Cat(reqAddr(31, 5), 0.U(5.W))
+  val requestLineBase32 = Cat(
+    reqAddr(31, cfg.lineOffsetWidth),
+    0.U(cfg.lineOffsetWidth.W))
 
-  val isAtomicOp = reqMemOp === Lr || reqMemOp === Sc || reqMemOp === Amo
-  val isStoreLike = reqMemOp === Store || reqMemOp === Amo
+  val reqIsLr = enableAtomics.B && reqMemOp === Lr
+  val reqIsSc = enableAtomics.B && reqMemOp === Sc
+  val reqIsAmo = enableAtomics.B && reqMemOp === Amo
+  val isAtomicOp = reqIsLr || reqIsSc || reqIsAmo
+  val isStoreLike = reqMemOp === Store || reqIsAmo
   val amoIsWord = reqSizeLog2 === 2.U
 
   // ===== AMO ALU (combinational; fed per-state below) =====
-  val amoAlu = Module(new BreezeAmoAlu)
+  val amoAlu = if (enableAtomics) Some(Module(new BreezeAmoAlu)) else None
   val amoOldWord = Wire(UInt(64.W)) // pre-modification aligned 64-bit word
+  val amoNewOperand = WireDefault(0.U(64.W))
   amoOldWord := 0.U
-  amoAlu.io.func := reqAmoFunc
-  amoAlu.io.isWord := amoIsWord
-  amoAlu.io.oldOperand := Mux(amoIsWord && reqAddr(2),
-    amoOldWord(63, 32), amoOldWord)
-  amoAlu.io.rs2 := reqWData
+  amoAlu.foreach { unit =>
+    unit.io.func := reqAmoFunc
+    unit.io.isWord := amoIsWord
+    unit.io.oldOperand := Mux(amoIsWord && reqAddr(2),
+      amoOldWord(63, 32), amoOldWord)
+    unit.io.rs2 := reqWData
+    amoNewOperand := unit.io.newOperand
+  }
   // Position the new value and mask within the aligned 64-bit word.
   val amoNewWData = Mux(amoIsWord,
-    Mux(reqAddr(2), Cat(amoAlu.io.newOperand(31, 0), 0.U(32.W)),
-      amoAlu.io.newOperand(31, 0).pad(64)),
-    amoAlu.io.newOperand)
+    Mux(reqAddr(2), Cat(amoNewOperand(31, 0), 0.U(32.W)),
+      amoNewOperand(31, 0).pad(64)),
+    amoNewOperand)
   val amoWMask = Mux(amoIsWord,
     Mux(reqAddr(2), "hf0".U(8.W), "h0f".U(8.W)),
     "hff".U(8.W))
@@ -271,15 +281,21 @@ class BreezeDCache(
   val pma = Module(new PMAChecker)
   pma.io.query.addr := reqAddr
   pma.io.query.sizeLog2 := reqSizeLog2
-  pma.io.query.accessType := Mux(reqIsWrite || reqMemOp === Sc || reqMemOp === Amo,
+  pma.io.query.accessType := Mux(reqIsWrite || reqIsSc || reqIsAmo,
     PMAAccessType.Store, PMAAccessType.Load)
 
   // ===== SRAM read/write control =====
-  val incomingSetIndex = io.cpu.req.addr(10, 5)
-  val pendingCpuSetIndex = cpuPending.addr(10, 5)
-  val flushSetIndex = flushIndex(7, 2)
-  val probeSetIndex = probeLineAddrReg(10, 5)
-  val probeTag = probeLineAddrReg(31, 11)
+  val incomingSetIndex = io.cpu.req.addr(
+    cfg.lineOffsetWidth + cfg.setIndexWidth - 1,
+    cfg.lineOffsetWidth)
+  val pendingCpuSetIndex = cpuPending.addr(
+    cfg.lineOffsetWidth + cfg.setIndexWidth - 1,
+    cfg.lineOffsetWidth)
+  val flushSetIndex = flushIndex(flushIndexWidth - 1, cfg.wayIndexWidth)
+  val probeSetIndex = probeLineAddrReg(
+    cfg.lineOffsetWidth + cfg.setIndexWidth - 1,
+    cfg.lineOffsetWidth)
+  val probeTag = probeLineAddrReg(31, cfg.lineOffsetWidth + cfg.setIndexWidth)
   val cpuArrayRead = state === Idle && !probePendingValid &&
     (cpuPendingValid || io.cpu.req.valid)
   val arrayReadEnable = cpuArrayRead ||
@@ -480,7 +496,7 @@ class BreezeDCache(
         }.otherwise {
           state := UncachedReq
         }
-      }.elsewhen(reqMemOp === Sc) {
+      }.elsewhen(reqIsSc) {
         // SC never allocates: a reservation can only be valid while its line
         // is still resident (eviction clears it), so a miss means failure.
         val scMatch = resValid && resAddr === reqAddr && resSizeLog2 === reqSizeLog2
@@ -509,7 +525,7 @@ class BreezeDCache(
           }
         }
       }.elsewhen(hit) {
-        when(reqMemOp === Amo) {
+        when(reqIsAmo) {
           val hitExcl = exclOf(metaReg(setIndex))(hitWay)
           val hitDirty = dirtyOf(metaReg(setIndex))(hitWay)
           when(hitDirty || hitExcl) {
@@ -550,11 +566,11 @@ class BreezeDCache(
             touchWay(plruOf(metaReg(setIndex)), hitWay)
           )
           responseData := lineWord(dataRdata(hitWay), reqAddr)
-          when(reqMemOp === Lr) {
+          when(reqIsLr) {
             resValid := true.B
             resAddr := reqAddr
             resSizeLog2 := reqSizeLog2
-            resLineAddr := reqAddr(31, 5)
+            resLineAddr := reqAddr(31, cfg.lineOffsetWidth)
           }
           state := Respond
         }
@@ -566,7 +582,8 @@ class BreezeDCache(
         victimTagReg := tagRdata(victimWay)
         victimDataReg := dataRdata(victimWay)
         // Evicting the reservation line kills the reservation.
-        when(victimIsValid && Cat(tagRdata(victimWay), setIndex) === resLineAddr) {
+        when(enableAtomics.B && victimIsValid &&
+            Cat(tagRdata(victimWay), setIndex) === resLineAddr) {
           resValid := false.B
         }
         when(!victimIsValid) {
@@ -624,13 +641,15 @@ class BreezeDCache(
           coh.req.opcode := Mux(victimNowDirty, BreezeCoherenceOpcode.PutM,
             BreezeCoherenceOpcode.PutS)
           coh.req.txnId := txnIdReg
-          coh.req.lineAddr := Cat(victimTagReg, setIndex, 0.U(5.W))
+          coh.req.lineAddr := Cat(
+            victimTagReg, setIndex, 0.U(cfg.lineOffsetWidth.W))
           coh.req.hasData := victimNowDirty
           coh.req.lineData := victimDataReg
           when(coh.req.ready) {
             txnIdPendingReg := txnIdReg
             txnIdReg := txnIdReg + 1.U
-            txnLineAddrReg := Cat(victimTagReg, setIndex, 0.U(5.W))
+            txnLineAddrReg := Cat(
+              victimTagReg, setIndex, 0.U(cfg.lineOffsetWidth.W))
             state := PutWait
           }
         }
@@ -697,7 +716,7 @@ class BreezeDCache(
             "DCache: dataless GrantM but the local S copy is gone")
           val scStillValid = resValid && resAddr === reqAddr &&
             resSizeLog2 === reqSizeLog2
-          when(reqMemOp === Sc && !scStillValid) {
+          when(reqIsSc && !scStillValid) {
             // The reservation died while waiting (probe invalidation): fail
             // without writing. The granted ownership is still installed - the
             // directory made this hart the UNIQUE owner - as a clean E line.
@@ -712,7 +731,7 @@ class BreezeDCache(
             resValid := false.B
             state := StoreHitWrite
           }.otherwise {
-            when(reqMemOp === Amo) {
+            when(reqIsAmo) {
               amoOldWord := lineWord(baseLine, reqAddr)
               storeMergeReg := amoMergedLine(baseLine)
               responseData := amoOldWord
@@ -721,7 +740,7 @@ class BreezeDCache(
               storeMergeReg := mergeStore(baseLine, reqAddr, reqWData, reqWMask)
               responseData := 0.U
             }
-            when(reqMemOp === Sc) { resValid := false.B }
+            when(reqIsSc) { resValid := false.B }
             metaToM(setIndex, storeHitWayReg, touchPlru = true.B)
             state := StoreHitWrite
           }
@@ -767,7 +786,7 @@ class BreezeDCache(
           val installedLine = MuxCase(coh.grant.lineData, Seq(
             (reqMemOp === Store) ->
               mergeStore(coh.grant.lineData, reqAddr, reqWData, reqWMask),
-            (reqMemOp === Amo) -> amoMergedLine(coh.grant.lineData)
+            reqIsAmo -> amoMergedLine(coh.grant.lineData)
           ))
           // The valid bits are recomputed from the current metadata: a probe
           // serviced while the refill was in flight may have invalidated
@@ -796,15 +815,15 @@ class BreezeDCache(
           }
           metaReg(setIndex) := makeMeta(newValidNow, newExcl, newDirty, newPlruReg)
           responseData := MuxCase(0.U, Seq(
-            (reqMemOp === Load || reqMemOp === Lr) ->
+            (reqMemOp === Load || reqIsLr) ->
               lineWord(coh.grant.lineData, reqAddr),
-            (reqMemOp === Amo) -> amoOldWord
+            reqIsAmo -> amoOldWord
           ))
-          when(reqMemOp === Lr) {
+          when(reqIsLr) {
             resValid := true.B
             resAddr := reqAddr
             resSizeLog2 := reqSizeLog2
-            resLineAddr := reqAddr(31, 5)
+            resLineAddr := reqAddr(31, cfg.lineOffsetWidth)
           }
           responseError := false.B
           state := Respond
@@ -833,7 +852,8 @@ class BreezeDCache(
 
       // Any probe against the reservation line clears the reservation
       // (conservative line granule, spec section 15), hit or not.
-      when(probeLineAddrReg(31, 5) === resLineAddr) {
+      when(enableAtomics.B &&
+          probeLineAddrReg(31, cfg.lineOffsetWidth) === resLineAddr) {
         resValid := false.B
       }
 
@@ -864,7 +884,7 @@ class BreezeDCache(
     is(Respond) {
       // Conservative reservation clear on the completion of any store-class
       // operation (spec section 15 allows this).
-      when(reqMemOp === Store || reqMemOp === Sc || reqMemOp === Amo) {
+      when(enableAtomics.B && (reqMemOp === Store || reqIsSc || reqIsAmo)) {
         resValid := false.B
       }
       state := Idle
@@ -877,8 +897,8 @@ class BreezeDCache(
     }
 
     is(FlushRead) {
-      val set = flushIndex(7, 2)
-      val way = flushIndex(1, 0)
+      val set = flushIndex(flushIndexWidth - 1, cfg.wayIndexWidth)
+      val way = flushIndex(cfg.wayIndexWidth - 1, 0)
       val lineValid = validOf(metaReg(set))(way)
       when(lineValid) {
         victimWayReg := way
@@ -886,7 +906,7 @@ class BreezeDCache(
         victimDataReg := dataRdata(way)
         state := FlushWritebackReq
       }.otherwise {
-        when(flushIndex === 255.U) {
+        when(flushIndex === flushLast) {
           state := FlushRespond
         }.otherwise {
           flushIndex := flushIndex + 1.U
@@ -900,14 +920,14 @@ class BreezeDCache(
         resumeState := FlushWritebackReq
         state := ProbeRead
       }.otherwise {
-        val set = flushIndex(7, 2)
-        val way = flushIndex(1, 0)
+        val set = flushIndex(flushIndexWidth - 1, cfg.wayIndexWidth)
+        val way = flushIndex(cfg.wayIndexWidth - 1, 0)
         // Re-read the current line state: a probe serviced while this request
         // was parked may have taken the line meanwhile (cancel, don't resume).
         val lineValidNow = validOf(metaReg(set))(way)
         val lineDirtyNow = dirtyOf(metaReg(set))(way)
         when(!lineValidNow) {
-          when(flushIndex === 255.U) {
+          when(flushIndex === flushLast) {
             state := FlushRespond
           }.otherwise {
             flushIndex := flushIndex + 1.U
@@ -918,13 +938,15 @@ class BreezeDCache(
           coh.req.opcode := Mux(lineDirtyNow, BreezeCoherenceOpcode.PutM,
             BreezeCoherenceOpcode.PutS)
           coh.req.txnId := txnIdReg
-          coh.req.lineAddr := Cat(victimTagReg, set, 0.U(5.W))
+          coh.req.lineAddr := Cat(
+            victimTagReg, set, 0.U(cfg.lineOffsetWidth.W))
           coh.req.hasData := lineDirtyNow
           coh.req.lineData := victimDataReg
           when(coh.req.ready) {
             txnIdPendingReg := txnIdReg
             txnIdReg := txnIdReg + 1.U
-            txnLineAddrReg := Cat(victimTagReg, set, 0.U(5.W))
+            txnLineAddrReg := Cat(
+              victimTagReg, set, 0.U(cfg.lineOffsetWidth.W))
             state := FlushWritebackWait
           }
         }
@@ -941,15 +963,15 @@ class BreezeDCache(
           fatalErrorReg := true.B
           state := Fatal
         }.otherwise {
-          val set = flushIndex(7, 2)
-          val way = flushIndex(1, 0)
+          val set = flushIndex(flushIndexWidth - 1, cfg.wayIndexWidth)
+          val way = flushIndex(cfg.wayIndexWidth - 1, 0)
           metaReg(set) := makeMeta(
             validOf(metaReg(set)) & ~(1.U << way),
             exclOf(metaReg(set)) & ~(1.U << way),
             dirtyOf(metaReg(set)) & ~(1.U << way),
             plruOf(metaReg(set))
           )
-          when(flushIndex === 255.U) {
+          when(flushIndex === flushLast) {
             state := FlushRespond
           }.otherwise {
             flushIndex := flushIndex + 1.U
@@ -971,7 +993,7 @@ class BreezeDCache(
 
   // Trap-time reservation kill has the last word (a same-cycle LR cannot
   // retire when the backend is trapping).
-  when(io.resKill) {
+  when(enableAtomics.B && io.resKill) {
     resValid := false.B
   }
 }
