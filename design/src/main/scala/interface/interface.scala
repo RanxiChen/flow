@@ -232,6 +232,8 @@ class BackendDebugIO(val VLEN: Int = 64) extends Bundle {
     val memWbTrapValid = Output(Bool())
     val memWbIsEcall = Output(Bool())
     val memWbIsMret = Output(Bool())
+    val memWbIsWfi = Output(Bool())
+    val wfiSleeping = Output(Bool())
     val csrIllegal = Output(Bool())
 }
 
@@ -360,6 +362,7 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
     val is_ebreak = Bool()
     val is_mret  = Bool()
     val is_sret  = Bool()
+    val is_wfi   = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
     val ctrl = new EXE_Ctrl
     val estop = Bool()
@@ -387,6 +390,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val is_ebreak = Bool()
     val is_mret  = Bool()
     val is_sret  = Bool()
+    val is_wfi   = Bool()
     val csr_illegal = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
     val estop = Bool()
@@ -433,6 +437,7 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val is_ebreak = Bool()
     val is_mret  = Bool()
     val is_sret  = Bool()
+    val is_wfi   = Bool()
     val csr_illegal = Bool()
     val load_addr_misaligned = Bool()
     val store_addr_misaligned = Bool()

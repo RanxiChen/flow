@@ -171,6 +171,27 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "wake WFI from a locally enabled interrupt independently of global MIE" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      val msip = BigInt(1) << MACHINE_INTERRUPT_CAUSE.SOFTWARE
+
+      commit(dut, CSRMAP.mie, msip)
+      commit(dut, CSRMAP.mstatus, 0)
+      dut.io.machineSoftwareInterrupt.poke(true.B)
+      dut.io.wfiWakeup.expect(true.B)
+      dut.io.interruptPending.expect(false.B)
+
+      commit(dut, CSRMAP.mstatus, BigInt(1) << 3)
+      dut.io.wfiWakeup.expect(true.B)
+      dut.io.interruptPending.expect(true.B)
+
+      dut.io.machineSoftwareInterrupt.poke(false.B)
+      dut.io.wfiWakeup.expect(false.B)
+      dut.io.interruptPending.expect(false.B)
+    }
+  }
+
   "enforce TSR TW TVM and keep simulation CSRs machine-only" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

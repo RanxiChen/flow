@@ -504,9 +504,9 @@ class RV64IZicsrDecoder extends Module {
                         io.inst(19, 15) === 0.U &&
                         io.inst(11, 7) === 0.U
                     ) {
-                        // WFI may legally resume immediately; this first-stage
-                        // implementation therefore treats it as a privilege-
-                        // checked architectural no-op.
+                        // The backend retires a legal WFI once, drains older
+                        // work, and stalls this hart until a locally enabled
+                        // interrupt becomes pending.
                         io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
                         io.I_ctrl.wb_en := false.B
                         io.I_ctrl.is_wfi := true.B

@@ -280,7 +280,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         imemLatency: Int = 6,
         dmemLatency: Int = 7,
         bootAddr: BigInt = 0,
-        logMode: TandemLogMode = TandemLogMode.Off
+        logMode: TandemLogMode = TandemLogMode.Off,
+        machineSoftwareInterruptAt: Option[Int] = None
     ): BreezeCoreSimTandemResult = {
         runInternal(
           memory = memory,
@@ -290,7 +291,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
           dmemLatency = dmemLatency,
           bootAddr = bootAddr,
           collectTandemTrace = true,
-          logMode = logMode
+          logMode = logMode,
+          machineSoftwareInterruptAt = machineSoftwareInterruptAt
         )
     }
 
@@ -302,7 +304,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         dmemLatency: Int,
         bootAddr: BigInt,
         collectTandemTrace: Boolean,
-        logMode: TandemLogMode = TandemLogMode.Off
+        logMode: TandemLogMode = TandemLogMode.Off,
+        machineSoftwareInterruptAt: Option[Int] = None
     ): BreezeCoreSimTandemResult = {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
@@ -351,6 +354,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.reset.poke(false.B)
 
             while (!dut.io.estop.peek().litToBoolean && cycleCount < maxCycles) {
+                dut.io.machineSoftwareInterrupt.poke(
+                    machineSoftwareInterruptAt.exists(cycleCount >= _).B)
                 dut.io.nextLevelRsp.vld.poke(false.B)
                 dut.io.nextLevelRsp.data.poke(0.U)
                 dut.io.nextLevelRsp.error.poke(false.B)

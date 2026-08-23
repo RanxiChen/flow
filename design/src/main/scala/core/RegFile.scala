@@ -194,6 +194,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val wfi_illegal = Output(Bool())
         val sfence_vma_illegal = Output(Bool())
         val mmu_context = Output(new BreezeMmuContext(XLEN))
+        // WFI wakeup is intentionally distinct from interruptPending.  The
+        // privileged architecture requires a locally enabled pending
+        // interrupt to resume WFI regardless of mstatus.MIE/SIE or mideleg.
+        val wfiWakeup = Output(Bool())
         val interruptPending = Output(Bool())
         val interruptCause = Output(UInt(XLEN.W))
         val csr_illegal = Output(Bool())
@@ -295,6 +299,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         (sip_SSIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
     val sie_read = mie_read & mideleg
     val sip_read = mip_read & mideleg
+    io.wfiWakeup := (mie_read & mip_read).orR
     def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
     val machineCsrFile = Seq(
         csrPattern(CSRMAP.fflags)  -> fflags,
