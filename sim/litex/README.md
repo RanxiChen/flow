@@ -194,6 +194,39 @@ The address end is exclusive and limits apply independently to each observer.
 Production cluster generation drives the debug records to zero and firtool
 eliminates the disconnected DCache trace logic.
 
+For an uncapped, whole-run event history, invoke `linux_sim.py` through the
+capture runner:
+
+```bash
+python3 sim/litex/run_linux_event_trace.py \
+    --event-trace-file build/linux-run/events.trace \
+    --opensbi "$BUILDROOT_OUT/images/fw_jump.bin" \
+    --kernel software/breeze-linux/build/handoff-smoke.bin \
+    --dtb "$BUILDROOT_OUT/images/flow-small.dtb" \
+    --bootrom software/breeze-linux/build/bootrom.bin \
+    --output-dir build/linux-run \
+    --build --non-interactive \
+    --debug-cycles 50000000 \
+    --mem-trace --mem-trace-max-events 1024 \
+    --opt-level O3 --jobs 20
+```
+
+The original verbose memory observer remains enabled by `--mem-trace`. The
+additional compact stream has no event limit and records every retire, DCache
+request/response, shared Wishbone request/response, interrupt-level change,
+and fatal/estop change from reset to simulation exit. Compact events are kept
+out of stdout and stored chronologically in `events.trace`.
+
+Filter it without loading the complete file into memory:
+
+```bash
+python3 sim/litex/filter_flow_event_trace.py build/linux-run/events.trace \
+    --kind R --hart 1 --cycle-start 8000000 --cycle-end 9000000
+
+python3 sim/litex/filter_flow_event_trace.py build/linux-run/events.trace \
+    --address-start 0x80100000 --address-end 0x80101000
+```
+
 After the handoff probe passes, replace `--kernel` with the Buildroot `Image`
 or Alpine `Image-alpine`. These runs are intentionally diskless: initramfs is
 embedded in the kernel image, and no VirtIO device is required.

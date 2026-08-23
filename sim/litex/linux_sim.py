@@ -181,6 +181,8 @@ def main():
     parser.add_argument("--mem-trace-max-events", type=int, default=1024)
     parser.add_argument("--mem-trace-address-start", type=lambda value: int(value, 0))
     parser.add_argument("--mem-trace-address-end", type=lambda value: int(value, 0))
+    parser.add_argument("--compact-event-trace", action="store_true",
+        help="Emit an unbounded compact [FLOW-EVENT] stream for host-side capture.")
     args = parser.parse_args()
 
     for path in (args.opensbi, args.kernel, args.dtb, args.bootrom):
@@ -222,6 +224,7 @@ def main():
         memory_trace_max_events=args.mem_trace_max_events,
         memory_trace_address_start=args.mem_trace_address_start,
         memory_trace_address_end=args.mem_trace_address_end,
+        compact_event_trace=args.compact_event_trace,
     )
     if args.debug_cycles < 0:
         parser.error("--debug-cycles must not be negative")

@@ -6,8 +6,9 @@ import io
 import os
 import sys
 import unittest
+from types import SimpleNamespace
 
-from migen import Module
+from migen import Module, Record, Signal
 from migen.sim import run_simulation
 from litex.soc.interconnect import wishbone
 
@@ -20,7 +21,8 @@ if WRAPPER_ROOT not in sys.path:
 if SIM_DIR not in sys.path:
     sys.path.insert(0, SIM_DIR)
 
-from memory_monitor import FlowWishboneMonitor  # noqa: E402
+from flow.cluster import DCACHE_TRACE_LAYOUT, RETIRE_LAYOUT  # noqa: E402
+from memory_monitor import FlowCompactEventMonitor, FlowWishboneMonitor  # noqa: E402
 
 
 class WishboneMonitorDut(Module):
@@ -30,6 +32,29 @@ class WishboneMonitorDut(Module):
         self.submodules.monitor = FlowWishboneMonitor(
             self.bus, name="unit-mmio", max_events=4,
             address_start=0x12001000, address_end=0x12002000)
+
+
+class CompactEventMonitorDut(Module):
+    def __init__(self):
+        self.retire = Record(RETIRE_LAYOUT)
+        self.dcache = Record(DCACHE_TRACE_LAYOUT)
+        self.msip = Signal()
+        self.mtip = Signal()
+        self.meip = Signal()
+        self.seip = Signal()
+        self.hart_fatal = Signal()
+        self.hart_estop = Signal()
+        cpu = SimpleNamespace(
+            retires=[self.retire],
+            dcache_traces=[self.dcache],
+            msip=self.msip,
+            mtip=self.mtip,
+            meip=self.meip,
+            seip=self.seip,
+            hart_fatal=self.hart_fatal,
+            hart_estop=self.hart_estop,
+        )
+        self.submodules.monitor = FlowCompactEventMonitor(cpu)
 
 
 class FlowWishboneMonitorTest(unittest.TestCase):
@@ -63,6 +88,30 @@ class FlowWishboneMonitorTest(unittest.TestCase):
         self.assertIn("sel=0x10", output)
         self.assertIn("[WB-RSP] name=unit-mmio", output)
         self.assertIn("dat_r=0x100000000", output)
+
+    def test_compact_stream_has_no_event_cap_and_records_irq_and_retire(self):
+        dut = CompactEventMonitorDut()
+
+        def process():
+            yield
+            yield dut.msip.eq(1)
+            yield dut.retire.valid.eq(1)
+            yield dut.retire.pc.eq(0x80000000)
+            yield dut.retire.inst.eq(0x10500073)
+            yield dut.retire.next_pc.eq(0x80000004)
+            yield
+            yield dut.retire.valid.eq(0)
+            yield
+
+        captured = io.StringIO()
+        with contextlib.redirect_stdout(captured):
+            run_simulation(dut, process())
+        output = captured.getvalue()
+        self.assertIn("[FLOW-EVENT] kind=I", output)
+        self.assertIn("msip=0x1", output)
+        self.assertIn("[FLOW-EVENT] kind=R hart=0", output)
+        self.assertIn("pc=0x80000000", output)
+        self.assertIn("inst=0x10500073", output)
 
 
 if __name__ == "__main__":

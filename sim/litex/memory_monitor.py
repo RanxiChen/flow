@@ -1,6 +1,6 @@
 """Reusable passive memory-path monitors for Flow debug simulations."""
 
-from migen import Display, If, Module, Signal
+from migen import Cat, Display, If, Module, Signal
 
 from flow.wiring import wishbone_byte_address
 
@@ -162,3 +162,112 @@ class FlowMemoryMonitor(Module):
             setattr(self.submodules, f"wishbone_{index}", FlowWishboneMonitor(
                 bus, name=name, max_events=max_events,
                 address_start=address_start, address_end=address_end))
+
+
+class FlowCompactEventMonitor(Module):
+    """Unbounded compact event stream for whole-run offline analysis.
+
+    This complements, rather than replaces, FlowMemoryMonitor. It has no event
+    cap and emits only when an architectural or bus event occurs. The host-side
+    runner removes these lines from the console and stores them chronologically.
+    """
+
+    PREFIX = "[FLOW-EVENT]"
+
+    def __init__(self, cpu, wishbone_buses=()):
+        cycle = Signal(64)
+        self.sync += cycle.eq(cycle + 1)
+
+        irq_width = 4 * len(cpu.retires)
+        irq_vector = Signal(irq_width)
+        previous_irq = Signal(irq_width)
+        irq_initialized = Signal()
+        self.comb += irq_vector.eq(Cat(cpu.msip, cpu.mtip, cpu.meip, cpu.seip))
+        self.sync += If(~irq_initialized | (irq_vector != previous_irq),
+            Display(
+                f"{self.PREFIX} kind=I cycle=%0d msip=0x%0x mtip=0x%0x "
+                "meip=0x%0x seip=0x%0x",
+                cycle, cpu.msip, cpu.mtip, cpu.meip, cpu.seip),
+            previous_irq.eq(irq_vector),
+            irq_initialized.eq(1))
+
+        for hart, retire in enumerate(cpu.retires):
+            self.sync += If(retire.valid,
+                Display(
+                    f"{self.PREFIX} kind=R hart={hart} cycle=%0d pc=0x%0x "
+                    "inst=0x%0x next=0x%0x rdwe=%0d rd=%0d rddata=0x%0x "
+                    "memen=%0d memwe=%0d addr=0x%0x aligned=0x%0x "
+                    "rdata=0x%0x wdata=0x%0x mask=0x%0x estop=%0d",
+                    cycle, retire.pc, retire.inst, retire.next_pc,
+                    retire.rd_write_en, retire.rd_addr, retire.rd_data,
+                    retire.mem_en, retire.mem_is_write, retire.mem_addr,
+                    retire.mem_aligned_addr, retire.mem_rdata,
+                    retire.mem_wdata, retire.mem_wmask, retire.estop))
+
+            dcache = cpu.dcache_traces[hart]
+            sequence = Signal(64, name=f"compact_dcache_seq{hart}")
+            active_sequence = Signal(64,
+                name=f"compact_dcache_active_seq{hart}")
+            self.sync += [
+                If(dcache.request_valid,
+                    active_sequence.eq(sequence),
+                    sequence.eq(sequence + 1),
+                    Display(
+                        f"{self.PREFIX} kind=DQ hart={hart} cycle=%0d seq=%0d "
+                        "addr=0x%0x size=%0d we=%0d wdata=0x%0x mask=0x%0x "
+                        "allowed=%0d cacheable=%0d device=%0d hit=%0d",
+                        cycle, sequence, dcache.address, dcache.size_log2,
+                        dcache.is_write, dcache.write_data, dcache.mask,
+                        dcache.pma_allowed, dcache.pma_cacheable,
+                        dcache.pma_device, dcache.cache_hit)),
+                If(dcache.response_valid,
+                    Display(
+                        f"{self.PREFIX} kind=DS hart={hart} cycle=%0d seq=%0d "
+                        "data=0x%0x error=%0d",
+                        cycle, active_sequence, dcache.response_data,
+                        dcache.response_error))
+            ]
+
+        for bus_index, (_name, bus) in enumerate(wishbone_buses):
+            active = Signal(name=f"compact_wb_active{bus_index}")
+            sequence = Signal(64, name=f"compact_wb_seq{bus_index}")
+            active_sequence = Signal(64,
+                name=f"compact_wb_active_seq{bus_index}")
+            byte_address = Signal(64,
+                name=f"compact_wb_byte_address{bus_index}")
+            request = bus.cyc & bus.stb
+            response = bus.ack | bus.err
+            self.comb += byte_address.eq(
+                wishbone_byte_address(bus.adr, bus.data_width))
+            self.sync += [
+                If(~active & request,
+                    active.eq(~response),
+                    active_sequence.eq(sequence),
+                    sequence.eq(sequence + 1),
+                    Display(
+                        f"{self.PREFIX} kind=WQ bus={bus_index} cycle=%0d "
+                        "seq=%0d addr=0x%0x sel=0x%0x we=%0d data=0x%0x",
+                        cycle, sequence, byte_address, bus.sel,
+                        bus.we, bus.dat_w),
+                    If(response,
+                        Display(
+                            f"{self.PREFIX} kind=WS bus={bus_index} cycle=%0d "
+                            "seq=%0d ack=%0d err=%0d data=0x%0x",
+                            cycle, sequence, bus.ack, bus.err, bus.dat_r))
+                ).Elif(active & response,
+                    active.eq(0),
+                    Display(
+                        f"{self.PREFIX} kind=WS bus={bus_index} cycle=%0d "
+                        "seq=%0d ack=%0d err=%0d data=0x%0x",
+                        cycle, active_sequence, bus.ack, bus.err, bus.dat_r))
+            ]
+
+        previous_fatal = Signal(len(cpu.retires))
+        previous_estop = Signal(len(cpu.retires))
+        self.sync += If((cpu.hart_fatal != previous_fatal) |
+                (cpu.hart_estop != previous_estop),
+            Display(
+                f"{self.PREFIX} kind=F cycle=%0d fatal=0x%0x estop=0x%0x",
+                cycle, cpu.hart_fatal, cpu.hart_estop),
+            previous_fatal.eq(cpu.hart_fatal),
+            previous_estop.eq(cpu.hart_estop))
