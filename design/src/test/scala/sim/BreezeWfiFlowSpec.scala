@@ -36,7 +36,7 @@ class BreezeWfiFlowSpec extends AnyFreeSpec with Matchers {
     val csrrs = 2
 
     install(memory, boot, Seq(
-      encodeLui(1, 0x10010),
+      encodeLui(1, 0x10000),
       BreezeCoreSimSupport.encodeAddi(1, 1, 0x100),
       encodeCsr(0, CSRMAP.mtvec, 1, csrrw),
       BreezeCoreSimSupport.encodeAddi(1, 0, 1 << 3),
