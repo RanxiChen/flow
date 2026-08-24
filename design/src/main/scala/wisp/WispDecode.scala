@@ -12,7 +12,7 @@ object WispOp extends ChiselEnum {
       Addw, Subw, Sllw, Srlw, Sraw,
       Fence, FenceI,
       Csrrw, Csrrs, Csrrc,
-      Ecall, Ebreak, Mret = Value
+      Ecall, Ebreak, Mret, Wfi = Value
 }
 
 class WispDecode extends Module {
@@ -146,6 +146,7 @@ class WispDecode extends Module {
           is(0.U) { io.op := WispOp.Ecall }
           is(1.U) { io.op := WispOp.Ebreak }
           is("h302".U) { io.op := WispOp.Mret }
+          is("h105".U) { io.op := WispOp.Wfi }
         }
       }.otherwise {
         switch(funct3) {

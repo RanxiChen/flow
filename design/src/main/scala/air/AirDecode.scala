@@ -12,7 +12,7 @@ object AirOp extends ChiselEnum {
       Addw, Subw, Sllw, Srlw, Sraw,
       Fence, FenceI,
       Csrrw, Csrrs, Csrrc,
-      Ecall, Ebreak, Mret = Value
+      Ecall, Ebreak, Mret, Wfi = Value
 }
 
 /** Air's independent RV64I/Zicsr/Zifencei decoder.
@@ -133,6 +133,7 @@ class AirDecode extends Module {
         switch(insn(31, 20)) {
           is(0.U) { io.op := AirOp.Ecall }; is(1.U) { io.op := AirOp.Ebreak }
           is("h302".U) { io.op := AirOp.Mret }
+          is("h105".U) { io.op := AirOp.Wfi }
         }
       }.otherwise {
         switch(funct3) {

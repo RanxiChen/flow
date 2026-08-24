@@ -40,9 +40,16 @@ class Wisp(CPU):
         self.reset = Signal()
         self.bus = wishbone.Interface(
             data_width=32, address_width=30, addressing="word")
+        self.interrupt = Signal(32)
+        self.timer_interrupt = Signal()
+        self.external_interrupt = Signal()
         self.area_probe = Signal()
         self.periph_buses = [self.bus]
         self.memory_buses = []
+        self.comb += [
+            self.timer_interrupt.eq(self.interrupt[1]),
+            self.external_interrupt.eq((self.interrupt & 0xffff_fffd) != 0),
+        ]
 
         self.cpu_params = dict(
             i_clock=ClockSignal("sys"),
@@ -58,6 +65,8 @@ class Wisp(CPU):
             i_io_wb_ack=self.bus.ack,
             i_io_wb_err=self.bus.err,
             i_io_wb_dat_r=self.bus.dat_r,
+            i_io_timerIrq=self.timer_interrupt,
+            i_io_externalIrq=self.external_interrupt,
             o_io_areaProbe=self.area_probe,
         )
         rtl_profile = "wisp-matrix-area" if variant == "matrix-area" else "wisp"

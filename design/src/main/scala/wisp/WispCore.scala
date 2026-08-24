@@ -7,7 +7,7 @@ import flow.bus.{LiteXWishboneMasterIO, LiteXWishboneParameters, WishboneBurstTy
 
 object WispPhase extends ChiselEnum {
   val Fetch, Execute, ReadIssue, ReadWait, PcAdd, Shift, AddressCheck,
-      MemStoreIssue, MemStoreWait, MemRequest, Csr, Commit = Value
+      MemStoreIssue, MemStoreWait, MemRequest, Csr, Commit, WaitInterrupt = Value
 }
 
 class WispTrace extends Bundle {
@@ -34,6 +34,8 @@ class WispCore(
     withMatrixAreaProbe: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val wb = new LiteXWishboneMasterIO(LiteXWishboneParameters(32, 32))
+    val timerIrq = Input(Bool())
+    val externalIrq = Input(Bool())
     val trace = Output(new WispTrace)
     // Synthesis-only observability hook for gateware area measurements whose
     // top level otherwise has no functional outputs.
@@ -55,11 +57,18 @@ class WispCore(
   val memWord = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
 
   val mstatus = RegInit(0.U(64.W))
+  val mie = RegInit(0.U(64.W))
   val mtvec = RegInit(0.U(64.W))
   val mscratch = RegInit(0.U(64.W))
   val mepc = RegInit(0.U(64.W))
   val mcause = RegInit(0.U(64.W))
   val mtval = RegInit(0.U(64.W))
+
+  val mip = (io.timerIrq.asUInt << 7) | (io.externalIrq.asUInt << 11)
+  val timerInterruptPending = mstatus(3) && mie(7) && io.timerIrq
+  val externalInterruptPending = mstatus(3) && mie(11) && io.externalIrq
+  val interruptPending = timerInterruptPending || externalInterruptPending
+  val enabledInterruptPending = (mie(7) && io.timerIrq) || (mie(11) && io.externalIrq)
 
   val traceValid = RegInit(false.B)
   val tracePc = Reg(UInt(64.W))
@@ -86,7 +95,7 @@ class WispCore(
   rf.io.writeByte := byteIndex
   rf.io.writeData := value(byteIndex)
 
-  io.wb.cyc := phase === WispPhase.Fetch || phase === WispPhase.MemRequest
+  io.wb.cyc := (phase === WispPhase.Fetch && !interruptPending) || phase === WispPhase.MemRequest
   io.wb.stb := io.wb.cyc
   io.wb.we := phase === WispPhase.MemRequest && isStore(dec.io.op)
   io.wb.adr := Mux(phase === WispPhase.Fetch, pcUInt(31, 2), valueUInt(31, 2) + memBeat)
@@ -117,7 +126,8 @@ class WispCore(
 
   def writesRd(op: WispOp.Type): Bool = {
     !(isBranch(op) || isStore(op) || op === WispOp.Fence || op === WispOp.FenceI ||
-      op === WispOp.Ecall || op === WispOp.Ebreak || op === WispOp.Mret || op === WispOp.Illegal)
+      op === WispOp.Ecall || op === WispOp.Ebreak || op === WispOp.Mret ||
+      op === WispOp.Wfi || op === WispOp.Illegal)
   }
   def isBranch(op: WispOp.Type): Bool = op >= WispOp.Beq && op <= WispOp.Bgeu
   def isLoad(op: WispOp.Type): Bool = op >= WispOp.Lb && op <= WispOp.Lwu
@@ -143,22 +153,25 @@ class WispCore(
     WispOp.Sw.asUInt -> "b1111".U,
     WispOp.Sd.asUInt -> "b1111".U))
 
-  def csrLegal(address: UInt): Bool = Seq("h300", "h301", "h305", "h340", "h341", "h342", "h343", "hf14")
+  def csrLegal(address: UInt): Bool = Seq("h300", "h301", "h304", "h305", "h340", "h341", "h342", "h343", "h344", "hf14")
     .map(x => address === x.U).reduce(_ || _)
   def csrRead(address: UInt): UInt = MuxLookup(address, 0.U)(Seq(
     "h300".U -> mstatus,
     "h301".U -> "h8000000000000100".U,
+    "h304".U -> mie,
     "h305".U -> mtvec,
     "h340".U -> mscratch,
     "h341".U -> mepc,
     "h342".U -> mcause,
     "h343".U -> mtval,
+    "h344".U -> mip.pad(64),
     "hf14".U -> 0.U))
 
   def takeTrap(cause: UInt, trapValue: UInt): Unit = {
     mepc := pcUInt
     mcause := cause
     mtval := trapValue
+    mstatus := (mstatus & ~"h1888".U(64.W)) | (mstatus(3).asUInt << 7) | "h1800".U
     for (i <- 0 until 8) { pc(i) := mtvec(8 * i + 7, 8 * i) }
     phase := WispPhase.Fetch
     traceValid := true.B
@@ -169,6 +182,22 @@ class WispCore(
     traceRdValue := 0.U
     traceTrap := true.B
     traceCause := cause
+  }
+  def takeInterrupt(cause: UInt): Unit = {
+    mepc := pcUInt
+    mcause := (1.U(64.W) << 63) | cause
+    mtval := 0.U
+    mstatus := (mstatus & ~"h1888".U(64.W)) | (mstatus(3).asUInt << 7) | "h1800".U
+    setPc(mtvec)
+    phase := WispPhase.Fetch
+    traceValid := true.B
+    tracePc := pcUInt
+    traceInsn := 0.U
+    traceRd := 0.U
+    traceRdWrite := false.B
+    traceRdValue := 0.U
+    traceTrap := true.B
+    traceCause := (1.U(64.W) << 63) | cause
   }
   def setValue(next: UInt): Unit = {
     for (i <- 0 until 8) { value(i) := next(8 * i + 7, 8 * i) }
@@ -191,7 +220,11 @@ class WispCore(
 
   switch(phase) {
     is(WispPhase.Fetch) {
-      when(pcUInt(1, 0) =/= 0.U) {
+      when(externalInterruptPending) {
+        takeInterrupt(11.U)
+      }.elsewhen(timerInterruptPending) {
+        takeInterrupt(7.U)
+      }.elsewhen(pcUInt(1, 0) =/= 0.U) {
         takeTrap(0.U, pcUInt)
       }.elsewhen(io.wb.err) {
         takeTrap(1.U, pcUInt)
@@ -209,7 +242,11 @@ class WispCore(
       }.elsewhen(dec.io.op === WispOp.Ebreak) {
         takeTrap(3.U, 0.U)
       }.elsewhen(dec.io.op === WispOp.Mret) {
+        mstatus := (mstatus & ~"h1888".U(64.W)) |
+          (mstatus(7).asUInt << 3) | "h1880".U
         setPc(mepc); phase := WispPhase.Fetch
+      }.elsewhen(dec.io.op === WispOp.Wfi) {
+        setPc(pcUInt + 4.U); phase := WispPhase.WaitInterrupt
       }.elsewhen(dec.io.op === WispOp.Lui) {
         setValue(dec.io.imm); byteIndex := 0.U; carry := false.B; phase := WispPhase.Commit
       }.elsewhen(dec.io.op === WispOp.Auipc || dec.io.op === WispOp.Jal) {
@@ -248,11 +285,18 @@ class WispCore(
       equal := equal && a === b
       when(byteIndex === 7.U) { signA := a(7); signB := b(7) }
 
+      // The byte-wide RF presents a different byte on every read pass.  The
+      // architectural shift amount lives in byte zero of rs2, so capture it
+      // while that byte is present instead of sampling readDataB after the
+      // final (byte-seven) pass.
+      when(isShift(dec.io.op) && byteIndex === 0.U) {
+        val amount = Mux(dec.io.useImm, dec.io.imm(5, 0), rf.io.readDataB(5, 0))
+        shiftRemaining := Mux(isWord(dec.io.op), Cat(0.U(1.W), amount(4, 0)), amount)
+      }
+
       val last = Mux(isWord(dec.io.op) && !isShift(dec.io.op), byteIndex === 3.U, byteIndex === 7.U)
       when(last) {
         when(isShift(dec.io.op)) {
-          val amount = Mux(dec.io.useImm, dec.io.imm(5, 0), rf.io.readDataB(5, 0))
-          shiftRemaining := Mux(isWord(dec.io.op), Cat(0.U(1.W), amount(4, 0)), amount)
           phase := WispPhase.Shift
         }.elsewhen(isCompare(dec.io.op)) {
           val eqFinal = equal && a === b
@@ -408,6 +452,7 @@ class WispCore(
         when(doWrite) {
           switch(address) {
             is("h300".U) { mstatus := next }
+            is("h304".U) { mie := next & "h880".U }
             is("h305".U) { mtvec := next & ~3.U(64.W) }
             is("h340".U) { mscratch := next }
             is("h341".U) { mepc := next & ~3.U(64.W) }
@@ -443,6 +488,10 @@ class WispCore(
         traceCause := 0.U
         byteIndex := 0.U; carry := false.B; branchTaken := false.B; phase := WispPhase.Fetch
       }.otherwise { byteIndex := byteIndex + 1.U }
+    }
+
+    is(WispPhase.WaitInterrupt) {
+      when(enabledInterruptPending) { phase := WispPhase.Fetch }
     }
   }
 

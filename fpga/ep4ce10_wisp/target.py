@@ -11,6 +11,7 @@ from migen.genlib.resetsync import AsyncResetSynchronizer
 from litex.build.altera import AlteraPlatform
 from litex.build.generic_platform import IOStandard, Pins, Subsignal
 from litex.soc.cores.cpu import CPUS
+from litex.soc.cores.gpio import GPIOOut
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.common import get_mem_data
 from litex.soc.integration.soc import SoCRegion
@@ -21,6 +22,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 FLOW_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 sys.path.insert(0, os.path.join(FLOW_ROOT, "litex_wrapper"))
 from wisp import Wisp  # noqa: E402
+from ep4ce10 import SevenSegmentDisplay  # noqa: E402
 from matrix_accelerator import MatrixAccelerator  # noqa: E402
 
 SYS_CLK_FREQ = 50_000_000
@@ -41,7 +43,11 @@ class GatewareOnlyBuilder(Builder):
 _io = [
     ("clk50", 0, Pins("E1"), IOStandard("3.3-V LVTTL")),
     ("rst_n", 0, Pins("M1"), IOStandard("3.3-V LVTTL")),
-    ("led", 0, Pins("D11"), IOStandard("3.3-V LVTTL")),
+    ("led", 0, Pins("D11 C11 E10 F9"), IOStandard("3.3-V LVTTL")),
+    ("seg7", 0,
+        Subsignal("sel", Pins("N16 N15 P16 P15 R16 T15")),
+        Subsignal("seg", Pins("M11 N12 C9 N13 M10 N11 P11 D9")),
+        IOStandard("3.3-V LVTTL")),
     ("serial", 0,
         # P2 direct TTL UART2 pins for an external USB-to-UART adapter.
         Subsignal("rx", Pins("A12")),
@@ -107,7 +113,10 @@ class SyncWishboneRAM(Module):
 
 class WispSoC(SoCCore):
     mem_map = Wisp.mem_map
-    csr_map = {"ctrl": 0, "uart": 1, "timer0": 2, "matrix": 3}
+    csr_map = {"ctrl": 0, "uart": 1, "timer0": 2, "matrix": 3,
+        "gpio": 4, "seg7": 5, "watchdog0": 6}
+    interrupt_map = {"uart": 0, "timer0": 1, "gpio_irq": 2,
+        "watchdog0": 3}
 
     def __init__(self, platform, rom_init, cpu_variant="minimal",
                  with_matrix=False):
@@ -145,14 +154,15 @@ class WispSoC(SoCCore):
             self.bus.add_slave("matrix_spm", self.matrix.bus,
                 SoCRegion(origin=MATRIX_SPM_BASE, size=MATRIX_SPM_SIZE,
                     mode="rw", cached=False))
-        # A visible heartbeat remains useful even before opening a serial terminal.
-        self.comb += platform.request("led", 0).eq(self.cpu.area_probe)
+        self.submodules.gpio = GPIOOut(platform.request("led", 0))
+        self.submodules.seg7 = SevenSegmentDisplay(
+            platform.request("seg7", 0), SYS_CLK_FREQ)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--firmware", default=os.path.join(FLOW_ROOT,
-        "software", "wisp-ep4ce10", "build", "wisp-ep4ce10.bin"))
+        "software", "ep4ce10-mcu", "build", "wisp", "led-timer-irq.bin"))
     matrix_group = parser.add_mutually_exclusive_group()
     matrix_group.add_argument("--matrix-area", action="store_true",
         help="include the synthesis-only 4x4 INT8 systolic-array area probe")

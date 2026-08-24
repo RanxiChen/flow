@@ -10,7 +10,7 @@ object AirState extends ChiselEnum {
       ShiftAmountWait, ShiftLoadWait, ShiftStart, ShiftByte,
       AddressWait, StoreReadWait, MemRequest,
       PcTarget, LinkWb, SequentialPc,
-      CsrSourceWait, CsrExecute = Value
+      CsrSourceWait, CsrExecute, WaitInterrupt = Value
 }
 
 class AirTrace extends Bundle {
@@ -39,6 +39,8 @@ class AirCore(
     withTrace: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val wb = new LiteXWishboneMasterIO(LiteXWishboneParameters(32, 32))
+    val timerIrq = Input(Bool())
+    val externalIrq = Input(Bool())
     val trace = Output(new AirTrace)
     val areaProbe = Output(Bool())
   })
@@ -72,11 +74,18 @@ class AirCore(
   // later CSR-RAM experiment can replace this bank without changing the core
   // instruction paths.
   val mstatus = RegInit(0.U(64.W))
+  val mie = RegInit(0.U(64.W))
   val mtvec = RegInit(0.U(64.W))
   val mscratch = RegInit(0.U(64.W))
   val mepc = RegInit(0.U(64.W))
   val mcause = RegInit(0.U(64.W))
   val mtval = RegInit(0.U(64.W))
+
+  val mip = (io.timerIrq.asUInt << 7) | (io.externalIrq.asUInt << 11)
+  val timerInterruptPending = mstatus(3) && mie(7) && io.timerIrq
+  val externalInterruptPending = mstatus(3) && mie(11) && io.externalIrq
+  val interruptPending = timerInterruptPending || externalInterruptPending
+  val enabledInterruptPending = (mie(7) && io.timerIrq) || (mie(11) && io.externalIrq)
 
   val traceValid = RegInit(false.B)
   val traceRdWrite = RegInit(false.B)
@@ -109,7 +118,7 @@ class AirCore(
   rf.io.writeData := 0.U
 
   val useParcel = if (withCompressed) parcelValid && parcelPc === pc else false.B
-  val fetchBus = state === AirState.Fetch && !useParcel
+  val fetchBus = state === AirState.Fetch && !useParcel && !interruptPending
   val secondBus = state === AirState.FetchSecond
   val memoryBus = state === AirState.MemRequest
   io.wb.cyc := fetchBus || secondBus || memoryBus
@@ -147,7 +156,7 @@ class AirCore(
   def isSubtract(op: AirOp.Type): Bool = op === AirOp.Sub || op === AirOp.Subw || isCompare(op)
   def writesRd(op: AirOp.Type): Bool = !(isBranch(op) || isStore(op) ||
     op === AirOp.Fence || op === AirOp.FenceI || op === AirOp.Ecall ||
-    op === AirOp.Ebreak || op === AirOp.Mret || op === AirOp.Illegal)
+    op === AirOp.Ebreak || op === AirOp.Mret || op === AirOp.Wfi || op === AirOp.Illegal)
 
   def loadBytes(op: AirOp.Type): UInt = MuxLookup(op.asUInt, 1.U)(Seq(
     AirOp.Lh.asUInt -> 2.U, AirOp.Lhu.asUInt -> 2.U,
@@ -158,13 +167,13 @@ class AirCore(
     AirOp.Sb.asUInt -> (1.U(4.W) << low), AirOp.Sh.asUInt -> (3.U(4.W) << low),
     AirOp.Sw.asUInt -> "b1111".U, AirOp.Sd.asUInt -> "b1111".U))
 
-  def csrLegal(a: UInt): Bool = Seq("h300", "h301", "h305", "h340", "h341", "h342", "h343", "hf14")
+  def csrLegal(a: UInt): Bool = Seq("h300", "h301", "h304", "h305", "h340", "h341", "h342", "h343", "h344", "hf14")
     .map(x => a === x.U).reduce(_ || _)
   def csrRead(a: UInt): UInt = MuxLookup(a, 0.U)(Seq(
     "h300".U -> mstatus, "h301".U -> Mux(withCompressed.B,
       "h8000000000000104".U, "h8000000000000100".U),
-    "h305".U -> mtvec, "h340".U -> mscratch, "h341".U -> mepc,
-    "h342".U -> mcause, "h343".U -> mtval, "hf14".U -> 0.U))
+    "h304".U -> mie, "h305".U -> mtvec, "h340".U -> mscratch, "h341".U -> mepc,
+    "h342".U -> mcause, "h343".U -> mtval, "h344".U -> mip.pad(64), "hf14".U -> 0.U))
 
   def setWorkByte(index: UInt, data: UInt): Unit = {
     for (i <- 0 until 8) { when(index === i.U) { work(i) := data } }
@@ -195,6 +204,7 @@ class AirCore(
     mepc := instructionPc.pad(64)
     mcause := cause
     mtval := value
+    mstatus := (mstatus & ~"h1888".U(64.W)) | (mstatus(3).asUInt << 7) | "h1800".U
     pc := mtvec(31, 0)
     parcelValid := false.B
     traceValid := true.B
@@ -202,6 +212,22 @@ class AirCore(
     traceRdValue := 0.U
     traceTrap := true.B
     traceCause := cause
+    state := AirState.Fetch
+  }
+  def takeInterrupt(cause: UInt): Unit = {
+    instructionPc := pc
+    instruction := 0.U
+    mepc := pc.pad(64)
+    mcause := (1.U(64.W) << 63) | cause
+    mtval := 0.U
+    mstatus := (mstatus & ~"h1888".U(64.W)) | (mstatus(3).asUInt << 7) | "h1800".U
+    pc := mtvec(31, 0)
+    parcelValid := false.B
+    traceValid := true.B
+    traceRdWrite := false.B
+    traceRdValue := 0.U
+    traceTrap := true.B
+    traceCause := (1.U(64.W) << 63) | cause
     state := AirState.Fetch
   }
   def startSequentialPc(): Unit = {
@@ -213,7 +239,11 @@ class AirCore(
   switch(state) {
     is(AirState.Fetch) {
       val badPc = if (withCompressed) pc(0) else pc(1, 0).orR
-      when(badPc) {
+      when(externalInterruptPending) {
+        takeInterrupt(11.U)
+      }.elsewhen(timerInterruptPending) {
+        takeInterrupt(7.U)
+      }.elsewhen(badPc) {
         instructionPc := pc
         takeTrap(0.U, pc.pad(64))
       }.elsewhen(useParcel) {
@@ -287,7 +317,11 @@ class AirCore(
       }.elsewhen(dec.io.op === AirOp.Ebreak) {
         takeTrap(3.U, 0.U)
       }.elsewhen(dec.io.op === AirOp.Mret) {
+        mstatus := (mstatus & ~"h1888".U(64.W)) |
+          (mstatus(7).asUInt << 3) | "h1880".U
         pc := mepc(31, 0); parcelValid := false.B; retire(false.B)
+      }.elsewhen(dec.io.op === AirOp.Wfi) {
+        startSequentialPc()
       }.elsewhen(dec.io.op === AirOp.Fence || dec.io.op === AirOp.FenceI) {
         when(dec.io.op === AirOp.FenceI) { parcelValid := false.B }
         startSequentialPc()
@@ -607,7 +641,10 @@ class AirCore(
       val mask = ("hff".U(32.W) << Cat(byteIndex, 0.U(3.W)))
       pc := (pc & ~mask) | (sum(7, 0) << Cat(byteIndex, 0.U(3.W)))
       carry := sum(8)
-      when(!sum(8) || byteIndex === 3.U) { retire(writesRd(dec.io.op)) }
+      when(!sum(8) || byteIndex === 3.U) {
+        retire(writesRd(dec.io.op))
+        when(dec.io.op === AirOp.Wfi) { state := AirState.WaitInterrupt }
+      }
         .otherwise { byteIndex := byteIndex + 1.U }
     }
 
@@ -631,7 +668,8 @@ class AirCore(
       .otherwise {
         when(doWrite) {
           switch(csrAddress) {
-            is("h300".U) { mstatus := next }; is("h305".U) { mtvec := next & ~3.U(64.W) }
+            is("h300".U) { mstatus := next }; is("h304".U) { mie := next & "h880".U }
+            is("h305".U) { mtvec := next & ~3.U(64.W) }
             is("h340".U) { mscratch := next }; is("h341".U) { mepc := next & ~1.U(64.W) }
             is("h342".U) { mcause := next }; is("h343".U) { mtval := next }
           }
@@ -640,6 +678,10 @@ class AirCore(
         when(dec.io.rd === 0.U) { startSequentialPc() }
           .otherwise { byteIndex := 0.U; state := AirState.WorkWb }
       }
+    }
+
+    is(AirState.WaitInterrupt) {
+      when(enabledInterruptPending) { state := AirState.Fetch }
     }
   }
 }

@@ -24,6 +24,7 @@ class AirCoreSpec extends AnyFreeSpec with ChiselSim {
       maxCycles: Int = 3000): Seq[(BigInt, Int, BigInt, Int, BigInt)] = {
     var retired = Seq.empty[(BigInt, Int, BigInt, Int, BigInt)]
     simulate(core) { dut =>
+      dut.io.timerIrq.poke(false.B); dut.io.externalIrq.poke(false.B)
       dut.io.wb.ack.poke(false.B); dut.io.wb.err.poke(false.B); dut.io.wb.dat_r.poke(0.U)
       dut.reset.poke(true.B); dut.clock.step(2); dut.reset.poke(false.B)
       val events = mutable.ArrayBuffer.empty[(BigInt, Int, BigInt, Int, BigInt)]
@@ -125,6 +126,7 @@ class AirCoreSpec extends AnyFreeSpec with ChiselSim {
 
       simulate(new AirCore(resetVector = BigInt("10000000", 16),
           withCompressed = compressed, withTrace = true)) { dut =>
+        dut.io.timerIrq.poke(false.B); dut.io.externalIrq.poke(false.B)
         dut.io.wb.ack.poke(false.B); dut.io.wb.err.poke(false.B); dut.io.wb.dat_r.poke(0.U)
         dut.reset.poke(true.B); dut.clock.step(2); dut.reset.poke(false.B)
         val uart = mutable.ArrayBuffer.empty[Char]

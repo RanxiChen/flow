@@ -22,6 +22,7 @@ class WispCoreSpec extends AnyFreeSpec with ChiselSim {
 
   "execute a continuous RV64I/Zicsr/Zifencei program over one Wishbone master" in {
     simulate(new WispCore(resetVector = 0, withTrace = true)) { dut =>
+      dut.io.timerIrq.poke(false.B); dut.io.externalIrq.poke(false.B)
       val words = mutable.Map[BigInt, BigInt](
         BigInt(0)  -> BigInt(i(0x13, 1, 0, 0, 5) & 0xffffffffL),       // addi x1,x0,5
         BigInt(1)  -> BigInt(i(0x13, 2, 0, 0, 7) & 0xffffffffL),       // addi x2,x0,7
@@ -33,8 +34,10 @@ class WispCoreSpec extends AnyFreeSpec with ChiselSim {
         BigInt(7)  -> BigInt(i(0x13, 6, 1, 4, 2) & 0xffffffffL),       // slli x6,x4,2
         BigInt(8)  -> BigInt(i(0x73, 7, 1, 6, 0x340) & 0xffffffffL),   // csrrw x7,mscratch,x6
         BigInt(9)  -> BigInt(i(0x73, 8, 2, 0, 0x340) & 0xffffffffL),   // csrrs x8,mscratch,x0
-        BigInt(10) -> BigInt(0x0000100fL),                             // fence.i
-        BigInt(11) -> BigInt(0x0000006fL)                              // jal x0,0
+        BigInt(10) -> BigInt(r(0x3b, 9, 1, 6, 1) & 0xffffffffL),       // sllw x9,x6,x1
+        BigInt(11) -> BigInt(r(0x3b, 10, 5, 9, 1) & 0xffffffffL),      // srlw x10,x9,x1
+        BigInt(12) -> BigInt(0x0000100fL),                             // fence.i
+        BigInt(13) -> BigInt(0x0000006fL)                              // jal x0,0
       )
 
       dut.io.wb.ack.poke(false.B)
@@ -44,7 +47,7 @@ class WispCoreSpec extends AnyFreeSpec with ChiselSim {
 
       val retired = mutable.ArrayBuffer.empty[(BigInt, Int, BigInt)]
       var cycles = 0
-      while (retired.size < 11 && cycles < 1600) {
+      while (retired.size < 13 && cycles < 2400) {
         val active = dut.io.wb.cyc.peek().litToBoolean && dut.io.wb.stb.peek().litToBoolean
         val address = dut.io.wb.adr.peekValue().asBigInt
         dut.io.wb.ack.poke(active.B)
@@ -72,13 +75,15 @@ class WispCoreSpec extends AnyFreeSpec with ChiselSim {
         cycles += 1
       }
 
-      assert(retired.size == 11, s"only retired ${retired.size} instructions in $cycles cycles: $retired")
-      assert(retired.map(_._1) == Seq(0, 4, 8, 12, 16, 20, 28, 32, 36, 40, 44))
+      assert(retired.size == 13, s"only retired ${retired.size} instructions in $cycles cycles: $retired")
+      assert(retired.map(_._1) == Seq(0, 4, 8, 12, 16, 20, 28, 32, 36, 40, 44, 48, 52))
       assert(retired.find(_._2 == 3).exists(_._3 == 12))
       assert(retired.find(_._2 == 4).exists(_._3 == 12))
       assert(retired.find(_._2 == 6).exists(_._3 == 48))
       assert(retired.find(_._2 == 7).exists(_._3 == 0))
       assert(retired.find(_._1 == 36).exists(_._3 == 48), s"unexpected retire values: $retired")
+      assert(retired.find(_._2 == 9).exists(_._3 == 1536), s"SLLW used the wrong rs2 byte: $retired")
+      assert(retired.find(_._2 == 10).exists(_._3 == 48), s"SRLW used the wrong rs2 byte: $retired")
       assert(words(BigInt(0x100 / 4)) == 12)
     }
   }
@@ -97,6 +102,7 @@ class WispCoreSpec extends AnyFreeSpec with ChiselSim {
     val uartTxFull = BigInt("12001004", 16) / 4
 
     simulate(new WispCore(resetVector = BigInt("10000000", 16), withTrace = true)) { dut =>
+      dut.io.timerIrq.poke(false.B); dut.io.externalIrq.poke(false.B)
       dut.io.wb.ack.poke(false.B); dut.io.wb.err.poke(false.B); dut.io.wb.dat_r.poke(0.U)
       dut.reset.poke(true.B); dut.clock.step(2); dut.reset.poke(false.B)
       val uart = mutable.ArrayBuffer.empty[Char]

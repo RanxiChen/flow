@@ -11,6 +11,7 @@ from migen.genlib.resetsync import AsyncResetSynchronizer
 from litex.build.altera import AlteraPlatform
 from litex.build.generic_platform import IOStandard, Pins, Subsignal
 from litex.soc.cores.cpu import CPUS
+from litex.soc.cores.gpio import GPIOOut
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.common import get_mem_data
 from litex.soc.integration.soc import SoCRegion
@@ -21,6 +22,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 FLOW_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 sys.path.insert(0, os.path.join(FLOW_ROOT, "litex_wrapper"))
 from air import Air  # noqa: E402
+from ep4ce10 import SevenSegmentDisplay  # noqa: E402
 
 SYS_CLK_FREQ = 50_000_000
 ROM_BASE = 0x1000_0000
@@ -38,7 +40,11 @@ class GatewareOnlyBuilder(Builder):
 _io = [
     ("clk50", 0, Pins("E1"), IOStandard("3.3-V LVTTL")),
     ("rst_n", 0, Pins("M1"), IOStandard("3.3-V LVTTL")),
-    ("led", 0, Pins("D11"), IOStandard("3.3-V LVTTL")),
+    ("led", 0, Pins("D11 C11 E10 F9"), IOStandard("3.3-V LVTTL")),
+    ("seg7", 0,
+        Subsignal("sel", Pins("N16 N15 P16 P15 R16 T15")),
+        Subsignal("seg", Pins("M11 N12 C9 N13 M10 N11 P11 D9")),
+        IOStandard("3.3-V LVTTL")),
     ("serial", 0,
         Subsignal("rx", Pins("A12")),
         Subsignal("tx", Pins("B12")),
@@ -95,7 +101,12 @@ class SyncWishboneRAM(Module):
 
 class AirSoC(SoCCore):
     mem_map = Air.mem_map
-    csr_map = {"ctrl": 0, "uart": 1, "timer0": 2}
+    csr_map = {"ctrl": 0, "uart": 1, "timer0": 2, "gpio": 4,
+        "seg7": 5, "watchdog0": 6}
+    # Keep the same IRQ numbers for Air and Wisp.  IRQ1 is routed to RISC-V
+    # MTIP; all other implemented sources are summarized as MEIP.
+    interrupt_map = {"uart": 0, "timer0": 1, "gpio_irq": 2,
+        "watchdog0": 3}
 
     def __init__(self, platform, rom_init, cpu_variant):
         self.submodules.crg = CRG(platform)
@@ -127,7 +138,9 @@ class AirSoC(SoCCore):
         self.submodules.sram = SyncWishboneRAM(SRAM_SIZE)
         self.bus.add_slave("sram", self.sram.bus,
             SoCRegion(origin=SRAM_BASE, size=SRAM_SIZE, mode="rwx", cached=True))
-        self.comb += platform.request("led", 0).eq(self.cpu.area_probe)
+        self.submodules.gpio = GPIOOut(platform.request("led", 0))
+        self.submodules.seg7 = SevenSegmentDisplay(
+            platform.request("seg7", 0), SYS_CLK_FREQ)
 
 
 def main():
@@ -136,8 +149,8 @@ def main():
     parser.add_argument("--firmware", default=None)
     args = parser.parse_args()
     if args.firmware is None:
-        args.firmware = os.path.join(FLOW_ROOT, "software", "air-ep4ce10",
-            "build", args.variant, "air-ep4ce10.bin")
+        args.firmware = os.path.join(FLOW_ROOT, "software", "ep4ce10-mcu",
+            "build", f"air-{args.variant}", "led-timer-irq.bin")
     if os.path.getsize(args.firmware) > ROM_SIZE:
         raise ValueError("Air firmware exceeds the 8 KiB boot ROM")
     rom_init = get_mem_data(args.firmware, data_width=32,
