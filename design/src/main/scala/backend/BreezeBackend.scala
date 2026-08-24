@@ -1201,8 +1201,13 @@ class BreezeBackend(
         exeMemReg.is_mret := idExeReg.is_mret
         exeMemReg.is_sret := idExeReg.is_sret
         exeMemReg.is_wfi := idExeReg.is_wfi
-        exeMemReg.csr_illegal := csrFile.io.csr_illegal &&
-            !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault
+        // CSRFile is driven from exeMemReg below, so its legality result belongs
+        // to the instruction already in EXE/MEM, not the incoming ID/EXE
+        // instruction captured by this assignment. Sampling it here shifts an
+        // illegal-CSR exception onto the following instruction and lets the
+        // unsupported CSR itself retire. Legality is sampled at EXE/MEM ->
+        // MEM/WB instead, alongside csr_old_data/csr_new_data.
+        exeMemReg.csr_illegal := false.B
         exeMemReg.pred := idExeReg.pred
         exeMemReg.estop := idExeReg.estop
         exeMemReg.fencei := idExeReg.ctrl.fencei
@@ -1390,7 +1395,8 @@ class BreezeBackend(
         memWbReg.is_mret := exeMemReg.is_mret
         memWbReg.is_sret := exeMemReg.is_sret
         memWbReg.is_wfi := exeMemReg.is_wfi
-        memWbReg.csr_illegal := exeMemReg.csr_illegal
+        memWbReg.csr_illegal := csrFile.io.csr_illegal &&
+            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
         memWbReg.estop := exeMemReg.estop
         memWbReg.load_addr_misaligned := loadAddrMisaligned
         memWbReg.store_addr_misaligned := storeAddrMisaligned
@@ -1653,6 +1659,6 @@ class BreezeBackend(
         debug.memWbIsMret := memWbReg.is_mret
         debug.memWbIsWfi := memWbReg.is_wfi
         debug.wfiSleeping := wfiSleepingReg
-        debug.csrIllegal := exeMemReg.csr_illegal
+        debug.csrIllegal := csrFile.io.csr_illegal
     }
 }

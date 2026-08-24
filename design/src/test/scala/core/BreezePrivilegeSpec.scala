@@ -96,6 +96,85 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "reject every unimplemented MCU CSR instead of silently reading zero" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Mcu)) { dut =>
+      reset(dut)
+      commit(dut, CSRMAP.mstatus, BigInt(1) << 13)
+
+      val implemented = Set(
+        CSRMAP.fflags, CSRMAP.frm, CSRMAP.fcsr, CSRMAP.printer, CSRMAP.coreinst,
+        CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
+        CSRMAP.mstatus, CSRMAP.mie, CSRMAP.mtvec, CSRMAP.mcounteren,
+        CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval, CSRMAP.mip,
+        CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
+        CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2
+      ) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
+        (0 until 8).flatMap(index => Seq(
+          CSRMAP.mhpmcounter3 + index,
+          CSRMAP.hpmcounter3 + index,
+          CSRMAP.mhpmevent3 + index))
+
+      for (address <- 0 until 4096) {
+        selectRead(dut, address)
+        val expectedIllegal = !implemented.contains(address)
+        withClue(f"MCU CSR 0x$address%03x: ") {
+          (dut.io.csr_illegal.peek().litValue != 0) mustBe expectedIllegal
+        }
+      }
+    }
+  }
+
+  "reject OpenSBI extension probes and every unimplemented Linux CSR" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+
+      // Make dynamically gated implemented CSRs readable before checking the
+      // static address whitelist: FS=Initial enables fflags/frm/fcsr and STCE
+      // enables stimecmp.
+      commit(dut, CSRMAP.mstatus, BigInt(1) << 13)
+      commit(dut, CSRMAP.menvcfg, BigInt(1) << 63)
+
+      val implemented = Set(
+        CSRMAP.fflags, CSRMAP.frm, CSRMAP.fcsr, CSRMAP.printer, CSRMAP.coreinst,
+        CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
+        CSRMAP.mstatus, CSRMAP.medeleg, CSRMAP.mideleg, CSRMAP.mie, CSRMAP.mtvec,
+        CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
+        CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time,
+        CSRMAP.instret, CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0,
+        CSRMAP.pmpcfg2,
+        CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
+        CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval, CSRMAP.sip,
+        CSRMAP.stimecmp, CSRMAP.satp
+      ) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
+        (0 until 8).flatMap(index => Seq(
+          CSRMAP.mhpmcounter3 + index,
+          CSRMAP.hpmcounter3 + index,
+          CSRMAP.mhpmevent3 + index))
+
+      val openSbiUnsupportedProbes = Seq(
+        0xfb0 -> "mtopi/Smaia",
+        0xda0 -> "scountovf/Sscofpmf",
+        0x30c -> "mstateen0/Smstateen",
+        0x10c -> "sstateen0/Ssstateen",
+        0x321 -> "mcyclecfg/Smcntrpmf",
+        0x7a0 -> "tselect/Sdtrig")
+      openSbiUnsupportedProbes.foreach { case (address, name) =>
+        selectRead(dut, address)
+        withClue(s"OpenSBI probe $name at 0x${address.toHexString}: ") {
+          dut.io.csr_illegal.peek().litValue mustBe 1
+        }
+      }
+
+      for (address <- 0 until 4096) {
+        selectRead(dut, address)
+        val expectedIllegal = !implemented.contains(address)
+        withClue(f"CSR 0x$address%03x: ") {
+          (dut.io.csr_illegal.peek().litValue != 0) mustBe expectedIllegal
+        }
+      }
+    }
+  }
+
   "enter S and U with MRET/SRET and route delegated exceptions to S" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

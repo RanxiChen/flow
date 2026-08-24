@@ -366,13 +366,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }.otherwise{
         old_csr_val := 0.U
     }
-    val csr_illegal_addr = ILLEGAL_CSR_ADDRS.addrs.map(a => io.csr_addr === a.U(12.W)).reduce(_ || _)
     val fpCsrAccess = io.csr_addr === CSRMAP.fflags.U ||
         io.csr_addr === CSRMAP.frm.U || io.csr_addr === CSRMAP.fcsr.U
     val machineAddresses = Seq(
         CSRMAP.fflags, CSRMAP.frm, CSRMAP.fcsr, CSRMAP.printer, CSRMAP.coreinst,
         CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
-        CSRMAP.mstatus, CSRMAP.medeleg, CSRMAP.mideleg, CSRMAP.mie, CSRMAP.mtvec,
+        CSRMAP.mstatus, CSRMAP.mie, CSRMAP.mtvec,
         CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
         CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
         CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2) ++
@@ -384,8 +383,11 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
         CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval,
         CSRMAP.sip, CSRMAP.stimecmp, CSRMAP.satp)
+    val supervisorMachineAddresses = Seq(CSRMAP.medeleg, CSRMAP.mideleg)
     val implementedAddresses = machineAddresses ++
-        (if (enableSupervisorUser) supervisorAddresses else Seq.empty)
+        (if (enableSupervisorUser)
+            supervisorMachineAddresses ++ supervisorAddresses
+        else Seq.empty)
     val csrImplemented = implementedAddresses.map(address =>
         io.csr_addr === address.U(12.W)).reduce(_ || _)
     val csrAccess = io.csr_cmd =/= CSR_CMD.NOP.U
@@ -413,15 +415,14 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         !mcounteren(counterIndex),
         Mux(currentPrivilege === PRIV_MODE.U.U,
             !mcounteren(counterIndex) || !scounteren(counterIndex), false.B))
-    if (enableSupervisorUser) {
-        io.csr_illegal := csrAccess && (
-            !csrImplemented || privilegeDenied || customCsrDenied || satpDenied || sstcDenied ||
-            readOnlyWrite || counterDenied ||
-            (fpCsrAccess && mstatus_FS === 0.U))
-    } else {
-        io.csr_illegal := (read_csr && csr_illegal_addr) ||
-            (csrAccess && fpCsrAccess && mstatus_FS === 0.U)
-    }
+    // CSR support is whitelist-based in every privilege profile. Unknown CSR
+    // addresses must raise an illegal-instruction exception; returning zero
+    // would make probing firmware falsely advertise extensions that are not
+    // implemented by the core.
+    io.csr_illegal := csrAccess && (
+        !csrImplemented || privilegeDenied || customCsrDenied || satpDenied || sstcDenied ||
+        readOnlyWrite || counterDenied ||
+        (fpCsrAccess && mstatus_FS === 0.U))
 
     when(!io.trap.valid){
         switch(io.csr_cmd){

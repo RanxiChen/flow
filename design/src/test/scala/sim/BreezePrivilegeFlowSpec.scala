@@ -154,4 +154,57 @@ class BreezePrivilegeFlowSpec extends AnyFreeSpec with Matchers {
     result.commitEvents.exists(event =>
       event.rdWriteEn && event.rdAddr == 23 && event.rdData == illegal) mustBe true
   }
+
+  "trap an unsupported OpenSBI mtopi probe in the matching pipeline slot" in {
+    val memory = mutable.LinkedHashMap.empty[BigInt, BigInt]
+    val boot = BreezeMcuPlatform.ResetVector
+    val handler = boot + 0x200
+    val csrrw = 1
+    val csrrs = 2
+    val mret = BigInt("30200073", 16)
+    val mtopi = 0xfb0
+    val probe = encodeCsr(rd = 9, csr = mtopi, rs1 = 0, funct3 = csrrs)
+
+    install(memory, boot, Seq(
+      encodeLui(1, (handler >> 12).toInt),
+      BreezeCoreSimSupport.encodeAddi(1, 1, (handler & 0xfff).toInt),
+      encodeCsr(0, CSRMAP.mtvec, 1, csrrw),
+      BreezeCoreSimSupport.encodeAddi(9, 0, 55),
+      probe,
+      BreezeCoreSimSupport.encodeAddi(10, 9, 0),
+      BreezeCoreSimSupport.EstopInst
+    ))
+    install(memory, handler, Seq(
+      encodeCsr(20, CSRMAP.mepc, 0, csrrs),
+      encodeCsr(21, CSRMAP.mcause, 0, csrrs),
+      encodeCsr(22, CSRMAP.mtval, 0, csrrs),
+      BreezeCoreSimSupport.encodeAddi(20, 20, 4),
+      encodeCsr(0, CSRMAP.mepc, 20, csrrw),
+      mret
+    ))
+
+    val result = BreezeCoreSimRunner.runWithTandemTrace(
+      memory = memory,
+      coreCfg = BreezeCoreConfig(
+        useFASE = false,
+        enableTandem = true,
+        useGShare = true,
+        privilegeProfile = PrivilegeProfile.Linux),
+      maxCycles = 5000,
+      imemLatency = 2,
+      dmemLatency = 2,
+      bootAddr = boot)
+
+    val faultPc = boot + 4 * 4
+    result.result.timedOut mustBe false
+    result.commitEvents.last.estop mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 20 && event.rdData == faultPc) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 21 && event.rdData == 2) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 22 && event.rdData == 0) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 10 && event.rdData == 55) mustBe true
+  }
 }
