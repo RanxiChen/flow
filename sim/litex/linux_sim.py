@@ -143,12 +143,12 @@ def pack_ddr(segments):
     return [int.from_bytes(image[n:n + 4], "little") for n in range(0, len(image), 4)]
 
 
-def elaborate(profile, core_preset, debug):
+def elaborate(profile, core_preset, rtl_mode):
     sbt = os.environ.get("SBT", "sbt")
     command = [
         sbt,
         "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-        f"{profile} {core_preset} linux {'debug' if debug else 'production'}",
+        f"{profile} {core_preset} linux {rtl_mode}",
     ]
     print("+", " ".join(command), flush=True)
     subprocess.run(command, cwd=os.path.join(FLOW_ROOT, "design"), check=True)
@@ -166,6 +166,9 @@ def main():
     parser.add_argument("--core-preset", choices=("gshare", "baseline"), default="gshare")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--elaborate", action="store_true")
+    parser.add_argument("--rtl-mode", choices=("production", "debug"),
+        default="production",
+        help="Cluster RTL mode used by --elaborate; debug enables Tandem.")
     parser.add_argument("--build", action="store_true",
         help="Compile and run the Verilator simulation after generating it.")
     parser.add_argument("--trace", action="store_true")
@@ -183,13 +186,17 @@ def main():
     parser.add_argument("--mem-trace-address-end", type=lambda value: int(value, 0))
     parser.add_argument("--compact-event-trace", action="store_true",
         help="Emit an unbounded compact [FLOW-EVENT] stream for host-side capture.")
+    parser.add_argument("--cycle-debug", action="store_true",
+        help="Emit one combined [FLOW-CYCLE] snapshot on every simulated cycle.")
     args = parser.parse_args()
 
     for path in (args.opensbi, args.kernel, args.dtb, args.bootrom):
         if not os.path.isfile(path):
             parser.error(f"image does not exist: {path}")
+    if args.debug_cycles and args.rtl_mode != "debug":
+        parser.error("--debug-cycles requires --rtl-mode debug")
     if args.elaborate:
-        elaborate(args.profile, args.core_preset, bool(args.debug_cycles))
+        elaborate(args.profile, args.core_preset, args.rtl_mode)
     if args.mem_trace_max_events <= 0:
         parser.error("--mem-trace-max-events must be greater than zero")
     if (args.mem_trace_address_start is not None and
@@ -225,6 +232,7 @@ def main():
         memory_trace_address_start=args.mem_trace_address_start,
         memory_trace_address_end=args.mem_trace_address_end,
         compact_event_trace=args.compact_event_trace,
+        cycle_debug=args.cycle_debug,
     )
     if args.debug_cycles < 0:
         parser.error("--debug-cycles must not be negative")

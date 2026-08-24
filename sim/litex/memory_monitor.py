@@ -164,6 +164,87 @@ class FlowMemoryMonitor(Module):
                 address_start=address_start, address_end=address_end))
 
 
+class FlowCycleSnapshotMonitor(Module):
+    """Emit one combined debug snapshot on every simulated clock cycle.
+
+    The snapshot contains only passive, already exported CPU and SoC signals.
+    It never drives ready/valid, interrupt, cache, or Wishbone state.
+    """
+
+    PREFIX = "[FLOW-CYCLE]"
+
+    def __init__(self, cpu, wishbone_buses=()):
+        cycle = Signal(64)
+        retire_valid = Signal(len(cpu.retires))
+        dcache_request = Signal(len(cpu.dcache_traces))
+        dcache_response = Signal(len(cpu.dcache_traces))
+        retire_counts = [
+            Signal(64, name=f"cycle_retire_count{hart}")
+            for hart in range(len(cpu.retires))
+        ]
+        last_pcs = [
+            Signal(64, name=f"cycle_last_pc{hart}")
+            for hart in range(len(cpu.retires))
+        ]
+        last_insts = [
+            Signal(32, name=f"cycle_last_inst{hart}")
+            for hart in range(len(cpu.retires))
+        ]
+        last_next_pcs = [
+            Signal(64, name=f"cycle_last_next_pc{hart}")
+            for hart in range(len(cpu.retires))
+        ]
+
+        self.comb += [
+            retire_valid.eq(Cat(*[retire.valid for retire in cpu.retires])),
+            dcache_request.eq(Cat(*[
+                trace.request_valid for trace in cpu.dcache_traces
+            ])),
+            dcache_response.eq(Cat(*[
+                trace.response_valid for trace in cpu.dcache_traces
+            ])),
+        ]
+
+        line = (
+            f"{self.PREFIX} cycle=%0d rv=0x%0x fatal=0x%0x estop=0x%0x "
+            "msip=0x%0x mtip=0x%0x meip=0x%0x seip=0x%0x "
+            "dq=0x%0x ds=0x%0x"
+        )
+        values = [
+            cycle, retire_valid, cpu.hart_fatal, cpu.hart_estop,
+            cpu.msip, cpu.mtip, cpu.meip, cpu.seip,
+            dcache_request, dcache_response,
+        ]
+        for hart, retire in enumerate(cpu.retires):
+            line += (
+                f" h{hart}n=%0d h{hart}pc=0x%0x h{hart}i=0x%0x "
+                f"h{hart}next=0x%0x h{hart}rpc=0x%0x h{hart}ri=0x%0x"
+            )
+            values.extend([
+                retire_counts[hart], last_pcs[hart], last_insts[hart],
+                last_next_pcs[hart], retire.pc, retire.inst,
+            ])
+        for index, (_name, bus) in enumerate(wishbone_buses):
+            line += (
+                f" wb{index}cyc=%0d wb{index}stb=%0d wb{index}ack=%0d "
+                f"wb{index}err=%0d wb{index}we=%0d"
+            )
+            values.extend([bus.cyc, bus.stb, bus.ack, bus.err, bus.we])
+
+        statements = [
+            cycle.eq(cycle + 1),
+            Display(line, *values),
+        ]
+        for hart, retire in enumerate(cpu.retires):
+            statements.append(
+                If(retire.valid,
+                    retire_counts[hart].eq(retire_counts[hart] + 1),
+                    last_pcs[hart].eq(retire.pc),
+                    last_insts[hart].eq(retire.inst),
+                    last_next_pcs[hart].eq(retire.next_pc)))
+        self.sync += statements
+
+
 class FlowCompactEventMonitor(Module):
     """Unbounded compact event stream for whole-run offline analysis.
 
