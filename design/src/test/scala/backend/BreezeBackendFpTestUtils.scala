@@ -74,16 +74,17 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
   }
 
   def issue(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+    dut.io.fetchBuffer.valid.poke(true.B)
+    dut.io.fetchBuffer.bits.pc.poke(pc.U)
+    dut.io.fetchBuffer.bits.inst.poke(inst.U)
+    dut.io.fetchBuffer.bits.pred.predPc.poke((pc + 4).U)
     var cycles = 0
     while (!dut.io.fetchBuffer.ready.peek().litToBoolean && cycles < 2000) {
       dut.clock.step(1)
       cycles += 1
     }
     if (cycles == 2000) fail(s"backend did not accept instruction 0x${inst.toString(16)}")
-    dut.io.fetchBuffer.valid.poke(true.B)
-    dut.io.fetchBuffer.bits.pc.poke(pc.U)
-    dut.io.fetchBuffer.bits.inst.poke(inst.U)
-    dut.io.fetchBuffer.bits.pred.predPc.poke((pc + 4).U)
+    // Decoupled producers must keep valid and payload stable until ready.
     dut.clock.step(1)
     dut.io.fetchBuffer.valid.poke(false.B)
   }

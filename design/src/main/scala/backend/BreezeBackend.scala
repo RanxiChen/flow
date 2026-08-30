@@ -1006,10 +1006,13 @@ class BreezeBackend(
         (exeMemReg.valid && exeFpCtrl.writesFpr && fpSourceMatches(fpDecoder.io.ctrl, exeMemReg.rd_addr))
     )
     val idCsrAffectsFp = idExeReg.ctrl.csr_addr === CSRMAP.mstatus.U ||
+        idExeReg.ctrl.csr_addr === CSRMAP.sstatus.U ||
         idExeReg.ctrl.csr_addr === CSRMAP.frm.U || idExeReg.ctrl.csr_addr === CSRMAP.fcsr.U
     val exeCsrAffectsFp = exeMemReg.csr_addr === CSRMAP.mstatus.U ||
+        exeMemReg.csr_addr === CSRMAP.sstatus.U ||
         exeMemReg.csr_addr === CSRMAP.frm.U || exeMemReg.csr_addr === CSRMAP.fcsr.U
     val memWbCsrAffectsFp = memWbReg.csr_addr === CSRMAP.mstatus.U ||
+        memWbReg.csr_addr === CSRMAP.sstatus.U ||
         memWbReg.csr_addr === CSRMAP.frm.U || memWbReg.csr_addr === CSRMAP.fcsr.U
     fpCsrHazard := fpDecoder.io.ctrl.valid && (
         (idExePendingCsrState && idCsrAffectsFp) ||

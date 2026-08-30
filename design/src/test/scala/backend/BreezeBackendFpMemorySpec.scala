@@ -1,7 +1,7 @@
 package flow.backend
 
 import chisel3._
-import flow.config.BackendConfig
+import flow.config.{BackendConfig, PrivilegeProfile}
 import flow.fpu.BreezeFpChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -68,6 +68,42 @@ class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpC
       dut.io.dmem.req.wdata.expect(BigInt("4040000040400000", 16).U)
       respond(dut, 0, writeAck = true)
       waitForWb(dut, fsw)
+    }
+  }
+
+  "honor a back-to-back sstatus FS enable before FLD" in {
+    val cfg = BackendConfig(privilegeProfile = PrivilegeProfile.Linux)
+    simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+      driveIdle(dut)
+      dut.reset.poke(true.B)
+      dut.clock.step(2)
+      dut.reset.poke(false.B)
+      var pc = BigInt(0x900)
+      def allocPc(): BigInt = { val result = pc; pc += 4; result }
+      def run(inst: BigInt): BigInt = {
+        issue(dut, allocPc(), inst)
+        waitForWb(dut, inst)
+      }
+
+      // Match Linux __fstate_restore: set sstatus.FS and immediately execute
+      // FLD.  The FP instruction must wait until the aliased mstatus.FS state
+      // commits instead of being decoded against the old FS=Off value.
+      run(encodeAddi(30, 0, 1))
+      run(encodeSlli(30, 30, 13))
+      val setSstatus = encodeCsr(2, 0, 0x100, 30) // CSRRS x0,sstatus,x30
+      val fld = encodeFpLoad(rd = 1, rs1 = 0, imm = 0, isDouble = true)
+      issue(dut, allocPc(), setSstatus)
+      issue(dut, allocPc(), fld)
+
+      waitForRequest(dut)
+      dut.io.dmem.req.isWrite.expect(false.B)
+      dut.io.dmem.req.addr.expect(0.U)
+      dut.io.dmem.req.sizeLog2.expect(3.U)
+      respond(dut, BigInt("4008000000000000", 16), writeAck = false)
+      waitForWb(dut, fld)
+
+      val moveD = encodeOpFp(0x1c, 1, 0, 0, rd = 2, rs1 = 1)
+      run(moveD) mustBe BigInt("4008000000000000", 16)
     }
   }
 
