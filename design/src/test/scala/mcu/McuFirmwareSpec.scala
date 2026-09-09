@@ -131,7 +131,8 @@ class McuFirmwareSpec extends AnyFreeSpec with ChiselSim {
         dut.clock.step()
         cycles += 1
       }
-      assert(uart.mkString == "MCU IRQ READY\r\n", s"Wisp UART was '${uart.mkString}'")
+      assert(uart.mkString == "SDRAM 32M READY\r\nMCU IRQ READY\r\n",
+        s"Wisp UART was '${uart.mkString}'")
       assert(timerArmed && irqCount == 10 && ledOne && seg7Ten && seg7Enabled,
         s"Wisp MCU decimal carry incomplete after $irqCount IRQs and $cycles cycles")
     }

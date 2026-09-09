@@ -6,6 +6,9 @@
 #include "soc.h"
 #include "timer.h"
 #include "uart.h"
+#ifdef MCU_CORE_WISP
+#include "sdram.h"
+#endif
 
 static volatile uint32_t seconds;
 static uint32_t display_bcd;
@@ -32,6 +35,14 @@ int main(void)
     gpio_led_write(0u);
     display_bcd = 0u;
     seg7_write(display_bcd, 0x3fu, 0u);
+#ifdef MCU_CORE_WISP
+    if (sdram_init_and_memtest() != 0) {
+        gpio_led_write(1u);
+        uart_puts("SDRAM FAIL\r\n");
+        for (;;) mcu_wfi();
+    }
+    uart_puts("SDRAM 32M READY\r\n");
+#endif
     uart_puts("MCU IRQ READY\r\n");
     timer0_start_periodic(MCU_SYS_CLK_HZ);
     mcu_enable_timer_interrupt();

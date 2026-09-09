@@ -6,17 +6,20 @@ import os
 import shutil
 import sys
 
-from migen import ClockDomain, If, Memory, Module, Signal
-from migen.genlib.resetsync import AsyncResetSynchronizer
+from migen import ClockDomain, ClockSignal, If, Memory, Module, Signal
 from litex.build.altera import AlteraPlatform
 from litex.build.generic_platform import IOStandard, Pins, Subsignal
+from litex.build.io import DDROutput
 from litex.soc.cores.cpu import CPUS
+from litex.soc.cores.clock import CycloneIVPLL
 from litex.soc.cores.gpio import GPIOOut
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.common import get_mem_data
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.soc_core import SoCCore
 from litex.soc.interconnect import wishbone
+from litedram.modules import W9825G6KH6
+from litedram.phy import GENSDRPHY
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 FLOW_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
@@ -32,6 +35,8 @@ SRAM_BASE = 0x1100_0000
 SRAM_SIZE = 0x2000
 MATRIX_SPM_BASE = 0x1300_0000
 MATRIX_SPM_SIZE = 0x4000
+SDRAM_BASE = 0x8000_0000
+SDRAM_SIZE = 0x0200_0000
 
 
 class GatewareOnlyBuilder(Builder):
@@ -53,6 +58,20 @@ _io = [
         Subsignal("rx", Pins("A12")),
         Subsignal("tx", Pins("B12")),
         IOStandard("3.3-V LVTTL")),
+    ("sdram_clock", 0, Pins("B14"), IOStandard("3.3-V LVTTL")),
+    ("sdram", 0,
+        Subsignal("a", Pins(
+            "F11 E11 D14 C14 A14 A15 B16 C15 C16 D15 F14 D16 F15")),
+        Subsignal("ba", Pins("G11 F13")),
+        Subsignal("cs_n", Pins("K10")),
+        Subsignal("ras_n", Pins("K11")),
+        Subsignal("cas_n", Pins("J12")),
+        Subsignal("we_n", Pins("J13")),
+        Subsignal("cke", Pins("F16")),
+        Subsignal("dm", Pins("J14 G15")),
+        Subsignal("dq", Pins(
+            "P14 M12 N14 L12 L13 L14 L11 K12 G16 J11 J16 J15 K16 K15 L16 L15")),
+        IOStandard("3.3-V LVTTL")),
 ]
 
 
@@ -69,10 +88,19 @@ class Platform(AlteraPlatform):
 class CRG(Module):
     def __init__(self, platform):
         self.clock_domains.cd_sys = ClockDomain("sys")
+        self.clock_domains.cd_sys_ps = ClockDomain("sys_ps", reset_less=True)
         clk = platform.request("clk50")
         rst_n = platform.request("rst_n")
-        self.comb += self.cd_sys.clk.eq(clk)
-        self.specials += AsyncResetSynchronizer(self.cd_sys, ~rst_n)
+        self.submodules.pll = pll = CycloneIVPLL(speedgrade="-8")
+        self.comb += pll.reset.eq(~rst_n)
+        pll.register_clkin(clk, SYS_CLK_FREQ)
+        pll.create_clkout(self.cd_sys, SYS_CLK_FREQ)
+        # The PIONEER manual uses -75 degrees at 100 MHz.  Keep the same
+        # 2.083 ns board-delay compensation while running Wisp at 50 MHz.
+        pll.create_clkout(self.cd_sys_ps, SYS_CLK_FREQ, phase=-37.5,
+            with_reset=False)
+        self.specials += DDROutput(
+            1, 0, platform.request("sdram_clock"), ClockSignal("sys_ps"))
         platform.add_period_constraint(clk, 1e9 / SYS_CLK_FREQ)
 
 
@@ -114,7 +142,7 @@ class SyncWishboneRAM(Module):
 class WispSoC(SoCCore):
     mem_map = Wisp.mem_map
     csr_map = {"ctrl": 0, "uart": 1, "timer0": 2, "matrix": 3,
-        "gpio": 4, "seg7": 5, "watchdog0": 6}
+        "gpio": 4, "seg7": 5, "watchdog0": 6, "sdram": 7}
     interrupt_map = {"uart": 0, "timer0": 1, "gpio_irq": 2,
         "watchdog0": 3}
 
@@ -149,6 +177,15 @@ class WispSoC(SoCCore):
         self.submodules.sram = SyncWishboneRAM(SRAM_SIZE)
         self.bus.add_slave("sram", self.sram.bus,
             SoCRegion(origin=SRAM_BASE, size=SRAM_SIZE, mode="rwx", cached=True))
+        self.submodules.sdrphy = GENSDRPHY(
+            platform.request("sdram"), sys_clk_freq=SYS_CLK_FREQ)
+        self.add_sdram("sdram",
+            phy=self.sdrphy,
+            module=W9825G6KH6(SYS_CLK_FREQ, "1:1"),
+            origin=SDRAM_BASE,
+            size=SDRAM_SIZE,
+            l2_cache_size=0,
+            l2_cache_full_memory_we=False)
         if with_matrix:
             self.submodules.matrix = MatrixAccelerator(platform)
             self.bus.add_slave("matrix_spm", self.matrix.bus,
@@ -208,7 +245,8 @@ def main():
         stream.write(qsf)
     print(f"[WISP-EP4CE10] variant={cpu_variant} matrix={args.matrix} "
           f"firmware={os.path.getsize(args.firmware)} bytes "
-          f"uart=0x12001000 project={gateware_dir}")
+          f"uart=0x12001000 sdram=0x{SDRAM_BASE:08x}+0x{SDRAM_SIZE:x} "
+          f"project={gateware_dir}")
 
 
 if __name__ == "__main__":

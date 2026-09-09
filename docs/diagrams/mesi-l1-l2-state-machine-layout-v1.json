@@ -1,0 +1,1474 @@
+{
+  "standards_file": "mesi-l1-l2-state-machine-standards.json",
+  "applied_standard_rules": [
+    "sem_state_node",
+    "sem_initial",
+    "sem_transition_label",
+    "sem_authoritative_only",
+    "sem_l1_hit",
+    "sem_sram_sync",
+    "sem_e_to_m_silent",
+    "sem_l2_overview_not_full_fsm",
+    "sem_l2_owner_fetch",
+    "sem_writeback_update",
+    "vis_rounded_states",
+    "vis_initial_circle",
+    "vis_directional_flow",
+    "vis_branch_geometry",
+    "vis_three_pages",
+    "vis_l2_concept_boundaries",
+    "vis_chinese_labels",
+    "vis_loose_end_notes",
+    "be_drawio_native",
+    "be_basic_shapes_no_search",
+    "be_edge_geometry",
+    "be_html_labels",
+    "be_no_electrical"
+  ],
+  "diagram_type": "hardware_state_machine_multi_page_drawio",
+  "purpose": "可视化当前一致认可的 MESI L1/L2 cache coherence 设计：Page 1 展示 L1 CPU request FSM，Page 2 展示 L2-initiated Invalidate 与 GetData paths，Page 3 展示 L2 directory coherence overview 与未展开 loose ends，供 RTL 实现继续迭代。",
+  "audience": "RTL 设计者本人；需要直接从图中核对 state、transition、message、SRAM timing 和 coherence corner cases。",
+  "style": "UML/Harel state-machine 风格，Draw.io 原生可编辑，多页；状态为圆角矩形，initial 为实心圆，transition 为带箭头标签；Page 3 用概念框、消息节点和 note 区分 overview 而非 full FSM。解释性文字中文，协议/RTL 标识符英文原样。",
+  "assumptions": [
+    {
+      "id": "asm_page_idle_ids",
+      "text": "S_IDLE 在 Page 1 与 Page 2 分别绘制为页面内节点；Page 2 的 Invalidate 和 GetData 分支共享同一 p2_st_idle。"
+    },
+    {
+      "id": "asm_l2_concept_edges",
+      "text": "Page 3 的边表示消息方向或概念依赖，不表示完整 L2 FSM state transition。"
+    },
+    {
+      "id": "asm_no_electrical",
+      "text": "本图不是电路图，domain_rules 保持空对象，不出现 electrical nets。"
+    },
+    {
+      "id": "asm_l1_store_hit_s",
+      "text": "Store Hit-S 的中间请求状态未定义，因此只用已记录的 S_COMPARE -> S_WAIT_RESP 和 S_WAIT_RESP -> S_CHANGE 表达。"
+    }
+  ],
+  "canvas": {
+    "backend": "drawio_native",
+    "pages": [
+      {
+        "id": "page_l1_cpu",
+        "name": "L1 CPU Request FSM",
+        "orientation": "landscape",
+        "aspect_ratio": "wide",
+        "reading_direction": "left-to-right then top-to-bottom",
+        "margins": "outer 40px minimum; leave extra room around loopback edges",
+        "grid": "coarse 180x120 placement grid; align state ranks to rows/columns"
+      },
+      {
+        "id": "page_l1_l2_initiated",
+        "name": "L1 L2-Initiated Paths",
+        "orientation": "landscape",
+        "aspect_ratio": "wide",
+        "reading_direction": "shared S_IDLE at left, branches flow to right and return externally",
+        "margins": "outer 40px minimum; separate Invalidate and GetData lanes vertically",
+        "grid": "coarse 180x120 placement grid; align branch states in two horizontal bands"
+      },
+      {
+        "id": "page_l2_overview",
+        "name": "L2 Coherence Overview",
+        "orientation": "landscape",
+        "aspect_ratio": "wide",
+        "reading_direction": "messages enter L2 at left, lookup/metadata in center, outgoing coherence actions at right",
+        "margins": "outer 40px minimum; loose-end notes in a clearly separated lower/right note area",
+        "grid": "coarse 180x120 placement grid; use visible regions for concept areas"
+      }
+    ],
+    "routing": "orthogonal connectors with arrowheads; use obstacle avoidance or careful spacing for dense branch fanout"
+  },
+  "regions": [
+    {
+      "id": "reg_page1",
+      "page": "L1 CPU Request FSM",
+      "role": "page",
+      "label": "Page 1：L1 CPU Request FSM",
+      "placement": "page 1 root",
+      "contains": [
+        "reg_p1_cpu_path",
+        "reg_p1_miss_writeback",
+        "reg_p1_notes"
+      ],
+      "alignment": "landscape full-page container or implicit page boundary",
+      "spacing": "keep state nodes at least one grid cell apart"
+    },
+    {
+      "id": "reg_p1_cpu_path",
+      "page": "L1 CPU Request FSM",
+      "role": "branch_group",
+      "label": "CPU Load/Store 主路径",
+      "placement": "upper and middle ranks; S_IDLE -> S_LOOKUP -> S_COMPARE drives branching",
+      "contains": [
+        "init",
+        "st_idle",
+        "st_lookup",
+        "st_compare",
+        "st_change",
+        "st_output",
+        "st_done"
+      ],
+      "alignment": "left-to-right main flow with completion loopbacks outside",
+      "spacing": "branch targets around S_COMPARE with clear edge labels"
+    },
+    {
+      "id": "reg_p1_miss_writeback",
+      "page": "L1 CPU Request FSM",
+      "role": "branch_group",
+      "label": "Miss / Victim / Refill 路径",
+      "placement": "middle-lower ranks below S_COMPARE",
+      "contains": [
+        "st_evict",
+        "st_wb_wait",
+        "st_allocate",
+        "st_wait_resp",
+        "st_refill"
+      ],
+      "alignment": "miss path flows left-to-right then rejoins Output/Done",
+      "spacing": "separate writeback subpath from clean victim subpath"
+    },
+    {
+      "id": "reg_p1_notes",
+      "page": "L1 CPU Request FSM",
+      "role": "annotation_group",
+      "label": "L1 约束注释",
+      "placement": "right or bottom margin",
+      "contains": [
+        "note_l1_constraints",
+        "note_l1_store_hit_s_loose"
+      ],
+      "alignment": "notes do not interrupt transition topology",
+      "spacing": "dashed callouts near relevant states"
+    },
+    {
+      "id": "reg_page2",
+      "page": "L1 L2-Initiated Paths",
+      "role": "page",
+      "label": "Page 2：L1 L2-Initiated Paths",
+      "placement": "page 2 root",
+      "contains": [
+        "reg_p2_shared_idle",
+        "reg_p2_invalidate",
+        "reg_p2_getdata",
+        "reg_p2_notes"
+      ],
+      "alignment": "shared entry at left; two branch bands to right",
+      "spacing": "invalidate band above GetData band"
+    },
+    {
+      "id": "reg_p2_shared_idle",
+      "page": "L1 L2-Initiated Paths",
+      "role": "shared_entry",
+      "label": "共享 S_IDLE",
+      "placement": "left side centered between two branch bands",
+      "contains": [
+        "p2_st_idle"
+      ],
+      "alignment": "both branches originate and return here",
+      "spacing": "reserve left margin for return arrows"
+    },
+    {
+      "id": "reg_p2_invalidate",
+      "page": "L1 L2-Initiated Paths",
+      "role": "branch_group",
+      "label": "Invalidate FSM",
+      "placement": "upper band",
+      "contains": [
+        "p2_st_inv_lookup",
+        "p2_st_inv_check",
+        "p2_st_invalidate",
+        "p2_st_inv_wb_wait",
+        "p2_st_inv_ack"
+      ],
+      "alignment": "left-to-right branch with M writeback subpath below/near check",
+      "spacing": "S_INV_CHECK fanout labels must remain readable"
+    },
+    {
+      "id": "reg_p2_getdata",
+      "page": "L1 L2-Initiated Paths",
+      "role": "branch_group",
+      "label": "GetData flow",
+      "placement": "lower band",
+      "contains": [
+        "gd_lookup",
+        "gd_return"
+      ],
+      "alignment": "short branch from S_IDLE to lookup to return and back",
+      "spacing": "leave room for loose-end note from gd_lookup miss"
+    },
+    {
+      "id": "reg_p2_notes",
+      "page": "L1 L2-Initiated Paths",
+      "role": "annotation_group",
+      "label": "GetData 未定事项",
+      "placement": "lower/right margin near gd_lookup",
+      "contains": [
+        "note_getdata_loose"
+      ],
+      "alignment": "dashed note/callout attached visually to gd_lookup",
+      "spacing": "do not resemble a protocol state"
+    },
+    {
+      "id": "reg_page3",
+      "page": "L2 Coherence Overview",
+      "role": "page",
+      "label": "Page 3：L2 Coherence Overview",
+      "placement": "page 3 root",
+      "contains": [
+        "reg_p3_message_map",
+        "reg_p3_l2_lookup",
+        "reg_p3_directory",
+        "reg_p3_outgoing",
+        "reg_p3_notes"
+      ],
+      "alignment": "left messages, center controller/lookup, right actions/responses, bottom notes",
+      "spacing": "concept regions visibly separated"
+    },
+    {
+      "id": "reg_p3_message_map",
+      "page": "L2 Coherence Overview",
+      "role": "message_map",
+      "label": "L1->L2 / L2->L1 Message Map",
+      "placement": "left side and right side around L2 controller",
+      "contains": [
+        "msg_gets",
+        "msg_getm",
+        "msg_writeback",
+        "msg_invalidate",
+        "msg_getdata",
+        "msg_ack",
+        "msg_data_resp"
+      ],
+      "alignment": "incoming L1->L2 messages on left; outgoing L2->L1 messages on right",
+      "spacing": "each message node has concise Chinese trigger/carries/result summary"
+    },
+    {
+      "id": "reg_p3_l2_lookup",
+      "page": "L2 Coherence Overview",
+      "role": "concept_flow",
+      "label": "L2 Entry + Lookup Framework",
+      "placement": "center upper band",
+      "contains": [
+        "l2_controller",
+        "l2_lookup_dir_read",
+        "l2_memory_refill"
+      ],
+      "alignment": "controller -> lookup/directory read; memory refill note as loose end",
+      "spacing": "do not present memory refill as expanded FSM"
+    },
+    {
+      "id": "reg_p3_directory",
+      "page": "L2 Coherence Overview",
+      "role": "metadata_block",
+      "label": "Directory Metadata Concept",
+      "placement": "center lower band",
+      "contains": [
+        "meta_tag_valid",
+        "meta_dirty",
+        "meta_dir_state",
+        "meta_owner_sharer",
+        "note_dir_e_m_fetch"
+      ],
+      "alignment": "stacked or grouped metadata cards inside visible container",
+      "spacing": "metadata items close together; note attached to Directory State"
+    },
+    {
+      "id": "reg_p3_outgoing",
+      "page": "L2 Coherence Overview",
+      "role": "coherence_actions",
+      "label": "Outgoing Coherence Actions / Responses",
+      "placement": "right side",
+      "contains": [
+        "l1_sharers",
+        "l1_owner",
+        "lower_memory"
+      ],
+      "alignment": "Invalidate targets sharers; GetData targets owner; Data Resp returns to requesting L1",
+      "spacing": "control fanout should not cross metadata internals unnecessarily"
+    },
+    {
+      "id": "reg_p3_notes",
+      "page": "L2 Coherence Overview",
+      "role": "annotation_group",
+      "label": "L2 loose ends",
+      "placement": "bottom or far right",
+      "contains": [
+        "note_l2_not_full_fsm",
+        "note_l2_ack_counting_loose",
+        "note_l2_getdata_opcode_loose",
+        "note_l2_memory_refill_loose"
+      ],
+      "alignment": "notes are dashed callouts, not states",
+      "spacing": "group all open items together"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "init",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "initial_pseudostate",
+      "label": "●",
+      "shape": "filled_circle",
+      "rank": "p1_r0_c0",
+      "size": "small circle",
+      "description": "FSM 初始入口"
+    },
+    {
+      "id": "st_idle",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state",
+      "label": "S_IDLE\n等待 CPU Load/Store；也作为 L2-initiated coherence messages 的入口",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r0_c1",
+      "size": "wide state"
+    },
+    {
+      "id": "st_lookup",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state",
+      "label": "S_LOOKUP\n用锁存 index 发起 Tag/Data SRAM read",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r0_c2",
+      "size": "wide state"
+    },
+    {
+      "id": "st_compare",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state_branch",
+      "label": "S_COMPARE\n比较 all-way tags；MESI!=I 才是真 hit；miss 时选 victim",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r0_c3",
+      "size": "wide state"
+    },
+    {
+      "id": "st_evict",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "role": "state_branch",
+      "label": "S_EVICT\nmiss 前处理 victim；检查 victim MESI",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r1_c4",
+      "size": "wide state"
+    },
+    {
+      "id": "st_wb_wait",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "role": "state",
+      "label": "S_WB_WAIT\n等待 L2 确认 victim writeback done",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r2_c5",
+      "size": "wide state"
+    },
+    {
+      "id": "st_allocate",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "role": "state",
+      "label": "S_ALLOCATE\n向 L2 发送 miss request：Load->GetS；Store->GetM",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r1_c6",
+      "size": "wide state"
+    },
+    {
+      "id": "st_wait_resp",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "role": "state",
+      "label": "S_WAIT_RESP\n等待 L2 Data Resp / permission response",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r1_c7",
+      "size": "wide state"
+    },
+    {
+      "id": "st_refill",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "role": "state",
+      "label": "S_REFILL\n安装 line：写 Data SRAM/Tag/MESI；Store miss 按 byte mask 合并 store data",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r1_c8",
+      "size": "wide state"
+    },
+    {
+      "id": "st_change",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state",
+      "label": "S_CHANGE\nStore Hit 写 Data SRAM 并更新 MESI；E->M silent；S->M after grant",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r0_c8",
+      "size": "wide state"
+    },
+    {
+      "id": "st_output",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state",
+      "label": "S_OUTPUT\n向 CPU 返回 Load data；miss path 可用 latched resp data",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r0_c9",
+      "size": "wide state"
+    },
+    {
+      "id": "st_done",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "role": "state",
+      "label": "S_DONE\nStore fully complete pulse；SRAM 已在前一拍更新",
+      "shape": "rounded_rectangle",
+      "rank": "p1_r2_c9",
+      "size": "wide state"
+    },
+    {
+      "id": "note_l1_constraints",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_notes",
+      "role": "note",
+      "label": "设计约束\nL1 DCache participates in MESI；I-Cache 不参与\nL1 blocking：一次一个 miss transaction\nWrite-Allocate + Write-Back\n同步 SRAM：Lookup 读，下一状态得结果；写使能当拍有效",
+      "shape": "note",
+      "rank": "p1_note_right",
+      "size": "large note"
+    },
+    {
+      "id": "note_l1_store_hit_s_loose",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nStore Hit-S 发 GetM/Upgrade 的中间请求状态未命名；不要新增 state",
+      "shape": "dashed_note",
+      "rank": "p1_note_near_wait_resp",
+      "size": "note"
+    },
+    {
+      "id": "p2_st_idle",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_shared_idle",
+      "role": "shared_state",
+      "label": "S_IDLE\n共享入口：接收 L2 Invalidate(addr) 或 L2 GetData(addr)",
+      "shape": "rounded_rectangle",
+      "rank": "p2_r0_c0",
+      "size": "wide state"
+    },
+    {
+      "id": "p2_st_inv_lookup",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "role": "state",
+      "label": "S_INV_LOOKUP\n独立 lookup local Tag SRAM",
+      "shape": "rounded_rectangle",
+      "rank": "p2_inv_r0_c1",
+      "size": "wide state"
+    },
+    {
+      "id": "p2_st_inv_check",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "role": "state_branch",
+      "label": "S_INV_CHECK\n检查 hit + MESI：miss/I、E/S、M 三类路径",
+      "shape": "rounded_rectangle",
+      "rank": "p2_inv_r0_c2",
+      "size": "wide state"
+    },
+    {
+      "id": "p2_st_invalidate",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "role": "state",
+      "label": "S_INVALIDATE\n设置 MESI/valid 为 I；Data SRAM 不必清零",
+      "shape": "rounded_rectangle",
+      "rank": "p2_inv_r0_c3",
+      "size": "wide state"
+    },
+    {
+      "id": "p2_st_inv_wb_wait",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "role": "state",
+      "label": "S_INV_WB_WAIT\nlocal M：等待 L2 接收最新 full line",
+      "shape": "rounded_rectangle",
+      "rank": "p2_inv_r1_c3",
+      "size": "wide state"
+    },
+    {
+      "id": "p2_st_inv_ack",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "role": "state",
+      "label": "S_INV_ACK\n向 L2 发送 invalidate-complete Ack",
+      "shape": "rounded_rectangle",
+      "rank": "p2_inv_r0_c4",
+      "size": "wide state"
+    },
+    {
+      "id": "gd_lookup",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_getdata",
+      "role": "flow_node",
+      "label": "gd_lookup\n收到 L2 GetData(addr)：锁存并 lookup",
+      "shape": "rounded_rectangle",
+      "rank": "p2_gd_r0_c1",
+      "size": "wide state"
+    },
+    {
+      "id": "gd_return",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_getdata",
+      "role": "flow_node",
+      "label": "gd_return\n命中 owner line：读整行并返回 L2",
+      "shape": "rounded_rectangle",
+      "rank": "p2_gd_r0_c2",
+      "size": "wide state"
+    },
+    {
+      "id": "note_getdata_loose",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nGetData miss：opcode 需拆 FetchShared / FetchInvalidate，未定",
+      "shape": "dashed_note",
+      "rank": "p2_gd_note",
+      "size": "note"
+    },
+    {
+      "id": "l2_controller",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_l2_lookup",
+      "role": "controller",
+      "label": "L2 Controller / shared LLC\n维护 directory；inclusive design；Write-Allocate + Write-Back",
+      "shape": "rounded_rectangle",
+      "rank": "p3_c0",
+      "size": "large concept"
+    },
+    {
+      "id": "l2_lookup_dir_read",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_l2_lookup",
+      "role": "concept_step",
+      "label": "Lookup + Directory Read\n读 L2 Tag/Data/Directory metadata\n决定 hit/miss、owner/sharers、response path",
+      "shape": "rounded_rectangle",
+      "rank": "p3_c1",
+      "size": "large concept"
+    },
+    {
+      "id": "meta_tag_valid",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "role": "metadata_item",
+      "label": "L2 Tag + Valid\nL2 是否缓存该 line；set-assoc tag；决定 L2 hit/miss",
+      "shape": "rounded_rectangle",
+      "rank": "p3_meta_0",
+      "size": "metadata card"
+    },
+    {
+      "id": "meta_dirty",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "role": "metadata_item",
+      "label": "L2 Dirty（optional）\nL2 对 memory 是否有未写回更新；用于 L2 eviction",
+      "shape": "rounded_rectangle",
+      "rank": "p3_meta_1",
+      "size": "metadata card"
+    },
+    {
+      "id": "meta_dir_state",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "role": "metadata_item",
+      "label": "Directory State S/E/M\n描述 L1 sharing/ownership；决定 L2 data 是否可直接使用",
+      "shape": "rounded_rectangle",
+      "rank": "p3_meta_2",
+      "size": "metadata card"
+    },
+    {
+      "id": "meta_owner_sharer",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "role": "metadata_item",
+      "label": "Owner/Sharer Vector\n哪些 L1 持有副本；exclusive owner；Invalidate/GetData 目标选择",
+      "shape": "rounded_rectangle",
+      "rank": "p3_meta_3",
+      "size": "metadata card"
+    },
+    {
+      "id": "note_dir_e_m_fetch",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "role": "note",
+      "label": "约定\nDirectory S：L2 data 可直接响应\nDirectory E/M：必须 GetData from owner\n原因：L1 E->M silent，L2 Data SRAM 不一定最新",
+      "shape": "note",
+      "rank": "p3_meta_note",
+      "size": "large note"
+    },
+    {
+      "id": "msg_gets",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "GetS\nL1->L2\nLoad miss；携带 line addr\n返回 Data Resp：full line + S/E",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_left_0",
+      "size": "message card"
+    },
+    {
+      "id": "msg_getm",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "GetM\nL1->L2\nStore miss 或 Store Hit-S upgrade；携带 line addr\n返回 M；Store miss 需要 full line",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_left_1",
+      "size": "message card"
+    },
+    {
+      "id": "msg_writeback",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "WriteL2 / WriteBack\nL1->L2\nevict M victim；Invalidate 时 local M\n携带 victim addr + full line",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_left_2",
+      "size": "message card"
+    },
+    {
+      "id": "msg_invalidate",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "Invalidate\nL2->L1\n撤销 sharer copy；携带 line addr\nL1 回复 Ack；若 local M 先 write back",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_right_0",
+      "size": "message card"
+    },
+    {
+      "id": "msg_getdata",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "GetData\nL2->L1\nL2 认为 newest data 可能在 owner L1\nL1 返回 full line；当前 M owner 返回后降级到 S",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_right_1",
+      "size": "message card"
+    },
+    {
+      "id": "msg_ack",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "Ack\nL1->L2\nInvalidate done completion flag\nL2 记录 sharer coherence action 完成",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_right_2",
+      "size": "message card"
+    },
+    {
+      "id": "msg_data_resp",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "role": "message",
+      "label": "Data Resp\nL2->L1\nGetS/GetM done；full line as needed + granted permission\nL1 refill 或 upgrade permission",
+      "shape": "rounded_rectangle",
+      "rank": "p3_msg_right_3",
+      "size": "message card"
+    },
+    {
+      "id": "l1_sharers",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "role": "external_target",
+      "label": "L1 Sharers\nInvalidate targets",
+      "shape": "rounded_rectangle",
+      "rank": "p3_ext_sharers",
+      "size": "external box"
+    },
+    {
+      "id": "l1_owner",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "role": "external_target",
+      "label": "Owner L1\nGetData target；可能持有 newest line",
+      "shape": "rounded_rectangle",
+      "rank": "p3_ext_owner",
+      "size": "external box"
+    },
+    {
+      "id": "lower_memory",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "role": "external_target",
+      "label": "Lower Memory\nL2 miss/invalid refill target（FSM 未展开）",
+      "shape": "rounded_rectangle",
+      "rank": "p3_ext_mem",
+      "size": "external box"
+    },
+    {
+      "id": "l2_memory_refill",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_l2_lookup",
+      "role": "loose_end_concept",
+      "label": "L2 miss/invalid\n-> lower memory refill\nfull FSM NOT expanded",
+      "shape": "dashed_note",
+      "rank": "p3_refill_loose",
+      "size": "note"
+    },
+    {
+      "id": "note_l2_not_full_fsm",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nPage 3 是 L2 coherence overview，不是 full L2 FSM",
+      "shape": "dashed_note",
+      "rank": "p3_note_0",
+      "size": "note"
+    },
+    {
+      "id": "note_l2_ack_counting_loose",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nGetM Invalidate / Ack counting 未展开",
+      "shape": "dashed_note",
+      "rank": "p3_note_1",
+      "size": "note"
+    },
+    {
+      "id": "note_l2_getdata_opcode_loose",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nGetData opcode split：FetchShared / FetchInvalidate open",
+      "shape": "dashed_note",
+      "rank": "p3_note_2",
+      "size": "note"
+    },
+    {
+      "id": "note_l2_memory_refill_loose",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "role": "loose_end_note",
+      "label": "loose end\nMemory refill FSM not expanded",
+      "shape": "dashed_note",
+      "rank": "p3_note_3",
+      "size": "note"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_init",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "init",
+      "target": "st_idle",
+      "label": "",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "initial default transition"
+    },
+    {
+      "id": "e_idle_lookup",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_idle",
+      "target": "st_lookup",
+      "label": "CPU Load/Store 到来：锁存 addr/type/store data/size/offset",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_lookup_compare",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_lookup",
+      "target": "st_compare",
+      "label": "下一拍（SRAM 读取结果）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_compare_output_load_hit",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_compare",
+      "target": "st_output",
+      "label": "Load Hit M/E/S（本地数据，状态保持；无一致性消息）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_compare_evict_miss",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_compare",
+      "target": "st_evict",
+      "label": "Load/Store Miss（含 tag match + I）：选 victim",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_compare_change_store_hit_me",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_compare",
+      "target": "st_change",
+      "label": "Store Hit M/E：本地写；E->M（不通知 L2）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_compare_wait_resp_store_hit_s",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_compare",
+      "target": "st_wait_resp",
+      "label": "Store Hit S：向 L2 发 GetM/Upgrade，等授予 M（中间请求状态为文档 loose end）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition with loose-end annotation"
+    },
+    {
+      "id": "e_evict_allocate_clean",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_evict",
+      "target": "st_allocate",
+      "label": "victim I/E/S（clean，无需写回）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_evict_wb_wait_m",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_evict",
+      "target": "st_wb_wait",
+      "label": "victim M：发 WriteL2",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_wb_wait_allocate",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_wb_wait",
+      "target": "st_allocate",
+      "label": "写回完成响应",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_allocate_wait_resp",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_allocate",
+      "target": "st_wait_resp",
+      "label": "请求握手完成（Load->GetS / Store->GetM）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_wait_resp_refill",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_wait_resp",
+      "target": "st_refill",
+      "label": "收到 Data Resp（Load/Store miss）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_wait_resp_change_upgrade",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_wait_resp",
+      "target": "st_change",
+      "label": "Store Hit-S 纯升级路径收到响应",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_refill_output_load",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_refill",
+      "target": "st_output",
+      "label": "Load：安装 line 完成",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_refill_done_store",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_miss_writeback",
+      "source": "st_refill",
+      "target": "st_done",
+      "label": "Store：安装 line + 合并 store data",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_change_done",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_change",
+      "target": "st_done",
+      "label": "下一拍（写使能当拍有效）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition"
+    },
+    {
+      "id": "e_output_idle",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_output",
+      "target": "st_idle",
+      "label": "输出完成",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition; route as outer loopback"
+    },
+    {
+      "id": "e_done_idle",
+      "page": "L1 CPU Request FSM",
+      "region": "reg_p1_cpu_path",
+      "source": "st_done",
+      "target": "st_idle",
+      "label": "完成脉冲",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented transition; route as outer loopback"
+    },
+    {
+      "id": "e_p2_idle_inv_lookup",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_idle",
+      "target": "p2_st_inv_lookup",
+      "label": "收到 L2 Invalidate(addr)：锁存地址",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_lookup_check",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_lookup",
+      "target": "p2_st_inv_check",
+      "label": "下一拍",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_check_ack_miss_i",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_check",
+      "target": "p2_st_inv_ack",
+      "label": "未命中 / MESI=I",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_check_invalidate_es",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_check",
+      "target": "p2_st_invalidate",
+      "label": "命中 E/S",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_check_wb_wait_m",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_check",
+      "target": "p2_st_inv_wb_wait",
+      "label": "命中 M：先 WriteL2",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_invalidate_ack",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_invalidate",
+      "target": "p2_st_inv_ack",
+      "label": "下一拍（MESI->I）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_wb_wait_invalidate",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_wb_wait",
+      "target": "p2_st_invalidate",
+      "label": "写回完成",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition"
+    },
+    {
+      "id": "e_inv_ack_idle",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_invalidate",
+      "source": "p2_st_inv_ack",
+      "target": "p2_st_idle",
+      "label": "发 Ack 完成",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented invalidate transition; route as outer loopback"
+    },
+    {
+      "id": "e_p2_idle_gd_lookup",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_getdata",
+      "source": "p2_st_idle",
+      "target": "gd_lookup",
+      "label": "收到 L2 GetData(addr)：锁存并 lookup",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented GetData flow"
+    },
+    {
+      "id": "e_gd_lookup_return",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_getdata",
+      "source": "gd_lookup",
+      "target": "gd_return",
+      "label": "命中 owner line：读整行返回 L2",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented GetData flow"
+    },
+    {
+      "id": "e_gd_return_idle",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_getdata",
+      "source": "gd_return",
+      "target": "p2_st_idle",
+      "label": "返回数据；若本地 M 且为共享读，M->S（隐含降级）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "documented GetData flow; route as outer loopback"
+    },
+    {
+      "id": "e_gd_lookup_loose",
+      "page": "L1 L2-Initiated Paths",
+      "region": "reg_p2_notes",
+      "source": "gd_lookup",
+      "target": "note_getdata_loose",
+      "label": "miss / opcode split 未定",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end callout, not FSM transition"
+    },
+    {
+      "id": "e_p3_gets_to_l2",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "source": "msg_gets",
+      "target": "l2_controller",
+      "label": "Load miss：line addr",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L1->L2"
+    },
+    {
+      "id": "e_p3_getm_to_l2",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "source": "msg_getm",
+      "target": "l2_controller",
+      "label": "Store miss / Store Hit-S upgrade：line addr",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L1->L2"
+    },
+    {
+      "id": "e_p3_writeback_to_l2",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "source": "msg_writeback",
+      "target": "l2_controller",
+      "label": "victim addr + full line；可直接 update/install",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L1->L2"
+    },
+    {
+      "id": "e_p3_l2_lookup",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_l2_lookup",
+      "source": "l2_controller",
+      "target": "l2_lookup_dir_read",
+      "label": "请求进入：lookup + directory read",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "concept flow, not full FSM transition"
+    },
+    {
+      "id": "e_p3_lookup_tag_valid",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "source": "l2_lookup_dir_read",
+      "target": "meta_tag_valid",
+      "label": "读 Tag + Valid",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "metadata dependency"
+    },
+    {
+      "id": "e_p3_lookup_dirty",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "source": "l2_lookup_dir_read",
+      "target": "meta_dirty",
+      "label": "读 Dirty（optional）",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "metadata dependency"
+    },
+    {
+      "id": "e_p3_lookup_dir_state",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "source": "l2_lookup_dir_read",
+      "target": "meta_dir_state",
+      "label": "读 Directory State",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "metadata dependency"
+    },
+    {
+      "id": "e_p3_lookup_owner_sharer",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "source": "l2_lookup_dir_read",
+      "target": "meta_owner_sharer",
+      "label": "读 Owner/Sharer Vector",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "metadata dependency"
+    },
+    {
+      "id": "e_p3_dir_state_note",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_directory",
+      "source": "meta_dir_state",
+      "target": "note_dir_e_m_fetch",
+      "label": "S 可直接用；E/M 需 owner data",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "design convention callout"
+    },
+    {
+      "id": "e_p3_owner_to_getdata",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "meta_owner_sharer",
+      "target": "msg_getdata",
+      "label": "选择 owner L1",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "target selection for GetData"
+    },
+    {
+      "id": "e_p3_getdata_to_owner",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "msg_getdata",
+      "target": "l1_owner",
+      "label": "L2->L1：line addr",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L2->L1"
+    },
+    {
+      "id": "e_p3_sharer_to_invalidate",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "meta_owner_sharer",
+      "target": "msg_invalidate",
+      "label": "选择 sharers",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "target selection for Invalidate"
+    },
+    {
+      "id": "e_p3_invalidate_to_sharers",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "msg_invalidate",
+      "target": "l1_sharers",
+      "label": "L2->L1：revoke copy",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L2->L1"
+    },
+    {
+      "id": "e_p3_ack_to_l2",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "source": "msg_ack",
+      "target": "l2_controller",
+      "label": "Invalidate done",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L1->L2"
+    },
+    {
+      "id": "e_p3_data_resp_to_requester",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_message_map",
+      "source": "l2_controller",
+      "target": "msg_data_resp",
+      "label": "GetS/GetM done：line + permission",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "response generation"
+    },
+    {
+      "id": "e_p3_data_resp_to_l1",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "msg_data_resp",
+      "target": "l1_sharers",
+      "label": "L2->requesting L1：refill / upgrade",
+      "arrow": "directed",
+      "routing": "orthogonal",
+      "semantics": "message direction L2->L1; target box reused as L1 endpoint"
+    },
+    {
+      "id": "e_p3_miss_to_memory_refill",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_l2_lookup",
+      "source": "l2_lookup_dir_read",
+      "target": "l2_memory_refill",
+      "label": "L2 miss/invalid",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end concept"
+    },
+    {
+      "id": "e_p3_memory_refill_to_lower_memory",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_outgoing",
+      "source": "l2_memory_refill",
+      "target": "lower_memory",
+      "label": "lower memory refill（未展开）",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end external dependency"
+    },
+    {
+      "id": "e_p3_getm_ack_note",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "source": "msg_getm",
+      "target": "note_l2_ack_counting_loose",
+      "label": "Invalidate/Ack counting 未展开",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end callout"
+    },
+    {
+      "id": "e_p3_getdata_opcode_note",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "source": "msg_getdata",
+      "target": "note_l2_getdata_opcode_loose",
+      "label": "opcode split open",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end callout"
+    },
+    {
+      "id": "e_p3_full_fsm_note",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "source": "l2_controller",
+      "target": "note_l2_not_full_fsm",
+      "label": "overview only",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end callout"
+    },
+    {
+      "id": "e_p3_refill_note",
+      "page": "L2 Coherence Overview",
+      "region": "reg_p3_notes",
+      "source": "l2_memory_refill",
+      "target": "note_l2_memory_refill_loose",
+      "label": "FSM not expanded",
+      "arrow": "directed_dashed",
+      "routing": "orthogonal",
+      "semantics": "loose-end callout"
+    }
+  ],
+  "typography": {
+    "font_family": "Noto Sans CJK SC or system sans-serif with Chinese support",
+    "state_name": "bold 13-14px; implementation identifiers kept English verbatim",
+    "body": "11-12px Chinese explanatory text; line height sufficient for wrapped labels",
+    "edge_labels": "10-11px; concise but preserve authoritative labels exactly where given",
+    "notes": "11px; loose-end keyword may be bold or emphasized; avoid tiny text",
+    "accessibility": "minimum readable font 10px; avoid relying on color alone for loose ends or branch meaning"
+  },
+  "color_roles": {
+    "state_fill": "light blue for normal FSM states",
+    "state_stroke": "medium blue border",
+    "initial_fill": "black filled circle",
+    "branch_state_fill": "light amber or slightly stronger blue for fanout states such as S_COMPARE/S_EVICT/S_INV_CHECK",
+    "message_fill": "light green for protocol message cards",
+    "metadata_fill": "light purple or gray for directory metadata cards",
+    "note_fill": "pale yellow for design constraints",
+    "loose_end_fill": "pale red/orange with dashed border",
+    "edge_normal": "dark gray solid directed arrows",
+    "edge_loose_end": "dark orange dashed directed callout arrows",
+    "page_region_fill": "very light neutral backgrounds with visible labels"
+  },
+  "domain_rules": {},
+  "must_do": [
+    {
+      "id": "md_three_pages",
+      "text": "Create exactly three Draw.io pages with names: L1 CPU Request FSM, L1 L2-Initiated Paths, L2 Coherence Overview."
+    },
+    {
+      "id": "md_enumerate_page1",
+      "text": "Page 1 must include all listed L1 CPU request states plus init, and every Page 1 transition edge listed in this contract."
+    },
+    {
+      "id": "md_enumerate_page2",
+      "text": "Page 2 must include one shared p2_st_idle for both Invalidate and GetData branches, all listed Invalidate states, gd_lookup/gd_return, and every Page 2 transition/callout edge."
+    },
+    {
+      "id": "md_page3_overview",
+      "text": "Page 3 must show L2 controller, lookup+directory read, all directory metadata concepts, all listed messages, target actors, and loose-end notes as overview concepts, not as a full FSM."
+    },
+    {
+      "id": "md_chinese_labels",
+      "text": "Use Chinese for explanatory labels while preserving implementation identifiers exactly: S_IDLE, GetS, GetM, WriteL2, WriteBack, Invalidate, GetData, Ack, Data Resp, M/E/S/I."
+    },
+    {
+      "id": "md_l1_constraints",
+      "text": "Visibly annotate L1 DCache participates in MESI, I-Cache does not, blocking L1 miss behavior, Write-Allocate + Write-Back, synchronous SRAM timing, true hit definition, and silent E->M."
+    },
+    {
+      "id": "md_l2_constraints",
+      "text": "Visibly annotate inclusive shared LLC directory, Write-Allocate + Write-Back, Directory S direct response convention, Directory E/M owner GetData requirement, and WriteBack direct update/install rule."
+    },
+    {
+      "id": "md_loose_ends",
+      "text": "Show documented loose ends as dashed notes/callouts: Store Hit-S request state, GetData opcode split, L2 memory refill FSM, GetM Invalidate/Ack counting, and L2 full FSM not expanded."
+    },
+    {
+      "id": "md_arrow_semantics",
+      "text": "Use directed arrows for transitions/messages and keep each edge label attached to the correct edge."
+    },
+    {
+      "id": "md_readability",
+      "text": "Maintain clear spacing, aligned ranks, and readable multiline labels; route loopbacks around the outside of state clusters."
+    }
+  ],
+  "must_not": [
+    {
+      "id": "mn_no_undocumented_states",
+      "text": "Do not add undocumented protocol states such as extra request, refill, ack-count, or memory-refill states beyond the authoritative lists."
+    },
+    {
+      "id": "mn_no_full_l2_fsm",
+      "text": "Do not turn Page 3 into a full L2 FSM; it must remain a coherence overview with explicit loose-end notes."
+    },
+    {
+      "id": "mn_no_electrical",
+      "text": "Do not include domain_rules.electrical.nets, source_port, target_port, net_id, electrical symbols, or wire/net modeling."
+    },
+    {
+      "id": "mn_no_label_translation_ids",
+      "text": "Do not translate implementation identifiers or protocol message names into Chinese."
+    },
+    {
+      "id": "mn_no_hide_loose_ends",
+      "text": "Do not omit or normalize loose ends into ordinary completed states or transitions."
+    },
+    {
+      "id": "mn_no_icache_mesi",
+      "text": "Do not imply I-Cache participates in MESI."
+    },
+    {
+      "id": "mn_no_l2_data_newest_e_m",
+      "text": "Do not imply L2 Data SRAM is necessarily newest when directory state is E/M."
+    },
+    {
+      "id": "mn_no_decorative_conductors",
+      "text": "Do not model visible conductors or decorative filled rectangles as protocol edges; all relationships must be real directed edges between nodes."
+    }
+  ],
+  "review_checklist": [
+    {
+      "id": "rc_page_count_names",
+      "text": "Verify the native Draw.io artifact has exactly the three required page names."
+    },
+    {
+      "id": "rc_page1_states_edges",
+      "text": "On Page 1, verify every Page 1 node id/label exists and all 18 documented transitions are present with correct source, target, and label."
+    },
+    {
+      "id": "rc_page2_states_edges",
+      "text": "On Page 2, verify Invalidate and GetData share p2_st_idle, all 11 required Page 2 edges/callouts are present, and GetData miss is only a loose-end note."
+    },
+    {
+      "id": "rc_page3_messages_metadata",
+      "text": "On Page 3, verify all 7 messages and all 4 directory metadata concepts appear with the required trigger/carries/result or metadata meaning."
+    },
+    {
+      "id": "rc_l2_not_full_fsm",
+      "text": "Verify Page 3 is visually an overview with concept regions and loose-end notes, not a fake full FSM."
+    },
+    {
+      "id": "rc_semantics_l1",
+      "text": "Verify annotations cover tag match AND MESI!=I hit rule, tag match + I miss, synchronous SRAM next-cycle behavior, and E->M silent upgrade."
+    },
+    {
+      "id": "rc_semantics_l2",
+      "text": "Verify annotations cover inclusive L2 directory, Directory S direct use, Directory E/M owner GetData, WriteBack direct update, and memory refill loose end."
+    },
+    {
+      "id": "rc_layout",
+      "text": "Verify states are aligned in readable ranks, branch fanouts are predictable, loopbacks are routed externally, and no connector crosses through important labels."
+    },
+    {
+      "id": "rc_text_readable",
+      "text": "Verify Chinese labels render correctly, no text is clipped, and identifiers remain English verbatim."
+    },
+    {
+      "id": "rc_no_extra_protocol",
+      "text": "Verify there are no extra undocumented states, transitions, or implied L2 sub-FSM details beyond the authoritative content."
+    }
+  ]
+}

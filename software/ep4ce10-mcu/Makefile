@@ -27,6 +27,9 @@ LDFLAGS    = $(ARCH_FLAGS) -nostdlib -nostartfiles -no-pie -Wl,-T,link.ld \
 	-Wl,--gc-sections -Wl,--build-id=none -Wl,-Map,$(TARGET).map
 
 OBJECTS = $(BUILD_DIR)/start.o $(BUILD_DIR)/trap.o $(BUILD_DIR)/main.o
+ifeq ($(CORE),wisp)
+OBJECTS += $(BUILD_DIR)/sdram.o
+endif
 
 .PHONY: all variants clean check
 

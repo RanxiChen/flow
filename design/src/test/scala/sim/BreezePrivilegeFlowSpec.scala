@@ -90,4 +90,68 @@ class BreezePrivilegeFlowSpec extends AnyFreeSpec with Matchers {
     result.commitEvents.exists(event =>
       event.rdWriteEn && event.rdAddr == 7 && event.rdData == 77) mustBe true
   }
+
+  "preserve an OpenSBI-style trap frame across CSR-read and store pairs" in {
+    val memory = mutable.LinkedHashMap.empty[BigInt, BigInt]
+    val boot = BreezeMcuPlatform.ResetVector
+    val handler = boot + 0x200
+    val trapFrame = boot + 0x2000
+    val csrrw = 1
+    val csrrs = 2
+    val illegal = BigInt("ffffffff", 16)
+
+    install(memory, boot, Seq(
+      encodeLui(2, (trapFrame >> 12).toInt),
+      encodeLui(1, (handler >> 12).toInt),
+      BreezeCoreSimSupport.encodeAddi(1, 1, (handler & 0xfff).toInt),
+      encodeCsr(0, CSRMAP.mtvec, 1, csrrw),
+      BreezeCoreSimSupport.encodeAddi(5, 0, 55),
+      illegal,
+      BreezeCoreSimSupport.EstopInst
+    ))
+
+    // This mirrors OpenSBI's trap entry pattern: read one trap CSR into t0,
+    // immediately store it, then reuse t0 for the next CSR. Distinct loads at
+    // the end make CSR/read-after-write and DCache/store failures observable
+    // independently in the tandem commit stream.
+    install(memory, handler, Seq(
+      encodeCsr(5, CSRMAP.mepc, 0, csrrs),
+      BreezeCoreSimSupport.encodeStore(2, 5, 0, funct3 = 3),
+      encodeCsr(5, CSRMAP.mstatus, 0, csrrs),
+      BreezeCoreSimSupport.encodeStore(2, 5, 8, funct3 = 3),
+      encodeCsr(5, CSRMAP.mcause, 0, csrrs),
+      BreezeCoreSimSupport.encodeStore(2, 5, 16, funct3 = 3),
+      encodeCsr(5, CSRMAP.mtval, 0, csrrs),
+      BreezeCoreSimSupport.encodeStore(2, 5, 24, funct3 = 3),
+      BreezeCoreSimSupport.encodeLoad(20, 2, 0, funct3 = 3),
+      BreezeCoreSimSupport.encodeLoad(21, 2, 8, funct3 = 3),
+      BreezeCoreSimSupport.encodeLoad(22, 2, 16, funct3 = 3),
+      BreezeCoreSimSupport.encodeLoad(23, 2, 24, funct3 = 3),
+      BreezeCoreSimSupport.EstopInst
+    ))
+
+    val result = BreezeCoreSimRunner.runWithTandemTrace(
+      memory = memory,
+      coreCfg = BreezeCoreConfig(
+        useFASE = false,
+        enableTandem = true,
+        useGShare = true,
+        privilegeProfile = PrivilegeProfile.Linux),
+      maxCycles = 5000,
+      imemLatency = 2,
+      dmemLatency = 2,
+      bootAddr = boot)
+
+    val faultPc = boot + 5 * 4
+    result.result.timedOut mustBe false
+    result.commitEvents.last.estop mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 20 && event.rdData == faultPc) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 21 && event.rdData == BigInt("a00001800", 16)) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 22 && event.rdData == 2) mustBe true
+    result.commitEvents.exists(event =>
+      event.rdWriteEn && event.rdAddr == 23 && event.rdData == illegal) mustBe true
+  }
 }

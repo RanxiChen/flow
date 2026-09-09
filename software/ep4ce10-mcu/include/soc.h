@@ -12,6 +12,10 @@
 #define CSR_GPIO_BASE              0x12004000u
 #define CSR_SEG7_BASE              0x12005000u
 #define CSR_WATCHDOG0_BASE         0x12006000u
+#define CSR_SDRAM_BASE             0x12007000u
+
+#define MAIN_RAM_BASE              0x80000000u
+#define MAIN_RAM_SIZE              0x02000000u
 
 #define UART_RXTX                  (CSR_UART_BASE + 0x00u)
 #define UART_TXFULL                (CSR_UART_BASE + 0x04u)
