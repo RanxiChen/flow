@@ -24,7 +24,7 @@ LITEX_WRAPPER_ROOT = os.path.join(FLOW_ROOT, "litex_wrapper")
 if LITEX_WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, LITEX_WRAPPER_ROOT)
 
-from flow.core import Flow
+from flow.cluster import Flow
 from flow.clint import BreezeClint
 from flow.plic import BreezePlic
 from flow.wiring import pack_plic_sources, wishbone_byte_address

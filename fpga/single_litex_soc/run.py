@@ -27,7 +27,7 @@ wrapper_path = os.path.join(flow_root_path, "litex_wrapper")
 sys.path.append(wrapper_path)
 
 from litex.soc.cores.cpu import CPUS
-from flow.core import Flow
+from flow.cluster import Flow
 CPUS["flow"] = Flow
 
 class FlowCore(SoCCore):
@@ -94,4 +94,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
