@@ -1,0 +1,6 @@
+#ifndef BREEZE_CSR_DEFS_H
+#define BREEZE_CSR_DEFS_H
+
+#define CSR_MSTATUS_MIE 0x8
+
+#endif /* BREEZE_CSR_DEFS_H */
