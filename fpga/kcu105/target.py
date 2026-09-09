@@ -201,7 +201,17 @@ def main():
 
     # With no --build this still finalizes the SoC, compiles the ROM BIOS and
     # emits the Vivado project, but does not launch synthesis/implementation.
-    builder.build(run=args.build)
+    # The fixed four-hart RV64GC cluster is close to the KU040 LUT limit, so
+    # use Vivado's area-oriented flow instead of its default strategy.  These
+    # directives do not change the architectural configuration.
+    builder.build(
+        run=args.build,
+        vivado_synth_directive="AreaOptimized_high",
+        vivado_opt_directive="ExploreArea",
+        vivado_place_directive="AltSpreadLogic_high",
+        vivado_post_place_phys_opt_directive="AggressiveExplore",
+        vivado_route_directive="NoTimingRelaxation",
+    )
 
     if args.load:
         programmer = soc.platform.create_programmer()

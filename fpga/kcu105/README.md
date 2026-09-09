@@ -24,7 +24,9 @@ single-hart BIOS/demo path is exercised.
 
 The system clock is fixed at 125 MHz.  `integrated_main_ram_size` is zero:
 only LiteDRAM implements `main_ram`.  LiteX's optional L2 is disabled because
-Breeze already has its own coherent shared L2.
+Breeze already has its own coherent shared L2.  The build uses Vivado's
+area-oriented synthesis/implementation directives because the fixed four-hart
+RV64GC cluster is close to the KCU105's KU040 LUT limit.
 
 ## Generate the SoC and BIOS
 
