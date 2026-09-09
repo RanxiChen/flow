@@ -1,0 +1,224 @@
+{
+  "diagram_type": "hardware_state_machine_multi_page_drawio",
+  "notation": "UML/Harel state machine for L1 pages; annotated concept overview for L2 page",
+  "research_status": "researched",
+  "sources": [
+    {
+      "id": "src_uml_251",
+      "title": "OMG Unified Modeling Language 2.5.1 Specification",
+      "authority": "official",
+      "applies_to": [
+        "UML state-machine states",
+        "initial pseudostate",
+        "transition semantics",
+        "transition label grammar"
+      ]
+    },
+    {
+      "id": "src_harel_statecharts",
+      "title": "Harel, Statecharts: A Visual Formalism for Complex Systems",
+      "authority": "primary",
+      "applies_to": [
+        "statecharts",
+        "reactive-system state modeling",
+        "state hierarchy and transitions"
+      ]
+    },
+    {
+      "id": "src_drawio_xml_ref",
+      "title": "Draw.io Validated Workflow XML Reference",
+      "authority": "local_validated",
+      "applies_to": [
+        "Draw.io native editable backend",
+        "basic UML shapes",
+        "containers",
+        "edge geometry",
+        "HTML labels",
+        "routing constraints"
+      ]
+    },
+    {
+      "id": "src_hardware_fsm_convention",
+      "title": "Hardware RTL FSM diagramming conventions for synchronous cache controllers",
+      "authority": "design_convention",
+      "applies_to": [
+        "clocked SRAM cycle annotations",
+        "RTL state action labels",
+        "cache-coherence design notes",
+        "loose-end annotations"
+      ]
+    }
+  ],
+  "semantic_rules": [
+    {
+      "id": "sem_state_node",
+      "text": "每个明确列出的 FSM state 必须表示为一个状态节点；状态节点文本必须包含 state name，并附带该状态的主要动作说明。",
+      "source_ids": [
+        "src_uml_251",
+        "src_harel_statecharts"
+      ]
+    },
+    {
+      "id": "sem_initial",
+      "text": "每个完整 FSM 页面的入口使用一个 filled circle initial pseudostate；initial pseudostate 到首状态的边表示默认进入，不得表达额外 undocumented protocol behavior。",
+      "source_ids": [
+        "src_uml_251"
+      ]
+    },
+    {
+      "id": "sem_transition_label",
+      "text": "状态迁移标签使用 trigger [guard] / action 的 UML/Harel 语义；当原文标签已给出中文说明时保留该说明，不额外拆造 guard/action。",
+      "source_ids": [
+        "src_uml_251",
+        "src_harel_statecharts"
+      ]
+    },
+    {
+      "id": "sem_authoritative_only",
+      "text": "只能枚举权威内容中的 states、documented transitions、messages、metadata concepts 和 loose ends；不得添加未记录的协议状态或隐藏中间状态。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_l1_hit",
+      "text": "L1 true hit 的语义必须标注为 tag match AND MESI != I；tag match + MESI==I 仍归入 miss。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_sram_sync",
+      "text": "同步 SRAM 语义必须作为时序约束呈现：Lookup 发起读，下一状态获得结果；写 SRAM 的状态当拍拉高 write-enable，下一拍进入 Output/Done。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_e_to_m_silent",
+      "text": "L1 E->M 是 silent upgrade，不通知 L2；因此 L2 directory 看到 E 时不能假设 L2 Data SRAM 是最新数据。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_l2_overview_not_full_fsm",
+      "text": "L2 页必须表现为 coherence overview：入口、lookup+directory read、metadata、消息流和 loose-end notes；不得画成完整 L2 FSM。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_l2_owner_fetch",
+      "text": "Directory State 为 E/M 时，L2 对需要最新数据的响应必须通过 GetData 从 owner L1 获取；Directory State 为 S 时约定 L2 data 可直接用于响应。",
+      "design_convention": true
+    },
+    {
+      "id": "sem_writeback_update",
+      "text": "L2 receiving WriteBack 时，L1 携带完整最新 line，L2 可直接 install/update，不需要先从 memory 读旧数据。",
+      "design_convention": true
+    }
+  ],
+  "visual_rules": [
+    {
+      "id": "vis_rounded_states",
+      "text": "FSM states 使用 rounded rectangles；节点内第一行突出 state name，后续行用中文描述 per-state action。",
+      "source_ids": [
+        "src_uml_251",
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "vis_initial_circle",
+      "text": "Initial pseudostate 使用 filled black circle，并以单条箭头连到 S_IDLE。",
+      "source_ids": [
+        "src_uml_251",
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "vis_directional_flow",
+      "text": "主读序从左到右、从上到下；主路径保持单向 ranks，回到 S_IDLE 的完成边放在外侧，避免穿过核心状态。",
+      "design_convention": true
+    },
+    {
+      "id": "vis_branch_geometry",
+      "text": "S_COMPARE、S_EVICT、S_INV_CHECK 等多分支节点应放在分岔中心；命中、miss、writeback、upgrade 分支按语义分组并用短标签区分。",
+      "design_convention": true
+    },
+    {
+      "id": "vis_three_pages",
+      "text": "Draw.io native source 必须有 3 pages，页名分别为 L1 CPU Request FSM、L1 L2-Initiated Paths、L2 Coherence Overview。",
+      "source_ids": [
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "vis_l2_concept_boundaries",
+      "text": "L2 overview 页应以可见区域边界分隔 message map、lookup framework、directory metadata、loose ends，避免被误读为完整 FSM。",
+      "design_convention": true
+    },
+    {
+      "id": "vis_chinese_labels",
+      "text": "解释性标签使用中文；实现标识符如 S_IDLE、GetS/GetM、M/E/S/I、WriteBack、Data Resp 保持英文原样。",
+      "design_convention": true
+    },
+    {
+      "id": "vis_loose_end_notes",
+      "text": "已记录但未展开的事项用 dashed note/callout 表示，并明确写“loose end / 未展开 / 未定”，不得伪装成已完成状态。",
+      "design_convention": true
+    }
+  ],
+  "backend_constraints": [
+    {
+      "id": "be_drawio_native",
+      "text": "目标后端是 editable Draw.io native multi-page artifact；每页必须是独立 mxGraphModel page，可由后续生成器写入 .drawio。",
+      "source_ids": [
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "be_basic_shapes_no_search",
+      "text": "本图使用 UML state/basic geometry shapes（rounded rectangle、filled ellipse/circle、note/container、arrows），不需要 draw.io shape library search。",
+      "source_ids": [
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "be_edge_geometry",
+      "text": "Draw.io edge 必须声明 source、target，并包含相对 mxGeometry；由后端进行正交/避障路由，不手写无意义装饰线。",
+      "source_ids": [
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "be_html_labels",
+      "text": "含多行、加粗或中文说明的 labels 应启用 HTML/text wrapping，并对 XML 特殊字符进行转义。",
+      "source_ids": [
+        "src_drawio_xml_ref"
+      ]
+    },
+    {
+      "id": "be_no_electrical",
+      "text": "该图不是 electrical/circuit schematic；不得设置 domain_rules.electrical.nets，也不得把可见导线当作电气 net。",
+      "design_convention": true
+    }
+  ],
+  "assumptions": [
+    "Page 1 和 Page 2 都出现 S_IDLE；在 contract 中按页面使用不同 node id，但 Page 2 内 Invalidate 与 GetData 共享同一个 S_IDLE node。",
+    "L2 overview 页是概念图，允许 message/concept nodes 和 annotation nodes，不把这些概念节点命名为 FSM states。",
+    "Store Hit-S 的中间请求状态未命名，按文档要求以 S_COMPARE -> S_WAIT_RESP 边和 loose-end note 表达，而不新增状态。"
+  ],
+  "unverified_rules": [
+    {
+      "id": "uv_l1_store_hit_s_request_state",
+      "text": "Store Hit S 到 GetM/Upgrade 的中间请求状态是文档 loose end，未定义为独立 state。"
+    },
+    {
+      "id": "uv_getdata_opcode_split",
+      "text": "GetData miss/opcode 需拆 FetchShared / FetchInvalidate，当前未定。"
+    },
+    {
+      "id": "uv_l2_memory_refill_fsm",
+      "text": "L2 miss/invalid 到 lower memory refill 的完整 FSM 未展开。"
+    },
+    {
+      "id": "uv_l2_getm_ack_counting",
+      "text": "L2 GetM 触发 Invalidate 与 Ack counting 的完整状态机未展开。"
+    },
+    {
+      "id": "uv_l2_full_fsm",
+      "text": "L2 full coherence state machine explicitly not yet expanded；Page 3 只能是 overview。"
+    }
+  ]
+}

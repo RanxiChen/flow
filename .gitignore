@@ -29,6 +29,8 @@ obj_dir/
 *.jou
 build/
 *.rpt
+__pycache__/
+fpga/ep4ce10_wisp/build-uart-*/
 *.dcp
 *.bit
 
