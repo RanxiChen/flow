@@ -18,6 +18,10 @@ class BreezeCompressedDecoderSpec extends AnyFreeSpec with ChiselSim {
       check(dut, 0x0001, 0x00000013L) // c.nop
       check(dut, 0x0085, 0x00108093L) // c.addi ra, 1
       check(dut, 0x557d, 0xfff00513L) // c.li a0, -1
+      check(dut, 0x7001, 0x00000013L) // c.lui x0, -32 is a hint
+      check(dut, 0x6005, 0x00000013L) // c.lui x0, 1 is a hint
+      check(dut, 0x6001, 0x00000013L, illegal = true) // reserved c.lui x0, 0
+      check(dut, 0x6602, 0x00013603L) // c.ldsp a2, 0(sp), not lw
       check(dut, 0x8082, 0x00008067L) // c.jr ra
       check(dut, 0x9002, 0x00100073L) // c.ebreak
       check(dut, 0x0000, 0x00000013L, illegal = true) // reserved c.addi4spn 0

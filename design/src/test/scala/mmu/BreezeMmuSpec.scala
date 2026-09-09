@@ -66,6 +66,68 @@ class BreezeMmuSpec extends AnyFreeSpec with ChiselSim {
     }
   }
 
+  "translate a high Sv39 user fetch without sign-extending bit 31" in {
+    simulate(new BreezeMmu(64, entries = 4)) { dut =>
+      dut.io.killI.poke(false.B)
+      dut.io.sfence.poke(0.U.asTypeOf(new BreezeSfenceReq(64)))
+      dut.io.context.satp.poke(((BigInt(8) << 60) | BigInt(0x100)).U)
+      dut.io.context.privilege.poke(PRIV_MODE.U.U)
+      dut.io.context.mprv.poke(false.B)
+      dut.io.context.mpp.poke(PRIV_MODE.M.U)
+      dut.io.context.sum.poke(false.B)
+      dut.io.context.mxr.poke(false.B)
+      for (n <- 0 until 16) {
+        dut.io.context.pmpcfg(n).poke((if (n == 0) 0x0f else 0).U)
+        dut.io.context.pmpaddr(n).poke(
+          (if (n == 0) (BigInt(1) << 54) - 1 else BigInt(0)).U)
+      }
+      dut.io.i.req.valid.poke(false.B); dut.io.i.resp.ready.poke(true.B)
+      dut.io.d.req.valid.poke(false.B); dut.io.d.resp.ready.poke(true.B)
+      dut.io.memReq.ready.poke(true.B)
+      dut.io.memRsp.valid.poke(false.B)
+      dut.io.memRsp.bits.poke(0.U.asTypeOf(new BackendMemResp))
+      dut.reset.poke(true.B); dut.clock.step(2); dut.reset.poke(false.B)
+
+      val va = BigInt("0000003f92bffbfe", 16)
+      val truncated = BigInt("ffffffff92bffbfe", 16)
+      val ptes = Map(
+        BigInt("1007f0", 16) -> ((BigInt(0x101) << 10) | 1),
+        BigInt("1014a8", 16) -> ((BigInt(0x102) << 10) | 1),
+        BigInt("102ff8", 16) -> ((BigInt(0x80001) << 10) | 0xdf))
+      dut.io.i.req.bits.vaddr.poke(va.U)
+      dut.io.i.req.bits.access.poke(BreezeMmuAccess.Fetch)
+      dut.io.i.req.bits.sizeLog2.poke(2.U)
+      dut.io.i.req.valid.poke(true.B)
+      while (!dut.io.i.req.ready.peek().litToBoolean) dut.clock.step(1)
+      dut.clock.step(1); dut.io.i.req.valid.poke(false.B)
+
+      var guard = 0
+      while (!dut.io.i.resp.valid.peek().litToBoolean && guard < 80) {
+        if (dut.io.memReq.valid.peek().litToBoolean) {
+          val addr = dut.io.memReq.bits.addr.peekValue().asBigInt
+          assert(ptes.contains(addr), f"unexpected PTW address 0x$addr%x")
+          dut.clock.step(1)
+          dut.io.memRsp.bits.valid.poke(true.B)
+          dut.io.memRsp.bits.data.poke(ptes(addr).U)
+          dut.io.memRsp.bits.isWriteAck.poke(false.B)
+          dut.io.memRsp.bits.error.poke(false.B)
+          dut.io.memRsp.bits.pageFault.poke(false.B)
+          dut.io.memRsp.bits.faultAddr.poke(0.U)
+          dut.io.memRsp.valid.poke(true.B)
+          dut.clock.step(1)
+          dut.io.memRsp.valid.poke(false.B)
+        } else dut.clock.step(1)
+        guard += 1
+      }
+      assert(guard < 80)
+      dut.io.i.resp.bits.vaddr.expect(va.U)
+      assert(dut.io.i.resp.bits.vaddr.peek().litValue != truncated)
+      dut.io.i.resp.bits.pageFault.expect(false.B)
+      dut.io.i.resp.bits.accessFault.expect(false.B)
+      dut.io.i.resp.bits.paddr.expect(BigInt("80001bfe", 16).U)
+    }
+  }
+
   "reject a non-canonical Sv39 address before issuing a PTW request" in {
     simulate(new BreezeMmu(64, entries = 4)) { dut =>
       dut.io.killI.poke(false.B)

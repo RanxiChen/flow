@@ -187,7 +187,17 @@ def main():
     parser.add_argument("--compact-event-trace", action="store_true",
         help="Emit an unbounded compact [FLOW-EVENT] stream for host-side capture.")
     parser.add_argument("--cycle-debug", action="store_true",
-        help="Emit one combined [FLOW-CYCLE] snapshot on every simulated cycle.")
+        help="Emit periodic combined [FLOW-CYCLE] progress snapshots.")
+    parser.add_argument("--cycle-debug-interval", type=int, default=1,
+        help=("Emit [FLOW-CYCLE] once per N cycles when --cycle-debug is set "
+              "(default: 1)."))
+    parser.add_argument("--fault-retire-trace", action="store_true",
+        help=("Keep a silent retirement ring, dump it on a positive-user to "
+              "negative-address transfer or exact PC match, then stop."))
+    parser.add_argument("--fault-retire-depth", type=int, default=64,
+        help="Number of pre-trigger retirements retained per hart (default: 64).")
+    parser.add_argument("--fault-retire-pc", type=lambda value: int(value, 0),
+        help="Optional exact 64-bit PC/next-PC trigger, such as an Oops badaddr.")
     args = parser.parse_args()
 
     for path in (args.opensbi, args.kernel, args.dtb, args.bootrom):
@@ -195,6 +205,16 @@ def main():
             parser.error(f"image does not exist: {path}")
     if args.debug_cycles and args.rtl_mode != "debug":
         parser.error("--debug-cycles requires --rtl-mode debug")
+    if args.fault_retire_trace and args.rtl_mode != "debug":
+        parser.error("--fault-retire-trace requires --rtl-mode debug")
+    if args.fault_retire_pc is not None and not args.fault_retire_trace:
+        parser.error("--fault-retire-pc requires --fault-retire-trace")
+    if args.cycle_debug_interval <= 0:
+        parser.error("--cycle-debug-interval must be greater than zero")
+    if not 1 <= args.fault_retire_depth <= 1024:
+        parser.error("--fault-retire-depth must be between 1 and 1024")
+    if args.fault_retire_pc is not None and not 0 <= args.fault_retire_pc < (1 << 64):
+        parser.error("--fault-retire-pc must fit in 64 bits")
     if args.elaborate:
         elaborate(args.profile, args.core_preset, args.rtl_mode)
     if args.mem_trace_max_events <= 0:
@@ -233,6 +253,10 @@ def main():
         memory_trace_address_end=args.mem_trace_address_end,
         compact_event_trace=args.compact_event_trace,
         cycle_debug=args.cycle_debug,
+        cycle_debug_interval=args.cycle_debug_interval,
+        fault_retire_trace=args.fault_retire_trace,
+        fault_retire_depth=args.fault_retire_depth,
+        fault_retire_pc=args.fault_retire_pc,
     )
     if args.debug_cycles < 0:
         parser.error("--debug-cycles must not be negative")

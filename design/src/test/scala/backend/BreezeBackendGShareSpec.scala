@@ -317,6 +317,50 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
         }
     }
 
+    "GShare backend should preserve a high Sv39 JALR target from a load" in {
+        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+            val loadPc = BigInt(0xfc)
+            val jalrPc = BigInt(0x100)
+            val staleTarget = BigInt(0x40)
+            val actualTarget = BigInt("0000003f92bffbfe", 16)
+            val truncatedTarget = BigInt("ffffffff92bffbfe", 16)
+            val loadX1FromZero = BigInt("00003083", 16) // ld x1, 0(x0)
+
+            reset(dut)
+            issueInstruction(dut, loadPc, loadX1FromZero)
+            issuePredictedControl(
+              dut,
+              jalrPc,
+              encodeJalr(rd = 0, rs1 = 1, imm = 0),
+              FrontendPredType.JALR,
+              staleTarget
+            )
+
+            dut.io.debug.get.idExePc.expect(jalrPc.U)
+            dut.io.dmem.req.valid.expect(true.B)
+            dut.clock.step(1)
+            for (_ <- 0 until 2) {
+                dut.io.frontendRedirect.valid.expect(false.B)
+                dut.clock.step(1)
+            }
+
+            dut.io.dmem.rsp.valid.poke(true.B)
+            dut.io.dmem.rsp.data.poke(actualTarget.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B)
+            dut.io.dmem.rsp.error.poke(false.B)
+            dut.io.frontendRedirect.valid.expect(true.B)
+            dut.io.frontendRedirect.target.expect(actualTarget.U)
+            dut.io.frontendRedirect.target.peek().litValue must not be truncatedTarget
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.target.expect(actualTarget.U)
+            dut.clock.step(1)
+
+            dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.frontendRedirect.valid.expect(false.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
+        }
+    }
+
     "GShare backend should keep a correct JALR target without retraining" in {
         simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
             val producerPc = BigInt(0xfc)

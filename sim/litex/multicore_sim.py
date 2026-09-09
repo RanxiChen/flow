@@ -45,7 +45,8 @@ from breeze_sim import (  # noqa: E402
     McuCompletionMonitor, Platform,
 )
 from memory_monitor import (  # noqa: E402
-    FlowCompactEventMonitor, FlowCycleSnapshotMonitor, FlowMemoryMonitor,
+    FlowCompactEventMonitor, FlowCycleSnapshotMonitor,
+    FlowFaultRetireMonitor, FlowMemoryMonitor,
 )
 from interrupt_monitor import FlowInterruptChainMonitor  # noqa: E402
 
@@ -85,7 +86,10 @@ class MulticoreSimSoC(SoCCore):
                  memory_trace=False, memory_trace_max_events=1024,
                  memory_trace_address_start=None,
                  memory_trace_address_end=None,
-                 compact_event_trace=False, cycle_debug=False, **kwargs):
+                 compact_event_trace=False, cycle_debug=False,
+                 cycle_debug_interval=1,
+                 fault_retire_trace=False, fault_retire_depth=64,
+                 fault_retire_pc=None, **kwargs):
         platform = Platform()
         FlowCluster.set_cluster_config(cluster_profile, core_preset, privilege_profile)
         self.mem_map = dict(type(self).mem_map)
@@ -258,6 +262,13 @@ class MulticoreSimSoC(SoCCore):
                     ("cpu-mmio", self.cpu.dbus),
                     ("cpu-memory", self.cpu.ibus),
                 ),
+                interval=cycle_debug_interval,
+            )
+        if fault_retire_trace:
+            self.submodules.fault_retire_monitor = FlowFaultRetireMonitor(
+                self.cpu,
+                depth=fault_retire_depth,
+                trigger_pc=fault_retire_pc,
             )
 
 

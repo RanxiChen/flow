@@ -1,6 +1,6 @@
 """Reusable passive memory-path monitors for Flow debug simulations."""
 
-from migen import Cat, Display, If, Module, Signal
+from migen import Array, Cat, Display, Finish, If, Module, Signal
 
 from flow.wiring import wishbone_byte_address
 
@@ -165,7 +165,7 @@ class FlowMemoryMonitor(Module):
 
 
 class FlowCycleSnapshotMonitor(Module):
-    """Emit one combined debug snapshot on every simulated clock cycle.
+    """Emit a combined debug snapshot at a configurable cycle interval.
 
     The snapshot contains only passive, already exported CPU and SoC signals.
     It never drives ready/valid, interrupt, cache, or Wishbone state.
@@ -173,8 +173,12 @@ class FlowCycleSnapshotMonitor(Module):
 
     PREFIX = "[FLOW-CYCLE]"
 
-    def __init__(self, cpu, wishbone_buses=()):
+    def __init__(self, cpu, wishbone_buses=(), interval=1):
+        if interval <= 0:
+            raise ValueError("cycle snapshot interval must be positive")
+
         cycle = Signal(64)
+        emit_countdown = Signal(max=max(interval, 2), reset=0)
         retire_valid = Signal(len(cpu.retires))
         dcache_request = Signal(len(cpu.dcache_traces))
         dcache_response = Signal(len(cpu.dcache_traces))
@@ -231,10 +235,17 @@ class FlowCycleSnapshotMonitor(Module):
             )
             values.extend([bus.cyc, bus.stb, bus.ack, bus.err, bus.we])
 
-        statements = [
-            cycle.eq(cycle + 1),
-            Display(line, *values),
-        ]
+        statements = [cycle.eq(cycle + 1)]
+        if interval == 1:
+            statements.append(Display(line, *values))
+        else:
+            statements.append(
+                If(emit_countdown == 0,
+                    Display(line, *values),
+                    emit_countdown.eq(interval - 1),
+                ).Else(
+                    emit_countdown.eq(emit_countdown - 1),
+                ))
         for hart, retire in enumerate(cpu.retires):
             statements.append(
                 If(retire.valid,
@@ -352,3 +363,147 @@ class FlowCompactEventMonitor(Module):
                 cycle, cpu.hart_fatal, cpu.hart_estop),
             previous_fatal.eq(cpu.hart_fatal),
             previous_estop.eq(cpu.hart_estop))
+
+
+class FlowFaultRetireMonitor(Module):
+    """Keep recent retirements and dump them when a bad user control-flow appears.
+
+    Normal execution is silent.  A trigger occurs when a retirement transfers
+    control from a positive Sv39 address to the negative Sv39 half, or when its
+    PC/next-PC equals ``trigger_pc``.  The latter lets a rerun target an exact
+    address printed by a previous Linux Oops.  Simulation stops after the dump
+    so the evidence cannot be buried by a subsequent panic loop.
+    """
+
+    PREFIX = "[FLOW-FAULT-RETIRE]"
+
+    def __init__(self, cpu, depth=64, trigger_pc=None, stop_on_trigger=True):
+        if depth <= 0:
+            raise ValueError("Fault retire trace depth must be positive")
+        if depth > 1024:
+            raise ValueError("Fault retire trace depth must not exceed 1024")
+        if trigger_pc is not None and not 0 <= trigger_pc < (1 << 64):
+            raise ValueError("Fault retire trigger PC must fit in 64 bits")
+
+        cycle = Signal(64)
+        sequence = [Signal(64, name=f"fault_retire_seq{hart}")
+                    for hart in range(len(cpu.retires))]
+        write_indices = [Signal(max=depth, name=f"fault_retire_wr{hart}")
+                         for hart in range(len(cpu.retires))]
+        triggers = []
+        histories = []
+
+        self.sync += cycle.eq(cycle + 1)
+        for hart, retire in enumerate(cpu.retires):
+            valid = Array(Signal(name=f"fault_h{hart}_valid{slot}")
+                          for slot in range(depth))
+            event_cycle = Array(Signal(64, name=f"fault_h{hart}_cycle{slot}")
+                                for slot in range(depth))
+            event_sequence = Array(Signal(64, name=f"fault_h{hart}_seq{slot}")
+                                   for slot in range(depth))
+            pc = Array(Signal(64, name=f"fault_h{hart}_pc{slot}")
+                       for slot in range(depth))
+            inst = Array(Signal(32, name=f"fault_h{hart}_inst{slot}")
+                         for slot in range(depth))
+            next_pc = Array(Signal(64, name=f"fault_h{hart}_next{slot}")
+                            for slot in range(depth))
+            rd_write_en = Array(Signal(name=f"fault_h{hart}_rdwe{slot}")
+                                for slot in range(depth))
+            rd_addr = Array(Signal(5, name=f"fault_h{hart}_rd{slot}")
+                            for slot in range(depth))
+            rd_data = Array(Signal(64, name=f"fault_h{hart}_rddata{slot}")
+                            for slot in range(depth))
+            mem_en = Array(Signal(name=f"fault_h{hart}_memen{slot}")
+                           for slot in range(depth))
+            mem_is_write = Array(Signal(name=f"fault_h{hart}_memwe{slot}")
+                                 for slot in range(depth))
+            mem_addr = Array(Signal(64, name=f"fault_h{hart}_addr{slot}")
+                             for slot in range(depth))
+            mem_rdata = Array(Signal(64, name=f"fault_h{hart}_rdata{slot}")
+                              for slot in range(depth))
+            mem_wdata = Array(Signal(64, name=f"fault_h{hart}_wdata{slot}")
+                              for slot in range(depth))
+            mem_wmask = Array(Signal(8, name=f"fault_h{hart}_mask{slot}")
+                              for slot in range(depth))
+            histories.append((valid, event_cycle, event_sequence, pc, inst,
+                              next_pc, rd_write_en, rd_addr, rd_data, mem_en,
+                              mem_is_write, mem_addr, mem_rdata, mem_wdata,
+                              mem_wmask))
+
+            # Positive canonical Sv39 code must not branch directly into the
+            # negative canonical half.  That transition is exactly what the
+            # init failure's 0x0000003f... -> 0xffffffff... corruption does.
+            user_to_negative = (
+                (retire.pc[39:64] == 0) &
+                (retire.next_pc[39:64] == ((1 << 25) - 1)))
+            exact_match = 0
+            if trigger_pc is not None:
+                exact_match = ((retire.pc == trigger_pc) |
+                               (retire.next_pc == trigger_pc))
+            trigger = retire.valid & (user_to_negative | exact_match)
+            triggers.append(trigger)
+
+            index = write_indices[hart]
+            self.sync += If(retire.valid,
+                valid[index].eq(1),
+                event_cycle[index].eq(cycle),
+                event_sequence[index].eq(sequence[hart]),
+                pc[index].eq(retire.pc),
+                inst[index].eq(retire.inst),
+                next_pc[index].eq(retire.next_pc),
+                rd_write_en[index].eq(retire.rd_write_en),
+                rd_addr[index].eq(retire.rd_addr),
+                rd_data[index].eq(retire.rd_data),
+                mem_en[index].eq(retire.mem_en),
+                mem_is_write[index].eq(retire.mem_is_write),
+                mem_addr[index].eq(retire.mem_addr),
+                mem_rdata[index].eq(retire.mem_rdata),
+                mem_wdata[index].eq(retire.mem_wdata),
+                mem_wmask[index].eq(retire.mem_wmask),
+                sequence[hart].eq(sequence[hart] + 1),
+                If(index == depth - 1,
+                    index.eq(0)
+                ).Else(
+                    index.eq(index + 1)))
+
+        any_trigger = Signal()
+        self.comb += any_trigger.eq(Cat(*triggers) != 0)
+        triggered = Signal()
+        dumps = []
+        for hart, (retire, trigger, history) in enumerate(
+                zip(cpu.retires, triggers, histories)):
+            (valid, event_cycle, event_sequence, pc, inst, next_pc,
+             rd_write_en, rd_addr, rd_data, mem_en, mem_is_write, mem_addr,
+             mem_rdata, mem_wdata, mem_wmask) = history
+            history_displays = [
+                If(valid[slot],
+                    Display(
+                        f"{self.PREFIX} kind=H hart={hart} slot={slot} "
+                        "seq=%0d cycle=%0d pc=0x%0x inst=0x%0x next=0x%0x "
+                        "rdwe=%0d rd=%0d rddata=0x%0x memen=%0d memwe=%0d "
+                        "addr=0x%0x rdata=0x%0x wdata=0x%0x mask=0x%0x",
+                        event_sequence[slot], event_cycle[slot], pc[slot],
+                        inst[slot], next_pc[slot], rd_write_en[slot],
+                        rd_addr[slot], rd_data[slot], mem_en[slot],
+                        mem_is_write[slot], mem_addr[slot], mem_rdata[slot],
+                        mem_wdata[slot], mem_wmask[slot]))
+                for slot in range(depth)
+            ]
+            dumps.append(If(trigger,
+                Display(
+                    f"{self.PREFIX} kind=T hart={hart} cycle=%0d seq=%0d "
+                    "pc=0x%0x inst=0x%0x next=0x%0x rdwe=%0d rd=%0d "
+                    "rddata=0x%0x memen=%0d memwe=%0d addr=0x%0x "
+                    "rdata=0x%0x wdata=0x%0x mask=0x%0x",
+                    cycle, sequence[hart], retire.pc, retire.inst,
+                    retire.next_pc, retire.rd_write_en, retire.rd_addr,
+                    retire.rd_data, retire.mem_en, retire.mem_is_write,
+                    retire.mem_addr, retire.mem_rdata, retire.mem_wdata,
+                    retire.mem_wmask),
+                *history_displays))
+        stop_statements = [Finish()] if stop_on_trigger else []
+        self.sync += If(~triggered & any_trigger,
+            *dumps,
+            Display(f"{self.PREFIX} kind=STOP cycle=%0d", cycle),
+            triggered.eq(1),
+            *stop_statements)

@@ -6,7 +6,7 @@ import chisel3.simulator.PeekPokeAPI
 import chisel3.testing.HasTestingDirectory
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import flow.config.{BreezeCoreConfig, BreezeCoreConfigs}
+import flow.config.{BreezeCoreConfig, BreezeCoreConfigs, PrivilegeProfile}
 import flow.core.BreezeCore
 import flow.fpu.BreezeFpSources
 import svsim.{CommonCompilationSettings, CommonSettingsModifications}
@@ -14,8 +14,17 @@ import svsim.{CommonCompilationSettings, CommonSettingsModifications}
 import java.io.File
 import scala.collection.mutable
 
-final case class BreezeCoreSimResult(cycleCount: Int, timedOut: Boolean)
-final case class BreezeCoreSimulationConfig(bootAddr: BigInt, tandemLog: Boolean)
+final case class BreezeCoreSimResult(
+    cycleCount: Int,
+    timedOut: Boolean,
+    exitCode: Option[BigInt] = None
+)
+final case class BreezeCoreSimulationConfig(
+    bootAddr: BigInt,
+    tandemLog: Boolean,
+    exitAddress: Option[BigInt] = None,
+    maxCycles: Int = 100000
+)
 
 object BreezeCoreSimSupport {
     val Mask32: BigInt = (BigInt(1) << 32) - 1
@@ -182,10 +191,24 @@ object BreezeCoreSimMemoryLoader {
         Option(node.get("tandemLog")).map(_.asBoolean(false)).getOrElse(false)
     }
 
+    def loadExitAddress(path: String): Option[BigInt] = {
+        val node = loadSimulationNode(path)
+        Option(node.get("exitAddress")).map(parseNodeValue)
+    }
+
+    def loadMaxCycles(path: String): Int = {
+        val node = loadSimulationNode(path)
+        val value = Option(node.get("maxCycles")).map(parseNodeValue).getOrElse(BigInt(100000))
+        require(value > 0 && value <= Int.MaxValue, s"simulation.maxCycles out of range: $value")
+        value.toInt
+    }
+
     def loadSimulationConfig(path: String): BreezeCoreSimulationConfig = {
         BreezeCoreSimulationConfig(
           bootAddr = loadBootAddr(path),
-          tandemLog = loadTandemLog(path)
+          tandemLog = loadTandemLog(path),
+          exitAddress = loadExitAddress(path),
+          maxCycles = loadMaxCycles(path)
         )
     }
 
@@ -260,7 +283,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         maxCycles: Int = 100000,
         imemLatency: Int = 6,
         dmemLatency: Int = 7,
-        bootAddr: BigInt = 0
+        bootAddr: BigInt = 0,
+        exitAddress: Option[BigInt] = None
     ): BreezeCoreSimResult = {
         runInternal(
           memory = memory,
@@ -269,7 +293,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
           imemLatency = imemLatency,
           dmemLatency = dmemLatency,
           bootAddr = bootAddr,
-          collectTandemTrace = false
+          collectTandemTrace = false,
+          exitAddress = exitAddress
         ).result
     }
 
@@ -281,7 +306,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         dmemLatency: Int = 7,
         bootAddr: BigInt = 0,
         logMode: TandemLogMode = TandemLogMode.Off,
-        machineSoftwareInterruptAt: Option[Int] = None
+        machineSoftwareInterruptAt: Option[Int] = None,
+        exitAddress: Option[BigInt] = None
     ): BreezeCoreSimTandemResult = {
         runInternal(
           memory = memory,
@@ -292,7 +318,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
           bootAddr = bootAddr,
           collectTandemTrace = true,
           logMode = logMode,
-          machineSoftwareInterruptAt = machineSoftwareInterruptAt
+          machineSoftwareInterruptAt = machineSoftwareInterruptAt,
+          exitAddress = exitAddress
         )
     }
 
@@ -305,7 +332,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         bootAddr: BigInt,
         collectTandemTrace: Boolean,
         logMode: TandemLogMode = TandemLogMode.Off,
-        machineSoftwareInterruptAt: Option[Int] = None
+        machineSoftwareInterruptAt: Option[Int] = None,
+        exitAddress: Option[BigInt] = None
     ): BreezeCoreSimTandemResult = {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
@@ -325,6 +353,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             var imemRespData: BigInt = 0
             var dmemRespData: BigInt = 0
             var dmemWaitIsWrite = false
+            var exitCode: Option[BigInt] = None
 
             dut.io.resetAddr.poke(bootAddr.U)
             dut.io.machineTimerInterrupt.poke(false.B)
@@ -353,7 +382,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.clock.step(1)
             dut.reset.poke(false.B)
 
-            while (!dut.io.estop.peek().litToBoolean && cycleCount < maxCycles) {
+            while (!dut.io.estop.peek().litToBoolean && exitCode.isEmpty && cycleCount < maxCycles) {
                 dut.io.machineSoftwareInterrupt.poke(
                     machineSoftwareInterruptAt.exists(cycleCount >= _).B)
                 dut.io.nextLevelRsp.vld.poke(false.B)
@@ -440,6 +469,14 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                               memWData = tandem.memWData.peek().litValue,
                               memWMask = tandem.memWMask.peek().litValue
                             )
+                            exitAddress.foreach { address =>
+                                if (event.memEn && event.memIsWrite &&
+                                    event.memAlignedAddr == BreezeCoreSimSupport.alignDown(address, 8)) {
+                                    val shift = ((address & 0x7) * 8).toInt
+                                    exitCode = Some(
+                                      (event.memWData >> shift) & BreezeCoreSimSupport.Mask32)
+                                }
+                            }
                             commitEvents += event
                             if (logMode == TandemLogMode.RawCommit) {
                                 println(RawCommitEventLogFormatter.format(cycleCount, event))
@@ -449,7 +486,11 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                 }
             }
 
-            result = BreezeCoreSimResult(cycleCount = cycleCount, timedOut = cycleCount >= maxCycles)
+            result = BreezeCoreSimResult(
+              cycleCount = cycleCount,
+              timedOut = cycleCount >= maxCycles && exitCode.isEmpty,
+              exitCode = exitCode
+            )
         }
 
         BreezeCoreSimTandemResult(result = result, commitEvents = commitEvents.toSeq)
@@ -457,42 +498,85 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
 }
 
 object BreezeCoreSimApp {
-    def buildCoreConfig(corePreset: String, enableTandem: Boolean): BreezeCoreConfig =
+    def buildCoreConfig(
+        corePreset: String,
+        enableTandem: Boolean,
+        privilegeProfileName: String = "mcu"
+    ): BreezeCoreConfig = {
+        val privilegeProfile = PrivilegeProfile.fromName(privilegeProfileName)
         corePreset match {
-            case "baseline" => BreezeCoreConfigs.baseline(enableTandem = enableTandem)
-            case "gshare"   => BreezeCoreConfigs.gshare(enableTandem = enableTandem)
+            case "baseline" => BreezeCoreConfigs.baseline(enableTandem, privilegeProfile)
+            case "gshare"   => BreezeCoreConfigs.gshare(enableTandem, privilegeProfile)
             case other =>
                 throw new IllegalArgumentException(
                   s"unsupported core preset: $other (expected baseline or gshare)"
                 )
         }
+    }
 
     def main(args: Array[String]): Unit = {
-        require(args.length == 2, "usage: BreezeCoreSimApp <memory-json-path> <baseline|gshare>")
+        require(
+          args.length == 2 || args.length == 3,
+          "usage: BreezeCoreSimApp <memory-json-path> <baseline|gshare> [mcu|linux]"
+        )
         val memory = BreezeCoreSimMemoryLoader.loadMemoryMap(args(0))
         val simCfg = BreezeCoreSimMemoryLoader.loadSimulationConfig(args(0))
-        val coreCfg = buildCoreConfig(args(1), enableTandem = simCfg.tandemLog)
-        if (simCfg.tandemLog) {
+        val privilegeProfileName = if (args.length == 3) args(2) else "mcu"
+        val useTandem = simCfg.tandemLog || simCfg.exitAddress.nonEmpty
+        val coreCfg = buildCoreConfig(
+          args(1),
+          enableTandem = useTandem,
+          privilegeProfileName = privilegeProfileName
+        )
+        if (useTandem) {
             val tandemResult = BreezeCoreSimRunner.runWithTandemTrace(
               memory = memory,
               coreCfg = coreCfg,
               bootAddr = simCfg.bootAddr,
-              logMode = TandemLogMode.RawCommit
+              maxCycles = simCfg.maxCycles,
+              exitAddress = simCfg.exitAddress,
+              logMode = if (simCfg.tandemLog) TandemLogMode.RawCommit else TandemLogMode.Off
             )
             val commitCount = tandemResult.commitEvents.length
             val ipc =
                 if (tandemResult.result.cycleCount == 0) 0.0
                 else commitCount.toDouble / tandemResult.result.cycleCount.toDouble
+            val exitText = tandemResult.result.exitCode
+                .map(code => s"0x${code.toString(16)}").getOrElse("none")
             println(
               f"[BreezeCoreSimApp] cycleCount=${tandemResult.result.cycleCount}%d " +
-                f"commitCount=$commitCount%d ipc=$ipc%.3f timedOut=${tandemResult.result.timedOut}"
+                f"commitCount=$commitCount%d ipc=$ipc%.3f " +
+                s"timedOut=${tandemResult.result.timedOut} exitCode=$exitText"
             )
-            require(!tandemResult.result.timedOut, "simulation timed out before estop")
+            validateResult(tandemResult.result, simCfg.exitAddress)
         } else {
-            val result =
-                BreezeCoreSimRunner.run(memory, coreCfg = coreCfg, bootAddr = simCfg.bootAddr)
-            println(s"[BreezeCoreSimApp] cycleCount=${result.cycleCount} timedOut=${result.timedOut}")
-            require(!result.timedOut, "simulation timed out before estop")
+            val result = BreezeCoreSimRunner.run(
+              memory,
+              coreCfg = coreCfg,
+              bootAddr = simCfg.bootAddr,
+              maxCycles = simCfg.maxCycles,
+              exitAddress = simCfg.exitAddress
+            )
+            val exitText = result.exitCode
+                .map(code => s"0x${code.toString(16)}").getOrElse("none")
+            println(
+              s"[BreezeCoreSimApp] cycleCount=${result.cycleCount} " +
+                s"timedOut=${result.timedOut} exitCode=$exitText"
+            )
+            validateResult(result, simCfg.exitAddress)
+        }
+    }
+
+    private[sim] def validateResult(
+        result: BreezeCoreSimResult,
+        exitAddress: Option[BigInt]
+    ): Unit = {
+        require(!result.timedOut, "simulation timed out before completion")
+        exitAddress.foreach { _ =>
+            val exitText = result.exitCode
+                .map(code => s"0x${code.toString(16)}").getOrElse("none")
+            require(result.exitCode.contains(BigInt(1)),
+              s"architectural test failed with exit code $exitText")
         }
     }
 }

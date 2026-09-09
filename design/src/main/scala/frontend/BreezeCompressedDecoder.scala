@@ -68,7 +68,7 @@ class BreezeCompressedDecoder(val enableDouble: Boolean = true) extends Module {
   q1(2) := iType(addiImm, x0, 0.U, rd, 0x13)
   q1(3) := Mux(rd === sp,
     iType(addi16spImm, sp, 0.U, sp, 0x13),
-    Cat(luiImm(31, 12), rd, 0x37.U(7.W)))
+    Mux(rd === x0, nop, Cat(luiImm(31, 12), rd, 0x37.U(7.W))))
 
   private val srli = iType(shamt, rs1p, 5.U, rs1p, 0x13)
   private val srai = srli | (1L << 30).U
@@ -124,7 +124,9 @@ class BreezeCompressedDecoder(val enableDouble: Boolean = true) extends Module {
     false.B,
     rd === 0.U,
     false.B,
-    Mux(rd === sp, !addi16spImm.orR, rd === 0.U || !addiImm.orR),
+    // C.LUI with rd=x0 and a non-zero immediate is a standard HINT.
+    // Only the zero-immediate encodings are reserved here.
+    Mux(rd === sp, !addi16spImm.orR, !addiImm.orR),
     x(11, 10) === 3.U && arithSel > "b101".U,
     false.B,
     false.B,

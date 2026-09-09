@@ -224,6 +224,33 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "preserve a high Sv39 user address across sepc and SRET" in {
+    simulate(new CSRFile(64, enableCompressed = true,
+      privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      val target = BigInt("0000003f92bffbfe", 16)
+      val truncated = BigInt("ffffffff92bffbfe", 16)
+
+      commit(dut, CSRMAP.mepc, 0x1000)
+      commit(dut, CSRMAP.mstatus, BigInt(PRIV_MODE.S) << 11)
+      mret(dut)
+      dut.io.current_privilege.expect(PRIV_MODE.S.U)
+
+      commit(dut, CSRMAP.sepc, target)
+      selectRead(dut, CSRMAP.sepc)
+      dut.io.csr_old_data.expect(target.U)
+      dut.io.csr_old_data.peek().litValue must not be truncated
+
+      dut.io.csr_cmd.poke(CSR_CMD.NOP.U)
+      dut.io.sret_commit.poke(true.B)
+      dut.io.xret_target.expect(target.U)
+      dut.io.xret_target.peek().litValue must not be truncated
+      dut.clock.step(1)
+      dut.io.sret_commit.poke(false.B)
+      dut.io.current_privilege.expect(PRIV_MODE.U.U)
+    }
+  }
+
   "take a delegated supervisor software interrupt with vectored stvec" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

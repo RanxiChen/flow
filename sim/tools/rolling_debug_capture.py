@@ -52,6 +52,7 @@ class RollingCapture:
         self.line_counts = collections.Counter()
         self.stop_requested = False
         self.child = None
+        self.exit_code = None
         self.console = (self.output / "console.log").open(
             "a", encoding="utf-8", buffering=1)
         self.alerts = (self.output / "alerts.log").open(
@@ -119,7 +120,15 @@ class RollingCapture:
 
     def status(self):
         wall = max(time.monotonic() - self.started, 1e-9)
+        child_status = None if self.child is None else self.child.poll()
         return {
+            "runner_pid": os.getpid(),
+            "simulator_pid": (
+                None if self.child is None else self.child.pid),
+            "running": self.child is not None and child_status is None,
+            "stop_requested": self.stop_requested,
+            "exit_code": (
+                self.exit_code if self.exit_code is not None else child_status),
             "cycle": self.current_cycle,
             "wall_seconds": wall,
             "cycles_per_wall_second": self.current_cycle / wall,
@@ -190,8 +199,11 @@ class RollingCapture:
             for line in self.child.stdout:
                 self.classify(line)
                 self.flush()
-            return self.child.wait()
+            self.exit_code = self.child.wait()
+            return self.exit_code
         finally:
+            if self.exit_code is None and self.child is not None:
+                self.exit_code = self.child.poll()
             self.flush(force=True)
             self.console.close()
             self.alerts.close()

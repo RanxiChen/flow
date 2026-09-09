@@ -46,4 +46,27 @@ class BreezeCoreSimMemoryLoaderSpec extends AnyFreeSpec with Matchers {
 
         BreezeCoreSimMemoryLoader.loadBootAddr(jsonPath.toString) mustBe BigInt(0x80)
     }
+
+    "BreezeCoreSimMemoryLoader should load architectural-test controls" in {
+        val json =
+            """{
+              |  "simulation": {
+              |    "bootaddr": "0x80000000",
+              |    "tandemLog": false,
+              |    "exitAddress": "0x80004000",
+              |    "maxCycles": 123456
+              |  },
+              |  "memoryMap": {
+              |    "0x80000000": "0x000000007ff00073"
+              |  }
+              |}""".stripMargin
+
+        val tempDir = os.temp.dir(prefix = "breeze-act-loader")
+        val jsonPath = tempDir / "memory.json"
+        os.write(jsonPath, json)
+
+        val config = BreezeCoreSimMemoryLoader.loadSimulationConfig(jsonPath.toString)
+        config.exitAddress mustBe Some(BigInt("80004000", 16))
+        config.maxCycles mustBe 123456
+    }
 }

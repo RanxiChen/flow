@@ -1,0 +1,5 @@
+.upstream/
+.work/
+out/
+config/breeze-rv64gc/rvtest_config.h
+config/breeze-rv64gc/rvtest_config.svh
