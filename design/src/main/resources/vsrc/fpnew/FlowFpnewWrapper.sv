@@ -22,16 +22,20 @@ module FlowFpnewWrapper (
   logic unused_tag, unused_early_valid;
   logic [0:0] simd_mask;
   fpnew_pkg::status_t status;
-  // At least one register guarantees that every accepted operation produces
-  // its response after the request cycle. This matches Breeze's blocking
-  // long-latency protocol and also breaks the large arithmetic timing path.
+  // Match CVA6's per-operation pipeline configuration (6348e9e68467).
+  // DISTRIBUTED enables the arithmetic units' internal register boundaries;
+  // BEFORE alone only registers inputs and leaves the arithmetic path intact.
+  // Breeze's blocking valid/ready protocol waits for the resulting latency.
   localparam fpnew_pkg::fpu_implementation_t FlowImplementation = '{
-    PipeRegs:   '{default: 1},
+    PipeRegs:   '{'{2, 3, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
+                  '{default: 2},    // DIVSQRT (not the total iterative latency)
+                  '{default: 1},    // NONCOMP
+                  '{default: 2}},   // CONV
     UnitTypes:  '{'{default: fpnew_pkg::PARALLEL},
                   '{default: fpnew_pkg::MERGED},
                   '{default: fpnew_pkg::PARALLEL},
                   '{default: fpnew_pkg::MERGED}},
-    PipeConfig: fpnew_pkg::BEFORE
+    PipeConfig: fpnew_pkg::DISTRIBUTED
   };
 
   assign simd_mask = '1;
