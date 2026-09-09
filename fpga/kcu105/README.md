@@ -22,7 +22,8 @@ single-hart BIOS/demo path is exercised.
 | LiteX CSR | `0x12000000` | control, UART, BIOS timer and LiteDRAM CSRs |
 | main RAM | `0x80000000` | KCU105 DDR4 through LiteDRAM |
 
-The system clock is fixed at 125 MHz.  `integrated_main_ram_size` is zero:
+The system clock is fixed at 50 MHz (20 ns period); the board reference clock
+remains 125 MHz.  `integrated_main_ram_size` is zero:
 only LiteDRAM implements `main_ram`.  LiteX's optional L2 is disabled because
 Breeze already has its own coherent shared L2.  The build uses Vivado's
 area-oriented synthesis/implementation directives because the fixed four-hart

@@ -34,7 +34,7 @@ from flow.wiring import pack_plic_sources  # noqa: E402
 # This target is intentionally configured in source rather than exposing a
 # large command-line configuration surface.  A different hardware product
 # should get a separate target script.
-SYS_CLK_FREQ = 125_000_000
+SYS_CLK_FREQ = 50_000_000
 UART_BAUDRATE = 115_200
 
 ROM_SIZE = 0x0001_0000
