@@ -64,9 +64,9 @@ Integer x0 remains zero; FP f0 remains writable. Preserve both integer read
 ports, all three FP read ports, and write-through bypass. Do not add a read
 cycle, reduce hart count, or change FPU arithmetic/pipeline configuration.
 
-The intended mapping is distributed RAM. Actual LUTRAM inference, CLB savings,
-and timing must be checked in the new integrated Vivado run. No ILA has been
-inserted yet; its width/depth and final fit remain to be validated separately.
+Vivado confirmed distributed RAM inference in the integrated run below.
+No ILA has been inserted yet; its width/depth and final fit remain to be
+validated separately.
 
 ## Validation
 
@@ -91,7 +91,29 @@ asynchronous read ports, and one edge-triggered write port. Integrated
 backend/core tests preserve dependent FP64/FMA results and integer dependency
 chains without additional pipeline stalls.
 
-Use the normal local commit/push, Alan pull, elaborate and Vivado workflow.
-Re-run the existing demo `all` on the new bitstream before calling the
-hardware change validated. Vivado mapping and post-route timing results for
-the new change are pending.
+## Completed implementation and board check
+
+Source: `e7dd64d94bb032819b7649f86648610b88db3a75`.
+Alan run: `/home/chen/FUN/flow/build/fpga/kcu105-regfile-lutram-50mhz-20260910-e7dd64d`.
+Vivado completed successfully at 2026-09-10 12:30:30 +08:00 in 48:59.68 wall
+time. Final WNS +1.661 ns, WHS +0.013 ns; no timing violations or route conflicts.
+
+The placement utilization report lists 28,853 CLBs (95.22%), 165,938 LUTs,
+and 79,941 FFs. Relative to the earlier BRAM placement report, this frees
+591 CLBs, 9,787 LUTs and 15,888 FFs. There are 1,447 unoccupied CLBs; this
+does not establish that a particular ILA configuration will fit and meet timing.
+Each integer register file uses 80 LUTRAMs and 31 FFs; each FP register file
+uses 120 LUTRAMs and 32 FFs.
+
+After loading this bitstream, the user reported demo `all` passing: integer
+34 checks, memory 8,216 checks, floating point 44 checks, plus four-hart
+computation and two-/four-hart AMO, LR/SC and payload-ring tests. This is
+user-provided console evidence, not an independently captured UART log.
+The tests do not establish DDR or comprehensive PMP/Sv39 correctness.
+
+Known-good bitstream and reports are archived outside Git on Alan:
+`/home/chen/fpga-artifacts/flow/kcu105-bram-50mhz-e7dd64d/`.
+Bitstream SHA256:
+`cdfe50959909c501501c3416cea1303135bbd6c4caafad3b3365991069df7039`.
+The archive includes a README and verified SHA256SUMS. Demo sources and
+binaries are intentionally excluded from Git and this archive.
