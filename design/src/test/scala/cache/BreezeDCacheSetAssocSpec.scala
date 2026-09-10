@@ -65,6 +65,7 @@ final class DCacheHomeModel(dut: BreezeDCache, val mem: DTestMem, mmioLatency: I
 
   val reqLog = mutable.ArrayBuffer.empty[CoherentReq]
   val mmioLog = mutable.ArrayBuffer.empty[MmioTxn]
+  var grantsAccepted = 0
   var hpmAccess = 0
   var hpmMiss = 0
   var hpmUncached = 0
@@ -132,6 +133,13 @@ final class DCacheHomeModel(dut: BreezeDCache, val mem: DTestMem, mmioLatency: I
       coh.grant.hasData.poke(g.hasData.B)
       coh.grant.lineData.poke(g.data.U)
       coh.grant.error.poke(g.error.B)
+    } else {
+      // The producer may change the payload immediately after a handshake.
+      // Consumers must not keep using the live bus during refill installation.
+      coh.grant.lineData.poke(0.U)
+      coh.grant.hasData.poke(false.B)
+      coh.grant.grantState.poke(BreezeGrantState.S.litValue)
+      coh.grant.error.poke(false.B)
     }
     val grantFire = driveGrant && coh.grant.ready.peek().litToBoolean
 
@@ -211,7 +219,10 @@ final class DCacheHomeModel(dut: BreezeDCache, val mem: DTestMem, mmioLatency: I
     if (dut.io.hpm.dcacheUncached.peek().litToBoolean) hpmUncached += 1
 
     dut.clock.step(1)
-    if (grantFire) pendingGrant = None
+    if (grantFire) {
+      grantsAccepted += 1
+      pendingGrant = None
+    }
     else pendingGrant.foreach(g => g.delay = math.max(0, g.delay - 1))
   }
 

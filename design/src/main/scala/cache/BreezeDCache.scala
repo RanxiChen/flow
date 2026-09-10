@@ -10,7 +10,7 @@ import flow.platform.{PMAAccessType, PMAChecker}
 object BreezeDCacheState extends ChiselEnum {
   val Idle, Lookup, StoreHitWrite,
       UncachedReq, UncachedWait,
-      RefillReq, RefillWait,
+      RefillReq, RefillWait, RefillInstall,
       UpgradeReq, UpgradeWait,
       PutReq, PutWait,
       ProbeRead, ProbeCompare, ProbeRespond,
@@ -43,7 +43,7 @@ object BreezeDCacheState extends ChiselEnum {
   *      serviced with priority in Idle and in every state that waits on the
   *      Home (PutReq/PutWait/UpgradeReq/UpgradeWait/RefillReq/RefillWait/
   *      Flush*). It is deferred while a local SRAM mutation or the AMO/SC
-  *      read-modify-write window is in flight (Lookup/StoreHitWrite/Respond),
+  *      read-modify-write window is in flight (Lookup/StoreHitWrite/RefillInstall/Respond),
   *      all of which complete in a bounded number of cycles - this is the
   *      atomicLock of the specification.
   *   2. A pending PutS/PutM that has not been handshaken re-checks the victim
@@ -184,6 +184,12 @@ class BreezeDCache(
   // Raw old line latched for the S-hit upgrade path (store/SC/AMO); used when
   // the grant carries no data.
   val upgradeLineReg = RegInit(0.U(cfg.lineWidth.W))
+
+  // A refill grant is accepted before installation. These registers cut the
+  // Home grant-control -> AMO/merge -> data-array write path. They are only
+  // consumed in RefillInstall, after a successful grant initialized them.
+  val refillLineReg = Reg(UInt(cfg.lineWidth.W))
+  val refillGrantStateReg = Reg(BreezeGrantState())
 
   val responseData = RegInit(0.U(64.W))
   val responseError = RegInit(false.B)
@@ -754,62 +760,71 @@ class BreezeDCache(
       when(probePendingValid) {
         resumeState := RefillWait
         state := ProbeRead
-      }.elsewhen(coh.grant.valid) {
+      }.elsewhen(coh.grant.valid && coh.grant.ready) {
         when(coh.grant.error) {
-          // Never overwrite the victim until the refill has completed.
+          // Never install data or alter the victim on a failed refill.
           responseError := true.B
           state := Respond
         }.otherwise {
           assert(coh.grant.hasData, "DCache: refill grant without data")
-          val grantedM = coh.grant.grantState === BreezeGrantState.M
-          val grantedE = coh.grant.grantState === BreezeGrantState.E
-          amoOldWord := lineWord(coh.grant.lineData, reqAddr)
-          val installedLine = MuxCase(coh.grant.lineData, Seq(
-            (reqMemOp === Store) ->
-              mergeStore(coh.grant.lineData, reqAddr, reqWData, reqWMask),
-            (reqMemOp === Amo) -> amoMergedLine(coh.grant.lineData)
-          ))
-          // The valid bits are recomputed from the current metadata: a probe
-          // serviced while the refill was in flight may have invalidated
-          // another way of this set, and that invalidation must survive the
-          // install. Only the victim way's state is replaced; every other way
-          // keeps its M/E ownership and its dirty data.
-          val newValidNow = validOf(metaReg(setIndex)) | (1.U << victimWayReg)
-          val newExcl = Mux(grantedE && !isStoreLike,
-            exclOf(metaReg(setIndex)) | (1.U << victimWayReg),
-            exclOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
-          val newDirty = Mux(isStoreLike,
-            dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
-            dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
-          when(isStoreLike) {
-            assert(grantedM, "DCache: GetM answered without M permission")
-          }
-          for (w <- 0 until ways) {
-            when(victimWayReg === w.U) {
-              tagArray(w).io.we := true.B
-              tagArray(w).io.addr := setIndex
-              tagArray(w).io.data_in := requestTag
-              dataArray(w).io.we := true.B
-              dataArray(w).io.addr := setIndex
-              dataArray(w).io.data_in := installedLine
-            }
-          }
-          metaReg(setIndex) := makeMeta(newValidNow, newExcl, newDirty, newPlruReg)
-          responseData := MuxCase(0.U, Seq(
-            (reqMemOp === Load || reqMemOp === Lr) ->
-              lineWord(coh.grant.lineData, reqAddr),
-            (reqMemOp === Amo) -> amoOldWord
-          ))
-          when(reqMemOp === Lr) {
-            resValid := true.B
-            resAddr := reqAddr
-            resSizeLog2 := reqSizeLog2
-            resLineAddr := reqAddr(31, 5)
-          }
-          responseError := false.B
-          state := Respond
+          refillLineReg := coh.grant.lineData
+          refillGrantStateReg := coh.grant.grantState
+          state := RefillInstall
         }
       }
+    }
+
+    is(RefillInstall) {
+      // Defer probe service for this bounded local mutation, just as for
+      // StoreHitWrite. A probe arriving with/after the grant stays pending;
+      // it must observe the installed (and possibly AMO-modified) line.
+      val grantedM = refillGrantStateReg === BreezeGrantState.M
+      val grantedE = refillGrantStateReg === BreezeGrantState.E
+      amoOldWord := lineWord(refillLineReg, reqAddr)
+      val installedLine = MuxCase(refillLineReg, Seq(
+        (reqMemOp === Store) ->
+          mergeStore(refillLineReg, reqAddr, reqWData, reqWMask),
+        (reqMemOp === Amo) -> amoMergedLine(refillLineReg)
+      ))
+      // The valid bits are recomputed from the current metadata: a probe
+      // serviced while the refill was in flight may have invalidated
+      // another way of this set, and that invalidation must survive the
+      // install. Only the victim way's state is replaced; every other way
+      // keeps its M/E ownership and its dirty data.
+      val newValidNow = validOf(metaReg(setIndex)) | (1.U << victimWayReg)
+      val newExcl = Mux(grantedE && !isStoreLike,
+        exclOf(metaReg(setIndex)) | (1.U << victimWayReg),
+        exclOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
+      val newDirty = Mux(isStoreLike,
+        dirtyOf(metaReg(setIndex)) | (1.U << victimWayReg),
+        dirtyOf(metaReg(setIndex)) & ~(1.U << victimWayReg))
+      when(isStoreLike) {
+        assert(grantedM, "DCache: GetM answered without M permission")
+      }
+      for (w <- 0 until ways) {
+        when(victimWayReg === w.U) {
+          tagArray(w).io.we := true.B
+          tagArray(w).io.addr := setIndex
+          tagArray(w).io.data_in := requestTag
+          dataArray(w).io.we := true.B
+          dataArray(w).io.addr := setIndex
+          dataArray(w).io.data_in := installedLine
+        }
+      }
+      metaReg(setIndex) := makeMeta(newValidNow, newExcl, newDirty, newPlruReg)
+      responseData := MuxCase(0.U, Seq(
+        (reqMemOp === Load || reqMemOp === Lr) ->
+          lineWord(refillLineReg, reqAddr),
+        (reqMemOp === Amo) -> amoOldWord
+      ))
+      when(reqMemOp === Lr) {
+        resValid := true.B
+        resAddr := reqAddr
+        resSizeLog2 := reqSizeLog2
+        resLineAddr := reqAddr(31, 5)
+      }
+      responseError := false.B
+      state := Respond
     }
 
     // ===== Probe service =====

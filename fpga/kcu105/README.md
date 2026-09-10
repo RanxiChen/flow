@@ -76,9 +76,9 @@ Default outputs are isolated:
   the bitstream; always use the pair from the same run.
 - Probe descriptions/widths: `ila-probes.json` within the SoC directory.
 
-The ILA samples 54 probes (1203 bits total) at the 50 MHz system clock,
+The ILA samples 54 probes (1203 bits total) at the selected system clock,
 with 4096 samples and two input pipeline stages. A full-rate capture spans
-81.92 microseconds. These are passive observation taps; no CPU/DDR handshake
+81.92 microseconds at 50 MHz, or 40.96 microseconds at 100 MHz. These are passive observation taps; no CPU/DDR handshake
 is routed through the ILA. Probe groups include:
 
 - all fields of hart 0's Tandem retirement record;
@@ -103,6 +103,35 @@ Debug builds still require timing/resource checks and a new board test.
 Changing runtime trigger conditions does not require rebuilding; changing
 probe wiring or capture depth does. The demo sources are not modified.
 
+## Refill pipeline and 100 MHz implementation
+
+D-cache refill completion uses two states: `RefillWait` accepts and stores a
+successful grant's data and MESI permission, then `RefillInstall` performs
+store/AMO merging and writes the cache arrays. A failed grant goes directly
+to the error response without installation. Probes arriving with the grant
+or during installation are queued until the bounded local mutation completes.
+This adds one cycle to successful refill completion; hits retain their path.
+
+Build the single-hart ILA product at 100 MHz with:
+
+```sh
+python fpga/kcu105/target.py --cpu-type breeze-tiny --debug \
+    --sys-clk-freq 100000000 --build
+```
+
+Without an explicit `--output-dir`, this uses
+`build/fpga/kcu105-breeze-tiny-ddr-debug-100mhz/`. The 50 MHz directories are
+unchanged. The selected frequency reaches the CRG, LiteDRAM PHY/controller,
+LiteX BIOS constants, CLINT divider and ILA metadata. MTIME remains 1 MHz;
+IDELAY remains 200 MHz. At 100 MHz system clock, DDR uses a 400 MHz clock
+(800 MT/s). The existing Linux `flow-kcu105-tiny.dts` describes 50 MHz; set
+its CPU `clock-frequency` to 100000000 before using it for a 100 MHz Linux boot.
+This target does not compile the Linux device tree.
+
+The 100 MHz setting is an implementation target, not a timing-pass claim.
+Check the final timing report before loading a new image. The separate BIOS
+command-delay scan range issue is not changed by this cache pipeline patch.
+
 ## Fixed hardware layout
 
 | Region | Address | Implementation |
@@ -114,8 +143,8 @@ probe wiring or capture depth does. The demo sources are not modified.
 | LiteX CSR | `0x12000000` | control, UART, timer and SDRAM controller/PHY CSRs |
 | main RAM | `0x80000000` | 1 GiB DDR4 window (`0x80000000`–`0xbfffffff`) |
 
-The system clock is fixed at 50 MHz (20 ns period); the board reference clock
-remains 125 MHz. The board's LiteX `_CRG` supplies the DDR and IDELAY domains.
+The system clock defaults to 50 MHz (20 ns period); `--sys-clk-freq 100000000`
+selects 100 MHz (10 ns). The board reference clock remains 125 MHz. The board's LiteX `_CRG` supplies the DDR and IDELAY domains.
 `USDDRPHY` and `EDY4016A` use the 1:4 ratio, corresponding to a 200 MHz DDR
 clock / 400 MT/s data rate; IDELAY uses 200 MHz. `integrated_main_ram_size=0`
 lets LiteDRAM own `main_ram`. The board geometry is 2 GiB, while this target

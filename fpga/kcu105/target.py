@@ -77,17 +77,19 @@ class BreezeKCU105SoC(SoCCore):
         "timer0": 2,
     }
 
-    def __init__(self, cpu_type="breeze", debug=False):
+    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ):
         if cpu_type not in ("breeze", "breeze-tiny"):
             raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
         if debug and cpu_type != "breeze-tiny":
             raise ValueError("--debug only supports --cpu-type breeze-tiny (single hart)")
+        if sys_clk_freq not in (50_000_000, 100_000_000):
+            raise ValueError("KCU105 system frequency must be 50 or 100 MHz")
         platform = xilinx_kcu105.Platform()
-        self.crg = _CRG(platform, SYS_CLK_FREQ)
+        self.crg = _CRG(platform, sys_clk_freq)
 
         super().__init__(
             platform,
-            clk_freq=SYS_CLK_FREQ,
+            clk_freq=sys_clk_freq,
             ident="Breeze RV64GC DDR4 SoC on KCU105",
             cpu_type="breeze_tiny_debug" if debug else cpu_type.replace("-", "_"),
             cpu_variant="standard",
@@ -117,20 +119,20 @@ class BreezeKCU105SoC(SoCCore):
         self.ddrphy = usddrphy.USDDRPHY(
             platform.request("ddram"),
             memtype="DDR4",
-            sys_clk_freq=SYS_CLK_FREQ,
+            sys_clk_freq=sys_clk_freq,
             iodelay_clk_freq=200e6,
         )
         self.add_sdram(
             name="sdram",
             phy=self.ddrphy,
-            module=EDY4016A(SYS_CLK_FREQ, "1:4"),
+            module=EDY4016A(sys_clk_freq, "1:4"),
             size=DDR_SIZE,
             l2_cache_size=0,
         )
 
         self.clint = BreezeClintVerilog(
             platform=platform,
-            sys_clk_freq=SYS_CLK_FREQ,
+            sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQ,
             num_harts=self.cpu.num_harts,
             region_size=CLINT_SIZE,
@@ -188,7 +190,7 @@ class BreezeKCU105SoC(SoCCore):
 
         if debug:
             from flow.ila import BreezeDebugILA
-            self.debug_ila = BreezeDebugILA(self.cpu, platform)
+            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq)
 
 
 def main():
@@ -196,6 +198,8 @@ def main():
         description="Build the fixed Breeze/KCU105 LiteX SoC.")
     parser.add_argument("--cpu-type", choices=("breeze", "breeze-tiny"),
                         default="breeze", help="four-hart or single-hart Linux cluster")
+    parser.add_argument("--sys-clk-freq", type=int, choices=(50_000_000, 100_000_000),
+                        default=SYS_CLK_FREQ, help="system frequency in Hz (default: 50000000)")
     parser.add_argument("--output-dir", default=None,
                         help="override the CPU-specific build directory")
     parser.add_argument("--debug", action="store_true",
@@ -220,9 +224,12 @@ def main():
             "single gshare linux fpga-debug",
         ], cwd=os.path.join(FLOW_ROOT, "design"), check=True)
 
-    soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug)
+    soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug,
+                          sys_clk_freq=args.sys_clk_freq)
     output_dir = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
         TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
+    if args.output_dir is None and args.sys_clk_freq != SYS_CLK_FREQ:
+        output_dir += f"-{args.sys_clk_freq // 1_000_000}mhz"
     builder = Builder(
         soc,
         output_dir=output_dir,

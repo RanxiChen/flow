@@ -104,6 +104,56 @@ class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim 
 
   // ===== Transient races =====
 
+  for (probeWithGrant <- Seq(true, false)) {
+    s"refill installation preserves AMO data with probe at ${if (probeWithGrant) "grant" else "install"}" in {
+      simulate(newDut()) { dut =>
+        val h = new DCacheHomeModel(dut, new DTestMem)
+        val coh = dut.io.coherence
+        val addr = sramAddr(0, 12)
+        val old = h.mem.readBytes(addr, 8)
+        val increment = BigInt(7)
+        h.holdGrant = true
+        h.cpuStart(addr, BreezeMemOp.Amo, wdata = increment, amoFunc = BreezeAmoFunc.Add)
+        var cycles = 0
+        while (h.reqLog.isEmpty && cycles < 100) { h.step(); cycles += 1 }
+        h.reqLog.map(_.opcode).toSeq mustBe Seq(GetM)
+        h.step()
+
+        def driveProbe(): Unit = {
+          coh.probe.valid.poke(true.B)
+          coh.probe.txnId.poke(3.U)
+          coh.probe.lineAddr.poke(lineBase(addr).U)
+          coh.probe.opcode.poke(BreezeProbeOpcode.ProbeRecallInv.litValue)
+          coh.probe.ready.peek().litToBoolean mustBe true
+        }
+        if (probeWithGrant) driveProbe()
+        h.holdGrant = false
+        h.step() // Accept the data grant; the line has not been installed yet.
+        h.grantsAccepted mustBe 1
+        dut.io.cpu.rsp.valid.peek().litToBoolean mustBe false
+        coh.grant.ready.peek().litToBoolean mustBe false
+        if (probeWithGrant) coh.probe.valid.poke(false.B) else driveProbe()
+        h.step() // Install using captured data; the model now drives invalid zeros.
+        coh.probe.valid.poke(false.B)
+        val (data, error, _) = h.cpuWait()
+        error mustBe false
+        data mustBe old
+
+        cycles = 0
+        while (!coh.probeResp.valid.peek().litToBoolean && cycles < 100) {
+          h.step(); cycles += 1
+        }
+        coh.probeResp.valid.peek().litToBoolean mustBe true
+        coh.probeResp.hasData.peek().litToBoolean mustBe true
+        (coh.probeResp.lineData.peek().litValue & word) mustBe ((old + increment) & word)
+        coh.probeResp.ready.poke(true.B)
+        h.step()
+        coh.probeResp.ready.poke(false.B)
+        h.grantsAccepted mustBe 1
+      }
+    }
+  }
+
   "upgrade race: a probe kills the S copy while GetM waits; the data grant repairs it" in {
     simulate(newDut()) { dut =>
       val h = new DCacheHomeModel(dut, new DTestMem)

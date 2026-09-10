@@ -11,7 +11,8 @@ class BreezeDebugILA(Module):
     depth = 4096
     input_pipe_stages = 2
 
-    def __init__(self, cpu, platform):
+    def __init__(self, cpu, platform, clock_hz=50_000_000):
+        self.clock_hz = int(clock_hz)
         if cpu.num_harts != 1 or not cpu.tandem_enabled:
             raise ValueError("Breeze ILA requires a single hart with live Tandem outputs")
 
@@ -81,7 +82,7 @@ class BreezeDebugILA(Module):
 
     def write_probe_map(self, filename):
         with open(filename, "w", encoding="utf-8") as stream:
-            json.dump({"clock": "sys", "clock_hz": 50_000_000,
+            json.dump({"clock": "sys", "clock_hz": self.clock_hz,
                        "depth": self.depth, "input_pipe_stages": self.input_pipe_stages,
                        "total_width": sum(len(p) for p in self.probes),
                        "probes": self.probe_map}, stream, indent=2)
