@@ -8,6 +8,7 @@ use the same memory map later, but are not part of this target's build flow.
 
 import argparse
 import os
+import subprocess
 import sys
 
 from litex.soc.cores.cpu import CPUS
@@ -26,6 +27,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, LITEX_WRAPPER_ROOT)
 
 from flow import Breeze, BreezeTiny  # noqa: E402
+from flow.core import BreezeTinyDebug  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
@@ -54,12 +56,14 @@ UART_PLIC_SOURCE = 10
 
 BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze-ddr")
 TINY_BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze-tiny-ddr")
+DEBUG_BUILD_DIR = TINY_BUILD_DIR + "-debug"
 
 
 CPUS["breeze"] = Breeze
 # LiteX incorporates this key into CONFIG_CPU_TYPE_* C identifiers.
 # Keep the public CLI spelling hyphenated and the internal registry key valid C.
 CPUS["breeze_tiny"] = BreezeTiny
+CPUS["breeze_tiny_debug"] = BreezeTinyDebug
 
 
 class BreezeKCU105SoC(SoCCore):
@@ -73,9 +77,11 @@ class BreezeKCU105SoC(SoCCore):
         "timer0": 2,
     }
 
-    def __init__(self, cpu_type="breeze"):
+    def __init__(self, cpu_type="breeze", debug=False):
         if cpu_type not in ("breeze", "breeze-tiny"):
             raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
+        if debug and cpu_type != "breeze-tiny":
+            raise ValueError("--debug only supports --cpu-type breeze-tiny (single hart)")
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, SYS_CLK_FREQ)
 
@@ -83,7 +89,7 @@ class BreezeKCU105SoC(SoCCore):
             platform,
             clk_freq=SYS_CLK_FREQ,
             ident="Breeze RV64GC DDR4 SoC on KCU105",
-            cpu_type=cpu_type.replace("-", "_"),
+            cpu_type="breeze_tiny_debug" if debug else cpu_type.replace("-", "_"),
             cpu_variant="standard",
             bus_standard="wishbone",
             bus_data_width=64,
@@ -180,6 +186,10 @@ class BreezeKCU105SoC(SoCCore):
         self.add_constant("BREEZE_PLIC", PLIC_ORIGIN)
         self.add_constant("BREEZE_UART_PLIC_SOURCE", UART_PLIC_SOURCE)
 
+        if debug:
+            from flow.ila import BreezeDebugILA
+            self.debug_ila = BreezeDebugILA(self.cpu, platform)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -188,6 +198,8 @@ def main():
                         default="breeze", help="four-hart or single-hart Linux cluster")
     parser.add_argument("--output-dir", default=None,
                         help="override the CPU-specific build directory")
+    parser.add_argument("--debug", action="store_true",
+                        help="generate single-hart Tandem RTL and add a native Vivado ILA")
     parser.add_argument(
         "--build",
         action="store_true",
@@ -199,9 +211,18 @@ def main():
         help="load the already-built bitstream into KCU105 SRAM",
     )
     args = parser.parse_args()
+    if args.debug and args.cpu_type != "breeze-tiny":
+        parser.error("--debug only supports --cpu-type breeze-tiny (single hart)")
 
-    soc = BreezeKCU105SoC(cpu_type=args.cpu_type)
-    output_dir = args.output_dir or (TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
+    if args.debug and not args.load:
+        subprocess.run([
+            "sbt", "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
+            "single gshare linux fpga-debug",
+        ], cwd=os.path.join(FLOW_ROOT, "design"), check=True)
+
+    soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug)
+    output_dir = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
+        TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
     builder = Builder(
         soc,
         output_dir=output_dir,
@@ -222,6 +243,9 @@ def main():
         vivado_post_place_phys_opt_directive="AggressiveExplore",
         vivado_route_directive="NoTimingRelaxation",
     )
+
+    if args.debug:
+        soc.debug_ila.write_probe_map(os.path.join(output_dir, "ila-probes.json"))
 
     if args.load:
         programmer = soc.platform.create_programmer()

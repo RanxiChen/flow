@@ -14,6 +14,7 @@ if WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, WRAPPER_ROOT)
 
 from flow import Breeze, BreezeTiny  # noqa: E402
+from flow.core import BreezeTinyDebug  # noqa: E402
 from flow.cluster import Flow  # noqa: E402
 
 
@@ -32,6 +33,8 @@ class _Platform:
 def _write_production_rtl(root, cpu_cls=Breeze):
     rtl_dir = os.path.join(
         root, "design", "build", "rtl", "cluster", cpu_cls.cluster_profile, "gshare", "linux")
+    if cpu_cls.rtl_mode == "fpga-debug":
+        rtl_dir = os.path.join(rtl_dir, "fpga-debug")
     os.makedirs(rtl_dir)
     source = os.path.join(rtl_dir, "BreezeMulticoreClusterWishbone.sv")
     with open(source, "w", encoding="utf-8") as source_file:
@@ -48,8 +51,8 @@ l1Ways=4
 l2Ways=8
 corePreset=gshare
 privilegeProfile=linux
-rtlMode=production
-tandem=false
+rtlMode={cpu_cls.rtl_mode}
+tandem={str(cpu_cls.tandem_enabled).lower()}
 compressed=true
 addressTranslation=bare,sv39
 """
@@ -60,6 +63,24 @@ addressTranslation=bare,sv39
 
 
 class BreezeCpuWrapperTest(unittest.TestCase):
+    def test_fpga_debug_is_isolated_and_rejects_disabled_trace(self):
+        with tempfile.TemporaryDirectory() as root:
+            production_dir, _ = _write_production_rtl(root, BreezeTiny)
+            debug_dir, marker_path = _write_production_rtl(root, BreezeTinyDebug)
+            with mock.patch.object(BreezeTinyDebug, "flow_root_dir", return_value=root):
+                cpu = BreezeTinyDebug(_Platform())
+                self.assertEqual(cpu.rtl_dir(), debug_dir)
+                self.assertTrue(cpu.tandem_enabled)
+                with open(marker_path, encoding="utf-8") as stream:
+                    marker = stream.read()
+                with open(marker_path, "w", encoding="utf-8") as stream:
+                    stream.write(marker.replace("tandem=true", "tandem=false"))
+                with self.assertRaisesRegex(RuntimeError, "tandem"):
+                    BreezeTinyDebug(_Platform())
+            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
+                self.assertEqual(BreezeTiny(_Platform()).rtl_dir(), production_dir)
+            self.assertFalse(BreezeTiny.tandem_enabled)
+
     def test_tiny_preserves_linux_buses_and_one_hart_interrupts(self):
         with tempfile.TemporaryDirectory() as root:
             _write_production_rtl(root, BreezeTiny)

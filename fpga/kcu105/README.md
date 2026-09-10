@@ -48,6 +48,61 @@ itself establish that the DDR training issue is fixed. Its Linux device tree
 and Buildroot configuration are described in
 [`linux/buildroot-external/README.md`](../../linux/buildroot-external/README.md).
 
+## Single-hart ILA debug build
+
+`--debug` enables both Tandem/D-cache trace generation and a native Xilinx
+ILA. It is off by default and is only accepted with `--cpu-type breeze-tiny`;
+requesting it with the four-hart product fails before RTL generation.
+
+In the Alan LiteX/Vivado environment, with `sbt` on `PATH`:
+
+```sh
+cd /home/chen/FUN/flow
+python fpga/kcu105/target.py --cpu-type breeze-tiny --debug --build
+```
+
+This command first elaborates `single gshare linux fpga-debug`, then builds
+the SoC and runs Vivado. Without `--build`, it generates RTL, compiles BIOS
+and emits the Vivado project only. The debug wrapper requires the marker
+`rtlMode=fpga-debug` and `tandem=true`; production RTL cannot silently supply
+zero-valued trace probes. The legacy simulation `debug` mode is unchanged.
+
+Default outputs are isolated:
+
+- RTL: `design/build/rtl/cluster/single/gshare/linux/fpga-debug/`.
+- SoC: `build/fpga/kcu105-breeze-tiny-ddr-debug/`.
+- Bitstream: `gateware/xilinx_kcu105.bit` within that SoC directory.
+- Debug probes: `gateware/xilinx_kcu105.ltx`, produced by Vivado alongside
+  the bitstream; always use the pair from the same run.
+- Probe descriptions/widths: `ila-probes.json` within the SoC directory.
+
+The ILA samples 54 probes (1203 bits total) at the 50 MHz system clock,
+with 4096 samples and two input pipeline stages. A full-rate capture spans
+81.92 microseconds. These are passive observation taps; no CPU/DDR handshake
+is routed through the ILA. Probe groups include:
+
+- all fields of hart 0's Tandem retirement record;
+- last retired PC/instruction, a sticky `seen_retire` flag and a saturating
+  16-bit `no_retire_cycles` counter (counts system cycles, not instructions);
+- D-cache request/response trace, hart fatal/estop and low MTIME bits;
+- memory/MMIO Wishbone byte addresses, handshake flags, byte enables and data.
+
+Retirement fields are meaningful when `dbg_retire_valid=1`. The retained
+last-retire fields remain readable after retirement stops; `seen_retire`
+distinguishes them from reset values. The initial diagnostic capture should
+sample every cycle, so a pending load with no retirement remains visible.
+All probes receive the same ILA input pipeline delay.
+
+After loading the new image, open Vivado Hardware Manager, associate the
+matching `.ltx`, refresh the device and use **Run Trigger Immediate** to
+capture the current state. Readout uses the FPGA JTAG debug infrastructure,
+without CPU execution or DDR storage. The system clock must still run.
+Normal serial console use can continue; the old image has no ILA.
+
+Debug builds still require timing/resource checks and a new board test.
+Changing runtime trigger conditions does not require rebuilding; changing
+probe wiring or capture depth does. The demo sources are not modified.
+
 ## Fixed hardware layout
 
 | Region | Address | Implementation |

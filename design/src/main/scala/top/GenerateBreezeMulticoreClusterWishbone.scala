@@ -19,27 +19,36 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 object GenerateBreezeMulticoreClusterWishbone extends App {
     require(args.length >= 1 && args.length <= 4,
         "usage: GenerateBreezeMulticoreClusterWishbone " +
-          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production]")
+          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production|fpga-debug]")
 
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
     private val privilegeProfile =
         PrivilegeProfile.fromName(args.lift(2).getOrElse("mcu"))
     private val rtlMode = args.lift(3).getOrElse("debug")
-    require(Set("debug", "production").contains(rtlMode),
-        s"RTL mode must be debug or production, got: $rtlMode")
-    private val enableTandem = rtlMode == "debug"
+    require(Set("debug", "production", "fpga-debug").contains(rtlMode),
+        s"RTL mode must be debug, production or fpga-debug, got: $rtlMode")
+    private val enableTandem = rtlMode != "production"
     private val clusterCfg =
         BreezeClusterPresets.fromName(args(0)).copy(
             corePreset = corePreset,
             privilegeProfile = privilegeProfile)
+    require(rtlMode != "fpga-debug" ||
+        (clusterCfg.numHarts == 1 && privilegeProfile == PrivilegeProfile.Linux),
+        "fpga-debug only supports the single-hart Linux cluster")
     // Preserve the historical MCU output path for every existing runner.
     // Linux/Bare elaborations are isolated so they can never overwrite MCU RTL.
     private val targetDirBase =
         os.pwd / "build" / "rtl" / "cluster" / clusterCfg.profileName / corePreset.name
-    private val targetDir = if (privilegeProfile == PrivilegeProfile.Mcu) {
+    private val profileDir = if (privilegeProfile == PrivilegeProfile.Mcu) {
         targetDirBase
     } else {
         targetDirBase / privilegeProfile.name
+    }
+    // Hardware instrumentation never overwrites production/simulation RTL.
+    private val targetDir = if (rtlMode == "fpga-debug") {
+        profileDir / "fpga-debug"
+    } else {
+        profileDir
     }
 
     println(

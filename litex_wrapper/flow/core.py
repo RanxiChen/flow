@@ -1,8 +1,9 @@
 """Production LiteX CPU wrappers for Breeze Linux clusters.
 
 ``Breeze`` exposes four harts; ``BreezeTiny`` exposes one hart with L2/Home.
-Both use RV64GC, the gshare preset, Linux privilege support and production
-(no Tandem) RTL. Legacy configurable
+Both default to RV64GC, the gshare preset, Linux privilege support and production
+(no Tandem) RTL. The target-internal ``BreezeTinyDebug`` enables FPGA traces.
+Legacy configurable
 simulation wrappers live in :mod:`flow.cluster` and reuse the private base
 class below; they are not part of the FPGA product interface.
 """
@@ -291,7 +292,7 @@ class _BreezeClusterCPU(CPU):
         profile_marker = os.path.join(rtl_dir, "cluster-profile.txt")
         if not os.path.isfile(filelist) or not os.path.isfile(profile_marker):
             raise FileNotFoundError(
-                "Breeze production RTL has not been elaborated. Generate it with:\n"
+                "Breeze RTL has not been elaborated. Generate it with:\n"
                 f"  cd {os.path.join(cls.flow_root_dir(), 'design')} && "
                 "sbt \"runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
                 f"{cls.cluster_profile} {cls.core_preset} "
@@ -379,3 +380,20 @@ class BreezeTiny(Breeze):
     cluster_profile = "single"
     num_harts = 1
     l2_bytes = 16384
+
+
+class BreezeTinyDebug(BreezeTiny):
+    """Target-internal single-hart product with live FPGA trace outputs."""
+
+    human_name = "Breeze Tiny RV64GC Linux (1 hart, ILA debug)"
+    rtl_mode = "fpga-debug"
+    tandem_enabled = True
+    expected_marker = {
+        **BreezeTiny.expected_marker,
+        "rtlMode": "fpga-debug",
+        "tandem": "true",
+    }
+
+    @classmethod
+    def rtl_dir(cls):
+        return os.path.join(super().rtl_dir(), "fpga-debug")
