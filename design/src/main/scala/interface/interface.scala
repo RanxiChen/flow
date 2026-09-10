@@ -3,6 +3,7 @@ package flow.interface
 import chisel3._
 import chisel3.util._
 import flow.core._
+import flow.config.BreezePmpConfig
 
 object FlowConst{
     val pc_addr_width = 64
@@ -296,8 +297,8 @@ class BreezeMmuContext(val XLEN: Int = 64) extends Bundle {
     val sum = Bool()
     val mxr = Bool()
     val adue = Bool()
-    val pmpcfg = Vec(16, UInt(8.W))
-    val pmpaddr = Vec(16, UInt(54.W))
+    val pmpcfg = Vec(BreezePmpConfig.CsrEntries, UInt(8.W))
+    val pmpaddr = Vec(BreezePmpConfig.CsrEntries, UInt(54.W))
 }
 
 class BreezeSfenceReq(val XLEN: Int = 64) extends Bundle {

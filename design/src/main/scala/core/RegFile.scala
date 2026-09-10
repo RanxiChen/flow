@@ -2,7 +2,7 @@ package flow.core
 
 import chisel3._
 import chisel3.util._
-import flow.config.PrivilegeProfile
+import flow.config.{BreezePmpConfig, PrivilegeProfile}
 import flow.interface._
 /**
   * Register File, used to store general purpose registers
@@ -236,8 +236,16 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val stval = RegInit(0.U(XLEN.W))
     val sscratch = RegInit(0.U(XLEN.W))
     val satp = RegInit(0.U(XLEN.W))
-    val pmpcfg = RegInit(VecInit(Seq.fill(16)(0.U(8.W))))
-    val pmpaddr = RegInit(VecInit(Seq.fill(16)(0.U(54.W))))
+    val pmpcfg = RegInit(VecInit(Seq.fill(BreezePmpConfig.ActiveEntries)(0.U(8.W))))
+    val pmpaddr = RegInit(VecInit(Seq.fill(BreezePmpConfig.ActiveEntries)(0.U(54.W))))
+    // Keep all 16 CSR slots visible to firmware probing. Entries 8..15 have
+    // no storage, ignore writes, and read as zero through both interfaces.
+    val visiblePmpCfg = VecInit((0 until BreezePmpConfig.CsrEntries).map { index =>
+        if (index < BreezePmpConfig.ActiveEntries) pmpcfg(index) else 0.U(8.W)
+    })
+    val visiblePmpAddr = VecInit((0 until BreezePmpConfig.CsrEntries).map { index =>
+        if (index < BreezePmpConfig.ActiveEntries) pmpaddr(index) else 0.U(54.W)
+    })
     val scounteren = RegInit(0.U(32.W))
     val stimecmp = RegInit(Fill(XLEN, 1.U(1.W)))
     val mcounteren = RegInit(0.U(32.W))
@@ -330,10 +338,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         csrPattern(CSRMAP.instret)  -> minstret,
         csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit,
         csrPattern(CSRMAP.menvcfg) -> menvcfg,
-        csrPattern(CSRMAP.pmpcfg0) -> Cat(pmpcfg.slice(0, 8).reverse),
-        csrPattern(CSRMAP.pmpcfg2) -> Cat(pmpcfg.slice(8, 16).reverse)
-    ) ++ (0 until 16).map(index =>
-        csrPattern(CSRMAP.pmpaddr0 + index) -> pmpaddr(index))
+        csrPattern(CSRMAP.pmpcfg0) -> Cat(visiblePmpCfg.slice(0, 8).reverse),
+        csrPattern(CSRMAP.pmpcfg2) -> Cat(visiblePmpCfg.slice(8, 16).reverse)
+    ) ++ (0 until BreezePmpConfig.CsrEntries).map(index =>
+        csrPattern(CSRMAP.pmpaddr0 + index) -> visiblePmpAddr(index))
     val supervisorCsrFile = if (enableSupervisorUser) Seq(
         csrPattern(CSRMAP.sstatus) -> sstatus_read,
         csrPattern(CSRMAP.sie) -> sie_read,
@@ -375,7 +383,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
         CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
         CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2) ++
-        (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
+        (0 until BreezePmpConfig.CsrEntries).map(CSRMAP.pmpaddr0 + _) ++
         (0 until implementedHpmCounters).flatMap(index => Seq(
             CSRMAP.mhpmcounter3 + index, CSRMAP.hpmcounter3 + index,
             CSRMAP.mhpmevent3 + index))
@@ -688,7 +696,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             }
             is(CSRMAP.pmpcfg0.U, CSRMAP.pmpcfg2.U) {
                 val base = Mux(io.commit_addr === CSRMAP.pmpcfg0.U, 0.U, 8.U)
-                for (index <- 0 until 16) {
+                for (index <- 0 until BreezePmpConfig.ActiveEntries) {
                     when(base === (index & 8).U) {
                         val lane = index & 7
                         val requested = io.commit_wdata(8 * lane + 7, 8 * lane)
@@ -699,9 +707,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
         }
-        for (index <- 0 until 16) {
+        for (index <- 0 until BreezePmpConfig.ActiveEntries) {
             val ownLocked = pmpcfg(index)(7)
-            val nextTorLocked = if (index == 15) false.B else
+            val nextTorLocked = if (index == BreezePmpConfig.ActiveEntries - 1) false.B else
                 pmpcfg(index + 1)(7) && pmpcfg(index + 1)(4, 3) === 1.U
             when(io.commit_addr === (CSRMAP.pmpaddr0 + index).U &&
                 !ownLocked && !nextTorLocked) {
@@ -838,8 +846,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.mmu_context.sum := mstatus_SUM
     io.mmu_context.mxr := mstatus_MXR
     io.mmu_context.adue := menvcfg(61)
-    io.mmu_context.pmpcfg := pmpcfg
-    io.mmu_context.pmpaddr := pmpaddr
+    io.mmu_context.pmpcfg := visiblePmpCfg
+    io.mmu_context.pmpaddr := visiblePmpAddr
     io.frm := frm
     io.fp_enabled := mstatus_FS =/= 0.U
     // Fixed priority: MEI > MSI > MTI > SEI > SSI > STI. xIE gates an

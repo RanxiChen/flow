@@ -3,9 +3,10 @@ package flow.mmu
 import chisel3._
 import chisel3.util._
 import flow.core.PRIV_MODE
+import flow.config.BreezePmpConfig
 import flow.interface._
 
-/** First-match PMP checker for 16 RV64 entries (TOR, NA4 and NAPOT). */
+/** Parallel first-match checker for the active RV64 PMP entries. */
 class BreezePmpChecker(val xlen: Int = 64) extends Module {
   val io = IO(new Bundle {
     val addr = Input(UInt(xlen.W))
@@ -32,7 +33,8 @@ class BreezePmpChecker(val xlen: Int = 64) extends Module {
   // TOR entries share their boundaries with their neighbours. Compute each
   // endpoint/boundary relation once, rather than comparing against selected
   // TOR/NA4/NAPOT lower and upper bounds inside every entry.
-  val boundaries = io.context.pmpaddr.map(addr => Cat(0.U(9.W), addr, 0.U(2.W)))
+  val boundaries = io.context.pmpaddr.take(BreezePmpConfig.ActiveEntries)
+    .map(addr => Cat(0.U(9.W), addr, 0.U(2.W)))
   def belowBoundary(high: UInt, low: UInt, boundary: UInt): Bool = {
     val boundHigh = boundary(64, blockBits)
     val boundLow = boundary(blockBits - 1, 0)
@@ -40,11 +42,11 @@ class BreezePmpChecker(val xlen: Int = 64) extends Module {
   }
   val startBelow = boundaries.map(b => belowBoundary(startHigh, startLow, b))
   val lastBelow = boundaries.map(b => belowBoundary(lastHigh, lastLow, b))
-  val overlaps = Wire(Vec(16, Bool()))
-  val contains = Wire(Vec(16, Bool()))
-  val permissions = Wire(Vec(16, Bool()))
+  val overlaps = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+  val contains = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+  val permissions = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
 
-  for (n <- 0 until 16) {
+  for (n <- 0 until BreezePmpConfig.ActiveEntries) {
     val cfg = io.context.pmpcfg(n)
     val a = cfg(4, 3)
     val encoded = io.context.pmpaddr(n)

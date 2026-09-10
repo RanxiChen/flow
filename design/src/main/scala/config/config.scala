@@ -1,6 +1,13 @@
 package flow.config
 
 import chisel3.util.log2Ceil
+
+/** Preserve the 16-entry CSR layout; upper entries are hardwired OFF/zero. */
+object BreezePmpConfig {
+    val CsrEntries = 16
+    val ActiveEntries = 8
+}
+
 /**
   * 存放组相连的ICache的配置参数,采用VIPT结构
   * 这个类对应的替换算法是LRU,目前不考虑其他替换算法

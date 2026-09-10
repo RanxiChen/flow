@@ -355,6 +355,46 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "expose eight writable PMP entries and eight read-zero slots to firmware probes" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      val addrMask = (BigInt(1) << 54) - 1
+      var detected = 0
+      for (index <- 0 until 16) {
+        commit(dut, CSRMAP.pmpaddr0 + index, addrMask)
+        selectRead(dut, CSRMAP.pmpaddr0 + index)
+        dut.io.csr_illegal.expect(false.B)
+        val expected = if (index < 8) addrMask else BigInt(0)
+        dut.io.csr_old_data.expect(expected.U)
+        dut.io.mmu_context.pmpaddr(index).expect(expected.U)
+        if (dut.io.csr_old_data.peek().litValue == addrMask) detected += 1
+      }
+      detected mustBe 8
+
+      // Attempts to configure/lock entry 8 cannot change or lock entry 7.
+      commit(dut, CSRMAP.pmpcfg2, BigInt("ffffffffffffffff", 16))
+      selectRead(dut, CSRMAP.pmpcfg2)
+      dut.io.csr_illegal.expect(false.B)
+      dut.io.csr_old_data.expect(0.U)
+      for (index <- 8 until 16) dut.io.mmu_context.pmpcfg(index).expect(0.U)
+      commit(dut, CSRMAP.pmpaddr0 + 7, 0x1234)
+      selectRead(dut, CSRMAP.pmpaddr0 + 7)
+      dut.io.csr_old_data.expect(0x1234.U)
+
+      // A locked TOR entry 7 still locks its own address and entry 6's bound.
+      commit(dut, CSRMAP.pmpcfg0, BigInt(0x89) << 56)
+      commit(dut, CSRMAP.pmpaddr0 + 6, 0)
+      commit(dut, CSRMAP.pmpaddr0 + 7, 0)
+      selectRead(dut, CSRMAP.pmpaddr0 + 6)
+      dut.io.csr_old_data.expect(addrMask.U)
+      selectRead(dut, CSRMAP.pmpaddr0 + 7)
+      dut.io.csr_old_data.expect(0x1234.U)
+      commit(dut, CSRMAP.pmpcfg0, 0)
+      selectRead(dut, CSRMAP.pmpcfg0)
+      dut.io.csr_old_data.expect((BigInt(0x89) << 56).U)
+    }
+  }
+
   "implement PMP CSRs and Sstc time/stimecmp pending state" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

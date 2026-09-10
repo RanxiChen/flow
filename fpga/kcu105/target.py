@@ -2,22 +2,22 @@
 """Fixed LiteX target for bringing Breeze up on a Xilinx KCU105.
 
 The first hardware milestone deliberately stops at the LiteX BIOS and a
-single-hart bare-metal payload loaded into DDR4 over UART.  OpenSBI and Linux
-use the same memory map later, but are not part of this target's build flow.
+single-hart bare-metal payload loaded into on-chip RAM over UART. DDR4 is
+temporarily omitted while the core and board integration are brought up.
 """
 
 import argparse
 import os
 import sys
 
+from migen import ClockDomain, Signal
+from litex.gen import LiteXModule
+from litex.soc.cores.clock import USMMCM
 from litex.soc.cores.cpu import CPUS
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.soc_core import SoCCore
 from litex_boards.platforms import xilinx_kcu105
-from litex_boards.targets.xilinx_kcu105 import _CRG
-from litedram.modules import EDY4016A
-from litedram.phy import usddrphy
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -39,7 +39,7 @@ UART_BAUDRATE = 115_200
 
 ROM_SIZE = 0x0001_0000
 SRAM_SIZE = 0x0001_0000
-DDR_SIZE = 0x4000_0000
+MAIN_RAM_SIZE = 0x0004_0000  # 256 KiB BRAM at the existing main_ram origin.
 
 CLINT_ORIGIN = 0x0200_0000
 CLINT_SIZE = 0x0001_0000
@@ -53,17 +53,29 @@ PLIC_SIZE = 0x0400_0000
 PLIC_NUM_SOURCES = 31
 UART_PLIC_SOURCE = 10
 
-BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze")
+BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze-bram")
 
 
 CPUS["breeze"] = Breeze
 
 
-class BreezeKCU105SoC(SoCCore):
-    """Four-hart Breeze SoC with LiteX BIOS, UART and KCU105 DDR4."""
+class _CRG(LiteXModule):
+    """Single system clock; the BRAM target needs no DDR/IDELAY domains."""
 
-    # Keep the software-visible LiteX CSR layout stable.  The DDR PHY and
-    # controller CSRs are allocated after these fixed pages.
+    def __init__(self, platform, sys_clk_freq):
+        self.rst = Signal()
+        self.cd_sys = ClockDomain("sys")
+        self.pll = pll = USMMCM(speedgrade=-2)
+        self.comb += pll.reset.eq(platform.request("cpu_reset") | self.rst)
+        pll.register_clkin(platform.request("clk125"), 125e6)
+        pll.create_clkout(self.cd_sys, sys_clk_freq)
+        platform.add_false_path_constraints(self.cd_sys.clk, pll.clkin)
+
+
+class BreezeKCU105SoC(SoCCore):
+    """Four-hart Breeze SoC with LiteX BIOS, UART and on-chip main RAM."""
+
+    # Keep the software-visible control/UART/timer CSR layout stable.
     csr_map = {
         "ctrl": 0,
         "uart": 1,
@@ -77,7 +89,7 @@ class BreezeKCU105SoC(SoCCore):
         super().__init__(
             platform,
             clk_freq=SYS_CLK_FREQ,
-            ident="Breeze RV64GC Linux SoC on KCU105",
+            ident="Breeze RV64GC BRAM SoC on KCU105",
             cpu_type="breeze",
             cpu_variant="standard",
             bus_standard="wishbone",
@@ -87,8 +99,7 @@ class BreezeKCU105SoC(SoCCore):
             bus_interconnect="shared",
             integrated_rom_size=ROM_SIZE,
             integrated_sram_size=SRAM_SIZE,
-            # The KCU105 DDR4 controller below owns the main_ram region.
-            integrated_main_ram_size=0,
+            integrated_main_ram_size=MAIN_RAM_SIZE,
             csr_data_width=32,
             csr_address_width=14,
             csr_paging=0x1000,
@@ -99,22 +110,6 @@ class BreezeKCU105SoC(SoCCore):
             # The BIOS polls timer0 for delays/timeouts.  Architectural time
             # and timer interrupts are supplied separately by the CLINT.
             with_timer=True,
-        )
-
-        # DDR4 is the only main_ram implementation.  Breeze already contains
-        # its coherent shared L2, so a second LiteX L2 must not be inserted.
-        self.ddrphy = usddrphy.USDDRPHY(
-            platform.request("ddram"),
-            memtype="DDR4",
-            sys_clk_freq=SYS_CLK_FREQ,
-            iodelay_clk_freq=200e6,
-        )
-        self.add_sdram(
-            name="sdram",
-            phy=self.ddrphy,
-            module=EDY4016A(SYS_CLK_FREQ, "1:4"),
-            size=DDR_SIZE,
-            l2_cache_size=0,
         )
 
         self.clint = BreezeClintVerilog(

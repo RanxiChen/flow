@@ -126,22 +126,22 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16) extends Module {
   val vpnIndex = MuxLookup(level, reqVpn(8, 0))(Seq(
     2.U -> reqVpn(26, 18), 1.U -> reqVpn(17, 9), 0.U -> reqVpn(8, 0)))
   val walkAddr = Cat(0.U(8.W), tablePpn, 0.U(12.W)) + (vpnIndex << 3)
-  val finalPmp = Module(new BreezePmpChecker(xlen))
-  finalPmp.io.addr := resultPaddr
-  finalPmp.io.sizeLog2 := reqReg.sizeLog2
-  finalPmp.io.access := reqReg.access
-  finalPmp.io.privilege := reqPriv
-  finalPmp.io.context := io.context
-  val walkPmp = Module(new BreezePmpChecker(xlen))
-  walkPmp.io.addr := Mux(state === UpdateAdReq, pteAddr, walkAddr)
-  walkPmp.io.sizeLog2 := 3.U
-  walkPmp.io.access := Mux(state === UpdateAdReq, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
-  walkPmp.io.privilege := reqPriv
-  walkPmp.io.context := io.context
+  // Page-table accesses and final responses use disjoint FSM states. Share
+  // the combinational checker without adding translation cycles or scanning
+  // PMP entries over time. While a response is stalled, Respond stays active.
+  val checkingWalk = state === ReadPteReq || state === UpdateAdReq
+  val sharedPmp = Module(new BreezePmpChecker(xlen))
+  sharedPmp.io.addr := Mux(checkingWalk,
+    Mux(state === UpdateAdReq, pteAddr, walkAddr), resultPaddr)
+  sharedPmp.io.sizeLog2 := Mux(checkingWalk, 3.U, reqReg.sizeLog2)
+  sharedPmp.io.access := Mux(checkingWalk,
+    Mux(state === UpdateAdReq, BreezeMmuAccess.Store, BreezeMmuAccess.Load), reqReg.access)
+  sharedPmp.io.privilege := reqPriv
+  sharedPmp.io.context := io.context
   io.i.resp.bits.accessFault := resultAccessFault ||
-    (!resultPageFault && !finalPmp.io.allowed)
+    (!resultPageFault && !sharedPmp.io.allowed)
   io.d.resp.bits.accessFault := resultAccessFault ||
-    (!resultPageFault && !finalPmp.io.allowed)
+    (!resultPageFault && !sharedPmp.io.allowed)
 
   when(io.killI && sourceI && state =/= Idle) { killed := true.B }
   when(io.sfence.valid && state =/= Idle) { killed := true.B }
@@ -172,12 +172,12 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16) extends Module {
       }
     }
     is(ReadPteReq) {
-      io.memReq.valid := walkPmp.io.allowed
+      io.memReq.valid := sharedPmp.io.allowed
       io.memReq.bits.valid := true.B
       io.memReq.bits.addr := walkAddr
       io.memReq.bits.sizeLog2 := 3.U
       io.memReq.bits.memOp := BreezeMemOp.Load
-      when(!walkPmp.io.allowed) {
+      when(!sharedPmp.io.allowed) {
         resultAccessFault := true.B; resultPaddr := 0.U; state := Respond
       }.elsewhen(io.memReq.fire) { pteAddr := walkAddr; state := ReadPteWait }
     }
@@ -238,14 +238,14 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16) extends Module {
     is(UpdateAdReq) {
       val mask = (1.U(64.W) << 6) |
         Mux(reqReg.access === BreezeMmuAccess.Store, 1.U(64.W) << 7, 0.U)
-      io.memReq.valid := walkPmp.io.allowed
+      io.memReq.valid := sharedPmp.io.allowed
       io.memReq.bits.valid := true.B
       io.memReq.bits.addr := pteAddr
       io.memReq.bits.sizeLog2 := 3.U
       io.memReq.bits.wdata := mask
       io.memReq.bits.memOp := BreezeMemOp.Amo
       io.memReq.bits.amoFunc := BreezeAmoFunc.Or
-      when(!walkPmp.io.allowed) {
+      when(!sharedPmp.io.allowed) {
         resultAccessFault := true.B; resultPaddr := 0.U; state := Respond
       }.elsewhen(io.memReq.fire) { state := UpdateAdWait }
     }
