@@ -21,7 +21,12 @@ class RegFileIO(XLEN:Int) extends Bundle{
 
 class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     val io = IO(new RegFileIO(XLEN))
-    val content = RegInit(VecInit(Seq.fill(32)(0.U(XLEN.W))))
+    // Asynchronous reads and one synchronous write infer FPGA distributed RAM.
+    // Reset only the validity bits: resetting every data bit prevents RAM
+    // inference. Unwritten registers still read zero, including after reset.
+    val content = Mem(32, UInt(XLEN.W))
+    val initialized = RegInit(VecInit(Seq.fill(32)(false.B)))
+    def stored(addr: UInt): UInt = Mux(initialized(addr), content(addr), 0.U)
     val writeValid = io.rd_en && (io.rd_addr =/= 0.U)
     val rs1WriteHit = writeValid && (io.rs1_addr === io.rd_addr)
     val rs2WriteHit = writeValid && (io.rs2_addr === io.rd_addr)
@@ -30,16 +35,17 @@ class RegFile(XLEN:Int=64,val dumplog:Boolean=false) extends Module {
     // explicit so a consumer sees the value being committed, not the previous
     // contents of the register file.
     io.rs1_data := Mux(io.rs1_addr === 0.U, 0.U,
-        Mux(rs1WriteHit, io.rd_data, content(io.rs1_addr)))
+        Mux(rs1WriteHit, io.rd_data, stored(io.rs1_addr)))
     io.rs2_data := Mux(io.rs2_addr === 0.U, 0.U,
-        Mux(rs2WriteHit, io.rd_data, content(io.rs2_addr)))
-    when(writeValid){
+        Mux(rs2WriteHit, io.rd_data, stored(io.rs2_addr)))
+    when(writeValid && !reset.asBool){
         content(io.rd_addr) := io.rd_data
+        initialized(io.rd_addr) := true.B
     }        
     if(dumplog){
     printf(cf"[RegFile]\n")
     for(i <- 0 until 32){
-        printf(cf"x[${i}%02d]=0x${content(i)}%x    ")
+        printf(cf"x[${i}%02d]=0x${stored(i.U(5.W))}%x    ")
         if(i%4 == 3){
             printf("\n")
         }        

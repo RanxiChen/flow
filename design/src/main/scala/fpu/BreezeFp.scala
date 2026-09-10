@@ -238,12 +238,20 @@ class BreezeFpRegFile extends Module {
         val rdData = Input(UInt(64.W))
         val rdEn = Input(Bool())
     })
-    val content = RegInit(VecInit(Seq.fill(32)(0.U(64.W))))
-    def read(addr: UInt): UInt = Mux(io.rdEn && io.rdAddr === addr, io.rdData, content(addr))
+    // Three asynchronous read ports, one synchronous write. Keep the data
+    // array reset-free for LUTRAM inference; validity preserves reset zeros.
+    // f0 is an ordinary writable register, unlike integer x0.
+    val content = Mem(32, UInt(64.W))
+    val initialized = RegInit(VecInit(Seq.fill(32)(false.B)))
+    def read(addr: UInt): UInt = Mux(io.rdEn && io.rdAddr === addr, io.rdData,
+        Mux(initialized(addr), content(addr), 0.U))
     io.rs1Data := read(io.rs1Addr)
     io.rs2Data := read(io.rs2Addr)
     io.rs3Data := read(io.rs3Addr)
-    when(io.rdEn) { content(io.rdAddr) := io.rdData }
+    when(io.rdEn && !reset.asBool) {
+        content(io.rdAddr) := io.rdData
+        initialized(io.rdAddr) := true.B
+    }
 }
 
 /** Resolve the vendored FPnew sources once at elaboration time.  ChiselSim
