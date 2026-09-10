@@ -13,7 +13,7 @@ WRAPPER_ROOT = os.path.join(FLOW_ROOT, "litex_wrapper")
 if WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, WRAPPER_ROOT)
 
-from flow import Breeze  # noqa: E402
+from flow import Breeze, BreezeTiny  # noqa: E402
 from flow.cluster import Flow  # noqa: E402
 
 
@@ -29,20 +29,20 @@ class _Platform:
         self.include_paths.append(path)
 
 
-def _write_production_rtl(root):
+def _write_production_rtl(root, cpu_cls=Breeze):
     rtl_dir = os.path.join(
-        root, "design", "build", "rtl", "cluster", "small", "gshare", "linux")
+        root, "design", "build", "rtl", "cluster", cpu_cls.cluster_profile, "gshare", "linux")
     os.makedirs(rtl_dir)
     source = os.path.join(rtl_dir, "BreezeMulticoreClusterWishbone.sv")
     with open(source, "w", encoding="utf-8") as source_file:
         source_file.write("module BreezeMulticoreClusterWishbone; endmodule\n")
     with open(os.path.join(rtl_dir, "filelist.f"), "w", encoding="utf-8") as manifest:
         manifest.write("BreezeMulticoreClusterWishbone.sv\n")
-    marker = """profile=small
-numHarts=4
+    marker = f"""profile={cpu_cls.cluster_profile}
+numHarts={cpu_cls.num_harts}
 l1iBytes=8192
 l1dBytes=8192
-l2Bytes=65536
+l2Bytes={cpu_cls.l2_bytes}
 lineBytes=32
 l1Ways=4
 l2Ways=8
@@ -60,6 +60,40 @@ addressTranslation=bare,sv39
 
 
 class BreezeCpuWrapperTest(unittest.TestCase):
+    def test_tiny_preserves_linux_buses_and_one_hart_interrupts(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write_production_rtl(root, BreezeTiny)
+            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
+                cpu = BreezeTiny(_Platform())
+            self.assertEqual(cpu.name, "breeze-tiny")
+            self.assertEqual(cpu.l2_bytes, 16384)
+            self.assertEqual(cpu.mem_map, Breeze.mem_map)
+            self.assertEqual(cpu.gcc_arch, Breeze.gcc_arch)
+            self.assertEqual(cpu.gcc_abi, Breeze.gcc_abi)
+            self.assertEqual(cpu.gcc_defines, Breeze.gcc_defines)
+            self.assertEqual(len(cpu.retires), 1)
+            self.assertEqual(len(cpu.msip), 1)
+            self.assertEqual(len(cpu.mtip), 1)
+            self.assertEqual(len(cpu.meip), 1)
+            self.assertEqual(len(cpu.seip), 1)
+            self.assertIn("i_io_externalInterrupts_0", cpu.cpu_params)
+            self.assertIn("i_io_supervisorExternalInterrupts_0", cpu.cpu_params)
+            self.assertNotIn("i_io_msip_1", cpu.cpu_params)
+            self.assertEqual(cpu.periph_buses, [cpu.memory_bus, cpu.mmio_bus])
+            cpu.set_reset_address(0x10010000)
+            self.assertEqual(Breeze.num_harts, 4)
+
+    def test_tiny_rejects_mismatched_hart_count(self):
+        with tempfile.TemporaryDirectory() as root:
+            _, marker_path = _write_production_rtl(root, BreezeTiny)
+            with open(marker_path, encoding="utf-8") as stream:
+                marker = stream.read()
+            with open(marker_path, "w", encoding="utf-8") as stream:
+                stream.write(marker.replace("numHarts=1", "numHarts=4"))
+            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
+                with self.assertRaisesRegex(RuntimeError, "numHarts"):
+                    BreezeTiny(_Platform())
+
     def test_public_product_is_fixed_four_hart_linux(self):
         self.assertEqual(Breeze.name, "breeze")
         self.assertEqual(Breeze.variants, ("standard",))

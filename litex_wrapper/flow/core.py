@@ -1,8 +1,8 @@
-"""Production LiteX CPU wrapper for the four-hart Breeze Linux cluster.
+"""Production LiteX CPU wrappers for Breeze Linux clusters.
 
-``Breeze`` is the only public CPU product exposed by this package. Its RTL
-profile is deliberately fixed: four RV64GC harts, the gshare core preset, the
-Linux privilege profile and production (no Tandem) RTL. Legacy configurable
+``Breeze`` exposes four harts; ``BreezeTiny`` exposes one hart with L2/Home.
+Both use RV64GC, the gshare preset, Linux privilege support and production
+(no Tandem) RTL. Legacy configurable
 simulation wrappers live in :mod:`flow.cluster` and reuse the private base
 class below; they are not part of the FPGA product interface.
 """
@@ -369,3 +369,13 @@ class Breeze(_BreezeClusterCPU):
         "compressed": "true",
         "addressTranslation": "bare,sv39",
     }
+
+
+class BreezeTiny(Breeze):
+    """Single-hart Linux product retaining the MESI L1D and L2/Home fabric."""
+
+    name = "breeze-tiny"
+    human_name = "Breeze Tiny RV64GC Linux (1 hart)"
+    cluster_profile = "single"
+    num_harts = 1
+    l2_bytes = 16384

@@ -25,15 +25,14 @@ LITEX_WRAPPER_ROOT = os.path.join(FLOW_ROOT, "litex_wrapper")
 if LITEX_WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, LITEX_WRAPPER_ROOT)
 
-from flow import Breeze  # noqa: E402
+from flow import Breeze, BreezeTiny  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
 
 
 # This target is intentionally configured in source rather than exposing a
-# large command-line configuration surface.  A different hardware product
-# should get a separate target script.
+# large command-line configuration surface. Only the cluster size is selectable.
 SYS_CLK_FREQ = 50_000_000
 UART_BAUDRATE = 115_200
 
@@ -54,13 +53,17 @@ PLIC_NUM_SOURCES = 31
 UART_PLIC_SOURCE = 10
 
 BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze-ddr")
+TINY_BUILD_DIR = os.path.join(FLOW_ROOT, "build", "fpga", "kcu105-breeze-tiny-ddr")
 
 
 CPUS["breeze"] = Breeze
+# LiteX incorporates this key into CONFIG_CPU_TYPE_* C identifiers.
+# Keep the public CLI spelling hyphenated and the internal registry key valid C.
+CPUS["breeze_tiny"] = BreezeTiny
 
 
 class BreezeKCU105SoC(SoCCore):
-    """Four-hart Breeze SoC with LiteX BIOS, UART and KCU105 DDR4."""
+    """One- or four-hart Breeze SoC with BIOS, PLIC, CLINT and DDR4."""
 
     # Keep the software-visible LiteX CSR layout stable.  The DDR PHY and
     # controller CSRs are allocated after these fixed pages.
@@ -70,7 +73,9 @@ class BreezeKCU105SoC(SoCCore):
         "timer0": 2,
     }
 
-    def __init__(self):
+    def __init__(self, cpu_type="breeze"):
+        if cpu_type not in ("breeze", "breeze-tiny"):
+            raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, SYS_CLK_FREQ)
 
@@ -78,7 +83,7 @@ class BreezeKCU105SoC(SoCCore):
             platform,
             clk_freq=SYS_CLK_FREQ,
             ident="Breeze RV64GC DDR4 SoC on KCU105",
-            cpu_type="breeze",
+            cpu_type=cpu_type.replace("-", "_"),
             cpu_variant="standard",
             bus_standard="wishbone",
             bus_data_width=64,
@@ -179,6 +184,10 @@ class BreezeKCU105SoC(SoCCore):
 def main():
     parser = argparse.ArgumentParser(
         description="Build the fixed Breeze/KCU105 LiteX SoC.")
+    parser.add_argument("--cpu-type", choices=("breeze", "breeze-tiny"),
+                        default="breeze", help="four-hart or single-hart Linux cluster")
+    parser.add_argument("--output-dir", default=None,
+                        help="override the CPU-specific build directory")
     parser.add_argument(
         "--build",
         action="store_true",
@@ -191,12 +200,13 @@ def main():
     )
     args = parser.parse_args()
 
-    soc = BreezeKCU105SoC()
+    soc = BreezeKCU105SoC(cpu_type=args.cpu_type)
+    output_dir = args.output_dir or (TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
     builder = Builder(
         soc,
-        output_dir=BUILD_DIR,
-        csr_csv=os.path.join(BUILD_DIR, "csr.csv"),
-        csr_json=os.path.join(BUILD_DIR, "csr.json"),
+        output_dir=output_dir,
+        csr_csv=os.path.join(output_dir, "csr.csv"),
+        csr_json=os.path.join(output_dir, "csr.json"),
     )
 
     # With no --build this still finalizes the SoC, compiles the ROM BIOS and
