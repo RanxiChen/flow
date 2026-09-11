@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one ACT ELF on the unchanged four-hart Flow Linux LiteDRAM SoC."""
+"""Run one ACT ELF on the selected-profile Flow Linux LiteDRAM SoC."""
 
 import argparse
 import hashlib
@@ -126,9 +126,9 @@ def _verify_sim_hash(gateware_dir):
     return actual
 
 
-def _check_debug_rtl():
+def _check_debug_rtl(profile):
     marker = os.path.join(
-        FLOW_ROOT, "design", "build", "rtl", "cluster", "small",
+        FLOW_ROOT, "design", "build", "rtl", "cluster", profile,
         "gshare", "linux", "cluster-profile.txt")
     values = {}
     with open(marker, encoding="utf-8") as handle:
@@ -136,14 +136,20 @@ def _check_debug_rtl():
             key, separator, value = line.strip().partition("=")
             if separator:
                 values[key] = value
-    if values.get("rtlMode") != "debug" or values.get("tandem") != "true":
+    expected_harts = {"single": 1, "dual": 2, "small": 4}[profile]
+    if (values.get("profile") != profile or
+            values.get("numHarts") != str(expected_harts) or
+            values.get("corePreset") != "gshare" or
+            values.get("privilegeProfile") != "linux" or
+            values.get("rtlMode") != "debug" or values.get("tandem") != "true"):
         raise RuntimeError(
-            "ACT completion requires small/gshare/linux debug RTL with tandem=true")
+            f"ACT completion requires {profile}/gshare/linux debug RTL with tandem=true")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run an ACT ELF on the existing four-hart Linux LiteDRAM SoC.")
+        description="Run an ACT ELF on the selected-profile Linux LiteDRAM SoC.")
+    parser.add_argument("--profile", choices=("single", "dual", "small"), default="small")
     parser.add_argument("--elf", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--bootrom", default=DEFAULT_BOOTROM)
@@ -183,8 +189,8 @@ def main():
         parser.error(f"tohost is outside Linux DDR: 0x{tohost:x}")
 
     if args.elaborate:
-        elaborate("small", "gshare", "debug")
-    _check_debug_rtl()
+        elaborate(args.profile, "gshare", "debug")
+    _check_debug_rtl(args.profile)
 
     payload_bin = _write_payload_binary(elf_path, output_dir, objcopy)
     ddr_init = pack_ddr([("act4", DDR_BASE, payload_bin)])
@@ -197,7 +203,7 @@ def main():
     soc = MulticoreSimSoC(
         sys_clk_freq=LINUX_SYS_CLK_FREQUENCY_HZ,
         rom_init=rom_init,
-        cluster_profile="small",
+        cluster_profile=args.profile,
         core_preset="gshare",
         privilege_profile="linux",
         with_litedram=True,

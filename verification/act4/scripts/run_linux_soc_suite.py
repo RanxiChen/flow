@@ -20,6 +20,7 @@ def sha256(path):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--profile", choices=("single", "dual", "small"), default="small")
     parser.add_argument("--elf-dir", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--max-cycles", type=int, default=2_000_000)
@@ -85,8 +86,8 @@ def main():
             "ran": len(records),
             "counts": counts,
             "soc": {
-                "profile": "small",
-                "harts": 4,
+                "profile": args.profile,
+                "harts": {"single": 1, "dual": 2, "small": 4}[args.profile],
                 "core_preset": "gshare",
                 "privilege": "linux",
                 "memory": "LiteDRAM 256 MiB",
@@ -110,6 +111,7 @@ def main():
         log_path = case_dir / f"{elf.stem}.log"
         command = [
             sys.executable, str(driver),
+            "--profile", args.profile,
             "--elf", str(elf),
             "--output-dir", str(shared_build),
             "--max-cycles", str(args.max_cycles),
@@ -118,15 +120,16 @@ def main():
         ]
         if needs_compile:
             command.extend(("--elaborate", "--compile"))
-        completed = subprocess.run(
-            command, cwd=flow_root, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        log_path.write_text(completed.stdout, encoding="utf-8")
-        if "[ACT4-SOC-PASS]" in completed.stdout:
+        with log_path.open("w", encoding="utf-8") as log:
+            completed = subprocess.run(
+                command, cwd=flow_root, text=True,
+                stdout=log, stderr=subprocess.STDOUT)
+        output = log_path.read_text(encoding="utf-8", errors="replace")
+        if "[ACT4-SOC-PASS]" in output and completed.returncode == 0:
             status = "PASS"
-        elif "[ACT4-SOC-FAIL]" in completed.stdout:
+        elif "[ACT4-SOC-FAIL]" in output:
             status = "FAIL"
-        elif "[ACT4-SOC-TIMEOUT]" in completed.stdout:
+        elif "[ACT4-SOC-TIMEOUT]" in output:
             status = "TIMEOUT"
         else:
             status = "INFRA_ERROR"

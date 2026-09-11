@@ -17,16 +17,44 @@ the product DCache/L2 memory hierarchy, so it must not be used as architectural
 evidence for AMO/LRSC or cache-flush behavior.
 
 The product-path runner is `sim/litex/act4_linux_soc.py`. It reuses the existing
-four-hart `MulticoreSimSoC` with the small/gshare/Linux cluster, complete private
+`MulticoreSimSoC` with a selectable single/dual/small GShare/Linux cluster, complete private
 L1 caches, shared L2/Home, LiteX address decoder, CLINT, PLIC, LiteUART, and the
 256 MiB modeled LiteDRAM. Its reset ROM sends hart 0 to the ACT ELF at
-`0x80000000` and parks harts 1 through 3. A passive retirement observer detects
+`0x80000000` and parks any secondary harts (none exist with `single`). A passive retirement observer detects
 the ELF's `tohost` store; it never drives or backpressures a DUT interface.
 
 The generated LiteDRAM contents are external `sim_mem*.init` files. The runner
 therefore compiles one Vsim and replaces only those existing initialization
 files between ELFs. A normalized `sim.v` structure hash rejects reuse if
 anything other than LiteX's timestamp comments changes.
+
+## Single-hart timing-refactor regression
+
+Use the full-SoC runner for this revision: the direct-core runner bypasses the
+L1/L2 hierarchy changed by the timing work. The Makefile defaults `SOC_PROFILE`
+to `single` (one physical hart, 16 KiB L2). Python entry points retain `small`
+as their backward-compatible default; pass `--profile single` explicitly.
+Profile selection controls RTL generation, metadata checks, SoC construction,
+and result summaries. The existing hart-zero completion monitor is unchanged.
+
+```bash
+make -C verification/act4 run-linux-soc SOC_PROFILE=single \
+  SOC_OUT_DIR=/absolute/path/to/fresh-act4-single-output
+```
+
+This runs all ELFs below `ELF_DIR`, regenerates single/gshare/linux/debug RTL,
+and builds a fresh Vsim for the first case. Subsequent cases reuse it with
+new DDR initialization files. Use a fresh output directory for each source
+revision; the existing sim.v hash alone does not fingerprint every external
+RTL dependency. Per-case logs stream to disk during the initial build.
+Set `SBT` if sbt is not on PATH, and use the Python environment containing
+this project's LiteX/Migen/LiteDRAM installation.
+
+The available historical corpus contains 330 ELFs: I 51, M 13, Zmmul 5,
+F 82, D 114, Zca 32, Zcd 4, Zicsr 6, Zifencei 1, Zaamo 18, Zalrsc 4.
+`include_priv_tests` remains false: ACT success does not establish Sv39 page
+walk, interrupt, PMP, or HPM event-boundary correctness. Keep the directed
+MMU/cache/CSR/backend tests alongside this architectural regression.
 
 ## Commands
 
