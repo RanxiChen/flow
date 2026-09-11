@@ -363,6 +363,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.io.nextLevelRsp.data.poke(0.U)
             dut.io.nextLevelRsp.error.poke(false.B)
             dut.io.dmem.rsp.valid.poke(false.B)
+            dut.io.dcacheArrayReq.foreach(_.ready.poke(false.B)) // scalar memory model has no L1 arrays
             dut.io.dmem.rsp.data.poke(0.U)
             dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.io.dmem.rsp.error.poke(false.B)

@@ -5,7 +5,7 @@ import chisel3.util._
 import flow.interface._
 
 /** Blocking instruction-side address-translation adapter. */
-class BreezeFetchTranslator(val xlen: Int = 64) extends Module {
+class BreezeFetchTranslator(val xlen: Int = 64, val parallelLookup: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val inReq = Flipped(Decoupled(new BreezeCacheReqIO(xlen)))
     val inRsp = Decoupled(new BreezeCacheRespIO(xlen, 32))
@@ -14,6 +14,7 @@ class BreezeFetchTranslator(val xlen: Int = 64) extends Module {
     val translateReq = Decoupled(new BreezeTranslationReq(xlen))
     val translateRsp = Flipped(Decoupled(new BreezeTranslationResp(xlen)))
     val kill = Input(Bool())
+    val arrayReq = if (parallelLookup) Some(Decoupled(UInt(xlen.W))) else None
   })
 
   object State extends ChiselEnum { val Idle, Translate, CacheReq, CacheWait, Fault = Value }
@@ -23,6 +24,13 @@ class BreezeFetchTranslator(val xlen: Int = 64) extends Module {
   val paddr = Reg(UInt(xlen.W))
   val pageFault = RegInit(false.B)
   val accessFault = RegInit(false.B)
+  if (parallelLookup) {
+    val sent = RegInit(false.B)
+    when(state === Idle || io.kill) { sent := false.B }
+    io.arrayReq.get.valid := state === Translate && !sent && !io.kill
+    io.arrayReq.get.bits := vaddr
+    when(io.arrayReq.get.fire) { sent := true.B }
+  }
 
   io.inReq.ready := state === Idle && !io.kill
   io.translateReq.valid := state === Translate && !io.kill

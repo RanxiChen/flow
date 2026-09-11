@@ -211,13 +211,19 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     })
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
-    val coreinst = RegInit(0.U(XLEN.W))
-    val mcycle = RegInit(0.U(XLEN.W))
-    val minstret = RegInit(0.U(XLEN.W))
     private val implementedHpmCounters = 8
-    val mhpmcounter = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
-    val mhpmevent = RegInit(VecInit(Seq.fill(implementedHpmCounters)(0.U(XLEN.W))))
-    val mcountinhibit = RegInit(0.U(32.W))
+    val performance = Module(new BreezePerformanceCounters(XLEN, implementedHpmCounters))
+    performance.io.write := io.commit_valid && io.commit_write_en && !io.trap.valid
+    performance.io.address := io.commit_addr
+    performance.io.data := io.commit_wdata
+    performance.io.retire := io.retire_valid
+    performance.io.events := io.hpmEvents
+    val coreinst = performance.io.coreinst
+    val mcycle = performance.io.mcycle
+    val minstret = performance.io.minstret
+    val mhpmcounter = performance.io.counter
+    val mhpmevent = performance.io.selector
+    val mcountinhibit = performance.io.inhibit
     val menvcfg = RegInit(0.U(XLEN.W))
     private val enableSupervisorUser = privilegeProfile.enableSupervisorUser
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
@@ -314,96 +320,64 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val sie_read = mie_read & mideleg
     val sip_read = mip_read & mideleg
     io.wfiWakeup := (mie_read & mip_read).orR
-    def csrPattern(address: Int): BitPat = BitPat(address.U(12.W))
-    val machineCsrFile = Seq(
-        csrPattern(CSRMAP.fflags)  -> fflags,
-        csrPattern(CSRMAP.frm)     -> frm,
-        csrPattern(CSRMAP.fcsr)    -> Cat(frm, fflags),
-        csrPattern(CSRMAP.printer) -> printer,
-        csrPattern(CSRMAP.coreinst) -> coreinst,
-        csrPattern(CSRMAP.misa)    -> misa,
-        csrPattern(CSRMAP.mvendorid)-> mvendorid,
-        csrPattern(CSRMAP.marchid)  -> marchid,
-        csrPattern(CSRMAP.mimpid)    -> mimpid,
-        csrPattern(CSRMAP.mhartid)  -> mhartid,
-        csrPattern(CSRMAP.mepc)     -> mepc,
-        csrPattern(CSRMAP.mtvec)    -> mtvec,
-        csrPattern(CSRMAP.mcause)   -> mcause,
-        csrPattern(CSRMAP.mtval)    -> mtval,
-        csrPattern(CSRMAP.mscratch) -> mscratch,
-        csrPattern(CSRMAP.mstatus)  -> mstatus_read,
-        csrPattern(CSRMAP.medeleg)  -> medeleg,
-        csrPattern(CSRMAP.mideleg)  -> mideleg,
-        csrPattern(CSRMAP.mie)      -> mie_read,
-        csrPattern(CSRMAP.mip)      -> mip_read,
-        csrPattern(CSRMAP.mcounteren) -> mcounteren,
-        csrPattern(CSRMAP.mcycle)   -> mcycle,
-        csrPattern(CSRMAP.minstret) -> minstret,
-        csrPattern(CSRMAP.cycle)    -> mcycle,
-        csrPattern(CSRMAP.time)     -> io.time,
-        csrPattern(CSRMAP.instret)  -> minstret,
-        csrPattern(CSRMAP.mcountinhibit) -> mcountinhibit,
-        csrPattern(CSRMAP.menvcfg) -> menvcfg,
-        csrPattern(CSRMAP.pmpcfg0) -> Cat(visiblePmpCfg.slice(0, 8).reverse),
-        csrPattern(CSRMAP.pmpcfg2) -> Cat(visiblePmpCfg.slice(8, 16).reverse)
+    // Each entry names one physical value and all of its CSR read aliases.
+    // One shared address decode drives both the whitelist and the read mux.
+    def entry(data: UInt, addresses: Int*): (Seq[Int], UInt) = (addresses.toSeq, data)
+    val statusReads = Seq(
+        entry(mepc, CSRMAP.mepc), entry(mtvec, CSRMAP.mtvec),
+        entry(mcause, CSRMAP.mcause), entry(mtval, CSRMAP.mtval),
+        entry(mscratch, CSRMAP.mscratch), entry(mstatus_read, CSRMAP.mstatus),
+        entry(mie_read, CSRMAP.mie), entry(mip_read, CSRMAP.mip),
+        entry(mcounteren, CSRMAP.mcounteren), entry(menvcfg, CSRMAP.menvcfg)
+    ) ++ (if (enableSupervisorUser) Seq(
+        entry(medeleg, CSRMAP.medeleg), entry(mideleg, CSRMAP.mideleg),
+        entry(sstatus_read, CSRMAP.sstatus), entry(sie_read, CSRMAP.sie),
+        entry(stvec, CSRMAP.stvec), entry(scounteren, CSRMAP.scounteren),
+        entry(sscratch, CSRMAP.sscratch), entry(sepc, CSRMAP.sepc),
+        entry(scause, CSRMAP.scause), entry(stval, CSRMAP.stval),
+        entry(sip_read, CSRMAP.sip), entry(stimecmp, CSRMAP.stimecmp)
+    ) else Seq.empty)
+    val protectionReads = Seq(
+        entry(Cat(visiblePmpCfg.slice(0, 8).reverse), CSRMAP.pmpcfg0),
+        entry(Cat(visiblePmpCfg.slice(8, 16).reverse), CSRMAP.pmpcfg2)
     ) ++ (0 until BreezePmpConfig.CsrEntries).map(index =>
-        csrPattern(CSRMAP.pmpaddr0 + index) -> visiblePmpAddr(index))
-    val supervisorCsrFile = if (enableSupervisorUser) Seq(
-        csrPattern(CSRMAP.sstatus) -> sstatus_read,
-        csrPattern(CSRMAP.sie) -> sie_read,
-        csrPattern(CSRMAP.stvec) -> stvec,
-        csrPattern(CSRMAP.scounteren) -> scounteren,
-        csrPattern(CSRMAP.sscratch) -> sscratch,
-        csrPattern(CSRMAP.sepc) -> sepc,
-        csrPattern(CSRMAP.scause) -> scause,
-        csrPattern(CSRMAP.stval) -> stval,
-        csrPattern(CSRMAP.sip) -> sip_read,
-        csrPattern(CSRMAP.stimecmp) -> stimecmp,
-        csrPattern(CSRMAP.satp) -> satp
-    ) else Seq.empty
-    val csrFile = machineCsrFile ++ supervisorCsrFile ++
-      (0 until implementedHpmCounters).flatMap { index => Seq(
-        csrPattern(CSRMAP.mhpmcounter3 + index) -> mhpmcounter(index),
-        csrPattern(CSRMAP.hpmcounter3 + index) -> mhpmcounter(index),
-        csrPattern(CSRMAP.mhpmevent3 + index) -> mhpmevent(index)
-    ) }
+        entry(visiblePmpAddr(index), CSRMAP.pmpaddr0 + index)) ++
+        (if (enableSupervisorUser) Seq(entry(satp, CSRMAP.satp)) else Seq.empty)
+    val performanceReads = Seq(
+        entry(coreinst, CSRMAP.coreinst),
+        entry(mcycle, CSRMAP.mcycle, CSRMAP.cycle),
+        entry(minstret, CSRMAP.minstret, CSRMAP.instret),
+        entry(io.time, CSRMAP.time), entry(mcountinhibit, CSRMAP.mcountinhibit)
+    ) ++ (0 until implementedHpmCounters).flatMap(index => Seq(
+        entry(mhpmcounter(index), CSRMAP.mhpmcounter3 + index, CSRMAP.hpmcounter3 + index),
+        entry(mhpmevent(index), CSRMAP.mhpmevent3 + index)))
+    val otherReads = Seq(
+        entry(fflags, CSRMAP.fflags), entry(frm, CSRMAP.frm),
+        entry(Cat(frm, fflags), CSRMAP.fcsr), entry(printer, CSRMAP.printer),
+        entry(misa, CSRMAP.misa), entry(mvendorid, CSRMAP.mvendorid),
+        entry(marchid, CSRMAP.marchid), entry(mimpid, CSRMAP.mimpid),
+        entry(mhartid, CSRMAP.mhartid)
+    )
+    val readBanks = Seq(statusReads, protectionReads, performanceReads, otherReads)
+    val implementedAddresses = readBanks.flatten.flatMap(_._1)
+    require(implementedAddresses.distinct.size == implementedAddresses.size,
+        "CSR read addresses must be unique for parallel selection")
+    val addressHits = implementedAddresses.map(address =>
+        address -> (io.csr_addr === address.U(12.W))).toMap
+    val bankData = readBanks.map(bank => Mux1H(bank.map { case (addresses, data) =>
+        addresses.map(addressHits(_)).reduce(_ || _) -> data.pad(XLEN)
+    }))
+    val csrImplemented = addressHits.values.toSeq.reduce(_ || _)
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
-    val read_csr = Wire(Bool())
-    val write_csr = Wire(Bool())
-    val uimm = io.csr_reg_data(4,0)
-    read_csr := false.B
-    write_csr := false.B
-    // Zicsr对寄存器的读
-    when(read_csr){
-        old_csr_val := Lookup(io.csr_addr, 0.U, csrFile)
-    }.otherwise{
-        old_csr_val := 0.U
-    }
-    val fpCsrAccess = io.csr_addr === CSRMAP.fflags.U ||
-        io.csr_addr === CSRMAP.frm.U || io.csr_addr === CSRMAP.fcsr.U
-    val machineAddresses = Seq(
-        CSRMAP.fflags, CSRMAP.frm, CSRMAP.fcsr, CSRMAP.printer, CSRMAP.coreinst,
-        CSRMAP.misa, CSRMAP.mvendorid, CSRMAP.marchid, CSRMAP.mimpid, CSRMAP.mhartid,
-        CSRMAP.mstatus, CSRMAP.mie, CSRMAP.mtvec,
-        CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
-        CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
-        CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2) ++
-        (0 until BreezePmpConfig.CsrEntries).map(CSRMAP.pmpaddr0 + _) ++
-        (0 until implementedHpmCounters).flatMap(index => Seq(
-            CSRMAP.mhpmcounter3 + index, CSRMAP.hpmcounter3 + index,
-            CSRMAP.mhpmevent3 + index))
-    val supervisorAddresses = Seq(
-        CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
-        CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval,
-        CSRMAP.sip, CSRMAP.stimecmp, CSRMAP.satp)
-    val supervisorMachineAddresses = Seq(CSRMAP.medeleg, CSRMAP.mideleg)
-    val implementedAddresses = machineAddresses ++
-        (if (enableSupervisorUser)
-            supervisorMachineAddresses ++ supervisorAddresses
-        else Seq.empty)
-    val csrImplemented = implementedAddresses.map(address =>
-        io.csr_addr === address.U(12.W)).reduce(_ || _)
+    val read_csr = WireDefault(false.B)
+    val write_csr = WireDefault(false.B)
+    val uimm = io.csr_reg_data(4, 0)
+    // Unselected banks produce zero. All selectors are mutually exclusive;
+    // no priority chain is required within or between banks.
+    old_csr_val := Mux(read_csr, bankData.reduce(_ | _), 0.U)
+    val fpCsrAccess = addressHits(CSRMAP.fflags) ||
+        addressHits(CSRMAP.frm) || addressHits(CSRMAP.fcsr)
     val csrAccess = io.csr_cmd =/= CSR_CMD.NOP.U
     val privilegeDenied = currentPrivilege < io.csr_addr(9, 8)
     // These simulation-only CSRs live in a non-standard U-privilege address
@@ -681,13 +655,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 }
             }
             is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
-                // Updated below so an explicit CSR write has priority over
-                // the automatic per-cycle/per-retirement increments.
-            }
-            is(CSRMAP.mcountinhibit.U) {
-                val supportedMask = ((BigInt(1) << 0) | (BigInt(1) << 2) |
-                    ((BigInt(1) << implementedHpmCounters) - 1) << 3).U(32.W)
-                mcountinhibit := io.commit_wdata(31, 0) & supportedMask
+                // Updated in the performance block with explicit-write priority.
             }
             is(CSRMAP.menvcfg.U) {
                 if (enableSupervisorUser) {
@@ -721,55 +689,6 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 !ownLocked && !nextTorLocked) {
                 pmpaddr(index) := io.commit_wdata(53, 0)
             }
-        }
-    }
-    for (index <- 0 until implementedHpmCounters) {
-        val writeSelector = io.commit_valid && io.commit_write_en &&
-            !io.trap.valid && io.commit_addr === (CSRMAP.mhpmevent3 + index).U
-        when(writeSelector) {
-            mhpmevent(index) := Mux(
-                io.commit_wdata <= BREEZE_HPM_EVENT.LOAD_USE_STALL.U,
-                io.commit_wdata,
-                0.U)
-        }
-    }
-    // 更新寄存器的值
-    when(io.retire_valid){
-        coreinst := coreinst + 1.U
-    }
-    val writeMcycle = io.commit_valid && io.commit_write_en &&
-        !io.trap.valid && io.commit_addr === CSRMAP.mcycle.U
-    val writeMinstret = io.commit_valid && io.commit_write_en &&
-        !io.trap.valid && io.commit_addr === CSRMAP.minstret.U
-    when(writeMcycle) {
-        mcycle := io.commit_wdata
-    }.elsewhen(!mcountinhibit(0)) {
-        mcycle := mcycle + 1.U
-    }
-    when(writeMinstret) {
-        minstret := io.commit_wdata
-    }.elsewhen(io.retire_valid && !mcountinhibit(2)) {
-        minstret := minstret + 1.U
-    }
-    def selectedHpmEvent(selector: UInt): Bool = MuxLookup(selector, false.B)(Seq(
-        BREEZE_HPM_EVENT.CONTROL_RETIRED.U -> io.hpmEvents.controlRetired,
-        BREEZE_HPM_EVENT.CONTROL_TAKEN.U -> io.hpmEvents.controlTaken,
-        BREEZE_HPM_EVENT.PREDICTION_MISS.U -> io.hpmEvents.predictionMiss,
-        BREEZE_HPM_EVENT.ICACHE_ACCESS.U -> io.hpmEvents.icacheAccess,
-        BREEZE_HPM_EVENT.ICACHE_MISS.U -> io.hpmEvents.icacheMiss,
-        BREEZE_HPM_EVENT.DCACHE_ACCESS.U -> io.hpmEvents.dcacheAccess,
-        BREEZE_HPM_EVENT.DCACHE_MISS.U -> io.hpmEvents.dcacheMiss,
-        BREEZE_HPM_EVENT.DCACHE_UNCACHED.U -> io.hpmEvents.dcacheUncached,
-        BREEZE_HPM_EVENT.MEM_STALL_CYCLE.U -> io.hpmEvents.memStallCycle,
-        BREEZE_HPM_EVENT.LOAD_USE_STALL.U -> io.hpmEvents.loadUseStall
-    ))
-    for (index <- 0 until implementedHpmCounters) {
-        val writeCounter = io.commit_valid && io.commit_write_en &&
-            !io.trap.valid && io.commit_addr === (CSRMAP.mhpmcounter3 + index).U
-        when(writeCounter) {
-            mhpmcounter(index) := io.commit_wdata
-        }.elsewhen(!mcountinhibit(index + 3) && selectedHpmEvent(mhpmevent(index))) {
-            mhpmcounter(index) := mhpmcounter(index) + 1.U
         }
     }
     val trapDelegated = if (enableSupervisorUser) {

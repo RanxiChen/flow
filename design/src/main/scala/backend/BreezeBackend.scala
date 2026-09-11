@@ -614,6 +614,11 @@ class BreezeBackend(
     frontendPhtUpdateValid := false.B
 
     if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
+        // Present training data independently of the late issue/hold decision.
+        // PHT only consumes it when valid; an invalid request need not select
+        // table entry zero and wait for another full table read when enabled.
+        io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
+        io.frontendPhtUpdate.taken := actualTaken
         when(idExeReg.valid && !pipelineHold && !idExeReg.instruction_access_fault &&
             !idExeReg.instruction_page_fault) {
             switch(idExeReg.pred.predType) {
@@ -624,8 +629,6 @@ class BreezeBackend(
                     exeBtbUpdate.target := actualTarget
                     exeBtbUpdate.predType := FrontendPredType.BR
                     exeBtbUpdate.taken := actualTaken
-                    io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
-                    io.frontendPhtUpdate.taken := actualTaken
                     io.frontendGhrUpdate.valid := true.B
                     io.frontendGhrUpdate.taken := actualTaken
                 }
@@ -712,8 +715,12 @@ class BreezeBackend(
     exeMemNeedsDmem := exeMemIsMem && !memAddrMisaligned
     memReqIssued := exeMemNeedsDmem && !memWaitingRespReg
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
+    // Each request requires exeMemReg.valid. interruptRedirect requires
+    // pipelineEmpty, which requires !exeMemReg.valid, so it cannot cancel
+    // one of these requests. Avoid routing interrupt timing through issue
+    // into pipelineHold. Exception/return/fence cancellation is still needed.
     mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !fenceiFlush
     mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
     mulUnit.io.flush := frontendRedirectNeeded
     mulUnit.io.in_valid := mulReqIssued
@@ -722,7 +729,7 @@ class BreezeBackend(
     mulUnit.io.op := exeMemReg.mul_op
     divFastCompletion := exeMemIsDiv && exeMemReg.div_fast
     divReqIssued := exeMemIsDiv && !exeMemReg.div_fast && !divWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !fenceiFlush
     divRspFire := divWaitingRespReg && divUnit.io.out_valid
     divUnit.io.flush := frontendRedirectNeeded
     divUnit.io.in_valid := divReqIssued
@@ -733,7 +740,7 @@ class BreezeBackend(
     divUnit.io.is_remainder := exeMemReg.div_is_remainder
     divUnit.io.is_word := exeMemReg.div_is_word
     fpReqIssued := exeMemIsFp && !fpWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !interruptRedirect && !fenceiFlush
+        !exceptionRedirect && !xretRedirect && !fenceiFlush
     fpReqAccepted := fpReqIssued && fpUnit.io.inReady
     fpRspFire := fpWaitingRespReg && fpUnit.io.outValid
     // A younger branch may resolve in the same cycle that an older FP result

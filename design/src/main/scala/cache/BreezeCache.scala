@@ -105,9 +105,11 @@ class BreezeCacheDebugIO(vlen: Int) extends Bundle {
   * @param cacheConfig
   * @param enabledebug
   */
-class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean = false,val inspectsram:Boolean=false) extends Module {
+class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean = false,val inspectsram:Boolean=false,
+                  val parallelLookup: Boolean = false) extends Module {
     val io = IO(new Bundle{
         val dreq = Flipped(Decoupled(new BreezeCacheReqIO(cacheConfig.VLEN)))
+        val arrayReq = if (parallelLookup) Some(Flipped(Decoupled(UInt(cacheConfig.VLEN.W)))) else None
         val drsp = Decoupled(new BreezeCacheRespIO(cacheConfig.VLEN,cacheConfig.FETCH_WIDTH))
         val flush = Input(Bool())
         val next_level_req = new L1CacheMissReqIO(cacheConfig.PLEN)
@@ -117,6 +119,8 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     })
     io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
     assert(cacheConfig.ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
+    require(!parallelLookup || cacheConfig.ICACHE_SET_NUM * cacheConfig.ICACHE_LINE_BYTES <= 4096,
+        "VIPT index must fit within the smallest Sv39 page")
     BreezeMcuPlatform.PMARegions.filter(_.supportsExecute).foreach { region =>
         require(region.cacheable, s"Executable PMA region ${region.name} must be cacheable")
         require(
@@ -189,16 +193,34 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
     val metaReg = RegInit(VecInit(Seq.fill(cacheConfig.ICACHE_SET_NUM)(0.U(cacheConfig.META_WIDTH.W)))) // PLRU, .....valid[1],valid[0]
     //s1 read tag and data
-    val can_read_array = s0_valid && fetchPma.io.result.allowed && fetchPma.io.result.cacheable
-    val cacheline_index = index_pos(s0_vaddr, cacheConfig)
+    val snapshotTags = Reg(Vec(cacheConfig.ICACHE_WAY_NUM, UInt(cacheConfig.ICACHE_TAG_WIDTH.W)))
+    val snapshotData = Reg(Vec(cacheConfig.ICACHE_WAY_NUM, UInt(cacheConfig.ICACHE_LINE_WIDTH.W)))
+    val snapshotIndex = Reg(UInt(cacheConfig.ICACHE_INDEX_WIDTH.W))
+    val snapshotValid = RegInit(false.B)
+    val snapshotUsable = parallelLookup.B && snapshotValid &&
+        snapshotIndex === index_pos(s0_vaddr, cacheConfig)
+    val s1_useSnapshot = RegNext(s0_valid && snapshotUsable, false.B)
+    val earlyRead = WireDefault(false.B)
+    val earlyIndex = WireDefault(0.U(cacheConfig.ICACHE_INDEX_WIDTH.W))
+    val can_read_array = (s0_valid && !snapshotUsable && fetchPma.io.result.allowed && fetchPma.io.result.cacheable) || earlyRead
+    val cacheline_index = Mux(earlyRead, earlyIndex, index_pos(s0_vaddr, cacheConfig))
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
         tag_array(i).io.addr := cacheline_index
         tag_array(i).io.re := can_read_array
         data_array(i).io.addr := cacheline_index
         data_array(i).io.re := can_read_array
     }
-    val tag_array_rdata = tag_array.map(_.io.data_out)
-    val data_array_rdata = data_array.map(_.io.data_out)
+    val rawTags = VecInit(tag_array.map(_.io.data_out))
+    val rawData = VecInit(data_array.map(_.io.data_out))
+    val tag_array_rdata = Mux(s1_useSnapshot, snapshotTags, rawTags)
+    val data_array_rdata = Mux(s1_useSnapshot, snapshotData, rawData)
+    val captureEarly = RegNext(earlyRead, false.B)
+    when(earlyRead) { snapshotIndex := earlyIndex }
+    when(captureEarly) {
+        snapshotTags := rawTags
+        snapshotData := rawData
+        snapshotValid := true.B
+    }
     val s1_word_offset = s1_vaddr(cacheConfig.ICACHE_LINE_OFFSET_WIDTH + cacheConfig.ICACHE_BYTES_OFFSET_WIDTH - 1, cacheConfig.ICACHE_BYTES_OFFSET_WIDTH)
     val s1_way_dout = Wire(Vec(cacheConfig.ICACHE_WAY_NUM, UInt(cacheConfig.FETCH_WIDTH.W)))
     for(i <- 0 until cacheConfig.ICACHE_WAY_NUM){
@@ -220,6 +242,14 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s2_done = WireDefault(false.B) //标志s2的miss处理完成
     //val s2_valid = RegNext(s1_valid && !s1_hit, false.B)
     val s2_valid = RegInit(false.B)
+    if (parallelLookup) {
+        io.arrayReq.get.ready := !io.flush && !s1_valid && !s2_valid && !io.dreq.valid
+        earlyRead := io.arrayReq.get.fire
+        earlyIndex := index_pos(io.arrayReq.get.bits, cacheConfig)
+    }
+    // No externally visible activity is caused by the early read. A fence,
+    // refill or intervening real request makes its saved array data unusable.
+    when(earlyRead || io.flush || s0_valid || s1_valid || s2_valid) { snapshotValid := false.B }
     val s2_vaddr = RegInit(0.U(cacheConfig.VLEN.W))
     val s2_paddr = RegInit(0.U(cacheConfig.PLEN.W))
     val s2_word_offset = RegInit(0.U(s1_word_offset.getWidth.W))

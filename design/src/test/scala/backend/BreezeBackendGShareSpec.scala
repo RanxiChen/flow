@@ -43,10 +43,18 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     private def driveIdleInputs(dut: BreezeBackend): Unit = {
         dut.io.resetAddr.poke(0.U)
         dut.io.machineTimerInterrupt.poke(false.B)
+        dut.io.machineSoftwareInterrupt.poke(false.B)
+        dut.io.supervisorExternalInterrupt.poke(false.B)
+        dut.io.time.poke(0.U)
         dut.io.externalInterrupts.poke(0.U)
         dut.io.fetchBuffer.valid.poke(false.B)
         dut.io.fetchBuffer.bits.pc.poke(0.U)
         dut.io.fetchBuffer.bits.inst.poke(0.U)
+        dut.io.fetchBuffer.bits.rawInst.poke(0.U)
+        dut.io.fetchBuffer.bits.instLen.poke(4.U)
+        dut.io.fetchBuffer.bits.isCompressed.poke(false.B)
+        dut.io.fetchBuffer.bits.illegalCompressed.poke(false.B)
+        dut.io.fetchBuffer.bits.instructionPageFault.poke(false.B)
         dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
         dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
@@ -261,6 +269,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.dmem.req.valid.expect(true.B)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(false.B)
+            dut.io.frontendPhtUpdate.idx.expect(phtIdx.U)
             dut.io.frontendGhrUpdate.valid.expect(false.B)
 
             // The request cycle and every response-wait cycle must suppress
@@ -270,6 +279,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
                 dut.io.debug.get.idExePc.expect(branchPc.U)
                 dut.io.frontendBtbUpdate.valid.expect(false.B)
                 dut.io.frontendPhtUpdate.valid.expect(false.B)
+                dut.io.frontendPhtUpdate.idx.expect(phtIdx.U)
                 dut.io.frontendGhrUpdate.valid.expect(false.B)
                 dut.clock.step(1)
             }
@@ -291,6 +301,100 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(false.B)
             dut.io.frontendGhrUpdate.valid.expect(false.B)
+        }
+    }
+
+    for ((name, operation, expectedIntegerResult) <- Seq(
+        ("multiply", BigInt("022082b3", 16), Some(BigInt(567))), // mul x5,x1,x2
+        ("divide", BigInt("0220d2b3", 16), Some(BigInt(7))),     // divu x5,x1,x2
+        ("floating add", BigInt("020001d3", 16), None))) {     // fadd.d f3,f0,f0
+        s"GShare backend should drain $name and train its younger branch before taking a timer interrupt" in {
+            simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+                reset(dut)
+                def setup(pc: Int, inst: BigInt): Unit = {
+                    issueInstruction(dut, BigInt(pc), inst)
+                    // Keep CSR/register setup separate from the measured drain.
+                    dut.clock.step(12)
+                }
+                def csrw(address: Int, rs1: Int): BigInt =
+                    (BigInt(address) << 20) | (BigInt(rs1) << 15) | BigInt(0x1073)
+                // Enable MTIE and global MIE; also enable floating-point state.
+                setup(0x00, encodeAddi(1, 0, 128))
+                setup(0x04, csrw(0x304, 1))
+                setup(0x08, BigInt("000060b7", 16)) // lui x1,6
+                setup(0x0c, encodeAddi(1, 1, 8))
+                setup(0x10, csrw(0x300, 1))
+                setup(0x14, BigInt("f2000053", 16)) // fmv.d.x f0,x0
+                setup(0x18, encodeAddi(1, 0, 63))
+                setup(0x1c, encodeAddi(2, 0, 9))
+
+                val operationPc = BigInt(0x100)
+                val branchPc = BigInt(0x104)
+                val index = 11
+                issueInstruction(dut, operationPc, operation)
+                issueBranch(dut, branchPc,
+                    encodeBranch(0, 0, 8, 1), // bne x0,x0,+8, actually not taken
+                    predTaken = false, predPc = branchPc + 4, phtIdx = index)
+                // The operation is about to issue from MEM, and the branch is
+                // held in EXE. A pending interrupt must not cancel either one.
+                dut.io.debug.get.exeMemValid.expect(true.B)
+                dut.io.debug.get.exeMemPc.expect(operationPc.U)
+                dut.io.frontendPhtUpdate.valid.expect(false.B)
+                dut.io.frontendPhtUpdate.idx.expect(index.U)
+                dut.io.machineTimerInterrupt.poke(true.B)
+                // Offer a younger instruction throughout drain. It must never
+                // enter the backend before the interrupt redirect.
+                dut.io.fetchBuffer.valid.poke(true.B)
+                dut.io.fetchBuffer.bits.pc.poke((branchPc + 4).U)
+                dut.io.fetchBuffer.bits.inst.poke(encodeAddi(31, 0, 1).U)
+                dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
+                dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
+                dut.io.fetchBuffer.bits.pred.predPc.poke((branchPc + 8).U)
+                dut.io.fetchBuffer.bits.pred.phtIdx.poke(0.U)
+
+                var trainingCount = 0
+                var operationRetireCount = 0
+                var branchRetireCount = 0
+                var interruptSeen = false
+                var cycles = 0
+                while (!interruptSeen && cycles < 160) {
+                    dut.io.fetchBuffer.ready.expect(false.B)
+                    if (dut.io.frontendPhtUpdate.valid.peek().litToBoolean) {
+                        dut.io.frontendPhtUpdate.idx.expect(index.U)
+                        dut.io.frontendPhtUpdate.taken.expect(false.B)
+                        trainingCount += 1
+                    }
+                    if (dut.io.debug.get.memWbValid.peek().litToBoolean) {
+                        dut.io.debug.get.memWbTrapValid.expect(false.B)
+                        val pc = dut.io.debug.get.memWbPc.peekValue().asBigInt
+                        if (pc == operationPc) {
+                            operationRetireCount += 1
+                            expectedIntegerResult.foreach(value =>
+                                dut.io.debug.get.wbData.expect(value.U))
+                        } else {
+                            assert(pc == branchPc, s"unexpected instruction retired at $pc")
+                            branchRetireCount += 1
+                        }
+                    }
+                    if (dut.io.debug.get.redirectValid.peek().litToBoolean) {
+                        assert(operationRetireCount == 1 && branchRetireCount == 1,
+                            "interrupt must wait for both older instructions to retire")
+                        dut.io.debug.get.idExeValid.expect(false.B)
+                        dut.io.debug.get.exeMemValid.expect(false.B)
+                        dut.io.debug.get.memWbValid.expect(false.B)
+                        dut.io.debug.get.memWbTrapValid.expect(true.B)
+                        dut.io.frontendPhtUpdate.valid.expect(false.B)
+                        interruptSeen = true
+                        dut.io.fetchBuffer.valid.poke(false.B)
+                    }
+                    dut.clock.step(1)
+                    cycles += 1
+                }
+                assert(interruptSeen, s"$name did not drain to a timer interrupt")
+                assert(trainingCount == 1, s"branch trained $trainingCount times")
+                dut.io.debug.get.csrMcause.expect(((BigInt(1) << 63) | 7).U)
+                dut.io.debug.get.csrMepc.expect((branchPc + 4).U)
+            }
         }
     }
 

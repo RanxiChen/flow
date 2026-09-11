@@ -1,6 +1,7 @@
 package flow.core
 
 import chisel3._
+import chisel3.util.Decoupled
 import chisel3.util._
 import flow.backend.BreezeBackend
 import flow.buffer.FASEFetchBuffer
@@ -24,6 +25,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
         val dmem = new BackendMemIO(corecfg.VLEN)
+        val dcacheArrayReq = if (corecfg.enableMmu) Some(Decoupled(UInt(corecfg.VLEN.W))) else None
         val dcacheFlushReq = Output(Bool())
         val dcacheFlushDone = Input(Bool())
         val dcacheHpm = Input(new BreezeHpmEvents)
@@ -67,7 +69,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.estop := backend.io.estop
     if (corecfg.enableMmu) {
         val mmu = Module(new BreezeMmu(corecfg.VLEN, entries = 16))
-        val dataTranslator = Module(new BreezeDataTranslator(corecfg.VLEN))
+        val dataTranslator = Module(new BreezeDataTranslator(corecfg.VLEN, parallelLookup = true))
+        io.dcacheArrayReq.get <> dataTranslator.io.arrayReq.get
 
         mmu.io.context := backend.io.mmuContext
         mmu.io.sfence := backend.io.sfence

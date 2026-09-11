@@ -71,7 +71,8 @@ class BreezeMulticoreClusterWishbone(
             hartId = h,
             hartIdWidth = clusterCfg.hartIdWidth,
             txnIdWidth = clusterCfg.txnIdWidth,
-            enableTrace = enableTandem
+            enableTrace = enableTandem,
+            parallelLookup = coreCfg.enableMmu
         ))
     }
 
@@ -96,6 +97,7 @@ class BreezeMulticoreClusterWishbone(
 
         // D$ CPU-facing and flush wiring (unchanged pulse semantics).
         dcache.io.cpu <> core.io.dmem
+        if (coreCfg.enableMmu) { dcache.io.arrayReq.get <> core.io.dcacheArrayReq.get }
         dcache.io.flushReq := core.io.dcacheFlushReq
         core.io.dcacheFlushDone := dcache.io.flushDone
         core.io.dcacheHpm := dcache.io.hpm

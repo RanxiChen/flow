@@ -89,6 +89,7 @@ final class DCacheHomeModel(dut: BreezeDCache, val mem: DTestMem, mmioLatency: I
 
   // Deterministic idle values.
   dut.io.cpu.req.valid.poke(false.B)
+  dut.io.arrayReq.foreach { p => p.valid.poke(false.B); p.bits.poke(0.U) }
   dut.io.cpu.req.addr.poke(0.U)
   dut.io.cpu.req.isWrite.poke(false.B)
   dut.io.cpu.req.sizeLog2.poke(3.U)

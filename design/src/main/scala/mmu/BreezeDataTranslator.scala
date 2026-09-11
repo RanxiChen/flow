@@ -7,13 +7,14 @@ import flow.interface._
 /** Blocking D-side translation adapter.  It preserves the backend's pulse
   * request protocol and converts translation faults into precise responses.
   */
-class BreezeDataTranslator(val xlen: Int = 64) extends Module {
+class BreezeDataTranslator(val xlen: Int = 64, val parallelLookup: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val cpu = Flipped(new BackendMemIO(xlen))
     val translateReq = Decoupled(new BreezeTranslationReq(xlen))
     val translateRsp = Flipped(Decoupled(new BreezeTranslationResp(xlen)))
     val memReq = Decoupled(new BackendMemReq(xlen))
     val memRsp = Flipped(Decoupled(new BackendMemResp))
+    val arrayReq = if (parallelLookup) Some(Decoupled(UInt(xlen.W))) else None
   })
 
   object State extends ChiselEnum { val Idle, Translate, MemReq, MemWait, Fault, Respond = Value }
@@ -22,6 +23,13 @@ class BreezeDataTranslator(val xlen: Int = 64) extends Module {
   val req = Reg(new BackendMemReq(xlen))
   val paddr = Reg(UInt(xlen.W))
   val rsp = Reg(new BackendMemResp)
+  if (parallelLookup) {
+    val sent = RegInit(false.B)
+    when(state === Idle) { sent := false.B }
+    io.arrayReq.get.valid := state === Translate && !sent
+    io.arrayReq.get.bits := req.addr
+    when(io.arrayReq.get.fire) { sent := true.B }
+  }
 
   io.translateReq.valid := state === Translate
   io.translateReq.bits.vaddr := req.addr

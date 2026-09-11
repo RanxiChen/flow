@@ -103,10 +103,13 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     })
 
     // ===== Module Instances =====
-    val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug))
+    val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug, parallelLookup = cfg.enableMmu))
     val realigner = if (cfg.enableCompressed) Some(Module(new BreezeInstrRealigner(cfg.VLEN))) else None
     val decompressor = if (cfg.enableCompressed) Some(Module(new BreezeCompressedDecoder(enableDouble = true))) else None
-    val fetchTranslator = if (cfg.enableMmu) Some(Module(new BreezeFetchTranslator(cfg.VLEN))) else None
+    val fetchTranslator = if (cfg.enableMmu) Some(Module(new BreezeFetchTranslator(cfg.VLEN, parallelLookup = true))) else None
+    if (cfg.enableMmu) {
+        icache.io.arrayReq.get <> fetchTranslator.get.io.arrayReq.get
+    }
     io.translateReq.valid := false.B
     io.translateReq.bits := 0.U.asTypeOf(new BreezeTranslationReq(cfg.VLEN))
     io.translateRsp.ready := false.B

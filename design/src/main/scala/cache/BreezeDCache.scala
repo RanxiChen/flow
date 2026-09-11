@@ -72,7 +72,8 @@ class BreezeDCache(
     val hartId: Int = 0,
     val hartIdWidth: Int = 1,
     val txnIdWidth: Int = 2,
-    val enableTrace: Boolean = false
+    val enableTrace: Boolean = false,
+    val parallelLookup: Boolean = false
 ) extends Module {
   private val ways = cfg.ways
   private val sets = cfg.sets
@@ -114,6 +115,9 @@ class BreezeDCache(
 
   val io = IO(new Bundle {
     val cpu = Flipped(new BackendMemIO(cfg.VLEN))
+    // Read-only virtual-index lookup. Never reserves the blocking CPU port:
+    // the MMU must still be able to send physical page-table requests.
+    val arrayReq = if (parallelLookup) Some(Flipped(Decoupled(UInt(cfg.VLEN.W)))) else None
     val flushReq = Input(Bool())
     val flushDone = Output(Bool())
     // Trap/reset reservation kill from the backend (one-cycle pulse).
@@ -157,8 +161,16 @@ class BreezeDCache(
     dataArray(w).io.re := false.B
     dataArray(w).io.id := w.U
   }
-  val tagRdata = VecInit(tagArray.map(_.io.data_out))
-  val dataRdata = VecInit(dataArray.map(_.io.data_out))
+  val rawTagRdata = VecInit(tagArray.map(_.io.data_out))
+  val rawDataRdata = VecInit(dataArray.map(_.io.data_out))
+  val snapshotTags = Reg(Vec(ways, UInt(cfg.tagWidth.W)))
+  val snapshotData = Reg(Vec(ways, UInt(cfg.lineWidth.W)))
+  val snapshotSet = Reg(UInt(6.W))
+  val snapshotValid = RegInit(false.B)
+  val useSnapshot = RegInit(false.B)
+  useSnapshot := false.B
+  val tagRdata = Mux(useSnapshot, snapshotTags, rawTagRdata)
+  val dataRdata = Mux(useSnapshot, snapshotData, rawDataRdata)
 
   // ===== Request / state registers =====
   val state = RegInit(Idle)
@@ -291,14 +303,41 @@ class BreezeDCache(
   val probeTag = probeLineAddrReg(31, 11)
   val cpuArrayRead = state === Idle && !probePendingValid &&
     (cpuPendingValid || io.cpu.req.valid)
-  val arrayReadEnable = cpuArrayRead ||
+  // Every physical transaction, probe or flush invalidates the snapshot.
+  // This deliberately includes PTW traffic: after a TLB miss the translated
+  // request re-reads the arrays instead of holding stale pre-walk data.
+  val snapshotUsable = parallelLookup.B && snapshotValid &&
+    snapshotSet === incomingSetIndex && state === Idle &&
+    !cpuPendingValid && !probePendingValid && !io.coherence.probe.valid && !io.flushReq
+  val earlyRead = WireDefault(false.B)
+  val earlyIndex = WireDefault(0.U(6.W))
+  if (parallelLookup) {
+    io.arrayReq.get.ready := state === Idle && !cpuPendingValid &&
+      !probePendingValid && !io.coherence.probe.valid && !io.flushReq && !io.cpu.req.valid
+    earlyRead := io.arrayReq.get.fire
+    earlyIndex := io.arrayReq.get.bits(10, 5)
+  }
+  val captureEarly = RegNext(earlyRead, false.B)
+  when(earlyRead) { snapshotSet := earlyIndex }
+  when(captureEarly) {
+    snapshotTags := rawTagRdata
+    snapshotData := rawDataRdata
+    snapshotValid := true.B
+  }
+  when(earlyRead || state =/= Idle || io.cpu.req.valid || io.coherence.probe.valid || io.flushReq) {
+    snapshotValid := false.B
+  }
+  when(cpuArrayRead && !cpuPendingValid && !io.flushReq) {
+    useSnapshot := snapshotUsable
+  }
+  val arrayReadEnable = (cpuArrayRead && !snapshotUsable) || earlyRead ||
     (state === FlushScan) || (state === ProbeRead)
   val cpuArrayReadAddr = Mux(cpuPendingValid, pendingCpuSetIndex, incomingSetIndex)
-  val arrayReadAddr = MuxLookup(state, cpuArrayReadAddr)(Seq(
+  val arrayReadAddr = Mux(earlyRead, earlyIndex, MuxLookup(state, cpuArrayReadAddr)(Seq(
     Idle -> cpuArrayReadAddr,
     FlushScan -> flushSetIndex,
     ProbeRead -> probeSetIndex
-  ))
+  )))
   for (w <- 0 until ways) {
     tagArray(w).io.addr := arrayReadAddr
     tagArray(w).io.re := arrayReadEnable
