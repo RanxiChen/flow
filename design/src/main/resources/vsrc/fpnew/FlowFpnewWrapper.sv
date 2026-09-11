@@ -23,12 +23,13 @@ module FlowFpnewWrapper (
   logic [0:0] simd_mask;
   fpnew_pkg::status_t status;
   // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
+  // FP64 FMA adds a full-precision pre-adder stage in our CVFPU fork.
   // CONV uses one additional output stage to separate conversion from result arbitration.
   // DISTRIBUTED enables the arithmetic units' internal register boundaries;
   // BEFORE alone only registers inputs and leaves the arithmetic path intact.
   // Breeze's blocking valid/ready protocol waits for the resulting latency.
   localparam fpnew_pkg::fpu_implementation_t FlowImplementation = '{
-    PipeRegs:   '{'{2, 3, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
+    PipeRegs:   '{'{2, 4, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
                   '{default: 2},    // DIVSQRT (not the total iterative latency)
                   '{default: 1},    // NONCOMP
                   '{default: 3}},   // CONV: input + internal + output register

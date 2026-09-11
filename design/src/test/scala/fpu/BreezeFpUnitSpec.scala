@@ -54,6 +54,11 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
     }
     val response = Response(dut.io.result.peekValue().asBigInt,
       dut.io.status.peekValue().asBigInt)
+    // Hold a completed response under backpressure before accepting it.
+    dut.clock.step(3)
+    dut.io.outValid.expect(true.B)
+    dut.io.result.expect(response.result.U)
+    dut.io.status.expect(response.status.U)
     dut.io.outReady.poke(true.B)
     dut.clock.step(1)
     dut.io.outReady.poke(false.B)
@@ -81,6 +86,15 @@ class BreezeFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
         b = BigInt("c000000000000000", 16)) // -2.0
       mulD.result mustBe BigInt("c008000000000000", 16) // -3.0
       mulD.status mustBe 0
+
+      // The pre-adder stage must preserve the unrounded product: separately
+      // rounding the multiply would turn this exact -2^-104 into zero.
+      val fusedD = transact(dut, BreezeFpOp.FMADD,
+        a = BigInt("3ff0000000000001", 16),
+        b = BigInt("3feffffffffffffe", 16),
+        c = BigInt("bff0000000000000", 16))
+      fusedD.result mustBe BigInt("b970000000000000", 16)
+      fusedD.status mustBe 0
 
       val divZero = transact(dut, BreezeFpOp.DIV,
         a = BigInt("3ff0000000000000", 16), b = 0)
