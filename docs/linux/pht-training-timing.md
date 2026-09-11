@@ -34,7 +34,7 @@ instructions finish and branches may train. Only after drain does interrupt
 entry redirect and flush the frontend. No blanket pending-interrupt training
 suppression is introduced.
 
-## Tests prepared, not executed
+## Validation
 
 The existing older-load/held-branch test in `BreezeBackendGShareSpec` now also
 checks that the nonzero training index is available while update.valid is low.
@@ -44,10 +44,18 @@ another offered instruction, completion of both older instructions, exactly
 one PHT update, and timer trap cause/mepc after drain. Integer cases also
 check the result value.
 
-Per user instruction, this batch has **not been compiled, elaborated, or
-simulated**. Only source/diff review was performed. Keep it uncommitted with
-the other timing changes and run combined validation on Alan after the
-remaining edits are ready. Suggested commands from Alan's `flow/design/`:
+The tests were initially prepared without local execution. After the combined
+changes were pushed, Alan validation on 2026-09-11 passed all ten
+`BreezeBackendGShareSpec` cases, including the three new interrupt-drain cases.
+The combined targeted regression passed 42 tests across backend arithmetic,
+CSR/privilege, parallel L1 lookup, and MMU/translator/PMP suites.
+
+Verilator 5.028 initially rejected CVFPU packed stage arrays at compile time;
+use the scoped [compatibility wrapper](../../sim/verilator/README.md) for the
+commands below. The 14 affected backend tests passed after enabling it.
+No assertion failure was reported in that initial compile-only failure.
+
+Suggested commands from Alan's `flow/design/`:
 
 ```sh
 sbt 'testOnly flow.backend.BreezeBackendGShareSpec flow.backend.BreezeBackendMulSpec flow.backend.BreezeBackendDivSpec flow.backend.BreezeBackendFpSpec'
@@ -55,6 +63,5 @@ sbt 'testOnly flow.core.CSRFileSpec flow.core.BreezePrivilegeSpec flow.core.Bree
 sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single gshare linux fpga-debug'
 ```
 
-The CSR tests previously passed locally before this backend change; that is
-not validation of the combined revision. Area and timing improvements require
+Area and timing improvements require
 a subsequent Vivado implementation with the same FPGA configuration.

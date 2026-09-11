@@ -28,6 +28,9 @@ therefore compiles one Vsim and replaces only those existing initialization
 files between ELFs. A normalized `sim.v` structure hash rejects reuse if
 anything other than LiteX's timestamp comments changes.
 
+Latest single-hart result: [330/330 ACT4 and 42/42 directed tests passed on
+2026-09-11](../../docs/linux/act4-single-regression-20260911.md).
+
 ## Single-hart timing-refactor regression
 
 Use the full-SoC runner for this revision: the direct-core runner bypasses the
@@ -36,6 +39,10 @@ to `single` (one physical hart, 16 KiB L2). Python entry points retain `small`
 as their backward-compatible default; pass `--profile single` explicitly.
 Profile selection controls RTL generation, metadata checks, SoC construction,
 and result summaries. The existing hart-zero completion monitor is unchanged.
+
+If rebuilding the ELF corpus instead of reusing it, run `make fetch` and
+`make build EXTENSIONS=I,M,Zmmul,F,D,Zca,Zcd,Zicsr,Zifencei,Zaamo,Zalrsc`
+inside `verification/act4` first. This run reused the existing 330 ELFs.
 
 ```bash
 make -C verification/act4 run-linux-soc SOC_PROFILE=single \
