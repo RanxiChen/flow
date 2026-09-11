@@ -48,7 +48,9 @@ new DDR initialization files. Use a fresh output directory for each source
 revision; the existing sim.v hash alone does not fingerprint every external
 RTL dependency. Per-case logs stream to disk during the initial build.
 Set `SBT` if sbt is not on PATH, and use the Python environment containing
-this project's LiteX/Migen/LiteDRAM installation.
+this project's LiteX/Migen/LiteDRAM installation. With Verilator 5.028,
+enable the scoped [CVFPU compatibility wrapper](../../sim/verilator/README.md)
+for both ChiselSim and the full-SoC build.
 
 The available historical corpus contains 330 ELFs: I 51, M 13, Zmmul 5,
 F 82, D 114, Zca 32, Zcd 4, Zicsr 6, Zifencei 1, Zaamo 18, Zalrsc 4.

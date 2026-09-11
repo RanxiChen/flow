@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+: "${FLOW_REAL_VERILATOR:?Set FLOW_REAL_VERILATOR to the real Verilator executable before prepending this directory to PATH}"
+compat_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+case "${1:-}" in
+    --version|-V|--help) exec "$FLOW_REAL_VERILATOR" "$@" ;;
+esac
+exec "$FLOW_REAL_VERILATOR" "$compat_dir/cvfpu.vlt" "$@"

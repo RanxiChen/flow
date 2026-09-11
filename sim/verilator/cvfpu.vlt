@@ -1,0 +1,5 @@
+`verilator_config
+// CVFPU assigns stage zero continuously and subsequent packed-array stages
+// sequentially. Verilator 5.028 treats these disjoint elements as one driver.
+// Limit the compatibility exception to the upstream FPnew modules.
+lint_off -rule BLKANDNBLK -file "*/third_party/cvfpu/src/fpnew_*.sv"
