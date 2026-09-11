@@ -22,7 +22,8 @@ module FlowFpnewWrapper (
   logic unused_tag, unused_early_valid;
   logic [0:0] simd_mask;
   fpnew_pkg::status_t status;
-  // Match CVA6's per-operation pipeline configuration (6348e9e68467).
+  // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
+  // CONV uses one additional output stage to separate conversion from result arbitration.
   // DISTRIBUTED enables the arithmetic units' internal register boundaries;
   // BEFORE alone only registers inputs and leaves the arithmetic path intact.
   // Breeze's blocking valid/ready protocol waits for the resulting latency.
@@ -30,7 +31,7 @@ module FlowFpnewWrapper (
     PipeRegs:   '{'{2, 3, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
                   '{default: 2},    // DIVSQRT (not the total iterative latency)
                   '{default: 1},    // NONCOMP
-                  '{default: 2}},   // CONV
+                  '{default: 3}},   // CONV: input + internal + output register
     UnitTypes:  '{'{default: fpnew_pkg::PARALLEL},
                   '{default: fpnew_pkg::MERGED},
                   '{default: fpnew_pkg::PARALLEL},

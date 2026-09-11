@@ -133,8 +133,16 @@ class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim 
         dut.io.cpu.rsp.valid.peek().litToBoolean mustBe false
         coh.grant.ready.peek().litToBoolean mustBe false
         if (probeWithGrant) coh.probe.valid.poke(false.B) else driveProbe()
-        h.step() // Install using captured data; the model now drives invalid zeros.
+        h.step() // Capture the AMO line; the model now drives invalid zeros.
         coh.probe.valid.poke(false.B)
+        // Prepare, execute, and write must finish before either the CPU or
+        // the queued recall can observe the line.
+        for (_ <- 0 until 3) {
+          dut.io.cpu.rsp.valid.peek().litToBoolean mustBe false
+          coh.probeResp.valid.peek().litToBoolean mustBe false
+          coh.grant.ready.peek().litToBoolean mustBe false
+          h.step()
+        }
         val (data, error, _) = h.cpuWait()
         error mustBe false
         data mustBe old

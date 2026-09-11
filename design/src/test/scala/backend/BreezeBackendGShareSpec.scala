@@ -153,17 +153,19 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.frontendRedirect.valid.expect(true.B)
             dut.io.frontendRedirect.target.expect((pc + 4).U)
 
-            dut.io.frontendBtbUpdate.valid.expect(true.B)
-            dut.io.frontendBtbUpdate.pc.expect(pc.U)
-            dut.io.frontendBtbUpdate.target.expect((pc - 0x20).U)
-            dut.io.frontendBtbUpdate.predType.expect(FrontendPredType.BR)
-            dut.io.frontendBtbUpdate.taken.expect(false.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(true.B)
             dut.io.frontendPhtUpdate.idx.expect(phtIdx.U)
             dut.io.frontendPhtUpdate.taken.expect(false.B)
             dut.io.frontendGhrUpdate.valid.expect(true.B)
             dut.io.frontendGhrUpdate.taken.expect(false.B)
 
+            dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.pc.expect(pc.U)
+            dut.io.frontendBtbUpdate.target.expect((pc - 0x20).U)
+            dut.io.frontendBtbUpdate.predType.expect(FrontendPredType.BR)
+            dut.io.frontendBtbUpdate.taken.expect(false.B)
             dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(false.B)
@@ -191,13 +193,17 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.debug.get.exeBruTaken.expect(true.B)
             dut.io.frontendRedirect.valid.expect(true.B)
             dut.io.frontendRedirect.target.expect(target.U)
-            dut.io.frontendBtbUpdate.valid.expect(true.B)
-            dut.io.frontendBtbUpdate.target.expect(target.U)
-            dut.io.frontendBtbUpdate.taken.expect(true.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(true.B)
             dut.io.frontendPhtUpdate.taken.expect(true.B)
             dut.io.frontendGhrUpdate.valid.expect(true.B)
             dut.io.frontendGhrUpdate.taken.expect(true.B)
+            dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.target.expect(target.U)
+            dut.io.frontendBtbUpdate.taken.expect(true.B)
+            dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
         }
     }
 
@@ -218,12 +224,16 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             )
 
             dut.io.frontendRedirect.valid.expect(false.B)
-            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(true.B)
             dut.io.frontendPhtUpdate.idx.expect(phtIdx.U)
             dut.io.frontendPhtUpdate.taken.expect(false.B)
             dut.io.frontendGhrUpdate.valid.expect(true.B)
             dut.io.frontendGhrUpdate.taken.expect(false.B)
+            dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
         }
     }
 
@@ -269,13 +279,15 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.dmem.rsp.data.poke(0.U)
             dut.io.dmem.rsp.isWriteAck.poke(false.B)
             dut.io.dmem.rsp.error.poke(false.B)
-            dut.io.frontendBtbUpdate.valid.expect(true.B)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(true.B)
             dut.io.frontendPhtUpdate.idx.expect(phtIdx.U)
             dut.io.frontendGhrUpdate.valid.expect(true.B)
             dut.clock.step(1)
+            dut.io.frontendBtbUpdate.valid.expect(true.B)
 
             dut.io.dmem.rsp.valid.poke(false.B)
+            dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
             dut.io.frontendPhtUpdate.valid.expect(false.B)
             dut.io.frontendGhrUpdate.valid.expect(false.B)
@@ -303,16 +315,18 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.debug.get.idExePc.expect(jalrPc.U)
             dut.io.frontendRedirect.valid.expect(true.B)
             dut.io.frontendRedirect.target.expect(actualTarget.U)
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
+            dut.io.frontendPhtUpdate.valid.expect(false.B)
+            dut.io.frontendGhrUpdate.valid.expect(false.B)
+
+            dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(true.B)
             dut.io.frontendBtbUpdate.pc.expect(jalrPc.U)
             dut.io.frontendBtbUpdate.target.expect(actualTarget.U)
             dut.io.frontendBtbUpdate.predType.expect(FrontendPredType.JALR)
             dut.io.frontendBtbUpdate.taken.expect(true.B)
-            dut.io.frontendPhtUpdate.valid.expect(false.B)
-            dut.io.frontendGhrUpdate.valid.expect(false.B)
-
-            dut.clock.step(1)
             dut.io.frontendRedirect.valid.expect(false.B)
+            dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
         }
     }
@@ -351,12 +365,14 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
             dut.io.frontendRedirect.valid.expect(true.B)
             dut.io.frontendRedirect.target.expect(actualTarget.U)
             dut.io.frontendRedirect.target.peek().litValue must not be truncatedTarget
+            dut.io.frontendBtbUpdate.valid.expect(false.B)
+            dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(true.B)
             dut.io.frontendBtbUpdate.target.expect(actualTarget.U)
-            dut.clock.step(1)
 
             dut.io.dmem.rsp.valid.poke(false.B)
             dut.io.frontendRedirect.valid.expect(false.B)
+            dut.clock.step(1)
             dut.io.frontendBtbUpdate.valid.expect(false.B)
         }
     }

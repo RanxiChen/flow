@@ -8,7 +8,7 @@ import flow.mem.flowSRAM
 import flow.platform.{PMAAccessType, PMAChecker}
 
 object BreezeDCacheState extends ChiselEnum {
-  val Idle, Lookup, StoreHitWrite,
+  val Idle, Lookup, StoreHitWrite, AmoPrepare, AmoExecute, AmoWrite,
       UncachedReq, UncachedWait,
       RefillReq, RefillWait, RefillInstall,
       UpgradeReq, UpgradeWait,
@@ -43,7 +43,7 @@ object BreezeDCacheState extends ChiselEnum {
   *      serviced with priority in Idle and in every state that waits on the
   *      Home (PutReq/PutWait/UpgradeReq/UpgradeWait/RefillReq/RefillWait/
   *      Flush*). It is deferred while a local SRAM mutation or the AMO/SC
-  *      read-modify-write window is in flight (Lookup/StoreHitWrite/RefillInstall/Respond),
+  *      read-modify-write window is in flight (Lookup/StoreHitWrite/RefillInstall/AmoPrepare/AmoExecute/AmoWrite/Respond),
   *      all of which complete in a bounded number of cycles - this is the
   *      atomicLock of the specification.
   *   2. A pending PutS/PutM that has not been handshaken re-checks the victim
@@ -180,6 +180,11 @@ class BreezeDCache(
   val victimTagReg = RegInit(0.U(cfg.tagWidth.W))
   val victimDataReg = RegInit(0.U(cfg.lineWidth.W))
   val storeMergeReg = RegInit(0.U(cfg.lineWidth.W))
+  // Captured before the common AMO pipeline. Request address/function/rs2
+  // remain held until Respond; pending probes cannot interrupt these states.
+  val amoLineReg = Reg(UInt(cfg.lineWidth.W))
+  val amoOldWordReg = Reg(UInt(64.W))
+  val amoResultReg = Reg(UInt(64.W))
   val storeHitWayReg = RegInit(0.U(cfg.wayIndexWidth.W))
   // Raw old line latched for the S-hit upgrade path (store/SC/AMO); used when
   // the grant carries no data.
@@ -252,20 +257,18 @@ class BreezeDCache(
   val isStoreLike = reqMemOp === Store || reqMemOp === Amo
   val amoIsWord = reqSizeLog2 === 2.U
 
-  // ===== AMO ALU (combinational; fed per-state below) =====
+  // ===== AMO ALU: only registered operands feed the arithmetic =====
   val amoAlu = Module(new BreezeAmoAlu)
-  val amoOldWord = Wire(UInt(64.W)) // pre-modification aligned 64-bit word
-  amoOldWord := 0.U
   amoAlu.io.func := reqAmoFunc
   amoAlu.io.isWord := amoIsWord
   amoAlu.io.oldOperand := Mux(amoIsWord && reqAddr(2),
-    amoOldWord(63, 32), amoOldWord)
+    amoOldWordReg(63, 32), amoOldWordReg)
   amoAlu.io.rs2 := reqWData
   // Position the new value and mask within the aligned 64-bit word.
   val amoNewWData = Mux(amoIsWord,
-    Mux(reqAddr(2), Cat(amoAlu.io.newOperand(31, 0), 0.U(32.W)),
-      amoAlu.io.newOperand(31, 0).pad(64)),
-    amoAlu.io.newOperand)
+    Mux(reqAddr(2), Cat(amoResultReg(31, 0), 0.U(32.W)),
+      amoResultReg(31, 0).pad(64)),
+    amoResultReg)
   val amoWMask = Mux(amoIsWord,
     Mux(reqAddr(2), "hf0".U(8.W), "h0f".U(8.W)),
     "hff".U(8.W))
@@ -521,12 +524,10 @@ class BreezeDCache(
           when(hitDirty || hitExcl) {
             // M/E hit: read-modify-write completes locally; probes latched
             // during this window are serviced after the write (atomicLock).
-            amoOldWord := lineWord(dataRdata(hitWay), reqAddr)
-            storeMergeReg := amoMergedLine(dataRdata(hitWay))
+            amoLineReg := dataRdata(hitWay)
             storeHitWayReg := hitWay
             metaToM(setIndex, hitWay, touchPlru = true.B)
-            responseData := amoOldWord
-            state := StoreHitWrite
+            state := AmoPrepare
           }.otherwise {
             storeHitWayReg := hitWay
             upgradeLineReg := dataRdata(hitWay)
@@ -581,6 +582,28 @@ class BreezeDCache(
           state := PutReq
         }
       }
+    }
+
+    // All entry paths have acquired M permission (or local E ownership).
+    // Probe requests may be captured, but service is deferred until Respond.
+    is(AmoPrepare) {
+      amoOldWordReg := lineWord(amoLineReg, reqAddr)
+      state := AmoExecute
+    }
+    is(AmoExecute) {
+      amoResultReg := amoAlu.io.newOperand
+      responseData := amoOldWordReg
+      state := AmoWrite
+    }
+    is(AmoWrite) {
+      for (w <- 0 until ways) {
+        when(storeHitWayReg === w.U) {
+          dataArray(w).io.we := true.B
+          dataArray(w).io.addr := setIndex
+          dataArray(w).io.data_in := amoMergedLine(amoLineReg)
+        }
+      }
+      state := Respond
     }
 
     is(StoreHitWrite) {
@@ -719,9 +742,7 @@ class BreezeDCache(
             state := StoreHitWrite
           }.otherwise {
             when(reqMemOp === Amo) {
-              amoOldWord := lineWord(baseLine, reqAddr)
-              storeMergeReg := amoMergedLine(baseLine)
-              responseData := amoOldWord
+              amoLineReg := baseLine
             }.otherwise {
               // Store or successful SC.
               storeMergeReg := mergeStore(baseLine, reqAddr, reqWData, reqWMask)
@@ -729,7 +750,7 @@ class BreezeDCache(
             }
             when(reqMemOp === Sc) { resValid := false.B }
             metaToM(setIndex, storeHitWayReg, touchPlru = true.B)
-            state := StoreHitWrite
+            state := Mux(reqMemOp === Amo, AmoPrepare, StoreHitWrite)
           }
         }
       }
@@ -780,11 +801,9 @@ class BreezeDCache(
       // it must observe the installed (and possibly AMO-modified) line.
       val grantedM = refillGrantStateReg === BreezeGrantState.M
       val grantedE = refillGrantStateReg === BreezeGrantState.E
-      amoOldWord := lineWord(refillLineReg, reqAddr)
       val installedLine = MuxCase(refillLineReg, Seq(
         (reqMemOp === Store) ->
-          mergeStore(refillLineReg, reqAddr, reqWData, reqWMask),
-        (reqMemOp === Amo) -> amoMergedLine(refillLineReg)
+          mergeStore(refillLineReg, reqAddr, reqWData, reqWMask)
       ))
       // The valid bits are recomputed from the current metadata: a probe
       // serviced while the refill was in flight may have invalidated
@@ -806,7 +825,8 @@ class BreezeDCache(
           tagArray(w).io.we := true.B
           tagArray(w).io.addr := setIndex
           tagArray(w).io.data_in := requestTag
-          dataArray(w).io.we := true.B
+          // AMO data is written only after its registered execute stage.
+          dataArray(w).io.we := reqMemOp =/= Amo
           dataArray(w).io.addr := setIndex
           dataArray(w).io.data_in := installedLine
         }
@@ -814,8 +834,7 @@ class BreezeDCache(
       metaReg(setIndex) := makeMeta(newValidNow, newExcl, newDirty, newPlruReg)
       responseData := MuxCase(0.U, Seq(
         (reqMemOp === Load || reqMemOp === Lr) ->
-          lineWord(refillLineReg, reqAddr),
-        (reqMemOp === Amo) -> amoOldWord
+          lineWord(refillLineReg, reqAddr)
       ))
       when(reqMemOp === Lr) {
         resValid := true.B
@@ -824,7 +843,13 @@ class BreezeDCache(
         resLineAddr := reqAddr(31, 5)
       }
       responseError := false.B
-      state := Respond
+      when(reqMemOp === Amo) {
+        amoLineReg := refillLineReg
+        storeHitWayReg := victimWayReg
+        state := AmoPrepare
+      }.otherwise {
+        state := Respond
+      }
     }
 
     // ===== Probe service =====

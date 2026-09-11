@@ -589,11 +589,20 @@ class BreezeBackend(
         redirectNeeded || exceptionRedirect || xretRedirect || interruptRedirect || wfiCommit
     predictionMiss := redirectNeeded
 
-    io.frontendBtbUpdate.valid := false.B
-    io.frontendBtbUpdate.pc := 0.U
-    io.frontendBtbUpdate.target := 0.U
-    io.frontendBtbUpdate.predType := FrontendPredType.NONE
-    io.frontendBtbUpdate.taken := false.B
+    // Train BTB in the cycle after EXE resolution. Keep redirect/PHT/GHR
+    // resolution in EXE; only the BTB request crosses this register boundary.
+    val exeBtbUpdate = Wire(new BreezeBTBUpdateReq(cfg.VLEN))
+    val memBtbUpdate = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(cfg.VLEN)))
+    // These events cancel younger work. A branch's own redirectNeeded must
+    // not cancel its training, nor a younger branch cancel a pending update.
+    val btbOlderKill = exceptionRedirect || xretRedirect || satpCommit ||
+        interruptRedirect || wfiCommit || fenceiFlush
+
+    exeBtbUpdate.valid := false.B
+    exeBtbUpdate.pc := 0.U
+    exeBtbUpdate.target := 0.U
+    exeBtbUpdate.predType := FrontendPredType.NONE
+    exeBtbUpdate.taken := false.B
 
     io.frontendPhtUpdate.valid := false.B
     io.frontendPhtUpdate.idx := 0.U
@@ -611,10 +620,10 @@ class BreezeBackend(
                 is(FrontendPredType.BR) {
                     frontendBtbUpdateValid := true.B
                     frontendPhtUpdateValid := true.B
-                    io.frontendBtbUpdate.pc := idExeReg.pc
-                    io.frontendBtbUpdate.target := actualTarget
-                    io.frontendBtbUpdate.predType := FrontendPredType.BR
-                    io.frontendBtbUpdate.taken := actualTaken
+                    exeBtbUpdate.pc := idExeReg.pc
+                    exeBtbUpdate.target := actualTarget
+                    exeBtbUpdate.predType := FrontendPredType.BR
+                    exeBtbUpdate.taken := actualTaken
                     io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
                     io.frontendPhtUpdate.taken := actualTaken
                     io.frontendGhrUpdate.valid := true.B
@@ -622,25 +631,37 @@ class BreezeBackend(
                 }
                 is(FrontendPredType.JAL) {
                     frontendBtbUpdateValid := true.B
-                    io.frontendBtbUpdate.pc := idExeReg.pc
-                    io.frontendBtbUpdate.target := actualTarget
-                    io.frontendBtbUpdate.predType := FrontendPredType.JAL
-                    io.frontendBtbUpdate.taken := true.B
+                    exeBtbUpdate.pc := idExeReg.pc
+                    exeBtbUpdate.target := actualTarget
+                    exeBtbUpdate.predType := FrontendPredType.JAL
+                    exeBtbUpdate.taken := true.B
                 }
                 is(FrontendPredType.JALR) {
                     when(predictionMiss) {
                         frontendBtbUpdateValid := true.B
-                        io.frontendBtbUpdate.pc := idExeReg.pc
-                        io.frontendBtbUpdate.target := actualTarget
-                        io.frontendBtbUpdate.predType := FrontendPredType.JALR
-                        io.frontendBtbUpdate.taken := true.B
+                        exeBtbUpdate.pc := idExeReg.pc
+                        exeBtbUpdate.target := actualTarget
+                        exeBtbUpdate.predType := FrontendPredType.JALR
+                        exeBtbUpdate.taken := true.B
                     }
                 }
             }
         }
     }
 
-    io.frontendBtbUpdate.valid := frontendBtbUpdateValid
+    exeBtbUpdate.valid := frontendBtbUpdateValid
+    // Consume each request once, even if MEM stalls. With no BTB backpressure,
+    // consecutive branches can replace the request every cycle.
+    memBtbUpdate.valid := exeBtbUpdate.valid && !btbOlderKill
+    when(exeBtbUpdate.valid && !btbOlderKill) {
+        memBtbUpdate.pc := exeBtbUpdate.pc
+        memBtbUpdate.target := exeBtbUpdate.target
+        memBtbUpdate.predType := exeBtbUpdate.predType
+        memBtbUpdate.taken := exeBtbUpdate.taken
+    }
+    io.frontendBtbUpdate := memBtbUpdate
+    io.frontendBtbUpdate.valid := memBtbUpdate.valid && !btbOlderKill && !reset.asBool
+
     io.frontendPhtUpdate.valid := frontendPhtUpdateValid
 
     exeMemIsMem := exeMemReg.valid && (exeMemReg.mem_cmd =/= MEM_TYPE.NOT_MEM.U)
