@@ -114,6 +114,9 @@ final class SmallL2Harness(
 
   /** Advance one cycle: Wishbone slave, per-hart probe accept/respond, logs. */
   def step(): Unit = {
+    // A completed response must not remain valid for the next transaction.
+    // The selected pending response below reasserts valid with stable data.
+    dut.io.coherenceProbeResp.foreach(_.valid.poke(false.B))
     // --- Wishbone slave ---
     val wb = dut.io.memoryWishbone
     wb.ack.poke(false.B)
