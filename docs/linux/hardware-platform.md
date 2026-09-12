@@ -59,7 +59,7 @@ Linux 仿真复用 LiteX 的 SoC 集成和 LiteDRAM 控制器结构：
 | CLINT | `0x0200_0000` | 64 KiB | device, R/W |
 | PLIC | `0x0c00_0000` | 64 MiB window | device, R/W |
 | Linux reset ROM | `0x1001_0000` | 64 KiB | cacheable, R/X |
-| SRAM | `0x1100_0000` | 256 KiB | cacheable, R/W/X |
+| SRAM | `0x1100_0000` | 64 KiB | cacheable, R/W/X; matches KCU105 SRAM |
 | LiteX CSR | `0x1200_0000` | 16 MiB window | device, R/W |
 | LiteUART CSR page | `0x1200_1000` | 4 KiB page | device, R/W |
 | DDR | `0x8000_0000` | 256 MiB | cacheable, R/W/X |

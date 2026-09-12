@@ -62,4 +62,13 @@ class BreezeLinuxPmaSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.io.result.allowed.expect(false.B)
     }
   }
+
+  "SRAM PMA should end at the actual KCU105 64 KiB boundary" in {
+    simulate(new PMAChecker) { dut =>
+      query(dut, BigInt("1100fff8", 16), 3, PMAAccessType.Store)
+      dut.io.result.allowed.expect(true.B)
+      query(dut, BigInt("11010000", 16), 0, PMAAccessType.Load)
+      dut.io.result.allowed.expect(false.B)
+    }
+  }
 }

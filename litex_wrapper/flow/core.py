@@ -308,9 +308,16 @@ class _BreezeClusterCPU(CPU):
                 f"{cls.privilege_profile} {cls.rtl_mode}\"")
 
         cls._validate_profile_marker(profile_marker)
-        dma_marker = cls._read_profile_marker(profile_marker).get("coherentDma", "false")
+        marker = cls._read_profile_marker(profile_marker)
+        dma_marker = marker.get("coherentDma", "false")
         if dma_marker != str(cls.coherent_dma).lower():
             raise RuntimeError("Breeze coherent DMA RTL does not match the selected CPU")
+        if cls.coherent_dma:
+            import hashlib
+            with open(os.path.join(cls.flow_root_dir(), "config", "breeze_mcu_platform.json"), "rb") as stream:
+                current_hash = hashlib.sha256(stream.read()).hexdigest()
+            if marker.get("platformSha256") != current_hash:
+                raise RuntimeError("Breeze PMA configuration changed: regenerate coherent DMA RTL")
 
         with open(filelist, encoding="utf-8") as rtl_manifest:
             entries = [

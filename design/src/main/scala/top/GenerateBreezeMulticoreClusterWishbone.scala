@@ -108,6 +108,9 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
 
     private val l1iBytes = clusterCfg.l1i.ICACHE_SET_NUM *
         clusterCfg.l1i.ICACHE_WAY_NUM * clusterCfg.l1i.ICACHE_LINE_BYTES
+    private val platformHash = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(os.read.bytes(flowRoot / "config" / "breeze_mcu_platform.json"))
+        .map(b => f"${b & 0xff}%02x").mkString
     private val profileText =
         s"""profile=${clusterCfg.profileName}
            |numHarts=${clusterCfg.numHarts}
@@ -122,6 +125,7 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |rtlMode=$rtlMode
            |tandem=$enableTandem
            |coherentDma=$withCoherentDma
+           |platformSha256=$platformHash
            |compressed=${clusterCfg.coreCfg().enableCompressed}
            |addressTranslation=${if (clusterCfg.coreCfg().enableMmu) "bare,sv39" else "bare"}
            |""".stripMargin

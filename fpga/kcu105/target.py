@@ -20,6 +20,7 @@ from litex_boards.platforms import xilinx_kcu105
 from litex_boards.targets.xilinx_kcu105 import _CRG
 from litedram.modules import EDY4016A
 from litedram.phy import usddrphy
+from migen import Cat
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -32,6 +33,7 @@ from flow.core import BreezeTinyDebug  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
+from sdcard import BreezeDma, BreezeTinyDma, BreezeTinyDebugDma, SdBuilder, add_sdcard  # noqa: E402
 
 
 # This target is intentionally configured in source rather than exposing a
@@ -65,6 +67,9 @@ CPUS["breeze"] = Breeze
 # Keep the public CLI spelling hyphenated and the internal registry key valid C.
 CPUS["breeze_tiny"] = BreezeTiny
 CPUS["breeze_tiny_debug"] = BreezeTinyDebug
+CPUS["breeze_dma"] = BreezeDma
+CPUS["breeze_tiny_dma"] = BreezeTinyDma
+CPUS["breeze_tiny_debug_dma"] = BreezeTinyDebugDma
 
 
 class BreezeKCU105SoC(SoCCore):
@@ -76,9 +81,14 @@ class BreezeKCU105SoC(SoCCore):
         "ctrl": 0,
         "uart": 1,
         "timer0": 2,
+        "ddrphy": 3,
+        "identifier_mem": 4,
+        "sdram": 5,
+        "sdcard": 6,
+        "sd_dma": 7,
     }
 
-    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ):
+    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False):
         if cpu_type not in ("breeze", "breeze-tiny"):
             raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
         if debug and cpu_type != "breeze-tiny":
@@ -87,12 +97,21 @@ class BreezeKCU105SoC(SoCCore):
             raise ValueError("KCU105 system frequency must be 50 or 100 MHz")
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, sys_clk_freq)
+        # Vendor MMCM search permits 1% frequency error by default. Require
+        # exact outputs so IDELAYCTRL's real clock matches REFCLK_FREQUENCY.
+        self.crg.pll.clkouts = {
+            n: (clk, freq, phase, 1e-6)
+            for n, (clk, freq, phase, _) in self.crg.pll.clkouts.items()
+        }
+        cpu_key = "breeze_tiny_debug" if debug else cpu_type.replace("-", "_")
+        if with_sdcard:
+            cpu_key += "_dma"
 
         super().__init__(
             platform,
             clk_freq=sys_clk_freq,
             ident="Breeze RV64GC DDR4 SoC on KCU105",
-            cpu_type="breeze_tiny_debug" if debug else cpu_type.replace("-", "_"),
+            cpu_type=cpu_key,
             cpu_variant="standard",
             bus_standard="wishbone",
             bus_data_width=64,
@@ -152,6 +171,10 @@ class BreezeKCU105SoC(SoCCore):
         ram_attributes = ("readable", "writable", "executable", "cacheable")
         if not all(ram_pma[key] for key in ram_attributes) or ram_pma["device"]:
             raise ValueError("DDR PMA must be cacheable R/W/X normal memory")
+        sram_pma = next(r for r in platform_config["regions"] if r["name"] == "sram")
+        actual_sram = self.bus.regions["sram"]
+        if (actual_sram.origin, actual_sram.size) != (int(sram_pma["origin"], 0), int(sram_pma["size"], 0)):
+            raise ValueError("SRAM/PMA mismatch: BIOS DMA buffers require an exact SRAM region")
 
         self.clint = BreezeClintVerilog(
             platform=platform,
@@ -192,9 +215,11 @@ class BreezeKCU105SoC(SoCCore):
                 cached=False,
             ),
         )
+        sd_probes = add_sdcard(self) if with_sdcard else []
+        interrupt_sources = Cat(self.uart.ev.irq, self.sdcard.ev.irq) if with_sdcard else self.uart.ev.irq
         self.comb += [
             self.plic.sources.eq(pack_plic_sources(
-                self.uart.ev.irq,
+                interrupt_sources,
                 first_source=UART_PLIC_SOURCE,
                 num_sources=PLIC_NUM_SOURCES,
             )),
@@ -210,10 +235,12 @@ class BreezeKCU105SoC(SoCCore):
         self.add_constant("BREEZE_MTIME_FREQUENCY", MTIME_FREQ)
         self.add_constant("BREEZE_PLIC", PLIC_ORIGIN)
         self.add_constant("BREEZE_UART_PLIC_SOURCE", UART_PLIC_SOURCE)
+        if with_sdcard:
+            self.add_constant("BREEZE_SDCARD_PLIC_SOURCE", UART_PLIC_SOURCE + 1)
 
         if debug:
             from flow.ila import BreezeDebugILA
-            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq)
+            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq, extra_sources=sd_probes)
 
 
 def main():
@@ -227,6 +254,8 @@ def main():
                         help="override the CPU-specific build directory")
     parser.add_argument("--debug", action="store_true",
                         help="generate single-hart Tandem RTL and add a native Vivado ILA")
+    parser.add_argument("--with-sdcard", action="store_true",
+                        help="native SD, coherent DMA, bounded BIOS driver and SD/DMA ILA probes")
     parser.add_argument(
         "--build",
         action="store_true",
@@ -241,19 +270,24 @@ def main():
     if args.debug and args.cpu_type != "breeze-tiny":
         parser.error("--debug only supports --cpu-type breeze-tiny (single hart)")
 
-    if args.debug and not args.load:
+    if (args.debug or args.with_sdcard) and not args.load:
+        profile = "single" if args.cpu_type == "breeze-tiny" else "small"
+        mode = "fpga-debug" if args.debug else "production"
+        dma_arg = " coherent-dma" if args.with_sdcard else ""
         subprocess.run([
             "sbt", "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-            "single gshare linux fpga-debug",
+            f"{profile} gshare linux {mode}{dma_arg}",
         ], cwd=os.path.join(FLOW_ROOT, "design"), check=True)
 
     soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug,
-                          sys_clk_freq=args.sys_clk_freq)
+                          sys_clk_freq=args.sys_clk_freq, with_sdcard=args.with_sdcard)
     output_dir = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
         TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
     if args.output_dir is None and args.sys_clk_freq != SYS_CLK_FREQ:
         output_dir += f"-{args.sys_clk_freq // 1_000_000}mhz"
-    builder = Builder(
+    if args.output_dir is None and args.with_sdcard:
+        output_dir += "-sd-dma"
+    builder = (SdBuilder if args.with_sdcard else Builder)(
         soc,
         output_dir=output_dir,
         csr_csv=os.path.join(output_dir, "csr.csv"),
