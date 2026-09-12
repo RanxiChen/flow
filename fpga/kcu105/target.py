@@ -7,6 +7,7 @@ use the same memory map later, but are not part of this target's build flow.
 """
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -40,7 +41,7 @@ UART_BAUDRATE = 115_200
 
 ROM_SIZE = 0x0001_0000
 SRAM_SIZE = 0x0001_0000
-DDR_SIZE = 0x4000_0000  # Expose a 1 GiB window of the board's 2 GiB DDR4.
+DDR_SIZE = 0x8000_0000  # Full 2 GiB DDR4 at 0x80000000..0xffffffff.
 
 CLINT_ORIGIN = 0x0200_0000
 CLINT_SIZE = 0x0001_0000
@@ -129,6 +130,28 @@ class BreezeKCU105SoC(SoCCore):
             size=DDR_SIZE,
             l2_cache_size=0,
         )
+
+        # LiteDRAM can cap the requested size to the physical geometry. Check
+        # its actual region against the PMA input used by Chisel, not just the
+        # requested DDR_SIZE. CPU RTL must still be regenerated after JSON edits.
+        with open(os.path.join(FLOW_ROOT, "config", "breeze_mcu_platform.json"),
+                  encoding="utf-8") as config_file:
+            platform_config = json.load(config_file)
+        ram_pma = next(r for r in platform_config["regions"] if r["name"] == "main_ram")
+        ram_region = self.bus.regions["main_ram"]
+        pma_origin = int(ram_pma["origin"], 0)
+        pma_size = int(ram_pma["size"], 0)
+        if (ram_region.origin, ram_region.size) != (pma_origin, pma_size):
+            raise ValueError(
+                f"DDR/PMA mismatch: SoC={ram_region.origin:#x}+{ram_region.size:#x}, "
+                f"PMA={pma_origin:#x}+{pma_size:#x}")
+        if ram_region.size != DDR_SIZE:
+            raise ValueError("DDR geometry does not provide the requested full capacity")
+        if pma_origin + pma_size > (1 << platform_config["addressWidth"]):
+            raise ValueError("DDR exceeds the CPU physical address width")
+        ram_attributes = ("readable", "writable", "executable", "cacheable")
+        if not all(ram_pma[key] for key in ram_attributes) or ram_pma["device"]:
+            raise ValueError("DDR PMA must be cacheable R/W/X normal memory")
 
         self.clint = BreezeClintVerilog(
             platform=platform,

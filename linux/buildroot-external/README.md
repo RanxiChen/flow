@@ -45,7 +45,9 @@ make -C "$BUILDROOT_DIR" O="$FLOW_ROOT/$BUILDROOT_OUT" -j"$(nproc)"
 ```
 
 其设备树为 `flow-kcu105-tiny.dtb`，仅声明 hart 0、对应的 CLINT 中断和
-两个 PLIC M/S context；内存为 KCU105 暴露的 `0x80000000` 起始 1 GiB。
+两个 PLIC M/S context；内存为 KCU105 暴露的 `0x80000000` 起始 2 GiB。
+这份容量配置需配合重新生成的 2 GiB PMA/FPGA；已有的 1 GiB DTB 和旧
+bitstream 不会自动更新。2 GiB 全范围尚未通过上板验证。
 加载地址仍为 `fw_jump.bin` → `0x80000000`、设备树 → `0x80100000`、
 `Image` → `0x80200000`。不能沿用四核仿真的 `flow-small.dtb`。
 新增配置不代表已经通过 FPGA Linux 启动验证；先完成 DDR 训练和内存测试。

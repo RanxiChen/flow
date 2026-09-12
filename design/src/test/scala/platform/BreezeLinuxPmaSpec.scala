@@ -29,16 +29,29 @@ class BreezeLinuxPmaSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "Linux DDR PMA should cover exactly 256 MiB" in {
+  "DDR PMA should cover 2 GiB including the former 256 MiB and 1 GiB boundaries" in {
     simulate(new PMAChecker) { dut =>
-      query(dut, BigInt("8fffffff", 16), 0, PMAAccessType.Load)
-      dut.io.result.allowed.expect(true.B)
-      dut.io.result.cacheable.expect(true.B)
-      dut.io.result.device.expect(false.B)
-
-      query(dut, BigInt("90000000", 16), 0, PMAAccessType.Load)
-      dut.io.result.regionHit.expect(false.B)
-      dut.io.result.allowed.expect(false.B)
+      for (address <- Seq("80000000", "90000000", "bffff000", "c0000000", "fffff000")) {
+        for (access <- Seq(PMAAccessType.Fetch, PMAAccessType.Load, PMAAccessType.Store)) {
+          query(dut, BigInt(address, 16), 3, access)
+          dut.io.result.regionHit.expect(true.B)
+          dut.io.result.allowed.expect(true.B)
+          dut.io.result.cacheable.expect(true.B)
+          dut.io.result.device.expect(false.B)
+        }
+      }
+      // Legal accesses ending at the final byte of the 32-bit physical space.
+      for ((address, size) <- Seq(("ffffffff", 0), ("fffffff8", 3), ("ffffffe0", 5))) {
+        query(dut, BigInt(address, 16), size, PMAAccessType.Store)
+        dut.io.result.allowed.expect(true.B)
+      }
+      // Crossing 4 GiB must not wrap around and alias a low physical address.
+      for ((address, size) <- Seq(("7fffffff", 0), ("100000000", 0),
+                                 ("fffffffc", 3), ("fffffff0", 5))) {
+        query(dut, BigInt(address, 16), size, PMAAccessType.Store)
+        dut.io.result.regionHit.expect(false.B)
+        dut.io.result.allowed.expect(false.B)
+      }
     }
   }
 

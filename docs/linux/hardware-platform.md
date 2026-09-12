@@ -65,8 +65,11 @@ Linux 仿真复用 LiteX 的 SoC 集成和 LiteDRAM 控制器结构：
 | DDR | `0x8000_0000` | 256 MiB | cacheable, R/W/X |
 
 LiteUART 使用 LiteX 固定 CSR ID 1，因此基址为 `0x1200_1000`。它已经包含在
-`0x1200_0000` 的 device PMA 窗口内，不再维护额外 UART PMA 区域。PMA 对 DDR 覆盖
-整个 `0x8000_0000..0x8fff_ffff`，不能继续保留早期 32 MiB RAM 上限。
+`0x1200_0000` 的 device PMA 窗口内，不再维护额外 UART PMA 区域。
+共享 PMA 当前覆盖 `0x8000_0000..0xffff_ffff`（2 GiB），供 KCU105 完整 DDR
+窗口使用；上表的 Linux 仿真仍只实现并向设备树声明其中 256 MiB。PMA 允许
+访问不代表对应目标实际实现了内存。KCU105 的新容量配置尚待重新生成 RTL、
+实现和上板验证，参见 `fpga/kcu105/README.md`。
 
 ## 5. 中断控制器
 

@@ -141,18 +141,32 @@ command-delay scan range issue is not changed by this cache pipeline patch.
 | ROM | `0x10010000` | 64 KiB FPGA BRAM containing the LiteX BIOS |
 | SRAM | `0x11000000` | 64 KiB FPGA BRAM for BIOS/demo data and stack |
 | LiteX CSR | `0x12000000` | control, UART, timer and SDRAM controller/PHY CSRs |
-| main RAM | `0x80000000` | 1 GiB DDR4 window (`0x80000000`–`0xbfffffff`) |
+| main RAM | `0x80000000` | 2 GiB DDR4 window (`0x80000000`–`0xffffffff`) |
 
 The system clock defaults to 50 MHz (20 ns period); `--sys-clk-freq 100000000`
 selects 100 MHz (10 ns). The board reference clock remains 125 MHz. The board's LiteX `_CRG` supplies the DDR and IDELAY domains.
 `USDDRPHY` and `EDY4016A` use the 1:4 ratio, corresponding to a 200 MHz DDR
 clock / 400 MT/s data rate; IDELAY uses 200 MHz. `integrated_main_ram_size=0`
-lets LiteDRAM own `main_ram`. The board geometry is 2 GiB, while this target
-exposes a 1 GiB window. BIOS SDRAM training runs before memory testing.
+lets LiteDRAM own `main_ram`. The board geometry and requested window are both
+2 GiB. BIOS SDRAM training runs before memory testing.
 Breeze retains its coherent shared L2, with no extra LiteX cache between the
 cluster and DDR. The build uses Vivado's
 area-oriented synthesis/implementation directives because the fixed four-hart
 RV64GC cluster is close to the KCU105's KU040 LUT limit.
+
+The shared Chisel PMA input in `config/breeze_mcu_platform.json` and the
+KCU105 single-hart DTS now also describe 2 GiB. The target rejects a mismatch
+between the actual LiteDRAM region and that PMA input. Simulation targets may
+still implement smaller RAM windows inside this PMA range.
+
+This capacity change has not been validated in RTL simulation, Vivado or on
+the board. Regenerate the CPU RTL (including production RTL; an existing
+profile marker does not verify the PMA contents), then build into a new FPGA
+output directory. Old bitstreams retain their old PMA logic. Build a matching
+DTB and keep its CPU clock consistent with the selected 50/100 MHz target.
+Preserve the old software/FPGA artifacts. Board acceptance must cover upper
+DDR addresses and aliasing across the old 1 GiB boundary; the BIOS's default
+small low-address memory test does not establish full-capacity correctness.
 
 ## Generate the SoC and BIOS
 
