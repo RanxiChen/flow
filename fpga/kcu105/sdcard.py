@@ -9,8 +9,7 @@ from migen.genlib.cdc import MultiReg
 from litex.gen import LiteXModule
 from litex.build.generic_platform import Pins, IOStandard, Misc
 from litex.soc.interconnect.csr import CSR, CSRStatus
-from litex.soc.integration.builder import Builder
-from litex.soc import soc_directory
+from litex.soc.integration.builder import Builder, soc_directory
 from flow.core import Breeze, BreezeTiny, BreezeTinyDebug
 
 
