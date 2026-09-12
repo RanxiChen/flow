@@ -252,7 +252,12 @@ class BreezeKCU105SoC(SoCCore):
                               ("sd_sample_ce", phy.sdpads.data_i_ce),
                               ("sd_cmd_event", self.sdcard.core.cmd_event.status),
                               ("sd_data_event", self.sdcard.core.data_event.status)]
-            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq, extra_sources=sd_probes)
+                from sd_debug import SDObserver
+                self.sd_observer = SDObserver(self.sdcard)
+                sd_probes += self.sd_observer.sources
+            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq,
+                extra_sources=sd_probes, storage_qualifier=with_sdcard,
+                depth=8192 if with_sdcard else 4096)
 
 
 def main():
@@ -279,6 +284,8 @@ def main():
         help="load the already-built bitstream into KCU105 SRAM",
     )
     args = parser.parse_args()
+    if args.with_sdcard and args.sys_clk_freq != 100_000_000:
+        parser.error("SD timing bring-up profile requires --sys-clk-freq 100000000")
     if args.debug and args.cpu_type != "breeze-tiny":
         parser.error("--debug only supports --cpu-type breeze-tiny (single hart)")
 
@@ -323,6 +330,9 @@ def main():
 
     if args.debug:
         soc.debug_ila.write_probe_map(os.path.join(output_dir, "ila-probes.json"))
+        if args.with_sdcard:
+            with open(os.path.join(output_dir, "ila-sd-states.json"), "w") as stream:
+                json.dump(soc.sd_observer.state_maps, stream, indent=2)
 
     if args.load:
         programmer = soc.platform.create_programmer()

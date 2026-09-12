@@ -33,3 +33,9 @@ boot.json and its four referenced files into a FAT partition only when ready.
 In BIOS use `sdcard_init`, `sdcard_read 0`, then `sdcardboot`.
 The kernel still uses its embedded rootfs; the baseline has MMC_LITEX disabled
 and this DTB has no MMC node. Linux SD mounting is a separate pending step.
+
+The SD debug successor adds storage qualification and 8192-point ILA. Use
+`capture_sd.tcl` with the matching LTX and an unused output prefix, then run
+sdcard_init only after FLOW_SD_ARMED. Interpret `dbg_sd_ticks` as elapsed sys
+cycles; filtered sample indices are not a time scale. FSM probes are one-hot,
+with bit names in ila-sd-states.json. See ../sd-timing.md for timing limits.

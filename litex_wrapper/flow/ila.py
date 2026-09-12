@@ -11,7 +11,10 @@ class BreezeDebugILA(Module):
     depth = 4096
     input_pipe_stages = 2
 
-    def __init__(self, cpu, platform, clock_hz=50_000_000, extra_sources=()):
+    def __init__(self, cpu, platform, clock_hz=50_000_000, extra_sources=(),
+                 storage_qualifier=False, depth=4096):
+        self.depth = depth
+        self.storage_qualifier = storage_qualifier
         self.clock_hz = int(clock_hz)
         if cpu.num_harts != 1 or not cpu.tandem_enabled:
             raise ValueError("Breeze ILA requires a single hart with live Tandem outputs")
@@ -71,13 +74,14 @@ class BreezeDebugILA(Module):
             "C_NUM_OF_PROBES": len(self.probes),
             "C_DATA_DEPTH": self.depth,
             "C_INPUT_PIPE_STAGES": self.input_pipe_stages,
+            "C_EN_STRG_QUAL": int(storage_qualifier),
+            "C_ALL_PROBE_SAME_MU_CNT": 2 if storage_qualifier else 1,
         }
         properties.update({"C_PROBE%d_WIDTH" % i: len(probe)
                            for i, probe in enumerate(self.probes)})
         for name, value in properties.items():
             commands.append(f"set_property CONFIG.{name} {value} [get_ips breeze_ila]")
         commands.append("generate_target all [get_ips breeze_ila]")
-        commands.append("synth_ip [get_ips breeze_ila]")
         platform.toolchain.additional_commands.append(
             "write_debug_probes -force {build_name}.ltx")
 
@@ -85,6 +89,7 @@ class BreezeDebugILA(Module):
         with open(filename, "w", encoding="utf-8") as stream:
             json.dump({"clock": "sys", "clock_hz": self.clock_hz,
                        "depth": self.depth, "input_pipe_stages": self.input_pipe_stages,
+                       "storage_qualifier": self.storage_qualifier,
                        "total_width": sum(len(p) for p in self.probes),
                        "probes": self.probe_map}, stream, indent=2)
             stream.write("\n")

@@ -10,6 +10,11 @@ from litex.soc.integration.builder import Builder
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        gateware = Path(self.gateware_dir)
+        gateware.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(Path(__file__).with_name("sd_timing.tcl"), gateware / "flow_sd_timing.tcl")
+        self.soc.platform.toolchain.pre_optimize_commands.append("source flow_sd_timing.tcl")
+        self.soc.platform.toolchain.additional_commands.append("flow_report_sd_timing")
         # Patch a build-local official package; never dirty the installed LiteX.
         patch_dir = Path(__file__).resolve().parent / "patches"
         lock = json.loads((patch_dir / "litex-sdcard.json").read_text())
