@@ -75,7 +75,7 @@ class BreezeDebugILA(Module):
             "C_DATA_DEPTH": self.depth,
             "C_INPUT_PIPE_STAGES": self.input_pipe_stages,
             "C_EN_STRG_QUAL": int(storage_qualifier),
-            "C_ALL_PROBE_SAME_MU_CNT": 2 if storage_qualifier else 1,
+            "ALL_PROBE_SAME_MU_CNT": 2 if storage_qualifier else 1,
         }
         properties.update({"C_PROBE%d_WIDTH" % i: len(probe)
                            for i, probe in enumerate(self.probes)})
