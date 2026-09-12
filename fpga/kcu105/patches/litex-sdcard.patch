@@ -121,7 +121,30 @@
  	bool support_4bit;
  
  	sdcard_phy_settings_write(SD_PHY_SPEED_1X);
-@@ -656,7 +689,7 @@
+@@ -559,7 +592,8 @@
+ 	/* Set SD clk freq to Initialization frequency */
+ 	sdcard_set_clk_freq(SDCARD_CLK_FREQ_INIT, 0);
+ 
+-	for (timeout=1000; timeout>0; timeout--) {
++	/* Fail promptly when no card response is visible; do not hide retries. */
++	for (timeout=8; timeout>0; timeout--) {
+ 		busy_wait(1);
+ 		/* Set SDCard in SPI Mode (generate 80 dummy clocks) */
+ 		sdcard_phy_init_initialize_write(1);
+@@ -570,8 +604,11 @@
+ 		busy_wait(1);
+ 
+ 		/* Set SDCard voltages, only supported by ver2.00+ SDCards */
+-		if (sdcard_send_ext_csd() == SD_OK)
++		int status = sdcard_send_ext_csd();
++		if (status == SD_OK)
+ 			break;
++		printf("SD init: CMD8 failed, status=%d, attempt=%u/8\n",
++		       status, (unsigned int)(9 - timeout));
+ 	}
+ 	if (timeout == 0)
+ 		return 0;
+@@ -656,7 +693,7 @@
  
  #ifdef CSR_SDCARD_BLOCK2MEM_DMA_BASE_ADDR
  
@@ -130,7 +153,7 @@
  {
  	int status;
  	unsigned int timeout;
-@@ -664,7 +697,7 @@
+@@ -664,7 +701,7 @@
  	while (count) {
  		uint32_t nblocks;
  #ifdef SDCARD_CMD18_SUPPORT
@@ -139,7 +162,7 @@
  #else
  		nblocks = 1;
  #endif
-@@ -672,6 +705,7 @@
+@@ -672,6 +709,7 @@
  		sdcard_block2mem_dma_enable_write(0);
  		sdcard_block2mem_dma_base_write((uint64_t)(uintptr_t) buf);
  		sdcard_block2mem_dma_length_write(512*nblocks);
@@ -147,7 +170,7 @@
  		sdcard_block2mem_dma_enable_write(1);
  
  		/* Read Block(s) from SDCard */
-@@ -709,6 +743,12 @@
+@@ -709,6 +747,12 @@
  			}
  			busy_wait_us(1);
  		}
@@ -160,7 +183,7 @@
  
  		/* Update Block/Buffer/Count */
  		block += nblocks;
-@@ -725,11 +765,28 @@
+@@ -725,11 +769,28 @@
  	return SD_OK;
  }
  
@@ -190,7 +213,7 @@
  {
  	int status;
  	unsigned int timeout;
-@@ -737,7 +794,7 @@
+@@ -737,7 +798,7 @@
  	while (count) {
  		uint32_t nblocks;
  #ifdef SDCARD_CMD25_SUPPORT
@@ -199,7 +222,7 @@
  #else
  		nblocks = 1;
  #endif
-@@ -745,6 +802,7 @@
+@@ -745,6 +806,7 @@
  		sdcard_mem2block_dma_enable_write(0);
  		sdcard_mem2block_dma_base_write((uint64_t)(uintptr_t) buf);
  		sdcard_mem2block_dma_length_write(512*nblocks);
@@ -207,7 +230,7 @@
  		sdcard_mem2block_dma_enable_write(1);
  
  		/* Write Block(s) to SDCard */
-@@ -781,6 +839,12 @@
+@@ -781,6 +843,12 @@
  			}
  			busy_wait_us(1);
  		}
@@ -220,7 +243,7 @@
  
  		/* Update Block/Buffer/Count */
  		block += nblocks;
-@@ -790,6 +854,23 @@
+@@ -790,6 +858,23 @@
  
  	return SD_OK;
  }
