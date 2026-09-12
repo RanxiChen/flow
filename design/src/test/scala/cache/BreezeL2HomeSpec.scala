@@ -413,6 +413,76 @@ class BreezeL2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private def dualRamAddr(tagLsb: Int, set: Int, offset: Int = 0): BigInt =
     BigInt(0x80000000L) + (BigInt(tagLsb) << 12) + (BigInt(set) << 5) + offset
 
+  "shared array payloads preserve every way across dirty hits and replacement" in {
+    simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
+      val h = new L2HomeHarness(dut, new DTestMem)
+      val addresses = (0 until 8).map(w => ramAddr(w, 17))
+      val lines = (0 until 8).map(w => (0 until 4).map(b =>
+        (BigInt("1020304050607080", 16) + w * 19 + b) << (64 * b)).reduce(_ | _))
+      for (w <- 0 until 8) {
+        h.getM(addresses(w))._2 mustBe false
+        h.putM(addresses(w), lines(w)) mustBe false
+      }
+      h.resetWbLog()
+      // Deliberately visit ways out of allocation order; each PutM must have
+      // changed just one way despite broadcasting its payload to all arrays.
+      for (w <- Seq(7, 0, 4, 1, 6, 2, 5, 3)) {
+        val (_, data, error) = h.getS(addresses(w))
+        error mustBe false
+        data mustBe lines(w)
+        h.putS(addresses(w)) mustBe false
+      }
+      h.wbLog mustBe empty
+      // Misses now select victims rather than the previous transaction's hit.
+      for (w <- 0 until 8) {
+        val replacement = ramAddr(w + 8, 17)
+        val (_, data, error) = h.getS(replacement)
+        error mustBe false
+        data mustBe h.mem.readLine(replacement)
+        h.putS(replacement) mustBe false
+        h.mem.readLine(addresses(w)) mustBe lines(w)
+      }
+      h.wbLog.filter(_._2).map(_._1).toSeq mustBe
+        addresses.flatMap(a => (0 until 4).map(b => a + b * 8))
+    }
+  }
+
+  "a recalled hit stays stable under grant backpressure before a clean recall" in {
+    simulate(new BreezeL2Home(dualL2Cfg, numHarts = 2)) { dut =>
+      val h = new L2HomeHarness(dut, new DTestMem, numHarts = 2)
+      val dirtyAddr = dualRamAddr(0, 11)
+      val cleanAddr = dualRamAddr(1, 11)
+      val dirty = (BigInt(1) << 255) | BigInt("123456789abcdef", 16)
+      h.getM(dirtyAddr, hart = 0)._2 mustBe false
+      h.l1Store(dirtyAddr, dirty, hart = 0)
+      h.getS(cleanAddr, hart = 0)._3 mustBe false
+      h.beginRequest(BreezeCoherenceOpcode.GetS, dirtyAddr, hart = 1)
+      val grant = dut.io.coherenceGrant(1)
+      var cycles = 0
+      while (!grant.valid.peek().litToBoolean && cycles < 4000) {
+        h.step()
+        cycles += 1
+      }
+      grant.valid.expect(true.B)
+      for (_ <- 0 until 12) {
+        grant.lineData.expect(dirty.U)
+        grant.hasData.expect(true.B)
+        grant.error.expect(false.B)
+        grant.valid.expect(true.B)
+        h.step()
+      }
+      val (_, data, hasData, error) = h.waitGrant(1)
+      data mustBe dirty
+      hasData mustBe true
+      error mustBe false
+      // The clean E owner returns no data. This must use this line's array
+      // contents, not the recalled dirty data from the preceding transaction.
+      val (_, clean, cleanError) = h.getS(cleanAddr, hart = 1)
+      cleanError mustBe false
+      clean mustBe h.mem.readLine(cleanAddr)
+    }
+  }
+
   "a GetS miss refills from memory with four beats and grants E (MESI)" in {
     simulate(new BreezeL2Home(l2Cfg, numHarts = 1)) { dut =>
       val h = new L2HomeHarness(dut, new DTestMem)

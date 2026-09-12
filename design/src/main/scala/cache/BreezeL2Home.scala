@@ -159,12 +159,13 @@ class BreezeL2Home(
   val hitOwnerReg = RegInit(0.U(hartIdWidth.W))
   val hitSharersReg = RegInit(0.U(sharerWidth.W))
   val hitDirtyMemReg = RegInit(false.B)
-  val hitDataReg = RegInit(0.U(lineWidth.W))
+  // A blocking transaction uses either hit data or victim data, never both.
+  // Keep the selected array line until a recall replaces it or the transaction ends.
+  val selectedLineReg = RegInit(0.U(lineWidth.W))
 
   // Victim context captured in Compare (miss path).
   val victimWayReg = RegInit(0.U(wayIndexWidth.W))
   val victimTagReg = RegInit(0.U(tagWidth.W))
-  val victimDataReg = RegInit(0.U(lineWidth.W))
   val victimDirtyReg = RegInit(false.B)
   val victimDirReg = RegInit(NONE)
   val victimSharersReg = RegInit(0.U(sharerWidth.W))
@@ -272,30 +273,21 @@ class BreezeL2Home(
   val dirWrEntry = Reg(dirEntryType)
   dirWrPending := false.B
 
-  when(state === Init) {
-    for (w <- 0 until ways) {
-      dirArray(w).io.we := true.B
-      dirArray(w).io.addr := initSet
-      dirArray(w).io.data_in := 0.U
-    }
-  }.elsewhen(state === ArrayUpdate && dirWrPending) {
-    for (w <- 0 until ways) {
-      when(dirWrWay === w.U) {
-        dirArray(w).io.we := true.B
-        dirArray(w).io.addr := dirWrSet
-        dirArray(w).io.data_in := dirWrEntry.asUInt
-      }
-    }
-  }
-
-  when(state === ArrayUpdate && dataWrPending) {
-    for (w <- 0 until ways) {
-      when(dataWrWay === w.U) {
-        dataArray(w).io.we := true.B
-        dataArray(w).io.addr := dataWrSet
-        dataArray(w).io.data_in := dataWrLine
-      }
-    }
+  val initializingArrays = state === Init
+  val writingDir = state === ArrayUpdate && dirWrPending
+  val writingData = state === ArrayUpdate && dataWrPending
+  // Broadcast payload/address; only the per-way write enable selects storage.
+  // Idle write payloads have no architectural meaning.
+  val dirAddress = Mux(initializingArrays, initSet, Mux(writingDir, dirWrSet, setIndex))
+  val dataAddress = Mux(writingData, dataWrSet, setIndex)
+  val dirPayload = Mux(initializingArrays, 0.U(dirEntryWidth.W), dirWrEntry.asUInt)
+  for (w <- 0 until ways) {
+    dirArray(w).io.addr := dirAddress
+    dirArray(w).io.data_in := dirPayload
+    dirArray(w).io.we := initializingArrays || (writingDir && dirWrWay === w.U)
+    dataArray(w).io.addr := dataAddress
+    dataArray(w).io.data_in := dataWrLine
+    dataArray(w).io.we := writingData && dataWrWay === w.U
   }
 
   // ===== Compare-stage lookup (tag, directory state and data all arrive now) =====
@@ -309,12 +301,16 @@ class BreezeL2Home(
   val hitSharers = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.sharers)))
   val hitOwner = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.ownerId)))
   val hitDirtyMem = Mux1H((0 until ways).map(w => (wayHit(w), dirRdata(w).dir.dirtyToMemory)))
-  val hitData = Mux1H((0 until ways).map(w => (wayHit(w), dataRdata(w))))
 
   val invalidVector = VecInit((0 until ways).map(w => !dirRdata(w).dir.valid))
   val hasInvalid = invalidVector.asUInt.orR
   val firstInvalid = OHToUInt(PriorityEncoderOH(invalidVector.asUInt))
   val victimWay = Mux(hasInvalid, firstInvalid, roundRobin(setIndex))
+
+  // Select hit/victim on narrow control signals before the single wide mux.
+  val selectedWayOH = VecInit((0 until ways).map(w =>
+    Mux(hit, wayHit(w), victimWay === w.U)))
+  val selectedLine = Mux1H((0 until ways).map(w => (selectedWayOH(w), dataRdata(w))))
 
   // hitWay is decoded with a bare OHToUInt, which returns a silently wrong way
   // if two ways ever carry the same tag; the Mux1H lookups above would fold
@@ -427,7 +423,7 @@ class BreezeL2Home(
       hitOwnerReg := hitOwner
       hitSharersReg := hitSharers
       hitDirtyMemReg := hitDirtyMem
-      hitDataReg := hitData
+      selectedLineReg := selectedLine
 
       when(reqOp === PutS || reqOp === PutM) {
         // ---- PutS/PutM: the line must be present and the source must match ----
@@ -472,7 +468,7 @@ class BreezeL2Home(
             nextState := ProbeReq
           }.otherwise {
             // NONE/SHARED: the L2 data is current; I$ never joins the bitmap.
-            grantDataReg := hitData
+            grantDataReg := selectedLine
             grantHasDataReg := true.B
             nextState := SendGrant
           }
@@ -482,14 +478,14 @@ class BreezeL2Home(
             // silently upgrade to M, so the directory goes UNIQUE and never
             // assumes the L2 data stays current.
             writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
-            grantDataReg := hitData
+            grantDataReg := selectedLine
             grantStateReg := BreezeGrantState.E
             grantHasDataReg := true.B
             nextState := SendGrant
           }.elsewhen(hitDirState === SHARED) {
             writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem,
               SHARED, hitSharers | hartBit(reqHart), 0.U)
-            grantDataReg := hitData
+            grantDataReg := selectedLine
             grantStateReg := BreezeGrantState.S
             grantHasDataReg := true.B
             nextState := SendGrant
@@ -511,7 +507,7 @@ class BreezeL2Home(
           // GetM
           when(hitDirState === NONE) {
             writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
-            grantDataReg := hitData
+            grantDataReg := selectedLine
             grantStateReg := BreezeGrantState.M
             grantHasDataReg := true.B
             nextState := SendGrant
@@ -519,7 +515,7 @@ class BreezeL2Home(
             val targets = hitSharers & ~hartBit(reqHart)
             when(targets === 0.U) {
               writeDir(setIndex, hitWay, requestTag, true.B, hitDirtyMem, UNIQUE, 0.U, reqHart)
-              grantDataReg := hitData
+              grantDataReg := selectedLine
               grantStateReg := BreezeGrantState.M
               grantHasDataReg := true.B
               nextState := SendGrant
@@ -556,7 +552,6 @@ class BreezeL2Home(
         victimWayReg := victimWay
         victimValidReg := victimEntry.dir.valid
         victimTagReg := victimEntry.tag
-        victimDataReg := dataRdata(victimWay)
         victimDirtyReg := victimEntry.dir.dirtyToMemory
         val (victimDirDecoded, victimDirLegal) =
           BreezeDirectoryState.safe(victimEntry.dir.dirState)
@@ -645,8 +640,8 @@ class BreezeL2Home(
             val recallLine = Mux(recalledValid, recalledData, respDataThisCycle)
             writeDataArray(victimWayReg, setIndex, recallLine)
             // The writeback below must carry the recalled dirty data as well:
-            // victimDataReg still holds the pre-recall array contents.
-            victimDataReg := recallLine
+            // selectedLineReg still holds the pre-recall array contents.
+            selectedLineReg := recallLine
           }
           memBeat := 0.U
           val nowDirty = victimDirtyReg || recallNow
@@ -661,7 +656,7 @@ class BreezeL2Home(
       // Post-probe completion of a GetS/GetM/GetInstr hit. A probed owner only
       // returns data when it held M; a clean E owner acks without data and the
       // L2 array line is already current.
-      val finalData = Mux(recalledValid, recalledData, hitDataReg)
+      val finalData = Mux(recalledValid, recalledData, selectedLineReg)
       when(recalledValid) {
         writeDataArray(hitWayReg, setIndex, recalledData)
       }
@@ -694,7 +689,7 @@ class BreezeL2Home(
       io.memoryWishbone.stb := true.B
       io.memoryWishbone.we := true.B
       io.memoryWishbone.adr := ((victimLineAddr >> 3) + memBeat)(io.memoryWishbone.adr.getWidth - 1, 0)
-      io.memoryWishbone.dat_w := (victimDataReg >> (memBeat << 6))(63, 0)
+      io.memoryWishbone.dat_w := (selectedLineReg >> (memBeat << 6))(63, 0)
       when(io.memoryWishbone.err) {
         // The victim's L1 copies are already gone; keep the victim tag/data
         // valid in the arrays with the only consistent directory state
