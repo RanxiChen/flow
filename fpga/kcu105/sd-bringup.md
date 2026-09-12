@@ -1,5 +1,30 @@
 # KCU105 single-hart SD and coherent DMA build
 
+## 2026-09-12 simplification (supersedes the implementation notes below)
+
+The target now calls official `self.add_sdcard(mode="read+write")` directly.
+The custom SD helper, card-detect input, DMA status/reset/gating hardware and
+all custom SD max-delay constraints have been removed. The manual MMCM
+`clkouts` rewrite has also been removed; clock generation uses official CRG.
+UART/SD interrupt allocation is explicitly 10/11, matching the PLIC wiring.
+The Breeze coherent DMA entry and internal SD/DMA ILA probes are retained.
+
+The BIOS driver overlay is disabled: the builder uses installed official
+LiteX software. Old custom driver sources under `software/` are currently
+unused and have not been adapted. Official driver alignment/error handling
+and the updated LiteX/picolibc compatibility remain unfinished. No build or
+board validation was performed for this simplification. `SnapshotBuilder`
+in `build_support.py` only freezes gateware sources; it adds no hardware and
+does not replace software packages. Manual BIOS boot remains selected.
+
+The r5 bitstream is not timing-qualified: its all-register-Q max-delay
+constraints segmented timing paths. Routed-DCP reanalysis gives WNS
+-12.083 ns and WHS -0.241 ns. Preserve r5 artifacts; a fresh implementation
+with valid constraints is required. Removing the erroneous constraints does
+not complete external SD timing verification.
+
+## Historical implementation notes (before simplification)
+
 This is a JTAG-loaded FPGA product. It does not store FPGA configuration in
 Flash, program the board, or modify the inserted SD card during the build.
 

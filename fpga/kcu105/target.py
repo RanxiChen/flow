@@ -20,7 +20,7 @@ from litex_boards.platforms import xilinx_kcu105
 from litex_boards.targets.xilinx_kcu105 import _CRG
 from litedram.modules import EDY4016A
 from litedram.phy import usddrphy
-from migen import Cat
+from migen import Cat, Constant
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -29,11 +29,11 @@ if LITEX_WRAPPER_ROOT not in sys.path:
     sys.path.insert(0, LITEX_WRAPPER_ROOT)
 
 from flow import Breeze, BreezeTiny  # noqa: E402
-from flow.core import BreezeTinyDebug  # noqa: E402
+from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
-from sdcard import BreezeDma, BreezeTinyDma, BreezeTinyDebugDma, SdBuilder, add_sdcard  # noqa: E402
+from build_support import SnapshotBuilder  # noqa: E402
 
 
 # This target is intentionally configured in source rather than exposing a
@@ -85,8 +85,9 @@ class BreezeKCU105SoC(SoCCore):
         "identifier_mem": 4,
         "sdram": 5,
         "sdcard": 6,
-        "sd_dma": 7,
     }
+
+    irq_map = {"uart": UART_PLIC_SOURCE, "sdcard": UART_PLIC_SOURCE + 1}
 
     def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False):
         if cpu_type not in ("breeze", "breeze-tiny"):
@@ -97,12 +98,6 @@ class BreezeKCU105SoC(SoCCore):
             raise ValueError("KCU105 system frequency must be 50 or 100 MHz")
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, sys_clk_freq)
-        # Vendor MMCM search permits 1% frequency error by default. Require
-        # exact outputs so IDELAYCTRL's real clock matches REFCLK_FREQUENCY.
-        self.crg.pll.clkouts = {
-            n: (clk, freq, phase, 1e-6)
-            for n, (clk, freq, phase, _) in self.crg.pll.clkouts.items()
-        }
         cpu_key = "breeze_tiny_debug" if debug else cpu_type.replace("-", "_")
         if with_sdcard:
             cpu_key += "_dma"
@@ -215,7 +210,9 @@ class BreezeKCU105SoC(SoCCore):
                 cached=False,
             ),
         )
-        sd_probes = add_sdcard(self) if with_sdcard else []
+        if with_sdcard:
+            self.add_sdcard(mode="read+write")
+            self.add_constant("CONFIG_BIOS_NO_BOOT", 1)
         interrupt_sources = Cat(self.uart.ev.irq, self.sdcard.ev.irq) if with_sdcard else self.uart.ev.irq
         self.comb += [
             self.plic.sources.eq(pack_plic_sources(
@@ -240,6 +237,21 @@ class BreezeKCU105SoC(SoCCore):
 
         if debug:
             from flow.ila import BreezeDebugILA
+            sd_probes = []
+            if with_sdcard:
+                bus, phy = self.cpu.dma_bus, self.sdcard.phy
+                sd_probes = [("dma_address", Cat(Constant(0, 3), bus.adr))]
+                sd_probes += [("dma_" + n, getattr(bus, n))
+                              for n in ("cyc", "stb", "ack", "err", "we", "sel")]
+                # Observe internal PHY signals, never physical bidirectional pads.
+                sd_probes += [("sd_cmd_" + n, getattr(phy.sdpads.cmd, n))
+                              for n in ("i", "o", "oe")]
+                sd_probes += [("sd_data_" + n, getattr(phy.sdpads.data, n))
+                              for n in ("i", "o", "oe")]
+                sd_probes += [("sd_clock_pre_io", ~phy.clocker.clk),
+                              ("sd_sample_ce", phy.sdpads.data_i_ce),
+                              ("sd_cmd_event", self.sdcard.core.cmd_event.status),
+                              ("sd_data_event", self.sdcard.core.data_event.status)]
             self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq, extra_sources=sd_probes)
 
 
@@ -287,7 +299,7 @@ def main():
         output_dir += f"-{args.sys_clk_freq // 1_000_000}mhz"
     if args.output_dir is None and args.with_sdcard:
         output_dir += "-sd-dma"
-    builder = (SdBuilder if args.with_sdcard else Builder)(
+    builder = (SnapshotBuilder if args.with_sdcard else Builder)(
         soc,
         output_dir=output_dir,
         csr_csv=os.path.join(output_dir, "csr.csv"),
