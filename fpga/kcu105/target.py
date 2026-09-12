@@ -304,6 +304,7 @@ def main():
         output_dir=output_dir,
         csr_csv=os.path.join(output_dir, "csr.csv"),
         csr_json=os.path.join(output_dir, "csr.json"),
+        integrated_rom_auto_size=False,
     )
 
     # With no --build this still finalizes the SoC, compiles the ROM BIOS and

@@ -22,3 +22,14 @@ This is a BIOS-only adaptation, not a Linux MMC driver patch.
 
 No write command is executed by the build. Board SD reads, writes, external
 interface timing and Linux boot require separate verification.
+
+## Boot files
+
+`prepare_sd_boot.py --images EXISTING_IMAGES --output FRESH_DIRECTORY` verifies
+known Image/OpenSBI hashes, builds the existing handoff trampoline and emits an
+explicit-entry boot.json. It updates the copied DTB memory size to 2 GiB to
+match the current target/PMA, leaving the original images untouched. Copy
+boot.json and its four referenced files into a FAT partition only when ready.
+In BIOS use `sdcard_init`, `sdcard_read 0`, then `sdcardboot`.
+The kernel still uses its embedded rootfs; the baseline has MMC_LITEX disabled
+and this DTB has no MMC node. Linux SD mounting is a separate pending step.
