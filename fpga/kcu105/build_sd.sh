@@ -6,7 +6,7 @@ output=${1:?usage: build_sd.sh ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-on
 mode=${2:---all}
 case "$output" in /*) ;; *) echo 'Output must be absolute' >&2; exit 2;; esac
 case "$mode" in --all|--prepare-only|--vivado-only) ;; *) exit 2;; esac
-export PATH="/home/chen/.sdkman/candidates/sbt/current/bin:/home/chen/RISCV/bin:$PATH"
+export PATH="/home/chen/miniforge3/envs/flow/bin:/home/chen/.sdkman/candidates/sbt/current/bin:/home/chen/RISCV/bin:$PATH"
 python=/home/chen/miniforge3/envs/flow/bin/python
 stage=prepare
 finish() {
