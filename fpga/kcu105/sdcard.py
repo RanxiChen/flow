@@ -10,7 +10,7 @@ from litex.gen import LiteXModule
 from litex.build.generic_platform import Pins, IOStandard, Misc
 from litex.soc.interconnect.csr import CSR, CSRStatus
 from litex.soc.integration.builder import Builder
-from litex.soc.integration.soc import soc_directory
+from litex.soc import soc_directory
 from flow.core import Breeze, BreezeTiny, BreezeTinyDebug
 
 
