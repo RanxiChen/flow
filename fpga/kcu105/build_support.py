@@ -1,14 +1,33 @@
-"""Freeze gateware inputs without replacing official LiteX software."""
+"""Freeze gateware inputs and apply the reviewed official SD driver patch."""
 from pathlib import Path
 import shutil
 import hashlib
 import json
+import subprocess
 
 from litex.soc.integration.builder import Builder
 
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        # Patch a build-local official package; never dirty the installed LiteX.
+        patch_dir = Path(__file__).resolve().parent / "patches"
+        lock = json.loads((patch_dir / "litex-sdcard.json").read_text())
+        packages = []
+        for name, source in self.software_packages:
+            if name == "liblitesdcard":
+                source = Path(source)
+                digest = hashlib.sha256((source / "sdcard.c").read_bytes()).hexdigest()
+                if digest != lock["sdcard_sha256"]:
+                    raise RuntimeError("LiteX SD driver changed: review the Flow patch before building")
+                dest = Path(self.output_dir) / "software-source" / name
+                shutil.copytree(source, dest, dirs_exist_ok=True)
+                subprocess.run(["patch", "--batch", "--fuzz=0", "-p1", "-i",
+                                str(patch_dir / "litex-sdcard.patch")], cwd=dest, check=True)
+                source = str(dest)
+                (dest.parent / "sdcard-upstream.json").write_text(json.dumps(lock, indent=2) + "\n")
+            packages.append((name, source))
+        self.software_packages = packages
         # Vivado consumes immutable copies, not a later sbt elaboration or
         # changing external CVFPU checkout. Keep original names for includes.
         snapshot = Path(self.output_dir) / "source-snapshot"

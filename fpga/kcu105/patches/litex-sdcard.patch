@@ -1,0 +1,246 @@
+--- a/sdcard.c
++++ b/sdcard.c
+@@ -32,7 +32,7 @@
+ #endif
+ 
+ #ifndef SDCARD_CLK_FREQ
+-#define SDCARD_CLK_FREQ 25000000
++#define SDCARD_CLK_FREQ 5000000
+ #endif
+ 
+ #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+@@ -54,7 +54,7 @@
+ static unsigned int sdcard_ccs = 1;
+ 
+ #ifdef CSR_SDCARD_BLOCK2MEM_DMA_BASE_ADDR
+-static uint8_t sdcard_switch_status[64] __attribute__((aligned(4)));
++static uint8_t sdcard_switch_status[64] __attribute__((aligned(8)));
+ #endif
+ 
+ static inline uint32_t sdcard_block_to_addr(uint32_t block) {
+@@ -65,13 +65,24 @@
+ /* SDCard command helpers                                                */
+ /*-----------------------------------------------------------------------*/
+ 
++/* Flow's DMA port is coherent, but MMIO and normal memory still need ordering. */
++static inline void sdcard_dma_fence(void) {
++    __asm__ __volatile__("fence iorw, iorw" ::: "memory");
++}
++
++/* BIOS is single threaded. Only unaligned callers use this existing-RAM buffer. */
++static uint8_t sdcard_bounce[512] __attribute__((aligned(8)));
++
+ int sdcard_wait_cmd_done(void) {
+ 	unsigned int event;
++	unsigned int timeout = 100000;
+ #ifdef SDCARD_DEBUG
+ 	uint32_t r[SD_CMD_RESPONSE_SIZE/4];
+ 	printf("cmdevt: wait for event & 0x1\n");
+ #endif
+ 	for (;;) {
++		if (timeout-- == 0)
++			return SD_TIMEOUT;
+ 		event = sdcard_core_cmd_event_read();
+ 		busy_wait_us(10);
+ 		if (event & 0x1)
+@@ -92,10 +103,13 @@
+ 
+ int sdcard_wait_data_done(void) {
+ 	unsigned int event;
++	unsigned int timeout = 100000;
+ #ifdef SDCARD_DEBUG
+ 	printf("dataevt: wait for event & 0x1\n");
+ #endif
+ 	for (;;) {
++		if (timeout-- == 0)
++			return SD_TIMEOUT;
+ 		event = sdcard_core_data_event_read();
+ 		if (event & 0x1)
+ 			break;
+@@ -258,6 +272,7 @@
+ 	sdcard_block2mem_dma_enable_write(0);
+ 	sdcard_block2mem_dma_base_write((uint64_t)(uintptr_t)sdcard_switch_status);
+ 	sdcard_block2mem_dma_length_write(sizeof(sdcard_switch_status));
++	sdcard_dma_fence();
+ 	sdcard_block2mem_dma_enable_write(1);
+ #endif
+ 
+@@ -287,7 +302,12 @@
+ 		}
+ 		busy_wait_us(1);
+ 	}
++	if (sdcard_block2mem_dma_error_read()) {
++		sdcard_block2mem_dma_enable_write(0);
++		return SD_WRITEERROR;
++	}
+ 	sdcard_block2mem_dma_enable_write(0);
++	sdcard_dma_fence();
+ 
+ #ifndef CONFIG_CPU_HAS_DMA_BUS
+ 	/* Flush caches */
+@@ -510,13 +530,20 @@
+ 	sdcard_block2mem_dma_enable_write(0);
+ 	sdcard_block2mem_dma_base_write((uint64_t)(uintptr_t)buf);
+ 	sdcard_block2mem_dma_length_write(8);
++	sdcard_dma_fence();
+ 	sdcard_block2mem_dma_enable_write(1);
+ #endif
+ 
+ 	if (sdcard_app_cmd(rca) != SD_OK){
++#ifdef CSR_SDCARD_BLOCK2MEM_DMA_BASE_ADDR
++		sdcard_block2mem_dma_enable_write(0);
++#endif
+ 		return 0;
+ 	}
+ 	if (sdcard_app_send_scr() != SD_OK){
++#ifdef CSR_SDCARD_BLOCK2MEM_DMA_BASE_ADDR
++		sdcard_block2mem_dma_enable_write(0);
++#endif
+ 		return 0;
+ 	}
+ 
+@@ -530,6 +557,12 @@
+ 		}
+ 		busy_wait_us(1);
+ 	}
++	if (sdcard_block2mem_dma_error_read()) {
++		sdcard_block2mem_dma_enable_write(0);
++		return 0;
++	}
++	sdcard_block2mem_dma_enable_write(0);
++	sdcard_dma_fence();
+ 
+ #ifndef CONFIG_CPU_HAS_DMA_BUS
+ 	/* Flush caches */
+@@ -551,7 +584,7 @@
+ int sdcard_init(void) {
+ 	uint16_t rca, timeout;
+ 	uint32_t r[SD_CMD_RESPONSE_SIZE/4];
+-	uint32_t scr_buf[2];
++	uint32_t scr_buf[2] __attribute__((aligned(8)));
+ 	bool support_4bit;
+ 
+ 	sdcard_phy_settings_write(SD_PHY_SPEED_1X);
+@@ -656,7 +689,7 @@
+ 
+ #ifdef CSR_SDCARD_BLOCK2MEM_DMA_BASE_ADDR
+ 
+-int sdcard_read(uint32_t block, uint32_t count, uint8_t* buf)
++static int sdcard_read_aligned(uint32_t block, uint32_t count, uint8_t* buf)
+ {
+ 	int status;
+ 	unsigned int timeout;
+@@ -664,7 +697,7 @@
+ 	while (count) {
+ 		uint32_t nblocks;
+ #ifdef SDCARD_CMD18_SUPPORT
+-		nblocks = count;
++		nblocks = count > 128 ? 128 : count;
+ #else
+ 		nblocks = 1;
+ #endif
+@@ -672,6 +705,7 @@
+ 		sdcard_block2mem_dma_enable_write(0);
+ 		sdcard_block2mem_dma_base_write((uint64_t)(uintptr_t) buf);
+ 		sdcard_block2mem_dma_length_write(512*nblocks);
++		sdcard_dma_fence();
+ 		sdcard_block2mem_dma_enable_write(1);
+ 
+ 		/* Read Block(s) from SDCard */
+@@ -709,6 +743,12 @@
+ 			}
+ 			busy_wait_us(1);
+ 		}
++		if (sdcard_block2mem_dma_error_read()) {
++			sdcard_block2mem_dma_enable_write(0);
++			return SD_WRITEERROR;
++		}
++		sdcard_block2mem_dma_enable_write(0);
++		sdcard_dma_fence();
+ 
+ 		/* Update Block/Buffer/Count */
+ 		block += nblocks;
+@@ -725,11 +765,28 @@
+ 	return SD_OK;
+ }
+ 
++
++int sdcard_read(uint32_t block, uint32_t count, uint8_t* buf)
++{
++    if (!count) return SD_OK;
++    if (!buf || count > UINT32_MAX / 512 || block > UINT32_MAX - (count - 1))
++        return SD_WRITEERROR;
++    if (((uintptr_t)buf & 7) == 0)
++        return sdcard_read_aligned(block, count, buf);
++    while (count--) {
++        int status = sdcard_read_aligned(block++, 1, sdcard_bounce);
++        if (status != SD_OK) return status;
++        memcpy(buf, sdcard_bounce, 512);
++        buf += 512;
++    }
++    return SD_OK;
++}
++
+ #endif
+ 
+ #ifdef CSR_SDCARD_MEM2BLOCK_DMA_BASE_ADDR
+ 
+-int sdcard_write(uint32_t block, uint32_t count, uint8_t* buf)
++static int sdcard_write_aligned(uint32_t block, uint32_t count, uint8_t* buf)
+ {
+ 	int status;
+ 	unsigned int timeout;
+@@ -737,7 +794,7 @@
+ 	while (count) {
+ 		uint32_t nblocks;
+ #ifdef SDCARD_CMD25_SUPPORT
+-		nblocks = count;
++		nblocks = count > 128 ? 128 : count;
+ #else
+ 		nblocks = 1;
+ #endif
+@@ -745,6 +802,7 @@
+ 		sdcard_mem2block_dma_enable_write(0);
+ 		sdcard_mem2block_dma_base_write((uint64_t)(uintptr_t) buf);
+ 		sdcard_mem2block_dma_length_write(512*nblocks);
++		sdcard_dma_fence();
+ 		sdcard_mem2block_dma_enable_write(1);
+ 
+ 		/* Write Block(s) to SDCard */
+@@ -781,6 +839,12 @@
+ 			}
+ 			busy_wait_us(1);
+ 		}
++		if (sdcard_mem2block_dma_error_read()) {
++			sdcard_mem2block_dma_enable_write(0);
++			return SD_WRITEERROR;
++		}
++		sdcard_mem2block_dma_enable_write(0);
++		sdcard_dma_fence();
+ 
+ 		/* Update Block/Buffer/Count */
+ 		block += nblocks;
+@@ -790,6 +854,23 @@
+ 
+ 	return SD_OK;
+ }
++
++int sdcard_write(uint32_t block, uint32_t count, uint8_t* buf)
++{
++    if (!count) return SD_OK;
++    if (!buf || count > UINT32_MAX / 512 || block > UINT32_MAX - (count - 1))
++        return SD_WRITEERROR;
++    if (((uintptr_t)buf & 7) == 0)
++        return sdcard_write_aligned(block, count, buf);
++    while (count--) {
++        memcpy(sdcard_bounce, buf, 512);
++        int status = sdcard_write_aligned(block++, 1, sdcard_bounce);
++        if (status != SD_OK) return status;
++        buf += 512;
++    }
++    return SD_OK;
++}
++
+ #endif
+ 
+ /*-----------------------------------------------------------------------*/
