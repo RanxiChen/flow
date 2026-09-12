@@ -53,15 +53,23 @@ def add_sdcard(soc):
         soc.platform.add_platform_command(
             "set_max_delay -datapath_only 5.000 -from [get_ports " + port + "]", p=pin)
         soc.platform.add_platform_command(
-            "set_max_delay -datapath_only 5.000 -to [get_ports " + port + "]", p=pin)
+            "set_max_delay -datapath_only 5.000 -from [all_registers -output_pins] "
+            "-to [get_ports " + port + "]", p=pin)
     bus = soc.cpu.dma_bus
     probes = [("dma_address", Cat(Constant(0, 3), bus.adr))]
     probes += [("dma_" + n, getattr(bus, n)) for n in ("cyc", "stb", "ack", "err", "we", "sel")]
-    probes += [("sd_cmd", pads.cmd), ("sd_data", pads.data),
-               ("sd_clock", pads.clk), ("sd_present", soc.sd_dma.present.status),
+    # Never fan a physical INOUT net into fabric/ILA: only the IOBUF may
+    # connect to that pad. Observe the PHY's registered receive signals and
+    # its pre-I/O transmit/control signals instead.
+    phy = soc.sdcard.phy
+    probes += [("sd_cmd_i", phy.sdpads.cmd.i), ("sd_data_i", phy.sdpads.data.i),
+               ("sd_clock_pre_io", ~phy.clocker.clk), ("sd_present", soc.sd_dma.present.status),
                ("sd_dma_error", soc.sd_dma.error.status),
                ("sd_cmd_event", soc.sdcard.core.cmd_event.status),
                ("sd_data_event", soc.sdcard.core.data_event.status)]
+    probes += [("sd_cmd_o", phy.sdpads.cmd.o), ("sd_cmd_oe", phy.sdpads.cmd.oe),
+               ("sd_data_o", phy.sdpads.data.o), ("sd_data_oe", phy.sdpads.data.oe),
+               ("sd_sample_ce", phy.sdpads.data_i_ce)]
     return probes
 
 
