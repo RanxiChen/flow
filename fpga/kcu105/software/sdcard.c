@@ -78,7 +78,7 @@ int sdcard_init(void)
     last_error = SD_OK;
     sd_dma_reset_write(1);
     busy_wait_us(10);
-    if (!sd_dma_present_read()) { printf("SD: no card detected\n"); return 0; }
+    if (!sd_dma_present_read()) { last_error = SD_TIMEOUT; printf("SD: no card detected\n"); return 0; }
     sdcard_set_clk_freq(400000, 1);
     sdcard_phy_init_initialize_write(1);
     busy_wait(2);
@@ -188,13 +188,13 @@ int flow_sd_read(uint32_t sector, uint32_t count, uint8_t *buf) { return transfe
 void sdcard_read(uint32_t sector, uint32_t count, uint8_t *buf) { (void)flow_sd_read(sector, count, buf); }
 void sdcard_write(uint32_t sector, uint32_t count, uint8_t *buf) { (void)transfer(sector, count, buf, 1); }
 
-static DSTATUS disk_status(BYTE drive) { return drive || !initialized ? STA_NOINIT : 0; }
-static DSTATUS disk_init(BYTE drive) { return drive ? STA_NOINIT : initialized || sdcard_init() ? 0 : STA_NOINIT; }
-static DRESULT disk_read(BYTE drive, BYTE *buf, LBA_t sector, UINT count)
+static DSTATUS flow_disk_status(BYTE drive) { return drive || !initialized ? STA_NOINIT : 0; }
+static DSTATUS flow_disk_init(BYTE drive) { return drive ? STA_NOINIT : initialized || sdcard_init() ? 0 : STA_NOINIT; }
+static DRESULT flow_disk_read(BYTE drive, BYTE *buf, LBA_t sector, UINT count)
 {
     if (drive || (uint64_t)sector > 0xffffffffull) return RES_PARERR;
     return flow_sd_read(sector, count, buf) == SD_OK ? RES_OK : RES_ERROR;
 }
-static DISKOPS ops = { .disk_initialize = disk_init, .disk_status = disk_status, .disk_read = disk_read };
+static DISKOPS ops = { .disk_initialize = flow_disk_init, .disk_status = flow_disk_status, .disk_read = flow_disk_read };
 void fatfs_set_ops_sdcard(void) { FfDiskOps = &ops; }
 #endif

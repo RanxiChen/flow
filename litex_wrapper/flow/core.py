@@ -416,3 +416,25 @@ class BreezeTinyDebug(BreezeTiny):
     @classmethod
     def rtl_dir(cls):
         return os.path.join(super().rtl_dir(), "fpga-debug")
+
+
+class CoherentDmaCPU:
+    coherent_dma = True
+
+    @classmethod
+    def rtl_dir(cls):
+        return os.path.join(super().rtl_dir(), "coherent-dma")
+
+
+# LiteX derives CPU_DIRECTORY from the concrete class's source file. Keep
+# these variants beside system.h/crt0.S, even when a board selects the DMA IP.
+class BreezeDma(CoherentDmaCPU, Breeze):
+    pass
+
+
+class BreezeTinyDma(CoherentDmaCPU, BreezeTiny):
+    pass
+
+
+class BreezeTinyDebugDma(CoherentDmaCPU, BreezeTinyDebug):
+    pass

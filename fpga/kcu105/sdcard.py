@@ -10,27 +10,7 @@ from litex.gen import LiteXModule
 from litex.build.generic_platform import Pins, IOStandard, Misc
 from litex.soc.interconnect.csr import CSR, CSRStatus
 from litex.soc.integration.builder import Builder, soc_directory
-from flow.core import Breeze, BreezeTiny, BreezeTinyDebug
-
-
-class CoherentDmaCPU:
-    coherent_dma = True
-
-    @classmethod
-    def rtl_dir(cls):
-        return str(Path(super().rtl_dir()) / "coherent-dma")
-
-
-class BreezeDma(CoherentDmaCPU, Breeze):
-    pass
-
-
-class BreezeTinyDma(CoherentDmaCPU, BreezeTiny):
-    pass
-
-
-class BreezeTinyDebugDma(CoherentDmaCPU, BreezeTinyDebug):
-    pass
+from flow.core import BreezeDma, BreezeTinyDma, BreezeTinyDebugDma
 
 
 class SdDmaStatus(LiteXModule):
