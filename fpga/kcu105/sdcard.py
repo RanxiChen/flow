@@ -64,7 +64,7 @@ def add_sdcard(soc):
         ("sdcard_cd", 0, Pins("AM10"), IOStandard("LVCMOS18"), Misc("PULLUP=TRUE")),
     ])
     soc.sd_dma = SdDmaStatus(soc.cpu, soc.sdcard, soc.platform.request("sdcard_cd"))
-    soc.add_constant("BIOS_NO_BOOT")  # Manual sdcardboot after read/CRC checks.
+    soc.add_constant("CONFIG_BIOS_NO_BOOT", 1)  # Manual sdcardboot after read/CRC checks.
     pads = soc.platform.lookup_request("sdcard")
     # The PHY uses sys-clocked I/O registers and a software divider/clock gate.
     # Bound internal pad routing; these are NOT a full card/mux timing model.
@@ -100,6 +100,8 @@ class SdBuilder(Builder):
         for name in ("sdcard.c", "sdcard_flow.h"):
             shutil.copy2(source / name, overlay / "liblitesdcard" / name)
         shutil.copy2(source / "cmd_sdcard.c", overlay / "bios" / "cmds" / "cmd_litesdcard.c")
+        makefile = overlay / "bios" / "Makefile"
+        makefile.write_text(makefile.read_text() + "\nCFLAGS += -I$(BIOS_DIRECTORY)/..\n")
         super().__init__(*args, **kwargs)
 
     def add_software_package(self, name, src_dir=None):
