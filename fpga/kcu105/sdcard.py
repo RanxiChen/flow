@@ -1,6 +1,8 @@
 """KCU105 SD integration; vendor checkouts remain unchanged."""
 from pathlib import Path
 import shutil
+import hashlib
+import json
 
 from migen import Cat, Constant, If, ResetInserter, Signal
 from migen.genlib.cdc import MultiReg
@@ -102,3 +104,27 @@ class SdBuilder(Builder):
 
     def add_software_package(self, name, src_dir=None):
         super().add_software_package(name, self.flow_packages.get(name, src_dir))
+
+    def build(self, *args, **kwargs):
+        # Vivado consumes immutable copies, not a later sbt elaboration or
+        # changing external CVFPU checkout. Keep original names for includes.
+        snapshot = Path(self.output_dir) / "source-snapshot"
+        sources = []
+        manifest = []
+        for index, source in enumerate(self.soc.platform.sources):
+            original = Path(source[0]).resolve()
+            dest = snapshot / f"source-{index}" / original.name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(original, dest)
+            sources.append((str(dest), *source[1:]))
+            manifest.append({"original": str(original), "snapshot": str(dest),
+                             "sha256": hashlib.sha256(dest.read_bytes()).hexdigest()})
+        self.soc.platform.sources = sources
+        includes = []
+        for index, original in enumerate(self.soc.platform.verilog_include_paths):
+            dest = snapshot / f"include-{index}"
+            shutil.copytree(original, dest, dirs_exist_ok=True)
+            includes.append(str(dest))
+        self.soc.platform.verilog_include_paths = includes
+        (snapshot / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        return super().build(*args, **kwargs)
