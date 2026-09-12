@@ -26,8 +26,19 @@ if [[ "$mode" != --vivado-only ]]; then
     cp "$flow_root/config/breeze_mcu_platform.json" "$output/platform.json"
     echo 'FLOW_STAGE directed hardware tests'
     cd "$flow_root/design"
-    sbt 'testOnly flow.cache.BreezeCoherentDmaSpec flow.cache.BreezeL2HomeSpec flow.cache.BreezeL2HomeSmallSpec flow.cache.BreezeDCacheCoherentSpec flow.platform.BreezeLinuxPmaSpec' \
-        2>&1 | tee "$output/directed-tests.log"
+    test_cache=${FLOW_TEST_CACHE:-}
+    if [[ -n "$test_cache" && -f "$test_cache/source-commit.txt" && ! -s "$test_cache/source-status.txt" ]] &&
+        rg -q '\[info\] All tests passed\.' "$test_cache/directed-tests.log" &&
+        git -C "$flow_root" diff --quiet "$(cat "$test_cache/source-commit.txt")" HEAD -- design config &&
+        git -C "$flow_root" diff --quiet HEAD -- design config; then
+        cp "$test_cache/directed-tests.log" "$output/directed-tests.log"
+        cp "$test_cache/source-commit.txt" "$output/directed-source-commit.txt"
+        echo "Reused passing hardware tests: identical tracked design/config, cache=$test_cache"
+    else
+        sbt 'testOnly flow.cache.BreezeCoherentDmaSpec flow.cache.BreezeL2HomeSpec flow.cache.BreezeL2HomeSmallSpec flow.cache.BreezeDCacheCoherentSpec flow.platform.BreezeLinuxPmaSpec' \
+            2>&1 | tee "$output/directed-tests.log"
+        cp "$output/source-commit.txt" "$output/directed-source-commit.txt"
+    fi
     echo 'FLOW_STAGE generate single/coherent-dma FPGA RTL and BIOS'
     cd "$flow_root"
     "$python" fpga/kcu105/target.py --cpu-type breeze-tiny --debug --with-sdcard \
