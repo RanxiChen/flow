@@ -17,9 +17,11 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
   * filelist.f and cluster-profile.txt; presets never overwrite each other.
   */
 object GenerateBreezeMulticoreClusterWishbone extends App {
-    require(args.length >= 1 && args.length <= 4,
+    require(args.length >= 1 && args.length <= 5,
         "usage: GenerateBreezeMulticoreClusterWishbone " +
-          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production|fpga-debug]")
+          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production|fpga-debug] [coherent-dma]")
+    require(args.lift(4).forall(_ == "coherent-dma"), "fifth argument must be coherent-dma")
+    private val withCoherentDma = args.lift(4).contains("coherent-dma")
 
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
     private val privilegeProfile =
@@ -45,11 +47,12 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
         targetDirBase / privilegeProfile.name
     }
     // Hardware instrumentation never overwrites production/simulation RTL.
-    private val targetDir = if (rtlMode == "fpga-debug") {
+    private val modeDir = if (rtlMode == "fpga-debug") {
         profileDir / "fpga-debug"
     } else {
         profileDir
     }
+    private val targetDir = if (withCoherentDma) modeDir / "coherent-dma" else modeDir
 
     println(
         s"[BreezeCluster RTL] profile=${clusterCfg.profileName} harts=${clusterCfg.numHarts} " +
@@ -57,7 +60,8 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
           s"target_dir=$targetDir"
     )
     ChiselStage.emitSystemVerilogFile(
-        new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = enableTandem),
+        new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = enableTandem,
+            withCoherentDma = withCoherentDma),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array(
             "-disable-all-randomization",
@@ -117,6 +121,7 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |privilegeProfile=${privilegeProfile.name}
            |rtlMode=$rtlMode
            |tandem=$enableTandem
+           |coherentDma=$withCoherentDma
            |compressed=${clusterCfg.coreCfg().enableCompressed}
            |addressTranslation=${if (clusterCfg.coreCfg().enableMmu) "bare,sv39" else "bare"}
            |""".stripMargin

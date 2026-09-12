@@ -100,6 +100,7 @@ class _BreezeClusterCPU(CPU):
     gcc_defines = "-D__breeze__"
     reset_vector = None
     expected_marker = {}
+    coherent_dma = False
 
     category = "softcore"
     family = "riscv"
@@ -144,6 +145,9 @@ class _BreezeClusterCPU(CPU):
             data_width=64, address_width=32, addressing="word")
         self.periph_buses = [self.memory_bus, self.mmio_bus]
         self.memory_buses = []
+        if self.coherent_dma:
+            self.dma_bus = wishbone.Interface(
+                data_width=64, address_width=32, addressing="word")
 
         # Non-canonical compatibility aliases for existing passive monitors.
         self.ibus = self.memory_bus
@@ -222,6 +226,11 @@ class _BreezeClusterCPU(CPU):
                 self.cpu_params[f"o_io_dcacheTrace_{hart}_{rtl_name}"] = getattr(
                     self.dcache_traces[hart], field_name)
 
+        if self.coherent_dma:
+            for name in ("adr", "dat_w", "sel", "cyc", "stb", "we", "cti", "bte"):
+                self.cpu_params["i_io_dmaWishbone_" + name] = getattr(self.dma_bus, name)
+            for name in ("dat_r", "ack", "err"):
+                self.cpu_params["o_io_dmaWishbone_" + name] = getattr(self.dma_bus, name)
         self.add_sources(platform)
 
     def set_reset_address(self, reset_address):
@@ -299,6 +308,9 @@ class _BreezeClusterCPU(CPU):
                 f"{cls.privilege_profile} {cls.rtl_mode}\"")
 
         cls._validate_profile_marker(profile_marker)
+        dma_marker = cls._read_profile_marker(profile_marker).get("coherentDma", "false")
+        if dma_marker != str(cls.coherent_dma).lower():
+            raise RuntimeError("Breeze coherent DMA RTL does not match the selected CPU")
 
         with open(filelist, encoding="utf-8") as rtl_manifest:
             entries = [

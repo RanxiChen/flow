@@ -55,6 +55,11 @@ final class SmallL2Harness(
 
   /** Byte addresses whose Wishbone beats must be answered with err. */
   var errorOnAddresses = Set.empty[BigInt]
+  dut.io.dmaWishbone.foreach { d =>
+    d.cyc.poke(false.B); d.stb.poke(false.B); d.we.poke(false.B)
+    d.adr.poke(0.U); d.dat_w.poke(0.U); d.sel.poke(0.U)
+    d.cti.poke(0.U); d.bte.poke(0.U)
+  }
 
   // ----- Wishbone slave state -----
   private var wbBusy = false

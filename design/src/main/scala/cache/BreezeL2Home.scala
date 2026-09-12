@@ -79,7 +79,8 @@ class L2DirEntry(val tagWidth: Int, val sharerWidth: Int, val hartIdWidth: Int) 
 class BreezeL2Home(
     val l2Cfg: L2CacheGeometry,
     val numHarts: Int,
-    val physicalAddressWidth: Int = BreezeMcuPlatform.AddressWidth
+    val physicalAddressWidth: Int = BreezeMcuPlatform.AddressWidth,
+    val withCoherentDma: Boolean = false
 ) extends Module {
   private val ways = l2Cfg.ways
   private val sets = l2Cfg.sets
@@ -105,7 +106,19 @@ class BreezeL2Home(
     val instrReq = Flipped(Vec(numHarts, new L1CacheMissReqIO(physicalAddressWidth)))
     val instrResp = Flipped(Vec(numHarts, new L1CacheMissRespIO(lineWidth)))
     val memoryWishbone = new LiteXWishboneMasterIO(LiteXWishboneParameters(physicalAddressWidth, 64))
+    val dmaWishbone = if (withCoherentDma) Some(Flipped(new LiteXWishboneMasterIO(
+      LiteXWishboneParameters(physicalAddressWidth, 64)))) else None
   })
+
+  // No external port, DMA registers or selection path survives elaboration
+  // when disabled. DMA is a non-caching requester, never an extra directory bit.
+  val dma = Wire(Flipped(new LiteXWishboneMasterIO(LiteXWishboneParameters(physicalAddressWidth, 64))))
+  if (withCoherentDma) dma <> io.dmaWishbone.get
+  else {
+    dma.cyc := false.B; dma.stb := false.B; dma.we := false.B
+    dma.adr := 0.U; dma.dat_w := 0.U; dma.sel := 0.U
+    dma.cti := 0.U; dma.bte := 0.U
+  }
 
   import BreezeL2HomeState._
   import BreezeCoherenceOpcode._
@@ -148,6 +161,11 @@ class BreezeL2Home(
   val reqTxnId = RegInit(0.U(2.W))
   val reqLineAddr = RegInit(0.U(physicalAddressWidth.W)) // line-aligned
   val reqIsInstr = RegInit(false.B)
+  val reqIsDma = if (withCoherentDma) RegInit(false.B) else WireDefault(false.B)
+  val dmaWrite = if (withCoherentDma) RegInit(false.B) else WireDefault(false.B)
+  val dmaWord = if (withCoherentDma) Reg(UInt(beatIndexWidth.W)) else WireDefault(0.U(beatIndexWidth.W))
+  val dmaMask = if (withCoherentDma) Reg(UInt(8.W)) else WireDefault(0.U(8.W))
+  val preferDma = if (withCoherentDma) RegInit(false.B) else WireDefault(false.B)
   val reqData = RegInit(0.U(lineWidth.W)) // PutM victim data
 
   val setIndex = reqLineAddr(lineOffsetWidth + setIndexWidth - 1, lineOffsetWidth)
@@ -234,6 +252,9 @@ class BreezeL2Home(
   io.memoryWishbone.sel := Fill(8, 1.U(1.W))
   io.memoryWishbone.cti := WishboneCycleType.Classic
   io.memoryWishbone.bte := WishboneBurstType.Linear
+  dma.ack := false.B
+  dma.err := false.B
+  dma.dat_r := (grantDataReg >> (dmaWord << 6))(63, 0)
 
   // ===== I$ refill pulse capture (any state) =====
   for (h <- 0 until numHarts) {
@@ -352,6 +373,17 @@ class BreezeL2Home(
     dataWrLine := data
   }
 
+  // Merge one 64-bit beat before the shared array write broadcast. No new
+  // per-way datapath or full-line DMA staging buffer is needed.
+  private def dmaMerged(line: UInt): UInt = {
+    val bytes = Wire(Vec(lineBytes, UInt(8.W)))
+    for (b <- 0 until lineBytes) {
+      bytes(b) := Mux(dmaWord === (b / 8).U && dmaMask(b % 8),
+        reqData(8 * (b % 8) + 7, 8 * (b % 8)), line(8 * b + 7, 8 * b))
+    }
+    bytes.asUInt
+  }
+
   // ===== FSM =====
   switch(state) {
     is(Init) {
@@ -372,7 +404,9 @@ class BreezeL2Home(
       val srcValids = Cat(instrPendingValid.asUInt,
         VecInit((0 until numHarts).map(h => io.coherenceReq(h).valid)).asUInt)
       val numSrcs = 2 * numHarts
-      val selValid = srcValids.orR
+      val cpuValid = srcValids.orR
+      val selectDma = dma.cyc && dma.stb && (!cpuValid || preferDma)
+      val selValid = cpuValid && !selectDma
       val selSrc = if (numSrcs == 1) {
         0.U(1.W)
       } else {
@@ -387,6 +421,7 @@ class BreezeL2Home(
       }
 
       when(selValid) {
+        if (withCoherentDma) { reqIsDma := false.B; preferDma := true.B }
         arbPtr := Mux(selSrc === (numSrcs - 1).U, 0.U, selSrc + 1.U)
         reqHart := selHart
         grantErrorReg := false.B
@@ -408,6 +443,32 @@ class BreezeL2Home(
             0.U(lineOffsetWidth.W))
           reqData := io.coherenceReq(selHart).lineData
           reqIsInstr := false.B
+        }
+      }
+      if (withCoherentDma) {
+        when(selectDma) {
+          reqIsDma := true.B
+          preferDma := false.B
+          reqIsInstr := false.B
+          reqHart := 0.U
+          reqTxnId := 0.U
+          // GetInstr already implements a non-caching coherent read.
+          reqOp := GetInstr
+          reqLineAddr := Cat(dma.adr(physicalAddressWidth - 4, beatIndexWidth), 0.U(lineOffsetWidth.W))
+          reqData := dma.dat_w
+          dmaWord := dma.adr(beatIndexWidth - 1, 0)
+          dmaMask := dma.sel
+          dmaWrite := dma.we
+          grantHasDataReg := false.B
+          val byteAddr = Cat(dma.adr, 0.U(3.W))
+          val regions = BreezeMcuPlatform.PMARegions.filter(r =>
+            r.cacheable && !r.device && r.supportsRead && r.supportsWrite)
+          val allowed = regions.map(r =>
+            (byteAddr & (~(r.size - 1) & ((BigInt(1) << physicalAddressWidth) - 1)).U(physicalAddressWidth.W)) === r.origin.U
+          ).reduce(_ || _)
+          grantErrorReg := !allowed
+          nextState := Mux(!allowed, SendError,
+            Mux(dma.we && dma.sel === 0.U, SendGrant, LookupRead))
         }
       }
     }
@@ -455,7 +516,22 @@ class BreezeL2Home(
         }
       }.elsewhen(hit) {
         // ---- GetS / GetM / GetInstr hit ----
-        when(reqOp === GetInstr) {
+        when(reqIsDma && dmaWrite) {
+          recalledValid := false.B
+          when(hitDirState === NONE) {
+            nextState := HitUpdate
+          }.otherwise {
+            val unique = hitDirState === UNIQUE
+            val targets = Mux(unique, hartBit(hitOwner), hitSharers)
+            probeBitmap := targets
+            probeAckBitmap := targets
+            probeOpcodeReg := Mux(unique, ProbeRecallInv, ProbeInv)
+            probeLineAddrReg := reqLineAddr
+            expectProbeData := unique
+            probeForVictim := false.B
+            nextState := ProbeReq
+          }
+        }.elsewhen(reqOp === GetInstr) {
           when(hitDirState === UNIQUE) {
             // Recall the owner (ProbeToS) before answering the I$.
             probeBitmap := hartBit(hitOwner)
@@ -660,7 +736,11 @@ class BreezeL2Home(
       when(recalledValid) {
         writeDataArray(hitWayReg, setIndex, recalledData)
       }
-      when(reqOp === GetS || reqOp === GetInstr) {
+      when(reqIsDma && dmaWrite) {
+        writeDataArray(hitWayReg, setIndex, dmaMerged(finalData))
+        writeDir(setIndex, hitWayReg, requestTag, true.B, true.B, NONE, 0.U, 0.U)
+        nextState := SendGrant
+      }.elsewhen(reqOp === GetS || reqOp === GetInstr) {
         // ProbeToS on the UNIQUE owner: the old owner becomes a D$ sharer.
         // A GetS requester joins the sharer bitmap; the I$ never joins.
         val sharersAfter = Mux(reqOp === GetS,
@@ -729,8 +809,11 @@ class BreezeL2Home(
           val installedLine = finalBeats.asUInt
           // The new tag rides along in the directory write - tag and state are
           // one SRAM word, so installing a line is a single update.
-          writeDataArray(victimWayReg, setIndex, installedLine)
-          when(reqIsInstr) {
+          writeDataArray(victimWayReg, setIndex,
+            Mux(reqIsDma && dmaWrite, dmaMerged(installedLine), installedLine))
+          when(reqIsDma) {
+            writeDir(setIndex, victimWayReg, requestTag, true.B, dmaWrite, NONE, 0.U, 0.U)
+          }.elsewhen(reqIsInstr) {
             // I$ lines allocate in the L2 but never join the D$ directory.
             writeDir(setIndex, victimWayReg, requestTag, true.B, false.B, NONE, 0.U, 0.U)
           }.elsewhen(reqOp === GetM) {
@@ -757,7 +840,10 @@ class BreezeL2Home(
     }
 
     is(SendGrant) {
-      when(reqIsInstr) {
+      when(reqIsDma) {
+        dma.ack := dma.cyc && dma.stb
+        nextState := Idle
+      }.elsewhen(reqIsInstr) {
         io.instrResp(reqHart).vld := true.B
         instrPendingValid(reqHart) := false.B
         nextState := Idle
@@ -785,7 +871,10 @@ class BreezeL2Home(
     }
 
     is(SendError) {
-      when(reqIsInstr) {
+      when(reqIsDma) {
+        dma.err := dma.cyc && dma.stb
+        nextState := Idle
+      }.elsewhen(reqIsInstr) {
         io.instrResp(reqHart).vld := true.B
         instrPendingValid(reqHart) := false.B
         nextState := Idle

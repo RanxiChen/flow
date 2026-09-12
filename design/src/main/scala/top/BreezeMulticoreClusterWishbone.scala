@@ -27,7 +27,8 @@ import flow.platform.BreezeMcuPlatform
   */
 class BreezeMulticoreClusterWishbone(
     val clusterCfg: BreezeClusterConfig,
-    val enableTandem: Boolean = false
+    val enableTandem: Boolean = false,
+    val withCoherentDma: Boolean = false
 ) extends Module {
     private val numHarts = clusterCfg.numHarts
     private val coreCfg = clusterCfg.coreCfg(enableTandem = enableTandem)
@@ -48,13 +49,15 @@ class BreezeMulticoreClusterWishbone(
         val supervisorExternalInterrupts = Input(Vec(numHarts, Bool()))
         val memoryWishbone = new LiteXWishboneMasterIO(wbParams)
         val mmioWishbone = new LiteXWishboneMasterIO(wbParams)
+        val dmaWishbone = if (withCoherentDma) Some(Flipped(new LiteXWishboneMasterIO(wbParams))) else None
         val hartFatal = Output(Vec(numHarts, Bool()))
         val hartEStop = Output(Vec(numHarts, Bool()))
         val retire = Output(Vec(numHarts, new TracePayload(64)))
         val dcacheTrace = Output(Vec(numHarts, new DCacheTracePayload(64)))
     })
 
-    val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts))
+    val l2Home = Module(new BreezeL2Home(clusterCfg.l2, numHarts, withCoherentDma = withCoherentDma))
+    if (withCoherentDma) l2Home.io.dmaWishbone.get <> io.dmaWishbone.get
     val mmioArbiter = Module(new BreezeMmioArbiter(numHarts, clusterCfg.l1d.lineBytes))
     val mmioBridge = Module(new DCacheWishboneBridge(
         physicalAddressWidth = plen,

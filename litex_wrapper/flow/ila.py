@@ -11,7 +11,7 @@ class BreezeDebugILA(Module):
     depth = 4096
     input_pipe_stages = 2
 
-    def __init__(self, cpu, platform, clock_hz=50_000_000):
+    def __init__(self, cpu, platform, clock_hz=50_000_000, extra_sources=()):
         self.clock_hz = int(clock_hz)
         if cpu.num_harts != 1 or not cpu.tandem_enabled:
             raise ValueError("Breeze ILA requires a single hart with live Tandem outputs")
@@ -50,6 +50,7 @@ class BreezeDebugILA(Module):
             sources += [(prefix + "_" + name, getattr(bus, name))
                         for name in ("cyc", "stb", "ack", "we", "err", "sel", "dat_w", "dat_r")]
 
+        sources += list(extra_sources)
         self.probes = []
         self.probe_map = []
         params = {"i_clk": ClockSignal("sys")}
