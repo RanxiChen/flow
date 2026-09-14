@@ -159,9 +159,11 @@ object GenerateRegFileVerilogFile extends App {
 class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false,
               val hartId:Int=0,
               val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
-              val enableCompressed: Boolean = false) extends Module {
+              val enableCompressed: Boolean = false, val useFASE: Boolean = false) extends Module {
     require(hartId >= 0, "CSRFile hartId must be non-negative")
     val io = IO(new Bundle{
+        val faseEnter = if (useFASE) Some(Input(Bool())) else None
+        val faseDiagnostic = if (useFASE) Some(Output(Vec(12, UInt(XLEN.W)))) else None
         val csr_addr = Input(UInt(12.W))
         val csr_cmd  = Input(UInt(CSR_CMD.width.W))
         val csr_reg_data = Input(UInt(XLEN.W))
@@ -745,6 +747,17 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         mstatus_SPIE := true.B
         currentPrivilege := Mux(mstatus_SPP, PRIV_MODE.S.U, PRIV_MODE.U.U)
         mstatus_SPP := false.B
+    }
+    if (useFASE) {
+        // Destructive debug takeover, NOT an architectural interrupt. Keep trap
+        // CSRs intact for diagnosis; software owns any subsequent restoration.
+        when(io.faseEnter.get) {
+            currentPrivilege := PRIV_MODE.M.U
+            mstatus_MPRV := false.B
+            mstatus_MIE := false.B
+        }
+        io.faseDiagnostic.get := VecInit(Seq(currentPrivilege, mstatus_read,
+            satp, mepc, mcause, mtval, sepc, scause, stval, mie_read, mip_read, mtvec))
     }
     io.csr_old_data := old_csr_val
     io.csr_new_data := new_csr_val

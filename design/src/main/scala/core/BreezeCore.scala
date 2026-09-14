@@ -43,13 +43,24 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val debug = if (enabledebug) Some(new BackendDebugIO(corecfg.VLEN)) else None
     })
 
-    val frontend = Module(new BreezeFrontend(corecfg.frontendCfg, enabledebug = enabledebug))
+    val frontend = Module(new BreezeFrontend(corecfg.frontendCfg, enabledebug = enabledebug, useFASE = corecfg.useFASE))
     val buffer = Module(new FetchBuffer(corecfg.VLEN, 6, corecfg.backendCfg.ghrLength))
     val backend = Module(new BreezeBackend(corecfg.backendCfg, enabledebug = enabledebug,
-        hartId = hartId))
+        hartId = hartId, useFASE = corecfg.useFASE))
 
+    val fasePaused = WireDefault(false.B)
+    val faseRedirect = WireDefault(false.B)
+    val faseTarget = WireDefault(0.U(corecfg.VLEN.W))
+    val physicalIdle = WireDefault(true.B)
+    val mmuDiag = WireDefault(VecInit(Seq.fill(8)(0.U(64.W))))
+    frontend.io.fasePause.foreach(_ := fasePaused)
     frontend.io.resetAddr := io.resetAddr
     frontend.io.beRedirect := backend.io.frontendRedirect
+    when(faseRedirect) {
+        frontend.io.beRedirect.valid := true.B
+        frontend.io.beRedirect.flush := true.B
+        frontend.io.beRedirect.target := faseTarget
+    }
     frontend.io.btbUpdate := backend.io.frontendBtbUpdate
     frontend.io.phtUpdate := backend.io.frontendPhtUpdate
     frontend.io.ghrUpdate := backend.io.frontendGhrUpdate
@@ -57,7 +68,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     frontend.io.nextLevelRsp <> io.nextLevelRsp
 
     buffer.io.in <> frontend.io.fetchBuffer
-    buffer.io.flush := backend.io.frontendRedirect.flush
+    buffer.io.flush := frontend.io.beRedirect.flush
 
     backend.io.resetAddr := io.resetAddr
     backend.io.machineTimerInterrupt := io.machineTimerInterrupt
@@ -68,13 +79,13 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.reservationKill := backend.io.reservationKill
     io.estop := backend.io.estop
     if (corecfg.enableMmu) {
-        val mmu = Module(new BreezeMmu(corecfg.VLEN, entries = 16))
+        val mmu = Module(new BreezeMmu(corecfg.VLEN, entries = 16, useFASE = corecfg.useFASE))
         val dataTranslator = Module(new BreezeDataTranslator(corecfg.VLEN, parallelLookup = true))
         io.dcacheArrayReq.get <> dataTranslator.io.arrayReq.get
 
         mmu.io.context := backend.io.mmuContext
         mmu.io.sfence := backend.io.sfence
-        mmu.io.killI := backend.io.frontendRedirect.valid
+        mmu.io.killI := frontend.io.beRedirect.valid
         mmu.io.i.req <> frontend.io.translateReq
         frontend.io.translateRsp <> mmu.io.i.resp
         mmu.io.d.req <> dataTranslator.io.translateReq
@@ -85,6 +96,12 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         // Only one downstream transaction is outstanding at a time.
         val physicalBusy = RegInit(false.B)
         val physicalOwnerPtw = RegInit(false.B)
+        physicalIdle := !physicalBusy && !mmu.io.memReq.valid && !dataTranslator.io.memReq.valid
+        if (corecfg.useFASE) {
+            for (i <- 0 until 6) mmuDiag(i) := mmu.io.faseDiagnostic.get(i)
+            mmuDiag(6) := physicalBusy.asUInt
+            mmuDiag(7) := physicalOwnerPtw.asUInt
+        }
         val choosePtw = mmu.io.memReq.valid
         mmu.io.memReq.ready := !physicalBusy
         dataTranslator.io.memReq.ready := !physicalBusy && !choosePtw
@@ -127,33 +144,55 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.debug.foreach(_ <> backend.io.debug.get)
 
     if (corecfg.useFASE) {
-        val fasebuffer = Module(new FASEFetchBuffer(corecfg.frontendCfg.cacheCfg.VLEN, 6, corecfg.backendCfg.ghrLength))
-        val useFASEBuffer = Wire(Bool())
-        val fase = io.fase.get
-
-        useFASEBuffer := true.B
-
-        fasebuffer.io.in.valid := fase.inst_valid
-        fasebuffer.io.in.bits.pc := 0.U
-        fasebuffer.io.in.bits.inst := fase.instruction
-        fasebuffer.io.in.bits.rawInst := fase.instruction
+        val fasebuffer = Module(new FASEFetchBuffer(corecfg.VLEN, 6, corecfg.backendCfg.ghrLength))
+        val f = io.fase.get
+        val b = backend.io.fase.get
+        val run :: drain :: control :: Nil = Enum(3)
+        val state = RegInit(run)
+        val saved = RegInit(VecInit(Seq.fill(12)(0.U(64.W))))
+        val stopping = state === run && f.halt
+        val enter = state === drain && b.empty && physicalIdle
+        val launch = state === control && f.launch && f.empty
+        fasePaused := state =/= run || f.halt
+        faseRedirect := stopping || enter || launch
+        faseTarget := Mux(launch, f.launchPc, b.nextPc)
+        when(stopping) { state := drain }
+        when(enter) {
+            state := control
+            saved := VecInit((16 until 28).map(b.diagnostic(_)))
+        }
+        when(launch) { state := run }
+        b.active := fasePaused
+        b.enter := enter
+        b.launch := launch
+        b.launchPc := f.launchPc
+        b.regIndex := f.regIndex
+        b.regWdata := f.regWdata
+        b.regWrite := f.regWrite && f.halted && f.empty
+        f.regRdata := b.regRdata
+        f.halted := state === control
+        f.empty := b.empty && !fasebuffer.io.out.valid && physicalIdle
+        f.retired := b.retired
+        f.fault := b.fault
+        f.cause := b.cause
+        f.tval := b.tval
+        f.nextPc := b.nextPc
+        f.diagnostic := VecInit(b.diagnostic.toSeq ++ mmuDiag.toSeq ++ saved.toSeq)
+        fasebuffer.io.in.valid := f.inst_valid && f.halted && !f.launch
+        fasebuffer.io.in.bits := 0.U.asTypeOf(fasebuffer.io.in.bits)
+        fasebuffer.io.in.bits.pc := f.inst_pc
+        fasebuffer.io.in.bits.inst := f.instruction
+        fasebuffer.io.in.bits.rawInst := f.instruction
         fasebuffer.io.in.bits.instLen := 4.U
-        fasebuffer.io.in.bits.isCompressed := false.B
-        fasebuffer.io.in.bits.illegalCompressed := false.B
-        fasebuffer.io.in.bits.instructionAccessFault := false.B
-        fasebuffer.io.in.bits.instructionPageFault := false.B
-        fasebuffer.io.in.bits.pred.predType := FrontendPredType.NONE
-        fasebuffer.io.in.bits.pred.predTaken := false.B
-        fasebuffer.io.in.bits.pred.predPc := 0.U
-        fasebuffer.io.in.bits.pred.phtIdx := 0.U
-        fasebuffer.io.flush := false.B
-        fase.inst_ready := fasebuffer.io.in.ready
-
-        fasebuffer.io.out.ready := useFASEBuffer && backend.io.fetchBuffer.ready
-        buffer.io.out.ready := !useFASEBuffer && backend.io.fetchBuffer.ready
-
-        backend.io.fetchBuffer.valid := Mux(useFASEBuffer, fasebuffer.io.out.valid, buffer.io.out.valid)
-        backend.io.fetchBuffer.bits := Mux(useFASEBuffer, fasebuffer.io.out.bits, buffer.io.out.bits)
+        fasebuffer.io.flush := launch
+        f.inst_ready := fasebuffer.io.in.ready && f.halted && !f.launch
+        val normal = state === run && !f.halt
+        val injected = state === control && !launch
+        buffer.io.out.ready := normal && backend.io.fetchBuffer.ready
+        fasebuffer.io.out.ready := injected && backend.io.fetchBuffer.ready
+        backend.io.fetchBuffer.valid := Mux(normal, buffer.io.out.valid,
+            injected && fasebuffer.io.out.valid)
+        backend.io.fetchBuffer.bits := Mux(normal, buffer.io.out.bits, fasebuffer.io.out.bits)
     } else {
         backend.io.fetchBuffer <> buffer.io.out
     }

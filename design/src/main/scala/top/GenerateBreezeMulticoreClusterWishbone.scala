@@ -17,11 +17,12 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
   * filelist.f and cluster-profile.txt; presets never overwrite each other.
   */
 object GenerateBreezeMulticoreClusterWishbone extends App {
-    require(args.length >= 1 && args.length <= 5,
+    require(args.length >= 1 && args.length <= 6,
         "usage: GenerateBreezeMulticoreClusterWishbone " +
-          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production|fpga-debug] [coherent-dma]")
-    require(args.lift(4).forall(_ == "coherent-dma"), "fifth argument must be coherent-dma")
-    private val withCoherentDma = args.lift(4).contains("coherent-dma")
+          "<single|dual|small> [gshare|baseline] [mcu|linux] [debug|production|fpga-debug] [coherent-dma] [fase]")
+    require(args.drop(4).forall(Set("coherent-dma", "fase")), "unknown optional feature")
+    private val withCoherentDma = args.drop(4).contains("coherent-dma")
+    private val useFASE = args.drop(4).contains("fase")
 
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
     private val privilegeProfile =
@@ -52,7 +53,8 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
     } else {
         profileDir
     }
-    private val targetDir = if (withCoherentDma) modeDir / "coherent-dma" else modeDir
+    private val dmaDir = if (withCoherentDma) modeDir / "coherent-dma" else modeDir
+    private val targetDir = if (useFASE) dmaDir / "fase" else dmaDir
 
     println(
         s"[BreezeCluster RTL] profile=${clusterCfg.profileName} harts=${clusterCfg.numHarts} " +
@@ -61,7 +63,7 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
     )
     ChiselStage.emitSystemVerilogFile(
         new BreezeMulticoreClusterWishbone(clusterCfg, enableTandem = enableTandem,
-            withCoherentDma = withCoherentDma),
+            withCoherentDma = withCoherentDma, useFASE = useFASE),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array(
             "-disable-all-randomization",

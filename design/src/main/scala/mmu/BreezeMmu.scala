@@ -9,12 +9,13 @@ import flow.interface._
   * one shared hardware page-table walker.  The memory port is physical and is
   * intended to be arbitrated onto the coherent L1D path.
   */
-class BreezeMmu(val xlen: Int = 64, val entries: Int = 16) extends Module {
+class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean = false) extends Module {
   require(xlen == 64, "Sv39 requires RV64")
   require(entries > 0 && (entries & (entries - 1)) == 0,
     "TLB entry count must be a positive power of two")
 
   val io = IO(new Bundle {
+    val faseDiagnostic = if (useFASE) Some(Output(Vec(6, UInt(xlen.W)))) else None
     val i = new BreezeTranslationPort(xlen)
     val d = new BreezeTranslationPort(xlen)
     val context = Input(new BreezeMmuContext(xlen))
@@ -96,6 +97,10 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16) extends Module {
   val tablePpn = Reg(UInt(44.W))
   val pteAddr = Reg(UInt(xlen.W))
   val pte = Reg(UInt(64.W))
+  if (useFASE) {
+    io.faseDiagnostic.get := VecInit(Seq(state.asUInt, reqReg.vaddr, pteAddr, pte,
+      level, sourceI.asUInt))
+  }
   val walkGlobal = RegInit(false.B)
   val resultPaddr = Reg(UInt(xlen.W))
   val resultPageFault = RegInit(false.B)

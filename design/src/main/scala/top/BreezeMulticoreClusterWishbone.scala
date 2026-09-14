@@ -28,10 +28,11 @@ import flow.platform.BreezeMcuPlatform
 class BreezeMulticoreClusterWishbone(
     val clusterCfg: BreezeClusterConfig,
     val enableTandem: Boolean = false,
-    val withCoherentDma: Boolean = false
+    val withCoherentDma: Boolean = false,
+    val useFASE: Boolean = false
 ) extends Module {
     private val numHarts = clusterCfg.numHarts
-    private val coreCfg = clusterCfg.coreCfg(enableTandem = enableTandem)
+    private val coreCfg = clusterCfg.coreCfg(enableTandem = enableTandem).copy(useFASE = useFASE)
     private val plen = BreezeMcuPlatform.AddressWidth
     private val wbParams = LiteXWishboneParameters(
         byteAddressWidth = plen,
@@ -39,6 +40,7 @@ class BreezeMulticoreClusterWishbone(
     )
 
     val io = IO(new Bundle {
+        val fase = if (useFASE) Some(Vec(numHarts, new flow.fase.FaseCommandIO)) else None
         val resetAddr = Input(UInt(64.W))
         val msip = Input(Vec(numHarts, Bool()))
         val mtip = Input(Vec(numHarts, Bool()))
@@ -81,6 +83,11 @@ class BreezeMulticoreClusterWishbone(
 
     for (h <- 0 until numHarts) {
         val core = cores(h)
+        if (useFASE) {
+            val controller = Module(new flow.fase.FaseController)
+            controller.io.cpu <> core.io.fase.get
+            controller.io.host <> io.fase.get(h)
+        }
         val dcache = dcaches(h)
 
         core.io.resetAddr := io.resetAddr

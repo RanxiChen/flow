@@ -492,10 +492,19 @@ class BreezeCoreSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         dut.io.dmem.rsp.error.poke(false.B)
         fase.inst_valid.poke(false.B)
         fase.instruction.poke(0.U)
+        fase.inst_pc.poke(0.U)
+        fase.halt.poke(true.B)
+        fase.launch.poke(false.B)
+        fase.launchPc.poke(0.U)
+        fase.regIndex.poke(0.U)
+        fase.regWrite.poke(false.B)
+        fase.regWdata.poke(0.U)
 
         dut.reset.poke(true.B)
         dut.clock.step(1)
         dut.reset.poke(false.B)
+        dut.clock.step(3)
+        fase.halted.expect(true.B)
     }
 
     private def stepUntil(
@@ -1247,10 +1256,19 @@ class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with BreezeFpC
         dut.io.dmem.rsp.isWriteAck.poke(false.B)
         fase.inst_valid.poke(false.B)
         fase.instruction.poke(0.U)
+        fase.inst_pc.poke(0.U)
+        fase.halt.poke(true.B)
+        fase.launch.poke(false.B)
+        fase.launchPc.poke(0.U)
+        fase.regIndex.poke(0.U)
+        fase.regWrite.poke(false.B)
+        fase.regWdata.poke(0.U)
 
         dut.reset.poke(true.B)
         dut.clock.step(1)
         dut.reset.poke(false.B)
+        dut.clock.step(3)
+        fase.halted.expect(true.B)
     }
 
     private def assertNoDmemReq(dut: BreezeCore, cycle: Int): Unit = {

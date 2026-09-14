@@ -84,9 +84,10 @@ class BreezeFrontendDebugIO(vlen: Int, ghrLength: Int = 0) extends Bundle {
   * 当前实现前端入口 PC 选择、cache 请求/返回，以及 s3 的快速预测输出。
   * 地址统一按虚拟地址处理。
   */
-class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val enabledebug: Boolean = false) extends Module {
+class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val enabledebug: Boolean = false, val useFASE: Boolean = false) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
+        val fasePause = if (useFASE) Some(Input(Bool())) else None
         val beRedirect = Input(new FrontendRedirectIO(cfg.VLEN))
         val btbUpdate = Input(new BreezeBTBUpdateReq(cfg.VLEN))
         val phtUpdate = Input(new BreezePHTUpdateReq(cfg.branchPredCfg.ghrLength.max(1)))
@@ -102,6 +103,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         } else None
     })
 
+    val fetchAllowed = !io.fasePause.getOrElse(false.B)
     // ===== Module Instances =====
     val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug, parallelLookup = cfg.enableMmu))
     val realigner = if (cfg.enableCompressed) Some(Module(new BreezeInstrRealigner(cfg.VLEN))) else None
@@ -260,7 +262,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         val r = realigner.get
         val d = decompressor.get
         r.io.redirect := redirectValid
-        r.io.req.valid := s1_validReg && io.fetchBuffer.canAccept3 && !s2_validReg
+        r.io.req.valid := s1_validReg && fetchAllowed && io.fetchBuffer.canAccept3 && !s2_validReg
         r.io.req.bits.pc := s1_pcReg
         if (cfg.enableMmu) {
             val t = fetchTranslator.get
@@ -294,7 +296,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     } else {
         if (cfg.enableMmu) {
             val t = fetchTranslator.get
-            t.io.inReq.valid := s1_validReg && io.fetchBuffer.canAccept3
+            t.io.inReq.valid := s1_validReg && fetchAllowed && io.fetchBuffer.canAccept3
             t.io.inReq.bits.vaddr := s1_pcReg
             t.io.inReq.bits.paddr := 0.U
             t.io.inRsp.ready := s2_validReg
@@ -311,7 +313,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             fetchRespAccessFault := t.io.inRsp.bits.accessFault
             fetchRespPageFault := t.io.inRsp.bits.pageFault
         } else {
-            icache.io.dreq.valid := s1_validReg && io.fetchBuffer.canAccept3
+            icache.io.dreq.valid := s1_validReg && fetchAllowed && io.fetchBuffer.canAccept3
             icache.io.dreq.bits.vaddr := s1_pcReg
             icache.io.dreq.bits.paddr := s1_pcReg
             icache.io.drsp.ready := s2_validReg

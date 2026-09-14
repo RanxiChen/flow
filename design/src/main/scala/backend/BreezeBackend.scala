@@ -13,12 +13,14 @@ import flow.platform.BreezeMcuPlatform
 class BreezeBackend(
     val cfg: BackendConfig = BackendConfig(),
     val enabledebug: Boolean = false,
-    val hartId: Int = 0
+    val hartId: Int = 0,
+    val useFASE: Boolean = false
 ) extends Module {
     require(cfg.VLEN == 64, "RV64 M-extension backend requires VLEN=64")
     require(hartId >= 0, "backend hartId must be non-negative")
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
+        val fase = if (useFASE) Some(new FaseBackendIO) else None
         val machineTimerInterrupt = Input(Bool())
         val machineSoftwareInterrupt = Input(Bool())
         val time = Input(UInt(cfg.VLEN.W))
@@ -43,6 +45,9 @@ class BreezeBackend(
         val debug = if (enabledebug) Some(new BackendDebugIO(cfg.VLEN)) else None
     })
 
+    val faseActive = io.fase.map(_.active).getOrElse(false.B)
+    val faseEnter = io.fase.map(_.enter).getOrElse(false.B)
+    val faseLaunch = io.fase.map(_.launch).getOrElse(false.B)
     val nopInst = "h00000013".U(32.W)
 
     val decoder = Module(new Decoder())
@@ -52,7 +57,7 @@ class BreezeBackend(
     val fpRegFile = Module(new BreezeFpRegFile)
     val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug,
         hartId = hartId, privilegeProfile = cfg.privilegeProfile,
-        enableCompressed = cfg.enableCompressed))
+        enableCompressed = cfg.enableCompressed, useFASE = useFASE))
     val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
     val retireValid = Wire(Bool())
 
@@ -560,7 +565,7 @@ class BreezeBackend(
     // separate decision to take a trap.
     when(reset.asBool) {
         wfiSleepingReg := false.B
-    }.elsewhen(csrFile.io.wfiWakeup) {
+    }.elsewhen(csrFile.io.wfiWakeup || faseEnter || faseLaunch) {
         wfiSleepingReg := false.B
     }.elsewhen(wfiCommit) {
         wfiSleepingReg := true.B
@@ -584,7 +589,7 @@ class BreezeBackend(
     pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
         !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg &&
         !divWaitingRespReg && !fpWaitingRespReg
-    interruptRedirect := csrFile.io.interruptPending && pipelineEmpty
+    interruptRedirect := csrFile.io.interruptPending && pipelineEmpty && !faseActive
     frontendRedirectNeeded := fenceiFlush || sfenceExecute || satpCommit ||
         redirectNeeded || exceptionRedirect || xretRedirect || interruptRedirect || wfiCommit
     predictionMiss := redirectNeeded
@@ -1131,6 +1136,10 @@ class BreezeBackend(
 
     when(reset.asBool) {
         architecturalNextPc := io.resetAddr
+    }.elsewhen(faseLaunch) {
+        architecturalNextPc := io.fase.map(_.launchPc).getOrElse(0.U)
+    }.elsewhen(exceptionRedirect || interruptRedirect) {
+        architecturalNextPc := csrFile.io.trap_target
     }.elsewhen(xretRedirect) {
         architecturalNextPc := csrFile.io.xret_target
     }.elsewhen(memWbReg.valid && !wbTrap) {
@@ -1589,7 +1598,7 @@ class BreezeBackend(
     // A pending enabled interrupt stops issue while older instructions drain.
     decodeReady := !pipelineHold && !csrHold && !fpRegHazard && !fpCsrHazard &&
         !frontendRedirectNeeded &&
-        !csrFile.io.interruptPending && !wfiInFlight && !wfiSleepingReg
+        (!csrFile.io.interruptPending || faseActive) && !wfiInFlight && (!wfiSleepingReg || faseActive)
     decodeFire := decodeValid && decodeReady
     io.fetchBuffer.ready := decodeReady
 
@@ -1646,6 +1655,35 @@ class BreezeBackend(
         // send a predicted-taken loop back to its body on the exit iteration.
         redirectNeeded     -> exeNextPc
     ))
+    if (useFASE) {
+        val f = io.fase.get
+        csrFile.io.faseEnter.get := f.enter
+        f.empty := pipelineEmpty && !fenceiPending
+        f.retired := retireValid
+        f.fault := exceptionRedirect
+        f.cause := mcauseVal
+        f.tval := mtvalVal
+        f.nextPc := architecturalNextPc
+        f.regRdata := regFile.io.rs1_data
+        when(f.active && f.empty) {
+            regFile.io.rs1_addr := f.regIndex
+            when(f.regWrite) {
+                regFile.io.rd_addr := f.regIndex
+                regFile.io.rd_data := f.regWdata
+                regFile.io.rd_en := true.B
+            }
+        }
+        assert(!f.enter || f.empty, "FASE entered before backend drained")
+        assert(!f.regWrite || (f.active && f.empty), "FASE register write while running")
+        f.diagnostic := VecInit(Seq(
+            architecturalNextPc, idExeReg.pc, exeMemReg.pc, memWbReg.pc,
+            Cat(fenceiPending, wfiSleepingReg, fpWaitingRespReg, divWaitingRespReg,
+                mulWaitingRespReg, memWaitingRespReg, memWbReg.valid, exeMemReg.valid, idExeReg.valid),
+            exeMemReg.data, idExeReg.inst, exeMemReg.inst,
+            memWbReg.inst, io.dmem.req.addr, io.dmem.req.valid.asUInt,
+            io.dmem.rsp.valid.asUInt, mcauseVal, mtvalVal,
+            exceptionRedirect.asUInt, retireValid.asUInt) ++ csrFile.io.faseDiagnostic.get.toSeq)
+    }
     io.estop := estopCommitted
     io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
         tandem := trace
