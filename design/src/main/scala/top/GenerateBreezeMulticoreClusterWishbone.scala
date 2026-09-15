@@ -127,6 +127,7 @@ object GenerateBreezeMulticoreClusterWishbone extends App {
            |rtlMode=$rtlMode
            |tandem=$enableTandem
            |coherentDma=$withCoherentDma
+           |fase=$useFASE
            |platformSha256=$platformHash
            |compressed=${clusterCfg.coreCfg().enableCompressed}
            |addressTranslation=${if (clusterCfg.coreCfg().enableMmu) "bare,sv39" else "bare"}

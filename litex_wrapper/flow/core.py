@@ -101,6 +101,7 @@ class _BreezeClusterCPU(CPU):
     reset_vector = None
     expected_marker = {}
     coherent_dma = False
+    fase_enabled = False
 
     category = "softcore"
     family = "riscv"
@@ -199,6 +200,21 @@ class _BreezeClusterCPU(CPU):
             o_io_mmioWishbone_bte=mmio_bus.bte,
             i_io_mmioWishbone_err=mmio_bus.err,
         )
+
+        if self.fase_enabled:
+            if self.num_harts != 1:
+                raise ValueError("FASE JTAG currently selects the single hart")
+            self.fase = Record([("cmd_valid", 1), ("cmd_ready", 1),
+                ("cmd_opcode", 8), ("cmd_index", 6), ("cmd_data", 64),
+                ("cmd_pc", 64), ("rsp_valid", 1), ("rsp_ready", 1),
+                ("rsp_error", 1), ("rsp_data", 64)])
+            for field in ("opcode", "index", "data", "pc"):
+                self.cpu_params["i_io_fase_0_cmd_bits_" + field] = getattr(self.fase, "cmd_" + field)
+            for field in ("error", "data"):
+                self.cpu_params["o_io_fase_0_rsp_bits_" + field] = getattr(self.fase, "rsp_" + field)
+            for direction, field in (("i", "cmd_valid"), ("o", "cmd_ready"),
+                                     ("o", "rsp_valid"), ("i", "rsp_ready")):
+                self.cpu_params[direction + "_io_fase_0_" + field] = getattr(self.fase, field)
 
         for hart in range(self.num_harts):
             self.cpu_params[f"i_io_msip_{hart}"] = self.msip[hart]
@@ -309,6 +325,8 @@ class _BreezeClusterCPU(CPU):
 
         cls._validate_profile_marker(profile_marker)
         marker = cls._read_profile_marker(profile_marker)
+        if marker.get("fase", "false") != str(cls.fase_enabled).lower():
+            raise RuntimeError("Breeze FASE RTL does not match the selected CPU")
         dma_marker = marker.get("coherentDma", "false")
         if dma_marker != str(cls.coherent_dma).lower():
             raise RuntimeError("Breeze coherent DMA RTL does not match the selected CPU")
@@ -437,4 +455,20 @@ class BreezeTinyDma(CoherentDmaCPU, BreezeTiny):
 
 
 class BreezeTinyDebugDma(CoherentDmaCPU, BreezeTinyDebug):
+    pass
+
+
+class FaseCPU:
+    fase_enabled = True
+
+    @classmethod
+    def rtl_dir(cls):
+        return os.path.join(super().rtl_dir(), "fase")
+
+
+class BreezeTinyFase(FaseCPU, BreezeTiny):
+    pass
+
+
+class BreezeTinyDebugFase(FaseCPU, BreezeTinyDebug):
     pass

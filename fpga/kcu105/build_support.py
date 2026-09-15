@@ -10,6 +10,15 @@ from litex.soc.integration.builder import Builder
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        if hasattr(self.soc, "fase_jtag"):
+            gateware = Path(self.gateware_dir)
+            gateware.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(Path(__file__).with_name("fase_timing.tcl"), gateware / "flow_fase_timing.tcl")
+            self.soc.platform.toolchain.pre_optimize_commands.append("source flow_fase_timing.tcl")
+            self.soc.platform.toolchain.additional_commands += [
+                "report_cdc -details -file fase-cdc.rpt",
+                "report_bus_skew -file fase-bus-skew.rpt",
+            ]
         if not hasattr(self.soc, "sdcard"):
             self.freeze_sources()
             return super().build(*args, **kwargs)

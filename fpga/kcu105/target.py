@@ -30,6 +30,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
 
 from flow import Breeze, BreezeTiny  # noqa: E402
 from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma  # noqa: E402
+from flow.core import BreezeTinyFase, BreezeTinyDebugFase  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
@@ -70,6 +71,8 @@ CPUS["breeze_tiny_debug"] = BreezeTinyDebug
 CPUS["breeze_dma"] = BreezeDma
 CPUS["breeze_tiny_dma"] = BreezeTinyDma
 CPUS["breeze_tiny_debug_dma"] = BreezeTinyDebugDma
+CPUS["breeze_tiny_fase"] = BreezeTinyFase
+CPUS["breeze_tiny_debug_fase"] = BreezeTinyDebugFase
 
 
 class BreezeKCU105SoC(SoCCore):
@@ -89,7 +92,9 @@ class BreezeKCU105SoC(SoCCore):
 
     irq_map = {"uart": UART_PLIC_SOURCE, "sdcard": UART_PLIC_SOURCE + 1}
 
-    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False):
+    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False, with_fase=False):
+        if with_fase and (cpu_type != "breeze-tiny" or with_sdcard):
+            raise ValueError("--with-fase requires breeze-tiny without SD/DMA")
         if cpu_type not in ("breeze", "breeze-tiny"):
             raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
         if debug and cpu_type != "breeze-tiny":
@@ -101,6 +106,8 @@ class BreezeKCU105SoC(SoCCore):
         cpu_key = "breeze_tiny_debug" if debug else cpu_type.replace("-", "_")
         if with_sdcard:
             cpu_key += "_dma"
+        if with_fase:
+            cpu_key += "_fase"
 
         super().__init__(
             platform,
@@ -235,6 +242,10 @@ class BreezeKCU105SoC(SoCCore):
         if with_sdcard:
             self.add_constant("BREEZE_SDCARD_PLIC_SOURCE", UART_PLIC_SOURCE + 1)
 
+        if with_fase:
+            from flow.fase import FaseJtag
+            self.fase_jtag = FaseJtag(self.cpu, platform)
+
         if debug:
             from flow.ila import BreezeDebugILA
             sd_probes = []
@@ -256,7 +267,7 @@ class BreezeKCU105SoC(SoCCore):
                 self.sd_observer = SDObserver(self.sdcard)
                 sd_probes += self.sd_observer.sources
             self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq,
-                extra_sources=sd_probes, storage_qualifier=with_sdcard,
+                extra_sources=sd_probes + (self.fase_jtag.sources if with_fase else []), storage_qualifier=with_sdcard,
                 depth=8192 if with_sdcard else 4096)
 
 
@@ -273,6 +284,8 @@ def main():
                         help="generate single-hart Tandem RTL and add a native Vivado ILA")
     parser.add_argument("--with-sdcard", action="store_true",
                         help="native SD, coherent DMA, bounded BIOS driver and SD/DMA ILA probes")
+    parser.add_argument("--with-fase", action="store_true",
+                        help="single-hart FASE controller and USER2 JTAG mailbox (no SD/DMA)")
     parser.add_argument(
         "--build",
         action="store_true",
@@ -284,28 +297,34 @@ def main():
         help="load the already-built bitstream into KCU105 SRAM",
     )
     args = parser.parse_args()
+    if args.with_fase and (args.cpu_type != "breeze-tiny" or args.with_sdcard):
+        parser.error("--with-fase requires --cpu-type breeze-tiny without --with-sdcard")
     if args.with_sdcard and args.sys_clk_freq != 100_000_000:
         parser.error("SD timing bring-up profile requires --sys-clk-freq 100000000")
     if args.debug and args.cpu_type != "breeze-tiny":
         parser.error("--debug only supports --cpu-type breeze-tiny (single hart)")
 
-    if (args.debug or args.with_sdcard) and not args.load:
+    if (args.debug or args.with_sdcard or args.with_fase) and not args.load:
         profile = "single" if args.cpu_type == "breeze-tiny" else "small"
         mode = "fpga-debug" if args.debug else "production"
         dma_arg = " coherent-dma" if args.with_sdcard else ""
+        fase_arg = " fase" if args.with_fase else ""
         subprocess.run([
             "sbt", "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
-            f"{profile} gshare linux {mode}{dma_arg}",
+            f"{profile} gshare linux {mode}{dma_arg}{fase_arg}",
         ], cwd=os.path.join(FLOW_ROOT, "design"), check=True)
 
     soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug,
-                          sys_clk_freq=args.sys_clk_freq, with_sdcard=args.with_sdcard)
+                          sys_clk_freq=args.sys_clk_freq, with_sdcard=args.with_sdcard,
+                          with_fase=args.with_fase)
     output_dir = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
         TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
     if args.output_dir is None and args.sys_clk_freq != SYS_CLK_FREQ:
         output_dir += f"-{args.sys_clk_freq // 1_000_000}mhz"
     if args.output_dir is None and args.with_sdcard:
         output_dir += "-sd-dma"
+    if args.output_dir is None and args.with_fase:
+        output_dir += "-fase"
     builder = SnapshotBuilder(
         soc,
         output_dir=output_dir,

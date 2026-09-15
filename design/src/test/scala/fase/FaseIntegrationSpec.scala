@@ -19,9 +19,10 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   private def csr(rd: Int, address: Int, rs: Int, f: Int = 1): BigInt =
     (BigInt(address) << 20) | (BigInt(rs) << 15) | (BigInt(f) << 12) | (BigInt(rd) << 7) | 0x73
 
-  "command decode controls a Linux core, diagnoses stalls and launches coherent DDR code" in {
+  for (serial <- Seq(false, true)) {
+  s"${if (serial) "JTAG mailbox" else "command decode"} controls a Linux core, diagnoses stalls and launches coherent DDR code" in {
     val cfg = BreezeClusterPresets.fromName("single").copy(privilegeProfile = PrivilegeProfile.Linux)
-    simulate(new BreezeMulticoreClusterWishbone(cfg, enableTandem = true, useFASE = true)) { d =>
+    simulate(new FaseIntegrationHarness(cfg, serial)) { d =>
       val h = d.io.fase.get(0)
       val mem = mutable.Map.empty[BigInt, Int].withDefaultValue(0)
       def put(a: BigInt, v: BigInt, n: Int): Unit =
@@ -58,8 +59,8 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
         while (!p && n < limit) { step(); n += 1 }
         assert(p, s"$why timed out at cycle $cycles")
       }
-      def cmd(op: Int, data: BigInt = 0, index: Int = 0, pc: BigInt = 0,
-              error: Boolean = false): BigInt = {
+      def directCmd(op: Int, data: BigInt, index: Int, pc: BigInt,
+                    error: Boolean): BigInt = {
         h.cmd.valid.poke(false.B); h.rsp.ready.poke(true.B)
         until("command ready") { h.cmd.ready.peek().litToBoolean }
         h.cmd.bits.opcode.poke(op.U); h.cmd.bits.index.poke(index.U)
@@ -69,6 +70,44 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
         h.rsp.bits.error.expect(error.B)
         val result = h.rsp.bits.data.peek().litValue
         step(); result
+      }
+      def tick(): Unit = {
+        d.jtag.tck.poke(false.B); step()
+        d.jtag.tck.poke(true.B); step()
+        d.jtag.tck.poke(false.B); step()
+      }
+      def scan(frame: BigInt): BigInt = {
+        d.jtag.sel.poke(true.B); d.jtag.capture.poke(true.B); tick()
+        d.jtag.capture.poke(false.B); d.jtag.shift.poke(true.B)
+        var reply = BigInt(0)
+        for (bit <- 0 until 192) {
+          d.jtag.tdi.poke(frame.testBit(bit).B)
+          if (d.jtag.tdo.peek().litToBoolean) reply = reply.setBit(bit)
+          tick()
+        }
+        d.jtag.shift.poke(false.B); d.jtag.update.poke(true.B); tick()
+        d.jtag.update.poke(false.B); d.jtag.sel.poke(false.B)
+        reply
+      }
+      var tag = 0
+      def cmd(op: Int, data: BigInt = 0, index: Int = 0, pc: BigInt = 0,
+              error: Boolean = false): BigInt = {
+        if (!serial) directCmd(op, data, index, pc, error)
+        else {
+          tag += 1
+          val prior = scan(0)
+          assert(!prior.testBit(66), "previous JTAG transaction busy")
+          scan((BigInt(0xfa5e) << 176) | (BigInt(tag) << 142) |
+            (pc << 78) | (data << 14) | (BigInt(index) << 8) | op)
+          var reply = scan(0); var attempts = 0
+          while ((!reply.testBit(65) || ((reply >> 68) & 65535) != tag) && attempts < 10) {
+            reply = scan(0); attempts += 1
+          }
+          assert(attempts < 10, "JTAG response missing")
+          assert((reply >> 176) == 0xfa5e && !reply.testBit(67), "JTAG framing/rejection")
+          reply.testBit(64) mustBe error
+          reply & ((BigInt(1) << 64) - 1)
+        }
       }
       def status(): BigInt = cmd(FaseOpcode.Status)
       def halt(): Unit = {
@@ -89,6 +128,8 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       }
       def snap(i: Int): BigInt = cmd(FaseOpcode.ReadSnapshot, index = i)
       h.cmd.valid.poke(false.B); h.rsp.ready.poke(true.B)
+      d.jtag.tck.poke(false.B); d.jtag.sel.poke(false.B); d.jtag.capture.poke(false.B)
+      d.jtag.shift.poke(false.B); d.jtag.update.poke(false.B); d.jtag.tdi.poke(false.B)
       h.cmd.bits.opcode.poke(0.U); h.cmd.bits.index.poke(0.U)
       h.cmd.bits.data.poke(0.U); h.cmd.bits.pc.poke(0.U)
       d.io.resetAddr.poke(boot.U); d.io.msip(0).poke(false.B); d.io.mtip(0).poke(false.B)
@@ -98,6 +139,7 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
         b.ack.poke(false.B); b.err.poke(false.B); b.dat_r.poke(0.U)
       }
       d.reset.poke(true.B); d.clock.step(3); d.reset.poke(false.B)
+      if (serial) (0 until 4).foreach(_ => tick())
       until("normal boot") { commits.count(_._1 == boot) >= 3 }
       cmd(FaseOpcode.WriteReg, 99, 10, error = true)
       halt()
@@ -110,12 +152,14 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       wr(0, 123); rd(0) mustBe BigInt(0)
       cmd(255, error = true)
       // Backpressure must hold response stable and must not repeat a write.
+      if (!serial) {
       h.rsp.ready.poke(false.B)
       h.cmd.bits.opcode.poke(FaseOpcode.Status.U); h.cmd.valid.poke(true.B)
       step(); h.cmd.valid.poke(false.B)
       val held = h.rsp.bits.data.peek().litValue
       step(5); h.rsp.valid.expect(true.B); h.rsp.bits.data.expect(held.U)
       h.cmd.ready.expect(false.B); h.rsp.ready.poke(true.B); step()
+      }
       // Real instruction cache contains the OLD DDR code first.
       cmd(FaseOpcode.Launch, pc = target)
       until("old code execution") { commits.exists(_._1 == target) }
@@ -164,7 +208,8 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       var n = 0
       while ((status() & 8) != 0 && n < 1000) { n += 1 }
       assert(n < 1000); rd(3) mustBe BigInt(0)
-      println(s"FASE_COMMAND_CPU_PASS cycles=$cycles commits=${commits.size}")
+      println(s"FASE_COMMAND_CPU_PASS serial=$serial cycles=$cycles commits=${commits.size}")
     }
+  }
   }
 }
