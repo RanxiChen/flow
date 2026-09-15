@@ -25,6 +25,8 @@ module FlowFaseJtagTransport (
     wire trst = t_reset[1], srst = s_reset[1];
     (* KEEP = "TRUE" *) reg [157:0] cmd_hold;
     (* KEEP = "TRUE" *) reg [80:0] rsp_hold;
+    (* KEEP = "TRUE" *) reg [80:0] response;
+    reg response_latched;
     reg [191:0] scan;
     reg [8:0] shift_count;
     reg req, ack, has_command, response_read;
@@ -33,25 +35,33 @@ module FlowFaseJtagTransport (
     (* ASYNC_REG = "TRUE" *) reg [4:0] seen_meta, seen_sync;
     wire busy = req != ack_sync;
     wire complete = has_command && !busy;
+    wire response_valid = complete && response_latched;
     // Read frame: data[63:0], error[64], valid[65], busy[66], rejected[67],
     // tag[83:68], version[175:168]=1, magic[191:176]=fa5e.
     wire [191:0] read_frame = {16'hfa5e, 8'h01, 84'b0,
-        rsp_hold[80:65], jtag_seen[4], busy, complete,
-        complete && rsp_hold[64], complete ? rsp_hold[63:0] : 64'b0};
+        response[80:65], jtag_seen[4], busy, response_valid,
+        response_valid && response[64], response_valid ? response[63:0] : 64'b0};
     assign tdo = scan[0];
     always @(posedge tck or posedge trst) begin
         if (trst) begin
             scan <= 0; shift_count <= 0; cmd_hold <= 0; req <= 0;
             has_command <= 0; response_read <= 0; jtag_seen <= 0;
+            response <= 0; response_latched <= 0;
             ack_meta <= 0; ack_sync <= 0;
         end else begin
             ack_meta <= ack; ack_sync <= ack_meta;
+            // A single controlled capture of the stable bundled response.
+            // The shift register never directly samples an asynchronous bus.
+            if (complete && !response_latched) begin
+                response <= rsp_hold;
+                response_latched <= 1;
+            end
             if (sel) jtag_seen[0] <= 1;
             if (tap_reset) begin scan <= 0; shift_count <= 0; end
             else if (sel) begin
                 if (capture) begin
                     scan <= read_frame; shift_count <= 0; jtag_seen[1] <= 1;
-                    if (complete) response_read <= 1;
+                    if (response_valid) response_read <= 1;
                 end else if (shift) begin
                     scan <= {tdi, scan[191:1]}; jtag_seen[2] <= 1;
                     if (shift_count != 511) shift_count <= shift_count + 1'b1;
@@ -64,6 +74,7 @@ module FlowFaseJtagTransport (
                             !busy && (!has_command || response_read)) begin
                             cmd_hold <= scan[157:0]; req <= ~req;
                             has_command <= 1; response_read <= 0;
+                            response_latched <= 0;
                         end else jtag_seen[4] <= 1;
                     end
                     shift_count <= 0;

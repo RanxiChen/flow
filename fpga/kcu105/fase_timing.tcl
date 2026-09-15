@@ -10,7 +10,7 @@ proc fase_regs {pattern} {
     if {[llength $cells] == 0} { error "Missing FASE CDC registers: $pattern" }
     return $cells
 }
-foreach pair {{cmd_hold_reg* command_reg*} {rsp_hold_reg* scan_reg*}} {
+foreach pair {{cmd_hold_reg* command_reg*} {rsp_hold_reg* response_reg*}} {
     lassign $pair source dest
     set from [fase_regs $source]
     set to [fase_regs $dest]
