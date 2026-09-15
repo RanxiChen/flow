@@ -1,5 +1,6 @@
 # Source in Vivado Tcl after open_hw_manager/connect_hw_server.
 # The target must be opened with open_hw_target -jtag_mode.
+# Before opening, set_property PARAM.FREQUENCY 10000000 [current_hw_target].
 # KU040 IR=6 bits, USER2=0x03 (Vivado 2022.2 device BSDL).
 # Call fase_select with the measured TOTAL IR length and bits preceding KU040
 # at TDO; other devices receive BYPASS. Defaults describe a KU040-only chain.
@@ -12,6 +13,9 @@ proc fase_hex {value digits} {
     return $result
 }
 proc fase_select {{ir_length 6} {ir_prefix 0} {bypass_prefix 0} {bypass_suffix 0}} {
+    if {[get_property PARAM.FREQUENCY [current_hw_target]] > 10000000} {
+        error "FASE timing is constrained for TCK <= 10 MHz; lower PARAM.FREQUENCY first"
+    }
     if {$ir_length < $ir_prefix + 6 || $ir_prefix < 0 || $bypass_prefix < 0 || $bypass_suffix < 0} {
         error "Invalid measured JTAG chain layout"
     }
