@@ -306,7 +306,7 @@ def main():
         output_dir += f"-{args.sys_clk_freq // 1_000_000}mhz"
     if args.output_dir is None and args.with_sdcard:
         output_dir += "-sd-dma"
-    builder = (SnapshotBuilder if args.with_sdcard else Builder)(
+    builder = SnapshotBuilder(
         soc,
         output_dir=output_dir,
         csr_csv=os.path.join(output_dir, "csr.csv"),

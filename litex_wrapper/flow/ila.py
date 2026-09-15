@@ -81,6 +81,10 @@ class BreezeDebugILA(Module):
                            for i, probe in enumerate(self.probes)})
         for name, value in properties.items():
             commands.append(f"set_property CONFIG.{name} {value} [get_ips breeze_ila]")
+        # LiteX creates a project but invokes synth_design directly, rather
+        # than launch_runs for per-IP OOC synthesis. Include ILA RTL in that
+        # global synthesis; otherwise the OOC module has no checkpoint/stub.
+        commands.append("set_property generate_synth_checkpoint false [get_files */breeze_ila.xci]")
         commands.append("generate_target all [get_ips breeze_ila]")
         platform.toolchain.additional_commands.append(
             "write_debug_probes -force {build_name}.ltx")

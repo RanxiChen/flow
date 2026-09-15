@@ -10,6 +10,9 @@ from litex.soc.integration.builder import Builder
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        if not hasattr(self.soc, "sdcard"):
+            self.freeze_sources()
+            return super().build(*args, **kwargs)
         gateware = Path(self.gateware_dir)
         gateware.mkdir(parents=True, exist_ok=True)
         shutil.copy2(Path(__file__).with_name("sd_timing.tcl"), gateware / "flow_sd_timing.tcl")
@@ -33,6 +36,10 @@ class SnapshotBuilder(Builder):
                 (dest.parent / "sdcard-upstream.json").write_text(json.dumps(lock, indent=2) + "\n")
             packages.append((name, source))
         self.software_packages = packages
+        self.freeze_sources()
+        return super().build(*args, **kwargs)
+
+    def freeze_sources(self):
         # Vivado consumes immutable copies, not a later sbt elaboration or
         # changing external CVFPU checkout. Keep original names for includes.
         snapshot = Path(self.output_dir) / "source-snapshot"
@@ -54,4 +61,3 @@ class SnapshotBuilder(Builder):
             includes.append(str(dest))
         self.soc.platform.verilog_include_paths = includes
         (snapshot / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-        return super().build(*args, **kwargs)
