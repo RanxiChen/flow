@@ -133,13 +133,18 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       cmd(FaseOpcode.Cause) mustBe BigInt(2)
       cmd(FaseOpcode.Tval) mustBe BigInt("ffffffff", 16)
       // Programmatically return to S mode, then externally take over in M again.
+      // Match firmware's PMP setup: reset entries deny all S/U accesses.
+      wr(1, BigInt("40000000", 16)); exec(csr(0, 0x3b0, 1)) // TOR end: 4 GiB
+      wr(1, 0x0f); exec(csr(0, 0x3a0, 1)) // TOR, RWX, unlocked
       wr(1, target); exec(csr(0, 0x341, 1))
       wr(1, 0x800); exec(csr(0, 0x300, 1))
       exec(BigInt("30200073", 16))
       cmd(FaseOpcode.Snapshot); snap(16) mustBe BigInt(1)
       cmd(FaseOpcode.NextPc) mustBe target
+      val supervisorMark = commits.size
       cmd(FaseOpcode.Launch, pc = target)
-      step(100); halt()
+      until("supervisor code execution") { commits.drop(supervisorMark).exists(_._1 == target) }
+      halt()
       cmd(FaseOpcode.Snapshot)
       snap(16) mustBe BigInt(3); snap(36) mustBe BigInt(1)
       // A never-responding physical read must not block the command interface.
