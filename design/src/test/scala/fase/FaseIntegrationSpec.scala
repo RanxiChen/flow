@@ -103,7 +103,10 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       halt()
       val before = rd(10); before must be >= BigInt(3)
       step(30); rd(10) mustBe before
-      wr(5, 40); exec(addi(6, 5, 2)); rd(6) mustBe BigInt(42)
+      wr(5, 40); rd(5) mustBe BigInt(40)
+      exec(addi(6, 5, 2)); rd(6) mustBe BigInt(42)
+      exec(BigInt("006283b3", 16)) // add x7,x5,x6: both decode read ports
+      rd(7) mustBe BigInt(82)
       wr(0, 123); rd(0) mustBe BigInt(0)
       cmd(255, error = true)
       // Backpressure must hold response stable and must not repeat a write.

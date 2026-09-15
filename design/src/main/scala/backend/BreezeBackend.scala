@@ -1665,7 +1665,9 @@ class BreezeBackend(
         f.tval := mtvalVal
         f.nextPc := architecturalNextPc
         f.regRdata := regFile.io.rs1_data
-        when(f.active && f.empty) {
+        // An empty pipeline can accept an injected instruction this cycle.
+        // Its decode operands must win over the host's diagnostic read index.
+        when(f.active && f.empty && !decodeValid) {
             regFile.io.rs1_addr := f.regIndex
             when(f.regWrite) {
                 regFile.io.rd_addr := f.regIndex
