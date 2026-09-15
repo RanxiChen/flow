@@ -155,7 +155,8 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       step(100)
       assert((status() & 8) != 0)
       cmd(FaseOpcode.Snapshot)
-      assert((snap(4) & 32) != 0, "missing outstanding load diagnostic")
+      // Pipeline snapshot bit 3 is the memory wait; bit 5 is divider wait.
+      assert(snap(4).testBit(3), "missing outstanding load diagnostic")
       snap(5) mustBe stuck
       cmd(FaseOpcode.Launch, pc = boot, error = true)
       cmd(FaseOpcode.WriteReg, 1, 1, error = true)
