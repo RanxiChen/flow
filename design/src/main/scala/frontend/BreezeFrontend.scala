@@ -88,6 +88,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val fasePause = if (useFASE) Some(Input(Bool())) else None
+        val flightEvent = if (useFASE) Some(Output(new flow.fase.FlightEvent)) else None
         val beRedirect = Input(new FrontendRedirectIO(cfg.VLEN))
         val btbUpdate = Input(new BreezeBTBUpdateReq(cfg.VLEN))
         val phtUpdate = Input(new BreezePHTUpdateReq(cfg.branchPredCfg.ghrLength.max(1)))
@@ -349,6 +350,20 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         s1_pcReg := predictedPc
     }.elsewhen(!cfg.enableCompressed.B && s1_fire) {
         s1_pcReg := s0_nextPc
+    }
+
+    if (useFASE) {
+        val ev = io.flightEvent.get
+        val advance = (cfg.enableCompressed.B && s2_respValid) ||
+            (!cfg.enableCompressed.B && s1_fire)
+        val seqPc = s2_pcReg + fetchRespInstLen
+        val compressedPc = if (isGShare) Mux(s2_predTakenReg.get, s2_predPcReg.get, seqPc) else seqPc
+        val adoptedPc = Mux(redirectValid, redirectTarget,
+            Mux(cfg.enableCompressed.B && s2_respValid, compressedPc, s0_nextPc))
+        ev.valid := redirectValid || advance
+        ev.words := VecInit(Seq(
+            Cat(fetchRespPageFault, fetchRespAccessFault, advance, s3_fastRedirectValid, io.beRedirect.valid),
+            s1_pcReg, adoptedPc, redirectTarget, io.beRedirect.target, s3_fastRedirectTarget, fetchRespPc))
     }
 
     // ===== S1: Cache Request =====

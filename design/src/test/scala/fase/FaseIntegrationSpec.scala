@@ -141,6 +141,14 @@ class FaseIntegrationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       d.reset.poke(true.B); d.clock.step(3); d.reset.poke(false.B)
       if (serial) (0 until 4).foreach(_ => tick())
       until("normal boot") { commits.count(_._1 == boot) >= 3 }
+      (cmd(16) & 7) mustBe BigInt(2)
+      cmd(17, 1 | (15 << 8))
+      step(100)
+      cmd(17, 2)
+      val history = cmd(16, index = 4) // retirement bank
+      ((history >> 16) & 65535) must be > BigInt(0)
+      val firstPc = cmd(19, (3 << 13) | 2)
+      Set(boot, boot + 4) must contain(firstPc)
       cmd(FaseOpcode.WriteReg, 99, 10, error = true)
       halt()
       val before = rd(10); before must be >= BigInt(3)

@@ -204,6 +204,9 @@ class _BreezeClusterCPU(CPU):
         if self.fase_enabled:
             if self.num_harts != 1:
                 raise ValueError("FASE JTAG currently selects the single hart")
+            self.flight = [Signal(64, name="flight_" + str(i)) for i in range(8)]
+            for i, signal in enumerate(self.flight):
+                self.cpu_params[f"o_io_flight_0_{i}"] = signal
             self.fase = Record([("cmd_valid", 1), ("cmd_ready", 1),
                 ("cmd_opcode", 8), ("cmd_index", 6), ("cmd_data", 64),
                 ("cmd_pc", 64), ("rsp_valid", 1), ("rsp_ready", 1),

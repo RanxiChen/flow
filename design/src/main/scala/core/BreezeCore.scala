@@ -33,6 +33,8 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val reservationKill = Output(Bool())
         val estop = Output(Bool())
         val fase = if (corecfg.useFASE) Some(new FASECoreIO()) else None
+        val recorder = if (corecfg.useFASE) Some(new flow.fase.FaseCommandIO) else None
+        val flight = if (corecfg.useFASE) Some(Output(Vec(8, UInt(64.W)))) else None
         val tandem = if (corecfg.enableTandem) Some(Output(new TracePayload(corecfg.VLEN))) else None
         val frontendDebug = if (enabledebug) {
             Some(new BreezeFrontendDebugIO(
@@ -52,6 +54,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     val faseRedirect = WireDefault(false.B)
     val faseTarget = WireDefault(0.U(corecfg.VLEN.W))
     val physicalIdle = WireDefault(true.B)
+    val translationEvent = WireDefault(0.U.asTypeOf(new flow.fase.FlightEvent))
     val mmuDiag = WireDefault(VecInit(Seq.fill(8)(0.U(64.W))))
     frontend.io.fasePause.foreach(_ := fasePaused)
     frontend.io.resetAddr := io.resetAddr
@@ -98,6 +101,16 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val physicalOwnerPtw = RegInit(false.B)
         physicalIdle := !physicalBusy && !mmu.io.memReq.valid && !dataTranslator.io.memReq.valid
         if (corecfg.useFASE) {
+            val req = mmu.io.i.req
+            val rsp = mmu.io.i.resp
+            val reqPriv = RegEnable(backend.io.mmuContext.privilege, 0.U, req.fire)
+            val reqSatp = RegEnable(backend.io.mmuContext.satp, 0.U, req.fire)
+            translationEvent.valid := req.fire || rsp.fire || mmu.io.killI
+            translationEvent.words := VecInit(Seq(
+                (Mux(rsp.fire, reqPriv, backend.io.mmuContext.privilege) << 8) |
+                    Cat(mmu.io.killI, rsp.bits.accessFault, rsp.bits.pageFault, rsp.fire, req.fire),
+                req.bits.vaddr, rsp.bits.vaddr, rsp.bits.paddr, reqSatp,
+                backend.io.mmuContext.satp, mmu.io.faseDiagnostic.get(0)))
             for (i <- 0 until 6) mmuDiag(i) := mmu.io.faseDiagnostic.get(i)
             mmuDiag(6) := physicalBusy.asUInt
             mmuDiag(7) := physicalOwnerPtw.asUInt
@@ -144,6 +157,13 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     io.debug.foreach(_ <> backend.io.debug.get)
 
     if (corecfg.useFASE) {
+        val recorder = Module(new flow.fase.FlightRecorder)
+        recorder.io.host <> io.recorder.get
+        recorder.io.privilege := backend.io.fase.get.flightPrivilege
+        for (i <- 0 until 4) recorder.io.events(i) := backend.io.fase.get.flightEvents(i)
+        recorder.io.events(4) := frontend.io.flightEvent.get
+        recorder.io.events(5) := translationEvent
+        io.flight.get := recorder.io.probes
         val fasebuffer = Module(new FASEFetchBuffer(corecfg.VLEN, 6, corecfg.backendCfg.ghrLength))
         val f = io.fase.get
         val b = backend.io.fase.get

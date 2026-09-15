@@ -19,5 +19,8 @@ class FaseJtag(Module):
             params["o_debug_" + name] = signal
             self.sources.append(("fase_" + name, signal))
         self.sources += [("fase_" + name, getattr(f, name)) for name, _ in f.layout]
+        self.sources += [("flight_" + name, signal) for name, signal in zip(
+            ("cycle", "flags", "backend_target", "frontend_target", "if_req_va",
+             "if_rsp_va", "trap_pc", "if_flags"), cpu.flight)]
         self.specials += Instance("FlowFaseJtag", name="fase_jtag", **params)
         platform.add_source(str(Path(__file__).parent / "rtl" / "FlowFaseJtag.sv"))

@@ -1,5 +1,5 @@
 # Source in Vivado Tcl after open_hw_manager/connect_hw_server.
-# The target must be opened with open_hw_target -jtag_mode.
+# The target must be opened with open_hw_target -jtag_mode on.
 # Before opening, set_property PARAM.FREQUENCY 10000000 [current_hw_target].
 # KU040 IR=6 bits, USER2=0x03 (Vivado 2022.2 device BSDL).
 # Call fase_select with the measured TOTAL IR length and bits preceding KU040

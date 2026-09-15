@@ -41,6 +41,7 @@ class BreezeMulticoreClusterWishbone(
 
     val io = IO(new Bundle {
         val fase = if (useFASE) Some(Vec(numHarts, new flow.fase.FaseCommandIO)) else None
+        val flight = if (useFASE) Some(Output(Vec(numHarts, Vec(8, UInt(64.W))))) else None
         val resetAddr = Input(UInt(64.W))
         val msip = Input(Vec(numHarts, Bool()))
         val mtip = Input(Vec(numHarts, Bool()))
@@ -86,7 +87,11 @@ class BreezeMulticoreClusterWishbone(
         if (useFASE) {
             val controller = Module(new flow.fase.FaseController)
             controller.io.cpu <> core.io.fase.get
-            controller.io.host <> io.fase.get(h)
+            val router = Module(new flow.fase.FaseRecorderRouter)
+            router.io.host <> io.fase.get(h)
+            router.io.cpu <> controller.io.host
+            router.io.recorder <> core.io.recorder.get
+            io.flight.get(h) := core.io.flight.get
         }
         val dcache = dcaches(h)
 

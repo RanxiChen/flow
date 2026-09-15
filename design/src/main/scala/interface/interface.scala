@@ -631,4 +631,6 @@ class FaseBackendIO extends Bundle {
     val tval = Output(UInt(64.W))
     val nextPc = Output(UInt(64.W))
     val diagnostic = Output(Vec(28, UInt(64.W)))
+    val flightEvents = Output(Vec(4, new flow.fase.FlightEvent))
+    val flightPrivilege = Output(UInt(2.W))
 }

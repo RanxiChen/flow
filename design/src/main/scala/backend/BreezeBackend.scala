@@ -1657,6 +1657,30 @@ class BreezeBackend(
     ))
     if (useFASE) {
         val f = io.fase.get
+        val cs = csrFile.io.faseDiagnostic.get
+        f.flightPrivilege := csrFile.io.current_privilege
+        val ev = f.flightEvents
+        ev := 0.U.asTypeOf(ev)
+        val priv = csrFile.io.current_privilege << 16
+        ev(0).valid := csrFile.io.trap.valid || xretRedirect
+        ev(0).words := VecInit(Seq(
+            priv | Cat(csrFile.io.mret_commit, csrFile.io.sret_commit,
+                csrFile.io.trap.is_interrupt, csrFile.io.trap.valid),
+            Mux(csrFile.io.trap.valid, csrFile.io.trap.pc, memWbReg.pc),
+            Mux(csrFile.io.trap.valid, csrFile.io.trap_target, csrFile.io.xret_target),
+            csrFile.io.trap.cause, csrFile.io.trap.tval, cs(1), cs(2)))
+        ev(1).valid := io.frontendRedirect.valid
+        ev(1).words := VecInit(Seq(
+            priv | Cat(redirectNeeded, wfiCommit, exceptionRedirect, interruptRedirect,
+                xretRedirect, satpCommit, sfenceExecute, fenceiFlush),
+            memWbReg.pc, io.frontendRedirect.target, idExeReg.pc,
+            exeNextPc, csrFile.io.xret_target, csrFile.io.trap_target))
+        ev(2).valid := csrFile.io.commit_valid && csrFile.io.commit_write_en
+        ev(2).words := VecInit(Seq(priv | csrFile.io.commit_addr,
+            memWbReg.pc, csrFile.io.commit_wdata, cs(1), cs(2), cs(6), cs(3)))
+        ev(3).valid := retireValid
+        ev(3).words := VecInit(Seq(priv | (regFile.io.rd_addr << 1) | regFile.io.rd_en,
+            memWbReg.pc, memWbReg.inst, memWbReg.nextPc, wbData, cs(1), cs(2)))
         csrFile.io.faseEnter.get := f.enter
         f.empty := pipelineEmpty && !fenceiPending
         f.retired := retireValid
