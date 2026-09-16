@@ -416,4 +416,21 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       assert((dut.io.csr_old_data.peekValue().asBigInt & (BigInt(1) << 5)) != 0)
     }
   }
+  "trap entry dominates a simultaneous return request" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { d =>
+      for (supervisorReturn <- Seq(false, true)) {
+        reset(d)
+        commit(d, CSRMAP.mstatus, 0) // saved MPP/SPP would return to U
+        d.io.trap.valid.poke(true.B)
+        d.io.trap.pc.poke(0x234.U); d.io.trap.cause.poke(2.U)
+        d.io.mret_commit.poke((!supervisorReturn).B)
+        d.io.sret_commit.poke(supervisorReturn.B)
+        d.clock.step()
+        idle(d)
+        d.io.current_privilege.expect(PRIV_MODE.M.U)
+        selectRead(d, CSRMAP.mepc); d.io.csr_old_data.expect(0x234.U)
+      }
+    }
+  }
+
 }

@@ -150,4 +150,47 @@ class BreezeMmuSpec extends AnyFreeSpec with ChiselSim {
       dut.io.i.resp.bits.pageFault.expect(true.B)
     }
   }
+  "overlapping global and ASID TLB entries select one mapping without merging PPNs" in {
+    simulate(new BreezeMmu(64, entries = 4)) { d =>
+      d.io.context.poke(0.U.asTypeOf(new BreezeMmuContext(64)))
+      d.io.context.privilege.poke(PRIV_MODE.S.U)
+      d.io.context.pmpcfg(0).poke(0x0f.U)
+      d.io.context.pmpaddr(0).poke(((BigInt(1)<<54)-1).U)
+      d.io.killI.poke(false.B)
+      d.io.sfence.poke(0.U.asTypeOf(new BreezeSfenceReq(64)))
+      d.io.i.req.valid.poke(false.B); d.io.i.resp.ready.poke(true.B)
+      d.io.d.req.valid.poke(false.B); d.io.d.resp.ready.poke(true.B)
+      d.io.memReq.ready.poke(true.B); d.io.memRsp.valid.poke(false.B)
+      d.io.memRsp.bits.poke(0.U.asTypeOf(new BackendMemResp))
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      for (port <- Seq(d.io.i, d.io.d)) {
+        for ((asid, ppn, global, expectedWalks) <- Seq((1,0x80001,false,3), (2,0x80002,true,3), (1,0x80001,false,0))) {
+          d.io.context.satp.poke(((BigInt(8)<<60)|(BigInt(asid)<<44)|0x100).U)
+          port.req.bits.vaddr.poke(BigInt("40001234",16).U)
+          port.req.bits.access.poke(BreezeMmuAccess.Load)
+          port.req.bits.sizeLog2.poke(2.U)
+          port.req.ready.expect(true.B)
+          port.req.valid.poke(true.B); d.clock.step(); port.req.valid.poke(false.B)
+          var cycles=0; var walks=0
+          val ptes=Map(BigInt(0x100008)->((BigInt(0x101)<<10)|1),
+            BigInt(0x101000)->((BigInt(0x102)<<10)|1),
+            BigInt(0x102008)->((BigInt(ppn)<<10)|0xcf|(if(global) 0x20 else 0)))
+          while(!port.resp.valid.peek().litToBoolean && cycles<80) {
+            if(d.io.memReq.valid.peek().litToBoolean) {
+              val address=d.io.memReq.bits.addr.peek().litValue
+              walks+=1; d.clock.step()
+              d.io.memRsp.bits.data.poke(ptes(address).U)
+              d.io.memRsp.valid.poke(true.B); d.clock.step(); d.io.memRsp.valid.poke(false.B)
+            } else d.clock.step()
+            cycles+=1
+          }
+          assert(cycles<80 && walks==expectedWalks)
+          port.resp.bits.pageFault.expect(false.B)
+          port.resp.bits.paddr.expect(((BigInt(ppn)<<12)|0x234).U)
+          d.clock.step()
+        }
+      }
+    }
+  }
+
 }
