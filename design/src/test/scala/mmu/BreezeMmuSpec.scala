@@ -193,4 +193,45 @@ class BreezeMmuSpec extends AnyFreeSpec with ChiselSim {
     }
   }
 
+  "SFENCE on the leaf refill cycle prevents a stale TLB insertion" in {
+    simulate(new BreezeMmu(64, entries = 4)) { d =>
+      d.io.context.poke(0.U.asTypeOf(new BreezeMmuContext(64)))
+      d.io.context.satp.poke(((BigInt(8)<<60)|0x100).U)
+      d.io.context.privilege.poke(PRIV_MODE.S.U)
+      d.io.context.pmpcfg(0).poke(0x0f.U)
+      d.io.context.pmpaddr(0).poke(((BigInt(1)<<54)-1).U)
+      d.io.killI.poke(false.B)
+      d.io.sfence.poke(0.U.asTypeOf(new BreezeSfenceReq(64)))
+      d.io.i.req.valid.poke(false.B); d.io.i.resp.ready.poke(true.B)
+      d.io.d.req.valid.poke(false.B); d.io.d.resp.ready.poke(true.B)
+      d.io.memReq.ready.poke(true.B); d.io.memRsp.valid.poke(false.B)
+      d.io.memRsp.bits.poke(0.U.asTypeOf(new BackendMemResp))
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      for (round <- 0 until 2) {
+        d.io.i.req.bits.vaddr.poke(BigInt("40001234",16).U)
+        d.io.i.req.bits.access.poke(BreezeMmuAccess.Fetch)
+        d.io.i.req.bits.sizeLog2.poke(2.U)
+        d.io.i.req.ready.expect(true.B)
+        d.io.i.req.valid.poke(true.B); d.clock.step(); d.io.i.req.valid.poke(false.B)
+        var cycles=0
+        while(!d.io.memReq.valid.peek().litToBoolean && cycles<20) {d.clock.step(); cycles+=1}
+        assert(cycles<20, "old translation survived SFENCE as a TLB hit")
+        d.io.memReq.bits.addr.expect(0x100008.U)
+        d.clock.step()
+        val ppn=if(round==0) 0x80000 else 0xc0000
+        d.io.memRsp.bits.data.poke(((BigInt(ppn)<<10)|0xcf).U)
+        d.io.memRsp.valid.poke(true.B); d.clock.step(); d.io.memRsp.valid.poke(false.B)
+        // The response has advanced the walker to CheckPte/leaf refill.
+        d.io.sfence.valid.poke((round==0).B)
+        d.clock.step(); d.io.sfence.valid.poke(false.B)
+        if(round==0) d.io.i.resp.valid.expect(false.B)
+        else {
+          d.io.i.resp.valid.expect(true.B)
+          d.io.i.resp.bits.paddr.expect(BigInt("c0001234",16).U)
+        }
+        d.clock.step()
+      }
+    }
+  }
+
 }
