@@ -10,7 +10,10 @@ proc flight_ila_arm {ila} {
     if {[llength $flags] != 1} {error "Matching flight-recorder LTX probe not found"}
     set_property CONTROL.TRIGGER_POSITION 3072 $ila
     set_property CONTROL.TRIGGER_CONDITION AND $ila
-    set_property CONTROL.CAPTURE_MODE ALWAYS $ila
+    # C_EN_STRG_QUAL=0 fixes this property at ALWAYS; Vivado makes it read-only.
+    if {[get_property CONTROL.CAPTURE_MODE $ila] ne "ALWAYS"} {
+        error "Flight capture requires the unqualified ALWAYS-mode ILA build"
+    }
     # flags[4] = configured recorder trigger hit, one sys-clock pulse.
     set_property TRIGGER_COMPARE_VALUE "eq64'b[string repeat x 59]1xxxx" $flags
     run_hw_ila $ila
