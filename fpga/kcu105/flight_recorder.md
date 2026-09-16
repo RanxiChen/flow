@@ -1,11 +1,28 @@
-# FASE flight recorder v1
+# FASE flight recorder v2
 
-Built with the existing `--with-fase` option; absent when FASE is disabled.
-Reset leaves recording disarmed. No CPU stalls, trap overrides, or automatic HALT
-are introduced. All events are sampled in the CPU/sys clock domain, then written
-into six independent synchronous circular memories. Each bank holds 1024 events,
-each 8 x 64 bits (384 KiB logical total). Vivado must infer block RAM and meet the
-10 ns clock constraint; source elaboration alone does not establish either fact.
+Enabled by `--with-fase`. Recording starts automatically after every reset,
+in M/S/U mode, without ARM, ILA, CPU HALT or a configured fault address.
+Every architectural instruction page fault (trap taken, not an interrupt,
+cause 12) creates a snapshot. Speculative IF MMU failures alone do not trigger.
+Normal demand instruction-page faults also trigger; this is not a panic detector.
+
+Each snapshot retains up to 256 preceding events **per bank**, events on the
+fault cycle, and events during the next 64 CPU cycles. In particular bank 3
+retains the preceding 256 retired instructions, not merely 256 clock cycles.
+Startup histories may be shorter. Timestamps align the six independent streams.
+Eight snapshots are retained; subsequent faults recycle older slots. A selected
+snapshot is leased against eviction while JTAG reads it; then the other seven
+slots continue recording newer faults. Release after export. A fault storm can
+recycle a snapshot before its post window completes; only ready snapshots can
+be selected. This finite history cannot guarantee the original cause survives
+arbitrarily many later faults.
+
+Six 4096 x 512-bit BRAM banks provide 1.5 MiB logical storage. Each bank uses
+64-entry pages, shared by overlapping snapshots and protected from overwrite.
+The allocator reserves enough pages even for eight disjoint maximal snapshots.
+No trace operation stalls the CPU. Loss counters expose allocation failure.
+Reset/reprogramming/CLEAR destroys retained snapshots; RAM contents need not be
+reset. There is no global freeze. Do not reset after a crash before exporting.
 
 ## Records
 
@@ -30,66 +47,66 @@ Bank 5 fault bits require response-fire. Saved request satp describes the previo
 request until the next clock edge; use current satp for a request-only event.
 The MMU permits only one transaction, so request context is retained until its
 response; kills are explicitly recorded. This is not a complete PTW/PTE or D-cache
-transaction trace. Existing ILA D-cache probes and FASE snapshots remain available.
+transaction trace. FASE register/memory inspection remains available separately.
 
-Each bank independently overwrites its oldest entry. Frequent instruction events
-cannot evict trap history. Finite capacity means the most recent 1024 traps,
-not every trap since boot. Counts saturate at 1024; totals wrap at 2^32 events.
-Reading is frozen-only. Manual freeze retains events already sampled before the
-freeze command. Arm clears history counters and previous trigger state. RAM itself
-is not reset. Reset/reprogramming loses all records.
+## JTAG readout
 
-## FASE commands
+Use the matching v2 helpers; v1 ARM/FREEZE commands have different meanings.
+The helpers check the protocol version before changing recorder state.
+Existing CPU commands 0..10 are unchanged. The debug path bypasses CPU loads
+and works with a running, halted or stuck CPU, provided sys clock/JTAG work.
 
-Existing CPU opcodes 0..10 are unchanged. The router holds one outstanding command.
-The recorder works while the CPU runs, drains, is halted, or is stuck.
+On Alan, with hw_server available on localhost:3121:
+
+```sh
+vivado -mode batch -source fpga/kcu105/flight_read.tcl -tclargs list
+vivado -mode batch -source fpga/kcu105/flight_read.tcl -tclargs dump latest /absolute/fresh-fault.csv
+vivado -mode batch -source fpga/kcu105/flight_read.tcl -tclargs dump 3 /absolute/fresh-fault-3.csv
+vivado -mode batch -source fpga/kcu105/flight_read.tcl -tclargs capture /absolute/fresh-manual.csv
+```
+
+These commands select the KCU105 Digilent serial 210308A7B107, USER2, 10 MHz.
+They do not program/reset/HALT the FPGA. Close other JTAG clients first.
+`list` reports snapshot IDs, readiness, privilege, PC, cause and eviction/loss
+counters. `dump` leases a completed ID, writes chronological CSV, then releases
+it even after an export error. Existing output files are never overwritten.
+An ID evicted before SELECT causes an explicit error; retry listing rather
+than treating a different snapshot as the requested one. A disconnected client
+may leave a lease; source the helpers and use `flight_release` to release it.
+`capture` creates and leases a manual snapshot of current execution, clearly
+marked manual; it does not reconstruct an earlier unretained fault.
+
+## Protocol
+
+One outstanding command. STATUS opcode 16 index 0 returns version[63:32]=2,
+depth[31:16]=4096, banks[15:8]=6, recording[0]=1.
 
 | Opcode | Meaning |
 | --- | --- |
-| 16 | STATUS: index 0 = depth[31:16], banks[15:8], triggered[2], frozen[1], active[0]; indices 1..6 = total[63:32], count[31:16], next-write-slot[15:0]; 7 = trigger source cycle; 8..13 = next-write-slot for each bank at trigger |
-| 17 | CONTROL data: bit 0 arm and clear, 1 freeze, 2 clear while frozen; at most one of these bits; 3 enable IF response page-fault trigger, 4 enable IF request address trigger, 11:8 allowed privilege mask (U=bit0, S=bit1, M=bit3), 31:16 post-trigger cycles. Every accepted CONTROL updates trigger settings. |
-| 18 | Set 64-bit match address |
-| 19 | READ WORD: data bank[15:13], slot[12:3], word[2:0]. Invalid bank/slot, unwritten slot, or active recording returns error. |
-| 20 | Set 64-bit address mask; comparison is `(requestVA & mask) == (address & mask)` |
+| 16 | STATUS indices 1..6 bank event totals; 7 capture count; 8 evictions; 9 latest capture cycle; 10 leased ID or 0; 11 slots; 12 pre-event limit; 13 post cycles; 14 loss mask; 15 version; 16..21 per-bank dropped events |
+| 17 | SLOT_INFO data=slot: index 0 flags valid/ready/leased/manual bits 0..3; 1 ID; 2..9 cycle, flags, PC, target, cause, tval, mstatus, satp; 10..15 per-bank total[31:16], pre-count[15:0] |
+| 18 | SELECT data=completed snapshot ID; atomically leases it and returns its cycle; failed selection preserves the previous lease |
+| 19 | READ_SELECTED data bank[15:13], chronological entry[12:3], word[2:0]; requires completed leased snapshot; invalid bank/entry returns error |
+| 20 | RELEASE lease |
+| 21 | CAPTURE_NOW creates and immediately leases a manual snapshot, returning ID; simultaneous real fault takes precedence in its metadata |
+| 22 | Reserved, returns error |
+| 23 | CLEAR metadata/history counters/lease; recording continues automatically |
 
-Fault/address matches are ORed and privilege-filtered. The triggering event is
-written, then `post_cycles` additional sys cycles are recorded before freezing.
-Zero freezes immediately after writing the trigger event. Trigger slots are the
-next write positions **before** that cycle's writes; a bank without an event that
-cycle has no trigger record. Timestamp comparison is authoritative. A large post
-window can overwrite pre-trigger history; 32 cycles is the initial default.
-A normal demand-page fault can trigger recording; enable the fault trigger only
-with the intended privilege/filter. The default helper uses address matching.
+IDs start at 1 after reset/CLEAR. Manual captures share the eight slots and ID
+counter with faults. Counters are 64-bit. Listing unleased slots can race with
+eviction; helpers check the ID before and after reading each descriptor.
+Only one reader lease is supported; concurrent clients must serialize access.
 
-## Capture procedure
+## Build and acceptance
 
-1. Program the new bitstream and matching LTX as a separate, explicit board step.
-2. In normal Hardware Manager mode, source `flight_ila.tcl`, then call
-   `flight_ila_arm [lindex [get_hw_ilas] 0]`. It clears previous trigger comparisons
-   and triggers on recorder hit, with 3072 pre-trigger and 1024 remaining samples
-   in the 4096-depth ILA. All cycles are captured. Verify ILA reports waiting.
-3. Switch to USER2 target mode (`open_hw_target -jtag_mode on`, TCK <= 10 MHz),
-   source `fase_jtag.tcl`, select the measured chain, then source
-   `flight_recorder.tcl`. Arm before launching Linux, for example:
+```sh
+python fpga/kcu105/target.py --cpu-type breeze-tiny --with-fase --sys-clk-freq 100000000 --output-dir ABS_FRESH_BUILD
+cd ABS_FRESH_BUILD/gateware
+bash build_xilinx_kcu105.sh
+```
 
-   ```tcl
-   flight_arm 0xffffffff88ba597e 0xffffffffffffffff 0 1 15 32
-   flight_cmd 16
-   ```
-
-   This example targets the previously observed VA; it does not assume the next
-   crash must use that address. For S-mode IF page faults use
-   `flight_arm 0 0xffffffffffffffff 1 0 2 32`.
-4. After failure, STATUS low bits 6 mean triggered and frozen. Export with
-   `flight_dump /absolute/fresh-capture.csv`. If no trigger fired, explicitly
-   `flight_freeze` first; preserve history before issuing FASE HALT/injections.
-5. Return to normal Hardware Manager mode and upload the ILA data. Switching JTAG
-   ownership does not stop sys-clock acquisition; do not reprogram/reset while
-   switching. CPU HALT does not implicitly freeze the recorder.
-
-ILA `flight_flags` bits: clear=0, active=1, frozen=2, triggered=3, hit=4,
-event-valid banks 0..5=bits 5..10. `flight_cycle` and sampled event payload probes
-are aligned to each other; existing unrelated ILA probes describe their current
-cycle, one cycle later than the source events. ILA's common two input pipeline
-stages affect all probes equally. These helpers still require board verification
-with the new bitstream; simulation is not a hardware capture.
+Omit `--debug` to avoid instantiating the large ILA. Existing optional ILA
+probes are not needed for snapshots. Run `flight_report.tcl` on the routed DCP
+to check inferred recorder BRAM and 10 ns setup/hold, then review utilization
+and CDC. Simulation success is not evidence of FPGA timing or board capture.
+Programming and reset/readout board verification are separate steps.

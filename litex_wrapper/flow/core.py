@@ -330,6 +330,8 @@ class _BreezeClusterCPU(CPU):
         marker = cls._read_profile_marker(profile_marker)
         if marker.get("fase", "false") != str(cls.fase_enabled).lower():
             raise RuntimeError("Breeze FASE RTL does not match the selected CPU")
+        if cls.fase_enabled and marker.get("flightRecorderVersion") != "2":
+            raise RuntimeError("Regenerate FASE RTL for reset-on recorder v2")
         dma_marker = marker.get("coherentDma", "false")
         if dma_marker != str(cls.coherent_dma).lower():
             raise RuntimeError("Breeze coherent DMA RTL does not match the selected CPU")
