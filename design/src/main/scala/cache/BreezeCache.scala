@@ -234,6 +234,10 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         val tag_match = tag_array_rdata(i) === desired_tag
         s1_tag_hit(i) := s1_vld && tag_match
     }
+    // Blocking refill preserves one copy of each tag in a set.
+    when(s1_valid) {
+        assert(PopCount(s1_tag_hit) <= 1.U, "ICache: duplicate matching ways")
+    }
     s1_dout := Mux1H(s1_tag_hit, s1_way_dout)
     val s1_pma_fault = s1_valid && (!s1_pma_allowed || !s1_pma_cacheable)
     val s1_miss = s1_valid && !s1_pma_fault && !s1_hit

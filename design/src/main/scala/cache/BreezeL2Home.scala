@@ -707,8 +707,11 @@ class BreezeL2Home(
           // this very cycle; earlier responses already latched recalledData.
           // An owner that answers WITHOUT data held a clean E copy - then the
           // L2 array line is current by construction and nothing is written.
+          val dataOwners = VecInit((0 until sharerWidth).map(h =>
+            respFired(h) && io.coherenceProbeResp(h).hasData))
+          assert(PopCount(dataOwners) <= 1.U, "L2/Home: multiple probe data owners")
           val respDataThisCycle = Mux1H((0 until sharerWidth).map(h =>
-            (respFired(h), io.coherenceProbeResp(h).lineData)))
+            (dataOwners(h), io.coherenceProbeResp(h).lineData)))
           val respHasDataThisCycle = (0 until sharerWidth).map(h =>
             respFired(h) && io.coherenceProbeResp(h).hasData).reduce(_ || _)
           val recallNow = victimDirReg === UNIQUE && (recalledValid || respHasDataThisCycle)

@@ -707,6 +707,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         stvecBase + (io.trap.cause << 2), stvecBase)
 
     // Trap entry is precise at WB. A trap raised in M is never delegated.
+    // Trap entry dominates returns even if the input requests overlap.
     when(io.trap.valid){
         when(trapDelegated) {
             sepc := (if (enableCompressed) Cat(io.trap.pc(XLEN - 1, 1), 0.U(1.W))
@@ -728,9 +729,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 currentPrivilege, PRIV_MODE.M.U)
             currentPrivilege := PRIV_MODE.M.U
         }
-    }
-    // MRET: restore mstatus from saved state
-    when(io.mret_commit){
+    }.elsewhen(io.mret_commit){
         mstatus_MIE  := mstatus_MPIE
         mstatus_MPIE := true.B
         if (enableSupervisorUser) {
@@ -741,8 +740,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             currentPrivilege := PRIV_MODE.M.U
             mstatus_MPP := PRIV_MODE.M.U
         }
-    }
-    when(io.sret_commit && enableSupervisorUser.B) {
+    }.elsewhen(io.sret_commit && enableSupervisorUser.B) {
         mstatus_SIE := mstatus_SPIE
         mstatus_SPIE := true.B
         currentPrivilege := Mux(mstatus_SPP, PRIV_MODE.S.U, PRIV_MODE.U.U)
@@ -765,7 +763,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.mtvec := mtvec
     io.mepc_out := mepc
     io.trap_target := Mux(trapDelegated, supervisorTrapTarget, machineTrapTarget)
-    io.xret_target := Mux(io.sret_commit, sepc, mepc)
+    io.xret_target := Mux(io.sret_commit && !io.mret_commit, sepc, mepc)
     io.current_privilege := currentPrivilege
     io.mret_illegal := enableSupervisorUser.B && currentPrivilege =/= PRIV_MODE.M.U
     io.sret_illegal := !enableSupervisorUser.B ||

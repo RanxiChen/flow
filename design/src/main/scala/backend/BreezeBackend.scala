@@ -578,14 +578,17 @@ class BreezeBackend(
     val sretRedirect = Wire(Bool())
     val xretRedirect = Wire(Bool())
     exceptionRedirect := memWbReg.valid && wbTrap
-    mretRedirect := memWbReg.valid && memWbReg.is_mret
-    sretRedirect := memWbReg.valid && memWbReg.is_sret
+    mretRedirect := memWbReg.valid && memWbReg.is_mret && !wbTrap
+    sretRedirect := memWbReg.valid && memWbReg.is_sret && !wbTrap
     xretRedirect := mretRedirect || sretRedirect
-    sfenceExecute := idExeReg.valid && idExeReg.ctrl.is_sfence_vma &&
+    // WB is older than MEM, which is older than EX. Cancellation must also
+    // gate same-cycle side effects; clearing pipeline registers is too late.
+    val wbKillsYounger = exceptionRedirect || xretRedirect || satpCommit || wfiCommit
+    sfenceExecute := !wbKillsYounger && !fenceiFlush && idExeReg.valid && idExeReg.ctrl.is_sfence_vma &&
         !pipelineHold && !idExeReg.illegal_inst && !idExeReg.instruction_access_fault &&
         !idExeReg.instruction_page_fault
     satpCommit := memWbReg.valid && memWbReg.csr_write_en &&
-        memWbReg.csr_addr === CSRMAP.satp.U && !memWbReg.csr_illegal
+        memWbReg.csr_addr === CSRMAP.satp.U && !wbTrap
     pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
         !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg &&
         !divWaitingRespReg && !fpWaitingRespReg
@@ -600,8 +603,7 @@ class BreezeBackend(
     val memBtbUpdate = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(cfg.VLEN)))
     // These events cancel younger work. A branch's own redirectNeeded must
     // not cancel its training, nor a younger branch cancel a pending update.
-    val btbOlderKill = exceptionRedirect || xretRedirect || satpCommit ||
-        interruptRedirect || wfiCommit || fenceiFlush
+    val btbOlderKill = wbKillsYounger || interruptRedirect || fenceiFlush
 
     exeBtbUpdate.valid := false.B
     exeBtbUpdate.pc := 0.U
@@ -624,8 +626,8 @@ class BreezeBackend(
         // table entry zero and wait for another full table read when enabled.
         io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
         io.frontendPhtUpdate.taken := actualTaken
-        when(idExeReg.valid && !pipelineHold && !idExeReg.instruction_access_fault &&
-            !idExeReg.instruction_page_fault) {
+        when(idExeReg.valid && !pipelineHold && !btbOlderKill && !idExeReg.illegal_inst &&
+            !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault) {
             switch(idExeReg.pred.predType) {
                 is(FrontendPredType.BR) {
                     frontendBtbUpdateValid := true.B
@@ -718,14 +720,14 @@ class BreezeBackend(
     loadAddrMisaligned := exeMemIsLoad && memAddrMisaligned && !exeMemIsAmo
     storeAddrMisaligned := (exeMemIsStore || exeMemIsAmo) && memAddrMisaligned
     exeMemNeedsDmem := exeMemIsMem && !memAddrMisaligned
-    memReqIssued := exeMemNeedsDmem && !memWaitingRespReg
+    memReqIssued := exeMemNeedsDmem && !memWaitingRespReg && !wbKillsYounger
     memRspFire := memWaitingRespReg && io.dmem.rsp.valid
     // Each request requires exeMemReg.valid. interruptRedirect requires
     // pipelineEmpty, which requires !exeMemReg.valid, so it cannot cancel
     // one of these requests. Avoid routing interrupt timing through issue
     // into pipelineHold. Exception/return/fence cancellation is still needed.
     mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !fenceiFlush
+        !wbKillsYounger && !fenceiFlush
     mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
     mulUnit.io.flush := frontendRedirectNeeded
     mulUnit.io.in_valid := mulReqIssued
@@ -734,7 +736,7 @@ class BreezeBackend(
     mulUnit.io.op := exeMemReg.mul_op
     divFastCompletion := exeMemIsDiv && exeMemReg.div_fast
     divReqIssued := exeMemIsDiv && !exeMemReg.div_fast && !divWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !fenceiFlush
+        !wbKillsYounger && !fenceiFlush
     divRspFire := divWaitingRespReg && divUnit.io.out_valid
     divUnit.io.flush := frontendRedirectNeeded
     divUnit.io.in_valid := divReqIssued
@@ -745,14 +747,13 @@ class BreezeBackend(
     divUnit.io.is_remainder := exeMemReg.div_is_remainder
     divUnit.io.is_word := exeMemReg.div_is_word
     fpReqIssued := exeMemIsFp && !fpWaitingRespReg &&
-        !exceptionRedirect && !xretRedirect && !fenceiFlush
+        !wbKillsYounger && !fenceiFlush
     fpReqAccepted := fpReqIssued && fpUnit.io.inReady
     fpRspFire := fpWaitingRespReg && fpUnit.io.outValid
     // A younger branch may resolve in the same cycle that an older FP result
     // completes and is forwarded.  Do not feed that redirect back into FPnew:
     // the older result must commit before the younger redirect takes effect.
-    fpUnit.io.flush := reset.asBool || fenceiFlush || exceptionRedirect ||
-        xretRedirect || interruptRedirect
+    fpUnit.io.flush := reset.asBool || fenceiFlush || wbKillsYounger || interruptRedirect
     fpUnit.io.inValid := fpReqIssued
     fpUnit.io.outReady := fpWaitingRespReg
     fpUnit.io.operandA := exeFpOperand1
@@ -1076,7 +1077,7 @@ class BreezeBackend(
         PRIV_MODE.S.U -> BigInt(9).U(cfg.VLEN.W)
     ))
     val mcauseVal = Wire(UInt(cfg.VLEN.W))
-    mcauseVal := Mux1H(Seq(
+    mcauseVal := MuxCase(0.U(cfg.VLEN.W), Seq(
         memWbReg.instruction_access_fault -> BigInt(1).U(cfg.VLEN.W),
         memWbReg.instruction_page_fault -> BigInt(12).U(cfg.VLEN.W),
         memWbReg.store_addr_misaligned -> BigInt(6).U(cfg.VLEN.W),
@@ -1088,13 +1089,12 @@ class BreezeBackend(
         memWbReg.is_ecall              -> ecallCause,
         memWbReg.is_ebreak             -> BigInt(3).U(cfg.VLEN.W),
         memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
-        memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W),
-        true.B                         -> 0.U(cfg.VLEN.W)
+        memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W)
     ))
 
     // Compute trap value at WB stage: faulting address or zero
     val mtvalVal = Wire(UInt(cfg.VLEN.W))
-    mtvalVal := Mux1H(Seq(
+    mtvalVal := MuxCase(0.U(cfg.VLEN.W), Seq(
         memWbReg.instruction_access_fault -> memWbReg.pc,
         memWbReg.instruction_page_fault -> memWbReg.pc,
         memWbReg.store_addr_misaligned -> memWbReg.alu_data,
@@ -1106,8 +1106,7 @@ class BreezeBackend(
         memWbReg.is_ecall              -> 0.U(cfg.VLEN.W),
         memWbReg.is_ebreak             -> 0.U(cfg.VLEN.W),
         memWbReg.csr_illegal           -> 0.U(cfg.VLEN.W),
-        memWbReg.illegal_inst          -> memWbReg.rawInst,
-        true.B                         -> 0.U(cfg.VLEN.W)
+        memWbReg.illegal_inst          -> memWbReg.rawInst
     ))
 
     csrFile.io.trap.valid        := exceptionRedirect || interruptRedirect
@@ -1115,8 +1114,8 @@ class BreezeBackend(
     csrFile.io.trap.cause        := Mux(interruptRedirect, csrFile.io.interruptCause, mcauseVal)
     csrFile.io.trap.pc           := Mux(interruptRedirect, architecturalNextPc, memWbReg.pc)
     csrFile.io.trap.tval         := Mux(interruptRedirect, 0.U, mtvalVal)
-    csrFile.io.mret_commit       := memWbReg.valid && memWbReg.is_mret
-    csrFile.io.sret_commit       := memWbReg.valid && memWbReg.is_sret
+    csrFile.io.mret_commit       := mretRedirect
+    csrFile.io.sret_commit       := sretRedirect
 
     if (cfg.enableTandem) {
         val trapTraceCount = RegInit(0.U(9.W))
@@ -1147,8 +1146,8 @@ class BreezeBackend(
     }
 
     fenceiPending := exeMemReg.valid && exeMemReg.fencei
-    io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg
-    fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone
+    io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg && !wbKillsYounger
+    fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone && !wbKillsYounger
 
     when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect ||
             interruptRedirect || wfiCommit) {
@@ -1641,20 +1640,29 @@ class BreezeBackend(
     io.frontendRedirect.valid := frontendRedirectNeeded
     io.frontendRedirect.flush := frontendRedirectNeeded
     io.frontendRedirect.cacheFlush := fenceiFlush
-    io.frontendRedirect.target := Mux1H(Seq(
-        fenceiFlush        -> (exeMemReg.pc + exeMemReg.instLen),
-        sfenceExecute      -> (idExeReg.pc + idExeReg.instLen),
-        satpCommit         -> memWbReg.nextPc,
-        xretRedirect       -> csrFile.io.xret_target,
-        interruptRedirect  -> csrFile.io.trap_target,
-        exceptionRedirect  -> csrFile.io.trap_target,
-        wfiCommit           -> memWbReg.nextPc,
-        // Direction mispredicts can be either not-taken -> taken or
-        // taken -> not-taken. exeNextPc selects the architecturally correct
-        // destination for both cases; actualTarget alone would incorrectly
-        // send a predicted-taken loop back to its body on the exit iteration.
-        redirectNeeded     -> exeNextPc
+    // Requests are NOT one-hot: a WB trap and a younger EX branch can
+    // resolve together. Mux1H ORs their addresses (observed on KCU105).
+    // Oldest architectural redirect wins; only then may MEM/EX redirect.
+    io.frontendRedirect.target := MuxCase(0.U(cfg.VLEN.W), Seq(
+        exceptionRedirect -> csrFile.io.trap_target,
+        interruptRedirect -> csrFile.io.trap_target, // only with empty pipeline
+        xretRedirect      -> csrFile.io.xret_target,
+        satpCommit        -> memWbReg.nextPc,
+        wfiCommit         -> memWbReg.nextPc,
+        fenceiFlush       -> (exeMemReg.pc + exeMemReg.instLen),
+        sfenceExecute     -> (idExeReg.pc + idExeReg.instLen),
+        redirectNeeded    -> exeNextPc
     ))
+    when(exceptionRedirect) {
+        assert(io.frontendRedirect.target === csrFile.io.trap_target,
+            "[BreezeBackend] younger redirect corrupted trap target")
+    }
+    when(wbKillsYounger) {
+        assert(!io.dmem.req.valid && !io.sfence.valid && !io.dcacheFlushReq &&
+            !io.frontendPhtUpdate.valid && !io.frontendGhrUpdate.valid &&
+            !io.frontendBtbUpdate.valid,
+            "[BreezeBackend] younger side effect survived WB redirect")
+    }
     if (useFASE) {
         val f = io.fase.get
         val cs = csrFile.io.faseDiagnostic.get

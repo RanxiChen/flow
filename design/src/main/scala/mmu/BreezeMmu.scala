@@ -109,10 +109,13 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
   // selection. Send states hold the complete authorized request under stall.
   val ptwReqReg = Reg(new BackendMemReq(xlen))
 
+  // Same-cycle cancellation dominates response and refill, not just next
+  // cycle's killed register. In particular SFENCE must win a leaf refill.
+  val cancelNow = killed || io.sfence.valid || (io.killI && sourceI)
   io.i.req.ready := state === Idle && !io.killI && !io.sfence.valid
   io.d.req.ready := state === Idle && !io.i.req.valid && !io.sfence.valid
-  io.i.resp.valid := state === Respond && sourceI && !killed
-  io.d.resp.valid := state === Respond && !sourceI && !killed
+  io.i.resp.valid := state === Respond && sourceI && !cancelNow
+  io.d.resp.valid := state === Respond && !sourceI && !cancelNow
   for (port <- Seq(io.i.resp, io.d.resp)) {
     port.bits.vaddr := reqReg.vaddr
     port.bits.paddr := resultPaddr
@@ -130,7 +133,9 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
   val iHits = VecInit(itlb.map(e => e.valid && (e.global || e.asid === asid) && vpnMatch(e, reqVpn)))
   val dHits = VecInit(dtlb.map(e => e.valid && (e.global || e.asid === asid) && vpnMatch(e, reqVpn)))
   val hits = Mux(sourceI, iHits.asUInt, dHits.asUInt)
-  val hitEntry = Mux(sourceI, Mux1H(iHits, itlb), Mux1H(dHits, dtlb))
+  // Global and ASID-specific cached mappings can overlap. Select one whole
+  // entry; ORing hits would invent a PPN and combine unrelated permissions.
+  val hitEntry = Mux(sourceI, PriorityMux(iHits.zip(itlb)), PriorityMux(dHits.zip(dtlb)))
   val vpnIndex = MuxLookup(level, reqVpn(8, 0))(Seq(
     2.U -> reqVpn(26, 18), 1.U -> reqVpn(17, 9), 0.U -> reqVpn(8, 0)))
   val walkAddr = Cat(0.U(8.W), tablePpn, 0.U(12.W)) + (vpnIndex << 3)
@@ -237,7 +242,7 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
           state := UpdateAdReq
         }.otherwise {
           resultPaddr := makePaddr(candidate, reqReg.vaddr)
-          when(!killed) {
+          when(!cancelNow) {
             when(sourceI) { itlb(iReplace) := candidate; iReplace := iReplace + 1.U }
               .otherwise { dtlb(dReplace) := candidate; dReplace := dReplace + 1.U }
           }
@@ -284,7 +289,7 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
       }
     }
     is(Respond) {
-      when(killed || (sourceI && io.i.resp.fire) || (!sourceI && io.d.resp.fire)) {
+      when(cancelNow || (sourceI && io.i.resp.fire) || (!sourceI && io.d.resp.fire)) {
         state := Idle
       }
     }
