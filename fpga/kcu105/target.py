@@ -31,6 +31,7 @@ if LITEX_WRAPPER_ROOT not in sys.path:
 from flow import Breeze, BreezeTiny  # noqa: E402
 from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma  # noqa: E402
 from flow.core import BreezeTinyFase, BreezeTinyDebugFase  # noqa: E402
+from flow.core import BreezeTinyDmaFase, BreezeTinyDebugDmaFase  # noqa: E402
 from flow.clint_verilog import BreezeClintVerilog  # noqa: E402
 from flow.plic_verilog import BreezePlicVerilog  # noqa: E402
 from flow.wiring import pack_plic_sources  # noqa: E402
@@ -73,6 +74,8 @@ CPUS["breeze_tiny_dma"] = BreezeTinyDma
 CPUS["breeze_tiny_debug_dma"] = BreezeTinyDebugDma
 CPUS["breeze_tiny_fase"] = BreezeTinyFase
 CPUS["breeze_tiny_debug_fase"] = BreezeTinyDebugFase
+CPUS["breeze_tiny_dma_fase"] = BreezeTinyDmaFase
+CPUS["breeze_tiny_debug_dma_fase"] = BreezeTinyDebugDmaFase
 
 
 class BreezeKCU105SoC(SoCCore):
@@ -93,8 +96,8 @@ class BreezeKCU105SoC(SoCCore):
     irq_map = {"uart": UART_PLIC_SOURCE, "sdcard": UART_PLIC_SOURCE + 1}
 
     def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False, with_fase=False):
-        if with_fase and (cpu_type != "breeze-tiny" or with_sdcard):
-            raise ValueError("--with-fase requires breeze-tiny without SD/DMA")
+        if with_fase and cpu_type != "breeze-tiny":
+            raise ValueError("--with-fase requires breeze-tiny")
         if cpu_type not in ("breeze", "breeze-tiny"):
             raise ValueError(f"Unsupported KCU105 CPU: {cpu_type}")
         if debug and cpu_type != "breeze-tiny":
@@ -297,8 +300,8 @@ def main():
         help="load the already-built bitstream into KCU105 SRAM",
     )
     args = parser.parse_args()
-    if args.with_fase and (args.cpu_type != "breeze-tiny" or args.with_sdcard):
-        parser.error("--with-fase requires --cpu-type breeze-tiny without --with-sdcard")
+    if args.with_fase and args.cpu_type != "breeze-tiny":
+        parser.error("--with-fase requires --cpu-type breeze-tiny")
     if args.with_sdcard and args.sys_clk_freq != 100_000_000:
         parser.error("SD timing bring-up profile requires --sys-clk-freq 100000000")
     if args.debug and args.cpu_type != "breeze-tiny":

@@ -477,3 +477,12 @@ class BreezeTinyFase(FaseCPU, BreezeTiny):
 
 class BreezeTinyDebugFase(FaseCPU, BreezeTinyDebug):
     pass
+
+
+# Match the generator's coherent-dma/fase directory nesting.
+class BreezeTinyDmaFase(FaseCPU, CoherentDmaCPU, BreezeTiny):
+    pass
+
+
+class BreezeTinyDebugDmaFase(FaseCPU, CoherentDmaCPU, BreezeTinyDebug):
+    pass
