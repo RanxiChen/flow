@@ -101,9 +101,15 @@ class McuFirmwareSpec extends AnyFreeSpec with ChiselSim {
       var seg7Ten = false
       var seg7Enabled = false
       var cycles = 0
-      while (!(ledOne && seg7Ten && seg7Enabled) && cycles < 1500000) {
+      // The real SDRAM startup executes 20,000 nop/addiw/bne iterations.
+      // On the byte-serial Wisp this delay alone exceeds 1.5 million cycles;
+      // allow it to finish before checking all ten interrupts and UART output.
+      val maxCycles = 3000000
+      var lastBusAddress = BigInt(0)
+      while (!(ledOne && seg7Ten && seg7Enabled) && cycles < maxCycles) {
         val active = dut.io.wb.cyc.peek().litToBoolean && dut.io.wb.stb.peek().litToBoolean
         val address = dut.io.wb.adr.peekValue().asBigInt
+        if (active) lastBusAddress = address * 4
         val write = active && dut.io.wb.we.peek().litToBoolean
         val data = dut.io.wb.dat_w.peekValue().asBigInt
         dut.io.wb.ack.poke(active.B)
@@ -132,9 +138,10 @@ class McuFirmwareSpec extends AnyFreeSpec with ChiselSim {
         cycles += 1
       }
       assert(uart.mkString == "SDRAM 32M READY\r\nMCU IRQ READY\r\n",
-        s"Wisp UART was '${uart.mkString}'")
+        s"Wisp UART was '${uart.mkString}' after $cycles cycles, last bus=0x${lastBusAddress.toString(16)}")
       assert(timerArmed && irqCount == 10 && ledOne && seg7Ten && seg7Enabled,
         s"Wisp MCU decimal carry incomplete after $irqCount IRQs and $cycles cycles")
+      info(s"Wisp firmware completed all ten IRQs in $cycles cycles")
     }
   }
 }
