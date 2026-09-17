@@ -630,7 +630,14 @@ class BreezeDCache(
       state := AmoExecute
     }
     is(AmoExecute) {
-      amoResultReg := amoAlu.io.newOperand
+      val pteUpdate = reqAmoFunc === BreezeAmoFunc.PteSetAd
+      when(pteUpdate) {
+        assert(reqSizeLog2 === 3.U, "PTW updates require a complete RV64 PTE")
+        assert((reqWMask & "h3f".U) === 0.U, "PTW may only set A/D")
+      }
+      amoResultReg := Mux(pteUpdate,
+        Mux(amoOldWordReg === reqWData, amoOldWordReg | reqWMask, amoOldWordReg),
+        amoAlu.io.newOperand)
       responseData := amoOldWordReg
       state := AmoWrite
     }

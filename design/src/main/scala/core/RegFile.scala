@@ -287,6 +287,9 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val mie_STIE = RegInit(false.B)
     val mie_SEIE = RegInit(false.B)
     val sip_SSIP = RegInit(false.B)
+    // Without STCE, OpenSBI forwards CLINT timer interrupts by writing mip.STIP.
+    val mip_STIP = RegInit(false.B)
+    val mip_SEIP = RegInit(false.B)
     val mstatus_read = Wire(UInt(XLEN.W))
     val linuxXlenFields = if (enableSupervisorUser) {
         ((BigInt(2) << 34) | (BigInt(2) << 32)).U(XLEN.W)
@@ -316,8 +319,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     mip_read := (io.machineExternalInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.EXTERNAL) |
         (io.machineTimerInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
         (io.machineSoftwareInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
-        (io.supervisorExternalInterrupt.asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) |
-        ((menvcfg(63) && io.time >= stimecmp).asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
+        ((enableSupervisorUser.B && (mip_SEIP || io.supervisorExternalInterrupt)).asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) |
+        (Mux(menvcfg(63), io.time >= stimecmp, mip_STIP).asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
         (sip_SSIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
     val sie_read = mie_read & mideleg
     val sip_read = mip_read & mideleg
@@ -388,7 +391,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         (io.csr_addr === CSRMAP.printer.U || io.csr_addr === CSRMAP.coreinst.U)
     val satpDenied = currentPrivilege === PRIV_MODE.S.U && mstatus_TVM &&
         io.csr_addr === CSRMAP.satp.U
-    val sstcDenied = io.csr_addr === CSRMAP.stimecmp.U && !menvcfg(63)
+    val sstcDenied = io.csr_addr === CSRMAP.stimecmp.U &&
+        currentPrivilege =/= PRIV_MODE.M.U && (!menvcfg(63) || !mcounteren(1))
     val readOnlyWrite = io.csr_addr(11, 10) === 3.U && write_csr
     val counterIndex = MuxLookup(io.csr_addr, 0.U(5.W))(Seq(
         CSRMAP.cycle.U -> 0.U,
@@ -414,6 +418,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         readOnlyWrite || counterDenied ||
         (fpCsrAccess && mstatus_FS === 0.U))
 
+    // SEIP reads include the external wire, but CSR read/modify/write uses
+    // only its software-pending bit (Privileged ISA, machine interrupt CSRs).
+    val seipMask = (BigInt(1) << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL).U(XLEN.W)
+    val csrModifyValue = Mux(io.csr_addr === CSRMAP.mip.U,
+        (old_csr_val & ~seipMask) | (mip_SEIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL),
+        old_csr_val)
     when(!io.trap.valid){
         switch(io.csr_cmd){
             is(CSR_CMD.NOP.U){
@@ -430,12 +440,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         is(CSR_CMD.RS.U){
             read_csr := true.B
             write_csr := Mux(io.rs1_id =/= 0.U, true.B, false.B)
-            new_csr_val := old_csr_val | io.csr_reg_data
+            new_csr_val := csrModifyValue | io.csr_reg_data
         }
         is(CSR_CMD.RC.U){
             read_csr := true.B
             write_csr := Mux(io.rs1_id =/= 0.U, true.B, false.B)
-            new_csr_val := old_csr_val & (~io.csr_reg_data)
+            new_csr_val := csrModifyValue & (~io.csr_reg_data)
         }
         is(CSR_CMD.RWI.U){
            read_csr := Mux(io.rd_id =/= 0.U, true.B, false.B)
@@ -445,12 +455,12 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         is(CSR_CMD.RSI.U){
             read_csr := true.B
             write_csr := Mux(uimm =/= 0.U, true.B, false.B)
-            new_csr_val := old_csr_val | io.csr_reg_data
+            new_csr_val := csrModifyValue | io.csr_reg_data
         }
         is(CSR_CMD.RCI.U){
             read_csr := true.B
             write_csr := Mux(uimm =/= 0.U, true.B, false.B)
-            new_csr_val := old_csr_val & (~io.csr_reg_data)
+            new_csr_val := csrModifyValue & (~io.csr_reg_data)
         }
     }
     }
@@ -462,7 +472,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     }
 
     // Zicsr对寄存器的写在wb阶段提交
-    val medelegMask = Seq(1, 2, 4, 5, 6, 7, 8, 9, 12, 13, 15)
+    val medelegMask = Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 15)
         .map(bit => BigInt(1) << bit).reduce(_ | _).U(XLEN.W)
     val midelegMask = Seq(
         SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE,
@@ -593,6 +603,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                 // inputs (software clears MSIP through the CLINT msip word).
                 if (enableSupervisorUser) {
                     sip_SSIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    mip_SEIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+                    when(!menvcfg(63)) {
+                        mip_STIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+                    }
                 }
             }
             is(CSRMAP.mcounteren.U) {
@@ -610,12 +624,15 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             }
             is(CSRMAP.sie.U) {
                 if (enableSupervisorUser) {
-                    mie_SSIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) &&
-                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
-                    mie_STIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.TIMER) &&
-                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
-                    mie_SEIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) &&
-                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+                    when(mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)) {
+                        mie_SSIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    }
+                    when(mideleg(SUPERVISOR_INTERRUPT_CAUSE.TIMER)) {
+                        mie_STIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+                    }
+                    when(mideleg(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)) {
+                        mie_SEIE := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
+                    }
                 }
             }
             is(CSRMAP.stvec.U) {
@@ -644,16 +661,21 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             }
             is(CSRMAP.sip.U) {
                 if (enableSupervisorUser) {
-                    sip_SSIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) &&
-                        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    when(mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)) {
+                        sip_SSIP := io.commit_wdata(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
+                    }
                 }
             }
             is(CSRMAP.satp.U) {
                 if (enableSupervisorUser) {
                     // RV64 satp implements Bare (0) and Sv39 (8), ASID[15:0]
-                    // and the 44-bit root PPN. Unsupported MODE writes become Bare.
-                    satp := Mux(io.commit_wdata(63, 60) === 8.U,
-                        Cat(8.U(4.W), io.commit_wdata(59, 0)), 0.U)
+                    // and the 44-bit root PPN. Unsupported MODE ignores the
+                    // entire write, preserving the previous address space.
+                    when(io.commit_wdata(63, 60) === 8.U) {
+                        satp := io.commit_wdata
+                    }.elsewhen(io.commit_wdata(63, 60) === 0.U) {
+                        satp := 0.U
+                    }
                 }
             }
             is(CSRMAP.mcycle.U, CSRMAP.minstret.U){
@@ -661,13 +683,13 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
             }
             is(CSRMAP.menvcfg.U) {
                 if (enableSupervisorUser) {
-                    // Sstc STCE and Svade ADUE are the implemented fields.
+                    // Sstc STCE and Svadu ADUE are the implemented fields.
                     menvcfg := io.commit_wdata & ((BigInt(1) << 63) | (BigInt(1) << 61)).U
                 }
             }
             is(CSRMAP.stimecmp.U) {
                 if (enableSupervisorUser) {
-                    when(menvcfg(63)) { stimecmp := io.commit_wdata }
+                    stimecmp := io.commit_wdata
                 }
             }
             is(CSRMAP.pmpcfg0.U, CSRMAP.pmpcfg2.U) {
@@ -745,6 +767,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         mstatus_SPIE := true.B
         currentPrivilege := Mux(mstatus_SPP, PRIV_MODE.S.U, PRIV_MODE.U.U)
         mstatus_SPP := false.B
+        mstatus_MPRV := false.B
     }
     if (useFASE) {
         // Destructive debug takeover, NOT an architectural interrupt. Keep trap
@@ -786,34 +809,28 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.mmu_context.pmpaddr := visiblePmpAddr
     io.frm := frm
     io.fp_enabled := mstatus_FS =/= 0.U
-    // Fixed priority: MEI > MSI > MTI > SEI > SSI > STI. xIE gates an
-    // interrupt only while executing at that same privilege level.
+    // M-targeted interrupts precede S-targeted interrupts. Within each
+    // destination use MEI > MSI > MTI > SEI > SSI > STI. Delegation controls
+    // the target, not whether a supervisor interrupt source exists.
     val machineGlobalEnable = currentPrivilege =/= PRIV_MODE.M.U || mstatus_MIE
     val supervisorGlobalEnable = enableSupervisorUser.B &&
         (currentPrivilege === PRIV_MODE.U.U ||
           (currentPrivilege === PRIV_MODE.S.U && mstatus_SIE))
-    val externalInterruptPending = machineGlobalEnable && mie_MEIE && io.machineExternalInterrupt
-    val softwareInterruptPending = machineGlobalEnable && mie_MSIE && io.machineSoftwareInterrupt
-    val timerInterruptPending = machineGlobalEnable && mie_MTIE && io.machineTimerInterrupt
-    val supervisorExternalPending = supervisorGlobalEnable && mie_SEIE &&
-        mideleg(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) &&
-        mip_read(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL)
-    val supervisorSoftwarePending = supervisorGlobalEnable && mie_SSIE &&
-        mideleg(SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE) && sip_SSIP
-    val supervisorTimerPending = supervisorGlobalEnable && mie_STIE &&
-        mideleg(SUPERVISOR_INTERRUPT_CAUSE.TIMER) &&
-        mip_read(SUPERVISOR_INTERRUPT_CAUSE.TIMER)
-    io.interruptPending := externalInterruptPending || softwareInterruptPending ||
-        timerInterruptPending || supervisorExternalPending ||
-        supervisorSoftwarePending || supervisorTimerPending
-    io.interruptCause := MuxCase(MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W), Seq(
-        externalInterruptPending -> MACHINE_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
-        softwareInterruptPending -> MACHINE_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W),
-        timerInterruptPending -> MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W),
-        supervisorExternalPending -> SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL.U(XLEN.W),
-        supervisorSoftwarePending -> SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE.U(XLEN.W),
-        supervisorTimerPending -> SUPERVISOR_INTERRUPT_CAUSE.TIMER.U(XLEN.W)
-    ))
+    val machineSources = Seq(MACHINE_INTERRUPT_CAUSE.EXTERNAL,
+        MACHINE_INTERRUPT_CAUSE.SOFTWARE, MACHINE_INTERRUPT_CAUSE.TIMER)
+    val supervisorSources = Seq(SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL,
+        SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE, SUPERVISOR_INTERRUPT_CAUSE.TIMER)
+    val machineCandidates = (machineSources ++ supervisorSources).map { cause =>
+        val delegated = if (supervisorSources.contains(cause)) mideleg(cause) else false.B
+        (machineGlobalEnable && !delegated && mie_read(cause) && mip_read(cause), cause)
+    }
+    val supervisorCandidates = supervisorSources.map { cause =>
+        (supervisorGlobalEnable && mideleg(cause) && mie_read(cause) && mip_read(cause), cause)
+    }
+    val interruptCandidates = machineCandidates ++ supervisorCandidates
+    io.interruptPending := interruptCandidates.map(_._1).reduce(_ || _)
+    io.interruptCause := MuxCase(MACHINE_INTERRUPT_CAUSE.TIMER.U(XLEN.W),
+        interruptCandidates.map { case (pending, cause) => pending -> cause.U(XLEN.W) })
     io.debug.foreach { debug =>
         debug.mcause := mcause
         debug.mepc  := mepc

@@ -149,7 +149,7 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
   sharedPmp.io.sizeLog2 := Mux(checkingWalk, 3.U, reqReg.sizeLog2)
   sharedPmp.io.access := Mux(checkingWalk,
     Mux(state === UpdateAdReq, BreezeMmuAccess.Store, BreezeMmuAccess.Load), reqReg.access)
-  sharedPmp.io.privilege := reqPriv
+  sharedPmp.io.privilege := Mux(checkingWalk, PRIV_MODE.S.U, reqPriv)
   sharedPmp.io.context := io.context
   io.i.resp.bits.accessFault := resultAccessFault ||
     (!resultPageFault && !sharedPmp.io.allowed)
@@ -173,6 +173,19 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
         resultPaddr := reqReg.vaddr; state := Respond
       }.elsewhen(!canonical) {
         resultPaddr := 0.U; resultPageFault := true.B; state := Respond
+      }.elsewhen(hits.orR && io.context.adue &&
+          (!hitEntry.a || (reqReg.access === BreezeMmuAccess.Store && !hitEntry.d))) {
+        // A load may have cached a clean page. A later store must walk and
+        // update D, rather than reporting a software-managed A/D fault.
+        // Remove all overlapping hits so an older clean entry cannot win.
+        for (n <- 0 until entries) {
+          when(sourceI && iHits(n)) { itlb(n).valid := false.B }
+          when(!sourceI && dHits(n)) { dtlb(n).valid := false.B }
+        }
+        level := 2.U
+        tablePpn := io.context.satp(43, 0)
+        walkGlobal := false.B
+        state := ReadPteReq
       }.elsewhen(hits.orR) {
         resultPaddr := makePaddr(hitEntry, reqReg.vaddr)
         resultPageFault := !permission(hitEntry, reqReg.access, reqPriv)
@@ -212,7 +225,8 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
     is(CheckPte) {
       val v = pte(0); val r = pte(1); val w = pte(2); val x = pte(3)
       val isLeaf = r || x
-      val invalid = !v || (!r && w) || pte(63, 54).orR
+      val invalid = !v || (!r && w) || pte(63, 54).orR ||
+        (!isLeaf && (pte(4) || pte(6) || pte(7)))
       val misalignedSuperpage = Mux(level === 2.U, pte(27, 10).orR,
         Mux(level === 1.U, pte(18, 10).orR, false.B))
       val candidate = Wire(new TlbEntry)
@@ -262,10 +276,13 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
       io.memReq.bits.valid := true.B
       io.memReq.bits.addr := pteAddr
       io.memReq.bits.sizeLog2 := 3.U
-      io.memReq.bits.wdata := mask
+      io.memReq.bits.wdata := pte
+      io.memReq.bits.wmask := mask(7, 0)
       io.memReq.bits.memOp := BreezeMemOp.Amo
-      io.memReq.bits.amoFunc := BreezeAmoFunc.Or
-      when(!sharedPmp.io.allowed) {
+      io.memReq.bits.amoFunc := BreezeAmoFunc.PteSetAd
+      when(cancelNow) {
+        state := Respond
+      }.elsewhen(!sharedPmp.io.allowed) {
         resultAccessFault := true.B; resultPaddr := 0.U; state := Respond
       }.otherwise {
         ptwReqReg := io.memReq.bits
@@ -281,6 +298,10 @@ class BreezeMmu(val xlen: Int = 64, val entries: Int = 16, val useFASE: Boolean 
       when(io.memRsp.fire) {
         when(io.memRsp.bits.error) {
           resultAccessFault := true.B; resultPaddr := 0.U; state := Respond
+        }.elsewhen(io.memRsp.bits.data =/= pte) {
+          // The PTE changed after validation. The cache left it untouched;
+          // restart step 2 at this level and validate the replacement.
+          state := ReadPteReq
         }.otherwise {
           pte := pte | (1.U(64.W) << 6) |
             Mux(reqReg.access === BreezeMmuAccess.Store, 1.U(64.W) << 7, 0.U)

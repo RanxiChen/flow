@@ -56,6 +56,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.fetchBuffer.bits.illegalCompressed.poke(false.B)
         dut.io.fetchBuffer.bits.instructionPageFault.poke(false.B)
         dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
+        dut.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
         dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predPc.poke(0.U)
@@ -98,6 +99,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.fetchBuffer.bits.pc.poke(pc.U)
         dut.io.fetchBuffer.bits.inst.poke(inst.U)
         dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
+        dut.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.BR)
         dut.io.fetchBuffer.bits.pred.predTaken.poke(predTaken.B)
         dut.io.fetchBuffer.bits.pred.predPc.poke(predPc.U)
@@ -112,6 +114,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.fetchBuffer.bits.pc.poke(pc.U)
         dut.io.fetchBuffer.bits.inst.poke(inst.U)
         dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
+        dut.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
         dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
         dut.io.fetchBuffer.bits.pred.predPc.poke((pc + 4).U)
@@ -170,7 +173,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         }
     }
 
-    "WB mret and satp restart beat a simultaneous EX branch" in {
+    "WB mret beats a simultaneous EX branch and satp blocks younger issue" in {
         simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
             for (ret <- Seq(true, false)) {
                 reset(d); writeCsr(d, 0x341, 0x600)
@@ -181,10 +184,23 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
                 issueInstruction(d, 0x58, BigInt("30009073",16)); d.clock.step(4)
                 val instruction = if (ret) BigInt("30200073",16) else BigInt("18001073",16)
                 issueInstruction(d, 0x100, instruction)
-                issueInstruction(d, 0x104, encodeAddi(0,0,0))
-                issueBranch(d, 0x108, encodeBranch(0,0,0x20,0), false, 0x10c, 2)
+                if (ret) {
+                    issueInstruction(d, 0x104, encodeAddi(0,0,0))
+                    issueBranch(d, 0x108, encodeBranch(0,0,0x20,0), false, 0x10c, 2)
+                } else {
+                    // A satp CSR now drains before any younger decode.
+                    d.io.fetchBuffer.valid.poke(true.B)
+                    d.io.fetchBuffer.bits.pc.poke(0x104.U)
+                    d.io.fetchBuffer.bits.inst.poke(encodeBranch(0,0,0x20,0).U)
+                    for (_ <- 0 until 2) {
+                        d.io.fetchBuffer.ready.expect(false.B)
+                        d.clock.step()
+                    }
+                    d.io.fetchBuffer.ready.expect(false.B)
+                    d.io.fetchBuffer.valid.poke(false.B)
+                }
                 d.io.debug.get.memWbPc.expect(0x100.U)
-                d.io.debug.get.idExeValid.expect(true.B)
+                d.io.debug.get.idExeValid.expect(ret.B)
                 d.io.frontendRedirect.valid.expect(true.B)
                 d.io.frontendRedirect.target.expect((if (ret) 0x600 else 0x104).U)
                 d.io.frontendPhtUpdate.valid.expect(false.B)
@@ -207,6 +223,47 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
             d.io.fetchBuffer.valid.poke(false.B); d.clock.step(3)
             d.io.debug.get.csrMcause.expect(1.U)
             d.io.debug.get.csrMepc.expect(0x180.U)
+        }
+    }
+
+    "keep EPC at the instruction start but report a fault on its second parcel" in {
+        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+            reset(d)
+            d.io.fetchBuffer.bits.pc.poke(0x1ffe.U)
+            d.io.fetchBuffer.bits.instructionPageFault.poke(true.B)
+            d.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(true.B)
+            d.io.fetchBuffer.valid.poke(true.B); d.clock.step()
+            d.io.fetchBuffer.valid.poke(false.B); d.clock.step(3)
+            d.io.debug.get.csrMepc.expect(0x1ffe.U)
+            d.io.debug.get.csrMcause.expect(12.U)
+            d.io.fetchBuffer.bits.instructionPageFault.poke(false.B)
+            issueInstruction(d, 0x200, BigInt("343022f3", 16)) // csrr x5,mtval
+            d.clock.step(2)
+            d.io.debug.get.memWbValid.expect(true.B)
+            d.io.debug.get.wbData.expect(0x2000.U)
+        }
+    }
+
+    "forward a CSR result to the following SC store operand" in {
+        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+            reset(d)
+            writeCsr(d, 0x340, 0x55)
+            issueInstruction(d, 0x100, BigInt("34002173", 16)) // csrr x2,mscratch
+            d.io.fetchBuffer.bits.pc.poke(0x104.U)
+            d.io.fetchBuffer.bits.inst.poke(BigInt("182031af", 16).U) // sc.d x3,x2,(x0)
+            d.io.fetchBuffer.valid.poke(true.B)
+            var cycles = 0
+            while (!d.io.fetchBuffer.ready.peek().litToBoolean && cycles < 20) {
+                d.clock.step(); cycles += 1
+            }
+            assert(cycles < 20)
+            d.clock.step(); d.io.fetchBuffer.valid.poke(false.B)
+            cycles = 0
+            while (!d.io.dmem.req.valid.peek().litToBoolean && cycles < 20) {
+                d.clock.step(); cycles += 1
+            }
+            assert(cycles < 20)
+            d.io.dmem.req.wdata.expect(0x55.U)
         }
     }
 }

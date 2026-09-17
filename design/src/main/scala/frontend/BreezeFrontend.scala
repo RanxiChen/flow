@@ -158,6 +158,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s3_illegalCompressedReg = RegInit(false.B)
     val s3_accessFaultReg = RegInit(false.B)
     val s3_pageFaultReg = RegInit(false.B)
+    val s3_faultSecondParcelReg = RegInit(false.B)
 
     // ===== GShare S3 Metadata =====
     val s3_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
@@ -195,6 +196,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val fetchRespIllegalCompressed = Wire(Bool())
     val fetchRespAccessFault = Wire(Bool())
     val fetchRespPageFault = Wire(Bool())
+    val fetchRespFaultSecondParcel = WireDefault(false.B)
 
     s0_defaultNextPc := Mux(cfg.enableCompressed.B && s2_respValid,
         s2_pcReg + fetchRespInstLen, s1_pcReg + 4.U)
@@ -294,6 +296,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         fetchRespIllegalCompressed := r.io.resp.bits.isCompressed && d.io.illegal
         fetchRespAccessFault := r.io.resp.bits.accessFault
         fetchRespPageFault := r.io.resp.bits.pageFault
+        fetchRespFaultSecondParcel := (r.io.resp.bits.accessFault || r.io.resp.bits.pageFault) &&
+            r.io.resp.bits.faultVaddr === (r.io.resp.bits.pc + 2.U)
     } else {
         if (cfg.enableMmu) {
             val t = fetchTranslator.get
@@ -422,6 +426,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         s3_illegalCompressedReg := fetchRespIllegalCompressed
         s3_accessFaultReg := fetchRespAccessFault
         s3_pageFaultReg := fetchRespPageFault
+        s3_faultSecondParcelReg := fetchRespFaultSecondParcel
         if (isGShare) {
             s3_ghrSnapshotReg.get := s2_ghrSnapshotReg.get
             s3_predTakenReg.get := s2_predTakenReg.get
@@ -449,6 +454,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     io.fetchBuffer.bits.illegalCompressed := s3_illegalCompressedReg
     io.fetchBuffer.bits.instructionAccessFault := s3_accessFaultReg
     io.fetchBuffer.bits.instructionPageFault := s3_pageFaultReg
+    io.fetchBuffer.bits.instructionFaultSecondParcel := s3_faultSecondParcelReg
 
     io.fetchBuffer.bits.pred.predType := s3_finalPredType
     io.fetchBuffer.bits.pred.predTaken := s3_finalPredTaken

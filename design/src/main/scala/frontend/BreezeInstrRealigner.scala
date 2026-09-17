@@ -145,7 +145,7 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
           compressedReg := false.B
           accessFaultReg := wordBufFault
           pageFaultReg := wordBufPageFault
-          faultVaddrReg := Mux(wordBufFault, secondAddr, 0.U)
+          faultVaddrReg := Mux(wordBufFault || wordBufPageFault, secondAddr, 0.U)
           state := Emit
         }.otherwise {
           io.wordReq.valid := true.B
@@ -160,7 +160,7 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
           compressedReg := false.B
           accessFaultReg := io.wordRsp.bits.accessFault
           pageFaultReg := io.wordRsp.bits.pageFault
-          faultVaddrReg := Mux(io.wordRsp.bits.accessFault, secondAddr, 0.U)
+          faultVaddrReg := Mux(io.wordRsp.bits.accessFault || io.wordRsp.bits.pageFault, secondAddr, 0.U)
           wordBufValid := true.B
           wordBufAddr := secondAddr
           wordBufData := io.wordRsp.bits.data

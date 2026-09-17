@@ -463,4 +463,24 @@ class BreezeDCacheCoherentSpec extends AnyFreeSpec with Matchers with ChiselSim 
       reqs mustBe empty
     }
   }
+
+  "conditionally update a PTE without modifying a concurrently replaced mapping" in {
+    simulate(newDut()) { dut =>
+      val h = new DCacheHomeModel(dut, new DTestMem)
+      val addr = sramAddr(1, 15)
+      val checked = (BigInt(0x80000) << 10) | 7
+      val replacement = (BigInt(0x90000) << 10) | 7
+      h.store(addr, checked)
+      h.cpu(addr, BreezeMemOp.Amo, wdata = checked, wmask = 0x40,
+        amoFunc = BreezeAmoFunc.PteSetAd)._1 mustBe checked
+      h.load(addr)._1 mustBe (checked | 0x40)
+      h.store(addr, replacement)
+      h.cpu(addr, BreezeMemOp.Amo, wdata = checked | 0x40, wmask = 0xc0,
+        amoFunc = BreezeAmoFunc.PteSetAd)._1 mustBe replacement
+      h.load(addr)._1 mustBe replacement
+      h.cpu(addr, BreezeMemOp.Amo, wdata = replacement, wmask = 0xc0,
+        amoFunc = BreezeAmoFunc.PteSetAd)._1 mustBe replacement
+      h.load(addr)._1 mustBe (replacement | 0xc0)
+    }
+  }
 }

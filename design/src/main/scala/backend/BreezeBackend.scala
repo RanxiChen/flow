@@ -235,6 +235,7 @@ class BreezeBackend(
     decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U ||
         decoder.io.exe_ctrl.bru_inst || decoder.io.exe_ctrl.is_sfence_vma ||
         decoder.io.exe_ctrl.mem_op === BreezeMemOp.Store ||
+        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Sc ||
         decoder.io.exe_ctrl.mem_op === BreezeMemOp.Amo
 
     val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
@@ -289,6 +290,7 @@ class BreezeBackend(
         idExeReg.instLen := 4.U
         idExeReg.instruction_access_fault := false.B
         idExeReg.instruction_page_fault := false.B
+        idExeReg.instruction_fault_second_parcel := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_ebreak := false.B
@@ -340,6 +342,7 @@ class BreezeBackend(
         idExeReg.instLen := decodeInstLen
         idExeReg.instruction_access_fault := decodeInstructionAccessFault
         idExeReg.instruction_page_fault := decodeInstructionPageFault
+        idExeReg.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
         idExeReg.illegal_inst := (io.fetchBuffer.bits.illegalCompressed ||
             (decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
             (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled) ||
@@ -386,6 +389,7 @@ class BreezeBackend(
         idExeReg.instLen := 4.U
         idExeReg.instruction_access_fault := false.B
         idExeReg.instruction_page_fault := false.B
+        idExeReg.instruction_fault_second_parcel := false.B
         idExeReg.illegal_inst := false.B
         idExeReg.is_ecall := false.B
         idExeReg.is_ebreak := false.B
@@ -1002,10 +1006,12 @@ class BreezeBackend(
     )
     idExePendingCsrState := idExeReg.valid && (idExeReg.ctrl.csr_cmd =/= CSR_CMD.NOP.U)
     exeMemPendingCsrState := exeMemReg.valid && csrFile.io.csr_write_en
-    csrStateHazard := (decoder.io.exe_ctrl.csr_cmd =/= CSR_CMD.NOP.U) && (
-        (idExePendingCsrState && (decoder.io.exe_ctrl.csr_addr === idExeReg.ctrl.csr_addr)) ||
-        (exeMemPendingCsrState && (decoder.io.exe_ctrl.csr_addr === exeMemReg.csr_addr))
-    )
+    // Privilege, interrupt and translation state also has CSR aliases and
+    // implicit consumers (e.g. sstatus -> load/SRET/WFI). Comparing only CSR
+    // addresses lets a younger instruction observe pre-commit state. Drain
+    // every CSR update through WB before decoding the next instruction.
+    csrStateHazard := idExePendingCsrState || exeMemPendingCsrState ||
+        (memWbReg.valid && memWbReg.csr_write_en)
     // CSR hazards: only stall decode, NOT idExe→exeMem.
     // CSR producers must flow through to memWb so the register file is updated.
     //
@@ -1093,10 +1099,12 @@ class BreezeBackend(
     ))
 
     // Compute trap value at WB stage: faulting address or zero
+    val instructionFaultVaddr = memWbReg.pc +
+        Mux(memWbReg.instruction_fault_second_parcel, 2.U, 0.U)
     val mtvalVal = Wire(UInt(cfg.VLEN.W))
     mtvalVal := MuxCase(0.U(cfg.VLEN.W), Seq(
-        memWbReg.instruction_access_fault -> memWbReg.pc,
-        memWbReg.instruction_page_fault -> memWbReg.pc,
+        memWbReg.instruction_access_fault -> instructionFaultVaddr,
+        memWbReg.instruction_page_fault -> instructionFaultVaddr,
         memWbReg.store_addr_misaligned -> memWbReg.alu_data,
         memWbReg.load_addr_misaligned  -> memWbReg.alu_data,
         memWbReg.store_access_fault    -> memWbReg.alu_data,
@@ -1166,6 +1174,7 @@ class BreezeBackend(
         exeMemReg.instLen := 4.U
         exeMemReg.instruction_access_fault := false.B
         exeMemReg.instruction_page_fault := false.B
+        exeMemReg.instruction_fault_second_parcel := false.B
         exeMemReg.illegal_inst := false.B
         exeMemReg.is_ecall := false.B
         exeMemReg.is_ebreak := false.B
@@ -1234,6 +1243,7 @@ class BreezeBackend(
         exeMemReg.instLen := idExeReg.instLen
         exeMemReg.instruction_access_fault := idExeReg.instruction_access_fault
         exeMemReg.instruction_page_fault := idExeReg.instruction_page_fault
+        exeMemReg.instruction_fault_second_parcel := idExeReg.instruction_fault_second_parcel
         exeMemReg.illegal_inst := idExeReg.illegal_inst
         exeMemReg.is_ecall := idExeReg.is_ecall
         exeMemReg.is_ebreak := idExeReg.is_ebreak
@@ -1375,6 +1385,7 @@ class BreezeBackend(
         memWbReg.instLen := 4.U
         memWbReg.instruction_access_fault := false.B
         memWbReg.instruction_page_fault := false.B
+        memWbReg.instruction_fault_second_parcel := false.B
         memWbReg.illegal_inst := false.B
         memWbReg.is_ecall := false.B
         memWbReg.is_ebreak := false.B
@@ -1428,6 +1439,7 @@ class BreezeBackend(
         memWbReg.instLen := exeMemReg.instLen
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
         memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
+        memWbReg.instruction_fault_second_parcel := exeMemReg.instruction_fault_second_parcel
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_ebreak := exeMemReg.is_ebreak
@@ -1481,6 +1493,7 @@ class BreezeBackend(
         memWbReg.instLen := exeMemReg.instLen
         memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
         memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
+        memWbReg.instruction_fault_second_parcel := exeMemReg.instruction_fault_second_parcel
         memWbReg.illegal_inst := exeMemReg.illegal_inst
         memWbReg.is_ecall := exeMemReg.is_ecall
         memWbReg.is_ebreak := exeMemReg.is_ebreak

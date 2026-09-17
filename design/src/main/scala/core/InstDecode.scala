@@ -514,8 +514,8 @@ class RV64IZicsrDecoder extends Module {
                     }.elsewhen(
                         funct7 === "b0001001".U && io.inst(11, 7) === 0.U
                     ) {
-                        // Address translation is Bare. SFENCE.VMA still has to
-                        // decode and pass privilege checks, but has no TLB to flush.
+                        // Decode SFENCE.VMA here; the backend checks privilege
+                        // and supplies address/ASID selection to the MMU.
                         io.I_ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
                         io.I_ctrl.wb_en := false.B
                         io.I_ctrl.is_sfence_vma := true.B

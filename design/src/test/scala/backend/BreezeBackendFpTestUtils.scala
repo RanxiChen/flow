@@ -52,6 +52,7 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
     dut.io.fetchBuffer.bits.pc.poke(0.U)
     dut.io.fetchBuffer.bits.inst.poke(0.U)
     dut.io.fetchBuffer.bits.instructionAccessFault.poke(false.B)
+    dut.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B)
     dut.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE)
     dut.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
     dut.io.fetchBuffer.bits.pred.predPc.poke(0.U)

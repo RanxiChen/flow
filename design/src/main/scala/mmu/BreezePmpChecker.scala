@@ -72,7 +72,9 @@ class BreezePmpChecker(val xlen: Int = 64) extends Module {
 
     val startAtOrAboveLower = if (n == 0) true.B else !startBelow(n - 1)
     val lastAtOrAboveLower = if (n == 0) true.B else !lastBelow(n - 1)
-    val torOverlap = startBelow(n) && lastAtOrAboveLower
+    val torNonempty = if (n == 0) boundaries(n) =/= 0.U else
+      boundaries(n - 1) < boundaries(n)
+    val torOverlap = torNonempty && startBelow(n) && lastAtOrAboveLower
     val torContains = startAtOrAboveLower && lastBelow(n)
     overlaps(n) := Mux(a(1), pow2Overlap, a(0) && torOverlap)
     contains(n) := Mux(a(1), pow2Contains, torContains)

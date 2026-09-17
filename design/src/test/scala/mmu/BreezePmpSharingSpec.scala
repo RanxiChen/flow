@@ -58,7 +58,11 @@ class BreezePmpSharingSpec extends AnyFreeSpec with ChiselSim {
           dut.io.memReq.bits.sizeLog2.expect(3.U)
           dut.io.memReq.bits.memOp.expect(op)
           dut.io.d.resp.valid.expect(false.B)
-          if (op == BreezeMemOp.Amo) dut.io.memReq.bits.wdata.expect(0xc0.U)
+          if (op == BreezeMemOp.Amo) {
+            dut.io.memReq.bits.wdata.expect((leaf | 7).U)
+            dut.io.memReq.bits.wmask.expect(0xc0.U)
+            dut.io.memReq.bits.amoFunc.expect(BreezeAmoFunc.PteSetAd)
+          }
           dut.clock.step(1)
         }
         dut.io.memReq.ready.poke(true.B); dut.clock.step(1)
@@ -109,7 +113,7 @@ class BreezePmpSharingSpec extends AnyFreeSpec with ChiselSim {
       dut.io.context.pmpcfg(0).poke(0x1b.U)
       issue(BreezeMmuAccess.Store)
       memory(BreezeMemOp.Load, leaf | 7)
-      memory(BreezeMemOp.Amo, 0)
+      memory(BreezeMemOp.Amo, leaf | 7)
       response(fault = false)
 
       // Bare mode still checks PMP, including execute permissions.

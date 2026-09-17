@@ -68,6 +68,10 @@ object BreezeMemOp extends ChiselEnum {
 /** RV64A AMO function, decoded from funct5. */
 object BreezeAmoFunc extends ChiselEnum {
     val Swap, Add, Xor, And, Or, Min, Max, MinU, MaxU = Value
+    // Internal PTW operation, never decoded from an instruction. Compare the
+    // entire 64-bit PTE against wdata; on equality set A/D selected by wmask.
+    // Return the old PTE on both success and failure. No LR/SC reservation.
+    val PteSetAd = Value
 }
 
 class BackendMemReq(val VLEN: Int = FlowConst.pc_addr_width) extends Bundle {
@@ -188,6 +192,7 @@ class FrontendFetchBundle(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bu
     val illegalCompressed = Bool()
     val instructionAccessFault = Bool()
     val instructionPageFault = Bool()
+    val instructionFaultSecondParcel = Bool()
     val pred = new FrontendPredInfo(VLEN, ghrLength)
 }
 
@@ -358,6 +363,7 @@ class BreezeBackendIDEXE(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bun
     val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
     val instruction_page_fault = Bool()
+    val instruction_fault_second_parcel = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_ebreak = Bool()
@@ -386,6 +392,7 @@ class BreezeBackendEXEMEM(val VLEN: Int = 64, val ghrLength: Int = 0, val enable
     val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
     val instruction_page_fault = Bool()
+    val instruction_fault_second_parcel = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_ebreak = Bool()
@@ -433,6 +440,7 @@ class BreezeBackendMEMWB(val VLEN: Int = 64, val enableTandem: Boolean = false) 
     val instLen = UInt(3.W)
     val instruction_access_fault = Bool()
     val instruction_page_fault = Bool()
+    val instruction_fault_second_parcel = Bool()
     val illegal_inst = Bool()
     val is_ecall = Bool()
     val is_ebreak = Bool()

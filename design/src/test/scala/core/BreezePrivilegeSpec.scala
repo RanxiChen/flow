@@ -129,8 +129,8 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       reset(dut)
 
       // Make dynamically gated implemented CSRs readable before checking the
-      // static address whitelist: FS=Initial enables fflags/frm/fcsr and STCE
-      // enables stimecmp.
+      // static address whitelist: FS=Initial enables fflags/frm/fcsr.
+      // M-mode stimecmp access does not depend on STCE.
       commit(dut, CSRMAP.mstatus, BigInt(1) << 13)
       commit(dut, CSRMAP.menvcfg, BigInt(1) << 63)
 
@@ -433,4 +433,126 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+
+  "forward the OpenSBI software timer interrupt and clear it on rearming" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      commit(dut, CSRMAP.mideleg, 0x20)
+      commit(dut, CSRMAP.mie, 0x20)
+      commit(dut, CSRMAP.mstatus, (BigInt(1) << 11) | 2) // return to S, SIE=1
+      commit(dut, CSRMAP.mip, 0x20)
+      dut.io.interruptPending.expect(false.B) // delegated interrupt masked in M
+      mret(dut)
+      dut.io.interruptPending.expect(true.B)
+      dut.io.interruptCause.expect(5.U)
+      selectRead(dut, CSRMAP.sip)
+      dut.io.csr_old_data.expect(0x20.U)
+      commit(dut, CSRMAP.sip, 0) // STIP is read-only through sip
+      dut.io.interruptPending.expect(true.B)
+      // Model the subsequent M-mode SBI timer handler's committed CSR write.
+      commit(dut, CSRMAP.mip, 0)
+      dut.io.interruptPending.expect(false.B)
+    }
+  }
+
+  "preserve hidden interrupt bits and prioritize M destinations over S" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      commit(dut, CSRMAP.mie, 0x222)
+      commit(dut, CSRMAP.mip, 0x222)
+      commit(dut, CSRMAP.sie, 0)
+      commit(dut, CSRMAP.sip, 0)
+      selectRead(dut, CSRMAP.mie)
+      dut.io.csr_old_data.expect(0x222.U)
+      selectRead(dut, CSRMAP.mip)
+      dut.io.csr_old_data.expect(0x222.U)
+      commit(dut, CSRMAP.mideleg, 0x202) // SEI/SSI to S; STI to M
+      commit(dut, CSRMAP.mstatus, (BigInt(1) << 11) | 2)
+      mret(dut)
+      dut.io.interruptPending.expect(true.B)
+      dut.io.interruptCause.expect(5.U) // M-targeted STI beats S-targeted SEI
+      commit(dut, CSRMAP.mip, 0x202)
+      dut.io.interruptCause.expect(9.U)
+    }
+  }
+
+  "exclude the external SEIP wire from CSRRS and CSRRC writeback" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      dut.io.supervisorExternalInterrupt.poke(true.B)
+      for (cmd <- Seq(CSR_CMD.RS, CSR_CMD.RC, CSR_CMD.RSI, CSR_CMD.RCI)) {
+        selectRead(dut, CSRMAP.mip)
+        dut.io.csr_cmd.poke(cmd.U)
+        dut.io.rs1_id.poke(1.U)
+        dut.io.csr_reg_data.poke(2.U)
+        dut.io.csr_old_data.expect(0x200.U)
+        val written = dut.io.csr_new_data.peek().litValue
+        (written & 0x200) mustBe 0
+      }
+      commit(dut, CSRMAP.mip, 0x200)
+      dut.io.supervisorExternalInterrupt.poke(false.B)
+      selectRead(dut, CSRMAP.mip)
+      dut.io.csr_old_data.expect(0x200.U)
+      commit(dut, CSRMAP.mip, 0)
+      dut.io.csr_old_data.expect(0.U)
+    }
+  }
+
+  "allow M stimecmp access and require both STCE and TM for S" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      selectRead(dut, CSRMAP.stimecmp)
+      dut.io.csr_illegal.expect(false.B)
+      commit(dut, CSRMAP.stimecmp, 100)
+      dut.io.csr_old_data.expect(100.U)
+      commit(dut, CSRMAP.mstatus, BigInt(1) << 11)
+      mret(dut)
+      dut.io.csr_illegal.expect(true.B)
+      // Commit interface models authorized firmware writes, not instruction decode.
+      commit(dut, CSRMAP.menvcfg, BigInt(1) << 63)
+      dut.io.csr_illegal.expect(true.B)
+      commit(dut, CSRMAP.mcounteren, 2)
+      dut.io.csr_illegal.expect(false.B)
+      dut.io.time.poke(100.U)
+      commit(dut, CSRMAP.mideleg, 0x20)
+      selectRead(dut, CSRMAP.sip)
+      dut.io.csr_old_data.expect(0x20.U)
+      commit(dut, CSRMAP.mip, 0) // comparator owns STIP while STCE=1
+      dut.io.csr_old_data.expect(0x20.U)
+    }
+  }
+
+  "preserve satp on unsupported modes and clear MPRV on SRET" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      val original = (BigInt(8) << 60) | (BigInt(0x1234) << 44) | 0x80000
+      commit(dut, CSRMAP.satp, original)
+      commit(dut, CSRMAP.satp, (BigInt(9) << 60) | 0x90000)
+      selectRead(dut, CSRMAP.satp)
+      dut.io.csr_old_data.expect(original.U)
+      commit(dut, CSRMAP.mstatus, (BigInt(1) << 17) | (BigInt(1) << 8))
+      sret(dut)
+      dut.io.current_privilege.expect(PRIV_MODE.S.U)
+      dut.io.mmu_context.mprv.expect(false.B)
+    }
+  }
+
+  "delegate user breakpoints to the supervisor handler" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      commit(dut, CSRMAP.medeleg, 8)
+      commit(dut, CSRMAP.stvec, 0x400)
+      commit(dut, CSRMAP.mstatus, 0) // MRET to U
+      mret(dut)
+      dut.io.trap.valid.poke(true.B)
+      dut.io.trap.cause.poke(3.U)
+      dut.io.trap.pc.poke(0x1000.U)
+      dut.io.trap_target.expect(0x400.U)
+      dut.clock.step()
+      dut.io.trap.valid.poke(false.B)
+      dut.io.current_privilege.expect(PRIV_MODE.S.U)
+      selectRead(dut, CSRMAP.scause)
+      dut.io.csr_old_data.expect(3.U)
+    }
+  }
 }

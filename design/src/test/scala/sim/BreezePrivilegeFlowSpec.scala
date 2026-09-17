@@ -47,6 +47,74 @@ class BreezePrivilegeFlowSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "serialize CSR aliases and observe status changes before the next instruction" in {
+    val memory = mutable.LinkedHashMap.empty[BigInt, BigInt]
+    val boot = BreezeMcuPlatform.ResetVector
+    install(memory, boot, Seq(
+      BreezeCoreSimSupport.encodeAddi(1, 0, 2),
+      encodeCsr(0, CSRMAP.mstatus, 1, 1), // set SIE through machine alias
+      encodeCsr(5, CSRMAP.sstatus, 0, 2), // immediately read supervisor alias
+      encodeCsr(0, CSRMAP.sstatus, 0, 1),
+      encodeCsr(6, CSRMAP.mstatus, 0, 2),
+      BreezeCoreSimSupport.encodeAddi(1, 0, 0x222),
+      encodeCsr(0, CSRMAP.mideleg, 1, 1),
+      encodeCsr(0, CSRMAP.mie, 1, 1),
+      encodeCsr(7, CSRMAP.sie, 0, 2),
+      encodeCsr(0, CSRMAP.sie, 0, 1),
+      encodeCsr(8, CSRMAP.mie, 0, 2),
+      BreezeCoreSimSupport.EstopInst
+    ))
+    val result = BreezeCoreSimRunner.runWithTandemTrace(
+      memory = memory,
+      coreCfg = BreezeCoreConfig(useFASE = false, enableTandem = true,
+        useGShare = true, privilegeProfile = PrivilegeProfile.Linux),
+      maxCycles = 5000, imemLatency = 1, dmemLatency = 1, bootAddr = boot)
+    result.result.timedOut mustBe false
+    result.commitEvents.last.estop mustBe true
+    def written(rd: Int): BigInt =
+      result.commitEvents.find(e => e.rdWriteEn && e.rdAddr == rd).get.rdData
+    (written(5) & 2) mustBe 2
+    (written(6) & 2) mustBe 0
+    written(7) mustBe 0x222
+    written(8) mustBe 0
+  }
+
+  "deliver an OpenSBI-style pending timer to Linux after MRET" in {
+    val memory = mutable.LinkedHashMap.empty[BigInt, BigInt]
+    val boot = BreezeMcuPlatform.ResetVector
+    install(memory, boot, Seq(
+      encodeLui(1, 0x10000),
+      BreezeCoreSimSupport.encodeAddi(1, 1, 0x200),
+      encodeCsr(0, CSRMAP.stvec, 1, 1),
+      encodeLui(1, 0x10000),
+      BreezeCoreSimSupport.encodeAddi(1, 1, 0x100),
+      encodeCsr(0, CSRMAP.mepc, 1, 1),
+      BreezeCoreSimSupport.encodeAddi(1, 0, 0x20),
+      encodeCsr(0, CSRMAP.mideleg, 1, 1),
+      encodeCsr(0, CSRMAP.mie, 1, 1),
+      encodeCsr(0, CSRMAP.mip, 1, 2), // OpenSBI's csrs mip, STIP
+      encodeLui(1, 1),
+      BreezeCoreSimSupport.encodeAddi(1, 1, -2046), // MPP=S, SIE=1
+      encodeCsr(0, CSRMAP.mstatus, 1, 1),
+      BigInt("30200073", 16)
+    ))
+    install(memory, boot + 0x100, Seq(BreezeCoreSimSupport.EstopInst))
+    install(memory, boot + 0x200, Seq(
+      encodeCsr(5, CSRMAP.scause, 0, 2),
+      BreezeCoreSimSupport.encodeAddi(6, 0, 99),
+      BreezeCoreSimSupport.EstopInst
+    ))
+    val result = BreezeCoreSimRunner.runWithTandemTrace(
+      memory = memory,
+      coreCfg = BreezeCoreConfig(useFASE = false, enableTandem = true,
+        useGShare = true, privilegeProfile = PrivilegeProfile.Linux),
+      maxCycles = 5000, imemLatency = 1, dmemLatency = 1, bootAddr = boot)
+    result.result.timedOut mustBe false
+    result.commitEvents.exists(e => e.rdWriteEn && e.rdAddr == 5 &&
+      e.rdData == ((BigInt(1) << 63) | 5)) mustBe true
+    result.commitEvents.exists(e => e.rdWriteEn && e.rdAddr == 6 && e.rdData == 99) mustBe true
+  }
+
   "run M boot, S setup, U ECALL, delegated S handler, and SRET in Bare mode" in {
     val memory = mutable.LinkedHashMap.empty[BigInt, BigInt]
     val csrrw = 1
