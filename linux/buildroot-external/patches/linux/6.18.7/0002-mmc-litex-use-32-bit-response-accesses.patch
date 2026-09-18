@@ -1,0 +1,28 @@
+From: Flow contributors <flow@localhost>
+Subject: [PATCH] mmc: litex: read response CSRs with explicit 32-bit accesses
+
+On Breeze RV64, memcpy_fromio uses ld for the 128-bit response window.
+The 32-bit CSR bridge drops the upper word, so a valid CMD55 response
+(0x120) becomes zero and mmc_app_cmd rejects it with -EOPNOTSUPP.
+Use four litex_read32 accesses, preserving the existing response order.
+
+--- a/drivers/mmc/host/litex_mmc.c
++++ b/drivers/mmc/host/litex_mmc.c
+@@ -173,11 +173,13 @@
+ 
+ 	if (response_len != SD_CTL_RESP_NONE) {
+ 		/*
+-		 * NOTE: this matches the semantics of litex_read32()
+-		 * regardless of underlying arch endianness!
++		 * LiteX CSRs require 32-bit transactions. memcpy_fromio() can
++		 * issue 64-bit loads on RV64, losing the upper response word
++		 * on a 32-bit CSR bridge. Keep the hardware word order.
+ 		 */
+-		memcpy_fromio(host->resp,
+-			      host->sdcore + LITEX_CORE_CMDRSP, 0x10);
++		for (unsigned int i = 0; i < ARRAY_SIZE(host->resp); i++)
++			host->resp[i] = litex_read32(host->sdcore +
++						   LITEX_CORE_CMDRSP + 4 * i);
+ 	}
+ 
+ 	if (!host->app_cmd && cmd == SD_SEND_RELATIVE_ADDR)
