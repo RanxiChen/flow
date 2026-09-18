@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+export OMP_NUM_THREADS=1
+export OMP_DYNAMIC=FALSE
+python3 -c 'import sys, json; print("Python:", sys.version); assert json.loads("{\"ok\": true}")["ok"]'
+cd /opt/gapbs
+for kernel in bc bfs cc_sv pr sssp tc; do
+    echo "=== $kernel: small-graph correctness test ==="
+    "./$kernel" -g 10 -n 1 -v
+done
+echo "Smoke commands completed; check each Verification result above."

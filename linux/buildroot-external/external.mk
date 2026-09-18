@@ -1,1 +1,1 @@
-# Intentionally empty: no external packages are required for the first boot.
+include $(sort $(wildcard $(BR2_EXTERNAL_FLOW_PATH)/package/*/*.mk))
