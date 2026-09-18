@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="breeze-organization">
+    <mxGraphModel page="1" pageWidth="1440" pageHeight="880">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="BREEZE / Core organization" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=32;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="34" width="1344" height="58" />
+        </mxCell>
+        <mxCell id="sub" value="RV64IMAFDC + Zicsr + Zifencei  ·  64-bit  ·  Single issue / in order  ·  100 MHz FPGA baseline" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="98" width="1344" height="32" />
+        </mxCell>
+        <mxCell id="frontpanel" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="175" width="350" height="570" />
+        </mxCell>
+        <mxCell id="fronttitle" value="FRONTEND" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=none;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="55" y="190" width="320" height="40" />
+        </mxCell>
+        <mxCell id="backpanel" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="430" y="175" width="570" height="570" />
+        </mxCell>
+        <mxCell id="backtitle" value="BACKEND" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=none;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="445" y="190" width="540" height="40" />
+        </mxCell>
+        <mxCell id="memorypanel" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1040" y="175" width="360" height="570" />
+        </mxCell>
+        <mxCell id="memorytitle" value="MEMORY &amp; PRIVILEGE" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=none;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1055" y="190" width="330" height="40" />
+        </mxCell>
+        <mxCell id="predict" value="Branch prediction&#10;GShare · 8-bit global history&#10;PHT: 256 × 2-bit counters&#10;BTB: 16 entries, fully associative" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="65" y="255" width="300" height="115" />
+        </mxCell>
+        <mxCell id="icache" value="Instruction cache&#10;8 KiB · 4 ways · 64 sets&#10;32-byte cache lines" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="65" y="405" width="300" height="100" />
+        </mxCell>
+        <mxCell id="align" value="Instruction alignment&#10;16 / 32-bit instructions" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="65" y="535" width="300" height="65" />
+        </mxCell>
+        <mxCell id="queue" value="Fetch buffer&#10;6-entry FIFO" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="65" y="630" width="300" height="80" />
+        </mxCell>
+        <mxCell id="decode" value="Decode / operand selection / hazard control" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="455" y="255" width="520" height="55" />
+        </mxCell>
+        <mxCell id="gpr" value="Integer register file&#10;32 × 64-bit architectural" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e0e7ff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="455" y="340" width="245" height="75" />
+        </mxCell>
+        <mxCell id="fpr" value="FP register file&#10;32 × 64-bit architectural" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e0e7ff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="730" y="340" width="245" height="75" />
+        </mxCell>
+        <mxCell id="alu" value="Integer ALU&#10;Arithmetic / logic" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="455" y="445" width="245" height="65" />
+        </mxCell>
+        <mxCell id="branch" value="BRU + JAU&#10;Branch / jump resolution" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="730" y="445" width="245" height="65" />
+        </mxCell>
+        <mxCell id="memctl" value="MEM control · blocking request / completion" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="455" y="540" width="520" height="55" />
+        </mxCell>
+        <mxCell id="mul" value="MUL" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="455" y="635" width="155" height="65" />
+        </mxCell>
+        <mxCell id="div" value="DIV" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="635" y="635" width="155" height="65" />
+        </mxCell>
+        <mxCell id="fpu" value="FPU · FP32/64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="815" y="635" width="160" height="65" />
+        </mxCell>
+        <mxCell id="fuNote" value="Multi-cycle units are requested by MEM" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#0f172a;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="465" y="708" width="500" height="25" />
+        </mxCell>
+        <mxCell id="dcache" value="Data cache&#10;8 KiB · 4 ways · 64 sets&#10;32-byte lines · LR/SC / AMO" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1065" y="255" width="310" height="100" />
+        </mxCell>
+        <mxCell id="mmu" value="Sv39 MMU&#10;I-TLB: 16 entries&#10;D-TLB: 16 entries&#10;Hardware page-table walk" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1065" y="385" width="310" height="130" />
+        </mxCell>
+        <mxCell id="csr" value="CSR / trap control&#10;M / S / U · interrupt delegation" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ede9fe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1065" y="545" width="310" height="75" />
+        </mxCell>
+        <mxCell id="pmp" value="Physical memory protection&#10;8 active PMP entries" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ede9fe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1065" y="650" width="310" height="65" />
+        </mxCell>
+        <mxCell id="debug" value="FASE Controller" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ede9fe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="775" width="960" height="60" />
+        </mxCell>
+        <mxCell id="output" value="To L2 / coherence home" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1040" y="775" width="360" height="60" />
+        </mxCell>
+        <mxCell id="note" value="Module / parameter overview · single + gshare + linux configuration · Interconnect and cache hierarchy shown separately" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=13;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="846" width="1360" height="22" />
+        </mxCell>
+        <mxCell id="edge0" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="215" y="370" />
+            <mxPoint as="targetPoint" x="215" y="405" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge1" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="215" y="505" />
+            <mxPoint as="targetPoint" x="215" y="535" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="215" y="600" />
+            <mxPoint as="targetPoint" x="215" y="630" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="532.5" y="595" />
+            <mxPoint as="targetPoint" x="532.5" y="635" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="712.5" y="595" />
+            <mxPoint as="targetPoint" x="712.5" y="635" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge5" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="895.0" y="595" />
+            <mxPoint as="targetPoint" x="895.0" y="635" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="365" y="670" />
+            <mxPoint as="targetPoint" x="455" y="282" />
+            <Array as="points">
+              <mxPoint x="410" y="670" />
+              <mxPoint x="410" y="282" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="975" y="567" />
+            <mxPoint as="targetPoint" x="1065" y="305" />
+            <Array as="points">
+              <mxPoint x="1020" y="567" />
+              <mxPoint x="1020" y="305" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

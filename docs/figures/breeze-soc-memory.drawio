@@ -1,0 +1,233 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="breeze-soc-memory">
+    <mxGraphModel page="1" pageWidth="1440" pageHeight="880">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="BREEZE / SoC &amp; memory hierarchy" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=32;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="34" width="1344" height="58" />
+        </mxCell>
+        <mxCell id="sub" value="KCU105 baseline · Single hart @ 100 MHz · 64-bit Wishbone · 2 GiB DDR4" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="98" width="1344" height="32" />
+        </mxCell>
+        <mxCell id="core" value="Breeze core&#10;RV64GC · M / S / U" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=22;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="555" y="160" width="330" height="85" />
+        </mxCell>
+        <mxCell id="fase" value="FASE Controller" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ede9fe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=21;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1060" y="165" width="300" height="75" />
+        </mxCell>
+        <mxCell id="jtag" value="JTAG debug access" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=15;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1080" y="250" width="260" height="28" />
+        </mxCell>
+        <mxCell id="icache" value="L1 instruction cache&#10;8 KiB · 4-way · 32 B line" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="420" y="295" width="270" height="85" />
+        </mxCell>
+        <mxCell id="dcache" value="L1 data cache&#10;8 KiB · 4-way · 32 B line" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="750" y="295" width="270" height="85" />
+        </mxCell>
+        <mxCell id="l2" value="L2 cache / coherence home&#10;16 KiB · 8-way · 32 B line · Single bank" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=20;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="420" y="445" width="600" height="90" />
+        </mxCell>
+        <mxCell id="refill" value="Instruction refill" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="433" y="398" width="245" height="26" />
+        </mxCell>
+        <mxCell id="coherence" value="Coherent data access" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="752" y="398" width="265" height="26" />
+        </mxCell>
+        <mxCell id="dma" value="SD DMA client&#10;Coherent memory access" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="55" y="295" width="270" height="85" />
+        </mxCell>
+        <mxCell id="fabric" value="LiteX shared interconnect · Wishbone 64-bit" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=21;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="420" y="590" width="940" height="60" />
+        </mxCell>
+        <mxCell id="mmio" value="Uncached MMIO" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1135" y="420" width="215" height="55" />
+        </mxCell>
+        <mxCell id="memorylabel" value="Memory master" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="755" y="548" width="250" height="28" />
+        </mxCell>
+        <mxCell id="csr" value="CSR bridge · 32-bit" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="55" y="590" width="350" height="60" />
+        </mxCell>
+        <mxCell id="sdcontroller" value="SD controller" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="55" y="685" width="200" height="60" />
+        </mxCell>
+        <mxCell id="sdcard" value="SD card" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=20;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="55" y="780" width="200" height="65" />
+        </mxCell>
+        <mxCell id="uart" value="UART&#10;Console" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="285" y="780" width="160" height="65" />
+        </mxCell>
+        <mxCell id="control" value="SoC control&#10;BIOS timer" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="475" y="780" width="185" height="65" />
+        </mxCell>
+        <mxCell id="rom" value="ROM / SRAM&#10;64 KiB each" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="690" y="780" width="190" height="65" />
+        </mxCell>
+        <mxCell id="clint" value="CLINT / PLIC&#10;Timer / IRQ" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="910" y="780" width="190" height="65" />
+        </mxCell>
+        <mxCell id="dram" value="LiteDRAM controller" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1130" y="685" width="240" height="60" />
+        </mxCell>
+        <mxCell id="ddr" value="DDR4 · 2 GiB" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=20;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1130" y="780" width="240" height="65" />
+        </mxCell>
+        <mxCell id="edge0" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1060" y="202" />
+            <mxPoint as="targetPoint" x="885" y="202" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge1" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1210" y="250" />
+            <mxPoint as="targetPoint" x="1210" y="240" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="625" y="245" />
+            <mxPoint as="targetPoint" x="555" y="295" />
+            <Array as="points">
+              <mxPoint x="625" y="270" />
+              <mxPoint x="555" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="815" y="245" />
+            <mxPoint as="targetPoint" x="885" y="295" />
+            <Array as="points">
+              <mxPoint x="815" y="270" />
+              <mxPoint x="885" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="555" y="380" />
+            <mxPoint as="targetPoint" x="555" y="445" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge5" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="885" y="380" />
+            <mxPoint as="targetPoint" x="885" y="445" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="325" y="337" />
+            <mxPoint as="targetPoint" x="420" y="465" />
+            <Array as="points">
+              <mxPoint x="365" y="337" />
+              <mxPoint x="365" y="465" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="720" y="535" />
+            <mxPoint as="targetPoint" x="720" y="590" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge8" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1020" y="335" />
+            <mxPoint as="targetPoint" x="1120" y="590" />
+            <Array as="points">
+              <mxPoint x="1120" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge9" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="420" y="620" />
+            <mxPoint as="targetPoint" x="405" y="620" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge10" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="155" y="650" />
+            <mxPoint as="targetPoint" x="155" y="685" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge11" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="55" y="715" />
+            <mxPoint as="targetPoint" x="55" y="337" />
+            <Array as="points">
+              <mxPoint x="30" y="715" />
+              <mxPoint x="30" y="337" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge12" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="155" y="745" />
+            <mxPoint as="targetPoint" x="155" y="780" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge13" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="305" y="650" />
+            <mxPoint as="targetPoint" x="365" y="780" />
+            <Array as="points">
+              <mxPoint x="305" y="700" />
+              <mxPoint x="365" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge14" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="380" y="650" />
+            <mxPoint as="targetPoint" x="567" y="780" />
+            <Array as="points">
+              <mxPoint x="380" y="675" />
+              <mxPoint x="567" y="675" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge15" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="785" y="650" />
+            <mxPoint as="targetPoint" x="785" y="780" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge16" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1005" y="650" />
+            <mxPoint as="targetPoint" x="1005" y="780" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge17" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1250" y="650" />
+            <mxPoint as="targetPoint" x="1250" y="685" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge18" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1250" y="745" />
+            <mxPoint as="targetPoint" x="1250" y="780" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

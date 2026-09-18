@@ -1,146 +1,165 @@
-# Flow / Breeze RISC-V Processor
+# Breeze RISC-V 处理器
 
-Flow 是一个使用 Chisel 实现的 64 位 RISC-V 处理器与多核 SoC 项目。当前开发主线
-已经从裸机 MCU 扩展到四核 Linux：CPU 具备 M/S/U 特权级、Sv39、PMP、RV64A 和
-压缩指令，多核系统包含私有 L1、共享一致性 L2、CLINT、PLIC、LiteX LiteUART，以及由
-LiteX/LiteDRAM 管理的 256 MiB DDR3 仿真内存。
+Breeze 是用 Chisel 实现的 RV64GC 顺序单发射处理器。当前版本在 KCU105 上以
+100 MHz 运行，配备 2 GiB DDR4，已启动 Buildroot Linux，并运行 Python 和 GAPBS。
+SoC 使用 LiteX 集成 DDR、串口和 SD 控制器，FASE 提供独立的 JTAG 调试入口。
 
-现阶段优先在 LiteX/Verilator 中完成可重复的软件仿真，再进行 FPGA 板级适配。Linux
-启动不依赖 VirtIO：OpenSBI、DTB 和内嵌 initramfs 的 Linux `Image` 由宿主机直接装入
-模拟 DDR，持久化块设备留到后续阶段。
+本文介绍已上板验证的单核配置。仓库也保留多核配置，本文的性能数据均来自单核。
 
-## 最新进展
+## 下载与启动
 
-截至 2026-08-21，仓库已经完成：
+[2026-09-18 发布页](https://github.com/RanxiChen/flow/releases/tag/breeze-kcu105-20260918)
+提供配套的 FPGA 与 Linux 镜像，可直接用于 KCU105：
 
-- 1/2/4 hart 可参数化集群，四核 `small` profile 使用 64 KiB 共享 L2；
-- Linux profile：M/S/U trap/CSR、delegation、PMP、Sv39、TLB、`SFENCE.VMA`、
-  `FENCE.I`、RV64C、RV64A LR/SC/AMO，以及 Linux 所需异常分类；
-- 精确识别 `EBREAK`，产生 breakpoint exception（`mcause=3`、`mtval=0`）；
-- Linux PMA：256 MiB DDR、CLINT、PLIC 和包含原生 LiteUART 的 LiteX CSR 区域；
-- LiteX 仿真中的 LiteDRAM DDR3 控制器路径，关闭额外 LiteX L2，避免绕过 Flow 的
-  一致性 home/L2；
-- 四核 reset ROM、OpenSBI `fw_jump`、DTB 和 kernel 的固定装载契约；
-- 全新 Buildroot external tree，可生成四核、musl、initramfs Linux 镜像；
-- 基于 Alpine 官方 RISC-V minirootfs 的无盘 `Image-alpine` 构建脚本；
-- Linux bring-up 进度、每 hart retirement、fatal 和 LiteUART CSR/MMIO 诊断；
-- 可复用的三层存储 monitor：Tandem 退休结果、DCache PMA/route、Wishbone
-  request/response，并支持地址过滤和独立 trace 文件；
-- Chisel 完整回归 43 个 suite、181 个测试全部通过。
-
-当前边界也要明确：Buildroot 和 Alpine 镜像已经真实构建成功，四核 ROM 到 OpenSBI
-的执行路径也已进入实际 RTL 仿真。旧自研 16550 已被原生 LiteUART 取代，仓库已经
-加入 CSR byte-access 和 PLIC source 10 两个短测试。Linux profile 的 PLIC 已从 Migen
-实现切换为独立的 `FlowPlic.sv`，并通过模块级与 CPU 集成级中断测试；CLINT 也已切换
-为独立的 `FlowClint.sv`，通过模块级、单 hart MSIP/MTIP、四 hart IPI 和 per-hart timer
-测试。LiteX 只负责实例化和总线接线，两者的旧 Migen 实现仍保留给 MCU 回归和对照。
-后续 handoff、Linux kernel 与用户空间仍需要目标机 Verilator 运行证据。不能把这些外设
-短测试当成“Linux 已启动”。详细证据见
-[`docs/linux/verification-status.md`](docs/linux/verification-status.md)。
-
-## 结构概览
-
-| 层级 | 当前实现 |
+| 文件 | 内容 |
 | --- | --- |
-| Core | RV64、单发射、顺序五级流水，GShare/BTB 可选 |
-| ISA | RV64IMAFDC、Zicsr、Zifencei；Linux profile 启用 A/C/F/D 路径 |
-| Privilege | 可选 MCU（M-only）或 Linux（M/S/U）profile |
-| MMU | Sv39、私有 I/D TLB、硬件 page-table walk、PMP、`SFENCE.VMA` |
-| L1 | 每 hart 8 KiB 4-way ICache + 8 KiB 4-way DCache，32 B line |
-| Coherence | 私有 coherent L1D + 共享 L2/home，支持 1/2/4 hart 与 LR/SC/AMO |
-| Linux SoC | 4 hart、256 MiB LiteDRAM、CLINT、PLIC、LiteUART、reset ROM |
-| Firmware | OpenSBI 1.9 `fw_jump`，DTB 位于固定 DDR 地址 |
-| Rootfs | Buildroot initramfs；Alpine minirootfs 重新内嵌进独立 kernel Image |
+| [FPGA 镜像](https://github.com/RanxiChen/flow/releases/download/breeze-kcu105-20260918/breeze-kcu105-100mhz-sd-fase-20260918.zip) | 单核 100 MHz，SD、FASE、硬件记录器；不含 ILA |
+| [Linux 启动包](https://github.com/RanxiChen/flow/releases/download/breeze-kcu105-20260918/breeze-linux-gapbs-python-20260918.zip) | Linux、OpenSBI、设备树、启动跳板和 boot.json，包含 GAPBS 与 Python |
+| [SHA256SUMS](https://github.com/RanxiChen/flow/releases/download/breeze-kcu105-20260918/SHA256SUMS) | 两个 ZIP 的 SHA-256 校验值 |
 
-硬件和启动地址的权威说明在
-[`docs/linux/hardware-platform.md`](docs/linux/hardware-platform.md)。
+FPGA 产物来自 `29ee514`，Linux 配置来自 `b2a895b`，完整提交号记在发布说明中。
+镜像保存在 GitHub Release，源码仓库不包含这些大文件。
 
-## Linux 启动契约
+1. 用 Vivado Hardware Manager 通过 JTAG 加载 FPGA 包中的 `xilinx_kcu105.bit`。
+2. 将 Linux 包中 `boot/` 下的全部文件复制到 SD 卡 FAT 分区根目录。
+3. 插入 SD 卡，以 115200 波特率连接 FPGA 串口，在 LiteX BIOS 执行：
 
-| 内容 | 地址 | 说明 |
-| --- | ---: | --- |
-| Reset ROM | `0x1001_0000` | 设置 `a0=mhartid`、`a1=DTB`，跳到 OpenSBI |
-| OpenSBI | `0x8000_0000` | `fw_jump.bin` |
-| DTB | `0x8010_0000` | 四核 Flow 平台描述 |
-| Linux / payload | `0x8020_0000` | Buildroot `Image`、`Image-alpine` 或 handoff smoke |
-| DDR | `0x8000_0000` | 256 MiB，结束于 `0x9000_0000` |
-
-`sim/litex/linux_sim.py` 会检查镜像范围和重叠，然后把三段镜像装入 LiteDRAM。它不
-创建 VirtIO 磁盘，Buildroot 和 Alpine 的根文件系统均内嵌在 kernel Image 中。
-debug RTL 会在精确 trap 点额外打印 `[CORE-TRAP]`，不增加总线接口或回压路径。
-
-## 快速阅读顺序
-
-后续开发者或 Agent 建议按以下顺序阅读：
-
-1. 本 README：项目目标和当前边界；
-2. [`docs/linux/hardware-platform.md`](docs/linux/hardware-platform.md)：CPU、SoC、
-   地址与中断契约；
-3. [`docs/linux/buildroot-alpine.md`](docs/linux/buildroot-alpine.md)：从干净源码构建
-   OpenSBI、Buildroot 和 Alpine；
-4. [`docs/linux/verification-status.md`](docs/linux/verification-status.md)：已验证项、
-   未完成门槛和已知陷阱；
-5. [`sim/litex/README.md`](sim/litex/README.md)：仿真命令和诊断选项；
-6. `design/src/main/scala/config/config.scala`、
-   `design/src/main/scala/top/BreezeMulticoreClusterWishbone.scala` 和
-   `sim/litex/multicore_sim.py`：实现源代码。
-
-## 构建 Linux 辅助镜像
-
-先生成 reset ROM、handoff smoke 和 DTB：
-
-```bash
-make -C software/breeze-linux
+```text
+sdcard_init
+sdcardboot
 ```
 
-handoff smoke 链接到 `0x8020_0000`。OpenSBI 成功进入 S-mode payload 后，它会轮询
-LiteUART `TXFULL` 并写出字符 `K`，随后留在 `WFI` 循环。它用于把“OpenSBI 仍在运行”
-和“OpenSBI 已完成交接”区分开。
+BIOS 从 SD 卡将文件装入 DDR，随后经启动跳板、OpenSBI 进入 Linux。登录用户为
+`root`，此镜像未设置密码。进入 shell 后可以检查 Python 和 GAPBS：
 
-生成四核 Linux debug RTL：
-
-```bash
-cd design
-sbt "runMain flow.top.GenerateBreezeMulticoreClusterWishbone small gshare linux debug"
-cd ..
+```sh
+python3 --version
+gapbs-smoke
 ```
 
-`debug` 保留 retirement 接口；最终综合准备可使用 `production`，它关闭 tandem
-trace，减少非产品端口和逻辑。
+已验证的 Python 版本为 3.14.6。`gapbs-smoke` 会运行六项小图测试，查看每项输出中的
+`Verification: PASS`。
 
-Buildroot、Alpine 和完整仿真命令见
-[`docs/linux/buildroot-alpine.md`](docs/linux/buildroot-alpine.md)。这些仿真可能运行很
-久，建议使用独立输出目录和可持久保存的日志。
+Linux 使用内嵌 initramfs，运行期间的文件写入保存在 RAM，断电后丢失。
+这一版由 BIOS 使用 SD 卡加载系统；Linux 挂载 SD 根分区仍在调试，网络尚未验证。
 
-## MCU 与回归
+## 微架构
 
-Linux profile 没有删除原有 MCU 流程。裸机程序仍可使用：
+流水线分为 IF、ID、EXE、MEM、WB。普通整数运算在 EXE 完成；乘除法、浮点和数据缓存
+访问由 MEM 发起请求，并等待结果返回。MEM 等待期间会阻塞流水线，因此这些单元的
+多周期操作会影响整核吞吐。
 
-```bash
-python3 sim/litex/run_mcu.py \
-    --main software/breeze-mcu/apps/main.c \
-    --core-preset gshare \
-    --elaborate
+![Breeze 阻塞式五级流水线](docs/figures/breeze-core.svg)
+
+下图列出前端、执行单元、缓存及特权架构模块。参数对应 `single / gshare / linux` 配置。
+
+![Breeze 核心组织与参数](docs/figures/breeze-organization.svg)
+
+| 项目 | 配置 |
+| --- | --- |
+| 指令集 | RV64IMAFDC、Zicsr、Zifencei |
+| 执行方式 | 单发射、顺序执行，阻塞式 MEM |
+| 分支预测 | GShare，8 位全局历史，256 项 2 位 PHT；16 项全相联 BTB |
+| 取指缓冲 | 6 项 FIFO，支持 16/32 位指令重对齐 |
+| L1 I-cache / D-cache | 各 8 KiB，4 路，64 组，32 B 缓存行 |
+| L2 / coherence home | 16 KiB，8 路，64 组，32 B 缓存行，单 bank |
+| 虚拟内存 | Sv39，I-TLB / D-TLB 各 16 项，硬件页表遍历、SFENCE.VMA |
+| 特权架构 | M/S/U，异常与中断委托，8 个有效 PMP 项，Sstc |
+| 调试 | FASE：JTAG halt、寄存器访问、指令注入；硬件记录器保存近期执行现场 |
+
+缓存容量不含标签和一致性元数据。实现入口见
+[核心配置](design/src/main/scala/config/config.scala)、
+[核心连接](design/src/main/scala/core/BreezeCore.scala)和
+[MMU](design/src/main/scala/mmu/BreezeMmu.scala)。
+
+## SoC 与存储结构
+
+L1 指令缓存和数据缓存接入 L2/Home，SD DMA 也作为 client 通过该入口访问内存。
+L2 的内存请求和核心的非缓存 MMIO 请求进入 LiteX 64 位 Wishbone 总线；外设寄存器
+使用 32 位 CSR 接口。LiteDRAM 管理板上的 2 GiB DDR4。
+
+![Breeze KCU105 SoC 与存储层次](docs/figures/breeze-soc-memory.svg)
+
+三张图的可编辑 draw.io 文件与 SVG 一同保存在 [docs/figures](docs/figures)。
+
+启动包使用以下加载地址。`boot.json` 的 `addr` 指定执行入口，即启动跳板地址。
+
+| 文件 | 加载地址 |
+| --- | --- |
+| `fw_jump.bin` | `0x8000_0000` |
+| `serial-handoff.bin` | `0x8008_0000` |
+| `flow-kcu105-tiny.dtb` | `0x8010_0000` |
+| `Image` | `0x8020_0000` |
+
+## 从源码构建
+
+以下命令在仓库根目录执行。FPGA 构建需要 Vivado、Java/sbt、RISC-V 交叉工具链，
+以及包含 Migen、LiteX、LiteX-Boards、LiteDRAM、LiteSDCard 的 Python 环境。
+请使用适配本项目的 LiteX 环境；仅安装任意版本的上游依赖不能保证复现已发布产物。
+
+### FPGA
+
+```sh
+python3 fpga/kcu105/target.py \
+    --cpu-type breeze-tiny \
+    --sys-clk-freq 100000000 \
+    --with-sdcard --with-fase \
+    --output-dir build/fpga/kcu105-sd-fase-100mhz \
+    --build
 ```
 
-主要回归入口：
+目标脚本会先通过 sbt 生成 RTL，再构建 LiteX BIOS 并运行 Vivado。
+产物为 `build/fpga/kcu105-sd-fase-100mhz/gateware/xilinx_kcu105.bit`。
+上述命令启用 FASE 与硬件记录器，不启用 ILA。重新构建后需检查实现时序报告再上板。
 
-```bash
+### Linux、GAPBS 与 Python
+
+已发布镜像使用 Buildroot 2026.05.1、musl 和 GCC 14.4.0。准备 Buildroot 源码目录后运行：
+
+```sh
+BUILDROOT_DIR=/path/to/buildroot bash linux/sd-gapbs/build.sh
+```
+
+脚本使用 `flow_tiny_gapbs_defconfig`，编译 Linux 6.18.7、OpenSBI、GAPBS 和 Python，
+将根文件系统嵌入 Linux Image，并生成启动跳板与 `boot.json`。
+
+- `build/sd-gapbs/output/`：Buildroot 构建目录及交叉工具链。
+- `build/sd-gapbs/boot/`：可复制到 SD 卡 FAT 分区的启动文件及校验值。
+
+构建脚本不写入 SD 卡。它与 Linux SD 根分区配置使用不同输出目录，避免混用镜像。
+配置入口为 [Buildroot defconfig](linux/buildroot-external/configs/flow_tiny_gapbs_defconfig)
+和[构建脚本](linux/sd-gapbs/build.sh)。
+
+### RTL 测试
+
+```sh
 cd design
 sbt test
 ```
 
-定向仿真、GShare、Timer/UART、1/2/4 hart 测试见
-[`sim/litex/README.md`](sim/litex/README.md) 和
-[`software/breeze-mcu/README.md`](software/breeze-mcu/README.md)。
+仿真环境和定向测试见 [LiteX 仿真文档](sim/litex/README.md)。
 
-## 更多文档
+## GAPBS 性能
 
-- [Linux 硬件平台](docs/linux/hardware-platform.md)
-- [Buildroot 与 Alpine](docs/linux/buildroot-alpine.md)
-- [Linux 验证状态](docs/linux/verification-status.md)
-- [LiteX 仿真](sim/litex/README.md)
-- [MCU 总体目标](docs/breeze-mcu-target.md)
-- [GShare](docs/gshare-status.md)
-- [PMU](docs/pmu.md)
-- [Tandem trace](docs/tandem-trace.md)
+测试平台为 KCU105 单核 Breeze，100 MHz、2 GiB DDR4，使用上述 Buildroot musl 镜像。
+GAPBS 源码固定为 `b5e3e19c2845f22fb338f4a4bc4b1ccee861d026`，启用 OpenMP 构建。
+
+| 算法 | 命令 | 顶点数 | 无向边数（程序报告） | Average Time |
+| --- | --- | ---: | ---: | ---: |
+| BFS | `./bfs -g 18 -n 50` | 262143 | 3805449 | 3.03940 s |
+| BC | `./bc -g 18 -n 50` | 262143 | 3805449 | 42.47229 s |
+
+Average Time 是 50 次算法运行的平均耗时，不包含生成图和构图。
+两次大图运行未使用 `-v`；正确性检查来自此前六项 `-g 10 -n 1 -v` 小图测试，均为 PASS。
+原始串口记录未包含 OpenMP 环境变量，实际线程设置未独立确认。
+完整试次与计时记录见 [测试数据](docs/benchmarks/breeze-gapbs-20260918.md)。
+
+后续测量可显式固定线程设置，并保存控制台输出：
+
+```sh
+cd /opt/gapbs
+export OMP_NUM_THREADS=1
+export OMP_DYNAMIC=FALSE
+time ./bfs -g 18 -n 50
+time ./bc -g 18 -n 50
+```
