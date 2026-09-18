@@ -1,0 +1,46 @@
+/include/ "flow-kcu105-tiny.dts"
+
+/ {
+	model = "Flow Breeze Tiny KCU105 SD root";
+	aliases {
+		mmc0 = &sdcard;
+	};
+	chosen {
+		bootargs = "earlycon=liteuart,0x12001000 console=liteuart root=/dev/mmcblk0p2 rootfstype=ext4 rootwait rw";
+	};
+	sd_reference_clk: sd-reference-clock {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+	};
+	vreg_sd: regulator-sd {
+		compatible = "regulator-fixed";
+		regulator-name = "sd-card-3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+	soc {
+		/* 29ee514 CSR map; tightly sized, non-overlapping regions. */
+		sdcard: mmc@12006000 {
+			compatible = "flow,breeze-litex-mmc-v1";
+			reg = <0 0x12006000 0 0x1c>,
+			      <0 0x1200601c 0 0x2c>,
+			      <0 0x12006048 0 0x20>,
+			      <0 0x12006068 0 0x20>,
+			      <0 0x12006088 0 0x0c>;
+			reg-names = "phy", "core", "reader", "writer", "irq";
+			clocks = <&sd_reference_clk>;
+			vmmc-supply = <&vreg_sd>;
+			interrupt-parent = <&plic>;
+			interrupts = <11>;
+			bus-width = <4>;
+			max-frequency = <5000000>;
+			/* No card-detect pad: insert before boot, no live removal. */
+			non-removable;
+			/* SD DMA is routed through Breeze's coherent Home entry. */
+			dma-coherent;
+			status = "okay";
+		};
+	};
+};
