@@ -16,6 +16,9 @@ and timing are separate validation gates. It does not change the published SD bi
 - `0x40000000..0x40000fff`: private PCIe test RAM, not CPU-visible; useful before
   DDR initialization. `0x80000000..0xffffffff`: coherent L2 DMA access. All other
   destinations are rejected. SD and PCIe share LiteX DMA arbitration.
+- LiteX's synthetic timeout ACK is disabled on this profile's memory/DMA fabric;
+  it must not turn a stalled transfer into false success. A permanently stalled
+  target requires host timeout and coordinated reset, not retry while still active.
 - FASE commands arbitrate per transaction with JTAG, locking from command
   presentation through response acceptance. Users must not run concurrent debug
   sessions: transaction arbitration does not provide exclusive whole-session ownership.

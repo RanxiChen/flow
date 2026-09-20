@@ -11,11 +11,17 @@ stage=tests
 finish() {
     result=$?
     trap - EXIT
+    if [[ "$stage" == vivado && "$result" == 0 && ! -s "$output/gateware/xilinx_kcu105.bit" ]]; then
+        result=1
+    fi
     echo "$result" > "$output/$stage-exit-code.txt"
     echo "FLOW_PCIE_EXIT stage=$stage code=$result"
     exit "$result"
 }
 trap finish EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 git -C "$root" rev-parse HEAD > "$output/source-commit.txt"
 git -C "$root" status --short > "$output/source-status.txt"
 git -C "$root" diff --binary > "$output/source.patch"

@@ -21,6 +21,7 @@ from litex_boards.targets.xilinx_kcu105 import _CRG
 from litedram.modules import EDY4016A
 from litedram.phy import usddrphy
 from migen import Cat, Constant
+from migen import ResetInserter
 
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -125,6 +126,10 @@ class BreezeKCU105SoC(SoCCore):
             bus_address_width=32,
             bus_bursting=False,
             bus_interconnect="shared",
+            # LiteX's timeout fabricates ACK + all-ones data, not ERR. A DMA
+            # must not report that as a successful transfer. Host timeouts
+            # require quiescing/reset, never cancellation of an L2 transaction.
+            bus_timeout=None if with_pcie else 1e6,
             integrated_rom_size=ROM_SIZE,
             integrated_sram_size=SRAM_SIZE,
             # The KCU105 DDR4 controller below owns the main_ram region.
@@ -251,8 +256,10 @@ class BreezeKCU105SoC(SoCCore):
             from flow.fase import FaseJtag
             if with_pcie:
                 from flow.pcie import BreezePcie, FaseArbiter
-                self.fase_arbiter = FaseArbiter(self.cpu.fase)
-                self.pcie = BreezePcie(platform, self.fase_arbiter.pcie)
+                self.fase_arbiter = ResetInserter()(FaseArbiter(self.cpu.fase))
+                self.comb += self.fase_arbiter.reset.eq(self.cpu.reset)
+                self.pcie = BreezePcie(platform, self.fase_arbiter.pcie, self.cpu.reset)
+                self.dma_bus.timeout = None
                 self.dma_bus.add_master(name="pcie_dma", master=self.pcie.bus)
                 self.comb += self.crg.rst.eq(self.pcie.reset_request)
                 self.fase_jtag = FaseJtag(self.cpu, platform, self.fase_arbiter.jtag)

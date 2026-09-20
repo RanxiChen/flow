@@ -56,7 +56,7 @@ def _axi_layout(lite=False):
 
 
 class BreezePcie(Module):
-    def __init__(self, platform, fase):
+    def __init__(self, platform, fase, cpu_reset=0):
         pads = platform.request("pcie_x8")
         platform.add_period_constraint(pads.clk_p, 10.0)
         self.reset_request = Signal()
@@ -119,7 +119,7 @@ class BreezePcie(Module):
             mem["i_wb_"+name] = getattr(memory_bus,name)
         self.specials += Instance("FlowPcieMemory", **mem)
         ctl = core_ports[1]
-        ctl.update(i_clk=ClockSignal(), i_reset=ResetSignal(),
+        ctl.update(i_clk=ClockSignal(), i_reset=ResetSignal() | cpu_reset,
             i_read_words=reads, i_write_words=writes, i_memory_errors=errors)
         for field in ("cmd_valid","cmd_opcode","cmd_index","cmd_data","cmd_pc","rsp_ready"):
             ctl["o_"+field] = getattr(fase,field)
