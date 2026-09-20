@@ -108,7 +108,11 @@ class BreezeKCU105SoC(SoCCore):
         if sys_clk_freq not in (50_000_000, 100_000_000):
             raise ValueError("KCU105 system frequency must be 50 or 100 MHz")
         platform = xilinx_kcu105.Platform()
-        self.crg = _CRG(platform, sys_clk_freq)
+        if with_pcie:
+            from pcie_crg import PcieCRG
+            self.crg = PcieCRG(platform, sys_clk_freq)
+        else:
+            self.crg = _CRG(platform, sys_clk_freq)
         cpu_key = "breeze_tiny_debug" if debug else cpu_type.replace("-", "_")
         if with_sdcard or with_pcie:
             cpu_key += "_dma"
@@ -258,10 +262,12 @@ class BreezeKCU105SoC(SoCCore):
                 from flow.pcie import BreezePcie, FaseArbiter
                 self.fase_arbiter = ResetInserter()(FaseArbiter(self.cpu.fase))
                 self.comb += self.fase_arbiter.reset.eq(self.cpu.reset)
-                self.pcie = BreezePcie(platform, self.fase_arbiter.pcie, self.cpu.reset)
+                self.pcie = BreezePcie(platform, self.fase_arbiter.pcie,
+                    self.crg.bridge_reset, self.cpu.reset)
                 self.dma_bus.timeout = None
                 self.dma_bus.add_master(name="pcie_dma", master=self.pcie.bus)
-                self.comb += self.crg.rst.eq(self.pcie.reset_request)
+                self.comb += [self.crg.pcie_clk.eq(self.pcie.user_clk),
+                              self.crg.pcie_reset_n.eq(self.pcie.user_reset_n)]
                 self.fase_jtag = FaseJtag(self.cpu, platform, self.fase_arbiter.jtag)
             else:
                 self.fase_jtag = FaseJtag(self.cpu, platform)
@@ -371,6 +377,7 @@ def main():
         vivado_place_directive="AltSpreadLogic_high",
         vivado_post_place_phys_opt_directive="AggressiveExplore",
         vivado_route_directive="NoTimingRelaxation",
+        vivado_post_route_phys_opt_directive="AggressiveExplore" if args.with_pcie else "default",
     )
 
     if args.debug:

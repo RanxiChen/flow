@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 module transport_tb;
-    reg sys_clk=0, reset=1, tck=0, sel=0, capture=0, shift=0, update=0, tap_reset=0, tdi=0;
+    reg sys_clk=0, reset=1, core_reset=0, tck=0, sel=0, capture=0, shift=0, update=0, tap_reset=0, tdi=0;
     wire tdo, cmd_valid, rsp_ready;
     reg cmd_ready=0, rsp_valid=0, rsp_error=0;
     reg [63:0] rsp_data=0;
@@ -68,6 +68,13 @@ module transport_tb;
         #31; reset=1; #31; reset=0;
         repeat(4) tick(); scan_frame(0,reply);
         if(reply[66:65]!=0 || debug_received!=0 || cmd_valid) $fatal(1,"reset created phantom command");
+        scan_frame(packet(4,77),reply);
+        // CPU-only reset must clear both mailbox ends with TCK stopped.
+        #23; core_reset=1; #30; core_reset=0;
+        repeat(6) @(negedge sys_clk);
+        if(!dut.trst || cmd_valid) $fatal(1,"core reset lost while TCK stopped");
+        repeat(4) tick(); scan_frame(0,reply);
+        if(reply[66:65]!=0 || debug_received!=0 || cmd_valid) $fatal(1,"core reset created phantom command");
         // A partial scan must not submit.
         sel=1; capture=1; tick(); capture=0; shift=1;
         repeat(12) tick(); shift=0; update=1; tick(); update=0; sel=0;

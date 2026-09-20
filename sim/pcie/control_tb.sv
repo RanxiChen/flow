@@ -104,6 +104,11 @@ initial begin
     read_reg(64,123,0); read_reg(68,456,0); read_reg(72,7,0);
     read_reg(1,0,1); read_reg(32'h10000,0,1); read_reg(80,0,1);
     write_reg(0,0,15,1,0);
+    write_reg(36,99,15,0,0);
+    if(!cmd_valid) $fatal(1,"reset test missing pending command");
+    @(negedge clk); reset=1; tick(); tick(); @(negedge clk); reset=0;
+    if(cmd_valid || rsp_ready || s_bvalid || s_rvalid) $fatal(1,"command survived reset");
+    read_reg(8,0,0); read_reg(40,0,0);
     $display("FLOW_PCIE_CONTROL_PASS"); $finish;
 end
 endmodule

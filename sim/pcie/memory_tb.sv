@@ -50,9 +50,10 @@ reg [7:0] mem[0:4095];
 reg [7:0] expected[0:4095];
 integer wait_cycles=0, transactions=0, k;
 reg inject_error=0;
+reg pause_bus=0;
 always @* begin
-    wb_ack = wb_cyc && wait_cycles == 3 && !inject_error;
-    wb_err = wb_cyc && wait_cycles == 3 && inject_error;
+    wb_ack = wb_cyc && wait_cycles == 3 && !inject_error && !pause_bus;
+    wb_err = wb_cyc && wait_cycles == 3 && inject_error && !pause_bus;
     for(integer j=0;j<8;j=j+1) wb_dat_r[j*8 +:8] = mem[{wb_adr[8:0],3'b0}+j];
 end
 always @(posedge clk) begin
@@ -153,6 +154,18 @@ initial begin
     write_burst(64'h40000000,128,5,32'hffffffff,0);
     read_burst(64'h40000000,128,5,0);
     for(k=0;k<4096;k=k+1) if(mem[k]!==expected[k]) $fatal(1,"memory corruption %d",k);
+    // Coordinated reset with an accepted, stalled request: no phantom response.
+    pause_bus=1;
+    @(negedge clk); s_araddr=64'h80000000; s_arlen=0; s_arsize=5; s_arvalid=1;
+    do begin @(posedge clk); end while(!s_arready);
+    @(negedge clk); s_arvalid=0;
+    while(!wb_cyc) tick();
+    @(negedge clk); reset=1; tick(); tick();
+    if(wb_cyc || s_rvalid || s_bvalid) $fatal(1,"transfer survived reset");
+    @(negedge clk); reset=0; pause_bus=0;
+    repeat(5) tick();
+    if(s_rvalid || s_bvalid) $fatal(1,"phantom completion after reset");
+    read_burst(64'h80000000,2,5,0);
     $display("FLOW_PCIE_MEMORY_PASS words_read=%0d words_written=%0d errors=%0d",read_words,write_words,errors);
     $finish;
 end

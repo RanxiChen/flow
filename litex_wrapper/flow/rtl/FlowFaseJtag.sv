@@ -3,7 +3,7 @@
 // Frame, LSB first: opcode[7:0], index[13:8], data[77:14], pc[141:78],
 // tag[157:142], reserved[175:158]=0, magic[191:176]=16'hfa5e.
 module FlowFaseJtagTransport (
-    input wire sys_clk, input wire reset,
+    input wire sys_clk, input wire reset, input wire core_reset,
     input wire tck, input wire sel, input wire capture, input wire shift,
     input wire update, input wire tap_reset, input wire tdi, output wire tdo,
     output wire cmd_valid, input wire cmd_ready,
@@ -18,11 +18,20 @@ module FlowFaseJtagTransport (
     // Board/CPU reset clears BOTH sides; TAP reset only discards a partial scan.
     // Async assertion covers stopped TCK, synchronized release in each domain.
     (* ASYNC_REG = "TRUE" *) reg [1:0] t_reset = 2'b11, s_reset = 2'b11;
+    // Register the sys-domain CPU-reset decode before crossing to stopped TCK.
+    reg core_reset_q = 0;
+    always @(posedge sys_clk) core_reset_q <= core_reset;
+    (* ASYNC_REG = "TRUE" *) reg [1:0] core_t_reset = 2'b11, core_s_reset = 2'b11;
     always @(posedge tck or posedge reset)
         if (reset) t_reset <= 2'b11; else t_reset <= {t_reset[0], 1'b0};
     always @(posedge sys_clk or posedge reset)
         if (reset) s_reset <= 2'b11; else s_reset <= {s_reset[0], 1'b0};
-    wire trst = t_reset[1], srst = s_reset[1];
+    always @(posedge tck or posedge core_reset_q)
+        if (core_reset_q) core_t_reset <= 2'b11; else core_t_reset <= {core_t_reset[0],1'b0};
+    always @(posedge sys_clk or posedge core_reset_q)
+        if (core_reset_q) core_s_reset <= 2'b11; else core_s_reset <= {core_s_reset[0],1'b0};
+    wire trst = t_reset[1] | core_t_reset[1];
+    wire srst = s_reset[1] | core_s_reset[1];
     (* KEEP = "TRUE" *) reg [157:0] cmd_hold;
     (* KEEP = "TRUE" *) reg [80:0] rsp_hold;
     (* KEEP = "TRUE" *) reg [80:0] response;
@@ -118,7 +127,7 @@ module FlowFaseJtagTransport (
 endmodule
 
 module FlowFaseJtag (
-    input wire sys_clk, reset,
+    input wire sys_clk, reset, core_reset,
     output wire cmd_valid, input wire cmd_ready,
     output wire [7:0] cmd_opcode, output wire [5:0] cmd_index,
     output wire [63:0] cmd_data, cmd_pc,

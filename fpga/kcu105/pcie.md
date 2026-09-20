@@ -23,6 +23,13 @@ and timing are separate validation gates. It does not change the published SD bi
   presentation through response acceptance. Users must not run concurrent debug
   sessions: transaction arbitration does not provide exclusive whole-session ownership.
 - XDMA reset resets the SoC/DDR clock tree to avoid abandoning L2 transactions.
+  PCIe, button and registered software requests cross independently into the
+  continuously running 125 MHz board-reference domain. Their synchronized
+  results combine in a registered MMCM reset request. Each PCIe bridge reset
+  source has its own asynchronous-assert/synchronous-release chain. The JTAG
+  mailbox similarly synchronizes system and registered CPU resets separately.
+  Only named synchronizers' asynchronous assertion pins receive false paths;
+  release chains and the reference-domain MMCM reset path remain timed.
   This profile requires a live PCIe reference clock and released PERST to boot.
   Stop DMA before board/software reset. Hot-reset/recovery is not board-validated.
 - Data writes enter L2; D-cache coherence is reused. I-cache is not a directory
@@ -76,6 +83,10 @@ Icarus Verilog and Migen. It covers burst/partial/narrow accesses, invalid addre
 and boundary rejection, Wishbone errors, response backpressure, independent
 AXI-Lite AW/W arrivals, command snapshot and JTAG/PCIe response ownership.
 These tests do not simulate PCIe PHY/link training or replace board validation.
+Reset coverage includes stopped PCIe/TCK clocks, overlapping reset sources,
+software reset pulses, stalled memory transactions and pending FASE commands.
+PCIe builds also select post-route `AggressiveExplore` physical optimization;
+100 MHz system and 250 MHz XDMA constraints are unchanged.
 
 On the host tomorrow: enumerate and check negotiated link, load the matching
 XDMA driver, read magic/ABI/scratch, DMA test RAM with byte comparison, then

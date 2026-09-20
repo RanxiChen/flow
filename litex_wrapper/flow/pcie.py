@@ -3,7 +3,6 @@ from pathlib import Path
 
 from migen import (Module, Signal, Record, Instance, ClockSignal, ResetSignal, ClockDomain,
                    If, FSM, NextState, NextValue)
-from migen.genlib.resetsync import AsyncResetSynchronizer
 from litex.soc.interconnect import wishbone
 
 
@@ -56,15 +55,11 @@ def _axi_layout(lite=False):
 
 
 class BreezePcie(Module):
-    def __init__(self, platform, fase, cpu_reset=0):
+    def __init__(self, platform, fase, bridge_reset, cpu_reset=0):
         pads = platform.request("pcie_x8")
         platform.add_period_constraint(pads.clk_p, 10.0)
-        self.reset_request = Signal()
-        pcie_clk, pcie_reset_n = Signal(), Signal()
-        self.clock_domains.cd_pcie_bridge = ClockDomain("pcie_bridge")
-        self.comb += self.cd_pcie_bridge.clk.eq(pcie_clk)
-        self.specials += AsyncResetSynchronizer(self.cd_pcie_bridge,
-            ~pcie_reset_n | ResetSignal("sys"))
+        self.user_clk = pcie_clk = Signal()
+        self.user_reset_n = pcie_reset_n = Signal()
         refclk, refclk_gt = Signal(), Signal()
         self.link_up = Signal()
         self.bus = wishbone.Interface(data_width=64, address_width=32, addressing="word")
@@ -79,7 +74,6 @@ class BreezePcie(Module):
             i_I=pads.clk_p, i_IB=pads.clk_n, o_O=refclk_gt, o_ODIV2=refclk)
         # PERST/link reset resets the whole SoC: never abandon an accepted L2 request.
         # XDMA itself uses the independent slot reset/refclock, avoiding a reset loop.
-        self.comb += self.reset_request.eq(~pcie_reset_n)
         ip = dict(i_sys_clk=refclk, i_sys_clk_gt=refclk_gt, i_sys_rst_n=pads.rst_n,
             o_axi_aclk=pcie_clk, o_axi_aresetn=pcie_reset_n, o_user_lnk_up=self.link_up,
             i_pci_exp_rxp=pads.rx_p, i_pci_exp_rxn=pads.rx_n,
@@ -91,7 +85,7 @@ class BreezePcie(Module):
         for lite, prefix, cdc_name in ((False,"m_axi_","flow_pcie_mm_cdc"),(True,"m_axil_","flow_pcie_ctl_cdc")):
             layout = _axi_layout(lite)
             system = {}
-            cdc = dict(i_s_axi_aclk=pcie_clk, i_s_axi_aresetn=~ResetSignal("pcie_bridge"),
+            cdc = dict(i_s_axi_aclk=pcie_clk, i_s_axi_aresetn=~bridge_reset,
                        i_m_axi_aclk=ClockSignal("sys"), i_m_axi_aresetn=~ResetSignal("sys"))
             if not lite:
                 for ch in ("aw", "ar"):

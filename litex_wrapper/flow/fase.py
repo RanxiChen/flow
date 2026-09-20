@@ -7,7 +7,7 @@ class FaseJtag(Module):
     def __init__(self, cpu, platform, interface=None):
         f = cpu.fase if interface is None else interface
         params = dict(i_sys_clk=ClockSignal("sys"),
-                      i_reset=ResetSignal("sys") | cpu.reset)
+                      i_reset=ResetSignal("sys"), i_core_reset=cpu.reset)
         for field in ("cmd_valid", "cmd_opcode", "cmd_index", "cmd_data", "cmd_pc", "rsp_ready"):
             params["o_" + field] = getattr(f, field)
         for field in ("cmd_ready", "rsp_valid", "rsp_error", "rsp_data"):
