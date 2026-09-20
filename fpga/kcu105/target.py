@@ -95,7 +95,9 @@ class BreezeKCU105SoC(SoCCore):
 
     irq_map = {"uart": UART_PLIC_SOURCE, "sdcard": UART_PLIC_SOURCE + 1}
 
-    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False, with_fase=False):
+    def __init__(self, cpu_type="breeze", debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False, with_fase=False, with_pcie=False):
+        if with_pcie and (cpu_type != "breeze-tiny" or not with_fase):
+            raise ValueError("--with-pcie requires single-hart --with-fase")
         if with_fase and cpu_type != "breeze-tiny":
             raise ValueError("--with-fase requires breeze-tiny")
         if cpu_type not in ("breeze", "breeze-tiny"):
@@ -107,7 +109,7 @@ class BreezeKCU105SoC(SoCCore):
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, sys_clk_freq)
         cpu_key = "breeze_tiny_debug" if debug else cpu_type.replace("-", "_")
-        if with_sdcard:
+        if with_sdcard or with_pcie:
             cpu_key += "_dma"
         if with_fase:
             cpu_key += "_fase"
@@ -247,7 +249,15 @@ class BreezeKCU105SoC(SoCCore):
 
         if with_fase:
             from flow.fase import FaseJtag
-            self.fase_jtag = FaseJtag(self.cpu, platform)
+            if with_pcie:
+                from flow.pcie import BreezePcie, FaseArbiter
+                self.fase_arbiter = FaseArbiter(self.cpu.fase)
+                self.pcie = BreezePcie(platform, self.fase_arbiter.pcie)
+                self.dma_bus.add_master(name="pcie_dma", master=self.pcie.bus)
+                self.comb += self.crg.rst.eq(self.pcie.reset_request)
+                self.fase_jtag = FaseJtag(self.cpu, platform, self.fase_arbiter.jtag)
+            else:
+                self.fase_jtag = FaseJtag(self.cpu, platform)
 
         if debug:
             from flow.ila import BreezeDebugILA
@@ -288,7 +298,9 @@ def main():
     parser.add_argument("--with-sdcard", action="store_true",
                         help="native SD, coherent DMA, bounded BIOS driver and SD/DMA ILA probes")
     parser.add_argument("--with-fase", action="store_true",
-                        help="single-hart FASE controller and USER2 JTAG mailbox (no SD/DMA)")
+                        help="single-hart FASE controller and USER2 JTAG mailbox")
+    parser.add_argument("--with-pcie", action="store_true",
+                        help="single-hart XDMA Gen3 x8, coherent memory DMA and FASE BAR")
     parser.add_argument(
         "--build",
         action="store_true",
@@ -302,15 +314,17 @@ def main():
     args = parser.parse_args()
     if args.with_fase and args.cpu_type != "breeze-tiny":
         parser.error("--with-fase requires --cpu-type breeze-tiny")
+    if args.with_pcie and (args.cpu_type != "breeze-tiny" or not args.with_fase):
+        parser.error("--with-pcie requires --cpu-type breeze-tiny --with-fase")
     if args.with_sdcard and args.sys_clk_freq != 100_000_000:
         parser.error("SD timing bring-up profile requires --sys-clk-freq 100000000")
     if args.debug and args.cpu_type != "breeze-tiny":
         parser.error("--debug only supports --cpu-type breeze-tiny (single hart)")
 
-    if (args.debug or args.with_sdcard or args.with_fase) and not args.load:
+    if (args.debug or args.with_sdcard or args.with_fase or args.with_pcie) and not args.load:
         profile = "single" if args.cpu_type == "breeze-tiny" else "small"
         mode = "fpga-debug" if args.debug else "production"
-        dma_arg = " coherent-dma" if args.with_sdcard else ""
+        dma_arg = " coherent-dma" if args.with_sdcard or args.with_pcie else ""
         fase_arg = " fase" if args.with_fase else ""
         subprocess.run([
             "sbt", "runMain flow.top.GenerateBreezeMulticoreClusterWishbone "
@@ -319,7 +333,7 @@ def main():
 
     soc = BreezeKCU105SoC(cpu_type=args.cpu_type, debug=args.debug,
                           sys_clk_freq=args.sys_clk_freq, with_sdcard=args.with_sdcard,
-                          with_fase=args.with_fase)
+                          with_fase=args.with_fase, with_pcie=args.with_pcie)
     output_dir = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
         TINY_BUILD_DIR if args.cpu_type == "breeze-tiny" else BUILD_DIR)
     if args.output_dir is None and args.sys_clk_freq != SYS_CLK_FREQ:
@@ -328,6 +342,8 @@ def main():
         output_dir += "-sd-dma"
     if args.output_dir is None and args.with_fase:
         output_dir += "-fase"
+    if args.output_dir is None and args.with_pcie:
+        output_dir += "-pcie"
     builder = SnapshotBuilder(
         soc,
         output_dir=output_dir,

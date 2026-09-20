@@ -10,6 +10,11 @@ from litex.soc.integration.builder import Builder
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        if hasattr(self.soc, "pcie"):
+            gateware = Path(self.gateware_dir)
+            gateware.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(Path(__file__).with_name("pcie_ip.tcl"), gateware / "flow_pcie_ip.tcl")
+            self.soc.platform.toolchain.pre_synthesis_commands.append("source flow_pcie_ip.tcl")
         if hasattr(self.soc, "fase_jtag"):
             gateware = Path(self.gateware_dir)
             gateware.mkdir(parents=True, exist_ok=True)

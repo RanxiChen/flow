@@ -4,8 +4,8 @@ from migen import ClockSignal, Instance, Module, ResetSignal, Signal
 
 
 class FaseJtag(Module):
-    def __init__(self, cpu, platform):
-        f = cpu.fase
+    def __init__(self, cpu, platform, interface=None):
+        f = cpu.fase if interface is None else interface
         params = dict(i_sys_clk=ClockSignal("sys"),
                       i_reset=ResetSignal("sys") | cpu.reset)
         for field in ("cmd_valid", "cmd_opcode", "cmd_index", "cmd_data", "cmd_pc", "rsp_ready"):
