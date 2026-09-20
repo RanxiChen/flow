@@ -143,6 +143,15 @@ initial begin
     inject_error=0;
     write_burst(64'h80000300,2,5,32'hffffffff,0);
     read_burst(64'h80000300,2,5,0);
+    // Concurrent address channels: finish one burst without losing the other.
+    fork
+        write_burst(64'h80000400,8,5,32'hffffffff,0);
+        read_burst(64'h80000000,8,5,0);
+    join
+    read_burst(64'h80000400,8,5,0);
+    // The private test aperture and the largest legal full-width burst.
+    write_burst(64'h40000000,128,5,32'hffffffff,0);
+    read_burst(64'h40000000,128,5,0);
     for(k=0;k<4096;k=k+1) if(mem[k]!==expected[k]) $fatal(1,"memory corruption %d",k);
     $display("FLOW_PCIE_MEMORY_PASS words_read=%0d words_written=%0d errors=%0d",read_words,write_words,errors);
     $finish;
