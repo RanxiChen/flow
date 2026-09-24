@@ -26,7 +26,11 @@ module FlowPcieMemory (
     output wire [7:0] wb_sel,
     input wire [63:0] wb_dat_r,
     input wire wb_ack, wb_err,
-    output reg [31:0] read_words, write_words, errors
+    output reg [31:0] read_words, write_words, errors,
+    // AXI-side observability. Diagnostic only: never gates a transfer.
+    // Compares what XDMA requested against what reached Wishbone, so an
+    // extra read can be attributed upstream or to this bridge.
+    output reg [31:0] ar_requests, ar_beats, ar_narrow, r_beats
 );
     localparam IDLE=0, WDATA=1, WORD=2, GAP=3, BRESP=4, RRESP=5;
     reg [2:0] state;
@@ -86,8 +90,15 @@ module FlowPcieMemory (
             addr <= 0; left <= 0; size <= 0; id <= 0; lane <= 0;
             data <= 0; mask <= 0; bad <= 0; beat_bad <= 0;
             read_words <= 0; write_words <= 0; errors <= 0;
+            ar_requests <= 0; ar_beats <= 0; ar_narrow <= 0; r_beats <= 0;
         end else case (state)
             IDLE: if (s_awvalid || s_arvalid) begin
+                // Read acceptance is exactly s_arvalid && s_arready.
+                if (s_arvalid && !pick_write) begin
+                    ar_requests <= ar_requests + 1;
+                    ar_beats <= ar_beats + {24'b0, s_arlen} + 1;
+                    if (s_arsize != 3'd5) ar_narrow <= ar_narrow + 1;
+                end
                 writing <= pick_write;
                 last_was_read <= !pick_write;
                 addr <= pick_write ? s_awaddr : s_araddr;
@@ -130,6 +141,7 @@ module FlowPcieMemory (
                 else begin left <= left - 1; addr <= next_addr; state <= WDATA; end
             BRESP: if (s_bready) state <= IDLE;
             RRESP: if (s_rready) begin
+                r_beats <= r_beats + 1;
                 if (left == 0) state <= IDLE;
                 else begin
                     left <= left - 1; addr <= next_addr; lane <= 0;

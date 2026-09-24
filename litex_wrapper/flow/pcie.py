@@ -104,9 +104,14 @@ class BreezePcie(Module):
             core_ports.append(system)
         self.specials += Instance("flow_xdma", name="flow_xdma_i", **ip)
         reads, writes, errors = Signal(32), Signal(32), Signal(32)
+        # AXI-side diagnostics, exported through the user BAR only.
+        ar_requests, ar_beats = Signal(32), Signal(32)
+        ar_narrow, r_beats = Signal(32), Signal(32)
         mem = core_ports[0]
         mem.update(i_clk=ClockSignal(), i_reset=ResetSignal(),
-            o_read_words=reads, o_write_words=writes, o_errors=errors)
+            o_read_words=reads, o_write_words=writes, o_errors=errors,
+            o_ar_requests=ar_requests, o_ar_beats=ar_beats,
+            o_ar_narrow=ar_narrow, o_r_beats=r_beats)
         for name in ("cyc","stb","we","adr","dat_w","sel"):
             mem["o_wb_"+name] = getattr(memory_bus,name)
         for name in ("ack","err","dat_r"):
@@ -114,7 +119,9 @@ class BreezePcie(Module):
         self.specials += Instance("FlowPcieMemory", **mem)
         ctl = core_ports[1]
         ctl.update(i_clk=ClockSignal(), i_reset=ResetSignal() | cpu_reset,
-            i_read_words=reads, i_write_words=writes, i_memory_errors=errors)
+            i_read_words=reads, i_write_words=writes, i_memory_errors=errors,
+            i_ar_requests=ar_requests, i_ar_beats=ar_beats,
+            i_ar_narrow=ar_narrow, i_r_beats=r_beats)
         for field in ("cmd_valid","cmd_opcode","cmd_index","cmd_data","cmd_pc","rsp_ready"):
             ctl["o_"+field] = getattr(fase,field)
         for field in ("cmd_ready","rsp_valid","rsp_error","rsp_data"):

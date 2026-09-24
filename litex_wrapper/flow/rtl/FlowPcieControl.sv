@@ -17,7 +17,8 @@ module FlowPcieControl (
     input wire rsp_valid, rsp_error,
     input wire [63:0] rsp_data,
     output wire rsp_ready,
-    input wire [31:0] read_words, write_words, memory_errors
+    input wire [31:0] read_words, write_words, memory_errors,
+    input wire [31:0] ar_requests, ar_beats, ar_narrow, r_beats
 );
     reg aw_full, w_full;
     reg [31:0] aw, wd;
@@ -86,6 +87,10 @@ module FlowPcieControl (
                     16'h0040: s_rdata <= read_words;
                     16'h0044: s_rdata <= write_words;
                     16'h0048: s_rdata <= memory_errors;
+                    16'h004c: s_rdata <= ar_requests;
+                    16'h0050: s_rdata <= ar_beats;
+                    16'h0054: s_rdata <= ar_narrow;
+                    16'h0058: s_rdata <= r_beats;
                     default: s_rresp <= 2'b10;
                 endcase
             end

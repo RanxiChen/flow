@@ -32,6 +32,10 @@ wire  rsp_ready;
 reg [31:0] read_words = 0;
 reg [31:0] write_words = 0;
 reg [31:0] memory_errors = 0;
+reg [31:0] ar_requests = 0;
+reg [31:0] ar_beats = 0;
+reg [31:0] ar_narrow = 0;
+reg [31:0] r_beats = 0;
 FlowPcieControl dut (.*);
 always #5 clk = ~clk;
 initial begin #2000000; $fatal(1,"timeout"); end
@@ -102,7 +106,10 @@ initial begin
     read_reg(8,0,0);
     read_words=123; write_words=456; memory_errors=7;
     read_reg(64,123,0); read_reg(68,456,0); read_reg(72,7,0);
-    read_reg(1,0,1); read_reg(32'h10000,0,1); read_reg(80,0,1);
+    ar_requests=11; ar_beats=1408; ar_narrow=1; r_beats=1408;
+    read_reg(76,11,0); read_reg(80,1408,0);
+    read_reg(84,1,0); read_reg(88,1408,0);
+    read_reg(1,0,1); read_reg(32'h10000,0,1); read_reg(92,0,1);
     write_reg(0,0,15,1,0);
     write_reg(36,99,15,0,0);
     if(!cmd_valid) $fatal(1,"reset test missing pending command");

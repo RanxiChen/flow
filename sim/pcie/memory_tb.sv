@@ -43,12 +43,17 @@ reg  wb_err = 0;
 wire [31:0] read_words;
 wire [31:0] write_words;
 wire [31:0] errors;
+wire [31:0] ar_requests;
+wire [31:0] ar_beats;
+wire [31:0] ar_narrow;
+wire [31:0] r_beats;
 FlowPcieMemory dut (.*);
 always #5 clk = ~clk;
 initial begin #2000000; $fatal(1,"timeout"); end
 reg [7:0] mem[0:4095];
 reg [7:0] expected[0:4095];
 integer wait_cycles=0, transactions=0, k;
+integer rw_before=0, rb_before=0, ab_before=0, arq_before=0;
 reg inject_error=0;
 reg pause_bus=0;
 always @* begin
@@ -152,7 +157,18 @@ initial begin
     read_burst(64'h80000400,8,5,0);
     // The private test aperture and the largest legal full-width burst.
     write_burst(64'h40000000,128,5,32'hffffffff,0);
+    // A full-page read must produce exactly one AR, 128 beats and 512 words.
+    // The board reports 514 words here; this pins the bridge's own accounting.
+    rw_before=read_words; rb_before=r_beats; ab_before=ar_beats;
+    arq_before=ar_requests;
     read_burst(64'h40000000,128,5,0);
+    if(read_words-rw_before!=512)
+        $fatal(1,"full-page read words=%0d expected 512",read_words-rw_before);
+    if(r_beats-rb_before!=128)
+        $fatal(1,"full-page read beats=%0d expected 128",r_beats-rb_before);
+    if(ar_beats-ab_before!=128 || ar_requests-arq_before!=1)
+        $fatal(1,"full-page read ar_requests=%0d ar_beats=%0d expected 1/128",
+            ar_requests-arq_before,ar_beats-ab_before);
     for(k=0;k<4096;k=k+1) if(mem[k]!==expected[k]) $fatal(1,"memory corruption %d",k);
     // Coordinated reset with an accepted, stalled request: no phantom response.
     pause_bus=1;
@@ -166,7 +182,8 @@ initial begin
     repeat(5) tick();
     if(s_rvalid || s_bvalid) $fatal(1,"phantom completion after reset");
     read_burst(64'h80000000,2,5,0);
-    $display("FLOW_PCIE_MEMORY_PASS words_read=%0d words_written=%0d errors=%0d",read_words,write_words,errors);
+    $display("FLOW_PCIE_MEMORY_PASS words_read=%0d words_written=%0d errors=%0d ar_requests=%0d ar_beats=%0d ar_narrow=%0d r_beats=%0d",
+        read_words,write_words,errors,ar_requests,ar_beats,ar_narrow,r_beats);
     $finish;
 end
 endmodule
