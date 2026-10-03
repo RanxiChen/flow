@@ -14,7 +14,7 @@
 
 ## 新版 MMU
 
-新版 MMU 的文档有三份，均已定案，尚未实现：
+新版 MMU 的设计文档有三份，均已定案。独立实现位于 `design/src/main/scala/mmu/sv39/`（包 `flow.mmu.sv39`）；Alan 模块测试 29/29 通过，版本、覆盖和证据见 [`docs/breeze-mmu-validation.md`](docs/breeze-mmu-validation.md)。系统集成、综合时序和板上运行仍待验证。
 
 - [`docs/breeze-mmu-vipt-design.md`](docs/breeze-mmu-vipt-design.md)：架构与取舍。独立 iTLB/dTLB（组相联 + 全相联超页阵列，16 位 ASID tag），共享 PTW，两级非叶 walk-cache，Svade，PTW 经 D-cache 专用物理通道读 PTE，miss 阻塞不重放，sfence 串行执行。
 - [`docs/breeze-mmu-rtl-spec.md`](docs/breeze-mmu-rtl-spec.md)：RTL 实现规格。写 MMU RTL 时以它为准：寄存器、流水级、状态机、接口、断言、测试按它实现，不增删流水级，不自行补设计；它没覆盖的行为先问用户。
