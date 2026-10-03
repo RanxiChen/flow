@@ -1,6 +1,7 @@
 package flow.mmu.sv39
 
 import chisel3._
+import chisel3.simulator.PeekPokeAPI
 import scala.collection.mutable
 import scala.util.Random
 
@@ -47,7 +48,7 @@ object Sv39TestSupport {
     Result("pageFault", 0)
   }
 
-  class Driver(val d: Sv39Mmu, var latency: Int = 1, seed: Int = 1) {
+  class Driver(val d: Sv39Mmu, var latency: Int = 1, seed: Int = 1) extends PeekPokeAPI {
     val memory = mutable.Map.empty[BigInt, BigInt]
     val faults = mutable.Set.empty[BigInt]
     val reads = mutable.ArrayBuffer.empty[(Int, BigInt)]
