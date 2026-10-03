@@ -1,97 +1,23 @@
 # Flow Agent Notes
 
-本文件记录当前仓库里前端、后端与联调相关的真实状态，避免继续沿用已经过时的阶段性描述。
+## 开发与验证位置
 
-## 当前实现状态
+本地编辑代码、提交并 push 到 GitHub；Alan 从 GitHub pull 对应提交后运行构建和验证。`sbt` 编译、RTL 生成、仿真和测试都在 Alan 执行，本地不运行。验证前确认 Alan 的分支、HEAD、工作区和已有任务，保留无关改动与正在运行的任务；报告验证所用提交和实际结果。
 
-当前已经具备的主路径如下：
+## Breeze 重做方向
 
-1. `BreezeFrontend` 已经接入 `BreezeCache`，并通过 `nextLevelReq/nextLevelRsp` 与下一级存储接口联通。
-2. `BreezeCore` 已经把前端、fetch buffer、后端串起来，形成完整取指到执行的基本通路。
-3. `BreezeBackend` 已经会根据实际执行结果产生 `frontendRedirect`，用于修正前端 PC。
-4. 前端和 cache 相关调试口已经接出，前端/核心测试里也已经在使用这些观测信号。
+当前仓库中的 Breeze 是待覆盖的旧实现。后续新版 Breeze 的架构讨论和实现应从新的目标与已达成的设计决定出发，不以旧 Breeze 的 RTL、接口、流水级、系统约束、测试入口或阶段性优先级作为必须沿用的基线。
 
-这意味着当前工作重心不再是“把 cache 接进前端”或“只搭骨架”，而是继续补齐行为、修正时序、扩测试覆盖。
+旧代码和旧文档可以用来了解历史、定位可复用的局部机制，不能仅因它们已经存在就要求新版兼容。如果新设计需要不同接口或模块边界，直接按新设计确定；不要为了迁就旧 Breeze 而削弱方案。只有用户明确要求迁移、兼容或复用某一部分时，才把那一部分作为约束。
 
-## 前端当前行为
+当前的 `BreezePipelinedDCache` 是概念/模块框架，不代表最终 VIPT D-cache。它的现有实现也不应限制新 MMU 的结构。新版访存方向是先确定 MMU、TLB、PTW 与 D-cache 的接口，再改造 D-cache，之后逐步更新 Breeze 其他部分。
 
-当前 `BreezeFrontend` 的实现特点如下：
+## 新版 MMU
 
-1. 地址统一按虚拟地址处理。
-2. 前端内部按 `S1/S2/S3` 组织请求、返回和输出寄存。
-3. `S1` 负责向 `BreezeCache` 发起取指请求。
-4. `S2` 跟踪已经发出的 cache 请求，并等待返回。
-5. `S3` 锁存返回的 `pc/inst`，再通过 `fetchBuffer` 送给后端。
-6. 当前支持把后端 redirect 和前端本地 fast redirect 一起并入 next-pc 选择。
+新版 MMU 的文档有三份，均已定案，尚未实现：
 
-## 分支与跳转现状
+- [`docs/breeze-mmu-vipt-design.md`](docs/breeze-mmu-vipt-design.md)：架构与取舍。独立 iTLB/dTLB（组相联 + 全相联超页阵列，16 位 ASID tag），共享 PTW，两级非叶 walk-cache，Svade，PTW 经 D-cache 专用物理通道读 PTE，miss 阻塞不重放，sfence 串行执行。
+- [`docs/breeze-mmu-rtl-spec.md`](docs/breeze-mmu-rtl-spec.md)：RTL 实现规格。写 MMU RTL 时以它为准：寄存器、流水级、状态机、接口、断言、测试按它实现，不增删流水级，不自行补设计；它没覆盖的行为先问用户。
+- [`docs/breeze-mmu-closure-checklist.md`](docs/breeze-mmu-closure-checklist.md)：MMU 依赖其他模块的假设（跨页取指、非对齐 trap、sfence 串行化、D-cache 前进保证等），系统闭环时逐项检查。
 
-当前仓库里的分支/跳转语义应按下面理解：
-
-1. 默认配置下，`BreezeFrontendConfig.branchPredCfg = NoBranchPredictorConfig`。
-2. 也就是说，默认前端不做分支预测，不默认在前端主动跳转。
-3. 默认取指路径按 `pc + 4` 顺序推进。
-4. 真正发生跳转修正时，由后端执行结果产生 `frontendRedirect`，前端收到后刷新并跳到目标地址。
-5. 如果显式启用 `GShare` 分支预测配置，当前前端已经具备一套 gshare 雏形：
-   - `S1` 已接入 `GHR + BTB + PHT` lookup
-   - 预测元数据会沿 `S2/S3` 流水推进，并传到后端
-   - `S3` 已接入 `MiniDecode` 的快速修正路径
-   - 后端已经具备 `BTB/PHT/GHR` 的反馈更新通路
-6. 当前工作的重点已经从“是否有 gshare 骨架”转为“验证这套 gshare 实现的语义是否正确、时序是否符合预期”。
-7. 因此，现在不要再把当前系统描述成“只有 JAL fast path”，更准确的说法是“已经实现 gshare 雏形，但还需要系统性验证正确性”。
-
-一句话说，当前默认行为就是：
-
-`不预测条件分支，顺序取指，跳转/分支修正主要依赖后端 redirect。`
-
-如果显式启用 `GShare`，则应理解为：
-
-`前端已经具备 gshare 预测、S3 快速修正和后端训练反馈的基本闭环；下一步重点是验证正确性。`
-
-## 当前验证入口
-
-当前常用验证入口如下：
-
-```bash
-cd /home/chen/FUN/flow/design
-sbt "runMain flow.frontend.FireBreezeFrontend"
-```
-
-```bash
-cd /home/chen/FUN/flow/design
-sbt 'testOnly flow.frontend.BreezeFrontendSpec'
-```
-
-```bash
-cd /home/chen/FUN/flow/design
-sbt 'testOnly flow.core.BreezeCoreSpec'
-```
-
-如果目标是确认前端与核心主路径没有被改坏，优先跑这些入口，而不是只看单纯能否 compile。
-
-当前阶段的项目优先级应按下面顺序推进：
-
-1. 先实现 `ecall`，补齐最基本的异常/程序退出通路，保证后续测试程序能够被正确承载。
-2. 在 `ecall` 打通之后，接入 `riscv-tests`，优先验证 `I` 指令集语义是否正确。
-3. 只有在 `riscv-tests` 对 `I` 指令集的验证结果稳定之后，才启用 `GShare` 配置，去验证分支预测路径本身的正确性。
-
-因此，当前不要把 `gshare` 验证当成最前面的工作项。更准确的说法是：
-
-`gshare` 验证是后续阶段工作，它依赖 `ecall` 和基础 ISA 验证先收敛。
-
-## 文档维护原则
-
-后续更新本文档时，按下面规则处理：
-
-1. 只保留“当前真实状态”和“当前仍然有效的协作约定”。
-2. 明显带有阶段性的临时流程，完成后就删，不长期堆在这里。
-3. 如果实现已经改变，优先先改本文档，再继续口头沿用旧说法。
-4. 不要把“计划做什么”写成“已经实现了什么”。
-
-## 相关文件
-
-- `design/src/main/scala/frontend/BreezeFrontend.scala`
-- `design/src/main/scala/backend/BreezeBackend.scala`
-- `design/src/main/scala/core/BreezeCore.scala`
-- `design/src/test/scala/frontend/breezefrontendSpec.scala`
-- `design/src/test/scala/core/breezecoreSpec.scala`
+讨论新机制时，先解释正常路径、冲突/停顿、恢复与资源代价，再确定接口和实现细节。明确区分架构决定、RTL 实现、模块仿真、系统集成、综合时序和板上运行证据。不要把现有框架或历史测试结果写成新版 Breeze 的验证结论。
