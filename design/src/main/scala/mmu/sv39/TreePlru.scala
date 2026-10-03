@@ -9,7 +9,7 @@ object TreePlru {
   def victim(state: UInt, ways: Int): UInt = {
     check(ways)
     def descend(node: Int, first: Int, count: Int): UInt = {
-      if (count == 1) first.U(math.max(1, log2Ceil(ways)).W)
+      if (count == 1) first.U(log2Ceil(ways).W)
       else Mux(state(node), descend(2 * node + 2, first + count / 2, count / 2),
         descend(2 * node + 1, first, count / 2))
     }

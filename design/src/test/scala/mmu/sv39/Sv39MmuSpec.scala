@@ -199,16 +199,18 @@ class Sv39MmuSpec extends AnyFreeSpec with ChiselSim {
       d.io.itlb.kill.poke(true.B); h.tick(); d.io.itlb.kill.poke(false.B)
       d.io.itlb.req.ready.expect(false.B); h.waitReady(0)
       assert(h.request(iv, 0).kind == "hit")
-      for (afterGrant <- Seq(false, true)) {
-        h.fence(); val bad = BigInt(0x80001000)
+      for (afterGrant <- Seq(false, true); accessFault <- Seq(false, true)) {
+        h.fence(); h.faults.clear(); val bad = BigInt(0x80001000L)
+        if (accessFault) h.faults += pteAddress(Root, bad, 2)
         assert(h.request(bad).kind == "miss")
         if (afterGrant) h.tick(2)
         d.io.dtlb.kill.poke(true.B); h.tick(); d.io.dtlb.kill.poke(false.B)
         h.waitReady(); d.io.idle.expect(true.B)
-        assert(h.request(bad).kind == "miss"); h.waitReady(); assert(h.request(bad).kind == "pageFault")
+        assert(h.request(bad).kind == "miss"); h.waitReady()
+        assert(h.request(bad).kind == (if (accessFault) "accessFault" else "pageFault"))
       }
       // kill suppresses an already pending fault and the current S1 response.
-      h.fence(); assert(h.request(BigInt(0xc0001000)).kind == "miss"); h.waitReady()
+      h.fence(); h.faults.clear(); assert(h.request(BigInt(0xc0001000L)).kind == "miss"); h.waitReady()
       d.io.idle.expect(false.B); d.io.dtlb.kill.poke(true.B); h.tick(); d.io.dtlb.kill.poke(false.B)
       d.io.idle.expect(true.B)
       h.setRequest(dv, 1); h.tick(); d.io.dtlb.req.valid.poke(false.B)
