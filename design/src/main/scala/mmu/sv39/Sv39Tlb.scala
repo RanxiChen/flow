@@ -107,15 +107,16 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean) extends Module {
     val mask = (0 until p.ways).map(i => victim === i.U)
     for (i <- 0 until p.ways) { values(i).assignPage(f); values(i).tag := tag(f.vpn) }
     mem.write(s, values, mask)
-    baseValid(s)(victim) := true.B
+    if (p.ways == 1) baseValid(s)(0) := true.B else baseValid(s)(victim) := true.B
     basePlru(s) := TreePlru.touch(basePlru(s), victim, p.ways)
   }
   when(refill && !baseWrite) {
     val invalid = VecInit(sp.map(e => !e.valid))
     val victim = Mux(invalid.asUInt.orR, PriorityEncoder(invalid), TreePlru.victim(spPlru, p.superpages))
-    sp(victim).assignPage(io.done.bits.refill)
-    sp(victim).vpn := io.done.bits.refill.vpn; sp(victim).level := io.done.bits.refill.level
-    sp(victim).valid := true.B
+    val target = if (p.superpages == 1) sp(0) else sp(victim)
+    target.assignPage(io.done.bits.refill)
+    target.vpn := io.done.bits.refill.vpn; target.level := io.done.bits.refill.level
+    target.valid := true.B
     spPlru := TreePlru.touch(spPlru, victim, p.superpages)
   }
   sfS1Valid := sfRead

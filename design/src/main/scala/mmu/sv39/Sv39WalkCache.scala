@@ -30,10 +30,11 @@ class Sv39WalkCache(sets: Int, ways: Int, keyBits: Int) extends Module {
     val s = index(io.port.fill.bits.key)
     val invalid = VecInit(entries(s).map(e => !e.valid))
     val victim = Mux(invalid.asUInt.orR, PriorityEncoder(invalid), TreePlru.victim(plru(s), ways))
-    entries(s)(victim).valid := true.B
-    entries(s)(victim).tag := tag(io.port.fill.bits.key)
-    entries(s)(victim).asid := io.port.fill.bits.asid
-    entries(s)(victim).ppn := io.port.fill.bits.ppn
+    val target = if (ways == 1) entries(s)(0) else entries(s)(victim)
+    target.valid := true.B
+    target.tag := tag(io.port.fill.bits.key)
+    target.asid := io.port.fill.bits.asid
+    target.ppn := io.port.fill.bits.ppn
     plru(s) := TreePlru.touch(plru(s), victim, ways)
   }
   when(io.flush) { for (s <- 0 until sets; w <- 0 until ways) entries(s)(w).valid := false.B }
