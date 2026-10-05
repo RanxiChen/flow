@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Deterministic W1 CSV summaries. No timing/performance estimates."""
 import collections
+import argparse
 import csv
 from pathlib import Path
 import sys
+import json
 
-run, out = map(lambda p: Path(p).resolve(), sys.argv[1:])
+parser = argparse.ArgumentParser()
+parser.add_argument("run")
+parser.add_argument("out")
+parser.add_argument("--partial", action="store_true", help="Summarize only completed, token-matching cases")
+options = parser.parse_args()
+run, out = Path(options.run).resolve(), Path(options.out).resolve()
 out.mkdir(parents=True, exist_ok=True)
 
 def write(name, columns, rows):
@@ -30,6 +37,15 @@ inventory = set()
 for quant in ("q4_0", "q8_0"):
     for mode, vlen in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]:
         stem = run / "profile" / f"{quant}-{mode}-vlen{vlen}"
+        if options.partial:
+            exit_path = Path(str(stem) + ".exit")
+            if not exit_path.exists() or exit_path.read_text().strip() != "0":
+                print("PARTIAL_SKIP", stem.name)
+                continue
+            actual = json.loads(Path(str(stem) + ".json").read_text())
+            reference = json.loads((run / f"correctness/{quant}-native.json").read_text())
+            if actual != reference:
+                raise RuntimeError(f"Token mismatch in completed case: {stem.name}")
         funcs = list(csv.DictReader(Path(str(stem) + "-functions.csv").open()))
         vecs = list(csv.DictReader(Path(str(stem) + "-vectors.csv").open()))
         for phase in ("prefill", "decode"):
@@ -42,7 +58,6 @@ for quant in ("q4_0", "q8_0"):
             # Decode has 15 evaluations after the first token's prefill sample.
             tokens = 15 if phase == "decode" else None
             if phase == "prefill":
-                import json
                 tokens = json.loads((run / f"correctness/{quant}-native.json").read_text())["prompt_tokens"]
             totals.append(key + [tokens, total, scalar, vector, config, total / tokens])
             ranked = sorted(rows, key=lambda r: (-(int(r["scalar"]) + int(r["vector"])), r["symbol"]))
@@ -107,4 +122,4 @@ for r in totals:
     control = next(s for s in totals if s[0] == r[0] and s[1] == "scalar" and s[3] == r[3])
     ratios.append(r[:4] + [control[5], r[5], control[5] / r[5]])
 write("scalar-ratio.csv", base + ["scalar_instructions", "rvv_instructions", "scalar_over_rvv"], ratios)
-print("W1_SUMMARIES_COMPLETE", out)
+print("W1_PARTIAL_SUMMARIES" if options.partial else "W1_SUMMARIES_COMPLETE", out)
