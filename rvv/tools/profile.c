@@ -35,6 +35,7 @@ static unsigned phase;
 static char *output;
 
 static uint64_t read_reg(struct qemu_plugin_register *reg) {
+    g_byte_array_set_size(regbuf, 0);
     if (!reg || !qemu_plugin_read_register(reg, regbuf) || regbuf->len != 8) {
         fprintf(stderr, "R01 register read failed\n");
         abort();
@@ -70,7 +71,8 @@ static void init(qemu_plugin_id_t id, unsigned cpu) {
     }
     g_array_free(regs, true);
     regbuf = g_byte_array_new();
-    if (!vl_reg || !type_reg || !n_reg || !nc_reg) abort();
+    // The scalar control deliberately exposes no V extension.
+    if (!n_reg || !nc_reg) abort();
 }
 static void boundary(unsigned cpu, void *data) {
     unsigned next = GPOINTER_TO_UINT(data);

@@ -25,6 +25,7 @@ static void read_vector(unsigned int cpu, void *data) {
     }
     uint64_t vl = 0, type = 0;
     memcpy(&vl, buf->data, MIN(buf->len, sizeof(vl)));
+    g_byte_array_set_size(buf, 0);
     if (!qemu_plugin_read_register(type_reg, buf)) abort();
     memcpy(&type, buf->data, MIN(buf->len, sizeof(type)));
     fprintf(stderr, "VECTOR_STATE vl=%lu vtype=%lu\n", vl, type);

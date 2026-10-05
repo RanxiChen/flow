@@ -26,7 +26,8 @@ for quant in ("q4_0", "q8_0"):
     ref = execute(f"{quant}-native", [run / "build/native/r01-runner", model, root / "prompt.txt"])
     for mode, vlen in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]:
         name = f"{quant}-{mode}-vlen{vlen}"
-        actual = execute(name, [qemu, "-cpu", f"rv64,v=true,vlen={vlen},elen=64,vext_spec=v1.0",
+        cpu = f"rv64,v=true,vlen={vlen},elen=64,vext_spec=v1.0" if mode == "rvv" else "rv64,v=false"
+        actual = execute(name, [qemu, "-cpu", cpu,
                                 run / f"build/{mode}/r01-runner", model, root / "prompt.txt"])
         match = actual == ref and len(actual["token_ids"]) == 16
         results.append({"run": name, "match": match, "reference": ref, "actual": actual})
