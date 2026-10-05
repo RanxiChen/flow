@@ -320,7 +320,7 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 
 ## 阶段二（B01/B02 续行，最新状态）
 
-冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线与第 2 步单元门槛已完成，第 3 步生成/形式化执行中，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
+冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线与第 2 步单元门槛已完成，第 3 步已按用户决定结束，进入第 4 步后端集成，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
 
 ### A. 提交列表
 
@@ -331,6 +331,7 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 | 2 单元实现 | `14249c7e570955e08682ff840bc63df4156525a6` | 新统一接口、四级 MUL/DIV wrapper、获准迁移、协议/数学随机/原 MUL 等价性；Alan 34/34 通过，已 push |
 | 2 剩余边界检查 | `fc26153` | 空 commit 断言负测和 DIV 延迟边界；最终 Alan 单元门槛 37/37，已 push |
 | 3 形式化准备 | `798c062` | 单元 formal-only observation、独立请求 FIFO 台账、固定 SBY 预算；已 push，生成/证明结果待记录 |
+| 3 审阅配置 | `51b62b9286e60ffec74902e34f9f64047930df79` | DIV 0–34拍抽象核、两单元控制证明、严格串行、PDR无深度、单任务3600秒；已push，生产MUL/DIV RTL未改变 |
 | Alan 新基线临时分支 | `3adca5e283caa7faa3262c713e9ca7624fa5b2dc` | 分支 `t01-b02-baseline-20261005`；父提交 `d5672f51bf0ec67465148c02af970c70464bec68`，只 cherry-pick 上述 B02 提交；相对父提交只改三个构建文件 |
 
 参数入口：Chisel 7.0.0 source JAR 的 `chisel3/simulator/HasSimulator.scala:43-52` 选择 Verilator；`verilator/Backend.scala:71-89,105-223` 定义设置并组装参数，API 没有任意参数/控制文件入口。源码已读取，现有 `disabledWarnings` 只能按规则全局关闭，不能用于本项。仓库现有 `design/src/test/scala/fpu/BreezeFpTestSupport.scala:13-20` 与 `design/src/main/scala/sim/BreezeCoreSimSupport.scala:238-244` 只配置 include 目录；普通 ChiselSim suite 使用默认 backend。
@@ -457,7 +458,7 @@ DIV 完成拍数以接受沿为0：0表示接受沿锁存 core 完成、1–34�
 | prove | `abc pdr` | **无界，不设归纳深度**，3600秒/任务 |
 | cover | `smtbmc z3` | 80拍，3600秒/任务 |
 
-**同一时间只运行一个求解器**，任务逐一串行。出现 unknown/timeout 即照实记录并停止整个任务报告，不再换引擎反复试。F03/F05/F07/F08/F11 单元 assert 全PASS、相关 cover 全可达后才进入第4步。3600秒审阅策略开始前的中断不伪称为该策略下的timeout。没有改变任何生产断言、既有期望、随机次数或 BMC/cover 深度。
+上述为执行时采用的策略。用户随后按 review §7 明确结束第3步：保留 BMC-80 和已完成 cover，立即终止 PDR，不再运行，也不修复模型哈希复用脚本。第4–7步不含任何形式化任务。未改变生产断言、既有期望、随机次数或已运行 BMC/cover 深度。
 
 #### D.2 历史尝试与证据（保留）
 
@@ -473,9 +474,30 @@ DIV 完成拍数以接受沿为0：0表示接受沿锁存 core 完成、1–34�
 
 各cover实际 witness 为相应 `*_cover/engine_0/trace*.{vcd,yw,smtc}`，逐项步数映射见 PASS 文件。此前并行求解造成内存压力、swap，已纠正为严格串行；不将EOF原因未经内核日志确认便断言为OOM。原失败/中断不会删除，也不会计入通过。旧 MUL BMC 80 的结果只注明原 source/config；当前配置的执行或复用必须按相同模型哈希单独登记，不冒充新运行。
 
-#### D.3 当前执行状态
+#### D.3 最终结果（按用户决定结束）
 
-上述审阅配置已准备；DIV新的0/34端点cover尚未运行，当前控制模型的最终PASS、无界证明及门槛尚未取得。尚未进入第4步。本机只做文本/静态检查，所有RTL生成、BMC、prove和cover在Alan运行。
+审阅配置 source `51b62b9286e60ffec74902e34f9f64047930df79`，Alan cwd `/home/chen/FUN/flow/design` 生成；执行根目录 `/home/chen/FUN/flow-runs/20261005-t01-2-control-review-51b62b9/`。`generate.log` / `.meta` / `.exit` exit0；`source.sha`、`tools.log`、`submodules.log`、原始 `generated/`、转换 `yosys/` 与 lowering audit 均保留。MUL模型哈希校验通过，但复用状态解析误将SBY的三列 `PASS 0 469` 当成单词比较而拒绝复用；`mul-bmc-reuse.log` 记录该辅助校验错误，随后在当前SHA重新运行，不将它混成DUT反例或复用成功。
+
+| 实际命令（cwd均为上述Alan执行根） | 退出码 / 结果 | 日志 |
+| --- | --- | --- |
+| `sby -f mul_protocol_abc.sby bmc` | 0，80frames PASS，469秒 | `mul_protocol_abc-bmc.log` / `.exit`，`mul_protocol_abc_bmc/` |
+| `sby -f mul_protocol_abc.sby cover` | 0，8/8 cover PASS，最大到第14步 | `mul_protocol_abc-cover.log` / `.exit` / `.meta`，`mul_protocol_abc_cover/PASS`、`engine_0/trace*.{vcd,yw,smtc}` |
+| `sby -f div_abc.sby bmc` | 0，80frames PASS，5秒 | `div_abc-bmc.log` / `.exit` / `.meta`，`div_abc_bmc/` |
+| `sby -f div_abc.sby cover` | 0，7/7 cover PASS；抽象核0拍cover在第2步、34拍cover在第36步 | `div_abc-cover.log` / `.exit` / `.meta`，`div_abc_cover/PASS`、`engine_0/trace*.{vcd,yw,smtc}` |
+| `sby -f div_abc.sby prove` | 按用户决定 SIGINT 终止，无无界结论 | `div_abc-prove.log` / `.meta`，`div_abc_prove/` |
+| `sby -f mul_protocol_abc.sby prove` | 未运行；按用户决定放弃 | 不再启动 |
+
+PDR 和串行 runner 已终止，远端进程检查确认没有剩余求解器任务。原始日志保留。第3步按用户决定结束，直接进入第4步；不宣称无界证明通过。所有上述RTL生成、BMC、prove和cover均在Alan运行。
+
+| 性质 | 最终证据结论 |
+| --- | --- |
+| F03 | BMC-80 PASS + 单元仿真断言覆盖，无界证明按用户决定放弃 |
+| F05 | BMC-80 PASS + 单元仿真断言覆盖，无界证明按用户决定放弃 |
+| F07 | BMC-80 PASS + 单元仿真断言覆盖，无界证明按用户决定放弃 |
+| F08 | BMC-80 PASS + 单元仿真断言覆盖，无界证明按用户决定放弃 |
+| F11 | BMC-80 PASS + 单元仿真断言覆盖，无界证明按用户决定放弃 |
+
+单元仿真为第2步37/37 PASS。其余 F01/F02/F04/F06/F09/F10/F12/F13/F14 不运行形式化，后端集成后由 S01–S16 仿真断言覆盖；F06 使用已提交项超过2000拍未写回报错的仿真看门狗。第4–7步无形式化任务。
 
 ### E. 迁移清单与删除清单
 
@@ -494,4 +516,4 @@ DIV 完成拍数以接受沿为0：0表示接受沿锁存 core 完成、1–34�
 
 ### G. B 类问题
 
-无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2 步 37/37 门槛已通过；第 3 步控制证明执行中、第 4–7 步未运行；按本轮 D 节审阅策略串行执行，unknown/timeout 时立即停下报告。
+无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2 步 37/37 门槛已通过；第3步按用户决定结束：两个单元 BMC-80 PASS、cover 8/8与7/7 PASS，PDR已终止、无界证明放弃。第4步开始集成，第4–7步不运行形式化。
