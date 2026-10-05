@@ -25,8 +25,10 @@ for phase in ('prefill', 'decode'):
     assert sum(int(r['load_unit']) for r in rows) == 16, (phase, rows)
     assert sum(int(r['store_unit']) for r in rows) == 16, (phase, rows)
     assert sum(int(r['vector']) for r in rows) == 3, (phase, rows)
-    data = [r for r in vectors if r['phase'] == phase and not r['opcode'].startswith('vset')]
+    data = [r for r in vectors if r['phase'] == phase and r['opcode'].startswith('v') and not r['opcode'].startswith('vset')]
     assert sum(int(r['count']) for r in data) == 2, data
     assert all(int(r['sew']) == 8 and int(r['vl']) == 16 and int(r['lmul_log2']) == 0 for r in data), data
-print('PROFILE_SMOKE_PASS: per phase 3 vector instructions, 16 load bytes, 16 store bytes, SEW8 LMUL1 VL16')
+    csr = [r for r in vectors if r['phase'] == phase and r['opcode'].endswith('.vlenb')]
+    assert sum(int(r['count']) for r in csr) == 1, csr
+print('PROFILE_SMOKE_PASS: per phase 3 vector instructions, 1 scalar CSR read, 16 load bytes, 16 store bytes, SEW8 LMUL1 VL16')
 PY

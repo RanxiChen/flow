@@ -12,9 +12,14 @@ int main(void) {
     for (int i = 0; i < 16; ++i) a[i] = i;
     r01_phase_prefill();
     copy16(a, b);
+    unsigned long prefill_vlenb;
+    asm volatile("csrr %0, vlenb" : "=r"(prefill_vlenb));
     r01_phase_decode();
     copy16(b, c);
+    unsigned long decode_vlenb;
+    asm volatile("csrr %0, vlenb" : "=r"(decode_vlenb));
     r01_phase_end();
+    if (prefill_vlenb != 16 || decode_vlenb != 16) return 2;
     for (int i = 0; i < 16; ++i) if (c[i] != i) return 1;
     return 0;
 }
