@@ -320,13 +320,16 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 
 ## 阶段二（B01/B02 续行，最新状态）
 
-冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线已完成，第 2 步待执行，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
+冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线与第 2 步单元门槛已完成，第 3 步待执行，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
 
 ### A. 提交列表
 
 | 步骤 | 提交 | 内容 |
 | --- | --- | --- |
 | 0 B02 构建 | `cd9321a335c156d974985a378930d98df6e96b69` | `T01-2/0 Scope ChiselSim BLKANDNBLK waiver to CVFPU sources`，已 push |
+| 0 新基线报告 | `788c6a0` | 新基线逐 suite 表与作废旧表，已 push |
+| 2 单元实现 | `14249c7e570955e08682ff840bc63df4156525a6` | 新统一接口、四级 MUL/DIV wrapper、获准迁移、协议/数学随机/原 MUL 等价性；Alan 34/34 通过，已 push |
+| 2 剩余边界检查 | `fc26153` | 空 commit 断言负测和 DIV 延迟边界；最终 Alan 单元门槛 37/37，已 push |
 | Alan 新基线临时分支 | `3adca5e283caa7faa3262c713e9ca7624fa5b2dc` | 分支 `t01-b02-baseline-20261005`；父提交 `d5672f51bf0ec67465148c02af970c70464bec68`，只 cherry-pick 上述 B02 提交；相对父提交只改三个构建文件 |
 
 参数入口：Chisel 7.0.0 source JAR 的 `chisel3/simulator/HasSimulator.scala:43-52` 选择 Verilator；`verilator/Backend.scala:71-89,105-223` 定义设置并组装参数，API 没有任意参数/控制文件入口。源码已读取，现有 `disabledWarnings` 只能按规则全局关闭，不能用于本项。仓库现有 `design/src/test/scala/fpu/BreezeFpTestSupport.scala:13-20` 与 `design/src/main/scala/sim/BreezeCoreSimSupport.scala:238-244` 只配置 include 目录；普通 ChiselSim suite 使用默认 backend。
@@ -416,11 +419,19 @@ ACT4 不重跑，沿用源码 `d5672f5` 的 69/69 PASS、0 FAIL/TIMEOUT/INFRA_ER
 | 0：`/home/chen/.local/share/coursier/bin/sbt test` | Alan `/home/chen/FUN/flow/design` | 1 | 276/1/0，56 suites；上述根目录 `sbt-test.log` / `sbt-test.meta` / `sbt-test.exit` / `source.sha` |
 | 0：`python3 /tmp/t01-b02-summary.py` | Alan SSH 默认目录；输入为上述根目录 | 0 | 按全部原始 XML 汇总，276/1/0；`suite-summary.json` / `suite-table.md` / `failures.json` |
 | 0：Git fetch、`git switch -c t01-b02-baseline-20261005 d5672f51bf0ec67465148c02af970c70464bec68`、`git cherry-pick cd9321a335c156d974985a378930d98df6e96b69` | Alan `/home/chen/FUN/flow` | 0 | 临时提交 `3adca5e`；`checkout.log` / `source-status.log` / `submodules.log`；相对 d5672f5 只改三个构建文件 |
-| 2 单元、3 形式化、4 后端、5 trace、6 整核、7 综合 | Alan | — | 未运行；按顺序继续，不能把第 0 步结果当作改造后验证 |
+| 2：`/home/chen/.local/share/coursier/bin/sbt 'testOnly flow.multiplier.* flow.divider.*'`，SHA `14249c7e570955e08682ff840bc63df4156525a6` | Alan `/home/chen/FUN/flow/design` | 0 | 7 suites，34/34；`/home/chen/FUN/flow-runs/20261005-t01-2-unit-14249c7/sbt-test.log` / `.meta` / `.exit`，`test-reports/`、`source.sha` |
+| 2：`/home/chen/.local/share/coursier/bin/sbt 'testOnly flow.multiplier.* flow.divider.* flow.backend.MduBoundarySpec'`，SHA `fc26153` | Alan `/home/chen/FUN/flow/design` | 0 | 8 suites，37/37，0 ignored/aborted；`/home/chen/FUN/flow-runs/20261005-t01-2-unit-fc26153/sbt-test.log` / `.meta` / `.exit`，`test-reports/`、`source.sha`；第 2 步门槛通过 |
+| 3 形式化、4 后端、5 trace、6 整核、7 综合 | Alan | — | 未运行，按顺序继续；本轮单元证据不代表后端/整核/综合通过 |
 
 工具：Java GraalVM CE 17.0.9；sbt 项目 1.9.7（启动脚本 1.11.2）；Verilator 5.028；CVFPU `1b220f3bc89df99e246b72e3574a3a533cf87653`，与旧基线一致，详见 `tools.log` / `submodules.log`。完整 sbt 用时 1913 s。Test fork 只用于把包装器 PATH 限定在测试进程，不改变测试向量/期望/次数。
 
 实际参数证据 `fpunit-verilator-parameters.dat`：来自本轮 FP 单元构建的 `VsvsimTestbench__verFiles.dat`，首个参数为上述 `.vlt`，没有 `-Wno-fatal`；该 FP suite 2/2 通过。BLKANDNBLK 未再出现于本轮 sbt 失败记录；PINMISSING 仍触发失败，确认未放宽其规则。Test 参数入口源码 JAR SHA256 `354de5e110cbe312449047a8d1f732bdc2c994e8ba0673c579b2a7292fb19139`，本地只读副本 `/tmp/flow-t01-b02-20261005/t01-chisel-7.0.0-sources.jar`。本地 shell 语法和 `git diff --check` 通过，只是静态检查。
+
+单元实施：新增 `backend/IntMduProtocol.scala`、`multiplier/CommittedMulUnit.scala`、`divider/CommittedDivUnit.scala`。MUL 四级 product/op/rd/valid/committed，A01 整体 enable，最老未提交 commit、先 commit 后 kill、结果保持。DIV 复用原样 unsigned radix-4，fast 1 拍 done、occupied 保持直到 write/合法 kill、release/accept 隔拍。旧后端暂时使用旧 wrapper，第 4 步再接线删除；没有在第 2 步提前改后端。
+
+B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 500 请求、五 op 各 100，commit 延迟 0–6 拍、result 反压 0–9 拍；DIV seed `0x702` 512 请求、八操作各 64，commit 延迟 0–39 拍、反压 0–9 拍；U01 seed `0x703` 1000 个连续 65-bit 请求，对原样 SignedMul65x65 和独立 BigInt。通过后的实际循环台账分别为 MUL 500 req/commit/write、0 kill；DIV 512 req/commit/write、0 kill；等价性 1000 req/commit/write、0 kill。四级占满定向用例最大占用 4、未提交 P4 停住 9 拍，先 commit 后 kill 丢弃其余项，已提交项再反压/kill 8 拍不丢；DIV 定向用例最大占用 1、早 done 等 commit 9 拍，再反压/kill 7 拍。另覆盖四个 MUL 级的 kill、复位在途、连续 8 个不同 rd MUL 的 II=1/四拍、DIV 迭代中 kill、早 done 未提交 kill/reset。原 SignedMul65x65 的 50k 检查原样运行通过。
+
+延迟原文（最终单元日志）：`a=0,b=1`、`a=1,b=2`、`a=5,b=5` 各 `arithmetic_iterations=0 req_to_done=2 req_to_write=12`；`a=18446744073709551615,b=1` 为 `arithmetic_iterations=32 req_to_done=34 req_to_write=44`；快路径 `req_to_done=1`。req→write 含这些测试明确施加的 commit/8 拍结果反压，不是无反压算术延迟，也不宣称任意环境的写回上界。两个空 commit 负测通过，预期异常来自 RTL S04 断言；不是忽略失败。没有单元测试失败或 RTL 重试。程序指令数、整核覆盖和波形 witness 此时未运行/未产生，有限随机结果不证明无界活性。
 
 ### D. 形式化
 
@@ -428,7 +439,14 @@ F01–F14 及相关 cover：未运行。无新 harness、SBY、assume、BMC 深�
 
 ### E. 迁移清单与删除清单
 
-无测试迁移、无字段/RTL/测试删除；原测试、断言、期望值、随机次数、深度与 assume 未修改。
+已批准迁移（新源码行号对应 `fc26153`）：
+
+| 旧检查（源:行） | 新检查（源:行） | 结果 |
+| --- | --- | --- |
+| `multiplier/RiscvMulUnitSpec.scala:23-64`：旧 wrapper 三拍数据/flush；完整路径均为 `design/src/test/scala/` | `multiplier/RiscvMulUnitSpec.scala:26-40,56-71`：统一 req，补 commit，四拍 result 和未提交 kill；同五种 op 的原输入/期望值原样，kill 用例 7×9 原样 | 2/2 PASS |
+| `divider/RiscvDivUnitSpec.scala:25-65`：原 req/脉冲完成观测 | `divider/RiscvDivUnitSpec.scala:30-70`：统一 req，在接收后补 commit，改 result 观测；四组输入/期望值及 `cycles < 33` 容差原样；原文件实际没有 flush 测例，新增 kill 用例另在协议 suite | 1/1 PASS |
+
+没有删除任何旧 RTL 字段、旧 wrapper、参照单元或测试；只做上述获准驱动/观测迁移并增加检查。旧后端完成断言和旧 wrapper 内断言也保留，第 4 步再按冻结稿迁移/删除。没有改已有期望值、随机次数、深度或 assume。
 
 ### F. 综合
 
@@ -436,4 +454,4 @@ F01–F14 及相关 cover：未运行。无新 harness、SBY、assume、BMC 深�
 
 ### G. B 类问题
 
-无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2–7 步尚未运行，本轮没有停止，继续按步骤门槛执行。
+无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2 步 37/37 门槛已通过；第 3–7 步尚未运行，本轮没有停止，继续按步骤门槛执行。
