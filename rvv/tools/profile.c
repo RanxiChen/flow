@@ -153,6 +153,9 @@ static void translate(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
         bool vector_mem = size == 4 && (opcode == 0x07 || opcode == 0x27) && (width == 0 || width >= 5);
         bool vector = size == 4 && (opcode == 0x57 || vector_mem);
         bool vset = vector && opcode == 0x57 && width == 7;
+        unsigned csr = raw >> 20;
+        bool vector_csr = size == 4 && opcode == 0x73 && width &&
+            (csr == 0xc20 || csr == 0xc21 || csr == 0xc22 || csr == 0x008 || csr == 0x009 || csr == 0x00a || csr == 0x00f);
         qemu_plugin_u64 count = {score, index * sizeof(Counts) + (vector ? offsetof(Counts, vector) : offsetof(Counts, scalar))};
         qemu_plugin_register_vcpu_insn_exec_inline_per_vcpu(q, QEMU_PLUGIN_INLINE_ADD_U64, count, 1);
         if (vset) {
@@ -163,13 +166,20 @@ static void translate(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
                               strstr(f->name, "ggml_gemv_q4_0_") || strstr(f->name, "ggml_gemv_q8_0_"))) {
             qemu_plugin_register_vcpu_insn_exec_cb(q, kernel_entry, QEMU_PLUGIN_CB_R_REGS, GUINT_TO_POINTER(index));
         }
-        if (vector) {
+        if (vector || vector_csr) {
             Instruction *insn = g_new0(Instruction, 1);
             insn->fn = index;
-            insn->is_vset = vset;
+            insn->is_vset = vset || vector_csr;
             char *disas = qemu_plugin_insn_disas(q);
             insn->op = g_strndup(disas, strcspn(disas, " \t"));
             g_free(disas);
+            if (vector_csr) {
+                const char *csrname = csr == 0xc20 ? "vl" : csr == 0xc21 ? "vtype" : csr == 0xc22 ? "vlenb" :
+                    csr == 0x008 ? "vstart" : csr == 0x009 ? "vxsat" : csr == 0x00a ? "vxrm" : "vcsr";
+                char *op = g_strdup_printf("%s.%s", insn->op, csrname);
+                g_free(insn->op);
+                insn->op = op;
+            }
             qemu_plugin_register_vcpu_insn_exec_cb(q, vector_exec, QEMU_PLUGIN_CB_R_REGS, insn);
             if (vector_mem) {
                 unsigned mop = (raw >> 26) & 3, nf = (raw >> 29) & 7, lumop = (raw >> 20) & 31;

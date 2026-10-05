@@ -73,9 +73,11 @@ for quant in ("q4_0", "q8_0"):
                 inventory.add(r["opcode"])
                 if any(p in r["symbol"] for p in ("ggml_vec_dot_q4_0_q8_0", "ggml_vec_dot_q8_0_q8_0", "ggml_gemv_q4_0_", "ggml_gemv_q8_0_")):
                     histograms.append(key + [r["symbol"], r["opcode"], int(r["sew"]), int(r["lmul_log2"]), int(r["vl"]), int(r["count"])])
-            assert sum(counts.values()) == vector, (key, sum(counts.values()), vector)
+            assert sum(n for op, n in counts.items() if not op.startswith("csr")) == vector, (key, counts, vector)
             for op, count in sorted(counts.items(), key=lambda x: (-x[1], x[0])):
-                if op.startswith("vset"):
+                if op.startswith("csr"):
+                    category = "rvv_csr_scalar_instruction"
+                elif op.startswith("vset"):
                     category = "configuration"
                 elif op.startswith(("vl", "vs")) and op.endswith(".v"):
                     category = "memory"
@@ -87,14 +89,14 @@ for quant in ("q4_0", "q8_0"):
                     category = "shift_unpack_bitwise"
                 else:
                     category = "other"
-                opcodes.append(key + [op, category, count, count / vector if vector else 0])
+                opcodes.append(key + [op, category, count, count / sum(counts.values()) if counts else 0])
 
 write("totals.csv", base + ["tokens", "total", "scalar", "vector", "vset", "instructions_per_token"], totals)
 write("top20.csv", base + ["rank", "symbol", "instructions", "fraction", "vector"], top)
 write("kernels.csv", base + ["symbol", "calls", "blocks32", "scalar", "vector", "vset", "scalar_per_block", "vector_per_block", "vset_per_block"],
       sorted(kernels))
 write("kernel-vl.csv", base + ["symbol", "opcode", "sew", "lmul_log2", "vl", "count"], sorted(histograms))
-write("opcodes.csv", base + ["opcode", "category", "count", "fraction_of_vector"], opcodes)
+write("opcodes.csv", base + ["opcode", "category", "count", "fraction_of_vector_and_rvv_csr"], opcodes)
 write("nonmatrix.csv", base + ["group", "exclusive_symbol_instructions", "fraction", "vector", "symbols"], nonmatrix)
 write("memory.csv", base + ["kind", "category", "bytes", "bytes_per_token"], memories)
 write("instruction-list.csv", ["opcode"], [[op] for op in sorted(inventory)])

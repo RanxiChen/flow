@@ -67,6 +67,8 @@ instructions outside all recorded ranges are assigned to `[unknown]`.
 Instruction counts are exclusive to each symbol, not inclusive call-tree
 costs. Scalar/vector/configuration counts use QEMU inline scoreboards.
 Configuration instructions are also included in the vector total.
+Reads/writes of RVV CSRs (including `vlenb`) remain scalar instructions in
+these totals and also appear in the opcode inventory with their CSR names.
 
 For data instructions, VL and vtype are read at execution time using QEMU's
 register API. `lmul_log2` records the signed LMUL exponent (0 means m1, -1
