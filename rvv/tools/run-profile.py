@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Run serial, nice'd profiles only after all token comparisons passed."""
+"""Run bounded, nice'd profiles only after all token comparisons passed."""
 import csv
 import argparse
+import os
 from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import subprocess
 import sys
 import threading
+import signal
 
 root = Path(__file__).resolve().parents[1]
-run = Path(sys.argv[1]).resolve()
 qemu = Path.home() / "opt/act4/gcc-2026.07.15/bin/qemu-riscv64"
-comparisons = json.loads((run / "correctness/comparison.json").read_text())
 expected = {f"{q}-{mode}-vlen{vl}" for q in ("q4_0", "q8_0")
             for mode, vl in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]}
-if {r["run"] for r in comparisons if r["match"]} != expected or not all(r["match"] for r in comparisons):
-    raise SystemExit("Correctness gate incomplete or failed; profiling prohibited")
 parser = argparse.ArgumentParser()
 parser.add_argument("run")
 parser.add_argument("case", nargs="?")
@@ -25,7 +23,11 @@ parser.add_argument("--jobs", type=int, default=1)
 parser.add_argument("--resume", action="store_true")
 parser.add_argument("--exclude", choices=sorted(expected))
 options = parser.parse_args()
-if not 1 <= options.jobs <= min(4, max(1, __import__("os").cpu_count() // 2)):
+run = Path(options.run).resolve()
+comparisons = json.loads((run / "correctness/comparison.json").read_text())
+if {r["run"] for r in comparisons if r["match"]} != expected or not all(r["match"] for r in comparisons):
+    raise SystemExit("Correctness gate incomplete or failed; profiling prohibited")
+if not 1 <= options.jobs <= min(4, max(1, os.cpu_count() // 2)):
     raise SystemExit("R01 profiling permits at most four workers and half the CPUs")
 selected = options.case
 suffix = "-repeat" if options.repeat else ""
@@ -35,6 +37,15 @@ if selected is not None and selected not in expected:
 active = set()
 lock = threading.Lock()
 failed = threading.Event()
+
+def terminate(signum, frame):
+    with lock:
+        failed.set()
+        for process in active:
+            process.terminate()
+    raise SystemExit(128 + signum)
+
+signal.signal(signal.SIGTERM, terminate)
 
 def execute(case):
     try:
@@ -78,6 +89,15 @@ def measure(case):
         if actual != ref:
             raise SystemExit(f"STOP: instrumented {name} token IDs differ")
         rows = list(csv.DictReader(Path(str(prefix) + "-functions.csv").open()))
+        vectors = list(csv.DictReader(Path(str(prefix) + "-vectors.csv").open()))
+        if {r["phase"] for r in rows} != {"prefill", "decode"}:
+            raise RuntimeError(f"Profile phases incomplete: {name}")
+        for phase in ("prefill", "decode"):
+            counted = sum(int(r["vector"]) for r in rows if r["phase"] == phase)
+            frequencies = sum(int(r["count"]) for r in vectors
+                              if r["phase"] == phase and not r["opcode"].startswith("csr"))
+            if frequencies != counted:
+                raise RuntimeError(f"Profile vector counts disagree: {name} {phase}")
         if mode == "scalar" and sum(int(r["vector"]) for r in rows):
             raise SystemExit("Scalar control unexpectedly executes vector instructions")
         print("PROFILE_PASS", name, flush=True)

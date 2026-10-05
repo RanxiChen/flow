@@ -6,9 +6,13 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import shutil
 
 run, out = (Path(p).resolve() for p in sys.argv[1:])
 subprocess.run([sys.executable, str(Path(__file__).with_name("summarize.py")), str(run), str(out)], check=True)
+subprocess.run([sys.executable, str(Path(__file__).with_name("tensors.py")), str(run)], check=True)
+for quant in ("q4_0", "q8_0"):
+    shutil.copyfile(run / f"summary/tensors-{quant}.csv", out / f"tensors-{quant}.csv")
 inputs = json.loads((Path(__file__).resolve().parents[1] / "third_party/inputs.json").read_text())
 tensors = json.loads((run / "summary/tensors.json").read_text())
 data = {}
@@ -35,12 +39,12 @@ def rvv(name):
 paragraph("# R01 / W1：RVV 工作负载画像")
 paragraph("本页是 Alan 上 QEMU user-mode 的动态指令与架构访存统计，依据 [R01 任务书](tasks/R01-rvv-workload-perfmodel.md)。没有周期或 token/s 测量，也没有 W2 模型估计。完整小型表在 `rvv/results/w1/`；原始数据留在 Alan。")
 paragraph("## 输入与证据")
-paragraph(f"Alan 工作区 `/home/chen/FUN/flow-rvv-r01`，分支 `feat/rvv-20261005`；运行目录 `{run}`（下文简称 RUN）。统计流水线 Flow 提交 `{(run / 'pipeline-source.sha').read_text().strip()}`；runner 构建提交 `8c7a34d`，后续 runner/build 文件没有改变，最终文件一致性见回报中的证据核查。上游 llama.cpp `{inputs['llama_commit']}`，提交日期 `{inputs['llama_date']}`。没有修改上游文件或内核。")
+paragraph(f"Alan 工作区 `/home/chen/FUN/flow-rvv-r01`，分支 `feat/rvv-20261005`；运行目录 `{run}`（下文简称 RUN）。初始统计流水线 Flow 提交 `{(run / 'pipeline-source.sha').read_text().strip()}`；并行接续提交 `{(run / 'parallel-source.sha').read_text().strip()}`，仅改变调度，插件/runner 没有改变；runner 构建提交 `8c7a34d`，后续 runner/build 文件没有改变，最终文件一致性见回报中的证据核查。上游 llama.cpp `{inputs['llama_commit']}`，提交日期 `{inputs['llama_date']}`。没有修改上游文件或内核。")
 paragraph(f"官方模型仓库 `{inputs['model_repo']}`，固定 revision `{inputs['model_revision']}`。")
 table(["模型", "文件字节", "sha256"], [[name, m["size"], f"`{m['sha256']}`"] for name, m in inputs["model_metadata"].items()])
 paragraph("提示词见 `rvv/prompt.txt`，实际 32 token；贪心采样，16 个生成 token；线程数和 batch 线程数均为 1。主构建 GCC/G++ 15.1.0，QEMU 11.0.0，RVV ISA `rv64gcv/lp64d`，标量 `rv64gc/lp64d` 且 QEMU `v=false`。BLAS/OpenMP 关闭；RVV 构建关闭 Zfh、Zvfh、Zicbop、Zihintpause，保留上游默认 repack 开关。完整 CMake 命令在 RUN/build.log；选项和复现命令见 [rvv/README.md](../rvv/README.md)。Clang 18.1.3 只作 RVV intrinsics 短片段对照，LLVM 全模型与 Spike/pk 未运行。")
 table(["模型", "32-token 提示", "16 个参照 token ID", "RVV 128/256/512/1024 与标量"], [[q, 32, "`" + ",".join(map(str, json.loads((run / f'correctness/{q}-native.json').read_text())["token_ids"])) + "`", "全部一致"] for q in ("q4_0", "q8_0")])
-paragraph("正确性原始文件：RUN/correctness/comparison.json 与各 case 的 `.json/.log`；统计运行的 token ID 还会再次比对。QEMU 插件原始文件：RUN/profile/{quant}-{mode}-vlen{N}-functions.csv、-vectors.csv、.json、.log、.exit。case 的全部实际命令见 RUN/pipeline.log，构建/盘点/失败修复记录见 [R01-report.md](tasks/R01-report.md)。全部仿真串行、`nice -n 10`；保留其他 Alan 任务。")
+paragraph("正确性原始文件：RUN/correctness/comparison.json 与各 case 的 `.json/.log`；统计运行的 token ID 还会再次比对。QEMU 插件原始文件：RUN/profile/{quant}-{mode}-vlen{N}-functions.csv、-vectors.csv、.json、.log、.exit。case 的全部实际命令见 RUN/pipeline.log 和 RUN/parallel-recovery.log，构建/盘点/失败修复记录见 [R01-report.md](tasks/R01-report.md)。正确性串行；统计至多四个并发单线程进程，全部 `nice -n 10`，小于 Alan 物理核数的一半；保留其他 Alan 任务。")
 paragraph("### 张量清单")
 table(["模型", "张量数/类型", "张量总字节", "token_embd.weight", "output.weight"], [[q, f"{t['tensor_count']} / " + ", ".join(f"{k}:{v}" for k,v in sorted(t["types"].items())), t["tensor_bytes"], next(f"{x['type']}, {x['dimensions']}, {x['bytes']} B" for x in t["token_embd"] if x["name"] == "token_embd.weight"), next(f"{x['type']}, {x['dimensions']}, {x['bytes']} B" for x in t["token_embd"] if x["name"] == "output.weight")] for q,t in tensors.items()])
 paragraph("形状按 GGUF 维度顺序记录。逐张量名称、形状、类型、元素数和字节数见 `rvv/results/w1/tensors-q4_0.csv` 与 `tensors-q8_0.csv`。两份模型都有 121 个 F32 张量；Q4_0 文件的输出层实际是 Q8_0，两份模型的嵌入和输出层都分别存储。")
@@ -82,6 +86,18 @@ for r in rvv("memory"):
         loads[tuple(key(r))] += int(r["bytes"])
 table(["模型", "模式", "VLEN", "阶段", "阶段向量 load B", "每 token B", "张量总 B", "每 token/张量总"], [list(k) + [v, num(v / (15 if k[3] == "decode" else 32)), tensors[k[0]]["tensor_bytes"], num(v / (15 if k[3] == "decode" else 32) / tensors[k[0]]["tensor_bytes"])] for k,v in sorted(loads.items())])
 paragraph("四种访存类别及 store 字节完整表见 `rvv/results/w1/memory.csv`，零项也保留。不能用向量 load 总量确认严格的“每 token 读一遍整个 GGUF”：GGUF 含元数据；token_embd 是行查表，不遍历其整张量；输出层单独存储且 Q4 文件也使用 Q8；dot 还重复读激活，量化 scale 和其他部分由 scalar load 读取。因此这里给出实际架构字节并对照文件/张量大小，不能据相近或更大就断言 DDR 读完整模型一遍。prefill 的批处理与 decode 独立列出。")
+paragraph("补充核查一次解码对活跃量化矩阵的逻辑遍历量：取 Q2 实际 dot 入口块数，Q4_0 每 32 权重块 18 B、Q8_0 每块 34 B（固定上游 ggml/src/ggml-common.h 的 block_q4_0/block_q8_0），与逐张量清单排除 token_embd 后的量化矩阵 payload 比较。这是统计派生的格式字节数，包含 scale，区别于上表实际向量 load。")
+weight_rows = []
+for q in ("q4_0", "q8_0"):
+    inventory_rows = list(csv.DictReader((out / f"tensors-{q}.csv").open()))
+    active_bytes = sum(int(r["bytes"]) for r in inventory_rows if r["name"] != "token_embd.weight" and r["type"] in ("Q4_0", "Q8_0"))
+    for vlen in (128, 256, 512, 1024):
+        counted = sum(int(r["blocks32"]) * (18 if r["symbol"] == "ggml_vec_dot_q4_0_q8_0" else 34)
+                      for r in rvv("kernels") if r["quant"] == q and r["phase"] == "decode" and int(r["vlen"]) == vlen
+                      and r["symbol"] in ("ggml_vec_dot_q4_0_q8_0", "ggml_vec_dot_q8_0_q8_0")) / 15
+        weight_rows.append([q, vlen, active_bytes, num(counted), num(counted / active_bytes), "相等" if counted == active_bytes else "不相等"])
+table(["模型", "VLEN", "非嵌入量化张量 B", "dot 块数派生 B/token", "比值", "核查"], weight_rows)
+paragraph("若上表相等，则支持当前 dot 路径每次解码逻辑遍历一次这些活跃量化矩阵；不包括整张 token_embd、F32 张量、KV 和激活的流量，也不意味着每字节都由 DDR 重新读取。没有地址级 cache/DDR 统计，不能给出物理权重读取次数。")
 paragraph("## Q7：RVV 及相关 CSR 完整清单")
 paragraph("下面是两模型、两阶段、四种 VLEN 的去重并集。逐 case 次数在 Q4 表，逐内核 VL 在 Q2 表；没有进入当前工作负载的指令不在此清单。")
 table(["opcode"], [[f"`{r['opcode']}`"] for r in data["instruction-list"]])
@@ -90,9 +106,14 @@ table(["模型", "模式", "VLEN", "阶段", "标量指令", "RVV 指令", "标�
 paragraph("这是动态指令数量比，不能当性能加速比。QEMU 执行时间受翻译和插件开销影响，没有作为 Breeze 或协处理器速度证据。")
 paragraph("## 对设计的含义与限制")
 paragraph("实测操作码、短块 VL 和配置频度可以作为下一步快路径与固定开销模型的输入；仅扩大 VLEN 是否减少现有内核指令，需看 Q3 的实际数据。归约、扩宽整数乘加和 Q4 拆包不能遗漏。模型含不同类型的输出/嵌入与 F32 张量，因此不能只建一种量化矩阵模型。架构访存量没有建立 DDR 带宽、延迟或在途深度的实测依据；这里不选择 DLEN、队列深度、自定义指令或 RTL 实现。W2 仍需用户确认。")
+for q in ("q4_0", "q8_0"):
+    lo = next(r for r in rvv("totals") if r["quant"] == q and r["phase"] == "decode" and r["vlen"] == "128")
+    hi = next(r for r in rvv("totals") if r["quant"] == q and r["phase"] == "decode" and r["vlen"] == "1024")
+    matrix = sum(int(r["vector"]) for r in rvv("kernels") if r["quant"] == q and r["phase"] == "decode" and r["vlen"] == "128" and r["symbol"] in ("ggml_vec_dot_q4_0_q8_0", "ggml_vec_dot_q8_0_q8_0"))
+    paragraph(f"{q}：VLEN 从 128 到 1024，decode 总指令变化 {pct(int(hi['total']) / int(lo['total']) - 1)}；VLEN=128 时上述两个量化 dot 的自身向量指令占阶段向量总量 {pct(matrix / int(lo['vector']))}。这两个比例直接由 Q1/Q2 的计数派生。")
 paragraph("本次仅覆盖固定提示、16-token 贪心输出、单线程、GCC 15.1.0 和 rv64gcv。SEW/LMUL/VL 是执行时配置，whole-register 操作的实际传输大小以 memory 字节为准；符号计数为 exclusive。没有 full LLVM、Spike 长程序、Breeze 集成、RTL、FPGA、周期、PPA 或 DDR 实测结论。")
 paragraph("## 一条命令复现")
-paragraph("在 Alan 工作区运行以下命令，即重新生成本页所有动态统计表和 Markdown；逐张量文件由 README 中的 tensors.py 生成。原始执行与两次再生、代表 case 的独立重跑比对见回报和 RUN/pipeline.log。")
+paragraph("在 Alan 工作区运行以下命令，即重新生成本页全部统计表、逐张量清单和 Markdown。原始执行与两次再生、代表 case 的独立重跑比对见回报以及 RUN/pipeline.log、RUN/parallel-recovery.log。")
 paragraph('```bash\npython3 rvv/tools/write-profile.py /home/chen/FUN/flow-r01-runs/20261005-w1 /home/chen/FUN/flow-r01-runs/20261005-w1/presentation\n```')
 (out / "rvv-workload-profile.md").write_text("\n".join(lines) + "\n")
 print("W1_PRESENTATION_COMPLETE", out)
