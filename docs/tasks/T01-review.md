@@ -42,3 +42,18 @@
 - spec 2.1、2.2、3.1、4.2、10 节按第 1 节修订重写：删除 ID 预约、kill 清位相关内容；F02 改为“`busy[r]` 当且仅当存在已提交、未写回、rd=r 的 MDU 项”；F03 改为“被 kill 的项永不写回”；新增断言“同一 rd 不同拍置位与清除”“`commit` 到达时单元必有未提交项”。
 - spec 6.1 的时序例子改为：x5 在 DIV 的 WB 提交拍末置位；依赖 ADD 在 DIV 位于 EX/MEM/WB 时由级间冒险停住，此后由记分板停住；写回拍可同拍离开 ID。
 - testplan 按上述决定补齐每条需求的具体期望，删除依赖已解决问题的“待定”标注。
+
+## 4. 第二轮审阅（针对 `53bef68`）
+
+Q01–Q18 的落实、重定向逐级核查（6.3）、附录 A 使用表、S01–S16/F01–F14 均已核对，可用。A01–A06 的决定如下，另增 A07、A08 两条补充规则。全部写入 spec/testplan 后即为冻结稿，不再保留“待确认”标注。
+
+| ID | 决定 |
+| --- | --- |
+| A01 | 改 MUL enable：`mulEnable = !P4.valid \|\| (P4.committed && outReady)`，即 P4 有效且本拍不能离开（未提交，或已提交但未获写口）时四级整体停住；`req.ready = mulEnable`。`outValid = P4.valid && P4.committed` 不变。commit/kill 在停住时照常更新元数据；kill 清掉未提交的 P4 后下一拍恢复。P4 同拍 commit 时本拍 outValid 仍为 0，下一拍起才可离开。无反压时 MUL 在 P2 前已在 WB 提交，II=1 与 4 拍不受影响。无死锁论证写进 spec：P4 未提交时单元内全部是未提交项（提交按序），没有 MUL 结果争写口；更老的 WB 指令只与 DIV（至多 1 项、有界）竞争，必然推进。S11/F08 按此公式检查，删除“待 A01”标注。 |
+| A02 | FENCE.I 保持在 MEM 发起，**不发** `killUncommitted`，只抑制同拍 EX 发射。理由：比它老的 MDU 只可能在 WB（本拍提交或已提交），比它年轻的在 EX/ID 尚未发射。第 2 节 Q03 括号中的 FENCE.I 是笔误，以本条为准。WB kill 组合即 exception/xRET/satp/interrupt/WFI。 |
+| A03 | 批准迁移，只改驱动和观测点，不改输入向量、期望值、随机次数和容差：`BreezeBackendMulSpec`/`BreezeBackendDivSpec` 的观测点从“MDU memWbValid 时的 wbData”改为“该 rd 的后台写回事件（或写回后的 RF 值）”；`RiscvDivUnitSpec` 驱动在 `req.fire` 后补 `commit` 脉冲，原 flush 用例改为对未提交项发 `killUncommitted`。每项在报告中列“旧检查 → 新检查”。 |
+| A04 | 确认 T01 不做参考模型比对，也不自建参考模型。完整的 Spike 比对以后单独立项（见 `docs/plans/2026-10-04-breeze-spike-cycle-model-mmu-ddr.md`）。T01 的取值正确性证据为：完整 `sbt test` 回归、MDU 定向和随机自检程序（程序自己比较最终寄存器/内存值）、仓库已有的 ISA 测试套件。 |
+| A05 | 批准以下文件只为承载 trace 而修改：`core/BreezeCore.scala`（仅接线）、`sim/BreezeCoreTandem.scala`、`sim/BreezeCoreTandemParser.scala`、`sim/BreezeCoreSimSupport.scala`。内容：提交记录加 `rdPending`，新增后台写回事件（rd、data），runner 收集并打印。再加一个**协议自洽检查**（不是参考模型）：每条 `rdPending` 提交之后，该 rd 恰好有一次后台写回；没有 pending 的后台写回、同一 rd 重复 pending、pending 期间该 rd 被普通写、结束时仍有 pending，都报错。 |
+| A06 | 确认 commit 与 kill 同拍只用于单元接口合同和模块级测试/cover。整核内不可达：WB 的那条指令要么是 MDU 提交，要么是发起 kill 的指令，而中断要求 `!memWbReg.valid`。中断接受条件不改。 |
+| A07 | 写死 CSR 等空条件：CSR 离开 ID 需 `busy==0`，**并且** EX/MEM/WB 中没有已发射的 MDU。只看 busy 不够：CSR 离开 ID 后，更老的 MDU 才在 WB 提交并置位。整数 MDU 上这只影响性能，但这条规则是 FPU 步骤中 fflags 正确性的模板，所以现在就写成这样。HPM 11/12 的计数按此条件。ESTOP 在 WB 等 `busy==0` 不变（此时更老的都已提交）。 |
+| A08 | 写死副作用门控：EX/MEM 发起的重定向（分支、JALR、SFENCE.VMA、FENCE.I）、BTB/预测训练、FENCE.I 的 flush 请求、访存请求，都只在本级本拍确实推进时发生。在 `wbPortStall`、ESTOP 等空及原 pipelineHold 期间一律不发，以免停住期间重复发出或丢失。6.3 每行的条件写成“该级 enable && 原条件”，S09/S13 按此检查。 |
