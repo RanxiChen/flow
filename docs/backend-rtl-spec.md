@@ -1,359 +1,425 @@
-# Breeze 后端 RTL spec：T01 阶段一审阅稿
+# Breeze 后端 RTL spec：T01 冻结候选
 
-状态：**未冻结，不授权阶段二实现**。微架构依据是 [backend-pipeline-design.md](backend-pipeline-design.md)（下称 D），任务范围与验收依据是 [T01 任务书](tasks/T01-backend-scoreboard-mdu.md)（下称 T）。本文仅展开 D 第 10 节第 1 步；设计未覆盖的细节统一列在第 12 节，不把候选方案当作决定。冻结前不得据此编写 RTL。
+状态：**冻结候选，待用户确认**。本轮仅文档修订，不授权阶段二。依据为 [后端设计](backend-pipeline-design.md)（D）、[T01 任务书](tasks/T01-backend-scoreboard-mdu.md)（T）和 [阶段一审阅决定](tasks/T01-review.md)（R）；R 对原稿 Q01–Q18 的决定已写入规则。审阅决定与源码/其他决定的冲突统一列在第 12 节“审阅后问题”，不得自行补方案。
 
 ## 0. 范围、版本与拍的定义
 
-- 源码审查基线：分支 `feat/pcie-fase-20260920`，提交 `d5672f51bf0ec67465148c02af970c70464bec68`，2026-10-05。下面所有源码位置均对应此提交；以后改动需刷新行号。
-- 本步实现目标：整数 MDU 记分板、RAW/WAW 检查、长延迟写口仲裁、EX 发起/WB 提交或 kill、DSP 乘法 4 拍/II=1、radix-4 除法及 1 拍特殊结果、三个 HPM 事件。
-- 访存、FPU 保留阻塞路径；不在本步实现浮点记分板、Load miss 提前提交、L1D S2 判定、迟到数据、`hartFatal` 或新的 MMU 接入。统一接口只记录这些后续用途。
-- `N` 表示一个时钟周期，周期内观察当前寄存器及组合信号，周期末上升沿采样 fire/更新寄存器，`N+1` 观察更新值。`fire = valid && ready`。`idLeave` 指真实离开 ID 的一次握手；`exAccept` 指单元接收一次操作；`wbCommit` 指该指令在 WB 无异常并实际提交一次；`resultWrite` 指仲裁获准、结果握手并实际写整数寄存器的一次事件。这些是本文的逻辑名称，尚不是既有 Bundle 字段。
-- 本文给出有依据的拍级约束；队列深度、身份编码、同拍未定义组合等标为 **未确认/待决定**。它们是冻结阻塞项，不能在阶段二默认填值。
-- 本轮只做源码和文档审查；编译、RTL 生成、仿真、形式化、ACT4、tandem、Vivado、性能测量全部 **未运行**。
+- 分支 `feat/pcie-fase-20260920`；源码/审阅基线 `d73a546a9f1acd51a4c99b20d3985d451a8d8be0`。该提交相对 `d5672f5` 没有 `.scala/.py/.sv` 差异，下面源码行号对应此基线。
+- 本步只实现整数 MDU 依赖检查、记分板、单写口仲裁、EX 发起/WB 提交、MUL 四级/DSP 推断、DIV 快路径/保持、HPM 11–13。访存和 FPU 仍阻塞；未来 FPU/L1D 只预留公共接口语义，不实现 FPR 记分板、MSHR/S2 提交、迟到 Load 或 hartFatal。
+- N 拍使用当前寄存器/组合值，周期末上升沿更新，N+1 拍看更新值；`fire=valid&&ready`。`wbCommit` 是真实、无异常、未被让拍的一次 WB 提交；`resultWrite` 是已提交结果获 grant、握手并物理写 GPR。
+- **记分板只跟踪已提交且未写回的 MDU**；未提交 EX/MEM/WB 的依赖由级间比较覆盖。MDU 不带事务身份、slot 或 epoch，结果只带 rd/data；验证台账可以用测试序号区分操作，不能把该序号加到 RTL 接口。
+- 所有硬件执行在 Alan，当前编译、生成 RTL、仿真、形式化、ACT4、tandem、综合、性能测量均 **未运行**。原 Q01–Q18 不再是未决问题；第 12 节的新问题仍阻止最终冻结。
 
-## 1. 现状映射与改造边界
+审阅决定落实索引（均已决定，冲突只列第12节）：
 
-### 1.1 流水寄存器和状态
-
-源码中的 decode 没有在下列位置另建 ID 寄存器，来自 `fetchBuffer`；ID/RR 接收后进入 `idExeReg`。此对应关系见 `design/src/main/scala/backend/BreezeBackend.scala:64-75,241,337-383`；四级目标来自 D 第 3 节。
-
-| 现有对象、位置 | 现状（源码审查） | 本步处理 |
-| --- | --- | --- |
-| `idExeReg`；`design/src/main/scala/backend/BreezeBackend.scala:241,285-442`；字段 `design/src/main/scala/interface/interface.scala:358-384` | valid、PC/指令/长度/取指异常、控制、rs/rd、读值与立即数；decodeFire 装载，重定向清空，阻塞时更新可旁路操作数 | 保留四级及指令元数据；增加本条 MDU 预约/发起身份侧带。EX 单元不 ready 时不能丢失、重复发起本条指令，具体级间 enable 见 Q04 |
-| `idFpCtrl/idFpOperand1..3`；`design/src/main/scala/backend/BreezeBackend.scala:198-206,444-466` | FP decode/操作数侧带与 ID/EX 条件对齐 | 保留 FPU 阻塞方式、寄存器和语义；整数源参与 MDU 依赖检查，不实现 FPR 记分板 |
-| `exeMemReg`；`design/src/main/scala/backend/BreezeBackend.scala:483,1167-1325`；字段 `design/src/main/scala/interface/interface.scala:386-432` | 指令元数据、ALU/地址、CSR、MUL 操作数/类型、DIV 快速结果/幅值/符号、trace | 保留普通指令、访存、CSR/异常字段；MDU 在 EX 发起后只携带身份和提交所需元数据到 MEM/WB，不再在 MEM 等算术结果；旧 MDU 数据字段删除或停止使用的最终清单待 Q09 |
-| `exeMemMemOp/exeMemAmoFunc/exeMemAq/exeMemRl`；`design/src/main/scala/backend/BreezeBackend.scala:487-490,1207-1210,1288-1292` | 原子访存侧带随 EX/MEM 清空/推进 | 保留，不改访存接口/aq/rl 边界 |
-| `exeFpCtrl/Operand1..3/Rm`；`design/src/main/scala/backend/BreezeBackend.scala:202-206,1327-1344` | EX/MEM FP 侧带；动态 rm 在 EX→MEM 采样 | 保留，不改 FPU 内部 |
-| `memWbReg`；`design/src/main/scala/backend/BreezeBackend.scala:61,1378-1569`；字段 `design/src/main/scala/interface/interface.scala:434-470` | WB 元数据、异常、普通/访存/CSR/MDU 数据；等待时清 valid 防重复退休 | 保留 WB 顺序提交、异常元数据；MDU 到 WB 不等结果；增加提交身份，普通 WB 让写口时整条 WB 项保持且不得重复退休（Q04/Q06） |
-| `memWbFpWrite/Data/FlagsValid/Flags`；`design/src/main/scala/backend/BreezeBackend.scala:156-169,1571-1608` | FP 写寄存器和 flags 与共同 MEM/WB 对齐 | 保留；普通 FP→GPR 与后台 MDU 同拍占整数写口需保留结果（Q07）；FPR 写口是否随共同 WB 停顿见 Q06 |
-| `memWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:491,727-728,1346-1352` | 访存发出置位、响应清除 | 保留；不让新的 WB 停顿丢失脉冲响应（Q07） |
-| `mulWaitingRespReg/divWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:492-493,1354-1368` | 单笔等待状态，所有 frontendRedirect 清除 | 修改/替换为逐笔 MDU 生命周期；删除它们对全流水等待和“重定向全清”的作用，已提交后台操作必须保留；是否保留诊断同名状态见 Q09/Q10 |
-| `fpWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:494,753-771,1370-1376` | FP ready 接收、等待完成 | 保留阻塞语义；共同级停顿引入后的响应保持见 Q07 |
-| `architecturalNextPc/wfiSleepingReg`；`design/src/main/scala/backend/BreezeBackend.scala:531-533,561-601,1144-1154` | 退休/重定向更新架构 PC，WFI 睡眠和唤醒 | 保留 PC/唤醒语义，所有“退休”消费者改看实际一次提交；WFI 不等待后台 MDU |
-| `fenceiFlushIssuedReg/memBtbUpdate`；`design/src/main/scala/backend/BreezeBackend.scala:261,606-677,1156-1165` | FENCE.I 单次 flush 请求；BTB 更新寄存并只消费一次 | 保留单次副作用与取消规则，新的流水反压必须统一保护它们（Q04） |
-
-### 1.2 hold、hazard 和旁路逐项映射
-
-| 信号与源码位置 | 现有行为 | 本步要求 |
-| --- | --- | --- |
-| `pipelineHold`；`design/src/main/scala/backend/BreezeBackend.scala:1063-1068` | memory/MUL/DIV/FP 请求与等待、fenceiPending 合并 | 仅去掉 MUL/DIV 两组等待项，memory/FP/FENCE.I 原有阻塞条件保留；新资源反压与 WB 让拍采用何种 enable/hold 组合待 Q04，不能删除其他项 |
-| `decodeReady/decodeFire`；`design/src/main/scala/backend/BreezeBackend.scala:1610-1615` | csr/fp hazard、pipelineHold、redirect、中断、WFI 限制 decode | 加入整数记分板 RAW/WAW 与 CSR 等记分板清空条件；中断只排空未提交流水，不等后台 MDU |
-| `decodeUsesRs1/decodeUsesRs2`；`design/src/main/scala/backend/BreezeBackend.scala:225-239` | 分支、跳转、CSR、sfence、Store/SC/AMO 的真实源参与判断 | 保留真实源语义；FP 的整数源与所有整数目的写同样检查（Q08） |
-| `loadUseHazard`；`design/src/main/scala/backend/BreezeBackend.scala:974-978` | 等待访存结果时 EX 源依赖 | 保留阻塞访存路径和事件定义，本步不改新 L1D load-use 延迟 |
-| `idExePendingCsrRd/exeMemPendingCsrRd/memWbPendingCsrRd/csrUseHazard`；`design/src/main/scala/backend/BreezeBackend.scala:979-1006` | CSR rd 被 decode rs 使用时等待 | 保留，在重新定义提交/让拍后不能把未完成普通 CSR 当作已写回 |
-| `idExePendingCsrState/exeMemPendingCsrState/csrStateHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1007-1014` | CSR 状态含别名/隐式用户，阻塞后续 decode 至 WB 更新 | 保留，不把记分板清空当作 CSR 状态冒险的替代 |
-| `csrRegHazard/csrHold`；`design/src/main/scala/backend/BreezeBackend.scala:1023-1038` | CSR 读流水中未完成 GPR 产生者时 decode 停，CSR 产生者继续推进 | 保留，并加后台 MDU 清空等待；不得把 CSR 等待加成阻止老 MDU 前进的全流水 hold |
-| `fpSourceMatches/fpRegHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1040-1047` | FP 三个 FPR 源依赖 ID/EX 与 EX/MEM FPR 写 | 保留，f0 不是 x0，本步不擅自扩展成 FPR 记分板 |
-| `idCsrAffectsFp/exeCsrAffectsFp/memWbCsrAffectsFp/fpCsrHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1048-1061` | mstatus/sstatus/frm/fcsr 的 FP 状态冒险 | 保留，FPU 内部不变 |
-| `wbData`、整数写使能；`design/src/main/scala/backend/BreezeBackend.scala:134-155` | 普通 ALU/MEM/CSR/MUL mux，按 WB 有效与异常屏蔽写 | 改为单写口仲裁；MUL/DIV 结果不再由普通 WB mux 写；FP→GPR 当前使用 MUL selector，不能一并删除（Q09） |
-| `exeRs1Data/exeRs2Data`；`design/src/main/scala/backend/BreezeBackend.scala:842-885` | WB 后赋值、MEM ALU 后赋值、MEM completion 最后赋值；越年轻匹配者优先 | 保留普通 ALU/MEM/WB 的数据顺序；移除旧 MDU completion 假设，长延迟实际写回同时供 ID 旁路；已在 EX 被反压的读值保持规则待 Q04/Q08 |
-| `completionValid/Rd/Data` 与互斥断言；`design/src/main/scala/backend/BreezeBackend.scala:825-840` | completion 用同一个 EX/MEM rd；断言所有长延迟来源同拍最多一项 | MDU 改用自己携带的标签；多个 ready 结果同拍合法，改验“写口 grant 独热”，旧断言修改需明确审阅授权 Q15；访存/FP 本步仍走原阻塞 completion |
-| `mulReqIssued/mulRspFire/divReqIssued/divRspFire/divFastCompletion`；`design/src/main/scala/backend/BreezeBackend.scala:733-752` | MEM 发起，返回结果或快速完成驱动 WB | 改为 EX req.fire、WB resolve 与后台 result.fire；快结果也走统一提交/kill/保持协议 |
-| `mulUnit.flush/divUnit.flush`；`design/src/main/scala/backend/BreezeBackend.scala:736,745` | 任意 frontendRedirect 全单元 flush | 删除全局冲刷的语义，换逐笔取消；年轻分支不能取消老 MDU，更不能取消已提交后台 MDU |
-
-### 1.3 MDU 现状与源文件范围
-
-- `RiscvMulUnit` 当前无 in_ready/out_ready/rd/commit 字段，仅 flush、in_valid、65 位 a/b、op、out_valid 和 64 位 result，valid/op 三拍对齐：`design/src/main/scala/multiplier/RiscvMulUnit.scala:13-63`。旧 `SignedMul65x65` 是 65×65→130 位 Booth/Dadda/CPA，三个寄存边界：`design/src/main/scala/multiplier/SignedMul65x65.scala:34-49,268-271,307-319`。本步替换乘法数据通路，保留旧单元作为等价性参照及其测试，不能删除参照断言（Q15）。D 第 9 节的 LUT/DSP 数字是设计文档中的历史/估计值，本轮未测量。
-- `RiscvDivUnit` 当前接口是 magnitude/sign/word/remainder 加 flush/in_valid/busy/out_valid/result，符号恢复和 W 结果扩展在 wrapper：`design/src/main/scala/divider/RiscvDivUnit.scala:7-49`。radix-4 核寄存器为 `busyReg/outValidReg/quotientReg/remainderReg/divisorReg/shiftReg`，每次两位商，out_valid 是脉冲：`design/src/main/scala/divider/UnsignedRadix4Divider.scala:25-30,38-60,62-100`。保留算术迭代，改 wrapper 生命周期/保持。
-- **已有快速路径**：后端 EX 已计算 divisor=0 和 RV64/RV32 有符号溢出、W 符号扩展，MEM 直接 completion：`design/src/main/scala/backend/BreezeBackend.scala:905-955,741-752,1526-1530`。本步“补快速路径”是把其行为接入新的统一单元协议，不能宣称基线完全缺失。放在 wrapper 还是后端、直接单元是否暴露原始操作数，待 Q05。
-- 阶段二允许目录以 T 第 3.1 节为准。已有公共 Bundle/HPM 在 `design/src/main/scala/interface/interface.scala:340-351,358-470`，不在允许目录内；若需要修改，先解决 Q09，不能默默扩大范围。本阶段没有修改任何代码。
-
-## 2. 状态与生命周期
-
-### 2.1 整数记分板与所有权
-
-D 第 5 节规定 x1–x31 每寄存器 1 bit，因此逻辑宽度 **31 bit**；x0 恒视为不 busy。物理采用 31 位还是 32 位且 bit0 恒零，属于表示选择，本文以 `busy[r] (r=1..31)` 描述。复位后无在途预约、所有位为 0；复位在途状态的整机边界需冻结 Q14。
-
-本步仅 MUL/DIV 的整数目的预约置位。访存/FPU 依旧阻塞，不在此步置记分板；它们读/写 GPR 时仍必须遵守后台 MDU 依赖。这是 T 第 1 节及 D 第 10 节的分步范围，不能把 D 第 5 节所有 Load/FPU 置位一次全做。
-
-| 逻辑状态 | 必需信息/宽度 | 更新约束 |
-| --- | --- | --- |
-| `busy[1..31]` | 31×1 | ID 离开预约；实际结果写回/提交前 kill 清除 |
-| 预约所有者 | rd 5、来源 MUL/DIV、指令身份（位宽待 Q01）、是否已发起/已提交 | 从 ID 起跟踪，含在 EX 未 ready 的预约；不是仅数 FU 内部条目 |
-| 每个 FU 在途项 | live 1、committed 1、身份、rd 5、数据/类型 | req.fire 接收；WB 同身份提交；提交前 kill 作废；结果获准后释放 |
-| 来源归属（计数用） | MUL/DIV 区分 | 必须可判断是谁使 ID 停顿；用每寄存器来源位还是 FU/流水标签查找，待 Q13 |
-| 浮点与迟到访存预留 | 目的 bank、标签、64 位 data、fflags/error 等逻辑信息 | 本步不建立 FPR 记分板、不连接这些结果源 |
-
-“当且仅当有在途结果”的形式化含义：`busy[r] == (存在一条已离开 ID、尚未 kill/写回、准备写 r 的 MDU 指令)`。不能只与 `req.fire` 后的 FU 项等价，否则 ID 置位到 EX 发起间出现假失败/错误空窗。
-
-### 2.2 置位、清除与同拍事件
-
-| 周期 N 内条件 | 周期末/周期 N+1 可见状态 |
+| 决定 | 确定规则 / 对应章节 |
 | --- | --- |
-| `idLeave && isMDU && writesGpr && rd!=0 && !killed` | 预约 rd，`busy[rd]=1`；即便 EX 单元随后反压，也不能丢预约 |
-| ID 被 stall、未真正离开，或被同拍老重定向取消 | 不产生新预约/EX 发起 |
-| `resultWrite && rd!=0`，结果属于有效且已提交项 | 实际写回并清本项 rd 的 busy；旁路见 3.2 |
-| 提交前被 kill，包括已预约但尚未发起者 | 清被 kill 项的预约与 FU live，不产生写回 |
-| 已提交后台项遇 trap、分支、xRET、satp、FENCE.I、WFI 重定向 | 不清其 busy，不取消计算/保持的结果 |
-| 周期 N 提交 MDU，但结果未实际写回 | busy 保持 1；提交本身不是清位事件 |
-| 对不同 rd 的置位、写回清除、多个年轻项 kill 同拍 | 所有对应更新都必须生效，不能用一个全局 if/else 丢失其中一项 |
-| 对同一 rd 的 clear+set，或 kill 与同身份 commit/result 同拍 | 具体优先级未确认，见 Q02/Q03；冻结前不得填写 next-state 公式 |
+| Q01 | 无事务标签；单元按发射顺序commit最老未提交项；2.1/4 |
+| Q02 | WB置位、write清位，同rd不能同拍，两rd同时生效；写穿透释放；2.2/3 |
+| Q03 | 无握手脉冲、先commit后kill、未提交结果不可见；按redirect级抑制/kill；4/6.3；A01/A02/A06 |
+| Q04 | MUL四级末级输出、整体enable/反压、无FIFO、EX资源等待；5.1/7；A01 |
+| Q05 | EX fast检测附带req，DIV ready=!occupied，释放与再接收隔拍；8 |
+| Q06 | 仅普通非零GPR写WB让拍四级；中断只等未提交流水；5/6 |
+| Q07 | dmem一项capture；FPU已有outReady，选择反压；5.2 |
+| Q08 | decoder真实GPR名单、FP跨bank，held EX更新保持，无MDU EX旁路；3/附录A |
+| Q09 | 公共interface、common事件、RF和HPM额外允许；旧MDU字段删、FP选择独立；1.3；A05 |
+| Q10 | FASE empty加busy空，enter/读写/launch等后台；中断独立；9 |
+| Q11 | x0 MDU不发单元，普通无写WB退休；2.2/9.1/附录A |
+| Q12 | DIV>MUL>普通WB，未来L1D>DIV>MUL>FPU；外部无永久停顿；5.3/10 |
+| Q13 | 事件11/12/13、双来源都计、合法上界13；11 |
+| Q14 | reset全清、WFI不停后台时钟、ESTOP WB退休前busy空；3.1/6/9 |
+| Q15 | 仅三类检查迁移获准，旧SignedMul65x65和其他检查保留；9.2；A03 |
+| Q16 | XCKU040/DSP48E2，仅推断、允许retiming；OOC资源/整核100MHz WNS；7 |
+| Q17 | 阶段二首项Alan d5672f5完整基线；无新增失败、通过数不少；9.2/测试计划6 |
+| Q18 | rdPending和晚写rd/data，以rd关联；先查可复用checker，未找到则停止；9.1；A04/A05 |
 
-由于 rd 检查，同一 r 不得有两位所有者。禁止以“flush 全清记分板”实现异常；例如旧 DIV x5 已提交、年轻 MUL x6 未提交，trap 周期只清 x6，x5 必须保持。
+## 1. 现状映射与文件边界
 
-## 3. ID 停顿与旁路
+### 1.1 流水寄存器、控制与结果
 
-### 3.1 RAW/WAW
+ID/RR 为 decode/读寄存器组合逻辑，接收后进入 EX 的 `idExeReg`，见 `design/src/main/scala/backend/BreezeBackend.scala:64-75,241,337-383`。保持四级，不新增后端流水级。
 
-按照 D 第 5 节，对真实使用的整数源检查：
+| 对象与源码位置 | 现状 | 修改/保留规则 |
+| --- | --- | --- |
+| `idExeReg`；`design/src/main/scala/backend/BreezeBackend.scala:241,285-442`；字段 `design/src/main/scala/interface/interface.scala:358-384` | valid、指令/PC/长度/异常、控制、rs/rd、数据 | 保留；ID 通过依赖检查后进入 EX；不在 ID 建立 busy。EX req 未接收则保持，不能重复发起 |
+| `idFpCtrl/Operand1..3`；`design/src/main/scala/backend/BreezeBackend.scala:198-201,444-466` | FP decode/读值侧带 | 保留，和 ID/EX 的新 enable 对齐；GPR 源检查按附录 A |
+| `exeMemReg`；`design/src/main/scala/backend/BreezeBackend.scala:483,1167-1325`；字段 `design/src/main/scala/interface/interface.scala:386-432` | ALU/访存/CSR/异常/MDU 参数与 trace | 保留非 MDU 字段；MDU 在 EX 接收，MEM 只传类别、rd、valid、指令/异常等提交元数据，不等待算术结果；删除数据字段清单见 1.3 |
+| `exeMemMemOp/AmoFunc/Aq/Rl`；`design/src/main/scala/backend/BreezeBackend.scala:487-490,1207-1210,1288-1292` | 原子访存侧带 | 保留；本步不改变访存/原子接口 |
+| `exeFpCtrl/Operand1..3/Rm`；`design/src/main/scala/backend/BreezeBackend.scala:202-206,1327-1344` | EX/MEM FP 侧带与动态 rm | 保留，FPU 仍阻塞，内部不修改 |
+| `memWbReg`；`design/src/main/scala/backend/BreezeBackend.scala:61,1378-1569`；字段 `design/src/main/scala/interface/interface.scala:434-470` | WB 元数据、异常、各类结果/CSR/trace | MDU 到 WB 即提交，不等结果；普通整数写遇后台写让拍则完整保持，不退休/不执行副作用；其他类别见第 5 节 |
+| `memWbFpWrite/Data/FlagsValid/Flags`；`design/src/main/scala/backend/BreezeBackend.scala:156-169,1571-1608` | 共同 WB 的 FP 写/flags 侧带 | 保留，WB 让拍同样保持；FPR 写单独存在时不因后台 GPR 写停顿 |
+| `memWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:491,727-728,1346-1352` | 阻塞访存请求/响应状态 | 保留，加一项响应捕获，见 5.2 |
+| `mulWaitingRespReg/divWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:492-493,1354-1368` | 全单元等待，redirect 全清 | 删除旧等待与全 flush 逻辑；诊断用 MUL busy/DIV occupied 或记分板信息替代，不能作为 interrupt 的后台排空条件 |
+| `fpWaitingRespReg`；`design/src/main/scala/backend/BreezeBackend.scala:494,753-771,1370-1376` | FPU 请求接收/等待 | 保留，用已有 outReady 在 MEM 不可推进时反压 |
+| `architecturalNextPc/wfiSleepingReg`；`design/src/main/scala/backend/BreezeBackend.scala:531-533,561-601,1144-1154` | 退休/redirect PC 和 WFI 状态 | 保留，PC/CSR/retire 消费真实提交；WFI 不停后台时钟 |
+| `fenceiFlushIssuedReg/memBtbUpdate`；`design/src/main/scala/backend/BreezeBackend.scala:261,606-677,1156-1165` | 单次 FENCE.I flush、单次 BTB 更新 | 保留，WB 让拍不得重复消费/产生；重定向级核查见 6.3 |
+| `wbData/regFile.rd_en`；`design/src/main/scala/backend/BreezeBackend.scala:134-155` | ALU/MEM/CSR/MUL 共用普通 WB mux | MDU 后台结果独立仲裁，普通 WB 不使用 MDU 最终值；FP→GPR 共用 selector 改独立 FP 结果名并保留功能 |
+| 整数 RF 写穿透；`design/src/main/scala/core/RegFile.scala:27-43` | 单写口、两个异步读口，同拍写读显式 forwarding | 被仲裁的真实写口作为 ID 数据来源，不增加 EX 的 MDU 结果旁路 |
+
+### 1.2 hold、hazard、旁路映射
+
+| 信号与位置 | 改造要求 |
+| --- | --- |
+| `pipelineHold`；`design/src/main/scala/backend/BreezeBackend.scala:1063-1068` | 去掉 MUL/DIV 请求/等待项，memory/FP/FENCE.I 项保留；WB 整体让拍和 EX 单元资源等待是独立 enable 条件，见 5.1 |
+| `decodeReady/decodeFire`；`design/src/main/scala/backend/BreezeBackend.scala:1610-1615` | 加 EX/MEM/WB MDU RAW/WAW、有效记分板 RAW/WAW、CSR 等空；ESTOP 的等空条件在 WB 退休前检查；保留 redirect、FP、CSR、中断/WFI 控制 |
+| `decodeUsesRs1/2`；`design/src/main/scala/backend/BreezeBackend.scala:225-239` | 新 MDU hazard 用附录 A 的真实整数源/目的；原 CSR 保守 hazard 的行为保留；FPR 编码不查整数记分板 |
+| `loadUseHazard`；`design/src/main/scala/backend/BreezeBackend.scala:974-978` | 保留旧阻塞访存语义及计数，不实现新 L1D load-use |
+| `idExePendingCsrRd/exeMemPendingCsrRd/memWbPendingCsrRd/csrUseHazard`；`design/src/main/scala/backend/BreezeBackend.scala:979-1006` | 保留 CSR rd 的 ID 源冒险 |
+| `idExePendingCsrState/exeMemPendingCsrState/csrStateHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1007-1014` | 保留 CSR 状态/别名/隐式使用者排空 |
+| `csrRegHazard/csrHold`；`design/src/main/scala/backend/BreezeBackend.scala:1023-1038` | 保留 CSR 对普通 GPR 产生者的保守检查，加记分板清空；只停年轻 ID，不停老 MDU WB/写回 |
+| `fpSourceMatches/fpRegHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1040-1047` | 保留 FPR 三源 hazard，f0 可写；不加 FPR scoreboard |
+| `idCsrAffectsFp/exeCsrAffectsFp/memWbCsrAffectsFp/fpCsrHazard`；`design/src/main/scala/backend/BreezeBackend.scala:1048-1061` | 保留 FP 状态 hazard/动态舍入语义 |
+| `exeRs1Data/exeRs2Data`；`design/src/main/scala/backend/BreezeBackend.scala:842-885` | 普通 WB→MEM ALU→阻塞 completion 的旁路顺序保留；completion 剔除 MDU，EX 无后台 MDU bypass；held EX 更新 `design/src/main/scala/backend/BreezeBackend.scala:436-442` 不变 |
+| `completionValid/Rd/Data`；`design/src/main/scala/backend/BreezeBackend.scala:825-840` | 只留阻塞访存/FP completion；MDU 改从自身 rd/data 写回。旧 completion 独热改 grant 独热+保持（已获 R/Q15 授权） |
+| `mulReqIssued/mulRspFire/divReqIssued/divRspFire/divFastCompletion`；`design/src/main/scala/backend/BreezeBackend.scala:733-752` | 删除旧 MEM 发起/完成进入普通 WB 路径；改 EX req.fire、WB commit、结果仲裁 |
+| `mulUnit.flush/divUnit.flush`；`design/src/main/scala/backend/BreezeBackend.scala:736,745` | 删除任意 frontendRedirect 全 flush，改 WB killUncommitted；EX/MEM redirect 的处理见 6.3 与 A02 |
+| `pipelineEmpty`；`design/src/main/scala/backend/BreezeBackend.scala:596-599` | 删除 MUL/DIV 等待项，保留未提交流水/memory/FP 条件；FASE empty 另加记分板为空 |
+
+### 1.3 MDU 现状、批准的删除清单与文件范围
+
+现有 MUL wrapper 无 ready/rd/commit 字段，valid/op 三拍、完整积选择 64 位结果：`design/src/main/scala/multiplier/RiscvMulUnit.scala:13-63`。旧 `SignedMul65x65` 为 65×65→130 位、三个寄存边界：`design/src/main/scala/multiplier/SignedMul65x65.scala:34-49,268-271,307-319`，**原样保留及其测试**作为等价性参照。
+
+DIV wrapper 的 magnitude/sign/word/remainder 与符号恢复见 `design/src/main/scala/divider/RiscvDivUnit.scala:7-49`；radix-4 寄存器与两位商迭代见 `design/src/main/scala/divider/UnsignedRadix4Divider.scala:25-30,38-60,62-100`。现有 fast 检测已经在 EX（`design/src/main/scala/backend/BreezeBackend.scala:905-955`）；保留检测，移动 fastData 的去向至 EX req，不称其“原先缺失”。
+
+批准的计划删除（本阶段尚未删除）：
+
+- EX/MEM 的 `mul_a/mul_b/mul_op`、`div_fast/div_fast_result/div_dividend_mag/div_divisor_mag/div_quotient_neg/div_remainder_neg/div_is_remainder/div_is_word`，原定义 `design/src/main/scala/interface/interface.scala:408-420`；参数于 EX 接收，不再携到 MEM。`mul_valid/div_valid` 保留为 MEM/WB 类别元数据，`rd_addr/valid` 保留。
+- `mulWaitingRespReg/divWaitingRespReg` 与旧 MEM 发起/返回 wires、全 flush，位置见 1.1/1.2。EX 的 `mulOperandA/B`、DIV 预处理/fast wires保留。
+- MEM/WB `mul_data` 的 MDU 用途移除（原字段 `design/src/main/scala/interface/interface.scala:464`）；当前 FP→GPR 使用 `SEL_WB.MUL`，见 `design/src/main/scala/backend/BreezeBackend.scala:1297-1300,1526-1530`，必须改独立 FP 结果字段/selector，不能删除功能。
+
+R/Q09 增加允许修改 `design/src/main/scala/interface/interface.scala`、`design/src/main/scala/core/common.scala`、`design/src/main/scala/core/RegFile.scala`、`design/src/main/scala/core/BreezePerformanceCounters.scala`，其余仍按 T 3.1。本轮不修改代码；tandem 全通路超出这些范围的问题列 A05。
+
+## 2. 记分板与单元状态
+
+### 2.1 寄存器与生命周期
+
+| 状态 | 位宽/归属 | 更新 |
+| --- | --- | --- |
+| `busy[1..31]` | 31 bit，r 对应 bit r−1，x0 无项 | WB 提交非零 rd 的 MUL/DIV 置位；实际 resultWrite 清除；复位全清，killUncommitted 不修改 |
+| `busySource[1..31]` | 每项 1 bit，0=MUL、1=DIV，仅 busy=1 有效 | 与 busy 置位同拍记录来源，用于计数；clear 后不参与判断（R/Q13） |
+| EX/MEM/WB 元数据 | 每级 valid、MUL/DIV 类别、rd 5、原指令/异常信息 | 级间 RAW/WAW 比较，未提交依赖不由 busy 表示 |
+| MUL P1..P4 | 每级 valid 1、committed 1、rd 5、op 3、product 130 | 接收/推进、最老未提交项 commit、全部未提交项 kill；没有事务标签、额外 FIFO |
+| DIV wrapper | occupied/committed/done 各1、rd 5、result 64，以及现有 sign/word/remainder 控制 | req 接收后 occupied，commit 授权，done 保存结果，写回或未提交 kill 释放 |
+| 访存 response capture | valid 1、data 64、error/pageFault/isWriteAck 各1 | 在 MEM 无法消费的响应拍捕获，MEM 推进消费；只一项 |
+
+现有 dmem 响应字段定义见 `design/src/main/scala/interface/interface.scala:104-110`，完成/异常使用见 `design/src/main/scala/backend/BreezeBackend.scala:728,1507-1519`；捕获全部参与该完成/异常判断的字段，不只保存 data。FPU 已有稳定输出和 outReady，见 5.2，不额外加 FPU capture。
+
+单元未提交项按发射顺序排列，至多对应 EX/MEM/WB 的 2–3 条。MUL 从 P4 向 P1 查最老的 valid && !committed 项；DIV 只有 occupied 项。`commit` 不带 rd/身份，授权该单元最老未提交项；`killUncommitted` 清所有未提交 live，已提交项保留。结果通道带 rd 5/data 64，valid 只在该结果已提交且算完时有效。
+
+### 2.2 置位、清除与同拍方程
 
 ```text
-sbRaw = (usesGprRs1 && rs1!=0 && busy[rs1])
-     || (usesGprRs2 && rs2!=0 && busy[rs2])
-sbWaw = writesGpr && rd!=0 && busy[rd]
-sbBlock = sbRaw || sbWaw
-csrSbBlock = isCsr && anyIntegerBusy  // 本步 FPU 尚无后台记分板
+setMask   = wbCommit && isMdu && rd!=0 ? oneHot31(rd) : 0
+clearMask = resultWrite ? oneHot31(result.rd) : 0
+busyNext  = (busy & ~clearMask) | setMask
+assert((setMask & clearMask)==0)
 ```
 
-`sbBlock` 对所有年轻指令生效，包括 ALU、MDU、Load、SC/AMO、CSR 及 FP→GPR；不是只对第二条 MDU 生效。Store 的立即数不是 rs2 使用标志；rs2 写数据也依赖 GPR。FPR rs1/rs2/rs3 不能误查整数 busy。现有普通源判断位置见 1.2；FP GPR 使用/目的完整 decode 映射 **未确认**，Q08 要求冻结明确名单。不能把整数 rd 编码为 0 的“不写”约定用于未来 f0。
+复位优先：全部项无效、busy=0；非复位时，kill 对 busy 没有写使能。WB 的 MUL/DIV 必须已经在 EX 真正 req.fire，且自身没有取指/非法/其他 WB 异常，才产生对应 `commit` 和 setMask。rd=x0 不发单元，也不 commit/setMask（R/Q11）。
 
-普通 ALU 旁路和 CSR/FP hazard 保留。ID 自己 stall 必须让老流水/FU/写口前进；CSR 等清空不能反压老 MDU 的 WB 提交，否则“先置 busy→CSR hold→老 MDU 不能提交→结果不能写→busy 不清”会死锁。
+同一 rd 不会同拍 set/clear：未提交项和已提交项都受 ID WAW 保护，不能同时拥有同 rd。不同 rd 的 set/clear 同拍全部生效。**同拍允许 ID 依赖者离开**；这不是同 rd 的 WB 再提交，本拍离开 ID 的新指令以后才到 WB。
 
-### 3.2 结果写回与读操作数
+`busy[r]` 当且仅当有一个 **已提交、尚未实际写回、rd=r** 的 MDU 项。未提交项不计入此等价关系；提交周期末转入已提交/busy，写回周期末同时释放/清位。
 
-- N 拍长延迟结果获 grant 且实际握手写回时，同拍将 **被选中的** rd/data 旁路到 ID；未获 grant 的 valid 结果不能旁路、不能清位。
-- 按 D 第 5 节，停住的依赖指令在下一拍可前进；不能假定仅看到 FU 计算完成就能放行。是否在 N 拍通过组合解 busy 让依赖者同时离开 ID，属于 Q02，不作为本稿默认行为。
-- 普通 ALU 的 EX/MEM/WB 旁路保持。旧实现的 RF 同拍写读已有显式 write-through（`design/src/main/scala/core/RegFile.scala:27-43`），可以作为被仲裁后的 ID 旁路实现路径；不能继续把普通 WB 数据接 RF，同时把另一未写 MDU 数据当作已完成。
-- EX 因反压保持时，必须能保存之前出现过的有效旁路值；现有 held EX 更新见 `design/src/main/scala/backend/BreezeBackend.scala:436-442`。新结果写回能否同拍影响 held EX、冲突选择和 enable 冻结于 Q04/Q08。
+## 3. ID 依赖检查与旁路
 
-## 4. 长延迟单元统一接口契约
+### 3.1 精确条件
 
-### 4.1 逻辑信号和字段
+附录 A 给出所有合法指令的整数源/目的。每项非零地址按以下两组检查：
 
-下表规定用途、必需宽度和方向（相对 FU），**不是已经存在的接口**。身份编码、resolve 的物理握手形式见 Q01/Q03，不能按这张表擅自定死 Bundle。
+```text
+effectiveBusy = busy & ~clearMask
+sbRaw = usesGprRs1 && rs1!=0 && effectiveBusy[rs1]
+     || usesGprRs2 && rs2!=0 && effectiveBusy[rs2]
+sbWaw = writesGpr && rd!=0 && effectiveBusy[rd]
+pipeRaw/Waw = 与 EX、MEM、WB 中 valid、非零 rd 的未提交 MUL/DIV 作同样比较
+idMduHazard = sbRaw || sbWaw || pipeRaw || pipeWaw
+```
 
-| 通道 | 方向/信号 | 必需字段 | 契约 |
+三个级包含本拍即将 WB commit 的 MDU：ID 在此拍仍因级间比较停顿，周期末 busy 置位，下一拍由 busy 接续；不能因“本拍要提交”提前删 WB 比较。带取指/非法异常、不发 FU 的条目没有 MDU 生产者资格；rd=x0 也不作为生产者。
+
+ID 被级间/记分板挡住不能离开，但 EX/MEM/WB 与后台结果继续前进；不能把 hazard 变成全流水 hold。CSR 在 ID 等空；ESTOP 到 WB 后若 busy 非空，保持 WB 不退休，并阻止年轻项覆盖，后台写回继续，busy 空后才退休。两者都不能阻止老 MDU 授权与写回。旧 CSR/FP/访存 hazard 另行保留。
+
+### 3.2 写回同拍读
+
+已提交结果实际 grant/write 的 N 拍，clearMask 屏蔽其 busy，RF 同拍写穿透给 ID 的真实源，依赖者在 N 拍可以 decodeFire。其他未选来源的 busy 不屏蔽；若还命中级间项或其他 hold，则继续等待。
+
+普通 EX/MEM/WB 旁路保留；不向 EX 添加后台 MDU 旁路。所有 MDU 依赖者在离开 ID 前已得到最终值。held EX 操作数更新沿用 `design/src/main/scala/backend/BreezeBackend.scala:436-442`，原普通/阻塞完成旁路见 `design/src/main/scala/backend/BreezeBackend.scala:842-885`，其中 MDU completion 的接入删除。
+
+## 4. 统一长延迟接口与脉冲时序
+
+### 4.1 本步信号（相对单元）
+
+| 通道 | 方向/位宽 | 字段与条件 |
+| --- | --- | --- |
+| `req.valid/ready` | In/Out，各1 | EX 发起；MUL a/b 各 SInt65、op UInt3、rd UInt5；DIV magnitude 各64、quotientNeg/remainderNeg/isRemainder/isWord 各1、fastValid 1、fastData 64、rd5 |
+| `commit` | In，1，单拍脉冲，无 ready | WB 本单元一条真实 MDU 提交；同拍必须接受，命中最老未提交项 |
+| `killUncommitted` | In，1，单拍脉冲，无 ready | WB 发起取消时向 MUL/DIV 都发；只作废全部未提交项；各类 redirect 见 6.3 |
+| `result.valid/ready` | Out/In，各1 | 已提交且 done 的结果 valid；ready 由 DIV>MUL 仲裁产生 |
+| `result.rd/data` | Out，5/64 | 无事务标签；valid&&!ready 时全部字段保持 |
+
+EX req 仅对 valid、合法 MUL/DIV、rd≠0、无取指异常/非法标记、未被更老 redirect 同拍取消的指令有效，且要求后端允许 EX 推进：WB port stall 或原 memory/FP/FENCE.I 阻塞时禁止 req.fire。单元 req.ready=0 本身不撤销 req.valid，EX 保持并等待；真正被接收才推进到 MEM，不能在保持同一 EX 项时重复接收。更老 WB kill 或 MEM 重定向抑制同拍 EX 发射；EX 分支/JALR 是同一个单发射 EX 槽，不能同时作为 MDU 发射，年轻 ID 被冲刷。
+
+### 4.2 周期末更新次序
+
+1. 复位：清所有 valid/occupied/committed/done、记分板与 response capture。
+2. 非复位：先对 `commit` 标记最老未提交 live 为 committed；随后 `killUncommitted` 作废仍未 committed 的项。即 commit+kill 同拍，刚提交项保留。
+3. 接收/流水推进遵守 enable 和老重定向抑制；提交/kill 在 MUL 停住时也必须生效，不随数据 enable 被屏蔽。
+4. 未提交结果算完先内部保存，`result.valid=0`；只在 committed 后提供输出。已提交结果获 ready 时精确一次物理写并释放。
+
+当前中断只在未提交流水空时接受，故 WB MDU commit 与 interruptRedirect 同拍在现有接受条件下不可达（`design/src/main/scala/backend/BreezeBackend.scala:596-599`），与 R/Q03 的整核示例冲突，列 A06；commit-before-kill 仍作为统一单元接口合同测试，不擅自放宽中断规则。
+
+未来 FPU 可复用 req/commit/kill/结果保持，增加目的 bank、EX rm 3、flagsValid/fflags 5；未来 L1D 的迟到 data/error 使用同一写口保持合同，其独立 MSHR 标识与 S2 判定按 D-cache 2.9，**不将 MDU 的无事务标签决定扩成删除 L1D 标识**。本步不连接这两类后台来源。
+
+## 5. 写口仲裁、级间 enable 与响应保存
+
+固定 **DIV > MUL > 普通 WB**，以后按 D 6 扩展 L1D > DIV > MUL > FPU；没有轮转。每拍至多一个后台写，未选来源 ready=0 并保持结果。
+
+```text
+wbNeedsGpr = wbValid && !wbTrap && ordinaryGprWrite && wb_en && rd!=0
+wbPortStall = wbNeedsGpr && longResultActuallyGranted
+```
+
+ordinaryGprWrite 包括 ALU/Load/CSR/FP→GPR，不包括 MDU 自身 WB commit。后台写清 busy、发写回事件，不再 retire。Store/branch/rd=x0/FPR 写/MDU commit/trap/xRET/WFI 无普通整数写口需求，可与后台结果同拍按原语义提交/陷入；CSR/ESTOP 仍须额外满足等空条件。
+
+### 5.1 流水推进表
+
+| 本拍条件 | ID/EX/MEM/WB 行为 |
+| --- | --- |
+| WB port stall | 四级都保持一拍；WB valid/数据/CSR/FP flags/trace 保持，禁止普通 retire/CSR/PC/flush/train/访存等副作用；后台 resultWrite 正常发生 |
+| 非 WB stall，EX 有有效 MDU 但 req.ready=0 | EX、ID 保持；MEM 在消费原项后插入气泡；MEM/WB 继续推进；同一 EX 项没有 req.fire，不重复发起 |
+| 单独 ID RAW/WAW/CSR 等空 | ID 不接受新指令，老 EX/MEM/WB 继续推进 |
+| 原 memory/FP/FENCE.I hold | 保留原阻塞行为；需要的响应保持见 5.2；后台已提交结果仍参与写口 |
+| 老 WB kill | 抑制同拍年轻 EX/ID/其他副作用，发 killUncommitted；记分板不由 kill 改变 |
+
+WB port stall 优先于 EX 资源停顿：只有 MEM 确实能够消费旧项时才插气泡，不能在 WB 停住时覆盖 MEM。EX/MEM/WB 控制侧带与共同寄存器采用同一个对应级 enable。
+
+### 5.2 阻塞响应
+
+dmem 响应为脉冲、后端在 `memWaitingRespReg && io.dmem.rsp.valid` 消费，见 `design/src/main/scala/backend/BreezeBackend.scala:727-728,1507-1519`。新加 **一项**捕获寄存器：MEM 不能推进时响应到达，锁存 valid/data/error/pageFault/isWriteAck；保持访存元数据，MEM 恢复推进时消费一次并清 valid。MEM 可以推进且未捕获时走原直接完成；不能同一响应既直接消费又置 capture。单 outstanding 原约束保留（`design/src/main/scala/backend/BreezeBackend.scala:1635-1636`），capture 有效时不再发下一访存，禁止溢出。
+
+FPU **有 outReady，选择反压，不新加捕获寄存器**：接口与内部一项稳定响应寄存器见 `design/src/main/scala/fpu/BreezeFp.scala:343-401`；现有 backend `outReady := fpWaitingRespReg` 见 `design/src/main/scala/backend/BreezeBackend.scala:756-762`。改为仅在本项等待且 MEM 可以实际消费完成时 ready=1；WB port stall 时 ready=0，result/status 保持，恢复时消费一次。FPU 内部不修改。
+
+### 5.3 进展
+
+DIV 至多一项，释放和再接收不能同拍；同一 DIV 结果只能获 grant 一次。MUL 被 DIV 压住时整条单元停、不接收新 MUL；DIV 写完的下一拍没有该 DIV 的 valid，MUL 可获写口。外部无永久停顿是活性环境假设，DUT 内部优先级/ready 属于证明目标，不能 assume 每个 grant 必然发生。
+
+## 6. 异常、CSR、重定向、中断与 WFI
+
+异常取消年轻未提交单元项，busy 不动；已提交后台项继续算/保持/写，trap handler 依赖仍由 busy/级间比较停住。CSR v1 等全部记分板清空，本步只有整数 MDU scoreboard；同时保留旧 CSR 状态/寄存器 hazard。ESTOP 在 WB 退休前等 busy=0，阶段一只写此条件，不执行仿真结束逻辑。
+
+FENCE 仍是旧阻塞访存流水语义；本步不接新 L1D。FENCE.I/SFENCE/satp/xRET 的原 redirect/操作数/特权规则保留；不得任意 frontendRedirect 全清 MDU。WFI 睡眠不停时钟，已提交结果继续写；中断停止正常 ID 发射，按原未提交流水空条件接受，不等后台 MDU；FASE empty 见第 9 节。
+
+### 6.1 正常时序例（修订后）
+
+PC `0x100: div x5,x1,x2`，`0x104: add x6,x3,x4`，`0x108: add x7,x5,x0`；无外部/写口停顿，DIV ready。
+
+| 拍 | DIV / 独立 ADD | 依赖 ADD | x5 busy |
 | --- | --- | --- | --- |
-| 发起 | In `req.valid`，Out `req.ready` | 身份（待定）、rd 5、目的 bank（整数/FP；编码待定）、操作类型；MDU 65 位 MUL a/b 或 DIV 有效操作数；未来 FPU rm 3 | EX 中仅 req.fire 接收一次；ready 为低则本条指令保留；老重定向 kill 同拍禁止发起年轻副作用 |
-| 提交/取消 | In `resolve` 的有效、身份、commit/kill 信息（物理形式待定） | 与已预约/接收项匹配的身份；commit 与 kill 不可同时授权 | WB 实际提交时授权；提交前取消可来自老 WB 或更老级重定向，未到 WB 的被取消项也须有取消路径 |
-| 结果 | Out `result.valid`，In `result.ready` | 身份、rd 5、目的 bank、data 64；未来 FPU flagsValid 1/fflags 5，迟到访存 error 1 | 被反压时 valid/全部 payload 保持；未提交项不得产生架构写；kill 的未提交项永不 resultWrite |
+| N | DIV 离开 ID | 尚未到 ID | 0 |
+| N+1 | DIV EX req.fire；独立 ADD 离开 ID | — | 0 |
+| N+2 | DIV MEM；独立 ADD EX | ID 命中 MEM 的未提交 DIV rd，停 | 0 |
+| N+3 | DIV WB commit；独立 ADD MEM | ID 命中 WB DIV，仍停 | 本拍0，周期末置1 |
+| N+4 | DIV 后台；独立 ADD WB 可提交 | ID 命中记分板，停 | 1 |
+| R（结果获 grant） | DIV resultWrite x5 | effectiveBusy 屏蔽 x5，经 RF 写穿透读值，同拍离开 ID | 本拍1，周期末清0 |
+| R+1 | 已无该 DIV 项 | 依赖 ADD EX，已携最终值，不用 MDU bypass | 0 |
 
-目的标签 rd 用于 RF/记分板，**不自动等于事务唯一身份**。同 rd 被 kill 后可再次使用，旧数据通路中的晚结果不能命中新预约；x0 还允许没有 busy 保护的多笔，Q01/Q11 冻结这些边界。
+R 若与普通整数 WB 写重合，该普通指令让拍；此时全流水保持，依赖者虽不再被 x5 busy 阻挡，也不能 decodeFire，须等 WB hold 解除。这不改变“仅依赖停顿时写回同拍可离开”的规则。
 
-### 4.2 必需生命周期与逻辑转移
+### 6.2 异常与同拍提交/取消例
 
-```text
-ID 预约 -> EX 已接收、未提交 -> WB 已提交、未写回 -> 结果实际写回、释放
-    \             \__ 提交前 kill -> 作废、释放预约
-     \__ 未发起先 kill -> 只释放预约
-```
+已提交 DIV x5 后台运行；年轻 load 在 N 拍 WB 报错，后面 MUL x6 在 EX/MEM。N 拍发 killUncommitted，未提交 MUL 作废，从未占 busy；x5 保持。若 x5 同拍实际写回，busy 清除来自 resultWrite，**不是 kill**。handler 在未写前读 x5 停，写回拍可释放。
 
-算术完成 `done` 与上述阶段正交：可能在 WB 之前已算完；此时保存结果，等待授权或被 kill。已经提交且未算完时继续计算；已经提交且算完时等待写口。状态可以用 live/committed/done 标志表达，但数量、编码、存储位置待 Q01/Q03/Q05，本文不指定额外队列。
+单元接口若同拍 commit 和 kill：先把最老未提交项授权，再丢其余未提交项。接口级用例覆盖此组合；整核中断仍保持 empty 条件，不人为制造一个当前不可达的“同拍中断提交”。
 
-| 周期 N 事件 | 必须行为 |
-| --- | --- |
-| EX req.fire | 锁存操作数、类型、rd、身份；后续输入变化不影响本项 |
-| WB 对匹配 MDU `wbCommit` | 一次性把该项标为已提交；不等算术结果；不通过普通 WB 写口写该 MDU 的未完成值 |
-| done 先于 commit | 不架构写回，保存结果；result.valid 是否预先可见、后端是否接受到内部缓冲待 Q03 |
-| 提交前 kill | 作废对应项/在途级，清预约；有物理晚结果也不能写回 |
-| 已提交 done 且未获 grant | 保持结果；年轻流水允许在依赖/资源满足时继续 |
-| 已提交 done 且 grant/ready | 精确一次写回并释放；不得把 result.fire 当第二次退休 |
+### 6.3 每种重定向的源码级核查
 
-未来 FPU 使用相同身份与生命周期，EX 采 rm，实际 FP 写回累积 fflags；迟到 Load 使用 L1D S2 判定完成提交后才供结果。两者的物理端口/错误上报尚未实现；L1D 两种事件及标签的设计边界见 [D-cache 2.9](dcache-pipeline-design.md#29-与后端的接口s2-判定与迟到数据)，不能在本步接上旧阻塞 dmem 伪造 S2 判定。
+这里的 EX=`idExeReg`、MEM=`exeMemReg`、WB=`memWbReg`。表中“发/不发”按 R/Q03 的**级别规则**；FENCE.I 的审阅表述冲突另列 A02，未擅自搬级或选另一种方案。
 
-## 5. 单写口仲裁与流水推进
-
-D 第 6 节确定：长延迟结果优先于普通 WB；整数 RF 仍一个写口。多个来源保持 valid/ready。D 第 6 节给出的 `L1D > DIV > MUL > FPU` 是待审阅顺序，D 第 12 节仍列待拍板；本文不擅自固定或改为轮转（Q12）。本步激活 DIV/MUL，其他源只保留逻辑扩展边界。
-
-| N 拍可写项 | 写口与 ready | WB |
+| 重定向 | 源码事实：发起级/条件/target | killUncommitted 规则 |
 | --- | --- | --- |
-| 无后台结果，有正常普通整数写 | 普通 WB 写 | 正常一次提交 |
-| 一个已提交 MDU 结果，无普通整数写 | 该结果 grant、ready，实际写回/清 busy | 不占用普通整数写口；无写目的的 WB 是否能照常提交见 Q06 |
-| 一个已提交 MDU 结果 + 普通整数 WB 写 | MDU 写，普通 WB 不写 | 普通 WB 完整保持，不能 retire/CSR 更新/改架构 PC/重复副作用 |
-| MUL 与 DIV 同拍可写 | 按冻结的来源顺序选一个；未选 ready=0 | 有普通整数写则同上；不能断言两个 result.valid 不可共存 |
-| 计算完成但未提交 | 不作为架构可写 grant 候选 | 继续按程序顺序处理 WB |
-| 被 kill 的未提交结果 + 已提交后台结果 | kill 项不可写；后台项存活 | trap/redirect 与后台写同拍的确切输出条件待 Q03/Q06 |
+| 条件分支 | EX：`redirectDirectionMismatch/TargetMismatch` 用 idExeReg && !pipelineHold；`design/src/main/scala/backend/BreezeBackend.scala:536-554,1667`；decoder `design/src/main/scala/core/InstDecode.scala:310-322` | 不发；年轻 ID 取消；不取消老 MEM/WB 项 |
+| JALR（兼列 JAL） | EX：同一 redirectNeeded/JAU/EX nextPc；`design/src/main/scala/backend/BreezeBackend.scala:477-481,536-554,1667`；decoder `design/src/main/scala/core/InstDecode.scala:282-309` | 不发；同槽不能另发 MDU，抑制年轻接受 |
+| 同步异常 | WB：memWbReg.valid && wbTrap；`design/src/main/scala/backend/BreezeBackend.scala:555-560,584,1080-1126,1660` | 发给两单元；未提交项清 live，busy 不由 kill 改 |
+| MRET/SRET（xRET） | WB：memWbReg.valid && is_mret/is_sret && !wbTrap；`design/src/main/scala/backend/BreezeBackend.scala:581-590,1662` | 发；抑制年轻 EX 发射 |
+| FENCE.I | **MEM**：exeMemReg.fencei、已发 flush 且 dcacheFlushDone；`design/src/main/scala/backend/BreezeBackend.scala:1156-1165,1431-1434,1665`；decoder 注明 MEM `design/src/main/scala/core/InstDecode.scala:434-453` | 按 MEM 原则不发、抑制同拍 EX；但 R/Q03 把 FENCE.I 列作 WB kill，**A02 待确认** |
+| SFENCE.VMA | **EX**：idExeReg.ctrl.is_sfence_vma && !pipelineHold 且合法、!wbKillsYounger/!fenceiFlush；`design/src/main/scala/backend/BreezeBackend.scala:591-593,1643-1647,1666` | 不发，不能杀老 MEM/WB 的未提交项；抑制年轻接受 |
+| satp 写 | WB：memWbReg.csr_write_en && csr_addr==satp && !wbTrap；`design/src/main/scala/backend/BreezeBackend.scala:594-595,1663` | 发；target=WB nextPc |
+| 中断 | 退休边界/空未提交流水：interruptPending && pipelineEmpty && !faseActive；`design/src/main/scala/backend/BreezeBackend.scala:596-601,1120-1124,1661` | 发（正常情况下没有未提交项）；busy 不需空 |
+| WFI | WB：memWbReg.valid && is_wfi && !wbTrap；`design/src/main/scala/backend/BreezeBackend.scala:561-579,590,1664` | 发；保持后台已提交项，睡眠不停时钟 |
 
-只有 `grant && result.valid && result.ready && committed && !killed && rd!=0` 对应物理 GPR 写和 busy 清除。x0 结果是否仍握手释放、是否占用写口见 Q11。未 selected 的源不得清 valid 或标签。
-
-WB 让拍会反压 MEM/EX/ID，必须保存所有 sideband，且 EX 同一 MDU 只能发起一次。MDU 结果等待不得经普通 pipelineHold 停住无关指令。具体 enable、响应保存与非整数 WB 的提交资格见 Q04/Q06/Q07；本稿不把一条新增全流水 hold 当作完整实现设计。
-
-固定来源优先级只保证长延迟优先于 ALU，不自动保证低优先级来源不被无限高优先级流饿死。形式化进展的仲裁公平性与来源流量边界必须解 Q12，不能假设环境直接给每个 DUT 仲裁结果 ready 来掩盖内部饥饿。
-
-## 6. 异常、中断、CSR、栅栏与 WFI
-
-| 边界事件（N 拍） | N 拍组合副作用 | 周期末/后续拍 |
-| --- | --- | --- |
-| WB 同步异常 | 老 trap 优先；禁止年轻 EX 发起/提交、访存/sfence/flush/train 副作用；只 kill 年轻未提交 MDU | 清年轻预约/项；已提交后台 MDU 保持并继续写；handler 读 busy rd 被 ID 停住 |
-| EX 分支重定向 | 取消比该分支年轻的 ID 预约/请求；不能以 redirect 全清单元 | 比分支老的 MEM/WB MDU 仍前进，已提交后台项存活；同拍 WB 老 trap 优先 |
-| 中断挂起 | 停止新的正常 decode，排空流水未提交指令，后台结果仍参与写口 | 在 WB 指令边界接受；无需等后台 MDU。采用原空流水边界还是同拍退休立即接收见 Q06；旧 pipelineEmpty 中后台等待项必须与 FASE 语义分开（Q10） |
-| CSR 位于 ID | any MDU busy 时等待，不发 CSR 执行；已有 csrUse/State/Reg hazard 继续生效 | 最后一项实际写回后按清位可见拍继续；等待只阻塞年轻 decode，不阻止老 WB 授权/结果写；阶段二/三再接入 FPR busy |
-| FENCE | 本步维持现有访存语义，不接入未来 MSHR/pending-store 条件 | 不因整组 MDU busy 增加未规定的等待；未来 FENCE 经新 L1D 的合同不属于本步 |
-| FENCE.I / SFENCE.VMA / satp / xRET | 保留已有 redirect/flush/CSR 特权语义；不能取消已提交后台 MDU | 清年轻未提交者；未来 L1D 排空/新 MMU idle/sfence 时序仅列接口依赖，不在本步改造 |
-| WFI 到 WB | 按原有规则只退休一次、停止年轻发射；不要求后台 busy 全清 | 睡眠时后台 MDU 继续完成；唤醒不等于接受中断，保留原语义；睡眠是否影响时钟/写口见 Q14 |
-| 阻塞访存/MMIO/FP 进行中 | 保留请求、结果与全流水等待方式；后台 MDU 不应丢失结果 | 其普通整数 WB 若被后台结果占口必须保留；已发访存不中断取消的现有路径保留；Q07 冻结响应/写口冲突 |
-
-本步不能实现 D 第 7 节中新的 refill `hartFatal`：它是后续访存提交点变更的依赖。也不能因新 MMU 示例规格与旧 sfence 时序不同而在 T01 重做 MMU。
-
-### 6.1 拍级正常例：独立 ALU 与 DIV
-
-假设无访存/FP/CSR/redirect/写口冲突，DIV ready；PC `0x100: div x5,x1,x2`，`0x104: add x6,x3,x4`，`0x108: add x7,x5,x0`。
-
-| 拍 | DIV | 独立 ADD | 依赖 ADD | x5 busy |
-| --- | --- | --- | --- | --- |
-| N | ID 离开，周期末预约 x5 | — | — | 本拍 0，下一拍 1 |
-| N+1 | EX req.fire | ID 离开 | — | 1 |
-| N+2 | MEM | EX | ID 因 rs1=x5 停住 | 1 |
-| N+3 | WB commit，不等算完 | MEM | ID 等待 | 1 |
-| N+4 | 后台运算 | WB 正常提交/写 x6 | ID 等待 | 1 |
-| R（算完、获 grant） | 后台结果写 x5，ID 同拍旁路 | 已退休 | ID 仍按清位可见性等待 | 本拍 1，周期末清除 |
-| R+1 | 无该在途项 | — | 可离开 ID，随后 EX | 0 |
-
-这是无冲突的约束例，不规定 DIV 总接口延迟。若 R 与普通 WB 写同拍，普通 WB 在 R 让拍，R+1 是否继续遇新结果取决于仲裁；不能保证只停一拍。若依赖者清位同拍放行获批准，表中 R/R+1 需随 Q02 冻结更新。
-
-### 6.2 精确异常例
-
-已提交 DIV x5 仍在后台；更年轻 load 在 N 拍 WB 报错；其后 MUL x6 在 EX、ADD x7 在 ID。N 拍禁止 MUL 发起（若前拍已经发起则 kill 相应项）；周期末清 x6 预约，x5 不清，trap PC/cause/tval 来自 load。handler 访问 x5 要等待真正写回。若 x5 结果也在 N 到达，不允许 trap 取消它；是否 N 同拍写或下一拍写待 Q03/Q06，最终结果与 busy 清除必须一致。
+WB kill 组合为 exceptionRedirect/xretRedirect/satpCommit/interruptRedirect/wfiCommit；FENCE.I 不在已确认组合里，单列 A02，不能把未冻结的歧义隐藏成确定公式。若 WB 老重定向与 EX/MEM 重定向同拍，target 保留原年长者优先，源证据 `design/src/main/scala/backend/BreezeBackend.scala:1656-1678`；WB 让拍禁止普通副作用，trap 等无写口类别按第 5 节处理。
 
 ## 7. MUL 单元
 
-### 7.1 算术与流水契约
+65×65 有符号乘法、完整 product 130，后接四个寄存边界；无反压 4 拍、II=1。P1/P2/P3/P4 各保存 product/op/rd/valid/committed，P4 就是输出寄存器，不设额外 FIFO。按 R/Q04：
 
-按 D 第 9 节：Chisel 65×65 有符号乘法，完整积 130 位，后接 **4 个寄存器边界**，允许 Vivado DSP 推断与寄存器重定时；无反压时 4 拍，II=1。DSP48E2 目标名称与 KCU105 实际器件/工具支持匹配 **未确认**，见 Q16；不得先偷偷替换 primitive 或把“约 16 DSP”当验收实测。
+```text
+outValid = P4.valid && P4.committed
+mulEnable = !(outValid && !outReady)
+所有四级数据 enable = mulEnable
+req.ready = mulEnable   // reset/取消拍禁止实际接收年轻请求
+```
 
-符号扩展沿用后端预处理：MUL/MULH 双有符号；MULHSU 仅 b 补零；MULHU 双补零；MULW 双操作数低 32 位符号扩展至 65 位，依据 `design/src/main/scala/backend/BreezeBackend.scala:887-903`。结果选择沿用 wrapper：低 64、高 `127:64`、W 低 32 符号扩展，依据 `design/src/main/scala/multiplier/RiscvMulUnit.scala:46-58`。旧 op 编码见 `design/src/main/scala/core/common.scala:105-113`；新接口是否直接复用编码待冻结接口表，不改变指令算术意义。
+停住期间 commit 与 kill 仍更新对应元数据；commit 最老未提交项，kill 清剩余未提交 valid，已提交项保持。**P4 已完成但未提交时，上式不能保证保留它，见 A01；本稿保留审阅公式并指出冲突，不自行改 enable、加 buffer 或提前写回。**
 
-| 逻辑级 | 必需保存内容 | 无反压时的拍 |
+符号扩展沿用 `design/src/main/scala/backend/BreezeBackend.scala:887-903`：MUL/MULH 双有符号，MULHSU b 补零，MULHU 双补零，MULW 低32位符号扩展至65。result 选择低64、高127:64、W低32符号扩展，源为 `design/src/main/scala/multiplier/RiscvMulUnit.scala:46-58`；op 3位定义 `design/src/main/scala/core/common.scala:105-113`。
+
+R/Q16 确定 XCKU040 使用 DSP48E2，只用推断、不例化 primitive，可启用 Vivado retiming。AMD 的 [UG579](https://docs.amd.com/v/u/en-US/ug579-ultrascale-dsp) 和 [UltraScale DSP 架构说明](https://docs.amd.com/r/en-US/conversion-methodology/DSP-Slice-Architecture) 支持这一 DSP 类型/推断方向；本轮没有运行推断/综合，不报告约16DSP/节省LUT估计为实测。验收为新旧 multiplier 单独 OOC DSP/LUT 对比，以及单核整机100MHz WNS/最差路径。
+
+## 8. DIV wrapper
+
+保留 unsigned radix-4 算术，EX 保留 divisor=0/有符号 overflow 检测，req 附带 fastValid/fastData。N 拍 req.fire，周期末锁存 rd/符号/W/余数控制并 occupied=1；fastValid 时同时 done=1/result=fastData，N+1可见算术完成，但未 commit 时 result.valid=0。正常路径等待 unsigned 核结果后锁存 result/done，不产生单拍丢失的架构输出。
+
+`req.ready=!occupied`；已完成但未授权/未写回也 occupied。结果写回或合法 kill 在周期末释放，下一拍才能再次接收，禁止释放与接收同拍。commit 授权本项，kill 只清未提交项；同时来先 commit 再 kill。
+
+| 条件（W 操作先格式化有效低32位） | 商类结果 | 余数类结果 |
 | --- | --- | --- |
-| P1 | 130 位积及 valid、op、rd、身份、提交/取消关联 | EX 在 N 接收，N+1 为 P1 |
-| P2 | 上一级积/元数据，valid 与 kill 生效后的状态 | N+2 |
-| P3 | 同上 | N+3 |
-| P4 | 同上；按 op 选出的 64 位结果可在末级组合选择 | N+4 为算术完成 |
+| 有效 divisor=0 | 全1，W同样低32全1再符号扩展 | 有效 dividend，W低32再符号扩展 |
+| 有符号 min / −1（64或W） | min，W为0xffffffff80000000 | 0 |
+| 其他 | unsigned magnitude 迭代后恢复符号，W最终符号扩展 | 同左 |
 
-此表是 D“乘法后接 4 级寄存器”的逻辑展开，不规定 DSP 内物理切片、retiming 后位置或新增结果队列。committed 信息必须能够由 WB 身份更新对应 live 项；存于每级还是外部项表、同拍推进如何命中待 Q01/Q03。P4 未获接收必须保持，后续已经算完的项也不能覆盖它。全流水可停的 elastic 方案或信用/结果缓冲方案、容量和 ready 方程待 Q04；**不得额外指定一个结果 FIFO 深度**。
+依据 `design/src/main/scala/backend/BreezeBackend.scala:908-955`、wrapper `design/src/main/scala/divider/RiscvDivUnit.scala:28-48`。unsigned 核 a=0、a<b、a=b 的短路径保留（`design/src/main/scala/divider/UnsignedRadix4Divider.scala:72-89`）。根据 `design/src/main/scala/divider/UnsignedRadix4Divider.scala:38-60` 的两位迭代，最坏32是算术迭代拍数；接收初始化、等待WB、写口停顿分别计入 req→write 的实测延迟，不能以32作为含所有反压的写回上界。
 
-### 7.2 kill 与反压
+## 9. 保留行为、FASE、tandem 与旧检查
 
-- 对提交前被取消的每项，作废其当前或同拍推进目标级的 valid/所有权；取消多条年轻 MDU 时必须覆盖全部，不限“一条 kill”。已经提交的级不能作废。
-- 标准结果保持：`result.valid && !result.ready` 的每个周期，payload（含身份/rd/op 所决定的 data）保持，直到接收或该未提交项被合法 kill。若只向外呈现已提交结果，则外部保持期间不存在合法 kill；具体可见性待 Q03。
-- 当单元有容量、无依赖/资源冲突、写口持续可用时，独立连续 MUL 可每拍接收一项。反压任意长时有限容量不能持续接收，必须降低 req.ready 并保存所有已接收项；4 拍固定算术延迟与 stall 造成的接口可见延迟区分报告。
-- 参照模型保留旧 `SignedMul65x65`（3 拍）并按身份/接收序列对齐比较，不能按新旧同周期 out_valid 比较。
+| 项目/来源位置 | 冻结候选要求 |
+| --- | --- |
+| CORE-001；`docs/bugs/CORE-001.md`；`design/src/main/scala/backend/BreezeBackend.scala:727-728,1063-1068,1346-1352,1561-1569` | 请求当拍持有、等待上下文、一次完成/退休，WB 让拍捕获响应 |
+| CORE-002；`docs/bugs/CORE-002.md`；回归 `design/src/test/scala/core/breezecoreSpec.scala:1761-1918` | 重定向目标 miss 不沿用旧事务/行，frontend/cache 不修改 |
+| CORE-003；`docs/bugs/CORE-003.md:7-11`；`design/src/main/scala/backend/BreezeBackend.scala:1015-1038`；测试 `design/src/test/scala/core/breezecoreSpec.scala:2299-2667` | 实际状态以 Alan d5672f5 基线为准，当前未确认；T01 记录基线已有失败，不修该 bug、不改 handler workaround |
+| CORE-004；`docs/bugs/CORE-004.md`；`design/src/main/scala/backend/BreezeBackend.scala:544-554,633-663` | EX 真推进才 branch resolve/train，保留 load-to-branch 数据正确性 |
+| CSR；`design/src/main/scala/backend/BreezeBackend.scala:979-1038,1070-1079,1253-1259,1449-1450` | 状态/别名/rd/合法性对齐，保留全部旧 hazard并加等空 |
+| trap/原子/reservation；`design/src/main/scala/backend/BreezeBackend.scala:704-725,815-823,1080-1126,1507-1516,1628-1641` | cause/tval/第二parcel、AMO Store类fault、单访存aq/rl、SC 0/1、trap reservationKill 保留 |
+| FENCE.I/SFENCE/satp/xRET/中断/WFI | 源码和级别详见6.3；保留语义，新增Mdu取消不得越过年龄界 |
+| FP；`design/src/main/scala/backend/BreezeBackend.scala:753-771,1327-1344,1571-1608` | 阻塞、rm、FPR/GPR、flags保留，不改FPU内部 |
+| FASE；`design/src/main/scala/backend/BreezeBackend.scala:1679-1732` | `f.empty = 未提交流水空 && !fenceiPending && busy==0`；enter/host寄存器读写/launch 都等后台完；interrupt不使用f.empty。保留flightEvents，诊断旧等待字段按1.3删除清单更新 |
+| HPM；`design/src/main/scala/core/BreezePerformanceCounters.scala:29-86`；`design/src/main/scala/core/RegFile.scala:216-227` | 8个计数器、写优先、旧selector/inhibit采样、可见pending不变；后台写不增加instret |
+| ESTOP/debug；`design/src/main/scala/backend/BreezeBackend.scala:170,1734,1739-1779` | ESTOP WB退休前busy空，一次退出；debug的旧MDU WB最终值观测与Q15冲突列A03 |
 
-## 8. DIV 单元
+### 9.1 tandem 决定与现有入口核查
 
-一次只接收一笔；已有 radix-4 的算术寄存器与迭代保留（位置见 1.3）。wrapper 至少需保存 live/committed/身份/rd、符号/word/remainder 信息、done/64 位 result。忙、已算完但等待提交/写回期间不能覆盖当前项；`req.ready` 只在可保存新操作时有效，释放与重新接收能否同拍待 Q03/Q04。
+R/Q18：WB 提交实际已发射且 rd≠0 的 MDU 时 trace 加 `rdPending=1`，原 rdData 无效；普通指令及不发单元的 rd=x0 MDU 为 rdPending=0。每次实际后台 GPR 写输出一个 valid/rd5/data64 写回事件；checker 顺序执行参考模型，在 MDU提交时以 rd 保存期望值，在晚写事件比较并移除，禁止重复/不存在pending的晚写。无事务标签，WAW 保证同rd只有一个 pending。commit与其他rd晚写可以同拍，两个事件都必须保留，不能互相替代。
 
-### 8.1 快速条件与值
+源码核查：`design/src/main/scala/interface/interface.scala:246-262` 的 TracePayload无rdPending/独立晚写；`design/src/main/scala/sim/BreezeCoreTandem.scala:3-24` 只有事件/result容器；parser `design/src/main/scala/sim/BreezeCoreTandemParser.scala:23-58` 仅转成reg/mem effects；runner `design/src/main/scala/sim/BreezeCoreSimSupport.scala:301-323,453-497` 仅收集/打印；`tests/ref/spike_ref.hpp:1-11` 为空壳。`sim/breezecore/README.md:3-26` 组织资产、调用Scala runner，不能作为参考比对器证据。**上述仓库范围未找到可复用的完整逐条参考比对器**，按R/Q18停止checker工作、报告A04，不新建参考模型。增加晚写到core/runner通路的文件范围见A05。
 
-使用有效 64 位操作数，W 操作先按符号属性扩展有效低 32 位。以下算术由已有 EX 表达式佐证（`design/src/main/scala/backend/BreezeBackend.scala:908-955`），也属于 T/D 要求，不是本轮新验证结果。
+### 9.2 已批准旧检查迁移
 
-| 条件 | 商类 DIV/DIVU/DIVW/DIVUW | 余数类 REM/REMU/REMW/REMUW |
-| --- | --- | --- |
-| 有效 divisor==0 | 全 1；W 结果低 32 位全 1 后符号扩展 | 有效 dividend；W 取低 32 位后符号扩展 |
-| 有符号有效 min / -1，64 位 min=`0x8000000000000000`，W min=`0x80000000` | min，W 最终 `0xffffffff80000000` | 0 |
-| 其他 | unsigned magnitude 迭代、按符号恢复、W 最终符号扩展 | 同左 |
-
-快速路径 EX 在 N 接收后，N+1 算术结果可保存（1 拍），但 N+1 不能绕过 WB 授权写架构寄存器。快速路径与迭代路径都必须支持提交前 kill、提交后存活和 result backpressure；不能保留旧 `divFastCompletion` 绕过仲裁直接普通 WB 写的办法。现有 unsigned 核还有 0 dividend、a<b、a==b 的短路径（`design/src/main/scala/divider/UnsignedRadix4Divider.scala:72-89`），保留其算术；它们不替代有符号 overflow 判断。
-
-### 8.2 延迟边界
-
-D 第 9 节的“最坏 32 拍”与现有核源码注释的“32 iterations”需要区分：源码在接收时初始化，再于 busy 周期两位商迭代（`design/src/main/scala/divider/UnsignedRadix4Divider.scala:6-11,68-98`）。新接口端到端 req.fire→done→写回上界 **未确认**（Q05），不能把迭代次数直接作为含提交/反压的写回时限。必须单独报告算术完成与实际写回延迟。
-
-## 9. 必须保留的现有行为
-
-此表是保留/回归义务，**不是本轮运行通过的结论**。
-
-| 项目 | 源码或 bug 证据 | 保留要求 |
-| --- | --- | --- |
-| CORE-001 | `docs/bugs/CORE-001.md`；`design/src/main/scala/backend/BreezeBackend.scala:727-728,1063-1068,1346-1352,1561-1569` | memory 请求当拍持有、等待期间上下文保留、一次 WB/退休、正确扩展 |
-| CORE-002 | `docs/bugs/CORE-002.md`；回归 `design/src/test/scala/core/breezecoreSpec.scala:1761-1918` | branch 重定向仍正确，目标 miss 恢复不沿用旧请求/行；本步不改 frontend/cache |
-| CORE-003 | `docs/bugs/CORE-003.md:7-11` 仍记 open；`design/src/main/scala/backend/BreezeBackend.scala:1015-1038` 有保守 CSR 源冒险；回归 `design/src/test/scala/core/breezecoreSpec.scala:2299-2667` | 保留 CSR 读值/状态规则；当前是否已修复 **未确认**，阶段二先测基线（Q17），不能改 handler 为 workaround |
-| CORE-004 | `docs/bugs/CORE-004.md`；`design/src/main/scala/backend/BreezeBackend.scala:544-554,633-663`；回归 `design/src/test/scala/core/breezecoreSpec.scala:1157-1191` | held EX 不用旧 load 值解析/训练；新 hold 也要保护真正 EX advance |
-| CSR 旁路/合法性/状态 | `design/src/main/scala/backend/BreezeBackend.scala:979-1038,1070-1079,1253-1259,1449-1450` | rd 与别名/隐式状态冒险保留；合法性与原条指令对齐；CSR 执行等待 busy 清空 |
-| trap 分类与优先级 | `design/src/main/scala/backend/BreezeBackend.scala:555-601,1080-1126,1507-1516,1656-1678` | PC/cause/tval、AMO Store 类 fault、取指第二 parcel fault 保留；老重定向赢且禁止同拍年轻副作用 |
-| FENCE.I | `design/src/main/scala/backend/BreezeBackend.scala:1156-1165,1431-1434,1653-1668` | 请求/完成、cacheFlush/顺序 PC、一条只退休一次 |
-| SFENCE.VMA/satp/xRET | `design/src/main/scala/backend/BreezeBackend.scala:581-601,1642-1647,1659-1668` | 原 sfence 操作数/ASID、satp 次条 PC、xret 特权/target 与优先级；不改 MMU |
-| 中断与 WFI | `design/src/main/scala/backend/BreezeBackend.scala:561-601,1120-1126,1610-1615` | 唤醒/陷入分离、WFI 一次退休、interrupt boundary 保留，按设计只放宽后台等待 |
-| RV64A / reservation | `design/src/main/scala/backend/BreezeBackend.scala:704-725,815-823,1628-1641` | 阻塞单访存 aq/rl、SC 0/1、trap reservationKill 保留 |
-| FPU 本步阻塞/fflags | `design/src/main/scala/backend/BreezeBackend.scala:753-771,1327-1344,1571-1608` | rm、FPR/GPR 输出与 flags 保留；不把 flags 搬成后台方案 |
-| FASE | `design/src/main/scala/backend/BreezeBackend.scala:48-50,1679-1732` | flightEvents、empty、注入、寄存器读写、进入断言保留；新后台 empty/共享写口缺口必须解 Q10 |
-| tandem | `design/src/main/scala/backend/BreezeBackend.scala:1304-1324,1471-1485,1538-1559,1735-1737`；字段 `design/src/main/scala/interface/interface.scala:246-262` | 顺序提交追踪继续，一项只一次；MDU 值晚到要能关联原提交后比对，现有字段如何满足待 Q18 |
-| HPM | `design/src/main/scala/core/BreezePerformanceCounters.scala:29-86`；`design/src/main/scala/core/RegFile.scala:216-227` | 8 个计数器/selector、inhibit、同拍 CSR 写优先与旧 selector/inhibit 采样行为保留；MDU 写回不额外 instret |
-| debug/ESTOP | `design/src/main/scala/backend/BreezeBackend.scala:170,1734,1739-1779` | 原调试可观测语义及一次 ESTOP；有后台项时 ESTOP/测试退出是否排空待 Q14/Q18 |
+- `PopCount(completion)<=1`（`design/src/main/scala/backend/BreezeBackend.scala:839-840`）→ 写口grant独热+每源结果保持，允许DIV/MUL同时valid。
+- `RiscvMulUnit` 三拍/全flush（`design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64`）→ 四拍/commit/kill/保持；旧 `SignedMul65x65` 及其tests原样保留。
+- HPM非法selector=11（`design/src/test/scala/core/BreezeCsrPipelineSpec.scala:130-131`）→ 非法上界14；旧合法0–10语义保留。
+- **其余旧测试/断言原样保留**。后端旧MDU测试观测与早提交冲突列A03，不能自行迁移；阶段二回归按R/Q17“无新增失败，通过数不少于d5672f5同机基线”，现有失败只记录不修复。
 
 ## 10. 仿真断言与形式化性质
 
-### 10.1 RTL 仿真断言（冻结后全部实现）
+### 10.1 仿真断言（冻结后实现）
 
-| ID | 断言 |
+| ID | 规则 |
 | --- | --- |
-| S01 | x0 不 busy、不物理写；每个非零 rd 至多一位预约所有者 |
-| S02 | busy 等价于 ID 已预约、未 kill/写回的同 rd MDU；不忽略 EX 尚未接收者 |
-| S03 | sbRaw/sbWaw 阻塞时无年轻 idLeave；未离开 ID 不置位 |
-| S04 | 每项至多一次 req.fire、一次 commit 或 kill；resolve 命中有效同身份项；不能 commit 与 kill 同时授权 |
-| S05 | 未提交或已 kill 项永不实际 resultWrite；已提交项不被普通 redirect 清除 |
-| S06 | 整数 RF 写口 grant 独热，长延迟每拍最多一笔；不能把多源 valid 独热当要求 |
-| S07 | 结果 valid && !ready 时保持全部 payload（取消例外由 Q03 冻结）；未选来源 ready=0 |
-| S08 | resultWrite、RF 数据/标签、记分板 clear、ID 旁路一致，写回不触发第二次 retire |
-| S09 | 普通 WB 因写口冲突保持元数据且不 retire/CSR commit/改 architecturalNextPc；释放后仅一次提交 |
-| S10 | kill 只清对应未提交项，不能误清其他 rd 或复用同 rd 的新身份；多项 kill 覆盖完整 |
-| S11 | MUL 每级 valid/身份/op/数据对齐；无 stall 的算术完成间隔/延迟为 II=1/4 拍 |
-| S12 | DIV 已占用或结果保持时不得覆盖输入；特殊算术结果 1 拍可用并受 WB 授权 |
-| S13 | WB 老重定向抑制所有年轻同拍副作用；EX branch 只在实际推进时解析/训练 |
-| S14 | CSR 执行前整数 busy 为空；WFI/中断不要求后台为空；FASE 排空规则按 Q10 冻结 |
-| S15 | 访存/FP 单次脉冲响应不能因 WB 让拍丢失/重复；现有断言保留或按 Q15 批准变更 |
-| S16 | 三个 HPM 事件与实际发生的 stall/conflict 对齐；一周期不因重复条件累计多次同事件 |
+| S01 | x0不busy、不发MDU；同rd跨未提交流水和已提交FU至多一项 |
+| S02 | busy iff有已提交未写回项；WB commit置位、write清位、kill不改busy |
+| S03 | RAW/WAW命中级间或effectiveBusy时ID不离开；真实写回mask只屏蔽被grant项 |
+| S04 | commit脉冲到达时单元有未提交项且只授权最老一个；无事务标签 |
+| S05 | kill项永不写，committed项不被killUncommitted取消；同拍先commit后kill |
+| S06 | 后台grant独热、后台与普通GPR写互斥；可有多源valid |
+| S07 | 每源valid&&!ready保持rd/data/valid；result.valid必有committed&&done |
+| S08 | write、clearMask、RF穿透、晚写事件一致，一项一次写，后台write不再retire |
+| S09 | WB port stall时四级及侧带保持、无普通退休/副作用 |
+| S10 | 同rd setMask/clearMask不能同拍非零；不同rd同时更新全部生效；reset清所有 |
+| S11 | MUL四级数据/op/rd/valid对齐，data enable按第7节；未提交P4保持缺口A01解决后检查 |
+| S12 | DIV occupied期间ready=0，不能同拍释放再接收；fast接收后1拍done、commit前不valid |
+| S13 | WB老redirect抑制年轻副作用；EX/MEM redirect不杀老未提交MDU；FENCE.I待A02 |
+| S14 | CSR离开ID及ESTOP在WB退休前busy空；FASE empty含busy空；中断/WFI不要求busy空 |
+| S15 | dmem capture一项不溢出/不重复消费；FPU outReady只在可消费拍；flags侧带不丢 |
+| S16 | HPM11/12双来源可同拍计，各源含级间与记分板；13等于WB让拍 |
 
-### 10.2 模块级形式化矩阵
+R第3节“同一rd不同拍置位与清除”按R/Q02的明确表达解释为 **同一rd不能同拍set与clear**，不是要求它们发生在相邻周期；不引入额外延迟。
 
-对象：记分板、整数写口仲裁、MDU 接口/生命周期；不把本步模块证明扩大为全核精确异常、算术或 FPGA 证明。wrapper 与真实数据通路的绑定另做仿真等价性；若形式化抽象算术，必须报告替换边界。
+### 10.2 模块级形式化（记分板、仲裁、MDU协议）
 
-| ID | 性质 / assert 或 cover | 环境义务 / 证明模式 |
+| ID | assert/cover | 环境与模式 |
 | --- | --- | --- |
-| F01 | 对每个 r≠0，所有者数量≤1（assert） | 合法 decode 类型；DUT 自己执行 rd 检查，不能 assume 无 WAW；BMC+归纳 |
-| F02 | busy[r] iff 存在对应预约到终结的 MDU（assert） | ghost 台账独立计数 ID leave/kill/write；BMC+归纳 |
-| F03 | 被 kill 身份永不物理写回，包括 kill 后复用 rd 的晚结果（assert） | 合法 resolve 年龄/身份；不能 assume kill 时 FU 无结果；BMC+归纳 |
-| F04 | 每拍至多一个长延迟 grant/write，普通写与后台写互斥（assert） | 多源同时 valid 合法；BMC+归纳 |
-| F05 | 被反压结果的 valid/全部 payload 保持至接收（assert） | 取消边界按 Q03；不用 assume DUT 自己保持；BMC+归纳 |
-| F06 | 每个已提交非零 rd 的结果最终恰好一次写回（assert 活性） | 算术在 Ldone 内完成、外部物理写口在 Lport 内可用；内部来源仲裁公平性必须解 Q12；先有界活性，另报无界/归纳结果 |
-| F07 | 无 commit 的写禁止、commit 不清 busy，已提交项 redirect 后存活（assert） | 年龄合法，含 trap 与结果同拍；BMC+归纳 |
-| F08 | req 接收到终结的计数守恒，无丢失/重复；容量不溢出（assert） | 容量 Q04 冻结后绑定，输入遵守 ready；BMC+归纳 |
-| F09 | WB stall 时 payload 不变、普通指令只提交一次（assert） | 接入流水 enable 后；BMC+归纳 |
-| F10 | ID RAW/WAW、CSR busy 阻塞正确且不阻止老 MDU 前进（assert） | 无永久外部 hold 的进展假设需显式记录；BMC+归纳/有界活性 |
-| F11 | commit/kill/推进/结果同边界遵守冻结的优先级（assert） | Q02/Q03 冻结后写精确公式；BMC+归纳 |
-| F12 | reset 后空、x0 行为及睡眠写口符合冻结合同（assert） | 复位/时钟 Q14；BMC+归纳 |
-| F13 | 连续 4 拍及以上 MUL 接收、DIV/MUL 同时 ready、WAW stall 后释放、早 done 等 commit、trap 后后台写（cover） | 允许竞争/kill/反压，记录 witness；cover 不是活性证明 |
-| F14 | kill 后立刻复用 rd、多个年轻 kill、普通 WB 多拍让口、CSR 等待释放（cover） | 同上；检查 assume/reset 不使场景不可达 |
+| F01 | 同rd任何时刻至多一个长延迟写在途（含未提交流水+已提交FU） | 不能assume无WAW代替DUT检查；BMC+归纳 |
+| F02 | busy[r] iff已提交、未写回、rd=r的MDU项 | 以WB commit/write台账检查，不计未提交项；BMC+归纳 |
+| F03 | 被kill项永不写回 | 允许kill+算完/复用rd；BMC+归纳 |
+| F04 | 每拍至多一个后台write/grant，普通写互斥 | 多源同时valid合法；BMC+归纳 |
+| F05 | valid&&!ready结果保持直至接收 | 外部valid只已提交，kill不能作稳定性的例外；BMC+归纳 |
+| F06 | 每个已提交结果最终恰一次写 | 单元有界算完，外部无永久hold；内部DIV>MUL公平性/释放间隔由DUT证明；有界与无界活性分别报告 |
+| F07 | commit前不能result.valid/架构写；commit-before-kill；已提交项存活 | 合法脉冲来自WB，单元无需ready；BMC+归纳 |
+| F08 | req接收到kill/write计数守恒、四级/单DIV容量不溢出 | 不限制合法长反压；A01需解决，BMC+归纳 |
+| F09 | WB stall完整保持、一条指令一次commit/retire | 同拍后台写、dmem/FP完成仍合法；BMC+归纳 |
+| F10 | 级间RAW/WAW与effectiveBusy检查、写回同拍释放/穿透 | 不假设结果缺竞争；BMC+归纳 |
+| F11 | assert同rd set/clear互斥；commit必有未提交项 | 含不同rd同时set/clear与commit+kill；BMC+归纳 |
+| F12 | reset空、x0不入FU、睡眠后台继续，capture复位 | reset合同显式，不assume永久reset；BMC+归纳 |
+| F13 | cover连续MUL、DIV/MUL同时valid、early done等commit、trap后后台写 | cover witness不是活性证明，A01缺口不能靠assume屏蔽 |
+| F14 | cover同拍清busy/ID离开、commit+kill、WB多拍让口、CSR等待释放 | commit+中断整核不可达不要求假cover；接口组合单独cover |
 
-BMC 深度、引擎、Ldone/Lport 数值在接口/容量冻结后制定并固定，当前 **未确认，未运行**；阶段二分别报告实际深度、SAT/UNSAT、归纳是否完成、cover witness、timeout/unknown/未完成项。不能用一次有界 pass 表述无界证明；不得减深度或添加排除合法竞争的 assume 取得通过。
+六项最低性质F01–F06保留；不调小深度、不增排除合法输入的assume、不换低覆盖验收。BMC实际深度/引擎/归纳/cover及有界活性常数在阶段二运行前登记，本轮未运行；“最终无永久停顿”的公平假设与有界实验的外部hold最大值分开，不把bounded pass当无界证明。
 
-## 11. 计数事件与接入
+## 11. HPM事件
 
-依据 [observability-design.md 2.6](observability-design.md#26-后端每核) 与 T 第 1 节，本步先接现有 HPM，不新建 MMIO/JTAG 计数阵列。
+| 编号/事件 | 精确事件条件 |
+| --- | --- |
+| 11 `SB_STALL_MUL` | ID有效、!idLeave、其真实源/目的因MUL来源effectiveBusy或EX/MEM/WB未提交MUL匹配被挡。其他hold并存仍计；若本拍clearMask已解除该依赖则不计 |
+| 12 `SB_STALL_DIV` | 同上，来源DIV；两来源成立两个都计；fetch invalid不计；纯req.ready资源wait无RAW/WAW不计 |
+| 13 `WB_PORT_CONFLICT` | 第5节wbPortStall，每让拍计一次；rd=x0/MDU提交/trap/FPR写等不计 |
 
-| 事件 | 已确定的计数对象 | 未覆盖的细节 |
+CSR在ID等全busy为空时，只要ID有效、不离开并确因相应来源busy未清造成等待，该来源事件也成立（属于记分板冒险）；级间未提交MDU若通过已有CSR状态/源规则挡住，同样以对应来源的实际匹配计。每个事件一拍一个Bool，不按匹配rs数量累加。ESTOP在WB等空造成的整体保持本身不新增ID来源事件，仍只按ID自身的记分板/级间依赖条件判断。
+
+现有ID0–10在 `design/src/main/scala/core/common.scala:337-349`；事件Bundle `design/src/main/scala/interface/interface.scala:340-351`。新合法上界13、非法14及以上映射NONE，软件全值先校验不截断（原行为 `design/src/main/scala/core/BreezePerformanceCounters.scala:49-64`）；selector宽 `log2Ceil(14)=4`，原 `log2Ceil(11)` 也4，需更新上界/表/三字段但不能误称物理位宽增大。保持counter+pending可见值、软件写优先、旧selector/inhibit同拍采样（`design/src/main/scala/core/BreezePerformanceCounters.scala:65-80`），8项数量不变。
+
+## 12. 审阅后问题
+
+原Q01–Q18的决定已落实，以下是核对这些决定后发现的新冲突/依赖；不自行修审阅文本，不作为已批准实现。
+
+| ID | 冲突/缺口、证据 | 需要用户确认 |
 | --- | --- | --- |
-| `sb_stall_mul` | ID 被 MUL 来源 busy 的 rs/rd 依赖停顿的拍数 | 多来源同时阻塞、CSR 等全空、fetch invalid、其他 hold 并存时是否计数 Q13 |
-| `sb_stall_div` | 同上，来源为 DIV | 同上；不把 DIV FU ready=0 的纯结构停顿自动算记分板停顿 |
-| `wb_port_conflict` | 后台结果实际占整数写口，普通 WB 整数写因此让拍的次数/拍数 | x0、trap/非法指令不构成正常待写；普通 WB 资格 Q06/Q11 冻结后定事件表达式 |
+| A01 | R/Q03要求未提交算完结果留单元、valid只已提交；R/Q04只在outValid&&!outReady停四级。P4有未提交完成时outValid=0、enable=1，下一沿可被覆盖；例如WB被普通写口冲突拖住而MUL已到P4，或P4同拍才commit。无额外FIFO，现公式不能保留该结果 | 未提交P4的保持/推进/ready和同拍commit规则；不能擅自改enable或加缓存 |
+| A02 | R/Q03将FENCE.I列为WB kill，但源码FENCE.I在MEM发redirect；证据6.3。其“MEM只抑EX、不kill”原则与括号例子冲突 | 保持MEM并不发kill，还是另批准改变发起级/取消方案；本稿不搬流水级 |
+| A03 | R/Q15除三类许可外要求旧tests原样；旧后端MUL测试在MDU memWbValid时读最终wbData（`design/src/test/scala/backend/BreezeBackendMulSpec.scala:78-91`），DIV亦如此（`design/src/test/scala/backend/BreezeBackendDivSpec.scala:70-80`）。新WB早提交时最终值未到，不能保留该观测合同且实现早提交。若直接改现有DIV wrapper接口，旧测试只发in_valid后等out_valid、从不commit（`design/src/test/scala/divider/RiscvDivUnitSpec.scala:25-65`），将不符合新协议 | 是否批准迁移这些观测及DIV wrapper协议驱动，或明确保留旧wrapper测试的模块边界；全部算术/依赖期望仍保留；当前不改tests、不伪造WB data |
+| A04 | 在9.1列出的仓库runner/parser/header范围没有可用完整逐条参考比对器。R/Q18要求未找到则停、不得自建 | 提供可复用比对器/入口或进一步指定查找范围；当前停止checker实现，不编造参考模型 |
+| A05 | R/Q18需rdPending/晚写通路，已有core仅转TracePayload（`design/src/main/scala/core/BreezeCore.scala:153-155`），runner只收原RawCommitEvent（`design/src/main/scala/sim/BreezeCoreSimSupport.scala:453-485`）；R/Q09新增允许文件不含sim目录/core非HPM改造 | 是否批准具体core/trace runner/parser/log文件变更；事件物理承载不能自行扩任务范围 |
+| A06 | R/Q03举“WB MDU提交同拍接受中断”为commit+kill例子，但R/Q06保留未提交流水为空接受中断；源码pipelineEmpty要求!memWbReg.valid（`design/src/main/scala/backend/BreezeBackend.scala:596-599`），此整核组合不可达 | 请确认该例子只用于单元接口，或另行修订中断接受条件；本稿保留先commit后kill合同，不自行改中断规则 |
 
-现有事件 ID 0–10 定义在 `design/src/main/scala/core/common.scala:337-349`；`BreezeHpmEvents` 当前只有十个字段（`design/src/main/scala/interface/interface.scala:340-351`），性能模块 selector 位宽/合法上界/表使用 LOAD_USE_STALL（`design/src/main/scala/core/BreezePerformanceCounters.scala:13,49-64`）。三个新 ID 及是否扩公共 Bundle/改用局部事件端口待 Q09/Q13，不擅自编号 11/12/13。
+上述问题阻止用户最终确认冻结；其余规则按R的决定，不恢复原Q列表或旧机制。
 
-接入后必须同时更新合法 selector 上界、表映射和相关测试驱动；保留 `counters+pending` 可见值、计数器 CSR 写优先、同拍采用旧 selector/inhibit（`design/src/main/scala/core/BreezePerformanceCounters.scala:65-80`）。实际退休信号必须每条一次，后台 resultWrite 不增加 minstret/coreinst（`design/src/main/scala/core/BreezePerformanceCounters.scala:38-44`）。
+## 附录 A：decoder 推导的整数源/目的使用表
 
-## 12. 未决问题（冻结前逐项处理）
+表中“读rs1/2”仅表示真实GPR源，非零才RAW；“写rd”非零才WAW。实际允许发射/退休还要合法性/取指异常条件。FPR源不查整数scoreboard。整数decoder由 `design/src/main/scala/core/InstDecode.scala:597-607` 直接接RV64IZicsrDecoder，表逐分支核对。
 
-所有项当前均为 **未决定/未确认**；正文有依据的合同继续有效，但不得据此越过冻结门槛。表中“需决定”不代表推荐某个候选值。
+| 指令（逐条族） | GPR rs1 | GPR rs2 | GPR rd | 源码位置/说明 |
+| --- | --- | --- | --- | --- |
+| ADDI、SLTI、SLTIU、XORI、ORI、ANDI、SLLI、SRLI、SRAI | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:88-119` |
+| ADDIW、SLLIW、SRLIW、SRAIW | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:120-147` |
+| LUI、AUIPC | — | — | 写 | `design/src/main/scala/core/InstDecode.scala:148-167`，源为ZERO/PC |
+| ADD、SUB、SLL、SLT、SLTU、XOR、SRL、SRA、OR、AND | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:168-237` |
+| ADDW、SUBW、SLLW、SRLW、SRAW | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:238-281` |
+| MUL、MULH、MULHSU、MULHU、MULW | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:180,187,194,201,251`；rd=x0仍读源但不发FU |
+| DIV、DIVU、REM、REMU、DIVW、DIVUW、REMW、REMUW | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:208,219,226,233,268,272,275,278` |
+| JAL | — | — | 写 | `design/src/main/scala/core/InstDecode.scala:282-294` |
+| JALR | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:295-309`，JAU rs1而ALU为PC+len |
+| BEQ、BNE、BLT、BGE、BLTU、BGEU | 读 | 读 | — | `design/src/main/scala/core/InstDecode.scala:310-322`；BRU读两源 |
+| LB、LBU、LH、LHU、LW、LWU、LD | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:324-340` |
+| SB、SH、SW、SD | 读 | 读 | — | `design/src/main/scala/core/InstDecode.scala:341-355`，rs2为store数据，虽ALU2是IMM仍读 |
+| LR.W/D | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:356-394`，合法编码rs2=0 |
+| SC.W/D | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:395-399` |
+| AMOADD/AMOSWAP/AMOXOR/AMOOR/AMOAND/AMOMIN/AMOMAX/AMOMINU/AMOMAXU，W/D | 读 | 读 | 写 | `design/src/main/scala/core/InstDecode.scala:400-408` |
+| FENCE、FENCE.I | — | — | — | `design/src/main/scala/core/InstDecode.scala:412-454` |
+| ECALL、EBREAK、MRET、SRET、WFI、ESTOP | — | — | — | `design/src/main/scala/core/InstDecode.scala:456-514` |
+| SFENCE.VMA | 读 | 读 | — | `design/src/main/scala/core/InstDecode.scala:515-523`；地址/ASID由后端 `design/src/main/scala/backend/BreezeBackend.scala:1643-1647`；x0表示全范围，不读GPR数据 |
+| CSRRW、CSRRS、CSRRC | 读 | — | 写 | `design/src/main/scala/core/InstDecode.scala:525-557`；rs1=x0无RAW，rd=x0仍可写CSR |
+| CSRRWI、CSRRSI、CSRRCI | — | — | 写 | `design/src/main/scala/core/InstDecode.scala:558-590`；字段19:15为zimm，虽sel_alu1=RS1但alu_op=RS2，立即数实际来源 `design/src/main/scala/core/FuncUnit.scala:127-136`，不能将zimm当新MDU RAW |
+| FLW、FLD | 读 | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:113-120`，usesGpr1 |
+| FSW、FSD | 读 | — | — | `design/src/main/scala/fpu/BreezeFp.scala:122-129`，地址为GPR rs1、数据为FPR rs2 |
+| FMADD/FMSUB/FNMSUB/FNMADD，S/D | — | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:100-109,131-139`，三FPR源 |
+| FADD/FSUB/FMUL/FDIV/FSQRT，S/D | — | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:143-149` |
+| FSGNJ/FSGNJN/FSGNJX/FMIN/FMAX，S/D | — | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:150-164` |
+| FCVT.S.D、FCVT.D.S | — | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:165-171`，rs2为fmt编码 |
+| FLE、FLT、FEQ，S/D | — | — | 写 | `design/src/main/scala/fpu/BreezeFp.scala:172-180`，两个FPR输入，writesGpr |
+| FCVT.W/WU/L/LU.S/D | — | — | 写 | `design/src/main/scala/fpu/BreezeFp.scala:181-189`，FPR输入，rs2是整数fmt编码 |
+| FCVT.S/D.W/WU/L/LU | 读 | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:190-198`，usesGpr1，rs2是fmt编码 |
+| FMV.X.W、FMV.X.D | — | — | 写 | `design/src/main/scala/fpu/BreezeFp.scala:199-205` |
+| FCLASS.S、FCLASS.D | — | — | 写 | `design/src/main/scala/fpu/BreezeFp.scala:206-212` |
+| FMV.W.X、FMV.D.X | 读 | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:214-222` |
 
-| ID | 来源/缺口与需决定事项 | 对实现/验证的影响 |
-| --- | --- | --- |
-| Q01 | D 4/5/8/9 只给 rd 标签和 commit/kill。事务身份用 rd、流水位置、slot 还是序号/epoch？宽度、复用条件、多个年轻 kill 的表示、ID 预约→EX→WB→FU 匹配如何规定？ | 晚结果不能命中新指令；MUL 多在途和 x0 不能依赖一个 busy 位定位 |
-| Q02 | D 5 写同拍旁路、下一拍前进，未给 clear+set 优先级。释放 rd 当拍是否允许同 rd 新 ID leave？set/clear/kill 多事件的逐位 next-state、旁路与 ready 优先级是什么？ | 位不丢、WAW 不漏，精确到拍的 scoreboard/ID 方程 |
-| Q03 | D 4/8 未规定 resolve 是脉冲还是 ready 握手、取消数量/确认，done 早于 commit 时 valid 可见性。commit+done、kill+done、kill+推进、reset 同拍如何排序？携取指/非法异常的指令是否预约/发起，自身 WB trap 的预约如何释放？ | 不能把计算完成当授权；稳定性断言的合法取消例外和 same-edge 测试，异常项不能遗留 busy |
-| Q04 | D 9 要求 4 拍/II=1 且结果保持，未给反压容量。MUL elastic/信用/结果缓冲结构、容量/ready、EX 一次发起标志、WB 让拍引起的各级 enable/旁路保持如何规定？ | 连续 MUL 与任意反压不丢结果、不重复发起；不得自行给 FIFO 深度 |
-| Q05 | T 要补 DIV 快路径，但基线已有 EX→MEM 路径（1.3）；改造后 fast 检测/寄存器归属、原始输入还是幅值接口？32 拍指迭代还是接口完成？释放与再接收可否同拍？ | DIV wrapper 寄存器/FSM、直接单元特殊值测试及活性边界 |
-| Q06 | D 6 仅说“WB 中要写寄存器的普通指令让拍”。无 GPR 写的 store/branch/CSR rd=x0/FPR 写、MDU 自身 WB commit、trap/xRET/WFI 与后台写同拍能否继续？中断接受仍等未提交流水全空还是允许 WB 退休同拍？ | commit/retire/CSR/PC/redirect 统一脉冲；不能重复或错误屏蔽副作用 |
-| Q07 | 现有 memory completion/FP completion 与 WB 使用脉冲和共同寄存器（1.1/1.2），新 WB 反压时如何存响应、使 FPU outReady、保持 FPR/fflags sideband？ | 不改 FPU 内部/访存协议也不能丢完成；需要批准保存位置/容量 |
-| Q08 | D 5 的真实 GPR 源/目的与 FP 跨 bank 规则需译码名单；本步哪些 FP/local/CSR/原子写检查 rd、FP usesGpr1 如何接？新长延迟旁路是否供 held EX，普通旁路优先级如何合并？ | RAW/WAW 覆盖完整，f0 与 x0 不混淆；未审的 decoder 映射不推测 |
-| Q09 | T 3.1 不含 `interface/`，现有 HPM/流水/trace Bundle 在该目录。是否允许修改指定公共文件，或批准后端局部侧带/事件端口？旧 MDU 数据字段/等待诊断字段具体保留/删除名单是什么？ | 模块/文件边界和编码，避免扩大任务范围/误删 FP 的 MUL selector |
-| Q10 | D 未覆盖 FASE，基线 `pipelineEmpty` 含 MDU 等待，`f.empty` 与 RF override 共用（`design/src/main/scala/backend/BreezeBackend.scala:596-599,1706-1724`）。FASE enter/empty/launch/寄存器写/flightEvents 如何对待已提交后台项？ | 调试读不能见未完成值，调试写不能覆老结果；中断排空条件不能直接复用调试 empty |
-| Q11 | D 5 只管理 x1–31。rd=x0 的 MDU 是否仍执行/提交并释放结果？是否占用 write grant/冲突计数？多笔 x0 如何唯一匹配、取消？ | 无 busy 的操作仍可能占 FU/身份资源；测试/形式化必须覆盖 |
-| Q12 | D 6 给默认顺序，D 12 仍待拍板。确认 DIV/MUL 的固定顺序或公平仲裁及扩展来源顺序；如何保证低优先级来源进展？ | 必须满足 T 活性，不能 assume 掉无限合法高优先级流量 |
-| Q13 | observability 2.6 未给重叠停顿归因/ID 与编码。两个来源同时依赖、CSR 等空、其他 hold、fetch invalid 的计数口径；新 ID/最大 selector 与来源元数据布局如何定？ | 性能计数可解释、CSR ABI 与现有 HPM 行为兼容 |
-| Q14 | 设计未细化复位、睡眠时钟、ESTOP/程序结束时后台排空。全局 reset 是否取消所有项、复位后的架构初值边界；WFI 睡眠仍有写口/时钟保证；退出何时可停止观测？ | reset/活性假设、后台完成与测量末尾不能丢最后结果 |
-| Q15 | T 0.2 禁止自改验收；旧 `PopCount(completion)<=1`（1.2）、MUL wrapper 3 拍测试/全 flush、后端 WB 同拍结果观察、HPM 非法 selector=11 检查（testplan 1 节）可能与新合同/新 ID 冲突。需逐条批准改为等强的新检查，哪些旧原样保留？ | 不能删/放宽断言或把已有失败掩盖为新测试通过 |
-| Q16 | D 9 指定 DSP48E2，而 D 的目标为 KU040。目标器件对应 DSP 类型及 Vivado 推断/retiming 支持未核验；允许使用哪种器件 DSP、综合顶层/配置/约束/retiming 设置？ | 不擅自改技术目标；4 拍与 DSP/LUT/WNS 需要匹配同配置实测 |
-| Q17 | T 要保留 CORE-003 修复，但 bug 文档仍 open（9 节）；新旧硬件完整基线 suite 数量/失败情况未运行。冻结保留行为需以哪条基线证据认定？若基线失败如何处置？ | 不把历史 bug 记载/源码保守逻辑当当前通过；先报告，不能降低全回归验收 |
-| Q18 | D 11 要提交顺序比对、迟到后比寄存器；现有 TracePayload 只一拍携 rdData（9 节）。迟到值与原提交的关联/trace 缓冲或额外完成事件、参考模型状态可见点、FASE 退休数据如何定？tandem 完整 checker/可复用执行入口未确认。 | 不把“有退休 log”当逐条参考模型通过；可能需超出 T 3.1 的文件变更 |
-
-不额外引入硬件技能。本阶段已用 `breeze-spec-verification`、`spec-to-testplan`、`breeze-microarchitecture-review`、`gf-formal` 做文档审查/追踪/性质清单，未启动其 RTL 或验证流程。
+由表产生新MDU RAW/WAW资格，不替换旧CSR/FP保守hazard，也不因非法编码中默认wb_en/源selector而发MDU。旧整数源组合会对CSR immediate产生保守RS1匹配，事实见 `design/src/main/scala/backend/BreezeBackend.scala:225-231`，此旧规则保留；新MDU真实源表与旧保守条件分开定义。

@@ -90,3 +90,87 @@
 - `.agents/`、`docs/figures/`、`docs/cross-project/`、`docs/hardware-skill*`、`docs/plans/2026-10-04-*` 均未暂存。技能/context 为本地只读输入，本报告不把它们当作已提交交付文件。
 - 使用的四个技能只辅助分析与文档；没有新增其他硬件技能需求，没有加载其实现/验证执行流程。
 - 到此停止。只有用户明确宣布阶段一 spec 冻结后，才能按冻结版本和已批准范围开始阶段二。
+
+## 6. 阶段一审阅修订记录（2026-10-05）
+
+本节是最新状态；前面第1–5节记录初稿交付历史，其中原Q01–Q18列表及旧规格锚点不再表示当前未决项。当前spec为**冻结候选，待用户确认**。阶段二仍未开始；没有修改任何 `.scala/.py/.sv`，没有运行硬件验证。
+
+### 6.1 提交、分支与交付
+
+分支仍为 `feat/pcie-fase-20260920`。
+
+| 提交 | 内容 / 结果 |
+| --- | --- |
+| `ea040b0ddf0247685769ff386ce09bda443275c5` | 上轮初稿报告提交，已push（历史记录） |
+| `d73a546a9f1acd51a4c99b20d3985d451a8d8be0` | 本轮第一步仅提交 `docs/tasks/T01-review.md` 和 `docs/backend-pipeline-design.md` 第5/7节修订；信息 `T01 review decisions and scoreboard set-at-commit revision`；已push，远端输出 `ea040b0..d73a546` |
+| 承载本轮修订的文档提交 | 仅 `docs/backend-rtl-spec.md`、`docs/backend-testplan.md`、本报告；实际SHA及push结果在提交后由最终回报和本地delivery日志给出，亦可 `git log -1 --format=%H -- docs/tasks/T01-report.md` 查询 |
+
+修订文件：[RTL spec](../backend-rtl-spec.md)、[测试计划](../backend-testplan.md)、[本报告](T01-report.md)。审阅输入：[T01-review.md](T01-review.md)。源码事实对应 `d73a546`（相对 `d5672f5` 无代码差异）。
+
+### 6.2 修订内容与边界
+
+- 原Q01–Q18已有确定决定，spec第0节增加落实索引。未提交MDU由EX/MEM/WB级间RAW/WAW检查覆盖；busy只在WB真实提交非零MDU置位、实际write清除，kill永不改busy。写回拍使用effectiveBusy掩码和已有RF写穿透；无EX MDU旁路、无事务标签。
+- 单元commit最老未提交项、killUncommitted全部未提交项，无ready、同拍先commit后kill。输出只已提交且算完，反压保持。按每种redirect核对发起级，全部附源码行号；FENCE.I/MEM和中断空流水的冲突不擅自修改。
+- 按decoder分支推导spec附录A的整数源/目的表，含CSR immediate zimm、原子、SFENCE、FP跨GPR/FPR bank。保留旧CSR/FP hazard、普通旁路与held EX更新。
+- MUL四级/末级输出/整体反压、DIV fast附带req及occupied释放隔拍；固定DIV>MUL>普通WB。仅普通非零GPR写WB遇后台grant时整流水让拍；dmem单项捕获，FPU确认有outReady，选择反压不加额外捕获。
+- FASE empty含busy空、enter/读写/launch等后台完；中断不使用该empty。rd=x0 MDU不发FU且无rdPending；WFI后台不停时钟；ESTOP在WB退休前等busy空。
+- HPM 11/12/13的拍级条件、重叠来源各计、上界13/非法14已确定；现4bit selector更新上界后仍4bit，证据 `design/src/main/scala/core/BreezePerformanceCounters.scala:13,49-64`。S01–S16/F01–F14及spec6.1时序例同步重写；测试计划27条需求、全部定向/随机/形式化/回归期望同步。
+- 后续验收按R/Q17在Alan先跑d5672f5完整基线，无新增失败且通过数不少，已有失败只记录。原设计第11节/任务第4节的“kill清记分板”旧措辞，测试期望按本轮明确审阅决定改为“kill不改busy”，不恢复已被否定的机制；本轮没有额外修改设计/任务文件。
+
+批准的**计划删除清单**（本阶段没有删代码）：
+
+| 原字段/逻辑与位置 | 阶段二冻结后的迁移 |
+| --- | --- |
+| EX/MEM `mul_a/mul_b/mul_op` 与DIV fast/magnitude/sign/word/remainder字段；`design/src/main/scala/interface/interface.scala:408-420` | EX req接受后不再携带到MEM；保留mul_valid/div_valid/rd/valid作为提交元数据 |
+| MUL/DIV等待状态及旧MEM发起/完成/全flush；`design/src/main/scala/backend/BreezeBackend.scala:492-493,733-752,1354-1368` | 改EX接收/WB commit与WB killUncommitted；已提交后台不被redirect取消 |
+| MEM/WB `mul_data` 的MDU用途；`design/src/main/scala/interface/interface.scala:464` | 后台结果独立仲裁；现FP→GPR共用MUL选择（`design/src/main/scala/backend/BreezeBackend.scala:1297-1300,1526-1530`）改独立FP命名/字段，保留全部功能 |
+
+R/Q15已批准的“旧检查→新检查”：
+
+| 旧检查 / 源位置 | 新检查 / 权限 |
+| --- | --- |
+| completion PopCount≤1；`design/src/main/scala/backend/BreezeBackend.scala:839-840` | grant独热+每源valid&&!ready保持；允许DIV/MUL同时valid；已批准 |
+| MUL wrapper3拍/全flush；`design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64` | 4拍/commit/kill/保持；已批准。旧SignedMul65x65及全部测试原样保留 |
+| HPM非法selector=11；`design/src/test/scala/core/BreezeCsrPipelineSpec.scala:130-131` | 新非法上界14；已批准，旧0–10及计数采样语义不变 |
+| 后端MDU提交拍最终wbData及DIV wrapper无commit驱动 | **未批准**，列A03；当前不修改旧测试、不伪造旧观测值 |
+
+### 6.3 审阅后问题
+
+完整证据和影响见 [spec第12节](../backend-rtl-spec.md#12-审阅后问题)。以下六项没有自行决定：
+
+| ID | 问题 / 需确认内容 |
+| --- | --- |
+| A01 | 未提交MUL到P4时outValid=0，Q04 enable仍允许推进，Q03要求的内部保存无法保证。确认未提交P4保持/ready及同拍commit规则；未擅加FIFO或改enable |
+| A02 | Q03把FENCE.I列作WB kill，但代码在MEM发redirect；与“MEM只抑EX、不kill”冲突。确认级/kill合同；未搬级 |
+| A03 | Q15除三类外旧检查原样，与后端MDU提交拍最终wbData冲突；直接替换原DIV wrapper协议也会使旧无commit驱动冲突。确认驱动/观测迁移许可或保留旧wrapper边界，算术/依赖期望不变；未修改测试 |
+| A04 | 指定仓库范围没有找到可复用完整逐条参考比对器。按Q18停止checker实现，请提供入口或指定进一步查找范围；未自建参考模型 |
+| A05 | rdPending/晚写事件需要贯穿core/sim，超出Q09允许范围。需批准具体core/trace runner/parser/log文件；未扩大代码范围 |
+| A06 | Q03“WB MDU提交同拍接受中断”示例与Q06保留空流水接受条件冲突，当前WB有效则不可达。确认仅是接口级例子或另修中断规则；未放宽中断条件 |
+
+Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests/ref/spike_ref.hpp:1-11`空壳；`design/src/main/scala/sim/BreezeCoreTandem.scala:3-24`容器；`design/src/main/scala/sim/BreezeCoreTandemParser.scala:23-58`转换；`design/src/main/scala/sim/BreezeCoreTandemLog.scala:1-44`格式化；`design/src/main/scala/sim/BreezeCoreSimSupport.scala:301-323,453-497`收集/打印，不能证明存在完整参考执行checker。没有可报告的tandem执行命令，写**未确认**。
+
+### 6.4 实际操作、检查和证据
+
+机器：本地chen；cwd `/home/chen/leisure/flow`。日志仅保存在 `/tmp/flow-t01-stage1-review-20261005/`，不暂存。逐条读取/复核argv、cwd、exit和输出见 `commands.log`（49条；34个源码文件）。
+
+| 命令 / 操作 | 结果 / 日志 |
+| --- | --- |
+| `git status --short --branch`、review完整读取、设计diff与agent规则读取 | 完成，指定分支；输入只读，技能仍限原四个 |
+| `git add -- docs/tasks/T01-review.md docs/backend-pipeline-design.md`；`git diff --cached --check`/范围复核；`git commit -m 'T01 review decisions and scoreboard set-at-commit revision'` | 成功，d73a546，仅两个指定文件；提交可重查 |
+| `git push origin feat/pcie-fase-20260920`（审阅输入） | 成功，ea040b0..d73a546；实际会话输出 |
+| `cat` review/任务/spec/plan/report、四个SKILL/context；`nl -ba`/`sed -n`核对decoder、redirect、FU、trace与旧测试 | 完成；最终源码重读和原文存 `commands.log`，不当运行证据 |
+| `rg -n 'Tandem|spike|compare|rdPending' design/src/main/scala/sim sim/breezecore tests/ref`；`rg --files sim/breezecore tests/ref` | 完成，查找范围明确，未找到完整可复用checker；原输出见 `commands.log` |
+| 仅Markdown的文档重写/补充 | 完成；无代码变更，新问题只报告 |
+| `python3 -` 内联静态检查：文件/引用上界/链接、Q/REQ/T/U/S/F/A编号、追踪与代码范围 | 首次发现spec中六项决定缺显式Q编号索引（并非缺规则）；已补决定索引。首轮 `static-check-initial.log`，最终 `static-check.log` errors=[]；核验spec138处、plan29处源码行号引用 |
+| `git diff --name-only d73a546 -- '*.scala' '*.py' '*.sv'`、`git diff --check` | 代码diff为空、空白检查通过；见 `static-check.log`/会话输出 |
+| 本轮三文件的精确暂存、cached check/范围复核、提交/push、远端HEAD核验 | 实际结果在完成操作后存 `delivery.log`，最终回报给出提交号；不在提交前预填成功 |
+
+**未运行**：Alan sbt基线/回归、RTL生成/仿真、SBY/Yosys、ACT4、tandem/随机程序、Vivado OOC/整核综合与100MHz WNS、性能程序。无BMC深度、通过数、seed数量、资源或周期测量；这些数值未确认。
+
+静态检查只确认文档引用范围/链接/编号和改动范围，不证明文字语义、RTL功能、测试覆盖或综合时序。源码/测试现状与新合同明确分开。四个已有技能仅用于文档/性质分析，没有新增其他硬件技能需求。
+
+### 6.5 偏离、限制与停止点
+
+无代码实施偏离：本轮仅阶段一修订，确定决定贯穿文档；六项冲突/缺口如实列出、不自行处理。spec尚非冻结版，A01–A06仍需用户审阅；已有测试迁移只有上述三类许可。
+
+所有无关未跟踪内容（包括 `.agents/`、`docs/figures/`、`docs/cross-project/`、`docs/hardware-skill*`、`docs/plans/2026-10-04-*`、`docs/roadmap.md`）不暂存。完成本轮文档提交和push后停止，等待用户确认冻结，不开始阶段二。

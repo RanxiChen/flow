@@ -1,158 +1,157 @@
-# Breeze 后端测试计划：T01 阶段一
+# Breeze 后端测试计划：T01 冻结候选
 
-状态：**计划稿，未冻结，所有新验证项未运行**。需求依据：[T01](tasks/T01-backend-scoreboard-mdu.md)（T）、[后端设计](backend-pipeline-design.md)（D）、[RTL spec 审阅稿](backend-rtl-spec.md)（S）。源码审查基线为 `d5672f51bf0ec67465148c02af970c70464bec68`，分支 `feat/pcie-fase-20260920`。本阶段不创建测试代码、harness 或 SBY 配置，不运行 Alan 验证，不修改已有验收。
+状态：**冻结候选，待用户确认；所有新验证项未运行**。依据：[任务书](tasks/T01-backend-scoreboard-mdu.md)（T）、[后端设计](backend-pipeline-design.md)（D）、[RTL spec](backend-rtl-spec.md)（S）、[阶段一审阅决定](tasks/T01-review.md)（R）。源码基线 `d73a546a9f1acd51a4c99b20d3985d451a8d8be0`，相对 `d5672f5` 无代码变化；分支 `feat/pcie-fase-20260920`。本轮只修文档，不创建测试/harness/SBY，不执行硬件验证。
 
 ## 0. 证据状态与执行门槛
 
-- “现有入口”表示源码中找到 suite/检查，不表示测试运行或覆盖了新合同；表中的新 Txx/Uxx/Rxx/Pxx 是**计划编号**，不是现成测试名称。
-- 每条需求都有定向、随机、形式化与回归映射；“不适用”说明原因，不能当作豁免该需求的仿真/系统验收。
-- S 的 Q01–Q18 未决；依赖它们的测试先记录必须满足的可见行为，不猜队列深度、来源顺序、BMC 深度或 ABI。冻结后补明确逐拍 oracle 和已批准的测试变更。
-- 所有硬件执行在 Alan。先核对分支/完整 SHA/工作区/已有任务，保留无关任务；基线、改造后使用同机同配置。每条运行保存命令、cwd、工具、配置、退出码、原始日志、seed/指令数量及匹配的源版本。
-- T 第 4 节每一类验收都必须完成；模块级仿真/形式化不替代全回归、ACT4、tandem、随机程序、综合/时序或性能证据。
+- 原 Q01–Q18 已有决定，下面逐项使用确定期望；新的 A01–A06 见 S 第12节。受冲突影响的检查明确注明冻结阻塞，不自行补方案。
+- “现有入口”只证明源码中有 suite/检查。REQ/T/U/A–D/P/S/F 是追踪编号，不能当作新测试已存在/已执行的证据。
+- 所有硬件执行在 Alan。阶段二第一件事是在 `d5672f51bf0ec67465148c02af970c70464bec68` 上完整 `sbt test`，逐 suite 记录 passed/failed/ignored。R/Q17 将回归判定改为**无新增失败、通过 suite/test 数不少于基线**；已有失败只记录、不在 T01 修复。其他验收类别仍须全部完成。
+- 源 SHA、参数、工具、命令/cwd、退出码、原始日志、seed/指令数与生成RTL/harness版本逐次保存；同机同配置比较。模块仿真/形式化不能代替系统比对、ACT4、综合时序或性能。
+- 未找到可复用完整 checker，按 R/Q18 停止 checker 实现并报告 A04；事件传递文件范围另列 A05。本轮不自建参考模型，不填造假的 tandem 命令。
 
-## 1. 现有测试入口与缺口
+## 1. 现有入口、批准的迁移与缺口
 
-下表全部为**源码审查，未运行**。引用行号对应上述基线。
+下表为源码审查，**未运行**，行号对应上述基线。
 
-| 回归编号 | 已找到的源码位置 | 可复用范围 / 缺口 |
+| 回归编号 | 已找到的源码位置 | 可复用范围 / 新合同 |
 | --- | --- | --- |
-| R-MUL | `design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64`；`design/src/test/scala/multiplier/SignedMul65x65Spec.scala:178-270,287-413` | wrapper 五种结果、flush、旧乘法连续/随机/边界与 3 拍检查；新 wrapper 为 4 拍、逐笔 kill、保持，须 Q15 批准等强迁移；旧 SignedMul65x65 参照及其检查保留 |
-| R-DIV | `design/src/test/scala/divider/RiscvDivUnitSpec.scala:25-65`；`design/src/test/scala/divider/UnsignedRadix4DividerSpec.scala:43-89` | 符号/W 和 unsigned 随机/flush；新协议提交/kill/ready、保持/快结果延迟需新增，旧算术检查保留 |
-| R-BE | `design/src/test/scala/backend/BreezeBackendMulSpec.scala:61-92`；`design/src/test/scala/backend/BreezeBackendDivSpec.scala:70-128` | MUL/ADD completion bypass、DIV 八种操作与快速值；当前按 memWbValid/wbData 观察 MDU 最终值，不能直接验“早提交、晚结果”；Q15/Q18 批准新观测点且保留算术期望 |
-| R-REDIR | `design/src/test/scala/backend/BreezeRedirectPrioritySpec.scala:133-210` | WB fault/xRET/satp 与年轻分支/访存/sfence/flush 同拍；新增年轻 MDU req/kill 与老后台结果同拍 |
-| R-CORE | `design/src/test/scala/core/breezecoreSpec.scala:900-1240,1761-1918,2299-2667` | CSR、load/store、单次退休、load-to-store、load-to-branch、目标 miss、CORE-003 handler/变体；基线真实通过数/失败项未确认 |
-| R-HPM | `design/src/test/scala/core/BreezeCsrPipelineSpec.scala:47-160`；`design/src/test/scala/core/breezecoreSpec.scala:323-393` | 全 CSR 可见拍的独立计数模型、selector/inhibit/overwrite；旧测试把 11 作为非法值（前者 :130-131），若新 ID 使用 11 需 Q15 批准迁移非法值检查，不能直接删 |
-| R-FP | `design/src/test/scala/backend/BreezeBackendFpSpec.scala:12-64`；`design/src/test/scala/backend/BreezeBackendFpMemorySpec.scala:32-134` | FS Off、依赖 FP/flags、FP 访存/boxing/非法对齐；新增与后台 MDU 同整数写口、FP 跨 bank RAW/WAW |
-| R-PRIV | `design/src/test/scala/sim/BreezePrivilegeFlowSpec.scala:50-116,118-248,381-477`；`design/src/test/scala/sim/BreezeWfiFlowSpec.scala:29-78` | CSR 别名、MRET/中断、S/U 交互、trap frame、非法 CSR、WFI 一次睡眠/唤醒；新增后台 MDU 存活及 handler 依赖 |
-| R-RF | `design/src/test/scala/core/BreezeRegisterStorageSpec.scala:10-91`；`design/src/test/scala/core/breezecoreSpec.scala:13-48` | x0、同拍 RF 写读、FPR f0；新增仲裁后真实 write-through 与 x0 MDU 生命周期 |
-| R-FASE | `design/src/test/scala/fase/FaseIntegrationSpec.scala:15`（suite 定义） | 仅确认入口；对新后台操作的覆盖**未确认**，按 Q10 设计新用例后纳入完整 suite |
-| R-ACT | `verification/act4/Makefile:19-34`；`verification/act4/scripts/run_linux_soc_suite.py:21-31,42-70,77-99` | build extensions、full SoC single profile、include-extension、selected/ran/summary；运行前枚举 I/M/Zmmul corpus，不能仅运行默认 I |
-| R-TANDEM | trace 字段 `design/src/main/scala/interface/interface.scala:246-262`，后端输出 `design/src/main/scala/backend/BreezeBackend.scala:1735-1737` | 仅确认退休 payload；晚结果关联、完整参考比对 checker 与执行命令**未确认**，Q18；`tests/ref/spike_ref.hpp:1-11` 仅为空壳，不能作为已存在 checker 证据 |
+| R-MUL | `design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64`；`design/src/test/scala/multiplier/SignedMul65x65Spec.scala:178-270,287-413` | wrapper 旧3拍/flush迁移为4拍/commit/kill/保持（R/Q15已批准）；旧 SignedMul65x65 及全部测试原样保留，五种算术结果继续验证 |
+| R-DIV | `design/src/test/scala/divider/RiscvDivUnitSpec.scala:25-65`；`design/src/test/scala/divider/UnsignedRadix4DividerSpec.scala:43-89` | 原unsigned算术/flush检查保留；旧wrapper测试只in_valid后等out_valid、无commit，直接改现类协议会冲突；A03列迁移/保留边界许可；新增快结果测试，不擅自删检查 |
+| R-BE | `design/src/test/scala/backend/BreezeBackendMulSpec.scala:61-92`；`design/src/test/scala/backend/BreezeBackendDivSpec.scala:70-128` | 原测试在MDU memWbValid时读取最终wbData，与早提交合同冲突；A03需迁移许可，当前原样保留，不能伪造WB最终数据 |
+| R-REDIR | `design/src/test/scala/backend/BreezeRedirectPrioritySpec.scala:133-210` | 保留WB fault/xRET/satp与年轻分支/访存/sfence/flush同拍检查；新增单元取消及老后台存活 |
+| R-CORE | `design/src/test/scala/core/breezecoreSpec.scala:900-1240,1761-1918,2299-2667` | 保留CSR/访存/退休/分支及CORE-003 handler变体；真实通过数与已有失败未确认，以Alan基线为准 |
+| R-HPM | `design/src/test/scala/core/BreezeCsrPipelineSpec.scala:47-160`；`design/src/test/scala/core/breezecoreSpec.scala:323-393` | 原CSR可见拍计数模型/selector/inhibit/overwrite保留；前者:130-131非法selector=11改14已批准，新增11/12/13合法事件 |
+| R-FP | `design/src/test/scala/backend/BreezeBackendFpSpec.scala:12-64`；`design/src/test/scala/backend/BreezeBackendFpMemorySpec.scala:32-134` | 保留FS Off/依赖/flags/FP访存；新增FP→GPR WAW、GPR→FP RAW、GPR写口冲突，不改FPU内部 |
+| R-PRIV | `design/src/test/scala/sim/BreezePrivilegeFlowSpec.scala:50-116,118-248,381-477`；`design/src/test/scala/sim/BreezeWfiFlowSpec.scala:29-78` | 原trap/xRET/中断/WFI语义保留；新增后台存活、handler等待、睡眠写回 |
+| R-RF | `design/src/test/scala/core/BreezeRegisterStorageSpec.scala:10-91`；`design/src/test/scala/core/breezecoreSpec.scala:13-48` | 原x0/写穿透/FPR f0检查保留；新增实际grant写穿透与MDU x0不发射 |
+| R-FASE | `design/src/test/scala/fase/FaseIntegrationSpec.scala:15` | 确认suite入口，新MDU覆盖未确认；新增busy为空之前不能enter/读写/launch |
+| R-ACT | `verification/act4/Makefile:19-34`；`verification/act4/scripts/run_linux_soc_suite.py:21-31,42-70,77-99` | 完整枚举I/M/Zmmul corpus、single profile及实际selected/ran/results，不仅默认I |
+| R-TANDEM | `design/src/main/scala/interface/interface.scala:246-262`；`design/src/main/scala/backend/BreezeBackend.scala:1735-1737` | 现退休payload需rdPending及独立晚写事件；完整checker未找到，详见第6节与A04/A05 |
 
-为遵守 T 0.2，改动旧检查前必须列出“旧检查→新合同→等强替代断言/观测点”的逐项审批记录。不得减少随机向量、删除旧参照算术测试、放宽错误期望、跳过 suite、换 workaround 让测试通过。源码只用于接口/现状定位，期望值来自 D/S、独立整数模型与经批准的参考模型。
+已批准迁移只有三类（R/Q15）：completion独热→grant独热+每源保持；MUL wrapper3拍/全flush→4拍/commit/kill；HPM非法11→14。旧SignedMul65x65及其测试原样保留，其余旧断言/测试不改；DIV wrapper驱动也需要A03单独许可。每次实际迁移仍在阶段二报告列“旧检查→新检查”、源位置、执行结果；不减随机向量、不跳suite、不放宽算术期望。
 
 ## 2. 需求到验证追踪表
 
-所有行的当前证据状态相同：**新合同未实现、测试待编写、形式化与回归未运行**。实现映射指 S 第 1 节与未来模块边界；不是已实现声明。Sxx/Fxx 见 S 第 10 节；随机 A/B/C/D 组见第 4 节；具体定向 Txx 见第 3 节。
+所有行状态：**新合同未实现，测试待编写，形式化/回归未运行**。实现边界见 S 第1–9节。S01–S16/F01–F14见S第10节；定向见第3节，随机组见第4节。行中的R/Q编号为决定来源，已不是待定条件。合法环境为握手输入、年长指令顺序提交、无永久外部停顿；违反环境的negative测试单列。
 
-| 需求 ID / 权威来源 | 预期可见行为 / 实现边界 | 定向测试 | 随机测试 | 形式化 / 仿真断言 | 回归项 / 依赖 |
+| 需求 / 来源 | 确定期望 / 实现边界 | 定向 | 随机 | 性质 / 断言 | 回归 / 新问题 |
 | --- | --- | --- | --- | --- | --- |
-| REQ01；D 3/4，T 1，S 1/4 | 顺序四级，MDU EX 发起、WB 一次提交；后台写不另退休；普通指令可前进 | T01、T07 | C | F07/F09，S04/S08/S09 | R-BE/R-CORE/R-TANDEM；Q01/Q04/Q06/Q18 |
-| REQ02；D 5，S 2.1 | x1–31 31 位逻辑 busy，x0 特例，至多一个预约所有者 | T02、T05、T18 | A | F01/F02/F12，S01/S02 | 新记分板模块回归、R-RF；Q01/Q11/Q14 |
-| REQ03；D 5，S 2.2 | ID 真离开置位；真实写回/提交前 kill 清位；提交不清 | T03、T05、T06 | A | F02/F07/F11，S02/S04/S08/S10 | 新记分板模块、R-BE；Q02/Q03 |
-| REQ04；D 5，S 3 | 真实 rs1/rs2 busy 停顿，rd busy 阻止所有 GPR 写；无关指令不依赖停顿 | T01、T02、T04 | A/C | F01/F10，S03 | R-BE/R-CORE/R-FP；Q08 |
-| REQ05；D 5，S 3.2 | 真实后台写回同拍 ID 旁路，未 grant 来源不旁路，下一拍可释放；普通旁路保留 | T04、T08 | A/C | F10/F11，S08/S13 | R-RF/R-CORE/R-BE；Q02/Q04/Q08 |
-| REQ06；D 4/8，S 4 | 接收/提交/kill/保持按身份匹配；早算完不能提前架构写，取消永不写 | T05、T06、T09 | A/B | F03/F05/F07/F08/F11，S04/S05/S07/S10 | 新 MDU 协议模块、R-MUL/R-DIV；Q01/Q03 |
-| REQ07；D 6，S 5 | 一个整数写口，长延迟优先，普通 WB 让拍完整保存、只提交一次 | T07、T08 | A/C | F04/F09，S06/S09 | 新仲裁模块、R-CORE/R-BE/R-HPM；Q04/Q06/Q07 |
-| REQ08；D 6/12，S 5 | 多来源同拍到达按冻结顺序选一，其他保持，已提交结果最终写回 | T08、T09 | A/B | F04/F05/F06/F13，S06/S07 | 新仲裁+真实 MDU 集成；Q12 |
-| REQ09；D 7，T 4，S 6 | trap kill 年轻未提交者、保留后台已提交者，handler 依赖等待 | T05、T10 | C | F03/F07/F13/F14，S05/S10/S13 | R-REDIR/R-PRIV/R-CORE；Q03/Q06 |
-| REQ10；D 7，S 6 | 中断停止新正常发射，只排空未提交流水，不等后台结果；pc 正确 | T11 | C | F07/F10，S13/S14；全核 pc 用仿真 | R-PRIV/R-TANDEM；Q06/Q10 |
-| REQ11；D 7，S 3/6 | CSR 等 busy 空，原 rd/状态/别名冒险仍有效，老 MDU 能前进 | T12 | A/C | F10/F14，S14 | R-CORE/R-HPM/R-PRIV；Q08/Q13/Q17 |
-| REQ12；D 7，T 0.5，S 6/9 | FENCE.I/SFENCE/satp/xRET 原语义与老重定向优先保留，后台项存活 | T13 | C | F07，S13；外部 cache/MMU 语义用仿真 | R-REDIR/R-PRIV/完整 sbt；Q06/Q09 |
-| REQ13；D 7，S 6 | WFI 一次退休，无需 busy 空，睡眠后台可写，唤醒和陷入分离 | T14 | C | F07/F12，S14；整机唤醒用仿真 | R-PRIV/R-TANDEM；Q14 |
-| REQ14；D 9，T 1/4，S 7 | MUL 65×65 有符号积，4 拍、无反压 II=1，各级 tag/op/valid 对齐 | T15、U01 | B | F08/F13，S11；完整算术另用等价性 | R-MUL/新 MUL 模块/R-BE；Q04/Q16 |
-| REQ15；D 9/8，S 7.2 | MUL 任一级 kill 对应身份，committed 不取消；满/反压不丢结果 | T05、T09、T15 | B | F03/F05/F08/F11/F14，S07/S10/S11 | 新 MUL 协议模块/R-BE；Q01/Q03/Q04 |
-| REQ16；D 9，S 7.1 | MUL/MULH/MULHSU/MULHU/MULW 与旧单元、独立数学值一致 | U01 | B（全算术随机向量） | S11 对齐；本步不要求证明完整 65×65 算术 | R-MUL/旧 SignedMul65x65Spec；Q15 |
-| REQ17；D 9，T 4，S 8.1 | divisor=0、signed min/-1（含 W）1 拍算完，授权前不写；余数/W 扩展正确 | T16、U02 | B/C | F07/F11，S12；特殊值可作组合断言 | R-DIV/R-BE；Q03/Q05 |
-| REQ18；D 9，S 8 | 保留 radix-4 数学、忙时拒绝接收，结果未接收保持；延迟口径分开 | T09、T17、U02 | B | F05/F08/F06，S12 | R-DIV/新 DIV 协议模块；Q04/Q05 |
-| REQ19；T 0.5，S 9 | CORE-001..004 与 CSR/访存/重定向原修复行为保留 | T19 | C | S13/S15；模块形式化不替代整核回归 | R-CORE/R-REDIR/完整 sbt；Q15/Q17 |
-| REQ20；T 1/0.5，S 1/6 | memory/FPU 保留阻塞，后台 MDU 与其完成/WB 冲突不丢数据/flags | T20 | B/C | F09，S09/S15 | R-FP/R-CORE/完整 sbt；Q07/Q08 |
-| REQ21；T 0.5，S 9 | FASE 注入/读写/flightEvents/empty 与后台项保持正确 | T21 | C | S14，FASE 不在 T 指定模块证明范围 | R-FASE；Q10/Q18 |
-| REQ22；T 1，observability 2.6，S 11 | sb_stall_mul/div、wb_port_conflict 计数准确，旧 HPM 语义保留 | T22 | D | S16；计数算术用独立逐拍模型，非 T 模块形式化必证项 | R-HPM/完整 sbt；Q09/Q13/Q15 |
-| REQ23；D 11，T 4，S 9 | 提交顺序逐条比对，迟到值关联原指令，随机程序结果/异常一致 | T23、T10、T11 | C | 不适用：参考模型逐条退休比对为系统仿真验收 | R-TANDEM/R-PRIV/随机程序；Q18 |
-| REQ24；T 4 | Alan 完整 sbt test 全通过且 suite/test 通过数不少于同机改造前；RV64IM ACT4 全通过 | T19+全部定向 | C | 不适用：回归集合计数不属于 RTL 性质 | 完整 sbt、R-ACT、R-TANDEM；Q17/Q18 |
-| REQ25；T 4，D 9 | 匹配单核配置 DSP/LUT 前后对比，100MHz WNS，SB/仲裁非新最差路径；两个程序测周期/计数 | P01、P02 | 不适用：固定同输入比较；随机验证另覆盖功能 | 不适用：综合/STA/性能是测量验收 | Vivado 综合/时序及性能运行；Q13/Q14/Q16 |
-| REQ26；T 4，S 10.2 | 六项最低形式化性质、深度、归纳、未完成项与活性环境假设均有报告 | T01–T18 中对应的冲突场景供 cover | A/B | F01–F14，尤其 F01–F06 | 模块 SBY 回归；Q01–Q05/Q12/Q14 |
-| REQ27；T 1，D 8/10，S 4 | 统一协议能表达未来 FPU bank/rm/flags、L1D tag/error；本步不激活 | 文档字段审阅；T06 用 MDU 验提交/kill/保持合同 | 不适用：后续源未实现 | F05/F07/F08 验公共合同，不声称验证未来单元 | 接口审阅；Q01/Q03/Q09，后续 FPU/L1D 另立任务 |
+| REQ01；D3/4，R1/Q03，S1/4 | EX接收、WB一次提交；后台写不另退休；独立指令可推进 | T01/T07 | C | F07/F09，S04/S08/S09 | R-BE/R-CORE/R-TANDEM；A03–A05 |
+| REQ02；D5，R1/Q01/Q11，S2 | busy为x1–31共31位；同rd跨未提交级间/已提交单元至多一项；x0无项 | T02/T18 | A | F01/F02/F12，S01/S02 | 新SB模块/R-RF |
+| REQ03；R1/Q02/Q03，S2.2 | 只在WB commit非零MDU置位、实际写清；kill永不改busy；同rdset/clear互斥 | T03/T05/T06 | A | F02/F03/F11，S02/S05/S10 | 新SB模块/R-BE |
+| REQ04；R1/Q08，S3/附录A | ID真GPR rs1/rs2 RAW、rd WAW；EX/MEM/WB未提交项与effectiveBusy两组均检查 | T01/T02/T04 | A/C | F01/F10，S03 | R-BE/R-CORE/R-FP |
+| REQ05；R/Q02/Q08，S3.2 | 实际写回拍busy掩码解除、RF写穿透；未grant项不解除；无EX MDU旁路 | T04/T08 | A/C | F10/F11，S03/S08 | R-RF/R-CORE |
+| REQ06；R/Q01/Q03，S4 | commit最老未提交、kill全部未提交，脉冲无ready；先commit后kill；输出只已提交，无事务标签 | T05/T06/T09 | A/B | F03/F05/F07/F08/F11，S04/S05/S07 | 新协议模块/R-MUL/R-DIV；A01/A03/A06 |
+| REQ07；R/Q06/Q07，S5 | 仅普通wb_en&&rd!=0无trap整数WB让拍；四级全保持，无退休/副作用 | T07/T08 | A/C | F04/F09，S06/S09 | 新仲裁/R-CORE/R-HPM |
+| REQ08；R/Q12，S5.3 | DIV>MUL>普通WB；未选保持；DIV释放/再接收隔拍、MUL阻塞停流水，内部不得饥饿 | T08/T09 | A/B | F04/F05/F06/F13，S06/S07 | 新仲裁/真实MDU；A01 |
+| REQ09；D7，R/Q03/Q06，S6 | WB trap取消全部未提交MDU，保留后台，handler依赖等最终写 | T05/T10 | C | F03/F07/F13/F14，S05/S13 | R-REDIR/R-PRIV |
+| REQ10；R/Q06/Q10，S6 | 中断只排空未提交流水及阻塞memory/FP，不等busy，不用FASE empty | T11 | C | F07/F10，S13/S14；PC系统仿真 | R-PRIV/R-TANDEM；A06 |
+| REQ11；D7，R/Q08/Q14，S6 | CSR等busy空，旧状态/rd/别名hazard不改；只挡年轻指令，老MDU继续前进 | T12 | A/C | F10/F14，S14 | R-CORE/R-HPM/R-PRIV |
+| REQ12；R/Q03/Q09，S6.3 | EX branch/JALR/SFENCE不kill，MEM redirect只抑EX，WB异常/xRET/satp/WFI及中断发kill | T13/T05 | C | F07，S13 | R-REDIR/完整sbt；FENCE.I冲突A02 |
+| REQ13；R/Q14，S6 | WFI一次退休不等busy、睡眠不停时钟，后台仍写；wake和interrupt不同 | T14 | C | F07/F12，S14 | R-PRIV/R-TANDEM |
+| REQ14；D9，R/Q04/Q16，S7 | 65×65积，4级末级输出，无反压II=1；op/rd/valid/committed与积对齐，无额外FIFO | T15/U01 | B | F08/F13，S11 | R-MUL/新MUL；A01 |
+| REQ15；R/Q03/Q04，S7 | 四级按outValid&&!outReady整停；kill停顿中仍生效且只杀未提交 | T05/T09/T15 | B | F03/F05/F08/F11/F14，S07/S10/S11 | 新MUL；未提交P4保持A01 |
+| REQ16；D9，R/Q15，S7 | 五种MUL值与原样旧单元和独立数学模型一致；旧测试原样 | U01 | B | S11；完整乘法数学另用等价性 | R-MUL/SignedMul65x65Spec |
+| REQ17；R/Q05，S8 | 0除/有符号min/-1含W在req接受后1拍内部done，commit前不valid，结果规则不变 | T16/U02 | B/C | F07/F11，S12 | R-DIV/R-BE |
+| REQ18；R/Q05，S8 | radix-4保留，ready=!occupied，release/accept不同拍；done等待授权/写口不丢 | T09/T17/U02 | B | F05/F08/F06，S12 | R-DIV/新DIV；A03 |
+| REQ19；T0.5，R/Q15/Q17，S9 | CORE-001..004/CSR/访存/重定向行为和旧检查保留；已有失败只记录 | T19 | C | S13/S15；需整核回归 | R-CORE/R-REDIR/完整sbt；A03 |
+| REQ20；R/Q07/Q08，S5.2/9 | memory仍阻塞，脉冲response一项捕获；FPU用已有outReady反压，flags一次提交 | T20 | B/C | F09，S09/S15 | R-FP/R-CORE |
+| REQ21；R/Q10，S9 | FASE empty含busy空，enter/寄存器读写/launch均等后台完；中断边界独立 | T21 | C | S14；整合仿真 | R-FASE |
+| REQ22；R/Q13，S11 | 11=MUL stall、12=DIV stall、13=WB让拍；双来源都计，合法上界13/非法14；selector仍4bit | T22 | D | S16；独立逐拍计数模型 | R-HPM/完整sbt |
+| REQ23；R/Q18，S9.1 | 顺序退休；MDU rdPending，data无效；晚写rd/data按rd核对，后台不另退休 | T23/T10/T11 | C | 不适用：系统参考比对 | R-TANDEM；A04/A05阻塞实现 |
+| REQ24；T4，R/Q17 | Alan d5672f5完整基线；无新增失败、通过数≥基线；ACT4 RV64IM全通过 | T19及全部定向 | C | 不适用：suite结果为运行证据 | 完整sbt/R-ACT/R-TANDEM |
+| REQ25；T4，R/Q13/Q14/Q16 | 新旧乘法器OOC DSP/LUT；单核100MHz WNS/路径；两程序周期/计数且结束等busy空 | P01/P02 | 不适用：固定输入测量 | 不适用：综合/STA/性能测量 | Vivado/性能 |
+| REQ26；T4，R3，S10 | F01–F06最低性质及F07–F14扩展，报告实际深度/归纳/假设/未完成 | T01–T18冲突cover | A/B | F01–F14/S01–S16 | 模块SBY；A01影响证明 |
+| REQ27；D8/10，R/Q01/Q03，S4 | 公共commit/kill/保持可扩展FPU bank/rm/flags、L1D标签/error；MDU无事务标签不删除L1D标识 | 接口审阅/T06 | 不适用：未实现未来源 | F05/F07/F08仅验证本步公共合同 | 后续FPU/L1D另立任务 |
 
 ## 3. 定向与等价性场景
 
-所有测试在复位后初始化所需寄存器/CSR，输入遵守握手，观察每次接收、提交、kill、实际写回、busy、PC/异常与 HPM。计数和算术 oracle 独立于 DUT。不同层次分别使用模块驱动、后端假前端/阻塞内存模型、全核/SoC 软件；不能用允许多个 MDU 同拍响应的模块模型代替真实流水整合用例。
+N拍指当前组合值，末沿更新，N+1观察更新。初始化寄存器/CSR；记录req.fire、单元commit/kill、WB退休、结果grant/实际写、busy、异常PC及HPM。模块台账可用测试序号，RTL不带该序号。期望来自R/S及独立数学模型，不能复制DUT实现。
 
-| ID | 激励 / 冲突 / 恢复 | 必须检查的结果与边界 |
+| ID | 激励 / 边界 | 精确期望 |
 | --- | --- | --- |
-| T01 | DIV x5 后跟独立 ALU x6 和依赖 ADD x7，选需要多次迭代的操作数 | WB 先提交 DIV；独立指令在 DIV 结果前前进/提交；依赖者等待实际写回；提交顺序和算术值正确，无二次退休 |
-| T02 | DIV/MUL 写 x5 后跟 ALU/MUL/DIV/Load/SC/AMO/FP→GPR 再写 x5；再测 rd 等于 rs1/rs2 | 所有整数写 WAW 停，老结果不覆新值；x5 写回后恢复；任意时刻一个所有者 |
-| T03 | ID leave、EX not ready、WB commit、结果到达但 not granted、最后 grant 分开观察 | busy 精确从 ID 至实际 write；commit 不清；ID stall 无重复 set；不同 rd set/clear/多项 kill 同拍全生效；同 rd 优先级待 Q02 |
-| T04 | MUL/DIV 各作为 rs1/rs2；用于 Store/SC/AMO 数据、branch/JALR、FP usesGpr；结果写回同拍 decode 读取 | 所有真实源不读旧值，unused 编码不误判；grant 后 ID 旁路；未获 grant 数据不放行；普通 ALU 链仍正确 |
-| T05 | 在 ID 预约但 EX 未发、MUL P1/P2/P3/P4、DIV 迭代/快速结果保持期间，制造老 WB fault；另测 EX branch 取消年轻 ID | 被 kill 的对应预约/级作废、永不写；同 rd 立刻复用后旧结果不污染；多条年轻同时取消；branch 不能取消较老 MEM/WB MDU |
-| T06 | 人为延迟 WB 授权，使 DIV 快结果先于 commit；再分别 commit、kill；交叉 same-edge commit/kill/done/推进 | 授权前无架构写，commit 后恰一次写，kill 后零写；字段/身份不串项；同拍 oracle 按 Q03，不用模型自行决定 |
-| T07 | 普通 ALU WB 与一个已提交 MDU 结果同拍，多拍连续后台结果 | 长延迟每拍选一；普通 WB 完整保持、不 retire/CSR commit/改 PC，最后一次写/提交；MDU WB 自身与其他 MDU 写同拍按 Q06 |
-| T08 | 对齐 MUL/DIV done，同时还有普通 WB，混合不同 rd 与同源连续结果 | 检查冻结来源顺序；未选 valid/tag/data 保持；grant 独热；最终两结果值正确，无 starvation；双方持续有效压力包含在随机/形式化 |
-| T09 | result.ready 反压 0/1/多拍/超过流水长度；接近满容量到达、release+accept 同拍，结果已完成但未提交 | 结果稳定，所有已接收项台账守恒，不覆 P4/持有 DIV；ready 正确限制容量；解反压后最终完成；容量数值待 Q04 |
-| T10 | 老已提交 DIV x5、随后 faulting load、年轻 MUL x6；trap 周期同时有 x5 result；handler 先独立工作后读 x5 | 只取消 x6，x5 存活；trap PC/cause/tval 正确；handler 读 x5 停/恢复；写回不是第二次退休，trap+write 同拍按 Q03/Q06 |
-| T11 | MDU 前、EX/MEM/WB 中、commit 后及结果反压时拉 enabled interrupt；与普通 WB/redirect 同拍 | 停新发射、未提交流水排空、无需等待后台；mepc/next PC 正确；handler 使用 busy rd 等结果，后台不被取消；MMIO 在途仍等响应 |
-| T12 | MUL/DIV 已提交未写回，CSR 不依赖 rd 也需等；MUL 在 EX 未授权、CSR 在 ID；最后两来源一起写回 | CSR 等空、老 MDU 继续推进/提交/写；最后清位后恢复；mstatus/sstatus/frm/fcsr 别名和 CORE-003 依赖保持；CSR 等待计数按 Q13 |
-| T13 | 后台 DIV 与 FENCE/FENCE.I/SFENCE.VMA/satp 写/MRET/SRET 交织；WB trap 同拍年轻请求 | 原请求/flush/target/privilege/操作数语义保留，老后台存活；年轻取消；本步不伪造 MSHR/pending-store 或新 MMU 握手 |
-| T14 | 后台 DIV 尚未完成时 WFI 退休、睡眠期间完成、后来 wake/interrupt；有挂起但不可陷入的唤醒源 | WFI 一次退休不等 busy；睡眠后台写成功；唤醒/中断区别与 PC+len 正确；睡眠时钟合同 Q14 |
-| T15 | 不同 rd 的连续 MUL，至少覆盖四级同时占用并继续接收；交错 op、bubble、stall/kill；另测后端连续 MUL | 无反压 II=1/4 拍算术；每项 tag/op/data 对齐；kill 只作废对应项；反压后的延迟与正常延迟分报，不能要求满容量永远 ready |
-| T16 | 全八种 DIV/REM：divisor=0、RV64 min/-1、W min/-1；W 高 32 位随机且低 32 位为特殊值 | 1 拍算术结果、无授权不写；quotient=-1/min、remainder=dividend/0；所有 W（含 unsigned）结果低 32 位符号扩展 |
-| T17 | DIV 正常最大跨度、a=0、a<b、a=b、小数值、正负组合；忙时持续另一 req.valid，done 被反压 | 仅 req.fire 接收，不覆盖当前符号/tag；迭代数学正确、短路径仍正确；算术完成次数、延迟与写回延迟分别记录 |
-| T18 | MUL/DIV rd=x0，多笔 x0 与普通 x0 指令、kill、reset 交织 | x0 恒零/无 busy；执行/握手/资源释放和是否占 grant 按 Q11；不借 rd=0 搞错身份 |
-| T19 | 原 CORE-001..004 重现和 CSR handler 变体、load/store、adjacent load→store/branch、CSR alias/非法 CSR，加上后台 MDU 干扰 | 原算术/地址/PC/CSR 期望不变，所有旧检查继续执行；CORE-003 基线状态先报告；不能用 csrrs workaround |
-| T20 | 阻塞 Load/Store/FP/FP Load 完成时 WB 正被 MDU 占口，FP→GPR WAW、GPR→FP RAW、flags 与 CSR 交织 | 脉冲响应不丢、结果/flags 一次提交，FPR f0 可写；memory/FPU 阻塞方式不变，后台 MDU 仍可继续，Q07/Q08 |
-| T21 | FASE drain/enter/empty 时后台 MDU 未完成，暂停读 busy rd/host regWrite/launch 与结果同拍 | 按 Q10 冻结的等待/优先级；调试写不被老结果覆盖、读不见旧值，flightEvents 关联正确；不扩大 FASE 功能 |
-| T22 | 各单独/混合 rs1/rs2/rd 来源 stall、CSR 等空、fetch invalid、memory hold 并存、连续 WB conflict；同拍 CSR 改 selector/inhibit/counter | 独立逐拍累计三个事件；重叠口径按 Q13；旧 HPM selector/inhibit/pending/write 可见性不变，后台 write 不增加 instret |
-| T23 | DIV x5 提交后多条 ALU 提交、MUL x6 先写回、DIV 后写，另插入 branch/trap/同 rd 新指令 | 参考执行按提交顺序，迟到数据按原身份核对，既不提前比旧值也不多记一次退休；结尾等所有被提交结果，Q18 |
-| U01 | 新 MUL 与旧 SignedMul65x65 同一接受序列，五种 op、0/1/-1/min/max/全1/交错位/幂次与其±1、随机 64 位有符号/无符号/W | 同时与独立 BigInt 数学 oracle 比值，旧 3 拍与新 4 拍按序列对齐；无 kill 对等价性，kill/反压另加身份台账；保留旧 50k 向量范围（现有测试位置见 R-MUL） |
-| U02 | 八种 DIV/REM 与独立有符号向零截断/余数/无符号/W 模型；特殊值和随机符号/幅值 | 溢出/0 按 S 8.1 独立处理，不用 DUT fast 条件反向生成期望；算术与协议分别判错 |
+| T01 | DIV x5，独立ADD x6，依赖ADD x7；正常多迭代 | 按S6.1：N ID、N+1 EX接收、N+2 MEM、N+3 WB提交末置busy；依赖ADD在MEM/WB由级间hazard停，此后busy停；实际write拍仅依赖阻挡可同拍离开ID。DIV只一次退休 |
+| T02 | MUL/DIV写x5，后跟ALU/MUL/DIV/Load/SC/AMO/CSR/FP→GPR写x5，覆盖rd=rs1/2 | 老MDU在EX/MEM/WB及已提交busy期间都WAW停，实际写拍可释放；同rd跨两类状态始终最多一项，不等FU算术done就解除 |
+| T03 | 分别观察ID离开、EX notready/req.fire、WB commit、done未grant、实际write；交叉不同rdset/clear | ID/EX接收不置busy；WB commit末置、真实write末清，kill不改；不同rd同拍均生效；断言同rdset/clear互斥，不能编优先级掩盖违规 |
+| T04 | 逐行遍历S附录A：两GPR源、store/atomic/sfence、JALR/branch、CSR immediate、FP跨bank、FPR编码 | 真实非零GPR源RAW/目的WAW；zimm/FPR编码不产生新MDU hazard；旧CSR保守检查仍保留。只有grant项同拍write-through释放，EX无MDU旁路 |
+| T05 | 在未接收EX、MUL四级、DIV迭代/早完成等阶段发WB kill；另EX branch/SFENCE与老MEM/WB MDU同拍 | WB kill未提交项永不写、从未占busy；已提交项保留且busy仅真实写可清；EX/MEM redirect不kill老项，抑同拍EX req；rd复用不受旧项污染。FENCE.I见A02 |
+| T06 | fast DIV早done后延迟commit；分别commit/kill；同拍commit+kill、done+kill；单元停顿时发脉冲 | 输出valid只已提交；commit总被同拍接受且命中最老未提交，先commit后kill保留该项；无ready/标签。负测空单元commit触发断言；整核不强造commit+interrupt，A06 |
+| T07 | 已提交MDU write与普通ALU/Load/CSR/FP→GPR WB写相撞；另Store/branch/x0/FPR/MDUcommit/trap/xRET/WFI | 前组四级整停，无普通retire/副作用，解除后一次提交；后组不因整数口停，后台write仍一次。CSR另受busy空条件；MDUcommit与不同rdwrite同拍set/clear成立 |
+| T08 | DIV/MUL均已提交、同拍valid并有普通WB整数写；连续MUL结果 | DIV先write，MUL保持rd/data/valid且整流水停；DIV释放拍不接下一DIV，下一拍MUL可write；普通WB每次仅必要让拍，grant独热，不假设valid独热 |
+| T09 | ready反压0/1/多拍/超过MUL长度，已算完未commit，release与req并列 | 已提交结果直到接收保持；DIV occupied时ready=0，release沿后下一拍才接受；MUL阻塞四级不推进/不ready但kill生效。未提交P4越过末级的反例必须暴露，A01解决前不自设期望或assume排除 |
+| T10 | 已提交DIV x5，年轻load fault WB、未提交MUL x6；trap与x5 write同拍，handler随后读x5 | x6取消且不改busy，x5存活/实际write清；trap cause/tval/PC正确，handler只在真正结果到达后读，后台无二次退休 |
+| T11 | interrupt在MDU EX/MEM/WB及commit后/结果反压时出现，混合MMIO/FP | 停新正常发射，等待EX/MEM/WB及阻塞memory/FP空，删除MUL/DIV wait条件；不等busy，handler读busy rd仍等待；不使用FASE empty。WB仍有效则本拍不能接受interrupt |
+| T12 | 已提交MDU未write后接CSR；MDU未提交级間还有老操作，CSR别名/rd hazard；最后一次write | CSR等busy空，普通CSR保守hazard原样；不挡老MDUcommit/write，RF更新后继续；mstatus/sstatus/frm/fcsr别名及CORE-003期望保留 |
+| T13 | 分支/JALR/SFENCE.EX，FENCE.I.MEM，trap/xRET/satp.WB，与后台MDU及年轻req交织 | 按S6.3逐种核查target/级/kill；EX/MEM不误杀MEM/WB老项，WB kill未提交项。FENCE.I维持原MEM事实，其kill最终oracle待A02；不自行搬级 |
+| T14 | 未完成DIV时WFI WB，睡眠写回，唤醒源/中断资格分开；另ESTOP/复位在途 | WFI不等busy、只退休一次且后台时钟不停；ESTOP在WB退休前等busy=0；reset清所有live/busy/capture，复位后不出现旧结果 |
+| T15 | 连续不同rd MUL，使四级占用；交错五种op/bubble/反压/commit/kill，后端连续MUL | 无反压4拍、II=1，op/rd/valid/committed对齐，无FIFO；停顿期间commit/kill仍更新，已提交不丢。A01未解决不得报容量/保持证明完成 |
+| T16 | 八种DIV/REM：除0、64/W min/-1；W低32特殊、高32随机 | req.fire后下一拍fast内部done，commit前valid=0；除0商全1、余数有效dividend，溢出商min余数0；所有W最终低32符号扩展，分记算术/req→write延迟 |
+| T17 | 正常最大跨度、a=0/a<b/a=b、正负/小值；忙时req.valid持续，done反压 | radix-4数学和短路径保留；仅req.fire接收，不覆符号/rd；occupied直到write或未提交kill，释放拍不能同拍接下一笔 |
+| T18 | MUL/DIV rd=x0与非零源hazard、kill/reset混合 | true源依赖仍检查，但x0不发FU、不commit单元、不setbusy、不占grant；作为无GPR写普通指令WB退休且rdPending=0，x0恒零 |
+| T19 | CORE-001..004、CSR handler变体、访存/branch、非法CSR加后台干扰 | 旧期望原样，逐suite与d5672f5基线对比无新增失败，通过数不少；旧已有失败记录不修，不用handler workaround |
+| T20 | WB整数写让拍时阻塞访存response脉冲到达、FP完成保持，FP跨bank与flags | dmem一项捕获所有结果/异常字段，MEM可消费时一次清；不重复发请求/消费；FPU outReady=0保持，不加capture，恢复一次消费，flags/FP结果不丢 |
+| T21 | FASE enter/drain/empty、host读写/launch请求在busy非空及最后write拍 | busy非空不能宣告empty或进行enter/读写/launch；后台完成后按原FASE握手继续，host写不被老结果覆盖；interrupt不因此多等；flightEvents保留 |
+| T22 | MUL/DIV源/目的级间/记分板hazard重叠、ID invalid、纯req资源等待、CSR等空、其他hold并存；selector/inhibit/overwrite | 11/12按S11逐拍各计一次，双方都成立两个都计；13严格等WB让拍；grant屏蔽后该依赖不计，旧CSR采样/写优先不变，14及以上非法，物理selector仍4bit |
+| T23 | DIV x5先提交、普通指令继续退休、MUL x6先write；同拍MDUcommit/另一rdwrite及trap | rdPending=1时rdData无效；参考顺序执行、按rd记期望并在晚写比较/移除；未记录/重复晚写报错，后台不再退休，结尾pending为空。实现受A04/A05阻塞 |
+| U01 | 五种MUL边界/随机与旧SignedMul65x65及独立BigInt比较 | 旧3拍与新4拍按接收序列对齐；算术值不因早提交改变。旧单元/测试原样，现50k随机范围见 `design/src/test/scala/multiplier/SignedMul65x65Spec.scala:223-245`；kill/反压另用台账 |
+| U02 | 八种DIV/REM独立向零截断/余数/unsigned/W模型，符号/幅值随机及特殊值 | 独立判除0/溢出、符号恢复/W扩展，不从DUT fast条件生成期望；算术与生命周期错误分开 |
 
-定向用例逐项包含 reset 前后、最短与较长反压、接收/结果/取消在同一边界、字段发生变化、最终排空。Q14 未冻结前不能把“reset 永远不在途”作为限制，也不能在最后退休后立即停止观测掩盖未写回结果。
+每项覆盖reset在途、字段变化、最短/较长反压、同拍接收/提交/取消/写以及最终排空；不以“永远不在途reset”简化环境，不在MDU提交后立即停观测。
 
 ## 4. 随机验证与独立模型
 
 | 组 | 层次 / 随机维度 | 独立检查与记录 |
 | --- | --- | --- |
-| A | 记分板/仲裁/接口：源/目的、ID 停顿、多个来源完成、commit/kill、ready、释放/重用 | 以接受/预约/提交/取消/实际写台账作为 oracle，不复制 DUT next-state；每拍验 busy 所有权、grant/稳定性/一次提交；含非法刺激的 negative 测试须明确分开，不能把环境违规混入合法随机结果 |
-| B | 真实 MUL/DIV：operand/op/tag、req bubble、result backpressure、提前/延后授权、逐级 kill | BigInt 数学 oracle + 独立生命周期模型；保持真实 4 拍 MUL 和真实 radix-4 完成规律，模型延迟随机仅用于接口层压力，不声称真实算术可任意延迟 |
-| C | 程序：MUL/DIV/ALU/branch/Load/Store/CSR/fence/WFI 与异常、中断交织；内存响应延迟、输入反压随机化 | 参考模型逐条提交比对并在迟到值可用时关联验证；检查指令数、PC/trap/寄存器/内存副作用、完成台账最终空；Q18 冻结后才能实现完整 checker |
-| D | HPM：事件重叠、selector 合法/非法、inhibit、counter overwrite/wrap、CSR write/trap/retire 同拍 | 独立即时计数模型对所有 CSR 可见拍；保留旧事件 ID 行为、旧写优先级；随机覆盖新 ID 与合法上界变化 |
+| A | SB/仲裁/接口：rd/source、级间占用、WBcommit/kill、grant/ready、释放/重用 | 台账区分未提交级间与已提交未写回；busy只后者。接收不置busy、kill不改busy；同rdset/clear互斥、实际grant RF数据正确 |
+| B | 真实MUL/DIV：operand/op/rd、req bubble、早done/延commit、反压、各级kill | BigInt数学+按接受顺序未提交列表；commit最老、kill全部未提交、已提交输出稳定。真实4拍MUL与radix-4不能随机伪造成任意算术延迟；A01不可用assume隐藏 |
+| C | 程序：MDU/ALU/FP跨bank/branch/访存/CSR/fence/WFI/异常/中断，memory延迟 | 可复用参考模型按提交顺序执行，rdPending/晚写分开比对；PC/trap/寄存器/内存与最终pending检查；A04/A05解决前不新建checker |
+| D | HPM：双来源/级间/忙表/其他hold重叠，11/12/13/非法14，inhibit/overwrite/wrap | 独立CSR可见拍模型，旧0–10事件与原写优先保留，后台write不增加instret；不把ID无效/纯资源wait当来源依赖事件 |
 
-记录每组所有 seed、每 seed 接收/提交/写回数量、程序指令数、最大 hold/占用、操作/冲突/kill 交叉覆盖、失败最小重现和 waveform。执行前登记随机预算，完成后报实际种子数/指令数；本阶段没有编造已跑数量或通过率。覆盖计数不能代替逐条比对，不删失败种子；长延迟无限等待只有在环境明确不满足进展假设的测试中可作为保持检查，合法有界等待必须完成。
+阶段二运行前登记预算；结果报告所有seed、实际接收/提交/kill/write数量、指令数、最大hold/占用、操作/冲突交叉覆盖、最小失败重现与waveform。不删失败seed，不编本阶段通过率。有限等待压力应排空；故意永久反压只能验证保持，不能声称证明进展。
 
-## 5. 形式化计划
+## 5. 断言与形式化计划
 
-按 S 第 10.2 节逐一实现 F01–F14，T 第 4 节六项最低必证性质为 F01–F06。建议目录沿用任务书的 `verification/formal/backend/`；当前未创建 harness/RTL/SBY 文件。
+实现S第10节S01–S16/F01–F14，最低F01–F06；目录建议 `verification/formal/backend/`，当前未创建文件。
 
-| 层次 | assert / assume / cover 边界 | 证据要求 |
+| 边界 | assert / assume / cover | 证明与冲突 |
 | --- | --- | --- |
-| 记分板 | assert 所有者唯一、busy iff 台账、ID RAW/WAW、kill 清理；assume 只约束合法输入身份/年龄及握手；cover 同拍不同 rd set/clear/多 kill、同 rd 复用 | 与真实 ID 预约定义一致，不仅抽象 FU req；BMC 深度及归纳结果分开 |
-| 写口仲裁 | assert grant 独热、后台优先、WB 保持、未选结果保持；允许 MUL/DIV 同拍到达 | 不假设 result.valid 独热；内部来源公平性属于 DUT/冻结策略，不能直接 assume grant |
-| MDU 生命周期 | assert commit 前不架构写、kill 后永不写、committed 不被 redirect 杀死、容量守恒；cover early done、busy/held、same-edge kill/commit/done | 输入合法约束不能排除正常 trap+result、背靠背请求或 result backpressure |
-| 进展 | 已提交未完成项在 Ldone 内算完、外部写口在 Lport 内可用；另明确等待授权/老流水前进与仲裁公平性 | Ldone 包括迭代/包装的准确周期；Lport 不能掩盖内部优先级饥饿；Q05/Q12 冻结后写界值和证明界 |
-| 可达性/复位 | cover F13/F14，assert reset/睡眠合同；检查 reset/assume 是否造成空洞 | 不以 cover witness 代替 eventual completion，不永久 assume reset 或 assume 没有 kill |
+| 记分板/级间 | busy iff已提交未write；RAW/WAW；x0；set/clear同rd互斥；kill不改busy；cover WBcommit转busy、不同rdset/clear、写穿透释放 | 不能assume无WAW代替ID检查；台账只在WB commit建立busy关联。F01/F02/F10/F11/F12 |
+| 仲裁/流水 | grant独热，允许多源valid；DIV>MUL；普通整数WB让拍四级保持/无副作用；其他WB类别不因口让拍 | 不assume result.valid独热或grant公平；F04/F05/F09，S06/S09/S15 |
+| 单元生命周期 | commit必有最老未提交项；无ready且同拍接受；先commit后kill；被kill永不write；committed不被kill；req计数守恒 | 允许早done、长反压、kill+done、commit+kill；F03/F07/F08。A01未解决不能排除P4未提交反例 |
+| 结果保持 | valid只committed&&done；valid&&!ready保持rd/data/valid，无kill例外 | F05/F07，S07；未提交内部保存仍是必须验证的合同，不因为外部valid=0而遗漏 |
+| 进展 | committed项有界算完、外部无永久hold；DIV一项且释放间隔、MUL阻塞停接收由DUT证明 | F06；实际Ldone/Lport、BMC深度/活性模式运行前登记。有限hold实验与无界公平证明分开，cover不代替eventually |
+| 可达性/复位 | cover连续MUL、双源valid、early done、trap后台write、不同rdcommit/write、CSR等待解除；reset清live/busy/capture | F12–F14；commit+kill接口cover保留，现整核WBcommit+interrupt不可达（A06），不能伪造cover |
 
-验证前在 Alan 检查 Yosys/SBY/solver/前端支持。缺工具先报告安装方案并等明确授权，不能本轮安装。对每条性质报告：源 SHA、参数、生成 RTL SHA、harness/SBY SHA、模式/引擎/命令、实际 BMC 深度、归纳是否完成、活性环境假设、cover witness、原日志和失败/unknown/timeout/未完成项。**当前这些数值与运行结果均未确认/未运行**；冻结配置后不能为了通过减深度、增不合理 assume 或改阈值。
+在Alan先核查Yosys/SBY/solver与Chisel生成RTL前端支持。缺工具按T3.2报告安装方案等待授权，本轮不安装。每条性质报告源/RTL/harness/SBY SHA、参数、模式/引擎/命令、实际BMC深度、归纳结果、assume、cover witness、原日志及fail/unknown/timeout/未完成。当前均未运行；禁止减深度、增不合理assume或更改阈值。
 
-## 6. Alan 全回归、ACT4 与退休比对
+## 6. Alan 基线、全回归、ACT4 与退休比对
 
-以下是阶段二的**计划命令/工作流，未执行**。实际 Alan checkout 路径、工具环境/兼容 wrapper 与 source/config 必须现场核实；不能把本地路径自动当 Alan 路径。阶段一没有跑改动前 sbt 基线。
+以下为**冻结后阶段二计划，未执行**。Alan checkout/cwd/工具wrapper须现场确认，保留其他任务和工作区；本阶段不连Alan跑构建。
 
-| 类别 | 计划入口 / 所在 cwd | 判定 |
+| 类别 | 计划入口 | 判定 |
 | --- | --- | --- |
-| 改造前完整基线 | 对已核实的基线 SHA，在 Alan `design/` 执行 `sbt test` | 保存 suites/tests passed/failed/ignored、全 log/退出码；源码统计 test 名称不是基线通过数；基线失败先提交问题，不免除后续全通过 |
-| 相关模块快速回归 | Alan `design/`，`sbt 'testOnly flow.multiplier.* flow.divider.* flow.backend.* flow.core.* flow.sim.BreezePrivilegeFlowSpec flow.sim.BreezeWfiFlowSpec flow.fase.*'` | 在冻结后确认实际新增 suite 已包括；仅是中间检查，不能替代完整 sbt test |
-| 改造后完整回归 | Alan 同配置 `design/`，`sbt test` | 全部通过；通过 suite 与 test 数各不小于基线；逐项解释经批准的迁移，ignored/skipped 不算通过 |
-| ACT4 corpus | Alan 仓库根 `make -C verification/act4 build EXTENSIONS=I,M,Zmmul`，若 corpus 未备齐则先按现有 fetch 流程 | 明确版本/corpus manifest 和实际 RV64IM 相关全集，不减少测试或仅默认 I；相关构建入口见 `verification/act4/Makefile:19-25` |
-| ACT4 执行 | 根目录 `python3 verification/act4/scripts/run_linux_soc_suite.py --profile single --elf-dir <已核实完整ELF目录> --output-dir <该SHA全新输出目录> --include-extension I --include-extension M --include-extension Zmmul --fresh-build` | selected==ran 且全部 PASS，0 FAIL/TIMEOUT/INFRA_ERROR；筛选功能源码 `verification/act4/scripts/run_linux_soc_suite.py:23-31,49-70`，统计见 :77-99；可跑更广 corpus，但单列 I/M/Zmmul 结果 |
-| tandem | Q18 确认的 checker/参考模型/完整逐条比对入口 | 退休顺序及迟到结果正确关联、结尾排空，日志/差异 0；当前命令**未确认**，不得编造“已存在的 Spike 回归” |
-| 随机程序 | C 组生成器/loader/checker，入口在 Q18 后补 | 逐条比对通过，报告实际 seed/指令数、trap/interrupt 数量、完成未决台账；既不只比最终内存签名也不把 ACT4 PASS 当随机程序证明 |
+| 阶段二首项基线 | Alan已核实 `d5672f51bf0ec67465148c02af970c70464bec68`，`design/` 内 `sbt test` | 每suite/test passed/failed/ignored及log/exit，CORE-003以实际结果为准；已有失败只记录 |
+| 模块快速回归 | `design/` 内 `sbt 'testOnly flow.multiplier.* flow.divider.* flow.backend.* flow.core.* flow.sim.BreezePrivilegeFlowSpec flow.sim.BreezeWfiFlowSpec flow.fase.*'` | 冻结后确认新增suite实际被包含；中间结果不代替全量 |
+| 改造后完整回归 | Alan同机同配置 `design/` 内 `sbt test` | 无新增失败，suite/test通过数各不少于基线；ignored/skipped不算通过，三类已批准迁移逐项说明，A03未许可前不改观测 |
+| ACT4 corpus | 根目录 `make -C verification/act4 build EXTENSIONS=I,M,Zmmul` | manifest/版本及RV64IM完整相关集合；源码入口 `verification/act4/Makefile:19-25`，未备齐先按现有fetch流程核实 |
+| ACT4运行 | 根目录 `python3 verification/act4/scripts/run_linux_soc_suite.py --profile single --elf-dir <完整ELF目录> --output-dir <该SHA全新目录> --include-extension I --include-extension M --include-extension Zmmul --fresh-build` | selected==ran且全部PASS，无FAIL/TIMEOUT/INFRA_ERROR；筛选/统计源码 `verification/act4/scripts/run_linux_soc_suite.py:23-31,49-70,77-99` |
+| tandem | 可复用checker及参考模型入口**未确认**，A04/A05 | 不编执行命令，不自建参考模型；解决后检查按rd pending、逐条顺序与晚写值、结尾排空、差异0 |
+| 随机程序 | C组generator/loader及可复用checker入口**未确认**，A04/A05 | 提交顺序+晚写逐条比对，不仅最终签名；报seed/指令/trap/interrupt与pending数量 |
 
-若现有退出/trace/API 无法表达新行为，依据 Q09/Q14/Q15/Q18 先提交所需文件、接口与等强验证变更，不绕过范围限制。ACT4 产品路径对内存层次的覆盖与模块假内存回归分开报告。
+Q18要求的现有入口已核查：`design/src/main/scala/sim/BreezeCoreTandem.scala:3-24`仅数据容器；`design/src/main/scala/sim/BreezeCoreTandemParser.scala:23-58`转换事件；`design/src/main/scala/sim/BreezeCoreTandemLog.scala:1-44`格式化；`design/src/main/scala/sim/BreezeCoreSimSupport.scala:301-323,453-497`收集日志；`tests/ref/spike_ref.hpp:1-11`空壳；`sim/breezecore/README.md:3-26`为资产/runner说明。上述范围未找到完整可复用参考执行比对器，按审阅决定停下报告。core目前仅转发trace（`design/src/main/scala/core/BreezeCore.scala:153-155`），rdPending/晚写贯穿core/sim超出Q09文件范围，不能静默扩范围。
 
 ## 7. 资源、时序与性能
 
-| ID | 比较配置 / 激励 | 测量与验收 |
+| ID | 配置 / 激励 | 测量与验收 |
 | --- | --- | --- |
-| P01 | 同 Alan、Vivado 版本、单核顶层/config、器件、100MHz 约束、综合/retiming 设置，基线与改造后各一份 | multiplier hierarchy 的 DSP/LUT、总核 DSP/LUT/FF、100MHz WNS/最差路径；列出 SB/仲裁路径是否成为新最差路径、startpoint/endpoint/logic levels。DSP 类型/配置 Q16；不把约16 DSP/省6k LUT 估计写成实测 |
-| P02 | 一个除法密集、一个乘法密集程序，固定可校验输入/输出、相同 binary/布局/config/内存模型 | 改造前后完整周期数、instret、sb_stall_mul/div 和 wb_port_conflict；纯依赖链与独立操作块分别解释瓶颈；程序结束按 Q14 等后台写完，不能早退出虚报加速 |
+| P01 | 新旧乘法器各OOC，同Alan/Vivado/器件/约束/retiming；另单核整机100MHz | R/Q16：XCKU040/DSP48E2、仅推断不例化；允许retiming。OOC报告DSP/LUT对比，整核报告资源/WNS/最差路径及SB/仲裁startpoint/endpoint/levels，不能用OOC WNS替代整机 |
+| P02 | 一个除法密集、一个乘法密集程序，相同可核查输入/输出/binary/布局/config/内存 | 前后周期/instret；新版本sb_stall_mul/div、wb_port_conflict及独立计数核对；依赖链/独立块分别记录；ESTOP退休前等busy空，不能提早结束虚报性能 |
 
-基线没有新 sb_stall_* 事件，旧版本该字段报告“未实现/不可用”，不能填 0 或假装直接比较。可以比较周期数，改造后给出新事件及相同口径的独立模型验证。性能软件/计数读取入口及命令在冻结后按实际可用环境补，本轮未创建或执行。
+旧基线没有新事件时其值写“未实现/不可用”，不填0。综合/时序/性能命令及实际顶层/config路径**未确认**，阶段二按可用环境绑定并报告；本轮没有测量数字。综合timing与实现后routed timing分开；SB/仲裁成为新最差路径或100MHz不满足时保留真实失败/路径，不降频或擅加例外。
 
-综合与时序命令**未确认**，Q16 要指定顶层/约束及匹配报告。单独报告综合 timing 与实现后 routed timing，T 本步要求的综合资源/100MHz WNS不能借其他历史配置完成。若 SB/仲裁成为新最差路径或 WNS 不满足目标，保留真实路径/失败结果，不自行加时序例外、降频或改接口。
+## 8. 阶段一检查与停止条件
 
-## 8. 阶段一检查与阶段二完成条件
+阶段一静态核查只检验文档：REQ01–27覆盖T4全部类别；T01–23/U01–02/A–D/P01–02与S/F追踪完整；源引用附文件行号；Q01–Q18已经写为规则；A01–A06独立报告。静态检查不代表RTL/测试/形式化通过。
 
-阶段一检查：T 2.1 的章节均有对应 spec；T 4 的所有验收类别均进入 REQ 表；S01–S16/F01–F14 有可追踪测试；源码描述附文件/行号；未覆盖的行为全部链接 Q01–Q18；硬件证据标为未运行。这只是文档静态完整性检查。
-
-阶段二必须等用户明确宣布 spec 冻结，解决冻结阻塞项并记录旧检查迁移许可后才能开始。最终 T01 完成需要 T 4 全部证据，形式化有界/归纳边界、回归数、ACT4 manifest、tandem 差异、随机种子/指令、PPA/timing、性能周期均可核查；任何未完成项不得改为推断通过。
+本轮结束在冻结候选，等待用户确认。A01–A06影响最终冻结及后续实现，不自行处理；未找到checker只报告依赖，不启动参考模型或阶段二。最终T01硬件验收仍需各类Alan证据；任何未运行/未完成项不能推断通过。
