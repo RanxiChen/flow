@@ -1,0 +1,8 @@
+{
+  "llama_url": "https://github.com/ggml-org/llama.cpp.git",
+  "llama_commit": "e117148a41d8e9bedb72e4c6c3f003ab0fe7f857",
+  "llama_date": "2026-10-05T19:14:23+05:30",
+  "model_repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+  "model_revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+  "model_files": ["qwen2.5-0.5b-instruct-q4_0.gguf", "qwen2.5-0.5b-instruct-q8_0.gguf"]
+}

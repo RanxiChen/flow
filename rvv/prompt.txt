@@ -1,0 +1,1 @@
+Explain how a computer stores and reads numbers in memory. Use simple words, describe the steps in order, and give one short example of adding two numbers.
