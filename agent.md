@@ -34,3 +34,14 @@
 ## 硬件辅助 skills
 
 项目技能位于 `.agents/skills/`，按当前任务选择，不整套加载。使用索引见 [`docs/hardware-skills.md`](docs/hardware-skills.md)，共用适配约定见 [`docs/hardware-skill-context.md`](docs/hardware-skill-context.md)。微架构讨论优先考虑 `breeze-microarchitecture-review`；需求到验证追踪使用 `breeze-spec-verification`；报告与源版本对齐使用 `breeze-timing-evidence`。其他技能补充规划、验证、FPGA 工程与绘图能力，不改变本文件及用户指定的任务权限和规格权威。
+
+## 形式化验证的做法
+
+用 SymbiYosys 做形式化时，按以下规则（来自 T01 第 3 步：带完整 65×65 乘法和 64 位除法的证明在 Z3 上跑了 500 多秒后求解器崩溃，多路并行把 Alan 内存占满）：
+
+- **形式化只证控制和协议**：握手、提交/kill、结果保持、计数守恒、互斥、无丢失/无重复。宽位算术（乘法、除法、浮点运算等）用抽象替换：结果换成逐拍任意值，多拍单元的完成时间换成有界任意值并加“有界内必然完成”的 assume；外壳控制逻辑保持原样。这不是机器强弱的问题，宽位乘除法原样放进求解器在任何机器上都基本证不出来。
+- **算术正确性由仿真负责**：随机向量对参照模型（如 `SignedMul65x65`、BigInt）逐条比对，在报告中写明这部分由哪项测试覆盖。
+- **一次只跑一个求解任务**，不要并行启动多个 SBY/求解器进程。
+- 无界证明优先用 `abc pdr`；BMC 和 cover 用 `abc bmc3` 或 `smtbmc`，深度按任务登记值执行。
+- 单个任务设 timeout（默认 3600 秒）。超时或 unknown 照实记录并停下报告，不要反复更换引擎或私自降低深度、增加 assume 来求得结果。
+- 抽象本身要写进报告：替换了哪个节点、用了哪些 assume、为什么不会漏掉真实行为（任意值集合包含全部真实结果）。
