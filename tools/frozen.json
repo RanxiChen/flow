@@ -1,0 +1,10 @@
+{
+  "docs/backend-pipeline-design.md": "702ea17b152149460b6a40a23e4f064b0844fd04a5f8798018c649804b46a45a",
+  "docs/backend-rtl-spec.md": "8e83f89a8cf7699129a4a024357466153355794b1bc6280f90c423ab7465269d",
+  "docs/backend-timing-contract.md": "6f7faa3bc6e7c159852971d5bbf1c199e39d823d019c45a9d2b988ce94bdeee5",
+  "docs/breeze-mmu-rtl-spec.md": "8198b2d99f2e3ae1cba2ef2bd6871b24f10b556775fe6b42d3ec4831c7626a88",
+  "docs/coherence-l2-rtl-spec.md": "b14659f79b86366d0be8d37d4444a58c51efb0b3e084ee4eb8153dca737d48f7",
+  "docs/dcache-pipeline-design.md": "d5b0f844804ab94780d57698e3e5a7b76507f95c656fb508d7e1b1bb8638edba",
+  "docs/l1d-rtl-spec.md": "ccc25f2e78405a439ca21c706ba2d7377d2753ef57f72c607e4ca2694705edce",
+  "docs/v1-integration-notes.md": "1de95db467bc074cd7d3bcac097d517f9cc368b8e17da6123ce74624f10a2551"
+}

@@ -1,6 +1,6 @@
 # Breeze v1 后端拍数与重叠合同
 
-状态：Claude 编写，2026-10-06，待用户确认后冻结。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得修改**；测不过只能改 RTL。认为某行与微架构文档推导不符时，停下报告（附推导），不得自行改期望值。
+状态：**冻结**（2026-10-06 用户确认）。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得修改**；测不过只能改 RTL。认为某行与微架构文档推导不符时，停下报告（附推导），不得自行改期望值。
 
 依据：[`backend-pipeline-design.md`](backend-pipeline-design.md)、[`backend-rtl-spec.md`](backend-rtl-spec.md)（T01 冻结稿）、[`l1d-rtl-spec.md`](l1d-rtl-spec.md)。
 
@@ -22,7 +22,7 @@
 | ID | 场景 | 期望 |
 | --- | --- | --- |
 | T01 | ALU→ALU 依赖：`add x1,..; add x2,x1,..` | `ex(第二条) = ex(第一条) + 1`（0 气泡，EX 旁路） |
-| T02 | Load 命中→依赖 ALU：`ld x1,0(x2); add x3,x1,x4` | `l1d.req.fire` 在 E；`l1d.resp.valid`（Done）在 E+2；`gprWrite(x1) = E+2`；`ex(add) = E+3`（load-use 2 拍气泡；v1 不做 S2→EX 组合旁路） |
+| T02 | Load 命中→依赖 ALU：`ld x1,0(x2); add x3,x1,x4` | `l1d.req.fire` 在 E；`l1d.resp.valid`（Done）在 E+2；`gprWrite(x1) = E+2`；`ex(add) = E+3`（load-use 2 拍气泡：经 WB→ID 寄存器堆写穿透旁路，不做 S2→EX 同拍旁路；见第 4 节 `loadUseBypass`） |
 | T03 | Load 命中后跟不相关 ALU | `ex(ALU) = E+1`（0 气泡） |
 | T04 | MUL→依赖：`mul x1,..; add x2,x1,..` | MUL `req.fire` 在 E；`gprWrite(x1) = E+4`；`idLeave(add) = E+4`（写回同拍经 RF 写穿透离开 ID）；`ex(add) = E+5` |
 | T05 | DIV 快速路径（除数 0 或 `min/-1`）→依赖 | `gprWrite(rd) = E+3`；`ex(依赖) = E+4` |
@@ -66,7 +66,7 @@
 - FPU 在途表是唯一新增的 FPU 侧结构：按 CVFPU `tag` 索引，存 rd、目的寄存器堆、committed、valid，不存数据。
 - 不为任何测试场景写特判（地址、PC、指令序列识别）。
 
-## 4. 待用户确认
+## 4. 已定事项
 
-- T02：load-use 定为 2 拍气泡（不做 S2→EX 组合旁路）。这是设计文档第 12 节的待拍板项，本表按默认值写。
-- T11、P05：推导值，依赖 L1D 安装 4 拍、回放走一次 S0–S2。若想缩短 miss 延迟（如安装最后一拍直接回放），要改 L1D spec。
+- **load-use**：v1 默认 2 拍（T02），即 WB→ID 写穿透旁路。S2→EX 同拍旁路做成生成参数 `loadUseBypass`（`BreezeClusterConfig`，默认 `false`）；理由是该路径在一拍内串起 L1D S2 选路格式化、EX 旁路/ALU，依赖者若是访存还要进 S0，100 MHz 风险大。`loadUseBypass = true` 时 T02 的期望改为 `ex(add) = E+2`，作为 T02b 一并实现与测试；默认配置跑 T02，T02b 只在该参数配置下跑。是否默认打开等首次整核综合的 S2 余量与 `load_use_stall` 计数决定。
+- **T11、P05（※）**：按 L1D spec 推导（安装 `wordsPerLine` 拍 + 回放走一次 S0–S2）。codex 若按 L1D spec 推出不同值，停下报告推导，由 Claude 裁定；不得各写各的。
