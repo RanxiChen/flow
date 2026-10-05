@@ -152,8 +152,8 @@
 4. `S0/S1` 的推进条件目前是阶段性写法，后续还会继续收敛。
 5. 当前重点已经从“把预测骨架接起来”转为“验证预测、修正、训练闭环是否正确”。
 
-GShare 的独立状态、已实现范围和验收缺口见
-[gshare-status.md](gshare-status.md)。
+新版前端的分支预测改动（BTB、全局历史、RAS、L1I 预取）见
+[frontend-prediction-design.md](frontend-prediction-design.md)。
 
 ## 后续方向
 

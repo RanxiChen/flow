@@ -10,7 +10,7 @@
 
 旧代码和旧文档可以用来了解历史、定位可复用的局部机制，不能仅因它们已经存在就要求新版兼容。如果新设计需要不同接口或模块边界，直接按新设计确定；不要为了迁就旧 Breeze 而削弱方案。只有用户明确要求迁移、兼容或复用某一部分时，才把那一部分作为约束。
 
-当前的 `BreezePipelinedDCache` 是概念/模块框架，不代表最终 VIPT D-cache。它的现有实现也不应限制新 MMU 的结构。新版访存方向是先确定 MMU、TLB、PTW 与 D-cache 的接口，再改造 D-cache，之后逐步更新 Breeze 其他部分。
+旧的 `BreezePipelinedDCache` 概念框架已删除。新版 L1D 按 [`docs/dcache-pipeline-design.md`](docs/dcache-pipeline-design.md) 重新实现，接口先与 MMU、TLB、PTW 对齐。
 
 ## 新版 MMU
 
@@ -21,3 +21,16 @@
 - [`docs/breeze-mmu-closure-checklist.md`](docs/breeze-mmu-closure-checklist.md)：MMU 依赖其他模块的假设（跨页取指、非对齐 trap、sfence 串行化、D-cache 前进保证等），系统闭环时逐项检查。
 
 讨论新机制时，先解释正常路径、冲突/停顿、恢复与资源代价，再确定接口和实现细节。明确区分架构决定、RTL 实现、模块仿真、系统集成、综合时序和板上运行证据。不要把现有框架或历史测试结果写成新版 Breeze 的验证结论。
+
+## 新版内存系统、后端与前端
+
+以下四份是新版 Breeze v1 的微架构设计文档，审阅冻结后再分别编写 RTL 级 spec；在冻结前不写对应 RTL。
+
+- [`docs/dcache-pipeline-design.md`](docs/dcache-pipeline-design.md)：L1D（单 MSHR hit-under-miss、S2 判定即提交、阻塞式 MMIO）、L2/Home、自有四链路一致性协议、AXI 集群边界与 LiteX 外壳、KCU105 参数。
+- [`docs/backend-pipeline-design.md`](docs/backend-pipeline-design.md)：4 级顺序单发射后端、记分板、长延迟写口仲裁、MDU 改造。
+- [`docs/frontend-prediction-design.md`](docs/frontend-prediction-design.md)：BTB、全局历史、RAS、S1 返回预测、L1I 下一行预取。
+- [`docs/observability-design.md`](docs/observability-design.md)：性能计数器、JTAG 读取与调试记录。
+
+## 硬件辅助 skills
+
+项目技能位于 `.agents/skills/`，按当前任务选择，不整套加载。使用索引见 [`docs/hardware-skills.md`](docs/hardware-skills.md)，共用适配约定见 [`docs/hardware-skill-context.md`](docs/hardware-skill-context.md)。微架构讨论优先考虑 `breeze-microarchitecture-review`；需求到验证追踪使用 `breeze-spec-verification`；报告与源版本对齐使用 `breeze-timing-evidence`。其他技能补充规划、验证、FPGA 工程与绘图能力，不改变本文件及用户指定的任务权限和规格权威。
