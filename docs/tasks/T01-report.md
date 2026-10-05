@@ -452,6 +452,8 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 新增 strengthening **assert**（不是 assume）：每个有效 MUL 级的 rd、完整 product、op 属于独立 FIFO 对应项，committed 状态为 FIFO 前缀；输出 data 属于仍存活的已提交 FIFO 头。FIFO 将实际 P1 组合运算节点作为该请求 payload 捕获，因此控制抽象下同一个任意乘积同时送实际 P1 和独立台账，检查请求身份/保持，不将该运算节点当数学等价性参照。DIV occupied 的 rd 在提交前后均对应 FIFO 头，内部 done 之后直到 release 的 data/rd/done 也检查保持（包括尚未 externally valid 的时期）。这些额外断言补足无界未提交停顿下的归纳不变式，不删除或放宽任何已登记性质。原请求/kill/commit 环境 assume 全部不变。
 
+完整算术 Z3 的 MUL prove 在 526 s、DIV prove 在 511 s 报 `Unexpected EOF response from solver` / `Engine terminated without status` / ERROR（rc16），无反例/witness；不是性质 FAIL。剩余 BMC 与另一路控制 Z3 尚在求解，但多个进程已超过数 GB、机器开始 swap。并行安排造成内存压力，终止本轮其余求解进程保留原始日志，后续各任务串行；不声称 EOF 已由内核日志确认为 OOM。追加已安装 ABC 引擎配置：`mul_protocol_abc.sby` / `div_abc.sby`，BMC `abc bmc3` 深度仍80、prove `abc pdr` 为无界不变式证明（不称80拍k归纳）、cover 仍Z3深度80，timeout仍1800 s。全部属性、输入假设及 cutpoint 保持，改引擎不改验收。
+
 ### E. 迁移清单与删除清单
 
 已批准迁移（新源码行号对应 `fc26153`）：

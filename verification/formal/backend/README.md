@@ -59,3 +59,11 @@ the arithmetic equivalence claim. Occupied DIV rd ownership is checked before
 as well as after commit, and internally completed DIV data is checked for
 stability even before it becomes externally valid. These are extra assertions,
 not assumptions; they strengthen the invariant under indefinite legal holds.
+
+Alternate configs `mul_protocol_abc.sby` and `div_abc.sby` use ABC `bmc3`
+(depth 80) and ABC PDR (unbounded invariant proof); cover remains SMTBMC/Z3
+(depth 80). They retain all properties, assumptions and cutpoint settings of
+their corresponding configs. Run each task separately in sequence to bound
+memory use, and report engine changes, ERROR/terminated runs and final results.
+PDR is an invariant proof, not an 80-step k-induction result. Per-task timeout
+remains 1800 seconds. Alan already has `yosys-abc`; no tool is installed.
