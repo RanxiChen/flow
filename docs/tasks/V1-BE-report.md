@@ -70,7 +70,30 @@
 
 日志 `/home/chen/FUN/flow-runs/20261006-v1-be-95b4f16/units.log`，环境 `environment.log`，执行脚本 `run.sh`、命令 `command.txt`、退出码 `exit-code.txt` 同目录。实际首轮：16测试通过、0失败，6 suite完成、2个FP suite aborted，整体退出码1。原因是独立checkout未初始化CVFPU嵌套 `src/common_cells`，不是FP通过；补齐该固定依赖后再验证。工具：OpenJDK11.0.32.1、实际sbt1.9.7（launcher脚本1.11.2）、Verilator5.028。未运行完整 `sbt test`、ACT4、整核/集群、综合/时序或形式化。
 
-本地和Alan `python3 tools/frozen_check.py` 均输出 `frozen check: OK (8 files)`；冻结检查仅证明文件完整性。补充ND02后的最终提交与组件复验结果待填。
+补充ND02后的验证代码提交 `45eb1ca44b47cdcd3f9a09e693924689b0eeeb28`（`V1-BE/2`）已push，Alan从GitHub fetch并checkout后执行上述同一命令。补齐依赖使用：
+
+```bash
+git -C /home/chen/FUN/flow-runs/20261006-v1-be-95b4f16/repo/third_party/cvfpu \
+  submodule update --init \
+  --reference /home/chen/FUN/flow/third_party/cvfpu/src/common_cells src/common_cells
+```
+
+固定 `common_cells` SHA `6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea`。复验执行脚本 `run-45eb1ca.sh`，命令 `command-45eb1ca.txt`，日志 `units-45eb1ca.log`，环境 `environment-45eb1ca.log`，退出码 `exit-code-45eb1ca.txt`，均位于 `/home/chen/FUN/flow-runs/20261006-v1-be-95b4f16/`。
+
+**组件与相关旧回归：23/23通过，8 suite完成、0 aborted、0 failed、0 ignored/pending/canceled，整体退出码0。** 总执行64秒。组件结果明细（命令和日志为上文同一次执行）：
+
+| Suite | 结果 | 本次证据边界 |
+| --- | --- | --- |
+| `flow.backend.V1ScoreboardSpec` | 3/3通过 | 四来源/双bank/f0/RAW/WAW、实际clear释放、CSR原始busy多等一拍、FP→x0 flags等待 |
+| `flow.backend.V1WritebackSpec` | 2/2通过 | 四路同拍valid依次grant、同bank普通写冲突、另一bank并行、fatal错误不写数据且清完成目的 |
+| `flow.backend.V1MduTimingSpec` | 3/3通过 | 8 MUL输入/输出连续且每项E+4；DIV fast E+3、再接收write+1；实际32迭代write=E+34 |
+| `flow.fpu.CommittedFpUnitSpec` | 4/4通过 | 8 FMA连续输入/输出、直接CVFPU fire；FDIV/FADD乱序和NV\|NX；commit-before-kill/作废返回/40次分配跨tag回卷；FP→x0不busy但保留flags |
+| `flow.multiplier.CommittedMulProtocolSpec` | 4/4通过 | 既有四级/commit/kill/保持与500次随机算术（seed0x701） |
+| `flow.divider.CommittedDivProtocolSpec` | 2/2通过 | 既有occupied/commit/kill/背压与512次随机算术（seed0x702） |
+| `flow.backend.MduBoundarySpec` | 3/3通过 | 既有空commit断言拒绝、短/长路径与reset/kill边界 |
+| `flow.fpu.BreezeFpUnitSpec` | 2/2通过 | 旧阻塞包装算术/flags/flush兼容，tag改线未破坏该suite |
+
+本地和Alan `python3 tools/frozen_check.py` 均输出 `frozen check: OK (8 files)`；冻结检查仅证明文件完整性。最后报告提交只改文档，验证绑定上述RTL/测试SHA，不重复运行未变更的组件。
 
 ## 6. 合同逐项状态
 
