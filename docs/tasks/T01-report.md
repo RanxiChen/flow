@@ -450,6 +450,8 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 另登记等价安全性方向的控制抽象 `mul_protocol.sby`，预算仍 BMC/归纳/cover 80，Z3，1800 s；只将一个组合 `$mul` 的 130-bit 输出替换成逐拍任意值（`select -assert-count 1` 保证仅这一项），不删除/修改任何寄存器、控制、assume/assert/cover，完整 payload 的保持检查仍在。任意值集合包含全部真实乘积，因此具体 RTL 的每条轨迹都包含在抽象模型中，抽象安全性质 PASS 可推出具体安全性质 PASS；不能从此声称算术等价性。完整算术任务保留并继续运行，单独报告，U01 证据独立。没有增加限制输入的假设、调小深度、改期望或降低被检查的协议性质；此控制证明尚未运行。
 
+新增 strengthening **assert**（不是 assume）：每个有效 MUL 级的 rd、完整 product、op 属于独立 FIFO 对应项，committed 状态为 FIFO 前缀；输出 data 属于仍存活的已提交 FIFO 头。FIFO 将实际 P1 组合运算节点作为该请求 payload 捕获，因此控制抽象下同一个任意乘积同时送实际 P1 和独立台账，检查请求身份/保持，不将该运算节点当数学等价性参照。DIV occupied 的 rd 在提交前后均对应 FIFO 头，内部 done 之后直到 release 的 data/rd/done 也检查保持（包括尚未 externally valid 的时期）。这些额外断言补足无界未提交停顿下的归纳不变式，不删除或放宽任何已登记性质。原请求/kill/commit 环境 assume 全部不变。
+
 ### E. 迁移清单与删除清单
 
 已批准迁移（新源码行号对应 `fc26153`）：

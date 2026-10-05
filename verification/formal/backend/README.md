@@ -48,3 +48,14 @@ backpressure. A false counterexample is possible, a false safety pass is not.
 The selector fails unless exactly one multiplication cell is found. Budgets and
 assumptions are unchanged. Keep the full arithmetic run and its result separate;
 this control proof makes no arithmetic equivalence claim (see U01).
+
+Additional ownership assertions compare every live MUL stage's rd, full product
+and operation to its independent accepted-request FIFO entry, and compare its
+committed bit to the committed FIFO prefix. The FIFO captures the combinational
+product as a payload; in the control model that payload is arbitrary, shared by
+the actual P1 input and the FIFO, and must retain its transaction ownership all
+the way through kill/commit/write. This verifies ownership rather than duplicating
+the arithmetic equivalence claim. Occupied DIV rd ownership is checked before
+as well as after commit, and internally completed DIV data is checked for
+stability even before it becomes externally valid. These are extra assertions,
+not assumptions; they strengthen the invariant under indefinite legal holds.
