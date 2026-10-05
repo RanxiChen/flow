@@ -21,10 +21,13 @@ def execute(name, args):
         raise RuntimeError(f"{name}: exit={result.returncode}; see {out / (name + '.log')}")
     return json.loads((out / (name + ".json")).read_text())
 
-for quant in ("q4_0", "q8_0"):
+selected = sys.argv[2:] or ["q4_0", "q8_0"]
+if any(q not in ("q4_0", "q8_0") for q in selected):
+    raise SystemExit("Optional quant arguments must be q4_0 and/or q8_0")
+for quant in selected:
     model = run / f"models/qwen2.5-0.5b-instruct-{quant}.gguf"
     ref = execute(f"{quant}-native", [run / "build/native/r01-runner", model, root / "prompt.txt"])
-    for mode, vlen in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]:
+    for mode, vlen in [("rvv", v) for v in (128, 256, 512, 1024)] + [("scalar", 128)]:
         name = f"{quant}-{mode}-vlen{vlen}"
         cpu = f"rv64,v=true,vlen={vlen},elen=64,vext_spec=v1.0" if mode == "rvv" else "rv64,v=false"
         actual = execute(name, [qemu, "-cpu", cpu,

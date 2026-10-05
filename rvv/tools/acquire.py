@@ -32,7 +32,7 @@ def fetch_model(name):
     path = models / name
     if not path.exists():
         url = f'https://huggingface.co/{inputs["model_repo"]}/resolve/{inputs["model_revision"]}/{name}'
-        call(["curl", "-fL", "-C", "-", "--connect-timeout", "30", "--max-time", "1800", "--retry", "3", url, "-o", str(path) + ".partial"])
+        call(["curl", "-fL", "-C", "-", "--connect-timeout", "30", "--max-time", "7200", "--retry", "3", url, "-o", str(path) + ".partial"])
         os.rename(str(path) + ".partial", path)
     digest = hashlib.sha256()
     with path.open("rb") as f:
