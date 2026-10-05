@@ -77,7 +77,7 @@ for r in rvv("opcodes"):
     categories[tuple(key(r))][r["category"]] += int(r["count"])
 table(["模型", "模式", "VLEN", "阶段", "类别", "次数", "占比"], [list(k) + [cat, n, pct(n / sum(v.values()))] for k,v in sorted(categories.items()) for cat,n in sorted(v.items())])
 paragraph("## Q5：非矩阵运算")
-paragraph("完整表 `rvv/results/w1/nonmatrix.csv` 覆盖四种 VLEN 和标量版。下面列 RVV 128；向量数为零说明列中匹配到的符号自身只执行标量指令，不能证明整个算子含其共享 helper 都是标量。attention 的通用矩阵 helper、共享 FP16 转换和 memcpy 等不通过符号范围回溯调用者，无法给出这些算子的完整 inclusive 成本；这是本次不能获得的字段及原因。输出投影计入矩阵 dot，embedding_lookup 是输入查表，二者不混用。")
+paragraph("完整表 `rvv/results/w1/nonmatrix.csv` 覆盖四种 VLEN 和标量版。下面列 RVV 128；向量数为零说明列中匹配到的符号自身只执行标量指令，不能证明整个算子含其共享 helper 都是标量。SiLU/Swiglu 包含图融合后的 SwiGLU 符号自身成本，不单独拆分其中的 SiLU 与门控乘法。attention 的通用矩阵 helper、共享 FP16 转换和 memcpy 等不通过符号范围回溯调用者，无法给出这些算子的完整 inclusive 成本；这是本次不能获得的字段及原因。输出投影计入矩阵 dot；embedding_lookup 按 get_rows 符号计，不能进一步区分输入嵌入查表和其他行抽取，二者不混用。")
 table(["模型", "阶段", "运算组", "自身指令", "占比", "向量指令"], [[r["quant"], r["phase"], r["group"], r["exclusive_symbol_instructions"], pct(r["fraction"]), r["vector"]] for r in rvv("nonmatrix") if r["vlen"] == "128"])
 paragraph("## Q6：向量 load 字节与权重大小")
 loads = collections.defaultdict(int)

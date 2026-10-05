@@ -21,7 +21,7 @@ totals, top, kernels, opcodes, histograms, nonmatrix, memories = [], [], [], [],
 base = ["quant", "mode", "vlen", "phase"]
 groups = {
     "RMSNorm": ("rms_norm",), "RoPE": ("rope",),
-    "softmax/attention": ("soft_max", "flash_attn"), "SiLU": ("silu",),
+    "softmax/attention": ("soft_max", "flash_attn"), "SiLU/Swiglu": ("silu", "swiglu"),
     "activation_quantization": ("quantize_row_q8_0", "quantize_mat_q8_0"),
     "sampling/argmax": ("sampler", "argmax",),
     "embedding_lookup": ("get_rows",),
