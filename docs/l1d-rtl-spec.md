@@ -96,10 +96,11 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | 阵列 | 组织 | 端口 | 内容 |
 | --- | --- | --- | --- |
 | `tag` | `SyncReadMem(sets, Vec(ways, TagEntry))`，按 way 掩码写 | 1R1W（U1） | `state` 2（I/S/E/M）、`tag` `tagBits` |
-| `data` | `SyncReadMem(sets × wordsPerLine, Vec(ways, Vec(8, UInt(8))))`，按 way+字节掩码写 | 1R1W | 地址 `{set, word}`；一次读出各路同一 8 B 字（S1 预选） |
+| `data` | 每路一块：`ways` 个 `SyncReadMem(sets × wordsPerLine, Vec(8, UInt(8)))`，按字节掩码写 | 1R1W | 地址 `{set, word}`；S0 用同一地址读各路同一 8 B 字（S1 预选） |
 | `plru` | 寄存器 `Vec(sets, UInt(plruBits))` | — | `TreePlru`；选 victim 时跳过锁定 way |
 
-- refill 安装写整行：`data` 连续 `wordsPerLine` 拍写（每拍一字、只写目标 way），期间 S0 被 refill 占用；或在实现中把 `data` 拆成 `wordsPerLine` 个 bank 一拍写完。v1 取后者：`data` = `wordsPerLine` 个 `SyncReadMem(sets, Vec(ways, Vec(8, UInt(8))))`，读时只用 `vaddr[offBits−1:3]` 选中的 bank，安装时全部 bank 同拍写。
+- **整行操作**（refill 安装、写回读、probe 读）每拍访问一个 8 B 字，连续占用 S0 `wordsPerLine` 拍（字计数器 0…`wordsPerLine−1`），期间 S0 不接收其他来源。
+- 取舍：不按字分 bank。默认几何下每路深 512 × 64 bit，正好一块 BRAM36，每核 4 块；按字分 4 个 bank 时每块只用 128 深，每核约 16 块，4 核多出约 48 块。refill 安装多 3 拍，只在 miss 时发生，代价可忽略；旧 4 核正是因资源装不进 XCKU040。
 - 复位：初始化状态机逐 set 写 `tag` 全 I，共 `sets` 拍；期间 `req.ready=0`、`snp.ready=0`。`data` 不初始化。
 - 同拍同地址读写的返回值不被依赖：S0 冲突检查（第 4 节）与快照失效（5.3 节）覆盖全部读写重叠情况。
 
@@ -107,7 +108,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 
 | 级 | 寄存器 | 动作 |
 | --- | --- | --- |
-| S0 | 无（组合仲裁，第 6 节） | 选中一个来源；读 `tag(idx)`、各 bank `data`；CPU 请求同拍发 `tlb.req`（`req.ready` 与 `tlb.req.ready` 同为 1 才 fire） |
+| S0 | 无（组合仲裁，第 6 节） | 选中一个来源；读 `tag(idx)`、各路 `data({idx, word})`；CPU 请求同拍发 `tlb.req`（`req.ready` 与 `tlb.req.ready` 同为 1 才 fire） |
 | S1 | `s1`：valid、src、req、idx、word、age | 收 `tlb.resp`（CPU）或携带 PA（内部来源）；寄存 tag 各路、data 各路字、PA、翻译异常 |
 | S2 | `s2`：同上 + PA、`tagVec`、`dataVec`、`snapInvalid` | tag 比较、命中路、格式化、PMP/PMA、MSHR 同行、判定（第 5 节） |
 | PS | `ps`：valid、idx、word、way、mask、data | pending-store：写 `data`；E→M 写 `tag` |
@@ -161,13 +162,15 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 
 ### 5.3 快照失效
 
-S1/S2 请求寄存 `idx` 与命中候选。下列事件发生在其阵列读之后、S2 判定之前，且同 set（refill 安装、probe 修改 tag 时比较 set 与 way；简化为同 set 即置位）→ 置 `snapInvalid`：
+S1/S2 请求寄存 `idx`。下列事件发生在其阵列读之后、S2 判定之前，且**同 set** → 置 `snapInvalid`：
 
 - refill 安装写 tag/data；
 - probe 修改 tag（I 或 S）；
 - 写回 victim 置 I。
 
 PS 写 data 不触发（由第 4 节保证）。
+
+有意偏离 [`l1d-spec-inputs.md`](l1d-spec-inputs.md) 第 14 节的“同 set 同 way”：miss 请求没有命中路可比，而 refill 恰好装入它要的行时它应由 miss 变为 hit，按 way 比较需为 miss 另加规则。按 set 比较对命中与缺失都不漏；代价是同 set 无关请求偶尔多一次重查（约 3 拍），refill 与 probe 低频，可忽略。
 
 ### 5.4 Load 格式化
 
@@ -184,7 +187,7 @@ PS 写 data 不触发（由第 4 节保证）。
 5. 重查（快照失效、s2Hold 解除、翻译等待恢复），按年龄。
 6. CPU 新请求（`req`）。
 
-内部来源（1–3）不查 dTLB，携带 PA；CPU 请求（5、6）查 dTLB。除 1–2 外，全部经第 4 节冲突检查。
+整行操作（2 中三者）一旦开始独占 S0 直到最后一拍，不被更高优先级打断。内部来源（1–3）不查 dTLB，携带 PA；CPU 请求（5、6）查 dTLB。除 1–2 外，全部经第 4 节冲突检查。
 
 ### 6.2 MSHR（`nMshrs` 项，v1 = 1）
 
@@ -199,7 +202,7 @@ PS 写 data 不触发（由第 4 节保证）。
 
 - SEND：victim 需写回时等写回读完成（6.3）；REQ `op` = GetS/GetM、`addr` = `lineAddr`、`id` = 0；fire 后 WAIT。
 - WAIT：RSP↓ DataS/DataE/AckE 到达 → 存入 `refill`（AckE 不带数据，安装时保留原数据）→ INSTALL。`error=1` → 不安装，解锁 way（置 I），直接 REPLAY 交付错误。
-- INSTALL：S0 内部来源，全部 bank 同拍写 `way` 的 data（AckE 不写 data），tag 写 `{state = grantE ? E : S, tag}`；PLRU touch；解锁 way；置同 set 在途快照失效。
+- INSTALL：S0 内部来源，整行操作：`wordsPerLine` 拍逐字写 `way` 的 data（AckE 跳过 data，只用 1 拍）；最后一拍写 tag `{state = grantE ? E : S, tag}`、PLRU touch、解锁 way、置同 set 在途快照失效。way 在安装期间仍锁定，不会被命中。
 - REPLAY：以 PA 从 S0 进入（经冲突检查），S2 执行原请求：Load → `late`（`late.ready=0` 时 S2 保持，不阻塞 RSP↓ 与 probe）；Store → PS；LR → `resp` Done 并建 reservation；PTW → `ptw.resp`（`ptwKilled` 时丢弃）。错误：Load 送 `late.error=1`；Store 丢弃；PTW → `ptw.resp.accessFault=1`。完成 → IDLE。
 - 回放时行可能已被 probe 收走（回放前 Inv）：回放不再 miss——第 10 节规则压住比回放更晚的 probe 直到回放完成，因此回放必命中（断言）。
 
@@ -208,7 +211,7 @@ PS 写 data 不触发（由第 4 节保证）。
 字段：`valid`、`lineAddr`、`hasData`、`data`、`state`（READ → SEND → WAIT_ACK）。
 
 - 分配：S2 分配 MSHR 且 victim 有效时置 `valid`，记 victim 地址与 `hasData = (state == M)`。
-- READ：`hasData` 时 S0 内部读 victim way 全部 bank（一拍），S2 前把整行存入 `data`；无数据时跳过。victim 的 tag 在分配拍已写 I（5.2）；data 在 refill 安装前不被覆盖，因 MSHR 在 READ 完成前不进入 SEND。
+- READ：`hasData` 时 S0 内部整行操作，`wordsPerLine` 拍逐字读 victim way，S2 逐字存入 `data`；无数据时跳过。victim way 已锁定，读期间不会被写。victim 的 tag 在分配拍已写 I（5.2）；data 在 refill 安装前不被覆盖，因 MSHR 在 READ 完成前不进入 SEND。
 - SEND：RSP↑ `Put`、`hasData`、`addr`、`data`；fire → WAIT_ACK。
 - WAIT_ACK：RSP↓ PutAck → `valid=0`。
 - 写回槽有效时：同行 S2 请求 s2Hold；不得发同行 Get（由 s2Hold 保证）；需 Put 的新 MSHR 分配 s2Hold。
@@ -280,7 +283,8 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 ### 10.1 接收
 
 - `snp` 接收寄存器 1 项（`snpValid`、`op`、`owner`、`addr`）。`snp.ready = !snpValid && initDone`。
-- `snpValid` 时每拍判断能否处理；能 → 作为 S0 内部来源（优先级 2）进入，读 tag 与 data（整行，全部 bank）。
+- `snpValid` 时每拍判断能否处理（10.2 节）；能 → 作为 S0 内部来源（优先级 2）以整行操作进入：第 0 拍读 tag 与字 0，其后逐字读，共 `wordsPerLine` 拍（固定长度，不论是否需要数据）。
+- 开始条件：除 10.2 节外，S1、S2 中没有未被 s2Hold 的同行 Store 类请求，且 PS 不同行。probe 待处理时 S0 不再接收重查与 CPU 新请求，因此该条件在 ≤3 拍内满足（有限拍本地延迟）。这保证整行读期间没有同行写入，读出的整行一致。
 
 ### 10.2 压住条件（不处理，`snpValid` 保持）
 
@@ -295,9 +299,9 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 
 本地 S 且 MSHR 正在 GetM 升级、收到 `owner=0` 的 Inv：不压住，立即失效 S 并答复，MSHR 继续 WAIT（L2 将回 Data）。
 
-### 10.3 处理（S2 拍）
+### 10.3 处理（最后一拍的 S2）
 
-- 查 tag：本地状态 `st`（锁定 way 视为 I）。
+- 查 tag（第 0 拍读出，随操作寄存）：本地状态 `st`（锁定 way 视为 I）。整行数据在各拍 S2 逐字收集。
 - Inv：命中 → tag 置 I；答 InvAck，`hasData = (st == M)`，数据为读出整行。
 - Down：命中 → E/M 置 S；答 DownAck，`hasData = (st == M)`。
 - 未命中：答对应 Ack，`hasData=0`。
@@ -315,7 +319,7 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 | ready | 条件 | 纪律 |
 | --- | --- | --- |
 | `rspDown.ready` | 恒 1 | 1 |
-| `snp.ready` | `!snpValid && initDone`；`snpValid` 的释放只依赖：MSHR 收到 RSP↓ Data/Ack 并回放（回放只等 `late.ready` 与 PS 写口，均为有限拍本地）、写回槽收到 PutAck、LR 80 拍窗口、AMO ≤2 拍窗口、PS 1 拍 | 2 |
+| `snp.ready` | `!snpValid && initDone`；`snpValid` 的释放只依赖：MSHR 收到 RSP↓ Data/Ack 并回放（回放只等 `late.ready` 与 PS 写口，均为有限拍本地）、写回槽收到 PutAck、LR 80 拍窗口、AMO ≤2 拍窗口、PS 1 拍、10.1 节开始条件 ≤3 拍、整行操作 `wordsPerLine` 拍 | 2 |
 | `req`（L1D 发送） | — | L2 侧 3 |
 | `rspUp`（L1D 发送） | L2 恒收 | 1 |
 | `ptw.req.ready` | S0 仲裁与冲突检查 | 本地 |
