@@ -57,3 +57,10 @@ Q01–Q18 的落实、重定向逐级核查（6.3）、附录 A 使用表、S01�
 | A06 | 确认 commit 与 kill 同拍只用于单元接口合同和模块级测试/cover。整核内不可达：WB 的那条指令要么是 MDU 提交，要么是发起 kill 的指令，而中断要求 `!memWbReg.valid`。中断接受条件不改。 |
 | A07 | 写死 CSR 等空条件：CSR 离开 ID 需 `busy==0`，**并且** EX/MEM/WB 中没有已发射的 MDU。只看 busy 不够：CSR 离开 ID 后，更老的 MDU 才在 WB 提交并置位。整数 MDU 上这只影响性能，但这条规则是 FPU 步骤中 fflags 正确性的模板，所以现在就写成这样。HPM 11/12 的计数按此条件。ESTOP 在 WB 等 `busy==0` 不变（此时更老的都已提交）。 |
 | A08 | 写死副作用门控：EX/MEM 发起的重定向（分支、JALR、SFENCE.VMA、FENCE.I）、BTB/预测训练、FENCE.I 的 flush 请求、访存请求，都只在本级本拍确实推进时发生。在 `wbPortStall`、ESTOP 等空及原 pipelineHold 期间一律不发，以免停住期间重复发出或丢失。6.3 每行的条件写成“该级 enable && 原条件”，S09/S13 按此检查。 |
+
+## 5. 阶段二第 1 次停止（`b6dedbe`）
+
+| ID | 决定 |
+| --- | --- |
+| B01 | 成立，是 A08 写法错误：把“发起许可”写成了“本级 enable”，而本级 enable 依赖的 pipelineHold 含请求拍。修订后的 A08 见 spec 5.1：自带单次状态的请求（dmem、FENCE.I flush、FPU）保持原条件；无单次状态的控制事件（EX 重定向、SFENCE.VMA、FENCE.I 重定向、BTB/预测训练）为 `原条件 && !downHold`，`downHold = wbPortStall \|\| estopWait`，只取决于 WB 与后台状态，不成环。 |
+| B02（审阅发现） | 基线不可用：66 个失败全部是 ChiselSim 下 Verilator 5.028 对 CVFPU 报 `%Error-BLKANDNBLK` 导致构建失败，覆盖了 BreezeBackendMul/Div、BreezeCore、Privilege、WFI、FASE 等正是 T01 要回归的 suite；以此为基线，“无新增失败”没有意义。LiteX 流程用 `-Wno-fatal` 所以 ACT4 不受影响。处理：新增第 0 步，只为 ChiselSim 的 Verilator 构建对 **CVFPU 源文件** 关闭 `BLKANDNBLK`（优先用 Verilator 配置文件 `lint_off -rule BLKANDNBLK -file "<CVFPU 路径>/*"`；不允许全局 `-Wno-fatal` 或关闭其他规则），不改任何 RTL 和测试。在 `d5672f5` + 该提交上重跑完整 sbt test 作为新基线；剩余失败照实记录。若做不到只针对 CVFPU 关闭，按停止条件停下。 |

@@ -48,7 +48,7 @@
 | REQ09；D7，R/Q03/Q06，S6 | WB trap取消全部未提交MDU，保留后台，handler依赖等最终写 | T05/T10 | C | F03/F07/F13/F14，S05/S13 | R-REDIR/R-PRIV |
 | REQ10；R/Q06/Q10，S6 | 中断只排空未提交流水及阻塞memory/FP，不等busy，不用FASE empty | T11 | C | F07/F10，S13/S14；PC系统仿真 | R-PRIV/R-TANDEM |
 | REQ11；D7，R/Q08/Q14，S6 | CSR按csrDrainOk离开ID（busy==0且EX/MEM/WB无已发射MDU，A07），旧状态/rd/别名hazard不改；只挡年轻指令，老MDU继续前进 | T12 | A/C | F10/F14，S14 | R-CORE/R-HPM/R-PRIV |
-| REQ12；R/Q03/Q09，S6.3 | EX branch/JALR/SFENCE及MEM FENCE.I不kill、只抑同拍EX，且只在该级enable拍发起（A02/A08）；WB异常/xRET/satp/WFI及中断发kill | T13/T05 | C | F07，S13 | R-REDIR/完整sbt |
+| REQ12；R/Q03/Q09，S6.3 | EX branch/JALR/SFENCE及MEM FENCE.I不kill、只抑同拍EX，控制事件只在!downHold拍发起（A02/A08/B01）；WB异常/xRET/satp/WFI及中断发kill | T13/T05 | C | F07，S13 | R-REDIR/完整sbt |
 | REQ13；R/Q14，S6 | WFI一次退休不等busy、睡眠不停时钟，后台仍写；wake和interrupt不同 | T14 | C | F07/F12，S14 | R-PRIV/R-TANDEM |
 | REQ14；D9，R/Q04/Q16，S7 | 65×65积，4级末级输出，无反压II=1；op/rd/valid/committed与积对齐，无额外FIFO | T15/U01 | B | F08/F13，S11 | R-MUL/新MUL |
 | REQ15；R/Q03/Q04，S7 | 四级按mulEnable=!P4.valid\|\|(P4.committed&&outReady)整停（A01）；kill停顿中仍生效且只杀未提交 | T05/T09/T15 | B | F03/F05/F08/F11/F14，S07/S10/S11 | 新MUL |
@@ -83,7 +83,7 @@ N拍指当前组合值，末沿更新，N+1观察更新。初始化寄存器/CSR
 | T10 | 已提交DIV x5，年轻load fault WB、未提交MUL x6；trap与x5 write同拍，handler随后读x5 | x6取消且不改busy，x5存活/实际write清；trap cause/tval/PC正确，handler只在真正结果到达后读，后台无二次退休 |
 | T11 | interrupt在MDU EX/MEM/WB及commit后/结果反压时出现，混合MMIO/FP | 停新正常发射，等待EX/MEM/WB及阻塞memory/FP空，删除MUL/DIV wait条件；不等busy，handler读busy rd仍等待；不使用FASE empty。WB仍有效则本拍不能接受interrupt |
 | T12 | 已提交MDU未write后接CSR；MDU仍在EX/MEM/WB未提交时CSR已到ID（busy此时为0）；CSR别名/rd hazard；最后一次write | CSR按csrDrainOk等空：后一情形busy为0也不得离开ID，直到该MDU提交并写回（A07）；普通CSR保守hazard原样；不挡老MDUcommit/write，RF更新后继续；mstatus/sstatus/frm/fcsr别名及CORE-003期望保留 |
-| T13 | 分支/JALR/SFENCE.EX，FENCE.I.MEM，trap/xRET/satp.WB，与后台MDU及年轻req交织 | 按S6.3逐种核查target/级/kill；EX/MEM不误杀MEM/WB老项，WB kill未提交项。FENCE.I在MEM发起、不发kill、只抑同拍EX（A02）；EX/MEM重定向在wbPortStall/ESTOP等空期间不发、保持结束后只发一次（A08） |
+| T13 | 分支/JALR/SFENCE.EX，FENCE.I.MEM，trap/xRET/satp.WB，与后台MDU及年轻req交织 | 按S6.3逐种核查target/级/kill；EX/MEM不误杀MEM/WB老项，WB kill未提交项。FENCE.I在MEM发起、不发kill、只抑同拍EX（A02）；EX/MEM控制事件在wbPortStall/estopWait期间不发、结束后只发一次；dmem/flush请求在MEM保持期间也只发一次，响应经捕获/反压不丢（A08/B01） |
 | T14 | 未完成DIV时WFI WB，睡眠写回，唤醒源/中断资格分开；另ESTOP/复位在途 | WFI不等busy、只退休一次且后台时钟不停；ESTOP在WB退休前等busy=0；reset清所有live/busy/capture，复位后不出现旧结果 |
 | T15 | 连续不同rd MUL，使四级占用；交错五种op/bubble/反压/commit/kill，后端连续MUL | 无反压4拍、II=1，op/rd/valid/committed对齐，无FIFO；停顿期间commit/kill仍更新，已提交不丢；P4未提交停住按A01 |
 | T16 | 八种DIV/REM：除0、64/W min/-1；W低32特殊、高32随机 | req.fire后下一拍fast内部done，commit前valid=0；除0商全1、余数有效dividend，溢出商min余数0；所有W最终低32符号扩展，分记算术/req→write延迟 |

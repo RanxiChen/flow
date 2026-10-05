@@ -35,7 +35,7 @@
 | A02 | FENCE.I在MEM发起，不发kill，只抑同拍EX；6.3 |
 | A06 | commit+kill同拍只属单元接口合同，整核不可达；4.2/6.2 |
 | A07 | CSR离开ID需busy==0且EX/MEM/WB无已发射MDU；3.1/11 |
-| A08 | EX/MEM副作用只在该级本拍推进时发生；5.1/6.3 |
+| A08 | 控制事件按`原条件&&!downHold`，单次状态请求原条件不变（R §5/B01修订）；5.1/6.3 |
 
 ## 1. 现状映射与文件边界
 
@@ -198,7 +198,21 @@ ordinaryGprWrite 包括 ALU/Load/CSR/FP→GPR，不包括 MDU 自身 WB commit�
 
 WB port stall 优先于 EX 资源停顿：只有 MEM 确实能够消费旧项时才插气泡，不能在 WB 停住时覆盖 MEM。EX/MEM/WB 控制侧带与共同寄存器采用同一个对应级 enable。
 
-**副作用门控（A08）**：EX/MEM 发起的重定向（条件分支、JAL/JALR、SFENCE.VMA、FENCE.I）、BTB/预测训练、FENCE.I 的 flush 请求、访存请求和 MDU req.fire，一律写成 `该级本拍 enable && 原条件`。`exEnable`/`memEnable` 在 wbPortStall、ESTOP 等空保持、原 pipelineHold 期间为 0，此时上述事件都不发，保持结束后由同一项发一次。已有的单次寄存器（`fenceiFlushIssuedReg`、`memBtbUpdate`）保证不重复。WB 发起的 kill 不受此门控（WB 让拍时 WB 本身不提交，也就不发 kill）。
+**副作用门控（A08，按 R §5/B01 修订）**：区分“发起许可”和“级推进”，副作用不得以本级 `enable` 为条件，因为本级 enable 依赖的 `pipelineHold` 本身包含请求拍（`memReqIssued`）。定义两个只取决于 WB 和后台状态、不依赖 EX/MEM 信号的停顿量：
+
+```text
+wbPortStall = 见第 5 节
+estopWait   = memWbReg.valid && memWbReg.estop && busy != 0
+downHold    = wbPortStall || estopWait
+```
+
+| 类别 | 事件 | 发起条件 |
+| --- | --- | --- |
+| 自带单次状态的请求 | dmem 请求 `memReqIssued`、FENCE.I flush 请求 `io.dcacheFlushReq`、FPU 请求 | **原条件不变**，不加 downHold、不加本级 enable。重复发起由 `memWaitingRespReg`/`fenceiFlushIssuedReg`/`fpWaitingRespReg` 防止；MEM 不能推进时到达的响应按 5.2 处理（dmem 捕获、FPU 反压）。CORE-001 的请求拍 hold 保留 |
+| 无单次状态的控制事件 | EX 分支/JAL/JALR 重定向（`redirectDirectionMismatch/TargetMismatch`）、EX SFENCE.VMA、MEM FENCE.I 重定向 `fenceiFlush`、BTB/预测训练（含 `memBtbUpdate`） | `原条件 && !downHold`。原条件里已有的 `!pipelineHold` 保留 |
+| MDU 发射 | EX `req.valid` | 按 4.1：`原合法条件 && !pipelineHold && !downHold`；`pipelineHold` 已不含 MUL/DIV 项 |
+
+downHold 不依赖 EX/MEM 的任何信号（wbPortStall 只取决于 WB 项和后台仲裁；普通 WB 优先级最低，后台 grant 不依赖它），故上表不形成组合环。WB 发起的 kill 不受此门控（WB 让拍时 WB 本身不提交，也就不发 kill）。实现中若综合或 Verilator 报告新的组合环（如 UNOPTFLAT），按停止条件处理，不自行改方程。
 
 ### 5.2 阻塞响应
 
@@ -240,7 +254,7 @@ R 若与普通整数 WB 写重合，该普通指令让拍；此时全流水保�
 
 ### 6.3 每种重定向的源码级核查
 
-这里的 EX=`idExeReg`、MEM=`exeMemReg`、WB=`memWbReg`。表中“发/不发”按 R/Q03 的级别规则与 R §4/A02。EX/MEM 行的发起条件均为 `该级 enable && 原条件`（A08）。
+这里的 EX=`idExeReg`、MEM=`exeMemReg`、WB=`memWbReg`。表中“发/不发”按 R/Q03 的级别规则与 R §4/A02。EX/MEM 行的发起条件按 5.1 的 A08 表（R §5/B01）：控制事件为 `原条件 && !downHold`，自带单次状态的请求保持原条件。
 
 | 重定向 | 源码事实：发起级/条件/target | killUncommitted 规则 |
 | --- | --- | --- |
@@ -343,7 +357,7 @@ T01 的取值正确性证据：完整 `sbt test` 回归（含 9.2 迁移后的 M
 | S06 | 后台grant独热、后台与普通GPR写互斥；可有多源valid |
 | S07 | 每源valid&&!ready保持rd/data/valid；result.valid必有committed&&done |
 | S08 | write、clearMask、RF穿透、晚写事件一致，一项一次写，后台write不再retire |
-| S09 | WB port stall及ESTOP等空时四级及侧带保持、无普通退休/副作用；EX/MEM副作用只在该级enable拍发生（A08） |
+| S09 | WB port stall及ESTOP等空时四级及侧带保持、无普通退休/副作用；EX/MEM控制事件只在!downHold拍发起，自带单次状态的请求不重复（A08/B01） |
 | S10 | 同rd setMask/clearMask不能同拍非零；不同rd同时更新全部生效；reset清所有 |
 | S11 | MUL四级数据/op/rd/valid对齐，data enable按第7节；P4有效未离开时四级都不推进、P4内容不变 |
 | S12 | DIV occupied期间ready=0，不能同拍释放再接收；fast接收后1拍done、commit前不valid |
