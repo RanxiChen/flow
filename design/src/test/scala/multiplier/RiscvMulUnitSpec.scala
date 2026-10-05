@@ -9,34 +9,40 @@ import org.scalatest.matchers.must.Matchers
 class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val Mask64 = (BigInt(1) << 64) - 1
 
-  private def reset(dut: RiscvMulUnit): Unit = {
-    dut.io.flush.poke(false.B)
-    dut.io.in_valid.poke(false.B)
-    dut.io.a.poke(0.S(65.W))
-    dut.io.b.poke(0.S(65.W))
-    dut.io.op.poke(MUL_OP.MUL.U)
+  private def reset(dut: CommittedMulUnit): Unit = {
+    dut.io.killUncommitted.poke(false.B)
+    dut.io.commit.poke(false.B)
+    dut.io.result.ready.poke(true.B)
+    dut.io.req.bits.rd.poke(5.U)
+    dut.io.req.valid.poke(false.B)
+    dut.io.req.bits.a.poke(0.S(65.W))
+    dut.io.req.bits.b.poke(0.S(65.W))
+    dut.io.req.bits.op.poke(MUL_OP.MUL.U)
     dut.reset.poke(true.B)
     dut.clock.step(1)
     dut.reset.poke(false.B)
   }
 
-  private def run(dut: RiscvMulUnit, a: BigInt, b: BigInt, op: Int): BigInt = {
-    dut.io.a.poke(a.S(65.W))
-    dut.io.b.poke(b.S(65.W))
-    dut.io.op.poke(op.U)
-    dut.io.in_valid.poke(true.B)
+  private def run(dut: CommittedMulUnit, a: BigInt, b: BigInt, op: Int): BigInt = {
+    dut.io.req.bits.a.poke(a.S(65.W))
+    dut.io.req.bits.b.poke(b.S(65.W))
+    dut.io.req.bits.op.poke(op.U)
+    dut.io.req.valid.poke(true.B)
     dut.clock.step(1)
-    dut.io.in_valid.poke(false.B)
+    dut.io.req.valid.poke(false.B)
+    dut.io.commit.poke(true.B)
+    dut.clock.step(1)
+    dut.io.commit.poke(false.B)
     dut.clock.step(2)
-    dut.io.out_valid.expect(true.B)
-    val result = dut.io.result.peekValue().asBigInt
+    dut.io.result.valid.expect(true.B)
+    val result = dut.io.result.bits.data.peekValue().asBigInt
     dut.clock.step(1)
-    dut.io.out_valid.expect(false.B)
+    dut.io.result.valid.expect(false.B)
     result
   }
 
   "wrapper selects all multiplication result forms" in {
-    simulate(new RiscvMulUnit) { dut =>
+    simulate(new CommittedMulUnit) { dut =>
       reset(dut)
 
       run(dut, -2, 3, MUL_OP.MUL) mustBe ((BigInt(-6)) & Mask64)
@@ -47,20 +53,20 @@ class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "flush cancels a stale completion token" in {
-    simulate(new RiscvMulUnit) { dut =>
+  "kill cancels an uncommitted completion token" in {
+    simulate(new CommittedMulUnit) { dut =>
       reset(dut)
-      dut.io.a.poke(7.S(65.W))
-      dut.io.b.poke(9.S(65.W))
-      dut.io.op.poke(MUL_OP.MUL.U)
-      dut.io.in_valid.poke(true.B)
+      dut.io.req.bits.a.poke(7.S(65.W))
+      dut.io.req.bits.b.poke(9.S(65.W))
+      dut.io.req.bits.op.poke(MUL_OP.MUL.U)
+      dut.io.req.valid.poke(true.B)
       dut.clock.step(1)
-      dut.io.in_valid.poke(false.B)
-      dut.io.flush.poke(true.B)
+      dut.io.req.valid.poke(false.B)
+      dut.io.killUncommitted.poke(true.B)
       dut.clock.step(1)
-      dut.io.flush.poke(false.B)
+      dut.io.killUncommitted.poke(false.B)
       dut.clock.step(3)
-      dut.io.out_valid.expect(false.B)
+      dut.io.result.valid.expect(false.B)
     }
   }
 }

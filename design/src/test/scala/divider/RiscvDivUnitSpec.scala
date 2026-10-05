@@ -8,22 +8,27 @@ import org.scalatest.matchers.must.Matchers
 class RiscvDivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val Mask64 = (BigInt(1) << 64) - 1
 
-  private def reset(dut: RiscvDivUnit): Unit = {
-    dut.io.flush.poke(false.B)
-    dut.io.in_valid.poke(false.B)
-    dut.io.dividend_mag.poke(0.U)
-    dut.io.divisor_mag.poke(1.U)
-    dut.io.quotient_neg.poke(false.B)
-    dut.io.remainder_neg.poke(false.B)
-    dut.io.is_remainder.poke(false.B)
-    dut.io.is_word.poke(false.B)
+  private def reset(dut: CommittedDivUnit): Unit = {
+    dut.io.killUncommitted.poke(false.B)
+    dut.io.commit.poke(false.B)
+    dut.io.result.ready.poke(true.B)
+    dut.io.req.bits.rd.poke(5.U)
+    dut.io.req.bits.fastValid.poke(false.B)
+    dut.io.req.bits.fastData.poke(0.U)
+    dut.io.req.valid.poke(false.B)
+    dut.io.req.bits.dividendMag.poke(0.U)
+    dut.io.req.bits.divisorMag.poke(1.U)
+    dut.io.req.bits.quotientNeg.poke(false.B)
+    dut.io.req.bits.remainderNeg.poke(false.B)
+    dut.io.req.bits.isRemainder.poke(false.B)
+    dut.io.req.bits.isWord.poke(false.B)
     dut.reset.poke(true.B)
     dut.clock.step(1)
     dut.reset.poke(false.B)
   }
 
   private def run(
-      dut: RiscvDivUnit,
+      dut: CommittedDivUnit,
       dividendMag: BigInt,
       divisorMag: BigInt,
       quotientNeg: Boolean,
@@ -31,28 +36,31 @@ class RiscvDivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
       isRemainder: Boolean,
       isWord: Boolean
   ): BigInt = {
-    dut.io.dividend_mag.poke(dividendMag.U)
-    dut.io.divisor_mag.poke(divisorMag.U)
-    dut.io.quotient_neg.poke(quotientNeg.B)
-    dut.io.remainder_neg.poke(remainderNeg.B)
-    dut.io.is_remainder.poke(isRemainder.B)
-    dut.io.is_word.poke(isWord.B)
-    dut.io.in_valid.poke(true.B)
+    dut.io.req.bits.dividendMag.poke(dividendMag.U)
+    dut.io.req.bits.divisorMag.poke(divisorMag.U)
+    dut.io.req.bits.quotientNeg.poke(quotientNeg.B)
+    dut.io.req.bits.remainderNeg.poke(remainderNeg.B)
+    dut.io.req.bits.isRemainder.poke(isRemainder.B)
+    dut.io.req.bits.isWord.poke(isWord.B)
+    dut.io.req.valid.poke(true.B)
     dut.clock.step(1)
-    dut.io.in_valid.poke(false.B)
+    dut.io.req.valid.poke(false.B)
+    dut.io.commit.poke(true.B)
+    dut.clock.step(1)
+    dut.io.commit.poke(false.B)
     var cycles = 0
-    while (!dut.io.out_valid.peek().litToBoolean && cycles < 33) {
+    while (!dut.io.result.valid.peek().litToBoolean && cycles < 33) {
       dut.clock.step(1)
       cycles += 1
     }
-    dut.io.out_valid.expect(true.B)
-    val result = dut.io.result.peekValue().asBigInt
+    dut.io.result.valid.expect(true.B)
+    val result = dut.io.result.bits.data.peekValue().asBigInt
     dut.clock.step(1)
     result
   }
 
   "wrapper restores quotient/remainder signs and W sign extension" in {
-    simulate(new RiscvDivUnit) { dut =>
+    simulate(new CommittedDivUnit) { dut =>
       reset(dut)
       run(dut, 20, 3, quotientNeg = true, remainderNeg = true,
         isRemainder = false, isWord = false) mustBe (BigInt(-6) & Mask64)
