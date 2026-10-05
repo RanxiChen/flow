@@ -41,7 +41,10 @@ def fetch_model(name):
         f.seek(0)
         while data := f.read(1024 * 1024):
             digest.update(data)
-    return {"file": name, "size": path.stat().st_size, "sha256": digest.hexdigest()}
+    record = {"file": name, "size": path.stat().st_size, "sha256": digest.hexdigest()}
+    (run / (name + ".json")).write_text(json.dumps(record, indent=2) + "\n")
+    print("MODEL_READY", json.dumps(record), flush=True)
+    return record
 
 # Downloads are not simulations. Two requests permit overlap and resume
 # independently, while all guest execution remains serial.

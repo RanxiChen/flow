@@ -10,7 +10,10 @@ run = Path(sys.argv[1]).resolve()
 qemu = Path.home() / "opt/act4/gcc-2026.07.15/bin/qemu-riscv64"
 out = run / "correctness"
 out.mkdir(exist_ok=True)
-results = []
+comparison_path = out / "comparison.json"
+results = json.loads(comparison_path.read_text()) if comparison_path.exists() else []
+if any(not r["match"] for r in results):
+    raise SystemExit("STOP: a previous token mismatch remains unresolved")
 
 def execute(name, args):
     command = ["nice", "-n", "10"] + [str(x) for x in args]
@@ -24,6 +27,7 @@ def execute(name, args):
 selected = sys.argv[2:] or ["q4_0", "q8_0"]
 if any(q not in ("q4_0", "q8_0") for q in selected):
     raise SystemExit("Optional quant arguments must be q4_0 and/or q8_0")
+results = [r for r in results if not any(r["run"].startswith(q + "-") for q in selected)]
 for quant in selected:
     model = run / f"models/qwen2.5-0.5b-instruct-{quant}.gguf"
     ref = execute(f"{quant}-native", [run / "build/native/r01-runner", model, root / "prompt.txt"])
@@ -34,7 +38,7 @@ for quant in selected:
                                 run / f"build/{mode}/r01-runner", model, root / "prompt.txt"])
         match = actual == ref and len(actual["token_ids"]) == 16
         results.append({"run": name, "match": match, "reference": ref, "actual": actual})
-        (out / "comparison.json").write_text(json.dumps(results, indent=2) + "\n")
+        comparison_path.write_text(json.dumps(results, indent=2) + "\n")
         print(name, "PASS" if match else "FAIL", flush=True)
         if not match:
             raise SystemExit("STOP: token IDs differ. R01 2.1 prohibits further profiling.")
