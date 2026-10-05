@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -eu
+shim_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+: "${FLOW_CHISELSIM_VERILATOR_REAL:?set by Test / envVars in build.sbt}"
+exec "$FLOW_CHISELSIM_VERILATOR_REAL" "$shim_dir/cvfpu.vlt" "$@"
