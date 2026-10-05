@@ -64,3 +64,9 @@ Q01–Q18 的落实、重定向逐级核查（6.3）、附录 A 使用表、S01�
 | --- | --- |
 | B01 | 成立，是 A08 写法错误：把“发起许可”写成了“本级 enable”，而本级 enable 依赖的 pipelineHold 含请求拍。修订后的 A08 见 spec 5.1：自带单次状态的请求（dmem、FENCE.I flush、FPU）保持原条件；无单次状态的控制事件（EX 重定向、SFENCE.VMA、FENCE.I 重定向、BTB/预测训练）为 `原条件 && !downHold`，`downHold = wbPortStall \|\| estopWait`，只取决于 WB 与后台状态，不成环。 |
 | B02（审阅发现） | 基线不可用：66 个失败全部是 ChiselSim 下 Verilator 5.028 对 CVFPU 报 `%Error-BLKANDNBLK` 导致构建失败，覆盖了 BreezeBackendMul/Div、BreezeCore、Privilege、WFI、FASE 等正是 T01 要回归的 suite；以此为基线，“无新增失败”没有意义。LiteX 流程用 `-Wno-fatal` 所以 ACT4 不受影响。处理：新增第 0 步，只为 ChiselSim 的 Verilator 构建对 **CVFPU 源文件** 关闭 `BLKANDNBLK`（优先用 Verilator 配置文件 `lint_off -rule BLKANDNBLK -file "<CVFPU 路径>/*"`；不允许全局 `-Wno-fatal` 或关闭其他规则），不改任何 RTL 和测试。在 `d5672f5` + 该提交上重跑完整 sbt test 作为新基线；剩余失败照实记录。若做不到只针对 CVFPU 关闭，按停止条件停下。 |
+
+## 6. 形式化范围裁剪（2026-10-05 晚，工期原因）
+
+- 第 3 步保留：MUL/DIV 单元级 F03、F05、F07、F08、F11，按 agent.md“形式化验证的做法”抽象算术、串行运行、单任务 3600 秒。
+- 第 6 步的整后端形式化（F01、F02、F04、F06、F09、F10、F12、F13、F14）**不做**。对应规则由仿真断言 S01–S16 在全部定向/随机测试和完整回归中检查，报告中每条 F 写明“由 Sxx 在仿真中覆盖”。F06（活性）改为仿真看门狗：任何已提交项超过 2000 拍未写回即报错。
+- 其余门槛不变：单元测试、完整 sbt 回归不差于新基线、ACT4 RV64IM 全通过、trace 协议检查 0 报错。
