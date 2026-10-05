@@ -18,23 +18,28 @@
 
 旧的 `cache/BreezeL2Home.scala`、`cache/Coherence.scala` 删除（见 [`v1-impl-plan.md`](v1-impl-plan.md)）。
 
-### 0.2 参数（v1 取值）
+### 0.2 参数（推导自 `BreezeClusterConfig`）
 
-| 参数 | 默认 | 说明 |
-| --- | --- | --- |
-| `nCores` | 4（支持 1/2/4，≤8） | L1D 客户端数 |
-| `lineBytes` | 32 | 行大小，`offBits = 5` |
-| `paddrBits` | 32 | 可缓存物理地址宽度。可缓存区域全部在 4 GiB 以下（0x8000_0000 起的 DDR、ROM、SRAM），PMA 把 ≥2^32 的物理地址判为不存在，不会进入 L2 |
-| `l2Ways` | 8 | |
-| `l2Sets` | `nCores × 256` | 每核 64 KiB；4 核 1024 set，`setBits = 10` |
-| `l2Slots` | 2 | 慢槽数 |
-| `memDataBits` | 64 | AXI4 `mem` 数据宽度，一行 4 拍 INCR |
-| `memReadsInFlight` | 2 | = `l2Slots`，每槽固定 AXI ID |
-| 链路数据宽度 | 256 | 每条消息单拍（设计文档第 7 节取 256 bit） |
-| II | 1 | 同 set 由在途检查串行（4.3 节）；设计文档允许 II=2，这里取 1，因为 1R1W 阵列下不增加逻辑 |
-| 写回在途 | 1 | 内存引擎 1 项写缓冲 |
+全部参数推导自 `config/config.scala` 的 `BreezeClusterConfig`（字段与 `require` 见 [`l1d-rtl-spec.md`](l1d-rtl-spec.md) 0.2 节）。`CoherenceParams(cfg)` 只做推导，L2 各模块不得出现几何常量。
 
-派生：`tagBits = paddrBits - setBits - offBits`（4 核为 17）。
+| 参数 | 来源 | 默认（4 核） | 说明 |
+| --- | --- | --- | --- |
+| `nCores` | `cfg.nCores` | 4 | L1D 客户端数，1–8 |
+| `lineBytes` | `cfg.lineBytes` | 32 | v1 锁定；`offBits = log2(lineBytes)` |
+| `paddrBits` | `cfg.paddrBits` | 32 | v1 锁定。可缓存区域全部在 4 GiB 以下，PMA 把 ≥2^32 判为不存在，不进入 L2 |
+| `l2Ways` | `cfg.l2Ways` | 8 | 2 的幂；`TreePlru` 位数 `l2Ways − 1` |
+| `l2Sets` | `nCores × l2BytesPerCore / (l2Ways × lineBytes)` | 1024 | 2 的幂；`setBits = log2(l2Sets)` |
+| `l2Slots` | `cfg.l2Slots` | 2 | 慢槽数 |
+| `memReadsInFlight` | `= l2Slots` | 2 | 每槽固定 AXI ID |
+| `memDataBits` | 常量 64 | 64 | AXI4 `mem` 数据宽度；一行 `lineBytes × 8 / 64` 拍 INCR |
+| 链路数据宽度 | `lineBytes × 8` | 256 | 每条消息单拍 |
+| `lineAddrBits` | `paddrBits − offBits` | 27 | 消息 `addr` 宽度 |
+| `tagBits` | `paddrBits − setBits − offBits` | 17 | |
+| `sharerBits` | `nCores` | 4 | |
+| II | 1 | 1 | 同 set 由在途检查串行（4.3 节） |
+| 写回在途 | 1 | 1 | 内存引擎 1 项写缓冲 |
+
+正文中出现的 “8 路”“7 bit PLRU”“32 字节”“4 拍” 等数值均指默认配置，实现一律用上表推导值。非默认配置冒烟（`l2Ways = 4`、`l1dWays = 2`、`nCores = 1`）见 L1D spec 13.4 节，L2 测试同样必跑。
 
 ## 1. 协议
 

@@ -31,7 +31,7 @@
 | --- | --- |
 | 协议与 L2 spec | 初稿完成 |
 | 集成备忘 | 完成：[`v1-integration-notes.md`](v1-integration-notes.md)（现有代码事实与集成决定） |
-| L1D spec | 未开始 |
+| L1D spec | 初稿完成（含参数单入口与非默认配置冒烟） |
 | 后端 spec | 未开始 |
 | 集群与外壳 spec | 未开始 |
 | 测试计划、codex 规则 | 未开始 |
