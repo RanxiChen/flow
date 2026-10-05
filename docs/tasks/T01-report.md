@@ -176,7 +176,7 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 所有无关未跟踪内容（包括 `.agents/`、`docs/figures/`、`docs/cross-project/`、`docs/hardware-skill*`、`docs/plans/2026-10-04-*`、`docs/roadmap.md`）不暂存。完成本轮文档提交和push后停止，等待用户确认冻结，不开始阶段二。
 
 
-## 阶段二
+## 阶段二：上轮历史（B01/B02 已由用户决定）
 
 日期：2026-10-05。用户已明确冻结 `b180a95fe91ff89bbd597e28419e74c516d2c9a5` 的 spec/testplan。本节为阶段二最新记录；阶段一的“未冻结/未开始”措辞仅为历史。当前第1步 Q17已完成；在第2步接口/源码核查时触发停止条件1，整个任务已停止，未修改任何RTL或测试。分支 `feat/pcie-fase-20260920`。
 
@@ -191,9 +191,11 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 
 验证源码提交为 `d5672f51bf0ec67465148c02af970c70464bec68`，不是报告提交；Alan 实际 HEAD 见证据目录 `source.sha`。
 
-### B. 基线表与改造后对比表（按 suite）
+### B. 旧基线表（作废：CVFPU 构建失败）
 
-基线：Alan，cwd `/home/chen/FUN/flow/design`，`/home/chen/.local/share/coursier/bin/sbt test`，源码 `d5672f51bf0ec67465148c02af970c70464bec68`，退出码 **1**。56 suites completed、0 aborted；277 tests，211 succeeded、66 failed、0 canceled/ignored/pending。按本次 XML 逐 suite 汇总，与 sbt 原文总数一致。0测试 suite 保留在表内，不算通过测试。
+**作废：CVFPU 构建失败。此表仅保留历史，不能作为第 6 步回归比较依据。**
+
+旧基线：Alan，cwd `/home/chen/FUN/flow/design`，`/home/chen/.local/share/coursier/bin/sbt test`，源码 `d5672f51bf0ec67465148c02af970c70464bec68`，退出码 **1**。56 suites completed、0 aborted；277 tests，211 succeeded、66 failed、0 canceled/ignored/pending。按本次 XML 逐 suite 汇总，与 sbt 原文总数一致。0测试 suite 保留在表内，不算通过测试。
 
 日志根目录：`/home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/`。原文 `sbt-test.log`，逐 suite 原始 XML `test-reports/TEST-<suite>.xml`，汇总 `suite-summary.json` / `suite-table.md`，逐用例错误 `failures.json`。
 
@@ -315,3 +317,123 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 基线66个CVFPU构建失败按Q17原样记录，未将其当作CORE-003运行时结论、未修复。没有遇到“RTL改3次仍失败”，RTL修改次数为0。没有修改测试/断言/期望/次数/深度/assume。已找到的工具不等于全部阶段环境通过；本轮未发现确定的工具缺失，不安装任何工具。
 
 最终交付只有`docs/tasks/T01-report.md`的阶段二记录；冻结spec/testplan及所有源码测试保持原样。Alan最终验证HEAD仍为`d5672f51bf0ec67465148c02af970c70464bec68`，干净detached checkout；基线任务均已结束。停止报告提交/push结果在最终回报给出。
+
+## 阶段二（B01/B02 续行，最新状态）
+
+冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线已完成，第 2 步待执行，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
+
+### A. 提交列表
+
+| 步骤 | 提交 | 内容 |
+| --- | --- | --- |
+| 0 B02 构建 | `cd9321a335c156d974985a378930d98df6e96b69` | `T01-2/0 Scope ChiselSim BLKANDNBLK waiver to CVFPU sources`，已 push |
+| Alan 新基线临时分支 | `3adca5e283caa7faa3262c713e9ca7624fa5b2dc` | 分支 `t01-b02-baseline-20261005`；父提交 `d5672f51bf0ec67465148c02af970c70464bec68`，只 cherry-pick 上述 B02 提交；相对父提交只改三个构建文件 |
+
+参数入口：Chisel 7.0.0 source JAR 的 `chisel3/simulator/HasSimulator.scala:43-52` 选择 Verilator；`verilator/Backend.scala:71-89,105-223` 定义设置并组装参数，API 没有任意参数/控制文件入口。源码已读取，现有 `disabledWarnings` 只能按规则全局关闭，不能用于本项。仓库现有 `design/src/test/scala/fpu/BreezeFpTestSupport.scala:13-20` 与 `design/src/main/scala/sim/BreezeCoreSimSupport.scala:238-244` 只配置 include 目录；普通 ChiselSim suite 使用默认 backend。
+
+本轮按 B02 用途扩展范围：`design/build.sbt:23-39`（Test 专用 fork/环境）、`design/project/chiselsim-verilator/verilator:1-5`（参数包装）、`design/project/chiselsim-verilator/cvfpu.vlt:1-3`（定向控制文件）。这些构建文件原不在 spec 1.3/9.1 中，用户已为 B02 明确批准。没有修改 RTL、测试文件或 CVFPU submodule。包装脚本在 svsim 原参数之前加 `.vlt`，然后 exec 原 Verilator，保持原参数和退出码；`.vlt` 仅 `lint_off -rule BLKANDNBLK -file "*/third_party/cvfpu/*"`，不匹配 Flow wrapper、生成顶层或其他源文件。Test 之外的原 Verilator 路径不变。不新增 `-Wno-fatal` 或关闭其他规则；原聚合源中已有的 warning metacomment 不修改。
+
+配置语义依据 [Verilator Control Files](https://verilator.org/guide/latest/control.html)：文件 wildcard 限定规则，控制文件须先于对应源码解析；本轮通过包装参数放在最前。具体支持以 Alan Verilator 5.028 执行为准。
+
+### B. 新基线表与改造后对比表（按 suite）
+
+Alan `3adca5e`，完整 `sbt test` 退出码 **1**：56 suites completed、0 aborted；277 tests，276 succeeded、1 failed、0 canceled/ignored/pending。由本轮原始 XML 汇总，与 sbt 原文一致。第 6 步以此表比较；旧表已标作废并保留在上轮 B 节。
+
+日志根目录 `/home/chen/FUN/flow-runs/20261005-t01-2-b02-newbaseline/`，逐 suite XML 为 `test-reports/TEST-<suite>.xml`；汇总为 `suite-summary.json` / `suite-table.md`，失败全文为 `failures.json`。
+
+| Suite | 基线通过 | 基线失败 | 基线忽略 | 改造后通过/失败/忽略 |
+| --- | ---: | ---: | ---: | --- |
+| `flow.backend.BreezeBackendDivSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.backend.BreezeBackendFpMemorySpec` | 3 | 0 | 0 | 未运行 |
+| `flow.backend.BreezeBackendFpSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.backend.BreezeBackendGShareSpec` | 10 | 0 | 0 | 未运行 |
+| `flow.backend.BreezeBackendMulSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.backend.BreezeRedirectPrioritySpec` | 5 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeAmoAluSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeCacheSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeCoherentDmaSpec` | 6 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeDCacheCoherentSpec` | 24 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeDCacheSetAssocSpec` | 12 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeL2HomeSmallSpec` | 8 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeL2HomeSpec` | 14 | 0 | 0 | 未运行 |
+| `flow.cache.BreezePLRUSpec` | 0 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeParallelLookupSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.config.BreezeCoreConfigSpec` | 7 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCoreCustomInstrSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCoreNoFASECustomInstrSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCoreNoFASESpec` | 11 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCoreSpec` | 12 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCsrPipelineSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.core.BreezePrivilegeSpec` | 19 | 0 | 0 | 未运行 |
+| `flow.core.BreezeRegisterStorageSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.core.CSRFileSpec` | 6 | 0 | 0 | 未运行 |
+| `flow.core.MulDecodeSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.core.RegFileSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.RiscvDivUnitSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.UnsignedRadix4DividerSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.fase.FaseIntegrationSpec` | 1 | 1 | 0 | 未运行 |
+| `flow.fase.FlightRecorderSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.fpu.BreezeFpDecoderSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.fpu.BreezeFpUnitSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeBTBSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeCompressedDecoderSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendFE001Spec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendFE002Spec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendGShareSpec` | 4 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeInstrRealignerSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezePHTSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.frontend.MiniDecodeSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeMmuAdSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeMmuSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeParallelTranslatorSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezePmpSharingSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.mmu.sv39.Sv39MmuSpec` | 16 | 0 | 0 | 未运行 |
+| `flow.mmu.sv39.Sv39StructuresSpec` | 13 | 0 | 0 | 未运行 |
+| `flow.multiplier.RiscvMulUnitSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.multiplier.SignedMul65x65Spec` | 22 | 0 | 0 | 未运行 |
+| `flow.platform.BreezeLinuxPmaSpec` | 4 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreGShareSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSim` | 2 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSimAppSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSimMemoryLoaderSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.sim.BreezePrivilegeFlowSpec` | 7 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeWfiFlowSpec` | 1 | 0 | 0 | 未运行 |
+| 合计（56 suites） | 276 | 1 | 0 | 未运行 |
+
+唯一失败：`flow.fase.FaseIntegrationSpec` 的 `JTAG mailbox controls a Linux core, diagnoses stalls and launches coherent DDR code`。`FaseIntegrationHarness.sv:175:25` 的 `FlowFaseJtagTransport` 缺少 `core_reset` 引脚（声明在 `FlowFaseJtag.sv:7:54`），Verilator `%Warning-PINMISSING` 后 `%Error: Exiting due to 1 warning(s)`；构建失败。按 B02 只记录，不修、不关闭 PINMISSING；同 suite 另一项通过。没有新增大量 suite 构建阻塞。
+
+CORE-003 四个 handler 变体全部真实执行通过：csrrs-read+csrrw-write、addi 结果经 x6、addi/csrrw 间 NOP、addi rd≠rs1。原文见 `TEST-flow.core.BreezeCoreNoFASESpec.xml`（该 suite 11/11）；这只说明本次测试结果，不改 bug 文档或扩大验证结论。
+
+ACT4 不重跑，沿用源码 `d5672f5` 的 69/69 PASS、0 FAIL/TIMEOUT/INFRA_ERROR，命令/日志见上轮 C 表；不把它记成新 B02 SHA 的 ACT4 运行。
+
+### C. 每步结果
+
+硬件运行在 Alan，cwd `/home/chen/FUN/flow/design`，源码 `3adca5e283caa7faa3262c713e9ca7624fa5b2dc`。
+
+| 步骤 / 实际命令 | cwd | 退出码 | 结果 / 日志 |
+| --- | --- | ---: | --- |
+| 0：`/home/chen/.local/share/coursier/bin/sbt test` | Alan `/home/chen/FUN/flow/design` | 1 | 276/1/0，56 suites；上述根目录 `sbt-test.log` / `sbt-test.meta` / `sbt-test.exit` / `source.sha` |
+| 0：`python3 /tmp/t01-b02-summary.py` | Alan SSH 默认目录；输入为上述根目录 | 0 | 按全部原始 XML 汇总，276/1/0；`suite-summary.json` / `suite-table.md` / `failures.json` |
+| 0：Git fetch、`git switch -c t01-b02-baseline-20261005 d5672f51bf0ec67465148c02af970c70464bec68`、`git cherry-pick cd9321a335c156d974985a378930d98df6e96b69` | Alan `/home/chen/FUN/flow` | 0 | 临时提交 `3adca5e`；`checkout.log` / `source-status.log` / `submodules.log`；相对 d5672f5 只改三个构建文件 |
+| 2 单元、3 形式化、4 后端、5 trace、6 整核、7 综合 | Alan | — | 未运行；按顺序继续，不能把第 0 步结果当作改造后验证 |
+
+工具：Java GraalVM CE 17.0.9；sbt 项目 1.9.7（启动脚本 1.11.2）；Verilator 5.028；CVFPU `1b220f3bc89df99e246b72e3574a3a533cf87653`，与旧基线一致，详见 `tools.log` / `submodules.log`。完整 sbt 用时 1913 s。Test fork 只用于把包装器 PATH 限定在测试进程，不改变测试向量/期望/次数。
+
+实际参数证据 `fpunit-verilator-parameters.dat`：来自本轮 FP 单元构建的 `VsvsimTestbench__verFiles.dat`，首个参数为上述 `.vlt`，没有 `-Wno-fatal`；该 FP suite 2/2 通过。BLKANDNBLK 未再出现于本轮 sbt 失败记录；PINMISSING 仍触发失败，确认未放宽其规则。Test 参数入口源码 JAR SHA256 `354de5e110cbe312449047a8d1f732bdc2c994e8ba0673c579b2a7292fb19139`，本地只读副本 `/tmp/flow-t01-b02-20261005/t01-chisel-7.0.0-sources.jar`。本地 shell 语法和 `git diff --check` 通过，只是静态检查。
+
+### D. 形式化
+
+F01–F14 及相关 cover：未运行。无新 harness、SBY、assume、BMC 深度、归纳结果或 cover witness。
+
+### E. 迁移清单与删除清单
+
+无测试迁移、无字段/RTL/测试删除；原测试、断言、期望值、随机次数、深度与 assume 未修改。
+
+### F. 综合
+
+新旧 MUL OOC DSP/LUT/FF、单核 100 MHz WNS/最差路径、P02 性能：未运行。
+
+### G. B 类问题
+
+无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2–7 步尚未运行，本轮没有停止，继续按步骤门槛执行。
