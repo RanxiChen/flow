@@ -4,6 +4,15 @@ Authority: [`docs/tasks/R01-rvv-workload-perfmodel.md`](../docs/tasks/R01-rvv-wo
 All builds and guest execution run on Alan in an independent checkout. No RTL
 or existing Breeze directories are changed. W2 requires user confirmation.
 
+The current run was stopped at the user's request. Correctness passed all ten
+cases; eight profiles completed. Q8_0 RVV 512/1024 and an independent profile
+rerun remain unfinished. `results/w1/` contains the completed-case summaries.
+Regenerate these without executing a guest:
+
+```bash
+python3 rvv/tools/write-profile.py "$R01_RUN" "$R01_RUN/partial-summary" --partial
+```
+
 ## Fixed inputs and execution
 
 `third_party/inputs.json` pins llama.cpp and the **official Qwen** GGUF revision.
