@@ -178,14 +178,16 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 
 ## 阶段二
 
-日期：2026-10-05。用户已明确冻结 `b180a95fe91ff89bbd597e28419e74c516d2c9a5` 的 spec/testplan。本节为阶段二最新记录；阶段一的“未冻结/未开始”措辞仅为历史。当前完成第1步 Q17，尚未进入第2步。分支 `feat/pcie-fase-20260920`。
+日期：2026-10-05。用户已明确冻结 `b180a95fe91ff89bbd597e28419e74c516d2c9a5` 的 spec/testplan。本节为阶段二最新记录；阶段一的“未冻结/未开始”措辞仅为历史。当前第1步 Q17已完成；在第2步接口/源码核查时触发停止条件1，整个任务已停止，未修改任何RTL或测试。分支 `feat/pcie-fase-20260920`。
 
 ### A. 提交列表
 
 | 步骤 | 提交 | 内容 |
 | --- | --- | --- |
-| 1 基线 | 本节承载的 `T01-2/1` 提交；可用 `git log --format=%H --grep='^T01-2/1' -1` 查询，后续步骤补入实际 SHA | 仅记录 Q17 基线，不改 RTL/测试 |
-| 2–7 | 未提交 | 未运行 |
+| 1 基线 | `f73a9a2b52f6b0545ec52502d1857740461511b5` | `T01-2/1 Record Alan Q17 suite baseline and 69 ACT4 RV64IM passes`；已push，仅报告 |
+| 2 单元 | 无RTL提交 | 源码核查时停止，单元实现/测试未运行 |
+| 3–7 | 无提交 | 未运行，未继续后续步骤 |
+| 停止报告 | 本节承载的 `T01-2/2` 报告提交；实际SHA在最终回报给出，亦可用 `git log --format=%H --grep='^T01-2/2' -1` 查询 | 仅更新本报告，不代表第2步实现完成 |
 
 验证源码提交为 `d5672f51bf0ec67465148c02af970c70464bec68`，不是报告提交；Alan 实际 HEAD 见证据目录 `source.sha`。
 
@@ -268,7 +270,7 @@ ACT4 基线：I/M/Zmmul selected=69、ran=69、PASS=69、FAIL=0、TIMEOUT=0、IN
 | 1：`/home/chen/.local/share/coursier/bin/sbt test` | `/home/chen/FUN/flow/design` | 1 | 56 suites，211通过/66失败/0忽略 | `/home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/sbt-test.log`；`sbt-test.meta`；`sbt-test.exit` |
 | 1：`make -C verification/act4 build EXTENSIONS=I,M,Zmmul` | `/home/chen/FUN/flow` | 0 | corpus构建完成（upstream报告345 up-to-date；实际选中集合由运行器统计） | 同根目录 `act4-build.log` / `act4-build.meta` / `act4-build.exit` |
 | 1：`python3 verification/act4/scripts/run_linux_soc_suite.py --profile single --elf-dir /home/chen/FUN/flow/verification/act4/.work/breeze-rv64gc/elfs --output-dir /home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/act4 --include-extension I --include-extension M --include-extension Zmmul --fresh-build` | `/home/chen/FUN/flow` | 0 | 69/69 PASS，无FAIL/TIMEOUT/INFRA_ERROR | 同根目录 `act4-run.log` / `act4-run.meta` / `act4-run.exit`；`act4/summary.json`；`act4/cases/*.log` |
-| 2 单元 | 未运行 | — | 未运行 | — |
+| 2 单元 | 硬件命令未运行；本地只读核查 | — | 遇B-01后立即停止；RTL/单元测试未运行 | 本地 `/tmp/flow-t01-2-20261005/stop-source-review.log` |
 | 3 单元形式化 | 未运行 | — | 未运行 | — |
 | 4 后端集成 | 未运行 | — | 未运行 | — |
 | 5 trace | 未运行 | — | 未运行 | — |
@@ -285,7 +287,7 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 
 ### E. 迁移清单与删除清单
 
-截至第1步：**无迁移、无删除**。旧测试、断言、期望值、随机次数、BMC深度、assume均未修改；`SignedMul65x65`及其测试原样保留。
+截至停止：**无迁移、无删除**。旧测试、断言、期望值、随机次数、BMC深度、assume均未修改；`SignedMul65x65`及其测试原样保留。
 
 ### F. 综合
 
@@ -293,4 +295,23 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 
 ### G. B 类问题
 
-无（截至第1步）。Q17指定基线的66个已有失败已原样记录，不在本任务修复；阶段二尚未停止，下一步为单元实现。
+**B-01：A08的MEM推进门控与冻结的访存请求当拍保持相矛盾。触发用户停止条件1（spec与源码保留要求冲突/按spec做不到）。**
+
+停止位置：第2步开始，只读核查现有单元接口及其后端接线时发现；第1步完成且已push，第2步未改RTL/测试，步骤3–7全部未运行。没有把一项挂起后继续后续步骤。
+
+冻结输入及源码位置（`b180a95`；对应源码与`d5672f5`一致）：
+
+- `docs/backend-rtl-spec.md:67`：从pipelineHold删除MUL/DIV项，但保留memory/FP/FENCE.I项。
+- `docs/backend-rtl-spec.md:196,201`：保留原阻塞行为；访存请求一律使用“该级本拍enable && 原条件”，原pipelineHold期间memEnable=0，并要求只在该级确实推进时发请求。
+- `docs/backend-rtl-spec.md:296`：CORE-001请求当拍持有必须保留。
+- `design/src/main/scala/backend/BreezeBackend.scala:727`：`memReqIssued := exeMemNeedsDmem && !memWaitingRespReg && !wbKillsYounger`。
+- 同文件`:1063-1068`：注释明确请求当拍必须hold，`pipelineHold := memReqIssued || (memWaitingRespReg && !memRspFire) || ...`。
+- 同文件`:1346-1352,1617`：req当拍末才置memWaitingRespReg，`io.dmem.req.valid := memReqIssued`；这是首拍真实请求，不是已经处于wait的重复请求。
+
+具体首拍：MEM有一个合法Load/Store，`memWaitingRespReg=0`、没有WB kill、没有其他hold/让拍/ESTOP等待，旧发请求条件为1。令I为memReqIssued、H为pipelineHold、E为memEnable。保留的请求拍hold要求H=I；A08要求E=!H（此场景其余enable条件均允许）；将请求按A08门控后I=E&&1。因此I=!I，没有稳定的组合逻辑解，依赖形成`memReqIssued -> pipelineHold -> memEnable -> memReqIssued`。如果另行固定请求为0，则不能发出这笔请求；如果允许请求为1，则当拍H=1/E=0，又违反A08“只有MEM确实推进才发请求”。
+
+这是冻结条款/源码方程的静态冲突分析，**不是已实现RTL的仿真或形式化失败**。没有为绕过冲突拆分issueEnable/advanceEnable、移除请求hold、改请求时序、改A08或增加assume；这些都需要新的明确规格决定。恢复任务需先明确阻塞访存（以及同类阻塞请求）的发起许可与该级寄存器推进的关系，并给出替换冻结条款；本轮未自行选择方案。
+
+基线66个CVFPU构建失败按Q17原样记录，未将其当作CORE-003运行时结论、未修复。没有遇到“RTL改3次仍失败”，RTL修改次数为0。没有修改测试/断言/期望/次数/深度/assume。已找到的工具不等于全部阶段环境通过；本轮未发现确定的工具缺失，不安装任何工具。
+
+最终交付只有`docs/tasks/T01-report.md`的阶段二记录；冻结spec/testplan及所有源码测试保持原样。Alan最终验证HEAD仍为`d5672f51bf0ec67465148c02af970c70464bec68`，干净detached checkout；基线任务均已结束。停止报告提交/push结果在最终回报给出。
