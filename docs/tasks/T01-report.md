@@ -174,3 +174,123 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 无代码实施偏离：本轮仅阶段一修订，确定决定贯穿文档；六项冲突/缺口如实列出、不自行处理。spec尚非冻结版，A01–A06仍需用户审阅；已有测试迁移只有上述三类许可。
 
 所有无关未跟踪内容（包括 `.agents/`、`docs/figures/`、`docs/cross-project/`、`docs/hardware-skill*`、`docs/plans/2026-10-04-*`、`docs/roadmap.md`）不暂存。完成本轮文档提交和push后停止，等待用户确认冻结，不开始阶段二。
+
+
+## 阶段二
+
+日期：2026-10-05。用户已明确冻结 `b180a95fe91ff89bbd597e28419e74c516d2c9a5` 的 spec/testplan。本节为阶段二最新记录；阶段一的“未冻结/未开始”措辞仅为历史。当前完成第1步 Q17，尚未进入第2步。分支 `feat/pcie-fase-20260920`。
+
+### A. 提交列表
+
+| 步骤 | 提交 | 内容 |
+| --- | --- | --- |
+| 1 基线 | 本节承载的 `T01-2/1` 提交；可用 `git log --format=%H --grep='^T01-2/1' -1` 查询，后续步骤补入实际 SHA | 仅记录 Q17 基线，不改 RTL/测试 |
+| 2–7 | 未提交 | 未运行 |
+
+验证源码提交为 `d5672f51bf0ec67465148c02af970c70464bec68`，不是报告提交；Alan 实际 HEAD 见证据目录 `source.sha`。
+
+### B. 基线表与改造后对比表（按 suite）
+
+基线：Alan，cwd `/home/chen/FUN/flow/design`，`/home/chen/.local/share/coursier/bin/sbt test`，源码 `d5672f51bf0ec67465148c02af970c70464bec68`，退出码 **1**。56 suites completed、0 aborted；277 tests，211 succeeded、66 failed、0 canceled/ignored/pending。按本次 XML 逐 suite 汇总，与 sbt 原文总数一致。0测试 suite 保留在表内，不算通过测试。
+
+日志根目录：`/home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/`。原文 `sbt-test.log`，逐 suite 原始 XML `test-reports/TEST-<suite>.xml`，汇总 `suite-summary.json` / `suite-table.md`，逐用例错误 `failures.json`。
+
+全部66个失败用例的原始错误包含 CVFPU 的 `%Error-BLKANDNBLK`（blocked/non-blocking assignments to same variable），仿真构建失败。这些是本次指定基线的实际失败；按 Q17 记录，不修复、不修改测试或工具检查。CORE-003 的4个 handler变体均失败于该构建错误，不能据此判定其运行时 RTL 行为。
+
+| Suite | 基线通过 | 基线失败 | 基线忽略 | 改造后通过/失败/忽略 |
+| --- | ---: | ---: | ---: | --- |
+| `flow.backend.BreezeBackendDivSpec` | 0 | 1 | 0 | 未运行 |
+| `flow.backend.BreezeBackendFpMemorySpec` | 0 | 3 | 0 | 未运行 |
+| `flow.backend.BreezeBackendFpSpec` | 0 | 2 | 0 | 未运行 |
+| `flow.backend.BreezeBackendGShareSpec` | 0 | 10 | 0 | 未运行 |
+| `flow.backend.BreezeBackendMulSpec` | 0 | 1 | 0 | 未运行 |
+| `flow.backend.BreezeRedirectPrioritySpec` | 0 | 5 | 0 | 未运行 |
+| `flow.cache.BreezeAmoAluSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeCacheSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeCoherentDmaSpec` | 6 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeDCacheCoherentSpec` | 24 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeDCacheSetAssocSpec` | 12 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeL2HomeSmallSpec` | 8 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeL2HomeSpec` | 14 | 0 | 0 | 未运行 |
+| `flow.cache.BreezePLRUSpec` | 0 | 0 | 0 | 未运行 |
+| `flow.cache.BreezeParallelLookupSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.config.BreezeCoreConfigSpec` | 7 | 0 | 0 | 未运行 |
+| `flow.core.BreezeCoreCustomInstrSpec` | 0 | 1 | 0 | 未运行 |
+| `flow.core.BreezeCoreNoFASECustomInstrSpec` | 0 | 1 | 0 | 未运行 |
+| `flow.core.BreezeCoreNoFASESpec` | 0 | 11 | 0 | 未运行 |
+| `flow.core.BreezeCoreSpec` | 0 | 12 | 0 | 未运行 |
+| `flow.core.BreezeCsrPipelineSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.core.BreezePrivilegeSpec` | 19 | 0 | 0 | 未运行 |
+| `flow.core.BreezeRegisterStorageSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.core.CSRFileSpec` | 6 | 0 | 0 | 未运行 |
+| `flow.core.MulDecodeSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.core.RegFileSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.RiscvDivUnitSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.UnsignedRadix4DividerSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.fase.FaseIntegrationSpec` | 0 | 2 | 0 | 未运行 |
+| `flow.fase.FlightRecorderSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.fpu.BreezeFpDecoderSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.fpu.BreezeFpUnitSpec` | 0 | 2 | 0 | 未运行 |
+| `flow.frontend.BreezeBTBSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeCompressedDecoderSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendFE001Spec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendFE002Spec` | 1 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendGShareSpec` | 4 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeFrontendSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezeInstrRealignerSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.frontend.BreezePHTSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.frontend.MiniDecodeSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeMmuAdSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeMmuSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezeParallelTranslatorSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.mmu.BreezePmpSharingSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.mmu.sv39.Sv39MmuSpec` | 16 | 0 | 0 | 未运行 |
+| `flow.mmu.sv39.Sv39StructuresSpec` | 13 | 0 | 0 | 未运行 |
+| `flow.multiplier.RiscvMulUnitSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.multiplier.SignedMul65x65Spec` | 22 | 0 | 0 | 未运行 |
+| `flow.platform.BreezeLinuxPmaSpec` | 4 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreGShareSpec` | 0 | 5 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSim` | 0 | 2 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSimAppSpec` | 5 | 0 | 0 | 未运行 |
+| `flow.sim.BreezeCoreSimMemoryLoaderSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.sim.BreezePrivilegeFlowSpec` | 0 | 7 | 0 | 未运行 |
+| `flow.sim.BreezeWfiFlowSpec` | 0 | 1 | 0 | 未运行 |
+| 合计（56 suites） | 211 | 66 | 0 | 未运行 |
+
+ACT4 基线：I/M/Zmmul selected=69、ran=69、PASS=69、FAIL=0、TIMEOUT=0、INFRA_ERROR=0；运行退出码0。改造后 ACT4 **未运行**。上游固定提交 `dfa582359db885ae4c6ed1fa82faef60874e212c`，实际 HEAD 与 `ACT4_REV` 一致。
+
+### C. 每步结果
+
+所有下面的硬件执行均在 Alan（hostname `chen-System-Product-Name`），源码 SHA 均为 `d5672f51bf0ec67465148c02af970c70464bec68`。第1步未修改源码。
+
+| 步骤/命令 | Alan cwd | 退出码 | 实际结果 | Alan 日志路径 |
+| --- | --- | ---: | --- | --- |
+| 1：`/home/chen/.local/share/coursier/bin/sbt test` | `/home/chen/FUN/flow/design` | 1 | 56 suites，211通过/66失败/0忽略 | `/home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/sbt-test.log`；`sbt-test.meta`；`sbt-test.exit` |
+| 1：`make -C verification/act4 build EXTENSIONS=I,M,Zmmul` | `/home/chen/FUN/flow` | 0 | corpus构建完成（upstream报告345 up-to-date；实际选中集合由运行器统计） | 同根目录 `act4-build.log` / `act4-build.meta` / `act4-build.exit` |
+| 1：`python3 verification/act4/scripts/run_linux_soc_suite.py --profile single --elf-dir /home/chen/FUN/flow/verification/act4/.work/breeze-rv64gc/elfs --output-dir /home/chen/FUN/flow-runs/20261005-t01-2-q17-d5672f5/act4 --include-extension I --include-extension M --include-extension Zmmul --fresh-build` | `/home/chen/FUN/flow` | 0 | 69/69 PASS，无FAIL/TIMEOUT/INFRA_ERROR | 同根目录 `act4-run.log` / `act4-run.meta` / `act4-run.exit`；`act4/summary.json`；`act4/cases/*.log` |
+| 2 单元 | 未运行 | — | 未运行 | — |
+| 3 单元形式化 | 未运行 | — | 未运行 | — |
+| 4 后端集成 | 未运行 | — | 未运行 | — |
+| 5 trace | 未运行 | — | 未运行 | — |
+| 6 整核验证 | 未运行 | — | 未运行 | — |
+| 7 综合 | 未运行 | — | 未运行 | — |
+
+工具：Java GraalVM CE17.0.9；sbt项目版本1.9.7（启动脚本1.11.2）；Verilator5.028；ACT4运行器Python3.10.19，现有conda `flow` 环境。工具记录 `tools.log`；已保存 `source-status.log` / `submodules.log`。CVFPU submodule `1b220f3bc89df99e246b72e3574a3a533cf87653`。启动脚本 `/tmp/t01-q17-baseline.sh`；汇总脚本 `/tmp/t01-baseline-summary.py` 只读取XML，不改变验收。
+
+同步：使用用户要求的本地代理反向转发 `Alan 127.0.0.1:17898 -> 本地127.0.0.1:7897`，Alan通过该代理访问GitHub HTTP200、fetch核实冻结提交。未修改全局Git代理配置。
+
+### D. 形式化
+
+F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assume、cover witness均未产生。尚未创建/修改harness、SBY或性质，不把工具探测当证明。已现场找到现有flow环境的SBY0.69、Yosys0.62和系统z3；实际证明尚未开始。
+
+### E. 迁移清单与删除清单
+
+截至第1步：**无迁移、无删除**。旧测试、断言、期望值、随机次数、BMC深度、assume均未修改；`SignedMul65x65`及其测试原样保留。
+
+### F. 综合
+
+新旧乘法器OOC（XCKU040）的DSP/LUT/FF：**未运行**。单核整机100MHz综合、WNS、最差路径：**未运行**。性能P02前后周期/新HPM：**未运行**。
+
+### G. B 类问题
+
+无（截至第1步）。Q17指定基线的66个已有失败已原样记录，不在本任务修复；阶段二尚未停止，下一步为单元实现。
