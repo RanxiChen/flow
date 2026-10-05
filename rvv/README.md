@@ -103,3 +103,10 @@ diff -r "$R01_RUN/reproduce-a" "$R01_RUN/reproduce-b"
 
 Only small summary CSVs may be committed. Models, binaries, raw profiles and
 logs remain in the external Alan run directory.
+
+To rerun a measured case independently and compare all recorded fields:
+
+```bash
+python3 rvv/tools/run-profile.py "$R01_RUN" q4_0-rvv-vlen128 repeat
+python3 rvv/tools/compare-repeat.py "$R01_RUN" q4_0-rvv-vlen128
+```

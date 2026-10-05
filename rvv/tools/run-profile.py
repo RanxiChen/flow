@@ -14,12 +14,18 @@ expected = {f"{q}-{mode}-vlen{vl}" for q in ("q4_0", "q8_0")
             for mode, vl in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]}
 if {r["run"] for r in comparisons if r["match"]} != expected or not all(r["match"] for r in comparisons):
     raise SystemExit("Correctness gate incomplete or failed; profiling prohibited")
+selected = sys.argv[2] if len(sys.argv) > 2 else None
+suffix = "-repeat" if len(sys.argv) > 3 and sys.argv[3] == "repeat" else ""
+if selected is not None and selected not in expected:
+    raise SystemExit("Unknown profile case")
 
 for quant in ("q4_0", "q8_0"):
     for mode, vlen in [("scalar", 128)] + [("rvv", v) for v in (128, 256, 512, 1024)]:
         name = f"{quant}-{mode}-vlen{vlen}"
+        if selected is not None and name != selected:
+            continue
         cpu = f"rv64,v=true,vlen={vlen},elen=64,vext_spec=v1.0" if mode == "rvv" else "rv64,v=false"
-        prefix = run / "profile" / name
+        prefix = run / "profile" / (name + suffix)
         plugin = f'{run}/profile/profile.so,symbols={run}/profile/{mode}.symbols,output={prefix}'
         args = ["nice", "-n", "10", str(qemu), "-cpu", cpu, "-plugin", plugin,
                 str(run / f"build/{mode}/r01-runner"),
