@@ -131,3 +131,10 @@
 | K7 | DP §2.1 两张旧图 | 已标弃用，以正文为准 |
 | K8 | DP §7 L2 II/链路宽度 | 以 CS §0.2 为准 |
 | K9 | 记忆早期 8 KiB/TileLink | 已被后续更新覆盖 |
+
+## 14. 写 spec 前已定（2026-10-06 用户确认“按建议”）
+- U1 Tag/Data 阵列均 1R1W（BRAM 双口），S0 读与 pending-store 写可同拍。
+- U2 refill 错误：后端收到带错迟到数据 → 该 hart 停止执行，输出 `hartFatal` 到集群（JTAG 可读），飞行记录出错 PA 与 rd，不产生陷入。
+- U3 reservation 粒度 32 B 整行；LR 与 SC 之间的其他访存不清除 reservation。
+- Claude 自定的细节：4 路树形 PLRU（复用 `TreePlru`，跳过锁定 way）；probe 与 pending-store 同行同拍时 pending-store 先写、probe 次拍处理；快照失效只看 refill 安装/probe 修改与在途查询同 set 同 way；AMO.W 按 addr[2] 选半字、返回符号扩展；FLW NaN-boxing 在 L1D Load 格式化中按 rd 标签处理；后端接口 Bundle 由 L1D spec 定义；Tag 复位逐 set 初始化 128 拍；PTW 读 I/O 报 accessFault、读 ROM 允许；计数器只引出事件线。
+- 参数（记忆 `single-config-entry`）：全部来自 `config/config.scala` 的 `BreezeClusterConfig`（nCores、lineBytes、l1dWays/l1iWays、l1Sets、l2Ways、l2BytesPerCore、l2Slots、l1dMshrs、paddrBits），`CoherenceParams` 与各模块只推导。require：L1 `l1Sets × lineBytes ≤ 4 KiB`；way 数为 2 的幂；v1 锁 `l1dMshrs = 1`、`lineBytes = 32`；L1I/L1D way 数可不同。测试计划加非默认配置冒烟（L2 4 路、L1D 2 路、单核）。同一提交改 coherence spec §0.2 为“推导自 BreezeClusterConfig”。
