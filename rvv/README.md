@@ -7,7 +7,7 @@ or existing Breeze directories are changed. W2 requires user confirmation.
 ## Fixed inputs and execution
 
 `third_party/inputs.json` pins llama.cpp and the **official Qwen** GGUF revision.
-`tools/acquire.py` downloads these into an external run directory; it does not
+`third_party/acquire.py` downloads these into an external run directory; it does not
 copy upstream source or models into this repository. `prompt.txt` is UTF-8;
 the runner removes its final newline before tokenization. It reports the real
 prompt token count and generates exactly 16 token IDs using a greedy sampler.
@@ -38,7 +38,7 @@ The proxy is an operational dependency, not a build or measurement input.
 ```bash
 git pull --ff-only
 export R01_RUN=/home/chen/FUN/flow-r01-runs/20261005-w1
-python3 rvv/tools/acquire.py "$R01_RUN"
+python3 rvv/third_party/acquire.py "$R01_RUN"
 bash rvv/tools/probe.sh "$R01_RUN"
 bash rvv/tools/build.sh "$R01_RUN"
 bash rvv/tools/build-profile.sh "$R01_RUN"
