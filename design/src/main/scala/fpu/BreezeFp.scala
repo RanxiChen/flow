@@ -314,7 +314,8 @@ object BreezeFpSources {
     }
 }
 
-class FlowFpnewBlackBox extends BlackBox with HasBlackBoxPath {
+class FlowFpnewBlackBox(val tagWidth: Int = 1)
+    extends BlackBox(Map("TAG_WIDTH" -> chisel3.experimental.IntParam(tagWidth))) with HasBlackBoxPath {
     override def desiredName = "FlowFpnewWrapper"
     addPath(BreezeFpSources.aggregate.toString)
     val io = IO(new Bundle {
@@ -332,6 +333,8 @@ class FlowFpnewBlackBox extends BlackBox with HasBlackBoxPath {
         val src_fmt_i = Input(UInt(3.W))
         val dst_fmt_i = Input(UInt(3.W))
         val int_fmt_i = Input(UInt(2.W))
+        val tag_i = Input(UInt(tagWidth.W))
+        val tag_o = Output(UInt(tagWidth.W))
         val out_valid_o = Output(Bool())
         val out_ready_i = Input(Bool())
         val result_o = Output(UInt(64.W))
@@ -378,6 +381,7 @@ class BreezeFpUnit extends Module {
     impl.io.src_fmt_i := io.srcFmt
     impl.io.dst_fmt_i := io.dstFmt
     impl.io.int_fmt_i := io.intFmt
+    impl.io.tag_i := 0.U
     // FPnew may produce and consume a short response pulse while its output is
     // permanently ready.  Buffer completion once so BreezeBackend's registered
     // request state cannot miss it, and expose one stable completion cycle.

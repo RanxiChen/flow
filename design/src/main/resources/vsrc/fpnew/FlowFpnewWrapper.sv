@@ -1,4 +1,6 @@
-module FlowFpnewWrapper (
+module FlowFpnewWrapper #(
+  parameter int unsigned TAG_WIDTH = 1
+) (
   input  logic        clk_i,
   input  logic        reset_i,
   input  logic        flush_i,
@@ -13,13 +15,15 @@ module FlowFpnewWrapper (
   input  logic [2:0]  src_fmt_i,
   input  logic [2:0]  dst_fmt_i,
   input  logic [1:0]  int_fmt_i,
+  input  logic [TAG_WIDTH-1:0] tag_i,
+  output logic [TAG_WIDTH-1:0] tag_o,
   output logic        out_valid_o,
   input  logic        out_ready_i,
   output logic [63:0] result_o,
   output logic [4:0]  status_o,
   output logic        busy_o
 );
-  logic unused_tag, unused_early_valid;
+  logic unused_early_valid;
   logic [0:0] simd_mask;
   fpnew_pkg::status_t status;
   // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
@@ -49,7 +53,7 @@ module FlowFpnewWrapper (
     .Features       (fpnew_pkg::RV64D),
     .Implementation (FlowImplementation),
     .DivSqrtSel     (fpnew_pkg::THMULTI),
-    .TagType        (logic),
+    .TagType        (logic [TAG_WIDTH-1:0]),
     .TrueSIMDClass  (0),
     .EnableSIMDMask (0)
   ) i_fpnew (
@@ -63,14 +67,14 @@ module FlowFpnewWrapper (
     .dst_fmt_i      (fpnew_pkg::fp_format_e'(dst_fmt_i)),
     .int_fmt_i      (fpnew_pkg::int_format_e'(int_fmt_i)),
     .vectorial_op_i (1'b0),
-    .tag_i          (1'b0),
+    .tag_i,
     .simd_mask_i    (simd_mask),
     .in_valid_i,
     .in_ready_o,
     .flush_i,
     .result_o,
     .status_o       (status),
-    .tag_o          (unused_tag),
+    .tag_o,
     .out_valid_o,
     .out_ready_i,
     .busy_o,
