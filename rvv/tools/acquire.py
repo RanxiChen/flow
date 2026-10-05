@@ -42,6 +42,8 @@ def fetch_model(name):
         while data := f.read(1024 * 1024):
             digest.update(data)
     record = {"file": name, "size": path.stat().st_size, "sha256": digest.hexdigest()}
+    if {k: record[k] for k in ("size", "sha256")} != inputs["model_metadata"][name]:
+        raise RuntimeError(f"Official model integrity check failed: {record}")
     (run / (name + ".json")).write_text(json.dumps(record, indent=2) + "\n")
     print("MODEL_READY", json.dumps(record), flush=True)
     return record
