@@ -69,7 +69,7 @@ for r in data["kernel-vl"]:
 table(["模型", "模式", "VLEN", "阶段", "内核", "VL:次数"], [list(k[:4]) + [f"`{k[4]}`", "; ".join(f"{n}:{c}" for n,c in sorted(v.items()))] for k,v in sorted(vl.items())])
 paragraph("## Q3：VLEN 与代码路径")
 paragraph("固定上游 `ggml/src/ggml-cpu/arch/riscv/quants.c:222–273` 的 Q4_0×Q8_0 dot 每块请求 VL=16（e8,m1），做拆包、扩宽乘加与归约；`:435–479` 的 Q8_0×Q8_0 dot 每块请求 VL=32（e8,m2）。这两个函数没有按 vlenb 扩大每块处理范围。`ggml/src/ggml-cpu/repack.cpp:4996–5005` 的 Q4_0 RVV repack selector 受 `__riscv_zvfh` 条件保护；本次 Zvfh 关闭，不能据文件中存在 256-bit outer-product 内核就声称运行过它。是否实际进入内核见 Q2 和 ELF 前 20 名。")
-paragraph("其他路径不同：`ggml/src/ggml-cpu/vec.cpp:443–450` 的 SwiGLU 以 `vsetvl_e32m2(n-i)` 分批处理，更大的 VLEN 可以减少循环次数；FP16 dot 在同文件 `:347–350` 进入无 Zvfh 的 C 转换/累加 fallback，实际编译产物是否包含向量指令以 ELF 统计为准。因此应同时看整个阶段的 Q3 总数变化和 Q2 量化内核本身的计数，不能把两者混为同一种 VLEN 收益。")
+paragraph("其他路径不同：`ggml/src/ggml-cpu/vec.cpp:441–448` 的 SwiGLU 以 `vsetvl_e32m2(n-i)` 分批处理，更大的 VLEN 可以减少循环次数；FP16 dot 在同文件 `:338–343` 进入无 Zvfh 的 C 转换/累加 fallback，实际编译产物是否包含向量指令以 ELF 统计为准。因此应同时看整个阶段的 Q3 总数变化和 Q2 量化内核本身的计数，不能把两者混为同一种 VLEN 收益。")
 table(["模型", "阶段", "VLEN", "阶段总指令", "相对 RVV 128"], [[r["quant"], r["phase"], r["vlen"], r["total"], num(int(r["total"]) / int(next(b["total"] for b in rvv("totals") if b["quant"] == r["quant"] and b["phase"] == r["phase"] and b["vlen"] == "128")))] for r in rvv("totals")])
 paragraph("## Q4：操作码频度与分类")
 paragraph("完整 opcode 次数及阶段占比见 `rvv/results/w1/opcodes.csv`，包括归约、扩宽乘加、移位/拆包、访存、配置及相关 scalar CSR。下面汇总各类别；分母与完整表一致，是向量指令加相关 CSR 指令，CSR 不重复计入总指令。")
