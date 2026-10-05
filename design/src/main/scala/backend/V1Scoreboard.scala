@@ -31,6 +31,7 @@ class V1Scoreboard extends Module {
     val idValid = Input(Bool())
     val idLeave = Input(Bool())
     val csr = Input(Bool())
+    val fpFlagsPending = Input(Bool()) // committed FP-to-x0 still owes flags
     val gprBusy = Output(UInt(32.W))
     val fprBusy = Output(UInt(32.W))
     val hazard = Output(Bool())
@@ -67,7 +68,7 @@ class V1Scoreboard extends Module {
       operand.used && writable(rd) && (sb || pipe)
     }.reduce(_ || _)
   }
-  io.csrDrainOk := !(gprBusy.orR || fprBusy.orR || io.pipe.map(_.valid).reduce(_ || _))
+  io.csrDrainOk := !(gprBusy.orR || fprBusy.orR || io.fpFlagsPending || io.pipe.map(_.valid).reduce(_ || _))
   val csrSources = (0 until 4).map { src =>
     (0 until 32).map { idx =>
       (gprBusy(idx) && gprSource(idx) === src.U) ||
@@ -77,7 +78,7 @@ class V1Scoreboard extends Module {
   io.hazard := matches.reduce(_ || _) || (io.csr && !io.csrDrainOk)
   for (src <- 0 until 4) {
     io.sourceStall(src) := io.idValid && !io.idLeave &&
-      (matches(src) || (io.csr && csrSources(src)))
+      (matches(src) || (io.csr && (csrSources(src) || ((src == V1LongSource.FPU).B && io.fpFlagsPending))))
   }
   io.gprBusy := gprBusy
   io.fprBusy := fprBusy

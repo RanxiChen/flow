@@ -38,6 +38,7 @@ class CommittedFpUnit(val depth: Int = 32) extends Module {
     val busy = Output(Bool())
     val committedGpr = Output(UInt(32.W))
     val committedFpr = Output(UInt(32.W))
+    val committedFlagsOnly = Output(Bool())
   })
   val impl = Module(new FlowFpnewBlackBox(tagWidth))
   val entries = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new V1FpEntry))))
@@ -84,6 +85,7 @@ class CommittedFpUnit(val depth: Int = 32) extends Module {
   }.reduce(_ | _)
   io.committedGpr := pending(false)
   io.committedFpr := pending(true)
+  io.committedFlagsOnly := entries.map(e => e.valid && e.committed && !e.isFp && e.rd === 0.U).reduce(_ || _)
 
   when(io.req.fire) {
     entries(allocate).valid := true.B

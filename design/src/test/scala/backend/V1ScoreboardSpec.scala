@@ -11,6 +11,7 @@ class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.set.bits.rd.isFp.poke(false.B); d.io.set.bits.source.poke(0.U)
     d.io.clear.valid.poke(false.B); d.io.clear.bits.idx.poke(0.U); d.io.clear.bits.isFp.poke(false.B)
     d.io.idValid.poke(true.B); d.io.idLeave.poke(false.B); d.io.csr.poke(false.B)
+    d.io.fpFlagsPending.poke(false.B)
     for (p <- d.io.pipe) {
       p.valid.poke(false.B); p.bits.rd.idx.poke(0.U)
       p.bits.rd.isFp.poke(false.B); p.bits.source.poke(0.U)
@@ -71,6 +72,17 @@ class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
         d.clock.step(); d.io.clear.valid.poke(false.B)
         d.io.csrDrainOk.expect(true.B); d.io.hazard.expect(false.B)
       }
+    }
+  }
+  "S01_S14: FP-to-x0 flags keep CSR draining without making x0 busy" in {
+    simulate(new V1Scoreboard) { d =>
+      idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
+      d.io.csr.poke(true.B); d.io.fpFlagsPending.poke(true.B)
+      d.io.gprBusy.expect(0.U); d.io.fprBusy.expect(0.U)
+      d.io.csrDrainOk.expect(false.B); d.io.sourceStall(V1LongSource.FPU).expect(true.B)
+      d.clock.step(4); d.io.csrDrainOk.expect(false.B)
+      d.io.fpFlagsPending.poke(false.B)
+      d.io.csrDrainOk.expect(true.B); d.io.sourceStall(V1LongSource.FPU).expect(false.B)
     }
   }
 }

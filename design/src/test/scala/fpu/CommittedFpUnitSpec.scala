@@ -121,4 +121,26 @@ class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       }
     }
   }
+  "S01_S08_S14: FP-to-x0 preserves conversion flags and explicit CSR drain state" in {
+    simulate(new CommittedFpProbe) { d =>
+      init(d)
+      d.io.req.bits.operation.poke(BreezeFpOp.F2I.U)
+      d.io.req.bits.operandA.poke(BigInt("3ff8000000000000", 16).U) // 1.5 -> 1, RTZ
+      d.io.req.bits.rm.poke(1.U); d.io.req.bits.intFmt.poke(BreezeIntFmt.W.U)
+      d.io.req.bits.rd.idx.poke(0.U); d.io.req.bits.rd.isFp.poke(false.B)
+      var writes = 0
+      for (cycle <- 0 until 30) {
+        d.io.req.valid.poke((cycle == 0).B); d.io.commit.poke((cycle == 2).B)
+        d.io.committedGpr.expect(0.U); d.io.committedFpr.expect(0.U)
+        if (cycle > 2 && writes == 0) d.io.committedFlagsOnly.expect(true.B)
+        if (d.io.result.valid.peek().litToBoolean) {
+          d.io.result.bits.rd.idx.expect(0.U); d.io.result.bits.rd.isFp.expect(false.B)
+          d.io.result.bits.data.expect(1.U); d.io.result.bits.flags.expect(1.U)
+          writes += 1
+        }
+        d.clock.step()
+      }
+      writes mustBe 1; d.io.committedFlagsOnly.expect(false.B); d.io.busy.expect(false.B)
+    }
+  }
 }

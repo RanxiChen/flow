@@ -35,6 +35,7 @@
 - 普通 ALU EX/MEM/WB 旁路和 held EX 操作数更新保留；ALU→ALU 依赖 EX 间隔为 1 拍。[backend-rtl-spec.md§1.2][backend-timing-contract.md§1/T01]
 - `loadUseBypass` 是 `BreezeClusterConfig` 生成参数，默认 false；false 时 Load EX/MEM 冒险阻止 ID，Done 的 WB 拍 RF 穿透释放，依赖 EX=E+3；true 时允许依赖者 E+1 离开 ID，并在 E+2 用 S2→EX 组合数据，依赖 EX=E+2；不影响其他操作数和 WAW 资格。[backend-timing-contract.md§4]
 - CSR 等空使用原始两组 busy==0，而非 effectiveBusy；同时 EX/MEM/WB 不得有已发射未提交 MDU/FPU 或尚未判定的访存，防止下一拍才提交置位的项越过 CSR。[backend-rtl-spec.md§3.1/A07][tasks/V1-BE-backend-spec-and-rtl.md§2.1]
+- FP→x0 不能置整数 busy，但转换/比较可能产生 flags；将表中 `valid&&committed&&!isFp&&rd==0` 的组合归约接到 CSR 等空和 FPU 来源等待事件，仍用当前状态，最后 fire 后下一拍才放行 CSR；不新增计数器/表字段。[新决定 ND02]
 - ESTOP 在 WB 等两组 busy 空，后台继续；FASE empty 包含两组 busy 空，v1 不支持 useFASE=true；中断/WFI 不以 busy 空为条件。[backend-rtl-spec.md§6及9][v1-integration-notes.md§3]
 
 ## 3. 写口、保持与事件

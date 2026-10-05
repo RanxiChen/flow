@@ -43,6 +43,7 @@
 | ID | 决定 | 理由/影响 | 裁定 |
 | --- | --- | --- | --- |
 | ND01 | FP kill 后关闭新 FP 分配，直到 CVFPU busy=0；已提交返回照常写、作废返回丢弃，不 flush CVFPU | 表 valid 清掉后，旧 tag 仍可能返回；立即复用会误写新项。仅增加 killDrain 控制位、不添 table 字段/结果缓存；trap后新FP可能延后 | 待 Claude |
+| ND02 | CSR 除两组原始 busy/未提交流水外，也等已提交 FP→x0 项返回 | x0不能busy，但这些FP项仍可能累积fflags；用在途表 metadata 的组合归约，不新增存储；CSR等到最后flags完成的下一拍 | 待 Claude |
 
 ## 4. [自定] 摘要
 
@@ -57,7 +58,19 @@
 
 起始本地分支 `feat/pcie-fase-20260920`，HEAD `e479a1ba295a746bca0547ee5141dd2e74936bdb`；已有未跟踪文件保留。Alan 原 `/home/chen/FUN/flow` 是干净 detached HEAD `51b62b9286e60ffec74902e34f9f64047930df79`；未占用其工作区或改其HEAD，验证使用独立checkout。
 
-提交号、Alan命令、日志、工具版本与实际结果将在执行后填入。当前硬件验证：**未运行**。本地 `python3 tools/frozen_check.py` 输出 `frozen check: OK (8 files)`，这只是冻结文件完整性检查。
+首个独立实现提交 `95b4f1615b923f3f77c261c834280e8a5240fa3a`（`V1-BE/1`）已push。Alan在独立clone从GitHub fetch并checkout该SHA；CVFPU SHA `1b220f3bc89df99e246b72e3574a3a533cf87653` 未改。
+
+首轮命令在 `/home/chen/FUN/flow-runs/20261006-v1-be-95b4f16/repo/design` 执行（先 `source /home/chen/miniforge3/bin/activate flow`）：
+
+```bash
+/home/chen/.local/share/coursier/bin/sbt -batch \
+  'set Test / parallelExecution := false' \
+  'testOnly flow.backend.V1ScoreboardSpec flow.backend.V1WritebackSpec flow.backend.V1MduTimingSpec flow.fpu.CommittedFpUnitSpec flow.multiplier.CommittedMulProtocolSpec flow.divider.CommittedDivProtocolSpec flow.backend.MduBoundarySpec flow.fpu.BreezeFpUnitSpec'
+```
+
+日志 `/home/chen/FUN/flow-runs/20261006-v1-be-95b4f16/units.log`，环境 `environment.log`，执行脚本 `run.sh`、命令 `command.txt`、退出码 `exit-code.txt` 同目录。实际首轮：16测试通过、0失败，6 suite完成、2个FP suite aborted，整体退出码1。原因是独立checkout未初始化CVFPU嵌套 `src/common_cells`，不是FP通过；补齐该固定依赖后再验证。工具：OpenJDK11.0.32.1、实际sbt1.9.7（launcher脚本1.11.2）、Verilator5.028。未运行完整 `sbt test`、ACT4、整核/集群、综合/时序或形式化。
+
+本地和Alan `python3 tools/frozen_check.py` 均输出 `frozen check: OK (8 files)`；冻结检查仅证明文件完整性。补充ND02后的最终提交与组件复验结果待填。
 
 ## 6. 合同逐项状态
 
