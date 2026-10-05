@@ -61,10 +61,10 @@ for q in ("q4_0", "q8_0"):
 paragraph("## Q2：32 权重块成本和每条指令的 VL")
 paragraph("plain dot 用入口 n/32 计块；gemv 还乘输出列 nc。每块比率包括函数自身 setup/epilogue 的摊销。wrapper 与 helper 保留各自的分母，不相加；未进入函数则没有样本。配置指令已经包含在向量/块中。")
 table(["模型", "模式", "VLEN", "阶段", "内核", "块数", "标量/块", "向量/块", "vset/块"], [key(r) + [f"`{r['symbol']}`", r["blocks32"], num(r["scalar_per_block"]) if r["blocks32"] != "0" else "不可得", num(r["vector_per_block"]) if r["blocks32"] != "0" else "不可得", num(r["vset_per_block"]) if r["blocks32"] != "0" else "不可得"] for r in data["kernels"]])
-paragraph("逐 opcode、SEW、LMUL、VL、动态次数完整表为 `rvv/results/w1/kernel-vl.csv`。下表归并各内核的数据指令 VL，配置/CSR 的 VL=0 不作为元素长度。")
+paragraph("逐 opcode、SEW、LMUL、VL、动态次数完整表为 `rvv/results/w1/kernel-vl.csv`。下表归并各内核的非配置、非 CSR 指令 VL；其中 vmv.x.s 即使 VL=0 仍可读取第 0 元素，不能把这个 0 当作统计缺失或配置指令的占位值。语义依据：[RISC-V V 1.0 / Integer Scalar Move Instructions](https://docs.riscv.org/reference/isa/unpriv/v-st-ext)。")
 vl = collections.defaultdict(collections.Counter)
 for r in data["kernel-vl"]:
-    if int(r["vl"]) > 0:
+    if not r["opcode"].startswith(("vset", "csr")):
         vl[tuple(key(r) + [r["symbol"]])][int(r["vl"])] += int(r["count"])
 table(["模型", "模式", "VLEN", "阶段", "内核", "VL:次数"], [list(k[:4]) + [f"`{k[4]}`", "; ".join(f"{n}:{c}" for n,c in sorted(v.items()))] for k,v in sorted(vl.items())])
 paragraph("## Q3：VLEN 与代码路径")
