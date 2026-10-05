@@ -16,8 +16,9 @@
 | --- | --- | --- | --- |
 | S0 / T | 入口仲裁；Load 的 S0 冲突检查；发 dTLB + VIPT Tag/Data 读；保存请求；接收前预留 TLB 结果容量 | EX（兼 AGU，`rs1+imm` 同拍入 S0；完整 64 bit 送 dTLB） | DP §2.1、BP §3 |
 | S1 / T+1 | 收翻译/页权限；各路预选 8 B 字；保存 PA/tag/数据；TLB miss → 翻译等待 | MEM | DP §2.1 |
-| S2 / T+2 | PA tag 比较、命中路选择、Load 格式化；PMP/PMA；快照失效检查；与 MSHR 同行检查；给出判定 | WB（提交点） | DP §2.1、BP §3–4 |
+| S2 / T+2 | PA tag 比较、命中路选择、Load 格式化；PMP/PMA；快照失效检查；与 MSHR 同行检查；判定与数据组合送 WB（同 Rocket），WB 拍末写回 | WB（提交点） | DP §2.1、BP §3–4 |
 | pending-store / T+3 | 按 mask 写 Data，E→M；写口受阻则保持 | — | DP §2.1 |
+- 时序退路（DP §2.1）：① PMP/PMA 移到 S1 寄存进 S2；② 仅 Load 数据寄存一拍（load-use 3），判定仍在 S2，提交点不变。
 - **S2 判定即提交**：给出"命中完成/进入 MSHR"时翻译、页权限、PMP/PMA 已全部通过，此后无精确异常（DP §2.3、BP §4）。
 - 判定类型（DP §2.9）：命中完成（Load 带数据 / Store 已入 pending-store）；进入 MSHR（已提交）；异常（kill 年轻请求）；暂不判定（TLB 等待、MSHR 同行、MSHR 满、写回槽未空，后端停在 WB）；迟到数据（回放时给出 rd 标签+数据+错误位，valid/ready，后端不能写时 L1D 保持）；LR 命中 E/M 与 SC 在 S2，LR miss 在回放完成时；AMO/MMIO 在实际完成时（不提前提交）。
 - 每请求按程序序恰好一次判定；v1 至多 1 笔迟到数据在途（DP §2.9）。
@@ -79,7 +80,7 @@
 - AXI4-Lite 64 bit，1/2/4/8 B 用 WSTRB；读数据按 addr[2:0] 移位+符号扩展（复用 Load 格式化）。集群 `mmio` 全局 1 笔在途、核间轮转。
 - 响应：OKAY 完成；SLVERR/DECERR → load / store access fault（精确）。Load 收数据、Store 收 B 才退休，无 posted write。
 - 发出后不可取消，中断/调试暂停等它退休。超时依赖 LiteX（返回全 1 不报错），调试 watchdog 只记事件。
-- 不支持：AMO、LR/SC 访问 I/O → store/AMO access fault；PTW 访问 I/O → access fault；非对齐已在 LSU trap。
+- 不支持（按 §11 原子性 PMA）：LR 访问 I/O → load access fault；SC、AMO → store/AMO access fault；PTW 访问 I/O → access fault；非对齐已在 LSU trap。
 
 ## 9. 栅栏（IN §3、BP §7、DP §2.7）
 - FENCE：作为 L1D 请求，MSHR 与 pending-store 均空时完成；只限 CPU 普通请求，PTW 与协议完成照常前进。
@@ -99,6 +100,8 @@
 
 ## 11. PMP / PMA
 - 位置：L1D S2 用最终 PA；数据访问用有效特权（MPRV 时 Load/Store 用 MPP，同 MS §5.3 `effPriv`）；PTW 读用 S；各一份实例（IN §3、CL C8、DP §2.5）。
+- 原子性 PMA（IN §3、DP §2.7）：json 每区域加 `mainMemory`、`amo`、`reservability`，`PMAChecker` 加 `amoOk`、`rsrvOk`。main_ram、sram = AMOArithmetic + RsrvEventual（满足 Ziccamoa、Ziccrse）；ROM 与设备区 = AMONone + RsrvNone（ROM 归 I/O，可缓存）。S2：LR→RsrvNone 报 5、不发 GetM；SC→RsrvNone、AMO→AMONone 报 7，SC 不看 reservation。设备树加 `_ziccrse_ziccamoa` 待 LR/SC 争用与 AMO 测试通过。
+- 异常类别依据：特权规范 mcause 一节，LR 为 Load 类、SC/AMO 为 Store/AMO 类；Rocket `TLB.scala:580-596`+`RocketCore.scala:738-745`、Spike `mmu.cc:248`/`mmu.h:287-292` 一致。
 - `PMAChecker`：in `query{addr 64, sizeLog2 3, accessType Fetch/Load/Store}`，out `result{regionHit, allowed, cacheable, device}`；纯组合，越 `addressWidth`（32）与空洞默认拒绝，可查整行 sizeLog2=5（PMAChecker.scala）。
 - `BreezePmpChecker`：in `addr 64, sizeLog2 3, access BreezeMmuAccess, privilege, context BreezeMmuContext`，out `allowed`；8 项生效，TOR/NA4/NAPOT；privilege 由调用方给（有效特权）。
 - `BreezeMmuContext`：satp, privilege, mprv, mpp, sum, mxr, adue, pmpcfg[], pmpaddr[]（interface.scala）。
@@ -116,15 +119,15 @@
 ## 12. 计数器事件（OB §2.3，L1D 只引出事件线）
 `load_access` `load_miss` `store_access` `store_miss` `upgrade` `ptw_access` `ptw_miss` `hit_under_miss` `mshr_busy_cycles` `mshr_full_stall` `same_line_stall` `s0_conflict_stall` `writeback_dirty` `writeback_clean` `probe_received` `probe_held_cycles` `lr_count` `sc_fail` `mmio_read` `mmio_write` `mmio_cycles`
 
-## 13. 已发现的矛盾与处理
-| # | 矛盾 | 处理 |
+## 13. 已发现的矛盾与处理（2026-10-06 已统一）
+| # | 矛盾 | 结论 |
 | --- | --- | --- |
-| K1 | DP §1 末段"L1D 不做 hit-under-miss"，与 DP §2.4（1 MSHR hit-under-miss）冲突 | 以 §2.4 为准（MEM 10-05 MSHR 更新） |
-| K2 | DP §2.3"Load/LR 用 Load 类异常"，与 DP §2.10"LR 访问 I/O 报 store/AMO access fault"冲突 | 待 L1D spec 定；需与 MS §3.1（LR 按 Load 发）一致 |
-| K3 | boot_rom/linux_boot_rom 可缓存但不可写：Store/SC/AMO 须在 S2 PMA 报 fault，不得发 GetM；LR 对只读区按 §7 会发 GetM 取独占 | L1D spec 须规定只读区 LR 的行为（如只读区 LR 发 GetS 或直接 fault） |
-| K4 | BP §7"FENCE.I、SFENCE.VMA 沿用现有语义"与 IN §3 新语义冲突；MS §4.4 的"store buffer 排空"未定义 | 以 IN §3 为准：= MSHR+pending-store 均空 |
-| K5 | DP §2.1"Load 寄存响应在 T+3 可见" vs BP §3/§4"WB（=S2，T+2）收判定并写回" | L1D spec 须定 S2 判定是组合给 WB 还是寄存一拍 |
-| K6 | MS §4.2 称 `resp.valid` 寄存器驱动，MS §5.3 为 `s1Valid && !kill`（组合依赖 kill） | L1D 驱动 kill 时注意组合路径 |
-| K7 | DP §2.1 两张图（hardware-pipeline.svg、shared-hardware-one-beat.svg）按旧 S2 冲突检测绘制 | 已标弃用，以 DP §2.2 正文为准 |
-| K8 | DP §7 列 L2 II=2 待定、链路宽度待定；CS §0.2 已取 II=1、256 bit | 以 CS 为准（不影响 L1D 接口） |
-| K9 | MEM 早期"8 KiB、无 hit-under-miss、TileLink/GrantAck" | 已被后续更新覆盖，以本文为准 |
+| K1 | DP §1"L1D 不做 hit-under-miss" vs §2.4 | 已改 DP §1：1 MSHR hit-under-miss |
+| K2 | DP §2.10"LR 访问 I/O 报 store/AMO fault" vs 规范 | 已改 DP §2.3/§2.10：LR 报 Load 类，SC/AMO 报 Store/AMO 类 |
+| K3 | 只读可缓存 ROM 上的 LR/SC/AMO 无定义 | 已加原子性 PMA（DP §2.7、IN §3），见 §11 |
+| K4 | BP §7"FENCE.I/SFENCE.VMA 沿用现有语义"是 10-05 旧核心语义 | 已改 BP §4/§7 为 IN §3 的 WB 串行语义；A02 只适用旧路径 |
+| K5 | DP §2.1"T+3 可见" vs BP WB=S2 | 已改 DP §2.1：S2 组合送 WB，两级退路 |
+| K6 | MS §4.2"寄存器驱动" vs §5.3 `s1Valid && !kill` | MS 不改；L1D spec 写明：kill 当拍 L1D 自行作废 S1，kill 不得依赖当拍 `resp.valid`（Rocket 同为组合 kill，`DCache.scala:271`） |
+| K7 | DP §2.1 两张旧图 | 已标弃用，以正文为准 |
+| K8 | DP §7 L2 II/链路宽度 | 以 CS §0.2 为准 |
+| K9 | 记忆早期 8 KiB/TileLink | 已被后续更新覆盖 |

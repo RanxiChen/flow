@@ -39,7 +39,8 @@
 | MMU | 换成 `Sv39Mmu`，删除旧 `BreezeMmu`、`BreezeDataTranslator`、`BreezeFetchTranslator`。 |
 | A/D 位 | Svade：硬件不更新 A/D，`menvcfg.ADUE` 改为只读 0；设备树 ISA 串加 `svade`。 |
 | PMP | 数据访问：L1D S2 用最终 PA 与有效特权（含 MPRV）检查；PTW 读：L1D 以 S 特权检查；取指：L1I 在命中判断时检查。复用 `BreezePmpChecker`。 |
-| PMA | L1D S2、L1I 命中判断各一份 `PMAChecker`；PA ≥ 2^32 判为不存在（access fault）。 |
+| PMA | L1D S2、L1I 命中判断各一份 `PMAChecker`；PA ≥ 2^32 判为不存在（access fault）。`breeze_mcu_platform.json` 每区域显式增加 `mainMemory`、`amo`（`arithmetic`/`none`）、`reservability`（`eventual`/`none`），`PMAChecker` 增加 `amoOk`、`rsrvOk` 输出：main_ram、sram = main memory、可缓存、AMOArithmetic、RsrvEventual；boot_rom、linux_boot_rom = I/O（只读 ROM，可缓存，特权规范允许只读区缓存）、AMONone、RsrvNone；timer、plic、litex_mmio = I/O、不可缓存、AMONone、RsrvNone。 |
+| Ziccrse / Ziccamoa | 设计按两者实现（无新指令，只是主存属性承诺）。设备树 `riscv,isa` 加 `_ziccrse_ziccamoa` 的时间点：4 核 LR/SC 争用压力测试（含 watchdog）与 main_ram/sram 全部 AMO 测试通过之后。 |
 | FENCE.I | 不再需要 D$ 写回：L1I 经 L2 一致性 Read 取最新数据（L2 对 owner 发 Down）。后端在 WB 等 L1D 的 MSHR 与 pending-store 为空后清 L1I 并重定向；删除 `dcacheFlushReq/Done`。 |
 | FENCE | 作为 L1D 请求，MSHR 与 pending-store 为空时完成。 |
 | SFENCE.VMA | 改在 WB 执行的串行指令，按 C4：更老指令全部完成、前端已被 kill → 等 L1D MSHR/pending-store 空 → 等 MMU idle → 一拍 sfence → 等 idle → 重定向到下一条。 |

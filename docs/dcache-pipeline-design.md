@@ -57,7 +57,7 @@ L2 使用 PA 查询，8 路，容量为 `核数 × 64 KiB`，行大小同为 32 
 
 完整参数表见 5.5 节。
 
-L1D 不做 hit-under-miss；某核因本地 miss 阻塞时，其他核仍可向 L2 发请求。L2 优先级固定为：**跨核 hit-under-miss > 命中端到端延迟 > 启动间隔 II**。II=2 可以作为 v1 起点，不以达到 II=1 为代价牺牲前两项。
+L1D 有 1 个 MSHR，支持 hit-under-miss（2.4 节）；某核 MSHR 等待时，本核其他命中继续完成，其他核也照常向 L2 发请求。L2 优先级固定为：**跨核 hit-under-miss > 命中端到端延迟 > 启动间隔 II**。II=2 可以作为 v1 起点，不以达到 II=1 为代价牺牲前两项。
 
 ## 2. L1D 流水线
 
@@ -74,7 +74,7 @@ L1D 不做 hit-under-miss；某核因本地 miss 阻塞时，其他核仍可向 
 | S2 / T+2 | PA tag 比较、命中路选择、Load 格式处理；并行做 PMP/PMA；检查侦听/refill 造成的快照失效和一致性权限；检查与 MSHR 同行 | 向后端给出判定（2.9 节）：命中完成、进入 MSHR、异常，或暂不判定并在 L1D 内停住/重查 |
 | pending-store / T+3 | 保存已通过 S2 的 Store，按 byte mask 写 Data，并使 E→M 或保持 M | 实际写入后形成 Store 完成；写口受阻则保持 |
 
-普通 Load 的寄存响应在 T+3 可见；Store 的 Data 写入发生在 T+3 拍末，完成结果最早 T+4 可见。后者是本例的延迟写时序，不承诺所有 Store 在固定拍数完成。响应反压时保持结果，禁止重复完成或重复写入。
+普通 Load 的 S2 判定与数据在 T+2 组合送到后端 WB（与 Rocket 相同，S2 即 WB），WB 在该拍末写回；Store 的 Data 写入发生在 T+3 拍末，完成结果最早 T+4 可见。时序退路按顺序：① PMP/PMA 移到 S1（TLB 结果之后）计算并寄存进 S2，S2 只剩 tag 比较、选路与格式化；② 仍不满足时只把 Load 数据寄存一拍（load-use 变 3 拍），判定仍在 S2 组合给出，提交点不变。后者是本例的延迟写时序，不承诺所有 Store 在固定拍数完成。响应反压时保持结果，禁止重复完成或重复写入。
 
 Data SRAM 具有**字节写使能**，普通 Store 不读改写。连续两笔部分 Store 按年龄依次写各自 mask，后写字节覆盖前写字节，未选中字节由 SRAM 保留。AMO 需要读取旧值用于运算，与普通 Store 的读改写问题分开。
 
@@ -129,7 +129,7 @@ probe、refill 或权限变化仍可能使在途 Tag/Data 快照失效。这类�
 
 因此不另设“不可撤销写入授权”握手：Store 只有在没有尚未决的更老访存、其自身检查通过且未被 kill 时，才能经 pending-store 写 Data。pending-store 是流水中更老的一项；年轻请求的异常不能撤销已经按序生效的老 Store。新核心还须按其精确异常规则交付可执行请求，不把可能被尚未决的更老指令取消的 Store 提前交给本流水写入；本文不定义核心提交接口。
 
-CPU kill 可取消结果和未生效写入，不能抹掉已经发送的 GetS/GetM/Put、已经接收的 Data/Ack 或必须答复的 probe。协议事务继续安装或答复，CPU 结果按 kill 丢弃。正常 Load/LR 用 Load 类异常，Store/SC/AMO 用 Store/AMO 类异常；未通过权限检查的目标地址不发起 refill、写操作或 MMIO。非对齐数据访问按已定 MMU 输入合同，在进入 dTLB 前由 LSU trap。
+CPU kill 可取消结果和未生效写入，不能抹掉已经发送的 GetS/GetM/Put、已经接收的 Data/Ack 或必须答复的 probe。协议事务继续安装或答复，CPU 结果按 kill 丢弃。正常 Load/LR 用 Load 类异常（5/13），Store/SC/AMO 用 Store/AMO 类异常（7/15），依据特权规范 mcause 一节 “load and load-reserved instructions generate load exceptions, whereas store, store-conditional, and AMO instructions generate store/AMO exceptions”；未通过权限检查的目标地址不发起 refill、写操作或 MMIO。非对齐数据访问按已定 MMU 输入合同，在进入 dTLB 前由 LSU trap。
 
 ### 2.4 MSHR、hit-under-miss 与 refill
 
@@ -208,6 +208,8 @@ AMO 独占 CPU 访存通路：停止年轻请求、排空老请求（包括 MSHR
 - **前进保证。**LR 建立 reservation 后开一个有限长度的窗口（v1 取 80 拍，与 Rocket 相同），期间压住命中该行的 probe；窗口在 SC 执行、陷入或到期时结束。这是有限拍数的本地延迟，不依赖任何消息，与 AMO 短窗口同类，不会成环。它保证 RISC-V 规范要求的“受约束 LR/SC 循环”最终成功。
 - reservation 跟踪 coherence 事件，不通过比较 LR/SC 两次数据判定；其他 hart 的同值写入也要使相应 SC 失败。LR 完成后中间指令正常执行，不锁住整个 LR→SC 区间。
 
+**原子性 PMA：**每个区域声明 AMO 支持（AMOArithmetic / AMONone）与 LR/SC 可保留性（RsrvEventual / RsrvNone），见 [`v1-integration-notes.md`](v1-integration-notes.md) 第 3 节。main_ram、sram 为 AMOArithmetic + RsrvEventual，满足 Ziccamoa 与 Ziccrse；ROM 与设备区为 AMONone + RsrvNone。S2 检查：LR 打到 RsrvNone 报 load access fault，不发 GetM；SC 打到 RsrvNone、AMO 打到 AMONone 报 store/AMO access fault，SC 不论 reservation 是否有效都报（与 Rocket、Spike 一致）。
+
 **带 aq/rl 的 LR/SC：**rl 置位时，等 MSHR 与 pending-store 为空后再进入流水；aq 置位时，年轻访存等它完成后再进入。AMO 无论 aq/rl 均按上述独占路径。
 
 FENCE 由后端作为请求发给 L1D，在 MSHR 与 pending-store 均为空时完成，从而保证已提交但仍在 MSHR 中的 Load/Store 先于 FENCE 后的访存生效。排空只限制 CPU 普通请求，PTW 和协议完成仍前进。
@@ -273,7 +275,7 @@ uncached/MMIO 访问不经过 cache，由每核一个**阻塞式 MMIO 状态机*
 | 响应 | OKAY 时完成；SLVERR/DECERR 报 load/store access fault，尚未提交，所以是精确异常 |
 | 退休 | Load 拿到数据、Store 收到 B 响应后在 WB 退休；Store 不提前退休（不做 posted write） |
 | kill 与中断 | 发出前可被中断抢占；**发出后不能取消**，中断与调试暂停等它退休后再接受 |
-| 不支持的访问 | AMO、LR/SC 访问 I/O 区域报 store/AMO access fault；PTW 访问 I/O 区域报 access fault；不对齐访问在进入 dTLB 前已由 LSU 陷入 |
+| 不支持的访问 | 按 2.7 节原子性 PMA：LR 访问 I/O 区域报 load access fault，SC、AMO 报 store/AMO access fault；PTW 访问 I/O 区域报 access fault；不对齐访问在进入 dTLB 前已由 LSU 陷入 |
 | 集群汇总 | AXI4-Lite 没有 ID，各核响应无法区分，所以集群级 `mmio` 口全局只允许 1 笔在途，各核轮转仲裁；LiteX 的 AXI-Lite→Wishbone 桥本身就是串行的，不损失性能 |
 | 超时 | 集群内不做超时，依赖 LiteX 总线超时（超时后 ack 并返回全 1，不报错）；另设调试用 watchdog，等待超过阈值时记一条飞行记录事件，不改变执行结果 |
 
@@ -566,6 +568,6 @@ Linux 级仿真使用 LiteDRAM 模型，双在途读在 SoC 级仿真中可见�
 | MSHR 扩展 | v1 为 1 个 MSHR 的 hit-under-miss，结构按 N 设计 | N=2 的时机；N=2 时 L2 慢槽是否增至 4、内存在途读是否随之增加 |
 | refill 错误上报 | 已提交请求的 refill 错误不可精确交付；v1 上报 `hartFatal` | 是否改为非精确总线错误中断，以及记录出错地址的 CSR |
 | 链路宽度与物理复用 | 四条逻辑链路与 3.1 节依赖纪律不变 | 数据宽度是否取 256 bit 使每条消息单拍；是否把上下行各合并为一条按类型预留缓冲、永不反压的物理链路 |
-| 系统排序 | MMU 合同不变；FENCE.I 本地作废；MMIO 阻塞且等 MSHR/pending-store 清空；FENCE 等 MSHR/pending-store 清空 | MMU 所称 store buffer 排空如何映射到 pending-store/MSHR 的细节 |
+| 系统排序 | MMU 合同不变；FENCE.I 本地作废；MMIO 阻塞且等 MSHR/pending-store 清空；FENCE 等 MSHR/pending-store 清空 已定：MMU 所称 store buffer 排空 = MSHR 与 pending-store 为空（`v1-integration-notes.md` 第 3 节） |
 
 下一份 RTL spec 再固定接口字段、握手保持、寄存器/状态机、同拍优先级、数组端口、队列深度、错误恢复和断言。本稿止于上述微架构与待决边界。

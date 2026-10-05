@@ -55,7 +55,7 @@ Load 命中时数据在 WB 拍得到并写回；紧随其后的依赖指令要�
 | Store / 浮点 Store | 收到 L1D 的 S2 判定：命中完成或进入 MSHR | 不写寄存器 |
 | 不带 aq/rl 的 LR、SC | LR 命中 E/M 与 SC 在 S2 判定；LR miss 在回放完成时 | 在 WB 写回（SC 写 0/1）；LR miss 不提前提交 |
 | AMO、带 aq/rl 的 LR/SC、uncached/MMIO | 收到实际结果 | WB 等待结果后写回；不提前提交；MMIO 期间整条流水停住 |
-| CSR、FENCE、FENCE.I、SFENCE.VMA、WFI | 满足第 7 节的等待条件后 | 按原有语义 |
+| CSR、FENCE、FENCE.I、SFENCE.VMA、WFI | 满足第 7 节的等待条件后 | CSR、WFI 按原有语义；FENCE、FENCE.I、SFENCE.VMA 见第 7 节 |
 
 L1D 暂不判定（TLB 等待、与 MSHR 同行、MSHR 已满等）时，访存指令停在 WB，比它年轻的指令随之停住。
 
@@ -91,7 +91,7 @@ MDU 和 FPU 在 EX 接收操作并开始计算，但结果在该指令提交前*
 - **refill 错误：**已提交访存的 refill 错误不可精确交付，L1D 以带错误标记的迟到数据返回，后端清除记分板位并上报 `hartFatal`（见 D-cache 文档 2.4 节）。
 - **CSR 指令：**v1 保守处理，等两组记分板全部清空后再执行。fflags/fcsr 的读写因此必然看到所有已提交浮点运算的结果；frm 的修改也不会影响已在途的浮点运算（这些运算在 EX 已带走舍入模式）。
 - **FENCE：**作为请求发给 L1D，L1D 在 MSHR 与 pending-store 均为空时完成，保证已提交但仍在 MSHR 中的访存先于 FENCE 后的访存生效。
-- **FENCE.I、SFENCE.VMA：**沿用现有语义，并额外等待 L1D 的 MSHR 与 pending-store 为空。
+- **FENCE.I、SFENCE.VMA：**v1 改在 WB 串行执行（[`v1-integration-notes.md`](v1-integration-notes.md) 第 3 节，覆盖旧语义）。FENCE.I：等 L1D 的 MSHR 与 pending-store 为空 → 清 L1I → 重定向到下一条；L1D 不写回、不失效，删除 `dcacheFlushReq/Done`。SFENCE.VMA：更老指令全部完成、前端 kill → 等 MSHR 与 pending-store 为空 → 等 MMU `idle` → 一拍 sfence → 等 `idle` → 重定向到下一条（MMU 合同 C4；MMU spec 所称 store buffer 排空即 MSHR 与 pending-store 为空）。两者在 WB 重定向时作废年轻未提交项（第 5 节）。T01 的 A02（FENCE.I 在 MEM、不发 kill）只适用于旧阻塞访存路径。
 - **AMO、带 aq/rl 的 LR/SC、MMIO：**由 L1D 保证在 MSHR 与 pending-store 为空后执行；后端在 WB 等结果。不带 aq/rl 的 LR/SC 在流水中执行（D-cache 文档 2.7 节）。
 - **MMIO 与中断：**MMIO 一旦发出就不能取消，中断等它退休后再接受（D-cache 文档 2.10 节）。
 - **WFI：**不需要等后台长延迟操作。
