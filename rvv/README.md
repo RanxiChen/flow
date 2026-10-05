@@ -104,6 +104,16 @@ diff -r "$R01_RUN/reproduce-a" "$R01_RUN/reproduce-b"
 Only small summary CSVs may be committed. Models, binaries, raw profiles and
 logs remain in the external Alan run directory.
 
+Generate the Markdown workload report and all its dynamic statistics tables
+from the same raw profiles in one command:
+
+```bash
+python3 rvv/tools/write-profile.py "$R01_RUN" "$R01_RUN/presentation"
+```
+
+The presentation directory contains `rvv-workload-profile.md` and the small
+summary CSVs. Tensor inventories are generated separately by `tensors.py`.
+
 To rerun a measured case independently and compare all recorded fields:
 
 ```bash
