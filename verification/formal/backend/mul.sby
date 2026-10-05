@@ -16,9 +16,10 @@ timeout 1800
 smtbmc z3
 
 [script]
-read_verilog -formal -sv FormalInitialReset.sv MulProtocolFormal.sv
+read_verilog -formal -sv FormalInitialReset.sv FormalMulProbe.sv MulProtocolFormal.sv
 prep -top MulProtocolFormal
 
 [files]
-generated/mul/FormalInitialReset.sv
-generated/mul/MulProtocolFormal.sv
+yosys/mul/FormalInitialReset.sv
+yosys/mul/FormalMulProbe.sv
+yosys/mul/MulProtocolFormal.sv

@@ -320,7 +320,7 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 
 ## 阶段二（B01/B02 续行，最新状态）
 
-冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线与第 2 步单元门槛已完成，第 3 步待执行，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
+冻结稿：`de9c303fa5e222f38470ab53e951544c43223b98`。上一轮 B01 已由用户修订 A08；下面记录新增第 0 步；当前新基线与第 2 步单元门槛已完成，第 3 步生成/形式化执行中，尚未触发本轮停止条件。旧阶段二记录作为历史保留。
 
 ### A. 提交列表
 
@@ -330,6 +330,7 @@ F01–F14及相关cover **未运行**；引擎、BMC深度、归纳结果、assu
 | 0 新基线报告 | `788c6a0` | 新基线逐 suite 表与作废旧表，已 push |
 | 2 单元实现 | `14249c7e570955e08682ff840bc63df4156525a6` | 新统一接口、四级 MUL/DIV wrapper、获准迁移、协议/数学随机/原 MUL 等价性；Alan 34/34 通过，已 push |
 | 2 剩余边界检查 | `fc26153` | 空 commit 断言负测和 DIV 延迟边界；最终 Alan 单元门槛 37/37，已 push |
+| 3 形式化准备 | `798c062` | 单元 formal-only observation、独立请求 FIFO 台账、固定 SBY 预算；已 push，生成/证明结果待记录 |
 | Alan 新基线临时分支 | `3adca5e283caa7faa3262c713e9ca7624fa5b2dc` | 分支 `t01-b02-baseline-20261005`；父提交 `d5672f51bf0ec67465148c02af970c70464bec68`，只 cherry-pick 上述 B02 提交；相对父提交只改三个构建文件 |
 
 参数入口：Chisel 7.0.0 source JAR 的 `chisel3/simulator/HasSimulator.scala:43-52` 选择 Verilator；`verilator/Backend.scala:71-89,105-223` 定义设置并组装参数，API 没有任意参数/控制文件入口。源码已读取，现有 `disabledWarnings` 只能按规则全局关闭，不能用于本项。仓库现有 `design/src/test/scala/fpu/BreezeFpTestSupport.scala:13-20` 与 `design/src/main/scala/sim/BreezeCoreSimSupport.scala:238-244` 只配置 include 目录；普通 ChiselSim suite 使用默认 backend。
@@ -421,7 +422,9 @@ ACT4 不重跑，沿用源码 `d5672f5` 的 69/69 PASS、0 FAIL/TIMEOUT/INFRA_ER
 | 0：Git fetch、`git switch -c t01-b02-baseline-20261005 d5672f51bf0ec67465148c02af970c70464bec68`、`git cherry-pick cd9321a335c156d974985a378930d98df6e96b69` | Alan `/home/chen/FUN/flow` | 0 | 临时提交 `3adca5e`；`checkout.log` / `source-status.log` / `submodules.log`；相对 d5672f5 只改三个构建文件 |
 | 2：`/home/chen/.local/share/coursier/bin/sbt 'testOnly flow.multiplier.* flow.divider.*'`，SHA `14249c7e570955e08682ff840bc63df4156525a6` | Alan `/home/chen/FUN/flow/design` | 0 | 7 suites，34/34；`/home/chen/FUN/flow-runs/20261005-t01-2-unit-14249c7/sbt-test.log` / `.meta` / `.exit`，`test-reports/`、`source.sha` |
 | 2：`/home/chen/.local/share/coursier/bin/sbt 'testOnly flow.multiplier.* flow.divider.* flow.backend.MduBoundarySpec'`，SHA `fc26153` | Alan `/home/chen/FUN/flow/design` | 0 | 8 suites，37/37，0 ignored/aborted；`/home/chen/FUN/flow-runs/20261005-t01-2-unit-fc26153/sbt-test.log` / `.meta` / `.exit`，`test-reports/`、`source.sha`；第 2 步门槛通过 |
-| 3 形式化、4 后端、5 trace、6 整核、7 综合 | Alan | — | 未运行，按顺序继续；本轮单元证据不代表后端/整核/综合通过 |
+| 3：`sbt 'runMain flow.backend.GenerateIntMduFormal /home/chen/FUN/flow-runs/20261005-t01-2-formal-798c062/generated'`，SHA `798c062` | Alan `/home/chen/FUN/flow/design` | 0 | 生成成功；上述目录 `generate.log` / `.meta` / `.exit`，原始 `generated/{mul,div}/` |
+| 3：`sby -f mul.sby`，SHA `798c062` | Alan `/home/chen/FUN/flow-runs/20261005-t01-2-formal-798c062` | 16 | BMC/prove/cover 均读取错误，`MulProtocolFormal.sv:47` 不支持 immediate assume/assert 的 `else $error`；没有引擎结果/witness，`mul-sby.log` / `.exit`。DIV 尚未运行 |
+| 4 后端、5 trace、6 整核、7 综合 | Alan | — | 未运行，按顺序继续；本轮单元证据不代表后端/整核/综合通过 |
 
 工具：Java GraalVM CE 17.0.9；sbt 项目 1.9.7（启动脚本 1.11.2）；Verilator 5.028；CVFPU `1b220f3bc89df99e246b72e3574a3a533cf87653`，与旧基线一致，详见 `tools.log` / `submodules.log`。完整 sbt 用时 1913 s。Test fork 只用于把包装器 PATH 限定在测试进程，不改变测试向量/期望/次数。
 
@@ -435,7 +438,13 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 ### D. 形式化
 
-F01–F14 及相关 cover：未运行。无新 harness、SBY、assume、BMC 深度、归纳结果或 cover witness。
+第 3 步首次运行前登记：`798c062`；harness `design/src/main/scala/backend/GenerateIntMduFormal.scala`、`verification/formal/backend/{mul,div}.sby` / `README.md`。BMC 深度 80、归纳深度 80、cover 深度 80，均 `smtbmc z3`，每任务 timeout 1800 s。工具预检 Alan SBY v0.69、Yosys 0.62、Z3 4.8.12，firtool 1.128.0；不运行本地 EDA。
+
+生产单元 subclass 仅输出 live/committed 状态供形式化观测，不改变生产接口与行为。独立 accepted-request FIFO 按接收顺序授权提交，kill 只截掉未提交尾部，结果必须属于已提交 FIFO 头；状态人口一致性与 32-bit 模计数台账检查 F03/F07/F08，生产结果保持断言检查 F05（含 kill），commit 的独立台账许可与物理单元一致性检查 F11 的单元部分。F11 记分板 set/clear、跨 MUL/DIV、CSR 等 integrated cover 留给后端集成后的 harness，不将单元证明冒充这些检查。
+
+全部 assume：初始拍 reset；非复位时 commit 必须对应独立 FIFO 中已有未提交项；WB kill 时年轻 EX req.valid 被抑制；req.valid 的 rd 非零。后续 reset 任意（可在途，开始新计数 epoch）；不限制合法 WAW、输入算术 payload、result.ready、反压长度；无公平 assume。cover 包括 commit+kill、已提交结果被反压时 kill、kill 后写、连续 MUL、四项未提交、未提交 P4 至少停 8 拍再 commit/kill，以及 DIV early done 至少等 8 拍再 commit、done+kill。归纳、实际 assert 结果和 witness 尚未产生；timeout/unknown/error 不视为通过。
+
+首次生成成功但 Yosys 读取失败是语法兼容问题，不是性质反例。新增形式化生成文件的语法 lowering：只将 `assert/assume(expr) else $error("diagnostic");` 转成 `assert/assume(expr);`；保留每个 expr、guard、label、全部 cover 与原始 RTL，输出逐文件属性数量、诊断文本、输入/输出 SHA256 的 audit。没有修改生产断言、环境假设、深度或 RTL 行为。SBY 读取完整 split-Verilog 模块集合。此兼容处理待 Alan 执行，不把首次 ERROR 记作 pass。
 
 ### E. 迁移清单与删除清单
 

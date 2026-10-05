@@ -6,7 +6,14 @@ Generate on Alan only, from `design`:
 sbt 'runMain flow.backend.GenerateIntMduFormal /absolute/run/directory/generated'
 ```
 
-Copy `mul.sby` and `div.sby` into that run directory. Run `sby -f mul.sby`
+Copy `mul.sby`, `div.sby` and `lower_immediate.py` into that run directory.
+Run `python3 lower_immediate.py generated/mul yosys/mul` and the corresponding
+command for DIV. Yosys 0.62 does not parse firtool's diagnostic `else $error`
+action blocks: this lowering preserves each assertion/assumption expression,
+cover, label and guard, replaces only the diagnostic action with a semicolon,
+and audits property counts, removed diagnostic text and input/output hashes.
+The raw generated RTL is retained. This does not weaken any property.
+Run `sby -f mul.sby`
 and `sby -f div.sby` there. Save exact source SHA, tool versions, generated
 RTL, logs, results and cover witnesses. Before the first run the registered
 budget is BMC 80, induction 80, cover 80, Z3 SMTBMC, 1800 seconds per task.

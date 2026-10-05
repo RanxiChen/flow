@@ -16,9 +16,11 @@ timeout 1800
 smtbmc z3
 
 [script]
-read_verilog -formal -sv FormalInitialReset.sv DivProtocolFormal.sv
+read_verilog -formal -sv FormalInitialReset.sv UnsignedRadix4Divider.sv FormalDivProbe.sv DivProtocolFormal.sv
 prep -top DivProtocolFormal
 
 [files]
-generated/div/FormalInitialReset.sv
-generated/div/DivProtocolFormal.sv
+yosys/div/FormalInitialReset.sv
+yosys/div/UnsignedRadix4Divider.sv
+yosys/div/FormalDivProbe.sv
+yosys/div/DivProtocolFormal.sv
