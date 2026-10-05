@@ -446,6 +446,10 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 首次生成成功但 Yosys 读取失败是语法兼容问题，不是性质反例。新增形式化生成文件的语法 lowering：只将 `assert/assume(expr) else $error("diagnostic");` 转成 `assert/assume(expr);`；保留每个 expr、guard、label、全部 cover 与原始 RTL，输出逐文件属性数量、诊断文本、输入/输出 SHA256 的 audit。没有修改生产断言、环境假设、深度或 RTL 行为。SBY 读取完整 split-Verilog 模块集合。此兼容处理待 Alan 执行，不把首次 ERROR 记作 pass。
 
+`f21c4b6` 兼容后 MUL 8/8 cover PASS，DIV 5/5 cover PASS；BMC/归纳仍求解，未得到结果。MUL 日志根 `/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6/`；独立 DIV 根 `/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6-div/`。各 `*_cover/engine_0/trace*.{vcd,yw,smtc}` 为实际 witness；详细映射见 PASS 文件。全算术 MUL 查询中的三个 Z3 进程各约 6 GB，CPU 约 100%；Alan 当次 available RAM 约 33 GB、swap 0，没有工具缺失或资源耗尽。
+
+另登记等价安全性方向的控制抽象 `mul_protocol.sby`，预算仍 BMC/归纳/cover 80，Z3，1800 s；只将一个组合 `$mul` 的 130-bit 输出替换成逐拍任意值（`select -assert-count 1` 保证仅这一项），不删除/修改任何寄存器、控制、assume/assert/cover，完整 payload 的保持检查仍在。任意值集合包含全部真实乘积，因此具体 RTL 的每条轨迹都包含在抽象模型中，抽象安全性质 PASS 可推出具体安全性质 PASS；不能从此声称算术等价性。完整算术任务保留并继续运行，单独报告，U01 证据独立。没有增加限制输入的假设、调小深度、改期望或降低被检查的协议性质；此控制证明尚未运行。
+
 ### E. 迁移清单与删除清单
 
 已批准迁移（新源码行号对应 `fc26153`）：

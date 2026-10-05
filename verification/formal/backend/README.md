@@ -37,3 +37,14 @@ ports are confined to subclasses instantiated only by this formal generator.
 All production assertions remain in the emitted RTL. F11 scoreboard set/clear
 and cross-unit covers require the later integrated harness; they are not claimed
 by these unit proofs. This protocol proof does not replace arithmetic U01/U02.
+
+`mul_protocol.sby` additionally offers a control proof with one conservative
+datapath cutpoint: the single combinational `$mul` output becomes an arbitrary
+130-bit value each cycle. This permits every concrete product and more values,
+so a safety proof on this model implies the same safety properties on the
+concrete multiplier. No register, handshake, property, assumption or cover is
+removed; assertions still check the full result and full stored payload under
+backpressure. A false counterexample is possible, a false safety pass is not.
+The selector fails unless exactly one multiplication cell is found. Budgets and
+assumptions are unchanged. Keep the full arithmetic run and its result separate;
+this control proof makes no arithmetic equivalence claim (see U01).
