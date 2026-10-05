@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 ROOT = Path(__file__).resolve().parents[1]
 inputs = json.loads((ROOT / "third_party/inputs.json").read_text())
@@ -27,12 +28,11 @@ if head != inputs["llama_commit"]:
 call(["git", "-C", source, "log", "-1", "--format=%H %cI"])
 models = run / "models"
 models.mkdir(exist_ok=True)
-manifest = []
-for name in inputs["model_files"]:
+def fetch_model(name):
     path = models / name
     if not path.exists():
         url = f'https://huggingface.co/{inputs["model_repo"]}/resolve/{inputs["model_revision"]}/{name}'
-        call(["curl", "-fL", "--connect-timeout", "30", "--max-time", "1800", "--retry", "3", url, "-o", str(path) + ".partial"])
+        call(["curl", "-fL", "-C", "-", "--connect-timeout", "30", "--max-time", "1800", "--retry", "3", url, "-o", str(path) + ".partial"])
         os.rename(str(path) + ".partial", path)
     digest = hashlib.sha256()
     with path.open("rb") as f:
@@ -41,6 +41,11 @@ for name in inputs["model_files"]:
         f.seek(0)
         while data := f.read(1024 * 1024):
             digest.update(data)
-    manifest.append({"file": name, "size": path.stat().st_size, "sha256": digest.hexdigest()})
+    return {"file": name, "size": path.stat().st_size, "sha256": digest.hexdigest()}
+
+# Downloads are not simulations. Two requests permit overlap and resume
+# independently, while all guest execution remains serial.
+with ThreadPoolExecutor(max_workers=2) as pool:
+    manifest = list(pool.map(fetch_model, inputs["model_files"]))
 (run / "models.json").write_text(json.dumps(manifest, indent=2) + "\n")
 print(json.dumps(manifest, indent=2))
