@@ -438,21 +438,44 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 ### D. 形式化
 
-第 3 步首次运行前登记：`798c062`；harness `design/src/main/scala/backend/GenerateIntMduFormal.scala`、`verification/formal/backend/{mul,div}.sby` / `README.md`。BMC 深度 80、归纳深度 80、cover 深度 80，均 `smtbmc z3`，每任务 timeout 1800 s。工具预检 Alan SBY v0.69、Yosys 0.62、Z3 4.8.12，firtool 1.128.0；不运行本地 EDA。
+#### D.1 第 3 步审阅决定（本轮生效）
 
-生产单元 subclass 仅输出 live/committed 状态供形式化观测，不改变生产接口与行为。独立 accepted-request FIFO 按接收顺序授权提交，kill 只截掉未提交尾部，结果必须属于已提交 FIFO 头；状态人口一致性与 32-bit 模计数台账检查 F03/F07/F08，生产结果保持断言检查 F05（含 kill），commit 的独立台账许可与物理单元一致性检查 F11 的单元部分。F11 记分板 set/clear、跨 MUL/DIV、CSR 等 integrated cover 留给后端集成后的 harness，不将单元证明冒充这些检查。
+用户本轮明确批准两个单元**只证控制逻辑**；算术正确性由第 2 步 B 组随机测试、U01/U02 负责（已记录 37/37 单元通过及原始日志）。不再执行带完整算术的 `mul.sby` / `div.sby`，两项记为 **“因求解器资源放弃，算术由仿真覆盖”**，保留全部原始生成 RTL、配置、日志及已有 cover witness。
 
-全部 assume：初始拍 reset；非复位时 commit 必须对应独立 FIFO 中已有未提交项；WB kill 时年轻 EX req.valid 被抑制；req.valid 的 rd 非零。后续 reset 任意（可在途，开始新计数 epoch）；不限制合法 WAW、输入算术 payload、result.ready、反压长度；无公平 assume。cover 包括 commit+kill、已提交结果被反压时 kill、kill 后写、连续 MUL、四项未提交、未提交 P4 至少停 8 拍再 commit/kill，以及 DIV early done 至少等 8 拍再 commit、done+kill。归纳、实际 assert 结果和 witness 尚未产生；timeout/unknown/error 不视为通过。
+| 单元 | 当前模型 | 保留的检查 / 边界 |
+| --- | --- | --- |
+| MUL | `mul_protocol_abc.sby`：唯一组合 `$mul` 的 130-bit 输出换成逐拍任意值；`select -assert-count 1` 检查替换数量 | 全部生产寄存器、控制和断言保留；独立 FIFO 捕获同一个任意乘积，检查所有有效级 rd/product/op 身份、提交前缀和输出身份；不声称数学等价性 |
+| DIV | `div_abc.sby`：只以 `UnsignedRadix4DividerAbstract.sv` 替换生成的 unsigned radix-4 核，quotient/remainder 为任意64位值，完成延迟任意0–34拍 | 原 `CommittedDivUnit` 外壳源代码和生成逻辑不变：occupied/commit/kill/done、符号/W恢复、输出保持、快路径全部保留；独立 FIFO 检查身份与计数，内部 done 尚未提交的保持也检查 |
 
-首次生成成功但 Yosys 读取失败是语法兼容问题，不是性质反例。新增形式化生成文件的语法 lowering：只将 `assert/assume(expr) else $error("diagnostic");` 转成 `assert/assume(expr);`；保留每个 expr、guard、label、全部 cover 与原始 RTL，输出逐文件属性数量、诊断文本、输入/输出 SHA256 的 audit。没有修改生产断言、环境假设、深度或 RTL 行为。SBY 读取完整 split-Verilog 模块集合。此兼容处理待 Alan 执行，不把首次 ERROR 记作 pass。
+DIV 完成拍数以接受沿为0：0表示接受沿锁存 core 完成、1–34表示后续对应沿完成；core 的 out_valid 是寄存输出（与原核短路径相同），外壳按原逻辑在随后采样拍捕获，不把它改成组合零拍输出。抽象模型仅新增**一条获批准的 assume**：非reset/flush且active、age=33时 `finish_now` 必须为1，保证该请求在接受后的第34拍以内完成；reset/flush 取消本项及其完成义务。模型保留原核“busy时不得接收”断言，并加 age 范围断言、0/34完成端点 cover；没有算术约束。
 
-`f21c4b6` 兼容后 MUL 8/8 cover PASS，DIV 5/5 cover PASS；BMC/归纳仍求解，未得到结果。MUL 日志根 `/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6/`；独立 DIV 根 `/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6-div/`。各 `*_cover/engine_0/trace*.{vcd,yw,smtc}` 为实际 witness；详细映射见 PASS 文件。全算术 MUL 查询中的三个 Z3 进程各约 6 GB，CPU 约 100%；Alan 当次 available RAM 约 33 GB、swap 0，没有工具缺失或资源耗尽。
+共同 caller assume 全部保留：初始拍 reset；非复位时 commit 对应独立 accepted-request FIFO 已有未提交项；WB kill 抑制年轻 EX req.valid；req.valid 的 rd 非零。后续 reset 可在途且任意，开始新计数 epoch；没有无WAW、无竞争、公平写口或外部hold上界假设。台账为32位模计数，检查 accepted=written+killed+live，并与真实槽位人口逐拍对应。F11 此步是单元 commit 必有未提交项；记分板 set/clear 及跨单元/CSR 的 integrated 检查在后端集成后进行，不将单元证明冒充这些检查。
 
-另登记等价安全性方向的控制抽象 `mul_protocol.sby`，预算仍 BMC/归纳/cover 80，Z3，1800 s；只将一个组合 `$mul` 的 130-bit 输出替换成逐拍任意值（`select -assert-count 1` 保证仅这一项），不删除/修改任何寄存器、控制、assume/assert/cover，完整 payload 的保持检查仍在。任意值集合包含全部真实乘积，因此具体 RTL 的每条轨迹都包含在抽象模型中，抽象安全性质 PASS 可推出具体安全性质 PASS；不能从此声称算术等价性。完整算术任务保留并继续运行，单独报告，U01 证据独立。没有增加限制输入的假设、调小深度、改期望或降低被检查的协议性质；此控制证明尚未运行。
+| 模式 | 引擎 | 深度 / 超时 |
+| --- | --- | --- |
+| BMC | `abc bmc3` | 80拍，3600秒/任务 |
+| prove | `abc pdr` | **无界，不设归纳深度**，3600秒/任务 |
+| cover | `smtbmc z3` | 80拍，3600秒/任务 |
 
-新增 strengthening **assert**（不是 assume）：每个有效 MUL 级的 rd、完整 product、op 属于独立 FIFO 对应项，committed 状态为 FIFO 前缀；输出 data 属于仍存活的已提交 FIFO 头。FIFO 将实际 P1 组合运算节点作为该请求 payload 捕获，因此控制抽象下同一个任意乘积同时送实际 P1 和独立台账，检查请求身份/保持，不将该运算节点当数学等价性参照。DIV occupied 的 rd 在提交前后均对应 FIFO 头，内部 done 之后直到 release 的 data/rd/done 也检查保持（包括尚未 externally valid 的时期）。这些额外断言补足无界未提交停顿下的归纳不变式，不删除或放宽任何已登记性质。原请求/kill/commit 环境 assume 全部不变。
+**同一时间只运行一个求解器**，任务逐一串行。出现 unknown/timeout 即照实记录并停止整个任务报告，不再换引擎反复试。F03/F05/F07/F08/F11 单元 assert 全PASS、相关 cover 全可达后才进入第4步。3600秒审阅策略开始前的中断不伪称为该策略下的timeout。没有改变任何生产断言、既有期望、随机次数或 BMC/cover 深度。
 
-完整算术 Z3 的 MUL prove 在 526 s、DIV prove 在 511 s 报 `Unexpected EOF response from solver` / `Engine terminated without status` / ERROR（rc16），无反例/witness；不是性质 FAIL。剩余 BMC 与另一路控制 Z3 尚在求解，但多个进程已超过数 GB、机器开始 swap。并行安排造成内存压力，终止本轮其余求解进程保留原始日志，后续各任务串行；不声称 EOF 已由内核日志确认为 OOM。追加已安装 ABC 引擎配置：`mul_protocol_abc.sby` / `div_abc.sby`，BMC `abc bmc3` 深度仍80、prove `abc pdr` 为无界不变式证明（不称80拍k归纳）、cover 仍Z3深度80，timeout仍1800 s。全部属性、输入假设及 cutpoint 保持，改引擎不改验收。
+#### D.2 历史尝试与证据（保留）
+
+工具预检 Alan SBY v0.69、Yosys0.62、Z3 4.8.12、firtool1.128.0；`yosys-abc` 已安装，没有安装任何工具。harness 为 `design/src/main/scala/backend/GenerateIntMduFormal.scala`。Yosys 不支持 firtool immediate assert/assume 的诊断 `else $error`，只将该动作转换成分号，保留每个表达式、guard、label、cover；原始 SV 保留，`lowering-audit.json` 记录属性数量、诊断与原始/转换 SHA256。
+
+| 源提交 / 目录 | 实际结果 |
+| --- | --- |
+| `798c062`；`/home/chen/FUN/flow-runs/20261005-t01-2-formal-798c062/` | `sbt runMain flow.backend.GenerateIntMduFormal .../generated` exit0；`sby -f mul.sby` exit16，读取 `MulProtocolFormal.sv:47` 的 `else $error` 语法错误，BMC/prove/cover没有引擎结果 |
+| `f21c4b6`；`/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6/` | 完整算术 MUL cover8/8 PASS；prove526秒后 `Unexpected EOF response from solver` / `Engine terminated without status` / ERROR rc16，无性质反例；其余任务已发终止命令。**因求解器资源放弃，算术由仿真覆盖** |
+| `f21c4b6`；`/home/chen/FUN/flow-runs/20261005-t01-2-formal-f21c4b6-div/` | 完整算术 DIV cover5/5 PASS；prove511秒后同类EOF/ERROR rc16，无性质反例；其余任务已发终止命令。**因求解器资源放弃，算术由仿真覆盖** |
+| `849a5d2`；`/home/chen/FUN/flow-runs/20261005-t01-2-formal-849a5d2/` | MUL控制抽象Z3 cover8/8 PASS；BMC/prove求解中终止，保留日志，不算PASS |
+| `943f9fae2263ca0d9ab71869525c719e284369b4`；`/home/chen/FUN/flow-runs/20261005-t01-2-formal-943f9fa/` | `sby -f mul_protocol_abc.sby bmc` exit0，80frames全部PASS，469秒；prove PDR原配置timeout1800，审阅配置更新时发出终止命令；其余尚未运行。生成exit0；wrapper和所有strengthening assert保留 |
+
+各cover实际 witness 为相应 `*_cover/engine_0/trace*.{vcd,yw,smtc}`，逐项步数映射见 PASS 文件。此前并行求解造成内存压力、swap，已纠正为严格串行；不将EOF原因未经内核日志确认便断言为OOM。原失败/中断不会删除，也不会计入通过。旧 MUL BMC 80 的结果只注明原 source/config；当前配置的执行或复用必须按相同模型哈希单独登记，不冒充新运行。
+
+#### D.3 当前执行状态
+
+上述审阅配置已准备；DIV新的0/34端点cover尚未运行，当前控制模型的最终PASS、无界证明及门槛尚未取得。尚未进入第4步。本机只做文本/静态检查，所有RTL生成、BMC、prove和cover在Alan运行。
 
 ### E. 迁移清单与删除清单
 
@@ -471,4 +494,4 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 
 ### G. B 类问题
 
-无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2 步 37/37 门槛已通过；第 3–7 步尚未运行，本轮没有停止，继续按步骤门槛执行。
+无新增 B 类问题。B01 已按 de9c303 的分类门控决定关闭；B02 定向构建修正及新基线已完成，唯一剩余 FASE 构建失败照实保留，不修。旧基线作废。第 2 步 37/37 门槛已通过；第 3 步控制证明执行中、第 4–7 步未运行；按本轮 D 节审阅策略串行执行，unknown/timeout 时立即停下报告。
