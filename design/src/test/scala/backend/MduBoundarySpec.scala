@@ -3,7 +3,7 @@ package flow.backend
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import flow.divider.CommittedDivUnit
-import flow.multiplier.CommittedMulUnit
+import flow.multiplier.MulUnit
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
@@ -26,7 +26,7 @@ class MduBoundarySpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
   "T06/S04: empty MUL commit triggers its RTL assertion" in {
     intercept[Exception] {
-      simulate(new CommittedMulUnit) { d =>
+      simulate(new MulUnit) { d =>
         d.io.req.valid.poke(false.B); d.io.req.bits.a.poke(0.S); d.io.req.bits.b.poke(0.S)
         d.io.req.bits.op.poke(0.U); d.io.req.bits.rd.poke(5.U)
         d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B); d.io.result.ready.poke(false.B)

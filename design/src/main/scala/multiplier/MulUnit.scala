@@ -6,7 +6,7 @@ import flow.backend.{IntMduIO, IntMulRequest}
 import flow.core.MUL_OP
 
 /** T01 four-register multiplier. The old wrapper remains until integration. */
-class CommittedMulUnit extends Module {
+class MulUnit extends Module {
   val io = IO(new IntMduIO(new IntMulRequest))
   val valid = RegInit(VecInit(Seq.fill(4)(false.B)))
   val committed = RegInit(VecInit(Seq.fill(4)(false.B)))

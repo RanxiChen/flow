@@ -2,7 +2,7 @@ package flow.backend
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import flow.multiplier.CommittedMulUnit
+import flow.multiplier.MulUnit
 import flow.divider.CommittedDivUnit
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -21,7 +21,7 @@ class MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.req.bits.fastValid.poke(false.B); d.io.req.bits.fastData.poke(0.U)
   }
   "T04_component_P02_component_S11: eight MUL requests and writes, each exactly EX+4" in {
-    simulate(new CommittedMulUnit) { d =>
+    simulate(new MulUnit) { d =>
       d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
       d.io.result.ready.poke(true.B); d.io.req.bits.a.poke(7.S); d.io.req.bits.b.poke(9.S)
       d.io.req.bits.op.poke(0.U); d.io.req.bits.rd.poke(1.U)

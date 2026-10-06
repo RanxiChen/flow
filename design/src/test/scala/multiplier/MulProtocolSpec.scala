@@ -6,22 +6,22 @@ import flow.core.MUL_OP
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class CommittedMulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class MulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val mask = (BigInt(1) << 64) - 1
-  private def init(d: CommittedMulUnit): Unit = {
+  private def init(d: MulUnit): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B)
     d.io.killUncommitted.poke(false.B); d.io.result.ready.poke(false.B)
     d.io.req.bits.a.poke(0.S); d.io.req.bits.b.poke(0.S)
     d.io.req.bits.op.poke(MUL_OP.MUL.U); d.io.req.bits.rd.poke(1.U)
     d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
   }
-  private def send(d: CommittedMulUnit, rd: Int, a: BigInt, b: BigInt, op: Int = MUL_OP.MUL): Unit = {
+  private def send(d: MulUnit, rd: Int, a: BigInt, b: BigInt, op: Int = MUL_OP.MUL): Unit = {
     d.io.req.ready.expect(true.B)
     d.io.req.bits.rd.poke(rd.U); d.io.req.bits.a.poke(a.S(65.W)); d.io.req.bits.b.poke(b.S(65.W))
     d.io.req.bits.op.poke(op.U); d.io.req.valid.poke(true.B); d.clock.step(); d.io.req.valid.poke(false.B)
   }
   "T05: kill in each of P1/P2/P3/P4 and reset in flight discard uncommitted requests" in {
-    simulate(new CommittedMulUnit) { d =>
+    simulate(new MulUnit) { d =>
       for (stage <- 1 to 4) {
         init(d); send(d, 5, -7, 9); d.clock.step(stage-1)
         d.io.killUncommitted.poke(true.B); d.clock.step(); d.io.killUncommitted.poke(false.B)
@@ -32,7 +32,7 @@ class CommittedMulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
     }
   }
   "T05/T06/T09/T15: stopped uncommitted P4, oldest commit then kill, and committed hold" in {
-    simulate(new CommittedMulUnit) { d =>
+    simulate(new MulUnit) { d =>
       init(d)
       for (r <- 1 to 4) send(d, r, r, 11)
       d.io.req.ready.expect(false.B); d.io.result.valid.expect(false.B)
@@ -51,7 +51,7 @@ class CommittedMulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
     }
   }
   "B/U01: all five operations agree with independent BigInt mathematics (seed 0x701, 500 requests)" in {
-    simulate(new CommittedMulUnit) { d =>
+    simulate(new MulUnit) { d =>
       init(d); val rng = new scala.util.Random(0x701)
       val operations = Vector(MUL_OP.MUL, MUL_OP.MULH, MUL_OP.MULHSU, MUL_OP.MULHU, MUL_OP.MULW)
       for (i <- 0 until 500) {
@@ -79,7 +79,7 @@ class CommittedMulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
     }
   }
   "T15: four-cycle latency and one accepted request per cycle with in-order commits" in {
-    simulate(new CommittedMulUnit) { d =>
+    simulate(new MulUnit) { d =>
       init(d); d.io.result.ready.poke(true.B)
       for (n <- 0 until 12) {
         d.io.req.valid.poke((n < 8).B); d.io.req.bits.rd.poke((1 + math.min(n,7)).U)
@@ -98,7 +98,7 @@ class CommittedMulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
 }
 
 /** Align the unmodified three-cycle SignedMul65x65 reference with new P4. */
-class MulProductProbe extends CommittedMulUnit {
+class MulProductProbe extends MulUnit {
   val fullProduct = IO(Output(UInt(130.W)))
   fullProduct := product(3).asUInt
 }

@@ -6,10 +6,10 @@ import flow.core.MUL_OP
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class MulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val Mask64 = (BigInt(1) << 64) - 1
 
-  private def reset(dut: CommittedMulUnit): Unit = {
+  private def reset(dut: MulUnit): Unit = {
     dut.io.killUncommitted.poke(false.B)
     dut.io.commit.poke(false.B)
     dut.io.result.ready.poke(true.B)
@@ -23,7 +23,7 @@ class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.reset.poke(false.B)
   }
 
-  private def run(dut: CommittedMulUnit, a: BigInt, b: BigInt, op: Int): BigInt = {
+  private def run(dut: MulUnit, a: BigInt, b: BigInt, op: Int): BigInt = {
     dut.io.req.bits.a.poke(a.S(65.W))
     dut.io.req.bits.b.poke(b.S(65.W))
     dut.io.req.bits.op.poke(op.U)
@@ -42,7 +42,7 @@ class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "wrapper selects all multiplication result forms" in {
-    simulate(new CommittedMulUnit) { dut =>
+    simulate(new MulUnit) { dut =>
       reset(dut)
 
       run(dut, -2, 3, MUL_OP.MUL) mustBe ((BigInt(-6)) & Mask64)
@@ -54,7 +54,7 @@ class RiscvMulUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "kill cancels an uncommitted completion token" in {
-    simulate(new CommittedMulUnit) { dut =>
+    simulate(new MulUnit) { dut =>
       reset(dut)
       dut.io.req.bits.a.poke(7.S(65.W))
       dut.io.req.bits.b.poke(9.S(65.W))

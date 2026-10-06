@@ -130,7 +130,7 @@ R/Q15已批准的“旧检查→新检查”：
 | 旧检查 / 源位置 | 新检查 / 权限 |
 | --- | --- |
 | completion PopCount≤1；`design/src/main/scala/backend/BreezeBackend.scala:839-840` | grant独热+每源valid&&!ready保持；允许DIV/MUL同时valid；已批准 |
-| MUL wrapper3拍/全flush；`design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64` | 4拍/commit/kill/保持；已批准。旧SignedMul65x65及全部测试原样保留 |
+| MUL wrapper3拍/全flush；`design/src/test/scala/multiplier/MulUnitSpec.scala:23-64` | 4拍/commit/kill/保持；已批准。旧SignedMul65x65及全部测试原样保留 |
 | HPM非法selector=11；`design/src/test/scala/core/BreezeCsrPipelineSpec.scala:130-131` | 新非法上界14；已批准，旧0–10及计数采样语义不变 |
 | 后端MDU提交拍最终wbData及DIV wrapper无commit驱动 | **未批准**，列A03；当前不修改旧测试、不伪造旧观测值 |
 
@@ -250,7 +250,7 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 | `flow.mmu.BreezePmpSharingSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.mmu.sv39.Sv39MmuSpec` | 16 | 0 | 0 | 未运行 |
 | `flow.mmu.sv39.Sv39StructuresSpec` | 13 | 0 | 0 | 未运行 |
-| `flow.multiplier.RiscvMulUnitSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.multiplier.MulUnitSpec` | 2 | 0 | 0 | 未运行 |
 | `flow.multiplier.SignedMul65x65Spec` | 22 | 0 | 0 | 未运行 |
 | `flow.platform.BreezeLinuxPmaSpec` | 4 | 0 | 0 | 未运行 |
 | `flow.sim.BreezeCoreGShareSpec` | 0 | 5 | 0 | 未运行 |
@@ -395,7 +395,7 @@ Alan `3adca5e`，完整 `sbt test` 退出码 **1**：56 suites completed、0 abo
 | `flow.mmu.BreezePmpSharingSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.mmu.sv39.Sv39MmuSpec` | 16 | 0 | 0 | 未运行 |
 | `flow.mmu.sv39.Sv39StructuresSpec` | 13 | 0 | 0 | 未运行 |
-| `flow.multiplier.RiscvMulUnitSpec` | 2 | 0 | 0 | 未运行 |
+| `flow.multiplier.MulUnitSpec` | 2 | 0 | 0 | 未运行 |
 | `flow.multiplier.SignedMul65x65Spec` | 22 | 0 | 0 | 未运行 |
 | `flow.platform.BreezeLinuxPmaSpec` | 4 | 0 | 0 | 未运行 |
 | `flow.sim.BreezeCoreGShareSpec` | 5 | 0 | 0 | 未运行 |
@@ -431,7 +431,7 @@ ACT4 不重跑，沿用源码 `d5672f5` 的 69/69 PASS、0 FAIL/TIMEOUT/INFRA_ER
 
 实际参数证据 `fpunit-verilator-parameters.dat`：来自本轮 FP 单元构建的 `VsvsimTestbench__verFiles.dat`，首个参数为上述 `.vlt`，没有 `-Wno-fatal`；该 FP suite 2/2 通过。BLKANDNBLK 未再出现于本轮 sbt 失败记录；PINMISSING 仍触发失败，确认未放宽其规则。Test 参数入口源码 JAR SHA256 `354de5e110cbe312449047a8d1f732bdc2c994e8ba0673c579b2a7292fb19139`，本地只读副本 `/tmp/flow-t01-b02-20261005/t01-chisel-7.0.0-sources.jar`。本地 shell 语法和 `git diff --check` 通过，只是静态检查。
 
-单元实施：新增 `backend/IntMduProtocol.scala`、`multiplier/CommittedMulUnit.scala`、`divider/CommittedDivUnit.scala`。MUL 四级 product/op/rd/valid/committed，A01 整体 enable，最老未提交 commit、先 commit 后 kill、结果保持。DIV 复用原样 unsigned radix-4，fast 1 拍 done、occupied 保持直到 write/合法 kill、release/accept 隔拍。旧后端暂时使用旧 wrapper，第 4 步再接线删除；没有在第 2 步提前改后端。
+单元实施：新增 `backend/IntMduProtocol.scala`、`multiplier/MulUnit.scala`、`divider/CommittedDivUnit.scala`。MUL 四级 product/op/rd/valid/committed，A01 整体 enable，最老未提交 commit、先 commit 后 kill、结果保持。DIV 复用原样 unsigned radix-4，fast 1 拍 done、occupied 保持直到 write/合法 kill、release/accept 隔拍。旧后端暂时使用旧 wrapper，第 4 步再接线删除；没有在第 2 步提前改后端。
 
 B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 500 请求、五 op 各 100，commit 延迟 0–6 拍、result 反压 0–9 拍；DIV seed `0x702` 512 请求、八操作各 64，commit 延迟 0–39 拍、反压 0–9 拍；U01 seed `0x703` 1000 个连续 65-bit 请求，对原样 SignedMul65x65 和独立 BigInt。通过后的实际循环台账分别为 MUL 500 req/commit/write、0 kill；DIV 512 req/commit/write、0 kill；等价性 1000 req/commit/write、0 kill。四级占满定向用例最大占用 4、未提交 P4 停住 9 拍，先 commit 后 kill 丢弃其余项，已提交项再反压/kill 8 拍不丢；DIV 定向用例最大占用 1、早 done 等 commit 9 拍，再反压/kill 7 拍。另覆盖四个 MUL 级的 kill、复位在途、连续 8 个不同 rd MUL 的 II=1/四拍、DIV 迭代中 kill、早 done 未提交 kill/reset。原 SignedMul65x65 的 50k 检查原样运行通过。
 
@@ -505,7 +505,7 @@ PDR 和串行 runner 已终止，远端进程检查确认没有剩余求解器�
 
 | 旧检查（源:行） | 新检查（源:行） | 结果 |
 | --- | --- | --- |
-| `multiplier/RiscvMulUnitSpec.scala:23-64`：旧 wrapper 三拍数据/flush；完整路径均为 `design/src/test/scala/` | `multiplier/RiscvMulUnitSpec.scala:26-40,56-71`：统一 req，补 commit，四拍 result 和未提交 kill；同五种 op 的原输入/期望值原样，kill 用例 7×9 原样 | 2/2 PASS |
+| `multiplier/MulUnitSpec.scala:23-64`：旧 wrapper 三拍数据/flush；完整路径均为 `design/src/test/scala/` | `multiplier/MulUnitSpec.scala:26-40,56-71`：统一 req，补 commit，四拍 result 和未提交 kill；同五种 op 的原输入/期望值原样，kill 用例 7×9 原样 | 2/2 PASS |
 | `divider/RiscvDivUnitSpec.scala:25-65`：原 req/脉冲完成观测 | `divider/RiscvDivUnitSpec.scala:30-70`：统一 req，在接收后补 commit，改 result 观测；四组输入/期望值及 `cycles < 33` 容差原样；原文件实际没有 flush 测例，新增 kill 用例另在协议 suite | 1/1 PASS |
 
 没有删除任何旧 RTL 字段、旧 wrapper、参照单元或测试；只做上述获准驱动/观测迁移并增加检查。旧后端完成断言和旧 wrapper 内断言也保留，第 4 步再按冻结稿迁移/删除。没有改已有期望值、随机次数、深度或 assume。

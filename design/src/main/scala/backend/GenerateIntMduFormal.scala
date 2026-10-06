@@ -3,11 +3,11 @@ package flow.backend
 import chisel3._
 import chisel3.util._
 import _root_.circt.stage.ChiselStage
-import flow.multiplier.CommittedMulUnit
+import flow.multiplier.MulUnit
 import flow.divider.CommittedDivUnit
 
 /** Formal-only observations; the production unit interfaces are unchanged. */
-class FormalMulProbe extends CommittedMulUnit {
+class FormalMulProbe extends MulUnit {
   val state = IO(Output(new Bundle {
     val live = UInt(3.W)
     val authorized = UInt(3.W)

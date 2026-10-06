@@ -17,7 +17,7 @@
 | 浮点 busy | f0–f31 全部有效；同一置位/清位生命周期。[backend-pipeline-design.md§5] |
 | 来源 | busy 对应项记录 L1D/DIV/MUL/FPU 的 2 bit 来源，仅 busy 有效时读取。[backend-rtl-spec.md§2.1][自定] |
 | EX/MEM/WB | valid、真正发射资格、类别、rd bank/index，保留普通数据、PC、异常、CSR、预测和 trace 侧带；未提交长延迟目的由级间检查覆盖。[backend-rtl-spec.md§1–3] |
-| MUL | 使用 `CommittedMulUnit`，P1–P4 各 valid/committed/rd/op/product；P4 不离开则四级全部停止；不加输出级。[backend-rtl-spec.md§7] |
+| MUL | 使用 `MulUnit`，P1–P4 各 valid/committed/rd/op/product；P4 不离开则四级全部停止；不加输出级。[backend-rtl-spec.md§7] |
 | DIV | 使用 `CommittedDivUnit`，保留 unsigned radix-4；occupied/committed/done/rd/result；释放后下一拍才 ready。[backend-rtl-spec.md§8] |
 | FPU 表 | 32 项，tag 宽度 5；每项仅 valid、committed、rd、isFp，无 data/flags；循环 allocate/commitCursor 指针决定发射/提交顺序。[tasks/V1-BE-backend-spec-and-rtl.md§2.1][自定] |
 | FPU killDrain | 一个控制位；WB kill 后暂停新 FP 接收直到 CVFPU busy=0，防止被作废但尚未返回的 tag 被复用。[V1-BE-B01-ruling§3/ND01] |

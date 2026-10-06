@@ -16,7 +16,7 @@
 
 | 回归编号 | 已找到的源码位置 | 可复用范围 / 新合同 |
 | --- | --- | --- |
-| R-MUL | `design/src/test/scala/multiplier/RiscvMulUnitSpec.scala:23-64`；`design/src/test/scala/multiplier/SignedMul65x65Spec.scala:178-270,287-413` | wrapper 旧3拍/flush迁移为4拍/commit/kill/保持（R/Q15已批准）；旧 SignedMul65x65 及全部测试原样保留，五种算术结果继续验证 |
+| R-MUL | `design/src/test/scala/multiplier/MulUnitSpec.scala:23-64`；`design/src/test/scala/multiplier/SignedMul65x65Spec.scala:178-270,287-413` | wrapper 旧3拍/flush迁移为4拍/commit/kill/保持（R/Q15已批准）；旧 SignedMul65x65 及全部测试原样保留，五种算术结果继续验证 |
 | R-DIV | `design/src/test/scala/divider/RiscvDivUnitSpec.scala:25-65`；`design/src/test/scala/divider/UnsignedRadix4DividerSpec.scala:43-89` | 原unsigned算术/flush检查保留；按A03迁移：驱动在req.fire后补commit，原flush用例改为对未提交项发killUncommitted；向量/期望/次数不变；新增快结果测试，不删检查 |
 | R-BE | `design/src/test/scala/backend/BreezeBackendMulSpec.scala:61-92`；`design/src/test/scala/backend/BreezeBackendDivSpec.scala:70-128` | 按A03迁移：观测点从MDU memWbValid时的wbData改为该rd的后台写回事件（或写回后RF值）；向量/期望/次数不变，不伪造WB数据 |
 | R-REDIR | `design/src/test/scala/backend/BreezeRedirectPrioritySpec.scala:133-210` | 保留WB fault/xRET/satp与年轻分支/访存/sfence/flush同拍检查；新增单元取消及老后台存活 |
