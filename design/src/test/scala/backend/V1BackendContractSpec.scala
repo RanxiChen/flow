@@ -359,8 +359,13 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     m.values(64)=mask; m.run(Seq(ld(10,64),addi(11,0,1)),5)
     m.misses += BigInt(0)
     val p=m.run(Seq(ld(1,0),mdu(2,10,11,true),fp(1,10,11,div=true))++Seq.fill(20)(add(20)),85)
-    val c=p.drop(3).map(m.at("commit",_)); consecutive(c)
-    c.last must be < Seq(m.written(1),m.written(2),m.written(1,true)).min
+    // Contract P06: (1) overlap, (2) gaps only at x1/x2 background GPR writes, one cycle each, (3) one write each.
+    val c=p.drop(3).map(m.at("commit",_))
+    val bg=Seq(m.written(1),m.written(2),m.written(1,true))
+    c.head must be < bg.min
+    val gaps=(c.head to c.last).filterNot(c.contains).toSet
+    gaps mustBe Seq(m.written(1),m.written(2)).filter(w=>w>c.head && w<c.last).toSet
+    c.sliding(2).foreach(q=> if(q.size==2) (q(1)-q(0)) must be <= 2)
     m.d.io.observe.gprBusy.expect(0.U); m.d.io.observe.fprBusy.expect(0.U)
   }}
   "P07_FPU_out_of_order_flags_OR" in { check() { m =>

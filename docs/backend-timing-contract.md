@@ -1,6 +1,6 @@
 # Breeze v1 后端拍数与重叠合同
 
-状态：**冻结**（2026-10-06 用户确认；同日 B01 裁定修订 T12、T13、T15、T19，新增 T21、T22，见 [`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得修改**；测不过只能改 RTL。认为某行与微架构文档推导不符时，停下报告（附推导），不得自行改期望值。
+状态：**冻结**（2026-10-06 用户确认；同日 B01 裁定修订 T12、T13、T15、T19，新增 T21、T22；P06 改为可测量的三条，见 [`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得修改**；测不过只能改 RTL。认为某行与微架构文档推导不符时，停下报告（附推导），不得自行改期望值。
 
 依据：[`backend-pipeline-design.md`](backend-pipeline-design.md)、[`backend-rtl-spec.md`](backend-rtl-spec.md)（T01 冻结稿）、[`l1d-rtl-spec.md`](l1d-rtl-spec.md)。
 
@@ -56,7 +56,7 @@
 | P03 | DIV 后台：一条常规 DIV（≥20 拍迭代）后跟 20 条不相关 ADD | 20 条 ADD 在 DIV 写回之前全部提交，且 `commit` 连续（每拍一条） |
 | P04 | hit-under-miss：Load A miss（拍 E），随后 Load B（他行命中，E+1）、Store C（他行命中，E+2）、10 条 ALU | B 的 Done 在 E+3、C 的 Done 在 E+4；B、C 与 10 条 ALU 都在 A 的 `late.fire` 之前提交 |
 | P05 ※ | miss 同行停住：P04 之后 Load D 访问 A 的行 | D 在 WB 收 `s2Hold` 直到 A 回放完成；D 的 Done = R+10（A 回放 S2 在 R+7，MSHR 当拍空闲，D 于 R+8 重进 S0） |
-| P06 | 后台三路并存：Load miss（x1）、常规 DIV（x2）、FDIV.D（f1）先后提交，随后 20 条不依赖它们的 ALU | 20 条 ALU 连续提交，不等任何一路后台结果；三路结果各写一次，记分板最终全 0 |
+| P06 | 后台三路并存：Load miss（x1）、常规 DIV（x2）、FDIV.D（f1）先后提交，随后 20 条不依赖它们的 ALU | ① 重叠：第 1 条 ALU 的 `commit` 早于三路结果中最早的一次写回；② 不停顿：20 条 ALU 的 `commit` 每拍一条，唯一允许的空拍是落在其间的 x1/x2 后台 GPR 写回拍（饥饿保护气泡），即空拍集合 = 落在首末 ALU commit 之间的 `gprWrite(x1)`/`gprWrite(x2)` 拍集合，每个空拍恰 1 拍；FDIV 写 FPR 不产生空拍；③ 三路结果各写一次，记分板最终全 0。不要求 20 条 ALU 全部早于后台写回（FDIV 延迟由 CVFPU 决定） |
 | P07 | FPU 乱序返回：`fdiv.d f1,..` 后紧跟 `fadd.d f2,..`（不相关） | `fadd` 在 fdiv 未完成时发射；`fprWrite(f2) < fprWrite(f1)`；两者 fflags 都累积 |
 | P08 | FPU 吞吐：8 条独立 `fmadd.d` | `fpu.in fire` 连续 8 拍（在途表容量不得成为瓶颈） |
 | P09 | 中断不等后台：常规 DIV 已提交在算，此时置中断 | 中断在未提交流水排空后立即接受，接受拍早于 DIV 的 `gprWrite`；DIV 结果照常写回 |
