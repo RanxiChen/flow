@@ -337,6 +337,8 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
     ): BreezeCoreSimTandemResult = {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
+        val lateEvents = mutable.ArrayBuffer.empty[LateRegisterEvent]
+        val pendingTrace = new V1PendingTrace
 
         implicit val temporary: HasTestingDirectory =
             HasTestingDirectory.temporary(deleteOnExit = true)
@@ -468,7 +470,9 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                               memAlignedAddr = tandem.memAlignedAddr.peek().litValue,
                               memRData = tandem.memRData.peek().litValue,
                               memWData = tandem.memWData.peek().litValue,
-                              memWMask = tandem.memWMask.peek().litValue
+                              memWMask = tandem.memWMask.peek().litValue,
+                              rdPending = tandem.rdPending.peek().litToBoolean,
+                              rdIsFp = tandem.rdIsFp.peek().litToBoolean
                             )
                             exitAddress.foreach { address =>
                                 if (event.memEn && event.memIsWrite &&
@@ -478,14 +482,24 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                                       (event.memWData >> shift) & BreezeCoreSimSupport.Mask32)
                                 }
                             }
+                            pendingTrace.commit(event)
                             commitEvents += event
                             if (logMode == TandemLogMode.RawCommit) {
                                 println(RawCommitEventLogFormatter.format(cycleCount, event))
                             }
                         }
+                        if (tandem.lateWriteValid.peek().litToBoolean) {
+                            val late = LateRegisterEvent(cycleCount, tandem.lateWriteIsFp.peek().litToBoolean,
+                                tandem.lateWriteRd.peek().litValue.toInt, tandem.lateWriteData.peek().litValue,
+                                tandem.lateWriteError.peek().litToBoolean)
+                            pendingTrace.complete(late)
+                            lateEvents += late
+                            if (logMode == TandemLogMode.RawCommit) println(s"[LATE] $late")
+                        }
                     }
                 }
             }
+            if (collectTandemTrace) pendingTrace.finish()
 
             result = BreezeCoreSimResult(
               cycleCount = cycleCount,
@@ -494,7 +508,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             )
         }
 
-        BreezeCoreSimTandemResult(result = result, commitEvents = commitEvents.toSeq)
+        BreezeCoreSimTandemResult(result = result, commitEvents = commitEvents.toSeq, lateEvents = lateEvents.toSeq)
     }
 }
 

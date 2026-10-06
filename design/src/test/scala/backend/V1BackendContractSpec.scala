@@ -39,7 +39,6 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   val misses = mutable.Set.empty[BigInt]
   val faults = mutable.Set.empty[BigInt]
   var returnDelay = 30
-  var forceLateAt: Option[Int] = None
   var drained = true
   var mmuIdle = true
   var randomHold = false
@@ -88,7 +87,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
       case None => d.io.fetchBuffer.valid.poke(false.B)
     }
     d.io.mmuIdle.poke(mmuIdle.B); d.io.machineSoftwareInterrupt.poke(softwareInterrupt.B)
-    val lateAt = pending.map { case (_,r) => forceLateAt.getOrElse(r+7) }
+    val lateAt = pending.map { case (_,r) => (r+7) }
     val lateValid = lateAt.exists(cycle >= _)
     d.io.l1d.late.valid.poke(lateValid.B)
     pending.foreach { case (q,_) =>
@@ -96,9 +95,9 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
       d.io.l1d.late.bits.data.poke(values(q.addr).U); d.io.l1d.late.bits.error.poke(false.B)
     }
     val blockedLine = s2.exists(q => pending.exists { case (a,r) =>
-      (q.addr>>5)==(a.addr>>5) && cycle <= forceLateAt.getOrElse(r+7)
+      (q.addr>>5)==(a.addr>>5) && cycle <= (r+7)
     })
-    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => forceLateAt.getOrElse(r+7)+3 }
+    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => (r+7)+3 }
     val retry = s2.nonEmpty && retryAt.exists(cycle < _)
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
@@ -243,8 +242,9 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     m.all("late") mustBe Seq(r+7); m.written(1) mustBe r+7; m.at("id",p(1)) mustBe r+7
   }}
   "T12_WB_wins_late_without_hold" in { check() { m =>
-    m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
-    val n=m.cycle+3; m.forceLateAt=Some(n)
+    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
+    for(_ <- 0 until 4) m.issue(nop)
+    val n=m.cycle+3
     val p=m.run(Seq(add(2),nop),12)
     m.at("commit",p.head) mustBe n; m.written(2) mustBe n
     m.all("late") mustBe Seq(n+1); m.all("hold") mustBe empty
@@ -254,14 +254,14 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     // DIV takes 32 real arithmetic cycles. MUL E+4 and CLASSIFY's
     // committed return E+3 are aligned to it; L1D replay is scheduled at N.
     m.enableFp(); m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
-    m.misses += BigInt(32); m.issue(ld(1,32))
+    m.returnDelay=26; m.misses += BigInt(32); m.issue(ld(1,32))
     val div=m.issue(mdu(2,10,11,true))
     val e=m.cycle // DIV's EX is this cycle
     for(_ <- 0 until 29) m.issue(nop)
     val mul=m.issue(mdu(3,0,0))
     val classify=(BigInt(0x71)<<25)|(BigInt(1)<<12)|(BigInt(4)<<7)|0x53
     val fpPc=m.issue(classify)
-    val n=e+34; m.forceLateAt=Some(n)
+    val n=e+34
     m.run(Seq.fill(8)(nop),35)
     val ws=(1 to 4).map(m.written(_)); ws mustBe Seq(n,n+1,n+2,n+3)
     m.at("commit",div) must be < m.written(2); m.at("fpIn",fpPc) mustBe m.at("ex",fpPc)
@@ -305,16 +305,17 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     m.all("xlatBlock") must contain allElementsOf (m.at("ex",p)+2 to r)
   }}
   "T21_ID_single_bubble_bounds_starvation" in { check() { m =>
-    m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 5) m.issue(add(20))
-    val c=m.cycle; m.forceLateAt=Some(c); m.run(Seq.fill(16)(add(20)),15)
+    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 9) m.issue(add(20))
+    val c=m.cycle; m.run(Seq.fill(16)(add(20)),15)
     m.all("late") mustBe Seq(c+6)
     val leaves=m.all("id").filter(x=>x>=c && x<=c+6)
     leaves mustBe (c to c+6).filter(_!=c+3)
     m.all("conflict").filter(_>=c) mustBe (c until c+6)
   }}
   "T22_B01_miss_ADD_hit_response_alignment" in { check() { m =>
-    m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
-    val n=m.cycle+3; m.forceLateAt=Some(n); val p=m.run(Seq(add(2),ld(3,64),nop),15)
+    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
+    for(_ <- 0 until 4) m.issue(nop)
+    val n=m.cycle+3; val p=m.run(Seq(add(2),ld(3,64),nop),15)
     m.at("commit",p(0)) mustBe n; m.written(2) mustBe n
     m.at("commit",p(1)) mustBe n+1; m.written(3) mustBe n+1
     m.events.filter(e=>e.kind=="resp" && e.rd==3).map(_.cycle).toSeq mustBe Seq(n+1)

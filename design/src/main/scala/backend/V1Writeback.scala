@@ -71,7 +71,7 @@ class V1Writeback extends Module {
   rd.isFp := (selected(0) && io.late.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
   rd.idx := Mux1H(selected, Seq(io.late.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
   val data = Mux1H(selected, Seq(io.late.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
-  val error = selected(0) && io.late.bits.error
+  val error = io.late.valid && io.late.bits.error
   val fatal = RegInit(false.B)
   when(error) { fatal := true.B }
   io.hartFatal := fatal || error

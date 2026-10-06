@@ -259,6 +259,13 @@ class TracePayload(val VLEN: Int = 64) extends Bundle {
     val memRData = UInt(VLEN.W)
     val memWData = UInt(64.W)
     val memWMask = UInt(8.W)
+    val rdPending = Bool()
+    val rdIsFp = Bool()
+    val lateWriteValid = Bool()
+    val lateWriteIsFp = Bool()
+    val lateWriteError = Bool()
+    val lateWriteRd = UInt(5.W)
+    val lateWriteData = UInt(64.W)
 }
 
 /** Simulation/debug view of one blocking L1D transaction.

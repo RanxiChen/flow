@@ -558,6 +558,13 @@ class BreezeBackend(
     t.estop := wb.estop
     t.rdWriteEn := wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U
     t.rdAddr := wb.rd.idx; t.rdData := wbData
+    t.rdPending := wbCommit && wbLong && wb.writes && (wb.rd.isFp || wb.rd.idx =/= 0.U)
+    t.rdIsFp := wb.rd.isFp
+    t.lateWriteValid := writeback.io.clear.valid
+    t.lateWriteIsFp := writeback.io.clear.bits.isFp
+    t.lateWriteRd := writeback.io.clear.bits.idx
+    t.lateWriteData := Mux(writeback.io.clear.bits.isFp, writeback.io.fprWrite.bits.data, writeback.io.gprWrite.bits.data)
+    t.lateWriteError := io.l1d.late.fire && io.l1d.late.bits.error
     t.memEn := wb.mem; t.memAddr := wb.address
     t.memAlignedAddr := wb.address & "hfffffffffffffff8".U
     t.memIsWrite := wb.mem && !wb.load

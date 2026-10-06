@@ -23,7 +23,7 @@ final case class CommitUpdate(
 object RawCommitEventParser {
     def toCommitUpdate(event: RawCommitEvent): CommitUpdate = {
         val regWrite =
-            if (event.rdWriteEn && event.rdAddr != 0) Some(RegWrite(event.rdAddr, event.rdData))
+            if (event.rdWriteEn && !event.rdPending && !event.rdIsFp && event.rdAddr != 0) Some(RegWrite(event.rdAddr, event.rdData))
             else None
 
         val memRead =
