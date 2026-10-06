@@ -65,6 +65,33 @@ class BackendBehaviorSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.d.io.l1d.req.bits.size.expect(3.U)
     for(_ <- 0 until 8) m.step()
   }}
+  "adjacent sstatus FS enable authorizes the following native FP load" in { check { m =>
+    m.values(0) = BigInt("3ff0000000000000",16)
+    m.issue(addi(30,0,1))
+    m.issue((BigInt(13)<<20)|(BigInt(30)<<15)|(BigInt(1)<<12)|(BigInt(30)<<7)|0x13)
+    m.issue(csr(0,0x100,30)); m.issue(ld(1,0,true))
+    for (_ <- 0 until 20) m.step()
+    m.writes(1,true).map(_.data).toSeq mustBe Seq(BigInt("3ff0000000000000",16))
+  }}
+  "a CSR read supplies the immediately following SC store operand" in { check { m =>
+    m.run(Seq(addi(10,0,0x55),csr(0,0x340,10)),6)
+    m.issue(csr(5,0x340))
+    m.issue((BigInt(3)<<27)|(BigInt(5)<<20)|(BigInt(3)<<12)|(BigInt(6)<<7)|0x2f)
+    m.d.io.l1d.req.valid.expect(true.B)
+    m.d.io.l1d.req.bits.op.expect(L1DOp.SC); m.d.io.l1d.req.bits.wdata.expect(0x55.U)
+    m.d.io.l1d.req.bits.vaddr.expect(0.U)
+    for (_ <- 0 until 10) m.step()
+  }}
+  for ((funct5, op) <- Seq(2 -> L1DOp.LR, 3 -> L1DOp.SC, 0 -> L1DOp.AMO)) {
+    s"native atomic funct5=$funct5 uses rs1 without an instruction-bit offset" in { check { m =>
+      m.run(Seq(addi(1,0,0x100),addi(2,0,0x55)),6)
+      val rs2 = if(funct5 == 2) 0 else 2
+      m.issue((BigInt(funct5)<<27)|(BigInt(rs2)<<20)|(BigInt(1)<<15)|(BigInt(3)<<12)|(BigInt(3)<<7)|0x2f)
+      m.d.io.l1d.req.valid.expect(true.B); m.d.io.l1d.req.bits.op.expect(op)
+      m.d.io.l1d.req.bits.vaddr.expect(0x100.U)
+      for (_ <- 0 until 10) m.step()
+    }}
+  }
   for (second <- Seq(false,true)) {
     s"fetch fault secondParcel=$second keeps EPC at instruction start and selects access before page fault" in { check { m =>
       m.instructionAccessFault=true; m.instructionPageFault=true; m.faultSecondParcel=second

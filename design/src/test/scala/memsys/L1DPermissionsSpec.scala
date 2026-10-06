@@ -10,7 +10,7 @@ import flow.mmu.sv39._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class L1DPermissionHarness extends Module {
+class L1DPermissionHarness(killOnFault: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val core = new L1DCoreIO
     val ptw = Flipped(new PtwMemIO)
@@ -20,6 +20,10 @@ class L1DPermissionHarness extends Module {
   val cache = Module(new L1DCache(BreezeMemGeometry.singleCore))
   val mmu = Module(new Sv39Mmu)
   cache.io.core <> io.core; cache.io.ptw <> io.ptw
+  if (killOnFault) {
+    cache.io.core.s2Kill := io.core.s2Kill ||
+      (cache.io.core.resp.valid && cache.io.core.resp.bits.kind === L1DRespKind.Exc)
+  }
   cache.io.tlb <> mmu.io.dtlb
   mmu.io.csr.sv39 := io.core.csr.satp(63,60) === 8.U
   mmu.io.csr.asid := io.core.csr.satp(59,44); mmu.io.csr.rootPpn := io.core.csr.satp(43,0)
@@ -76,6 +80,11 @@ class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
   "64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM" in {
     simulate(new L1DPermissionHarness) { d => init(d); fault(d,BigInt("180000000",16),L1DOp.Load,5); fault(d,BigInt("180000000",16),L1DOp.Store,7) }
+  }
+  "WB fault cancellation cannot combinationally suppress the fault that generated it" in {
+    simulate(new L1DPermissionHarness(killOnFault = true)) { d =>
+      init(d); fault(d, BigInt("180000000",16), L1DOp.Store, 7)
+    }
   }
   "MPRV selects MPP for PMP instead of bypassing protection as M-mode" in {
     simulate(new L1DPermissionHarness) { d => init(d,false); d.io.core.csr.mprv.poke(true.B); fault(d,BigInt("80000000",16),L1DOp.Load,5) }

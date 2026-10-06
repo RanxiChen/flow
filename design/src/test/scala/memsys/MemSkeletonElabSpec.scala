@@ -3,6 +3,9 @@ package flow.memsys
 import chisel3._
 import circt.stage.ChiselStage
 import flow.config.BreezeMemGeometry
+import flow.bus._
+import flow.coherence.CoherenceParams
+import flow.top.{BreezeCluster, BreezeClusterWishbone}
 import flow.l1d.L1DCache
 import flow.l2.L2Home
 import flow.l1i.{L1ICache, L1IClient, L1IParams, FetchTlbClient}
@@ -18,6 +21,18 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
     "stress" -> BreezeMemGeometry.stress)
 
   for ((name, g) <- geometries) {
+    s"BreezeCluster elaborates ($name)" in {
+      ChiselStage.emitSystemVerilog(new BreezeCluster(g), firtoolOpts = Array("-disable-all-randomization"))
+    }
+    s"BreezeClusterWishbone elaborates with DMA ($name)" in {
+      ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(g, withDma = true), firtoolOpts = Array("-disable-all-randomization"))
+    }
+    s"DMA and AXI bridges elaborate ($name)" in {
+      val p = CoherenceParams(g)
+      ChiselStage.emitSystemVerilog(new DmaWishboneClient(g), firtoolOpts = Array("-disable-all-randomization"))
+      ChiselStage.emitSystemVerilog(new Axi4WishboneBridge(Axi4Params(32,64,p.slotBits)), firtoolOpts = Array("-disable-all-randomization"))
+      ChiselStage.emitSystemVerilog(new Axi4LiteArbiter(g.nCores), firtoolOpts = Array("-disable-all-randomization"))
+    }
     s"L1ICache elaborates ($name)" in {
       ChiselStage.emitSystemVerilog(new L1ICache(L1IParams(g)), firtoolOpts = Array("-disable-all-randomization"))
     }
@@ -30,6 +45,10 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
     s"L2Home elaborates ($name)" in {
       ChiselStage.emitSystemVerilog(new L2Home(g), firtoolOpts = Array("-disable-all-randomization"))
     }
+  }
+  "AXI-Lite bridge and cluster without DMA elaborate" in {
+    ChiselStage.emitSystemVerilog(new Axi4LiteWishboneBridge, firtoolOpts = Array("-disable-all-randomization"))
+    ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(BreezeMemGeometry.singleCore), firtoolOpts = Array("-disable-all-randomization"))
   }
   "FetchTlbClient elaborates" in {
     ChiselStage.emitSystemVerilog(new FetchTlbClient, firtoolOpts = Array("-disable-all-randomization"))

@@ -274,7 +274,11 @@ class BreezeBackend(
   val exNext = Mux(taken, jau.io.jmp_addr, ex.pc + ex.instLen)
   val fpImm = Mux(exFp.isStore, Cat(Fill(52, ex.inst(31)), ex.inst(31,25), ex.inst(11,7)),
     Cat(Fill(52, ex.inst(31)), ex.inst(31,20)))
-  val address = exR1 + Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm)
+  // RV64A carries no address immediate (Decoder selects CONST0). Preserve
+  // rs1 exactly; funct5/rs2 bits must not become an I/S offset at this port.
+  val atomicAddress = ex.ctrl.mem_op === BreezeMemOp.Lr || ex.ctrl.mem_op === BreezeMemOp.Sc ||
+    ex.ctrl.mem_op === BreezeMemOp.Amo
+  val address = exR1 + Mux(atomicAddress, 0.U, Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm))
   val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped && !deferredWait
   io.l1d.req.valid := exMem && allowEx
   val req = io.l1d.req.bits
