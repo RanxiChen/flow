@@ -105,6 +105,7 @@ class BreezeBackend(
   val sleeping = RegInit(false.B)
   val stopped = RegInit(false.B)
   val sfenceSent = RegInit(false.B)
+  val deferredLoad = RegInit(false.B)
   val nextPc = RegInit(0.U(64.W))
   val wbKill = Wire(Bool())
   val exAdvance = Wire(Bool())
@@ -180,8 +181,8 @@ class BreezeBackend(
   writeback.io.mul <> mulUnit.io.result
   writeback.io.fp <> fpUnit.io.result
   io.hartFatal := writeback.io.hartFatal
-  regFile.io.rs1_addr := rs1
-  regFile.io.rs2_addr := rs2
+  regFile.io.rs1_addr := Mux(deferredLoad, ex.rs1_addr, rs1)
+  regFile.io.rs2_addr := Mux(deferredLoad, ex.rs2_addr, rs2)
   regFile.io.rd_en := writeback.io.gprWrite.valid
   regFile.io.rd_addr := writeback.io.gprWrite.bits.idx
   regFile.io.rd_data := writeback.io.gprWrite.bits.data
@@ -237,8 +238,23 @@ class BreezeBackend(
       !mem.mem && !mem.mul && !mem.div && !mem.fp && mem.csrCmd === CSR_CMD.NOP.U && addr === mem.rd.idx
     Mux(fromMem, mem.data, Mux(fromWb, wbData, saved))
   }
-  val exR1 = exRead(ex.rs1_addr, ex.rs1_data)
-  val exR2 = exRead(ex.rs2_addr, ex.rs2_data)
+  val exGpr1Used = Mux(exFp.valid, exFp.usesGpr1,
+    ex.ctrl.sel_alu1 === SEL_ALU1.RS1.U || ex.ctrl.bru_inst ||
+      ex.ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ex.ctrl.is_sfence_vma)
+  val exGpr2Used = !exFp.valid && (ex.ctrl.sel_alu2 === SEL_ALU2.RS2.U || ex.ctrl.bru_inst ||
+    ex.ctrl.mem_op === BreezeMemOp.Store || ex.ctrl.mem_op === BreezeMemOp.Sc || ex.ctrl.mem_op === BreezeMemOp.Amo)
+  val bypassMissWait = cfg.loadUseBypass.B && ex.valid && wbMiss && wb.load && !wb.rd.isFp && wb.rd.idx =/= 0.U &&
+    ((exGpr1Used && ex.rs1_addr === wb.rd.idx) || (exGpr2Used && ex.rs2_addr === wb.rd.idx))
+  val deferredBusy = (exGpr1Used && scoreboard.io.gprBusy(ex.rs1_addr)) ||
+    (exGpr2Used && scoreboard.io.gprBusy(ex.rs2_addr))
+  val deferredWait = bypassMissWait || (deferredLoad && deferredBusy)
+  // A bypass-enabled dependent of a miss stays in EX. Reuse the two RF read
+  // ports while ID is closed; capture write-through into existing EX operands.
+  // No background-result-to-EX mux or extra result storage is added.
+  val exR1 = Mux(deferredLoad, regFile.io.rs1_data, exRead(ex.rs1_addr, ex.rs1_data))
+  val exR2 = Mux(deferredLoad, regFile.io.rs2_data, exRead(ex.rs2_addr, ex.rs2_data))
+  when(bypassMissWait) { deferredLoad := true.B }
+  when(deferredLoad && !deferredBusy || wbKill) { deferredLoad := false.B }
   alu.io.alu_op := ex.ctrl.alu_op
   alu.io.is_w := ex.ctrl.is_w
   alu.io.alu_in1 := MuxLookup(ex.ctrl.sel_alu1, 0.U)(Seq(
@@ -259,7 +275,7 @@ class BreezeBackend(
   val fpImm = Mux(exFp.isStore, Cat(Fill(52, ex.inst(31)), ex.inst(31,25), ex.inst(11,7)),
     Cat(Fill(52, ex.inst(31)), ex.inst(31,20)))
   val address = exR1 + Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm)
-  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped
+  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped && !deferredWait
   io.l1d.req.valid := exMem && allowEx
   val req = io.l1d.req.bits
   req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
@@ -419,7 +435,7 @@ class BreezeBackend(
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
   io.fetchBuffer.ready := exAdvance && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !serialInFlight && !deferredLoad && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || branchRedirect) { ex.valid := false.B }
@@ -542,7 +558,7 @@ class BreezeBackend(
   io.observe.gprBusy := scoreboard.io.gprBusy
   io.observe.fprBusy := scoreboard.io.fprBusy
   io.observe.memHold := downHold
-  io.observe.exHold := downHold || resourceWait
+  io.observe.exHold := downHold || resourceWait || deferredWait
   io.observe.grant := writeback.io.grant
   io.observe.fpIn := fpUnit.io.req.fire
   io.observe.fpOut := fpUnit.io.result.fire

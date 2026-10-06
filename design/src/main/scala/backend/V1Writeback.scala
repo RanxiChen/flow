@@ -89,6 +89,12 @@ class V1Writeback extends Module {
   io.clear.bits := rd
   io.fpFlags.valid := selected(3)
   io.fpFlags.bits := io.fp.bits.flags
+  val pastActive = RegNext(!reset.asBool, false.B)
+  val wasLateBlocked = RegNext(io.late.valid && !io.late.ready, false.B)
+  val heldLate = RegNext(io.late.bits.asUInt)
+  when(pastActive && !reset.asBool && wasLateBlocked) {
+    assert(io.late.valid && io.late.bits.asUInt === heldLate, "[V1 S07] stalled late result changed")
+  }
   when(!reset.asBool) {
     assert(PopCount(selected) <= 1.U, "[V1 S06] background grants not one-hot")
     assert(!io.gprWrite.valid || io.gprWrite.bits.idx =/= 0.U, "[V1 S01] physical x0 write")

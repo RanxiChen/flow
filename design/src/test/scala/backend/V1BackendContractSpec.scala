@@ -50,6 +50,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   private var pending: Option[(V1Request,Int)] = None // metadata/refill, single MSHR
   private var retryAt: Option[Int] = None
   var lateStored = false
+  private var lateData: Option[BigInt] = None
   def bool(x: Bool): Boolean = x.peek().litToBoolean
   def uint[T <: Data](x: T): BigInt = x.peek().litValue
   def record(k: String, p: BigInt = 0, r: Int = -1, data: BigInt = 0): Unit = events += V1Event(cycle,k,p,r,data)
@@ -92,7 +93,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     d.io.l1d.late.valid.poke(lateValid.B)
     pending.foreach { case (q,_) =>
       d.io.l1d.late.bits.rd.idx.poke(q.rd.U); d.io.l1d.late.bits.rd.isFp.poke(q.fp.B)
-      d.io.l1d.late.bits.data.poke(values(q.addr).U); d.io.l1d.late.bits.error.poke(false.B)
+      d.io.l1d.late.bits.data.poke(lateData.getOrElse(values(q.addr)).U); d.io.l1d.late.bits.error.poke(false.B)
     }
     val blockedLine = s2.exists(q => pending.exists { case (a,r) =>
       (q.addr>>5)==(a.addr>>5) && cycle <= (r+7)
@@ -111,7 +112,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
       d.io.l1d.resp.bits.kind.poke(if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
       d.io.l1d.resp.bits.data.poke(values(q.addr).U)
       d.io.l1d.resp.bits.excCause.poke(13.U); d.io.l1d.resp.bits.tval.poke(q.addr.U)
-      if (!hold && miss) allocated = Some(q -> (cycle+returnDelay))
+      if (!hold && miss) allocated = Some(q -> (cycle+(if(randomHold) 1+rng.nextInt(40) else returnDelay)))
     }
     d.io.l1d.req.ready.poke((!hold).B)
     val reqAddr = uint(d.io.l1d.req.bits.vaddr)
@@ -147,14 +148,14 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind))
     val lateFire = lateValid && bool(d.io.l1d.late.ready)
     if(lateFire) record("late",r=pending.get._1.rd)
-    if(lateValid && !lateFire) lateStored = true
+    if(lateValid && !lateFire) { lateStored = true; if(lateData.isEmpty) lateData=Some(values(pending.get._1.addr)) }
     if(pending.exists(_._2==cycle)) record("rspData")
     val kill = bool(d.io.l1d.s2Kill)
     d.clock.step()
     ps = if(s2.exists(q=>q.op==1) && !hold && !kill) s2 else None
     if(kill) { s1=None; s2=None; retryAt=None }
     else if(!hold) { s2=s1; s1=newReq; retryAt=None }
-    if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false }
+    if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false; lateData=None }
     if(allocated.nonEmpty && !kill) { pending=allocated; misses -= allocated.get._1.addr }
     cycle += 1
     accepted
@@ -389,4 +390,20 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     (1 to 13).foreach(r=>m.writes(r).size mustBe 1)
     m.d.io.observe.gprBusy.expect(0.U)
   }}
+  "S02b_optional_bypass_miss_keeps_dependent_in_EX" in { check(true) { m =>
+    m.misses += BigInt(0); m.values(0)=23
+    val p=m.run(Seq(ld(1,0),add(2,1,1),add(3,2)),65)
+    m.writes(2).head.data mustBe 46; m.writes(3).head.data mustBe 46
+    m.written(2) must be > m.written(1)
+    m.all("hold") mustBe empty
+  }}
+  "S01_S08_f0_and_cross_bank_RAW_WAW" in { check() { m =>
+    m.enableFp(); m.values(256)=BigInt("3ff0000000000000",16)
+    val p=m.run(Seq(ld(0,256,true), fp(1,0,0), fp(2,1,toGpr=true),
+      (BigInt(0x69)<<25)|(BigInt(2)<<15)|(BigInt(2)<<20)|(BigInt(2)<<7)|0x53),40)
+    m.writes(0,true).size mustBe 1; m.writes(1,true).head.data mustBe BigInt("4000000000000000",16)
+    m.writes(2).head.data mustBe 2; m.writes(2,true).head.data mustBe BigInt("4000000000000000",16)
+    m.d.io.observe.gprBusy.expect(0.U); m.d.io.observe.fprBusy.expect(0.U)
+  }}
+
 }
