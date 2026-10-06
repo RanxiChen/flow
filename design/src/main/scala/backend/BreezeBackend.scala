@@ -155,9 +155,9 @@ class BreezeBackend(
   val wbMiss = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Mshr
   val wbMemExc = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Exc
   val wbExc = wb.valid && (wb.exception || wbMemExc)
-  val serialWait = wb.valid && ((wb.fencei && !io.l1d.drained) ||
+  val serialWait = wb.valid && !wb.exception && ((wb.fencei && !io.l1d.drained) ||
     (wb.sfence && (!sfenceSent || !io.mmuIdle)) ||
-    (wb.estop && (scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.busy)))
+    (wb.estop && (scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.committedFlagsOnly)))
   val downHold = io.l1d.s2Hold || serialWait
   val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
   wbCommit := wbCanLeave && !wbExc
