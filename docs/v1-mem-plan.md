@@ -9,7 +9,7 @@
 | 1 | RTL 骨架：L1D、L2 的流水级、阵列、寄存器、状态机、协议 Bundle；能 elaborate；功能留 `TODO` | Claude | 完成：五种几何配置均能 elaborate（`MemSkeletonElabSpec`） |
 | 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 已提交，最终接口提交 `71f4988`；报告 [`tasks/V1-MEM-interfaces-report.md`](tasks/V1-MEM-interfaces-report.md) |
 | 3 | 审核接口 | Claude | 未记录独立审核结论；当前原生 cluster 已接 Backend/L1D/MMU/L2 |
-| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | 第一批 RTL 实现见 [`tasks/MEM-load-store-rtl-report.md`](tasks/MEM-load-store-rtl-report.md)；单核测试已写（L1D+行为 L2、L2+Scala L1D、L1D+L2 端到端），未编译未运行，任务书 [`tasks/MEM-single-core-tests.md`](tasks/MEM-single-core-tests.md) |
+| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | 第一批 RTL 实现见 [`tasks/MEM-load-store-rtl-report.md`](tasks/MEM-load-store-rtl-report.md)；单核测试已写；首轮 Alan `aae9158` 编译通过，L1D 1/22、L2 11/12、骨架 37/37、权限 5/5；L1D 掩码写入生成语义与 L2 单 set 地址拼接失败，端到端前置门槛未满足。报告 [`tasks/MEM-single-core-tests-report.md`](tasks/MEM-single-core-tests-report.md)，任务书 [`tasks/MEM-single-core-tests.md`](tasks/MEM-single-core-tests.md) |
 | 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude | 黄金内存、协议检查行为模型、看门狗已写（`memsys/MemTestKit.scala`、`MemAgents.scala`）；多核 SWMR 监视器待第 6 步 |
 | 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | |
 | 7 | 一边改一边完善状态机，消化 `TODO`，spec 随之更新 | 共同 | 第一批普通 Load/Store 与 L2 槽主流程已写；原子路径及功能验证待完成 |
