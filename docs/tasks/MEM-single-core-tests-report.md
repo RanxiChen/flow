@@ -1,6 +1,6 @@
-# MEM 单核测试：首轮执行与失败归因
+# MEM 单核测试：执行、测试修复与失败归因
 
-日期：2026-10-06。按用户“先跑一遍、判断语义/RTL/测试错误”的范围，完成编译修复、完整单测首轮和一次冷 load 波形复现。功能失败仍保留；本轮未修改 RTL、规格、测试期望、断言、随机规模或 watchdog。端到端按任务书的前置门槛未运行。
+日期：2026-10-06。首轮按用户“先跑一遍、判断语义/RTL/测试错误”完成编译修复、完整单测和冷 load 波形复现。第二轮按“先修测试”修复驱动与最终检查，详见末节。两轮均未修改生产 RTL、规格、黄金期望、RTL 断言、随机规模或 watchdog；端到端前置门槛仍未满足。
 
 ## 版本、环境与命令
 
@@ -72,9 +72,9 @@ L2 其余 8 个 directed、seed 31/32 随机、四路 smoke 均通过。本轮�
 
 证据：`l2-stress-primary-sources/`、U1 日志及保存的 XML 报告。
 
-## 尚未推进到的测试语义与覆盖问题
+## 首轮静态发现的测试语义与覆盖问题
 
-以下是源码检查发现的测试模型问题，不冒充已经触达并归因的功能失败，也未据此改期望：
+以下是首轮源码检查发现的测试模型问题，不冒充已经触达并归因的功能失败，也未据此改期望。前两项已在第二轮修复；升级 WAIT 场景仍被早期 RTL 错误挡住：
 
 - `BehavioralL2.probeAfterGrant` 在 `sample()` 消费 grant 后才 enqueue probe，实际 SNP 最早下一次 `drive()` 才 valid。名为“grant 同拍 probe”的用例当前制造的是下一拍 probe；需要按 L1D spec §10.2 的同边沿条件加强驱动。
 - `CoreDriver.idle` 不含 `core.drained`。Store Mshr 在 resp 后被标为 done；行为 L2 在发送 grant 后可能已 idle，而真实 DUT 仍在 install/replay/PS。`Bench.quiesce()` 只额外走固定 4 拍，不能作为 DUT store-miss 已 drain 的保证。后续结束写回/读回前应按 L1D spec §6.2、§11 等待真实 drain；不能靠扩大固定延时掩盖问题。
@@ -96,3 +96,47 @@ L1D 唯一通过的是 blocking MMIO 用例。其余 21 项全部失败：15 项
 随机 RTL assert 的时间是模拟器日志时间单位，不伪称为 Bench 拍号。R1 已缩小到一个无随机反压的冷 load；seed 22 的后续数据错误尚未单独缩小，不能假设解决 tag mask 后全部 21 项都会通过。没有删除、跳过或降低任何失败检查。
 
 下一轮的直接入口是先修 R1 的掩码写入并复测冷 load/字节 store，再修 R2 的三处行地址重建，然后重跑完整 L1D/L2 门槛；两者都通过后才运行系统 spec。本报告仅是首轮模块仿真与归因，不是单核功能闭环、全核/多核、时序、PPA、FPGA 或软件运行证明。
+
+## 第二轮：只修测试
+
+用户范围为“先修测试，把测试修好”。最终测试代码提交为 `c7a3c4b97b292d8d07817da5a93f56ed5763b6fa`，包含 `142ed2d` 的驱动/收尾修复及 `a7f5a03` 的 probe/store 回归。生产源码相对首轮 `aae9158` 无改动。
+
+### 改动、规格依据及验证范围
+
+| 修复 | 依据 | 独立验证 / 真实 DUT 验证 |
+| --- | --- | --- |
+| 行为 L2 在 `drive` 中同时呈现 grant 与预定 SNP，记录两者握手拍；真实 L1D directed 用例新增拍号相等检查 | L1D §10.1–10.2，同边沿接受 probe 后必须等 grant 安装/回放完成 | wire-only peer 分别验证 Inv/Down 同拍 valid、SNP 反压时保持字段，以及 ready=1 时两条链路同边沿握手；真实 L1D 用例仍可能在 late 黄金比较提前失败，不能报其后续机制已通过 |
+| `CoreDriver.idle` 增加 `drained && !mmioBusy`，不再只看 Scala 请求队列 | L1D §1.1、§6.2、§9、§11；store Mshr 的响应早于安装/PS 完成 | 独立 peer 在 store Mshr 响应后延迟 18 拍才 drained，确认 `quiesce` 等到真实信号；另验证 MMIO busy 会阻止 idle；未增加固定延时或 watchdog |
+| AXI 内存的 R/B 已拉高 valid 后持续保持到 ready 握手；随机气泡只决定何时首次呈现下一 beat/响应 | coherence/L2 §7 的 AXI4 内存接口及 valid/ready 保持约束；§9 实际 L2 的 R/B ready 恒为 1 | 独立 peer 拉低 R/B ready，首次 valid 后把新 valid 概率设为 0，确认当前 valid、ID、data、resp、last 不撤回；握手后恢复随机气泡并完成四 beat |
+| REQ 稳定性检查覆盖 op、addr、id、mask、data 全部字段 | coherence/L2 §1.3、§8、§10 | 独立负向用例分别篡改 stalled mask/data，必须触发原有协议检查；没有放宽字段要求 |
+| Scala L1D 在同行 probe 待处理或 Ack 未握手期间不启动新的本地 store/acquire/evict | L1D §10.1 的 probe 行数据稳定要求及 coherence/L2 §1.3 的 Ack 保持要求 | 独立 peer 以 DownAck 反压阻止同行 store，检查原脏数据保持，Ack 后才 GetM/AckE 和写入；L2 随机种子验证综合交互 |
+| 三个 spec 的公共 wrapper 在成功完成 body 后必调 `finish`；L2 增加所有 `arch.touched` 行经 DMA 读回的精确比较 | 原任务书 §1 的结束检查契约；L1D §10.3，coherence/L2 §5.2 的 Read/Down 与脏数据合并 | L1D Inv 全部模型持有行后比较 arch/backing 修改行的全部字节；L2/系统 DMA 检查全部写过的行。body 已失败时保留第一现场，不用清理错误掩盖它；系统仅编译，未运行 |
+
+没有修改任何黄金值或放宽测试期望。原有显式 `finish` 仍保留，便于在测试 body 内检查 probe 结果；公共收尾保证遗漏显式调用的成功用例也会检查。
+
+中间版本 `142ed2d` 的额外四路 L2 超时也作为测试错误保留：seed=42、cycle=7951，GetM 尚未被接受，Scala L1D 却把同行 sharer Inv 等待条件改成“必须 getAccepted”，导致 REQ 等 SNP、SNP 等 REQ。按 coherence/L2 §1.4，SNP 不能依赖尚未接受的 REQ；最终 `c7a3c4b` 恢复 Scala 代理原有 sharer Inv 前进规则。没有改真实 L1D SEND/WAIT 语义，也没有把用户指定的 WAIT directed 场景改成 SEND 场景。
+
+证据根：Alan `/home/chen/FUN/flow-runs/20261006-mem-tests-fix-142ed2d/`；cwd `/home/chen/FUN/flow/design`，同首轮工具环境。`01-agents.log/.exit` 为中间版 8/8 独立驱动回归，exit=0；`02-unit.log/.exit` 为中间版 53/76、23 fail，exit=1，包含上述模型超时。二者均绑定 `142ed2ded48db0e98e790b89201571d0d585fdd2`，不混入最终结果。
+
+最终命令（同已推送的 `c7a3c4b`）：
+
+```sh
+sbt "testOnly flow.memsys.MemAgentsSpec flow.memsys.L1DCacheSpec flow.memsys.L2HomeSpec flow.memsys.MemSkeletonElabSpec flow.memsys.L1DPermissionsSpec"
+```
+
+最终 F1 结果：
+
+| spec | 通过 / 总数 | 命令退出码 | 证据 |
+| --- | --- | --- | --- |
+| MemAgentsSpec | 9 / 9 | 同批 F1 = 1 | `03-final-c7a3c4b.log`、`final-test-reports/` |
+| L1DCacheSpec | 1 / 22 | 同批 F1 = 1 | 同上 |
+| L2HomeSpec | 11 / 12 | 同批 F1 = 1 | 同上 |
+| MemSkeletonElabSpec | 37 / 37 | 同批 F1 = 1 | 同上 |
+| L1DPermissionsSpec | 5 / 5 | 同批 F1 = 1 | 同上 |
+| L1DL2SystemSpec | 未运行（源码已编译） | 无 | 仍遵守 §3.5，L1D/L2 尚未全部通过 |
+
+总计 85 个测试，63 通过、22 失败，0 aborted/canceled/ignored/pending；组合命令退出码 1，保存在 `03-final-c7a3c4b.exit`。每个 spec 的数字来自同一 F1，不能把通过的 spec 记成单独命令 exit=0。运行前后 Alan 均为精确 `c7a3c4b`、tracked 工作区干净；运行后无本轮 sbt/仿真进程残留。GitHub 直接 HTTPS 连接故障后使用仅本次 SSH 会话的 SOCKS 转发完成 fetch，未更改仓库代理配置。
+
+四路 L2 seed=42 的中间模型死锁已消失；默认 seed=31/32、四路 smoke 及新增最终 DMA 收尾均通过。L2 仍仅 stress seed=41 在 cycle=13 返回错行，与首轮 R2 相同。L1D 仍仅 MMIO 通过；冷 load 的 cycle=141 实际/期望值、stress seed=22 的 cycle=128 错误及 seed=11/12/13、两路 seed=21 的 tag 断言均与首轮一致，21 个失败用例保留。真实 grant/probe 同拍、升级 WAIT 等后续场景仍会被早期 RTL 故障挡住，独立驱动回归通过不等于这些真实缓存机制已通过。
+
+本轮完成的是测试设施修复与 Alan 模块复测。已知 RTL R1/R2 留待下一步，不能把当前 22 项失败说成已通过，也不能据此证明真实单核端到端功能。

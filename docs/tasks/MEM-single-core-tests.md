@@ -9,6 +9,7 @@
 | `MemTestKit.scala` | 黄金内存（确定性背景值 + 按行写历史）、`CycleAgent`、`Bench`（drive → decide → sample → step，无进展看门狗 4000 拍） |
 | `MemHarness.scala` | `IdentityTlb`（恒等映射，可注入 busy/miss/pageFault）、`L1DTestHarness`（L1D 单独）、`L1DL2Harness`（L1D + L2Home，单核） |
 | `MemAgents.scala` | `CoreDriver`（按后端语义驱动 `L1DCoreIO`，含 s1Kill/s2Kill）、`PtwDriver`、`BehavioralL2`（按协议第 1 节检查 L1D 侧全部规则）、`AxiLiteDevice`、`AxiMemory`、`ReadClientAgent`（L1I/DMA）、`L1DProxy`（Scala L1D，供 L2 单测） |
+| `MemAgentsSpec.scala` | 不含 cache RTL 的 wire-only peer：独立验证同拍 grant/probe、反压保持、真实 drain 等待、完整 REQ 稳定性检查及 probe/store 顺序 |
 | `L1DCacheSpec.scala` | L1D + 行为 L2：hit/miss 全尺寸、store hit/miss、S→M 升级、victim 与写回、hit-under-miss、单 MSHR 等待、kill、probe（Inv/Down/未持有）、grant 同拍 probe 压住、升级中 sharer Inv、refill 错误、MMIO、异常、TLB miss、PTW、FENCE、随机 3 种子 + 两组非默认几何 |
 | `L2HomeSpec.scala` | L2Home + Scala L1D/L1I/DMA + AXI 内存：冷 miss、Put、Down 合并、MaskWrite（持有/未缓存）、L2 驱逐 probe 与写回、AXI 读错误、两槽并发、随机 2 种子 + stress 单 set 与 4 路 |
 | `L1DL2SystemSpec.scala` | 真实 L1D + L2 端到端：读写、两级驱逐、L1I/DMA 拉脏数据、DMA 写失效、PTW/MMIO、随机 2 种子 + 三组非默认几何 |
@@ -17,8 +18,22 @@
 
 ## 2. 运行
 
+先运行驱动回归，避免 cache 的早期 RTL 错误挡住测试设施本身的验证：
+
 ```
-sbt "testOnly flow.memsys.L1DCacheSpec flow.memsys.L2HomeSpec flow.memsys.L1DL2SystemSpec flow.memsys.MemSkeletonElabSpec flow.memsys.L1DPermissionsSpec"
+sbt "testOnly flow.memsys.MemAgentsSpec"
+```
+
+再按 §3.5 分阶段运行现有模块与系统测试：
+
+```
+sbt "testOnly flow.memsys.L1DCacheSpec flow.memsys.L2HomeSpec flow.memsys.MemSkeletonElabSpec flow.memsys.L1DPermissionsSpec"
+```
+
+L1D/L2 都通过后才运行：
+
+```
+sbt "testOnly flow.memsys.L1DL2SystemSpec"
 ```
 
 ## 3. 规则
