@@ -1,6 +1,35 @@
 # V1-MEM：扫描现有代码，补 L1D/L2 外部接口（交给 codex）
 
-分支 `feat/v1-mem-skeleton`。工作目录用单独的 worktree（例如 `git worktree add ../flow-mem-codex feat/v1-mem-skeleton`），不要在后端分支的工作区里切换分支。先读 [`docs/v1-mem-plan.md`](../v1-mem-plan.md)。
+**开始条件**：V1-BE 已完成（`docs/tasks/V1-BE-report.md` 记录完整后端合同结果）。先把 `feat/v1-mem-skeleton` 合并进 `feat/pcie-fase-20260920`，本任务在合并后的后端分支上做。合并冲突预计只出现在 `config`：保留两边内容，`BreezeMemGeometry` 暂不挂入 `BreezeClusterConfig`（见第 6 项）。先读 [`docs/v1-mem-plan.md`](../v1-mem-plan.md)。
+
+## 0. 先做：命名清理与删除旧实现
+
+v1 是覆盖式重构。规则：
+
+1. 新模块用功能名，不加 `V1`、`Committed`、`New`、`Legacy` 这类区分新旧的词。
+2. 新旧重名时**删旧的**，新的用原名。
+3. 旧测试跟着旧模块一起删；不保留让旧测试跑在新 RTL 上的适配层。
+4. `Breeze` 前缀是项目名，不动；也不给新模块补加。
+
+| 现在 | 改为 / 动作 |
+| --- | --- |
+| `backend/V1Scoreboard`、`V1Writeback`、`V1BackendObservation` | `Scoreboard`、`Writeback`、`BackendObservation`；内部 `V1LongSource`、`V1FpEntry`、`V1Request`、`V1Event` 等全部去掉前缀 |
+| `multiplier/CommittedMulUnit` | `MulUnit`；删除 `RiscvMulUnit`（无引用） |
+| `divider/CommittedDivUnit` | `DivUnit`；删除 `RiscvDivUnit`（无引用） |
+| `fpu/CommittedFpUnit` | `FpUnit`；删除旧阻塞包装 `BreezeFpUnit` 及其测试；`FlowFpnewWrapper.sv` 去掉只给旧包装用的 response 缓存路径 |
+| `cache/BreezePLRU` | 删除，统一用 `mmu/sv39/TreePlru` |
+| 测试 `V1*Spec`、`Committed*Spec` | 同名去前缀（如 `ScoreboardSpec`、`MulUnitSpec`）；合同测试名仍以合同行 ID 开头 |
+| `test/.../V1LegacyTestAdapter` 及依赖它的旧测试 | 删除。旧测试覆盖的行为若在新 RTL 上仍有效，就作为新测试直接写在新接口上；否则删除 |
+| 打印标记 `[V1-CYCLE]`、断言文本 `"[V1 Sxx] ..."` | 改为 `[CYCLE]`、`"[Sxx] ..."`；测试台匹配这些字符串的地方同步修改 |
+| 注释里的 "v1"、"old"、"legacy" | 说明当前行为的保留，只为区分新旧的删除 |
+| `cache/BreezeDCache`、`cache/BreezeL2Home`、`cache/Coherence.scala`、`top/BreezeMulticoreClusterWishbone` 及其测试 | 第 3 项新集群 `top/BreezeCluster` 能 elaborate 后删除，同一提交里一起删 |
+| `cache/BreezeCache`（现 L1I） | 第 2 项改造成一致性 Read 客户端后，按功能改名为 `l1i/L1ICache`，删除旧文件 |
+
+要求：
+- 改名用 `git mv`，保留历史；每一类改名单独提交，提交信息写明对应关系。
+- 改名后全量 `sbt test` 的通过数不少于改名前（删掉的旧测试除外，在报告里逐个列出删除理由）；冻结检查必须 OK。
+- `docs/backend-v1-rtl-spec.md` 等非冻结文档里的类名同步更新；冻结文件不改（合同只用行 ID，不含类名）。
+- 为避免重复：删除前用 `git grep -w` 确认已无引用，并把结果写进报告。
 
 ## 目标
 
@@ -22,6 +51,6 @@
 ## 规则
 
 - 不改 `interface/L1DCoreIO.scala` 和冻结文件（`python3 tools/frozen_check.py` 必须 OK）。
-- 每次提交前都跑一遍 `testOnly flow.memsys.MemSkeletonElabSpec`，必须全部通过；新增的模块加入该测试。
+- 第 0 项完成后，每次提交前都跑一遍 `testOnly flow.memsys.MemSkeletonElabSpec`，必须全部通过；新增的模块加入该测试。
 - 接口位宽、方向、拍关系拿不准的，写进报告，不要猜。
 - 报告写到 `docs/tasks/V1-MEM-interfaces-report.md`，内容包括：每个接口点的现有代码位置（文件:行）、改了什么、仍未解决的冲突、命令和日志路径。

@@ -7,7 +7,7 @@
 | # | 内容 | 负责 | 状态 |
 | --- | --- | --- | --- |
 | 1 | RTL 骨架：L1D、L2 的流水级、阵列、寄存器、状态机、协议 Bundle；能 elaborate；功能留 `TODO` | Claude | 完成：五种几何配置均能 elaborate（`MemSkeletonElabSpec`） |
-| 2 | 扫描现有代码，补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 任务书 [`tasks/V1-MEM-interfaces.md`](tasks/V1-MEM-interfaces.md) |
+| 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 任务书 [`tasks/V1-MEM-interfaces.md`](tasks/V1-MEM-interfaces.md) |
 | 3 | 审核接口 | Claude | |
 | 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | |
 | 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude | 与第 4 步并行 |
