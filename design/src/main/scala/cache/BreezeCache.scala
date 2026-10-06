@@ -6,78 +6,9 @@ import flow.interface._
 import _root_.circt.stage.ChiselStage
 import flow.config.DefaultICacheConfig
 import flow.mem.flowSRAM
+import flow.mmu.sv39.TreePlru
 import flow.platform.{BreezeMcuPlatform, PMAAccessType, PMAChecker}
 import svsim.CommonCompilationSettings.Timescale.Unit.s
-
-object BreezePLRU {
-    /**
-      * LRU替换算法的实现，输入是当前cache line的valid位向量和PLRU位向量
-      * 目前是硬编码到 4-ways
-      * @param valid_vec
-      * @param plru_vec
-      * @param cfg
-      * @return (new_valid_vec,new plru_vec,wb_en_OH)
-      *            b0
-      *         /     \
-      *       b1       b2
-      *      /  \     /  \
-      *    w0    w1 w2    w3
-      */
-    def replace_way_select(valid_vec:UInt,plru_vec:UInt):(UInt,UInt,UInt) ={
-        //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
-        val num_ways = 4
-        val old_valid_vec = valid_vec(num_ways-1,0)
-        val old_plru_vec = plru_vec(num_ways-2,0)
-        val replace_way_OH = WireDefault(0.U(num_ways.W))
-        val new_valid_vec = WireDefault(old_valid_vec)
-        val b0 = old_plru_vec(2)
-        val b1 = old_plru_vec(1)
-        val b2 = old_plru_vec(0)
-        when(old_valid_vec.andR === false.B){
-          //有无效的way，直接替换
-          replace_way_OH := PriorityEncoderOH(~old_valid_vec)
-          new_valid_vec := old_valid_vec | replace_way_OH
-        }.otherwise{
-          //无无效的way，需要从PLRU中选择
-          new_valid_vec := old_valid_vec
-          when(b0 === false.B){
-            //左边的更久未使用，选择左边
-            when(b1 === false.B){
-                //w0更久未使用，选择w0
-                replace_way_OH := "b0001".U
-                }.otherwise{
-                //w1更久未使用，选择w1
-                replace_way_OH := "b0010".U
-            } 
-          }.otherwise{
-            //右边的更久未使用，选择右边
-            when(b2 === false.B){
-                //w2更久未使用，选择w2
-                replace_way_OH := "b0100".U
-            }.otherwise{
-                //w3更久未使用，选择w3
-                replace_way_OH := "b1000".U
-            }
-          } 
-        }
-        //更新PLRU位，选择的路的父节点都要更新为最近使用
-        val new_plru_vec = WireDefault(old_plru_vec)
-        when(replace_way_OH(0) === true.B){
-            //选择了w0
-            new_plru_vec := true.B ## true.B ## old_plru_vec(0)
-        }.elsewhen(replace_way_OH(1) === true.B){
-            //选择了w1
-            new_plru_vec := true.B ## false.B ## old_plru_vec(0)
-        }.elsewhen(replace_way_OH(2) === true.B){
-            //选择了w2
-            new_plru_vec := false.B ## old_plru_vec(1) ## true.B
-        }.elsewhen(replace_way_OH(3) === true.B){
-            //选择了w3
-            new_plru_vec := false.B ## old_plru_vec(1) ## false.B
-        }
-        (new_valid_vec, new_plru_vec, replace_way_OH)
-    }
-}
 
 class BreezeCacheDebugIO(vlen: Int) extends Bundle {
     val s0_valid = Output(Bool())
@@ -292,7 +223,11 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val s2_replace_way = RegInit(0.U(log2Ceil(cacheConfig.ICACHE_WAY_NUM).W))
     //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
     val s2_entry_meta = metaReg(s2_index)
-    val (new_valid_vec, new_plru_vec, wb_en_OH) = BreezePLRU.replace_way_select(s2_entry_meta(3,0),s2_entry_meta(6,4))
+    val validWays = s2_entry_meta(3, 0)
+    val victim = Mux(!validWays.andR, PriorityEncoder(~validWays), TreePlru.victim(s2_entry_meta(6, 4), 4))
+    val wb_en_OH = UIntToOH(victim, 4)
+    val new_valid_vec = validWays | wb_en_OH
+    val new_plru_vec = TreePlru.touch(s2_entry_meta(6, 4), victim, 4)
     // 暂存控制信号
     val s2_new_valid_vec = Reg(UInt(4.W))
     val s2_new_plru_vec = Reg(UInt(3.W))

@@ -1,6 +1,7 @@
 package flow.cache
 
 import chisel3._
+import flow.mmu.sv39.TreePlru
 import chisel3.util._
 import flow.config.DefaultDCacheConfig
 import flow.interface._
@@ -105,13 +106,7 @@ class BreezeDCache(
     Cat(plru, dirty, excl, valid)
 
   /** Mark `way` as most-recently-used in a 3-bit tree-PLRU. */
-  private def touchWay(plru: UInt, way: UInt): UInt =
-    MuxLookup(way, plru)(Seq(
-      0.U -> Cat(1.U(1.W), 1.U(1.W), plru(0)),
-      1.U -> Cat(1.U(1.W), 0.U(1.W), plru(0)),
-      2.U -> Cat(0.U(1.W), plru(1), 1.U(1.W)),
-      3.U -> Cat(0.U(1.W), plru(1), 0.U(1.W))
-    ))
+  private def touchWay(plru: UInt, way: UInt): UInt = TreePlru.touch(plru, way, ways)
 
   val io = IO(new Bundle {
     val cpu = Flipped(new BackendMemIO(cfg.VLEN))
@@ -352,9 +347,11 @@ class BreezeDCache(
   val hit = wayHit.asUInt.orR
   val hitWay = OHToUInt(wayHit.asUInt)
 
-  val (newValidVec, newPlruVec, victimOH) =
-    BreezePLRU.replace_way_select(validOf(metaReg(setIndex)), plruOf(metaReg(setIndex)))
-  val victimWay = OHToUInt(victimOH)
+  val victimWay = Mux(!validOf(metaReg(setIndex)).andR,
+    PriorityEncoder(~validOf(metaReg(setIndex))), TreePlru.victim(plruOf(metaReg(setIndex)), ways))
+  val victimOH = UIntToOH(victimWay, ways)
+  val newValidVec = validOf(metaReg(setIndex)) | victimOH
+  val newPlruVec = TreePlru.touch(plruOf(metaReg(setIndex)), victimWay, ways)
   val victimIsValid = validOf(metaReg(setIndex))(victimWay)
 
   val readSelectBase = MuxLookup(reqSizeLog2, "hff".U(8.W))(Seq(
