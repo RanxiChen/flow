@@ -73,7 +73,12 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   private def withSys(g: BreezeMemGeometry = BreezeMemGeometry.singleCore, seed: Int = 1)(body: Env => Unit): Unit =
-    simulate(new L1DL2Harness(g)) { d => init(d); body(new Env(d, g, seed)) }
+    simulate(new L1DL2Harness(g)) { d =>
+      init(d)
+      val env = new Env(d, g, seed)
+      body(env)
+      env.finish()
+    }
 
   "loads and stores through the real L2 read each line from memory once and match the golden memory" in withSys() { e =>
     import e._

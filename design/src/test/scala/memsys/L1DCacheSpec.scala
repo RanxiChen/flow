@@ -62,7 +62,12 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   private def withL1D(g: BreezeMemGeometry = BreezeMemGeometry.singleCore, seed: Int = 1)(body: Env => Unit): Unit =
-    simulate(new L1DTestHarness(g)) { d => init(d); body(new Env(d, g, seed)) }
+    simulate(new L1DTestHarness(g)) { d =>
+      init(d)
+      val env = new Env(d, g, seed)
+      body(env)
+      env.finish()
+    }
 
   "load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW" in withL1D() { e =>
     import e._
@@ -227,6 +232,10 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     l2.probeAfterGrant(line(r3)) = SnpOp.Down
     runOps(CoreOp.store(r3, 0x99))
     (l2.acks.last._2, l2.acks.last._3, l2.acks.last._4) mustBe (("DownAck", line(r3), true))
+    for (a <- Seq(r1, r2, r3)) {
+      val l = line(a)
+      l2.probes.find(_._3 == l).get._1 mustBe l2.grants.find(_._3 == l).get._1
+    }
     val gets = l2.gets.size
     runOps(CoreOp.load(r3), CoreOp.load(r1))
     l2.gets.size mustBe gets + 1

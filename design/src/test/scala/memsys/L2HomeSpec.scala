@@ -29,6 +29,14 @@ class L2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val l2Stride: BigInt = BigInt(CoherenceParams(g).l2Sets) * LineBytes
     def line(off: BigInt): BigInt = lineOf(MainRam + off)
     def settle(): Unit = bench.quiesce()
+    def finish(): Unit = {
+      settle()
+      val before = dma.results.size
+      for (l <- arch.touched.toSeq.sorted) dma.pending += ClientReq.read(l)
+      settle()
+      for ((_, q, data, _) <- dma.results.drop(before))
+        withClue(s"final line ${hex(q.line << 5)}: ") { data mustBe arch.line(q.line) }
+    }
   }
 
   private def init(d: L2Home): Unit = {
@@ -52,7 +60,12 @@ class L2HomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   private def withL2(g: BreezeMemGeometry = BreezeMemGeometry.singleCore, seed: Int = 1)(body: Env => Unit): Unit =
-    simulate(new L2Home(g)) { d => init(d); body(new Env(d, g, seed)) }
+    simulate(new L2Home(g)) { d =>
+      init(d)
+      val env = new Env(d, g, seed)
+      body(env)
+      env.finish()
+    }
 
   "cold GetS reads one AXI line and grants E; a clean Put keeps the line in L2" in withL2() { e =>
     import e._

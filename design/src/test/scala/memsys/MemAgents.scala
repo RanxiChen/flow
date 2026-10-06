@@ -189,7 +189,10 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     formatLoad(raw, o.size, o.signed, o.isFlw)
   }
 
-  def idle: Boolean = pending.isEmpty && presenting.isEmpty && inPipe.isEmpty && awaitingLate.isEmpty
+  // A store miss responds before install/replay/PS have completed (§6.2).
+  // The interface's drained indication, rather than a fixed delay, closes it.
+  def idle: Boolean = pending.isEmpty && presenting.isEmpty && inPipe.isEmpty && awaitingLate.isEmpty &&
+    drained && !core.mmioBusy.peek().litToBoolean
   override def describe: String =
     s"core: pending ${pending.size}, presenting $presenting, inPipe ${inPipe.mkString("; ")}, " +
       s"awaiting late ${awaitingLate.mkString("; ")}, drained $drained"
@@ -270,6 +273,7 @@ class BehavioralL2(coh: L1DCoherenceIO, val backing: GoldenMem, rng: Random) ext
   val held = mutable.Map.empty[BigInt, Char]
   val gets = ArrayBuffer.empty[(Long, String, BigInt)]
   val grants = ArrayBuffer.empty[(Long, String, BigInt)]
+  val probes = ArrayBuffer.empty[(Long, String, BigInt)]
   val puts = ArrayBuffer.empty[(Long, BigInt, Boolean)]
   val acks = ArrayBuffer.empty[(Long, String, BigInt, Boolean)]
 
@@ -285,7 +289,7 @@ class BehavioralL2(coh: L1DCoherenceIO, val backing: GoldenMem, rng: Random) ext
   private var upReady = false
   private var rspSent = false
   private var snpSent = false
-  private var stalledReq: Option[(BigInt, BigInt)] = None
+  private var stalledReq: Option[(BigInt, BigInt, BigInt, BigInt, BigInt)] = None
   private var stalledUp: Option[(BigInt, Boolean, BigInt, BigInt)] = None
 
   private val rspNames = Seq(RspDownOp.DataS -> "DataS", RspDownOp.DataE -> "DataE", RspDownOp.AckE -> "AckE",
@@ -315,6 +319,13 @@ class BehavioralL2(coh: L1DCoherenceIO, val backing: GoldenMem, rng: Random) ext
       coh.rspDown.bits.op.poke(x.op); coh.rspDown.bits.id.poke(0.U)
       coh.rspDown.bits.error.poke(x.error.B); coh.rspDown.bits.data.poke(x.data.U(256.W))
     }
+    // Drive SNP before this edge, alongside the grant, not after sampling it.
+    r.filterNot(x => enumIs(x.op, RspDownOp.PutAck)).foreach { x =>
+      probeAfterGrant.remove(x.line).foreach { op =>
+        check(snpOut.isEmpty && snpQ.isEmpty, "same-cycle grant/probe requested while SNP is busy")
+        probe(op, x.line)
+      }
+    }
     if (snpOut.isEmpty && snpQ.isEmpty && randomProbeProb > 0 && rng.nextDouble() < randomProbeProb) {
       val candidates = held.keys.filter(l => !getOut.contains(l) && !deferred.contains(l)).toSeq.sorted
       if (candidates.nonEmpty) {
@@ -337,14 +348,20 @@ class BehavioralL2(coh: L1DCoherenceIO, val backing: GoldenMem, rng: Random) ext
       else {
         getOut = None
         grants += ((now, rspName(r.op), r.line))
-        probeAfterGrant.remove(r.line).foreach(op => probe(op, r.line))
       }
       progress()
     }
-    if (snpSent && coh.snp.ready.peek().litToBoolean) { snpOut = Some(snpQ.dequeue()); progress() }
+    if (snpSent && coh.snp.ready.peek().litToBoolean) {
+      val s = snpQ.dequeue()
+      snpOut = Some(s)
+      probes += ((now, if (enumIs(s.op, SnpOp.Inv)) "Inv" else "Down", s.line))
+      progress()
+    }
 
     if (coh.req.valid.peek().litToBoolean) {
-      val sig = (coh.req.bits.op.peek().litValue, coh.req.bits.addr.peek().litValue)
+      val q = coh.req.bits
+      val sig = (q.op.peek().litValue, q.addr.peek().litValue, q.id.peek().litValue,
+        q.mask.peek().litValue, q.data.peek().litValue)
       stalledReq.foreach(s => check(s == sig, "REQ changed before acceptance"))
       check(coh.req.bits.id.peek().litValue == 0, "L1D REQ id must be 0")
       if (reqReady) { stalledReq = None; handleReq(sig._1, sig._2); progress() }
@@ -534,14 +551,16 @@ class AxiMemory(axi: Axi4MasterIO, val mem: GoldenMem, rng: Random) extends Cycl
     wReady = rng.nextDouble() < wReadyProb
     axi.ar.ready.poke(arReady.B); axi.aw.ready.poke(awReady.B); axi.w.ready.poke(wReady.B)
     val r = rq.headOption.filter(_.due <= now)
-    rValid = r.nonEmpty && rng.nextDouble() < rValidProb
+    // Random bubbles are allowed before asserting VALID; once asserted,
+    // VALID and the head beat remain held until READY accepts them.
+    rValid = rValid || (r.nonEmpty && rng.nextDouble() < rValidProb)
     axi.r.valid.poke(rValid.B)
     r.foreach { x =>
       axi.r.bits.id.poke(x.id.U); axi.r.bits.data.poke(((x.data >> (64 * x.beat)) & mask(64)).U(64.W))
       axi.r.bits.resp.poke((if (x.error && x.beat == 1) 2 else 0).U(2.W)); axi.r.bits.last.poke((x.beat == Beats - 1).B)
     }
     val b = bq.headOption.filter(_._1 <= now)
-    bValid = b.nonEmpty && rng.nextDouble() < bValidProb
+    bValid = bValid || (b.nonEmpty && rng.nextDouble() < bValidProb)
     axi.b.valid.poke(bValid.B)
     b.foreach { x => axi.b.bits.id.poke(x._2.U); axi.b.bits.resp.poke(0.U) }
   }
@@ -563,6 +582,7 @@ class AxiMemory(axi: Axi4MasterIO, val mem: GoldenMem, rng: Random) extends Cycl
       progress()
     }
     if (rValid && axi.r.ready.peek().litToBoolean) {
+      rValid = false
       val x = rq.head
       x.beat += 1
       if (x.beat == Beats) rq.dequeue()
@@ -577,7 +597,7 @@ class AxiMemory(axi: Axi4MasterIO, val mem: GoldenMem, rng: Random) extends Cycl
       check(axi.w.bits.last.peek().litToBoolean == (wbeats.size == Beats), "WLAST position")
       progress()
     }
-    if (bValid && axi.b.ready.peek().litToBoolean) { bq.dequeue(); progress() }
+    if (bValid && axi.b.ready.peek().litToBoolean) { bValid = false; bq.dequeue(); progress() }
     if (awq.nonEmpty && wbeats.size == Beats) {
       val (id, addr) = awq.dequeue()
       val data = wbeats.zipWithIndex.map { case (d, i) => d << (64 * i) }.reduce(_ | _)
@@ -699,7 +719,8 @@ class L1DProxy(port: L1DCoherenceIO, arch: GoldenMem, rng: Random) extends Cycle
   def evict(line: BigInt): Unit = script.enqueue(Evict(line))
   def state(line: BigInt): Char = lines.get(line).map(_._1).getOrElse('I')
 
-  private def busyLine(l: BigInt): Boolean = put.exists(_._1 == l) || get.exists(_.line == l)
+  private def busyLine(l: BigInt): Boolean = put.exists(_._1 == l) || get.exists(_.line == l) ||
+    probe.exists(_.line == l) || answer.exists(_._3 == l)
 
   private def doStore(s: Store): Unit = {
     val (st, data) = lines(s.line)
@@ -760,7 +781,8 @@ class L1DProxy(port: L1DCoherenceIO, arch: GoldenMem, rng: Random) extends Cycle
     // sharer Inv during an upgrade, which invalidates S at once.
     probe.foreach { pr =>
       val st = state(pr.line)
-      val upgradeInv = enumIs(pr.op, SnpOp.Inv) && st == 'S' && get.exists(_.line == pr.line)
+      val upgradeInv = enumIs(pr.op, SnpOp.Inv) && !pr.owner && st == 'S' && getAccepted &&
+        get.exists(g => g.line == pr.line && enumIs(g.op, ReqOp.GetM))
       val held = !upgradeInv && (get.exists(_.line == pr.line) || put.exists(_._1 == pr.line))
       if (answer.isEmpty && now >= pr.readyAt && !held) {
         if (st == 'E' || st == 'M') check(pr.owner, s"probe ${hex(pr.line << 5)} to an owner with owner=0")
