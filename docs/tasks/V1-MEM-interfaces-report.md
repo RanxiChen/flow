@@ -72,3 +72,15 @@
 `core/BreezePerformanceCounters.scala:53` 的现有 CSR 事件只提供 1–13：新 load_access|store_access→dcacheAccess，load_miss|store_miss→dcacheMiss，mmio_read|mmio_write→dcacheUncached，其他细分线从集群按 hart 引出，未擅自分配 CSR 编码。访问统计在 req.fire 还是不可撤销 S2 的计数口径，来源只列事件名、未写 kill 计数约定；报告保留当前入口口径供接口审阅。upgrade/probe hold/SC 失败/完整 hit-under-miss 的真实事件取决于内部 TODO，不把恒零的骨架条件声称为已覆盖行为。
 
 基线 CSR 参照测试把 11 当非法选择器，当前事件合同已为 1–13。参照模型更新为全部合法事件与 conflict=0/1/2，并保留非法 14、全宽非法值、随机写、显式写优先、inhibit 和 reset；未更改 RTL 或放宽期望。
+
+## 2. L1I 客户端与功能改名
+
+`cache/BreezeCache.scala` 用 git mv 改为 `l1i/L1ICache.scala`，对应测试改名保留 3 项；`frontend/BreezeFrontend.scala:88,111` 使用 L1ICache，几何由新 L1IParams 直接推导。取消缓存内 4 路硬编码，TreePlru 的 1 路/多路与 metadata 位宽均参数化；config.scala 保持不变。
+
+`l1i/L1IClient.scala` 是任务允许的独立 refill 接口模块：现有 frontend/L1ICache 单拍 demand refill → 保持到 fire 的 coherence.ReadClientIO。两个独立槽分别 id=0 demand、id=1 prefetch，REQ 只发 Read；RSP↓按 id 返回数据/错误，不加入目录 sharer。已发请求在 flush 后仍须消费返回，L1ICache 的 s2_flush_seen 决定丢弃安装，不在 coherence 中增加取消语义。PA 高位拒绝并回 error，避免回绕。REQ 选择寄存后不因新 demand 到来而替换已被反压的 prefetch。
+
+`l1i/FetchTlbClient.scala` 连接现有前端 Decoupled 翻译接口与独立 Sv39 iTLB：一次请求、下一拍响应，miss 后等待 req.ready 并重试，resp 在前端 ready 前保持；Fetch 的 PMP 使用当前特权，不使用 MPRV。它是当前前端与 MMU 的边界模块，不是旧后端测试兼容层。
+
+未补前端的下一行预取触发或预取安装策略：Read id=1 的发送/返回接口已经具备，但既有 L1ICache 仍只有 demand miss 安装入口；该策略缺少本任务要求的具体改造合同，报告保留给后续前端实现，不自行增加隐含预取队列。
+
+Alan `08-l1i-v2.log`：28/28，4 suites，退出 0。其中 MemSkeletonElabSpec 21/21（五种几何下新增 L1ICache/L1IClient，另 FetchTlbClient）、客户端 2/2（两个 ID、REQ 反压保持、乱序返回、error、高 PA）、缓存原回归 3/3、原并行 lookup 2/2。

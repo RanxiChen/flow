@@ -115,7 +115,7 @@ Because the literal mask used the minimum width of the constant instead of `PLEN
 
 ## Fix
 
-The fix has two parts in `design/src/main/scala/cache/BreezeCache.scala`:
+The fix has two parts in `design/src/main/scala/cache/L1ICache.scala`:
 
 1. Rework miss request pulse state around a transaction-level pulse condition:
 
@@ -147,7 +147,7 @@ Observed result:
 
 ## Related Files
 
-- `design/src/main/scala/cache/BreezeCache.scala`
+- `design/src/main/scala/cache/L1ICache.scala`
 - `design/src/main/scala/frontend/BreezeFrontend.scala`
 - `design/src/main/scala/core/BreezeCore.scala`
 - `design/src/test/scala/core/breezecoreSpec.scala`

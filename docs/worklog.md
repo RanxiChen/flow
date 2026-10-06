@@ -413,7 +413,7 @@ design/src/main/scala/frontend/BreezeFrontend.scala
 
 曾尝试同时让 ICache 在 `s2_done` 返回拍禁止接收新请求，但该临时修改使现有
 `BreezeFrontendSpec` 在早期 ready 时序断言处失败，已经在本地和远端全部撤销；
-`BreezeCache.scala` 当前没有未提交修改。
+`L1ICache.scala` 当前没有未提交修改。
 
 ### 新窗口继续位置
 
@@ -430,7 +430,7 @@ design/src/main/scala/frontend/BreezeFrontend.scala
 
 ### ICache refill 写入错误 set：根因、修复与复跑
 
-继续排查后已确认上述错位的根因位于 `BreezeCache` refill 写地址，而不是
+继续排查后已确认上述错位的根因位于 `L1ICache` refill 写地址，而不是
 Wishbone 返回数据或 ROM 镜像：
 
 - miss 进入 `s2` 后，`s2_vaddr` 正确保存了 outstanding miss 地址；
@@ -452,13 +452,13 @@ Wishbone 返回数据或 ROM 镜像：
 - 新增定向回归：先发起 `0x10000320` miss，再在 backpressure 期间把
   `dreq.bits` 改成 `0x100002c0`，验证 refill 后 0x320 在正确 set 命中并返回
   `0x00050913`，同时 0x2c0 仍为 miss；
-- 同时将旧 `BreezeCacheSpec` 的 `0x0` 取指地址更新为真实 boot ROM 地址，
+- 同时将旧 `L1ICacheSpec` 的 `0x0` 取指地址更新为真实 boot ROM 地址，
   因为 PMA 引入后 `0x0` 已应当返回 instruction access fault，不再是合法
   cache miss 测试地址。
 
 远端 `/home/chen/FUN/flow` 已完成以下实际验证：
 
-- `sbt "testOnly flow.cache.BreezeCacheSpec"`：3/3 通过；
+- `sbt "testOnly flow.cache.L1ICacheSpec"`：3/3 通过；
 - `sbt elaborate`：通过；
 - `sbt build`：通过；
 - Timer Direct：source cycle 1122，vector PC `0x10000080`，观察到 `mret` 和

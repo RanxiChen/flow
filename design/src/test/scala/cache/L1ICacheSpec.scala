@@ -5,22 +5,18 @@ import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import flow.config.DefaultICacheConfig
+import flow.l1i.{L1ICache, L1IParams}
 
-class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
-    val cfg = DefaultICacheConfig()
-    // 一些辅助函数
-    class refCache(val cacheConfig: DefaultICacheConfig){
-        ???
-    }
-    def sendCacheReq(dut: BreezeCache, vaddr: BigInt): Unit = {
+class L1ICacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
+    val cfg = L1IParams()
+    def sendCacheReq(dut: L1ICache, vaddr: BigInt): Unit = {
         dut.io.dreq.valid.poke(true.B)
         dut.io.dreq.bits.vaddr.poke(vaddr.U)
         dut.io.dreq.bits.paddr.poke(vaddr.U)
         println(s"[INFO] Sending request for vaddr: 0x${vaddr.toString(16)}")
     }
-    "BreezeCache should miss after reset" in {
-        simulate(new BreezeCache(cfg, enabledebug = true)){dut =>
+    "L1ICache should miss after reset" in {
+        simulate(new L1ICache(cfg, enabledebug = true)){dut =>
             var cycle_count = 0
             var s2Cycle = 0
             val lineBase = BigInt(0x10000000L)
@@ -131,8 +127,8 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
-    "BreezeCache should follow default flow after reset" in {
-        simulate(new BreezeCache(cfg, enabledebug = true)){dut =>
+    "L1ICache should follow default flow after reset" in {
+        simulate(new L1ICache(cfg, enabledebug = true)){dut =>
             dut.io.flush.poke(false.B)
             dut.io.dreq.valid.poke(false.B)
             dut.io.dreq.bits.vaddr.poke(0.U)
@@ -145,8 +141,8 @@ class BreezeCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
-    "BreezeCache should refill the outstanding miss set when dreq changes under backpressure" in {
-        simulate(new BreezeCache(cfg, enabledebug = true)) { dut =>
+    "L1ICache should refill the outstanding miss set when dreq changes under backpressure" in {
+        simulate(new L1ICache(cfg, enabledebug = true)) { dut =>
             val missedAddr = BigInt(0x10000320L)
             val redirectedAddr = BigInt(0x100002c0L)
             val refillLine = BigInt("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080000000000050913", 16)

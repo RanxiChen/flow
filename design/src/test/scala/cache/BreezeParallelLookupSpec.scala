@@ -2,7 +2,8 @@ package flow.cache
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import flow.config.{DefaultDCacheConfig, DefaultICacheConfig}
+import flow.config.DefaultDCacheConfig
+import flow.l1i.{L1ICache, L1IParams}
 import flow.interface._
 import org.scalatest.freespec.AnyFreeSpec
 
@@ -19,7 +20,7 @@ class ParallelDCacheHarness extends BreezeDCache(DefaultDCacheConfig(), parallel
   observed.reuse := useSnapshot
 }
 
-class ParallelICacheHarness extends BreezeCache(DefaultICacheConfig(), parallelLookup = true) {
+class ParallelICacheHarness extends L1ICache(L1IParams(), parallelLookup = true) {
   val observed = IO(new Bundle {
     val read = Output(Bool())
     val saved = Output(Bool())

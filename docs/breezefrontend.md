@@ -7,14 +7,14 @@
 `BreezeFrontend` 当前不是一次性把完整前端写完，而是按流水线逐阶段补齐：
 
 1. 先把 PC 生成和阶段寄存关系明确下来。
-2. 再把 `BreezeCache` 接入前端流水。
+2. 再把 `L1ICache` 接入前端流水。
 3. 再把取回的指令和预测信息送到 fetch buffer。
 4. 最后再细化阻塞、预测、异常、flush 等控制逻辑。
 
 当前的设计重点是：
 
 - 地址统一按虚拟地址处理。
-- `BreezeCache` 在前端内部实例化。
+- `L1ICache` 在前端内部实例化。
 - 流水线按 `S0 -> S1 -> S2 -> S3` 组织。
 - 后端重定向优先级最高，前端快速预测次之，顺序取指 `+4` 最低。
 
@@ -49,7 +49,7 @@
 - reset 时回到 `io.resetAddr`
 - 满足 `s0_canAdvance` 时，装入 `s0_nextPc`
 
-此外，`S1` 会把当前 `s1_pcReg` 送给 `BreezeCache` 的请求端：
+此外，`S1` 会把当前 `s1_pcReg` 送给 `L1ICache` 的请求端：
 
 - `icache.io.dreq.bits.vaddr := s1_pcReg`
 
@@ -130,7 +130,7 @@
 当前已经完成：
 
 1. `BreezeFrontendConfig`
-2. `BreezeFrontend` 内部实例化 `BreezeCache`
+2. `BreezeFrontend` 内部实例化 `L1ICache`
 3. `S0/S1/S2/S3` 的基础寄存结构
 4. `S0` 的 PC 来源优先级选择
 5. `S1` 向 cache 发虚拟地址请求
@@ -268,7 +268,7 @@
 
 ### 后续用于逐拍监测的关键信号
 
-如果后面要像 `BreezeCacheSpec` 一样写逐周期对齐测试，建议至少观察这些抽象信号：
+如果后面要像 `L1ICacheSpec` 一样写逐周期对齐测试，建议至少观察这些抽象信号：
 
 - `s1_pc`
 - `s1_valid`

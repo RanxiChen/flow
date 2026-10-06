@@ -3,7 +3,8 @@ package flow.frontend
 import chisel3._
 import chisel3.util._
 
-import flow.cache.BreezeCache
+import flow.l1i.{L1ICache, L1IParams}
+import flow.config.BreezeMemGeometry
 import flow.config._
 import flow.interface._
 import _root_.circt.stage.ChiselStage
@@ -80,11 +81,12 @@ class BreezeFrontendDebugIO(vlen: Int, ghrLength: Int = 0) extends Bundle {
 }
 
 /**
-  * 使用 BreezeCache 的前端骨架。
+  * 使用 L1ICache 的前端骨架。
   * 当前实现前端入口 PC 选择、cache 请求/返回，以及 s3 的快速预测输出。
   * 地址统一按虚拟地址处理。
   */
-class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val enabledebug: Boolean = false, val useFASE: Boolean = false) extends Module {
+class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val enabledebug: Boolean = false, val useFASE: Boolean = false,
+    memGeometry: BreezeMemGeometry = BreezeMemGeometry(l1Sets = 64)) extends Module {
     val io = IO(new Bundle {
         val resetAddr = Input(UInt(cfg.VLEN.W))
         val fasePause = if (useFASE) Some(Input(Bool())) else None
@@ -106,7 +108,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
 
     val fetchAllowed = !io.fasePause.getOrElse(false.B)
     // ===== Module Instances =====
-    val icache = Module(new BreezeCache(cfg.cacheCfg, enabledebug = enabledebug, parallelLookup = cfg.enableMmu))
+    val icache = Module(new L1ICache(L1IParams(memGeometry), enabledebug = enabledebug, parallelLookup = cfg.enableMmu))
     val realigner = if (cfg.enableCompressed) Some(Module(new BreezeInstrRealigner(cfg.VLEN))) else None
     val decompressor = if (cfg.enableCompressed) Some(Module(new BreezeCompressedDecoder(enableDouble = true))) else None
     val fetchTranslator = if (cfg.enableMmu) Some(Module(new BreezeFetchTranslator(cfg.VLEN, parallelLookup = true))) else None

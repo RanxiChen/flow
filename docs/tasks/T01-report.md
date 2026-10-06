@@ -210,7 +210,7 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 | `flow.backend.BreezeBackendMulSpec` | 0 | 1 | 0 | 未运行 |
 | `flow.backend.BreezeRedirectPrioritySpec` | 0 | 5 | 0 | 未运行 |
 | `flow.cache.BreezeAmoAluSpec` | 2 | 0 | 0 | 未运行 |
-| `flow.cache.BreezeCacheSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.cache.L1ICacheSpec` | 3 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeCoherentDmaSpec` | 6 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeDCacheCoherentSpec` | 24 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeDCacheSetAssocSpec` | 12 | 0 | 0 | 未运行 |
@@ -355,7 +355,7 @@ Alan `3adca5e`，完整 `sbt test` 退出码 **1**：56 suites completed、0 abo
 | `flow.backend.BreezeBackendMulSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.backend.BreezeRedirectPrioritySpec` | 5 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeAmoAluSpec` | 2 | 0 | 0 | 未运行 |
-| `flow.cache.BreezeCacheSpec` | 3 | 0 | 0 | 未运行 |
+| `flow.cache.L1ICacheSpec` | 3 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeCoherentDmaSpec` | 6 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeDCacheCoherentSpec` | 24 | 0 | 0 | 未运行 |
 | `flow.cache.BreezeDCacheSetAssocSpec` | 12 | 0 | 0 | 未运行 |

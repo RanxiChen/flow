@@ -1,42 +1,41 @@
-package flow.cache
+package flow.l1i
 
 import chisel3._
 import chisel3.util._
 import flow.interface._
 import _root_.circt.stage.ChiselStage
-import flow.config.DefaultICacheConfig
 import flow.mem.flowSRAM
 import flow.mmu.sv39.TreePlru
 import flow.platform.{BreezeMcuPlatform, PMAAccessType, PMAChecker}
 import svsim.CommonCompilationSettings.Timescale.Unit.s
 
-class BreezeCacheDebugIO(vlen: Int) extends Bundle {
+class BreezeCacheDebugIO(cacheConfig: L1IParams) extends Bundle {
     val s0_valid = Output(Bool())
-    val s0_vaddr = Output(UInt(vlen.W))
+    val s0_vaddr = Output(UInt(cacheConfig.VLEN.W))
     val s0_ready = Output(Bool())
     val s1_valid = Output(Bool())
-    val s1_vaddr = Output(UInt(vlen.W))
-    val s1_meta = Output(UInt(DefaultICacheConfig().META_WIDTH.W))
-    val s1_tag_hit = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
+    val s1_vaddr = Output(UInt(cacheConfig.VLEN.W))
+    val s1_meta = Output(UInt(cacheConfig.META_WIDTH.W))
+    val s1_tag_hit = Output(UInt(cacheConfig.ICACHE_WAY_NUM.W))
     val s1_hit = Output(Bool())
     val s2_valid = Output(Bool())
-    val s2_vaddr = Output(UInt(vlen.W))
+    val s2_vaddr = Output(UInt(cacheConfig.VLEN.W))
     val s2_req_pulse_done = Output(Bool())
     val wait_rsp = Output(Bool())
     val s2_refill_done = Output(Bool())
     val s2_done = Output(Bool())
-    val data_array_we = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
-    val tag_array_we = Output(UInt(DefaultICacheConfig().ICACHE_WAY_NUM.W))
+    val data_array_we = Output(UInt(cacheConfig.ICACHE_WAY_NUM.W))
+    val tag_array_we = Output(UInt(cacheConfig.ICACHE_WAY_NUM.W))
 }
 
 /**
   * 当前的cache每次会向下一级的存储请求一个cache line的数据
-  * 因为PLRU硬编码到4路组相连，所以当前cache的路数固定为4
+  * 组数、路数和行宽由 L1IParams 推导，替换统一使用 TreePlru
   *
   * @param cacheConfig
   * @param enabledebug
   */
-class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean = false,val inspectsram:Boolean=false,
+class L1ICache(val cacheConfig: L1IParams, val enabledebug: Boolean = false,val inspectsram:Boolean=false,
                   val parallelLookup: Boolean = false) extends Module {
     val io = IO(new Bundle{
         val dreq = Flipped(Decoupled(new BreezeCacheReqIO(cacheConfig.VLEN)))
@@ -46,10 +45,10 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
         val next_level_req = new L1CacheMissReqIO(cacheConfig.PLEN)
         val next_level_rsp = new L1CacheMissRespIO(cacheConfig.ICACHE_LINE_WIDTH)
         val hpm = Output(new BreezeHpmEvents)
-        val debug = if(enabledebug) Some(new BreezeCacheDebugIO(cacheConfig.VLEN)) else None
+        val debug = if(enabledebug) Some(new BreezeCacheDebugIO(cacheConfig)) else None
     })
     io.hpm := 0.U.asTypeOf(new BreezeHpmEvents)
-    assert(cacheConfig.ICACHE_WAY_NUM == 4, "当前只支持4路组相连的cache")
+
     require(!parallelLookup || cacheConfig.ICACHE_SET_NUM * cacheConfig.ICACHE_LINE_BYTES <= 4096,
         "VIPT index must fit within the smallest Sv39 page")
     BreezeMcuPlatform.PMARegions.filter(_.supportsExecute).foreach { region =>
@@ -220,18 +219,19 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     line_addr := s2_paddr & ~((cacheConfig.ICACHE_LINE_BYTES - 1).U(cacheConfig.PLEN.W)) // cache line对齐
     //在s2选择要替换到那一个way
     val s2_index = index_pos(s2_vaddr, cacheConfig)
-    val s2_replace_way = RegInit(0.U(log2Ceil(cacheConfig.ICACHE_WAY_NUM).W))
     //首先检查有没有无效的way，如果有的话直接替换第一个无效的way
     val s2_entry_meta = metaReg(s2_index)
-    val validWays = s2_entry_meta(3, 0)
-    val victim = Mux(!validWays.andR, PriorityEncoder(~validWays), TreePlru.victim(s2_entry_meta(6, 4), 4))
-    val wb_en_OH = UIntToOH(victim, 4)
+    val ways = cacheConfig.ICACHE_WAY_NUM
+    val validWays = s2_entry_meta(ways-1, 0)
+    val plruState = if (ways == 1) 0.U(0.W) else s2_entry_meta(cacheConfig.META_WIDTH-1, ways)
+    val victim = Mux(!validWays.andR, PriorityEncoder(~validWays), TreePlru.victim(plruState, ways))
+    val wb_en_OH = UIntToOH(victim, ways)
     val new_valid_vec = validWays | wb_en_OH
-    val new_plru_vec = TreePlru.touch(s2_entry_meta(6, 4), victim, 4)
+    val new_plru_vec = TreePlru.touch(plruState, victim, ways)
     // 暂存控制信号
-    val s2_new_valid_vec = Reg(UInt(4.W))
-    val s2_new_plru_vec = Reg(UInt(3.W))
-    val s2_wt_en_OH = Reg(UInt(4.W))
+    val s2_new_valid_vec = Reg(UInt(cacheConfig.ICACHE_WAY_NUM.W))
+    val s2_new_plru_vec = Reg(UInt(cacheConfig.PLRU_WIDTH.W))
+    val s2_wt_en_OH = Reg(UInt(cacheConfig.ICACHE_WAY_NUM.W))
     val s2_refill_tag = Reg(UInt(cacheConfig.ICACHE_TAG_WIDTH.W))
     when(s2_valid){
         s2_new_valid_vec := new_valid_vec
@@ -270,7 +270,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
 
     // 一个周期的对外的请求脉冲
     io.next_level_req.req := issue_s2_req_pulse
-    io.next_level_req.paddr := line_addr // 目前直接使用vaddr作为paddr，后续会加入地址转换模块
+    io.next_level_req.paddr := line_addr // translated physical line address
     //等待下一级的存储返回数据
     val write_back_en = WireDefault(false.B)
     val refill_response = io.next_level_rsp.vld && wait_rsp
@@ -303,7 +303,7 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
             metaReg(i) := 0.U
         }
     }.elsewhen(s2_req_pulse_done && write_back_en){
-        metaReg(s2_index) := s2_new_plru_vec(2,0) ## s2_new_valid_vec(3,0) // PLRU位在高位，valid位在低位，默认4 ways
+        metaReg(s2_index) := s2_new_plru_vec ## s2_new_valid_vec // PLRU位在高位，valid位在低位，默认4 ways
         //printf(p"*********************s2 refill done, update meta: index=0x${Hexadecimal(s2_index)}, new_meta=0b${Binary(s2_new_plru_vec)}_${Binary(s2_new_valid_vec)}\n")
     }
     s2_done := s2_refill_done
@@ -312,8 +312,9 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     val stop_new_req = s1_miss || s2_valid && !s2_done
     io.dreq.ready := !io.flush && ~(stop_new_req) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
     
-    def index_pos(vaddr:UInt,cfg:DefaultICacheConfig): UInt = {
-        vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH)
+    def index_pos(vaddr:UInt,cfg:L1IParams): UInt = {
+        if (cfg.ICACHE_SET_NUM == 1) 0.U(1.W)
+        else vaddr(cfg.ICACHE_INDEX_WIDTH + cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH - 1, cfg.ICACHE_LINE_OFFSET_WIDTH + cfg.ICACHE_BYTES_OFFSET_WIDTH)
     }
     
     // handshake and response: prefer returning the refill result when s2 completes
@@ -363,9 +364,9 @@ class BreezeCache(val cacheConfig: DefaultICacheConfig, val enabledebug: Boolean
     }
 }
 
-object GenerateBreezeCacheVerilogFile extends App {
+object GenerateL1ICache extends App {
     ChiselStage.emitSystemVerilogFile(
-        new BreezeCache(DefaultICacheConfig()),
+        new L1ICache(L1IParams()),
         Array("--target-dir", "build"),
         firtoolOpts = Array(
             "-disable-all-randomization",

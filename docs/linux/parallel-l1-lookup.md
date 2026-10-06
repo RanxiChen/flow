@@ -81,7 +81,7 @@ Commands, run from `design/`:
 
 ```sh
 sbt 'testOnly flow.cache.BreezeParallelLookupSpec flow.mmu.BreezeMmuSpec'
-sbt 'testOnly flow.mmu.BreezeParallelTranslatorSpec flow.mmu.BreezePmpSharingSpec flow.cache.BreezeCacheSpec flow.cache.BreezeDCacheSetAssocSpec flow.cache.BreezeDCacheCoherentSpec' 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single gshare linux fpga-debug'
+sbt 'testOnly flow.mmu.BreezeParallelTranslatorSpec flow.mmu.BreezePmpSharingSpec flow.cache.L1ICacheSpec flow.cache.BreezeDCacheSetAssocSpec flow.cache.BreezeDCacheCoherentSpec' 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single gshare linux fpga-debug'
 ```
 
 The single-hart Linux/GShare/FPGA-debug top elaborated successfully; generated
