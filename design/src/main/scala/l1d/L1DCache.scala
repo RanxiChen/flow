@@ -279,12 +279,15 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val installLast = installNow && s0Req.lastBeat
   val psWriteBlocked = wholeBusy || miss.io.status.mshrState === MshrState.Install || probe.io.tagUpdate.valid
   val psWrites = ps.valid && !psWriteBlocked
-  val tagBusy = installLast || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
+  // These decision inputs must not depend on S0's kill-qualified grant:
+  // a WB fault produces s2Kill from resp in the same cycle.
+  val installing = miss.io.status.mshrState === MshrState.Install
+  val tagBusy = installing || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
   val psRoom = !ps.valid || psWrites
-  val externalMutation = installNow || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
-  val externalSet = Mux(installNow, miss.io.s0Req.bits.idx,
+  val externalMutation = installing || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
+  val externalSet = Mux(installing, idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)),
     Mux(probe.io.tagUpdate.valid, idx(probe.io.pending.addr ## 0.U(p.offBits.W)), ps.idx))
-  val canAllocate = miss.io.status.canAllocate && !ptwOutstanding && !tagBusy && !internalFire &&
+  val canAllocate = miss.io.status.canAllocate && !ptwOutstanding && !tagBusy && !probe.io.s0Req.valid &&
     (!victimValid || !miss.io.status.wbValid)
   val ptwCanAllocate = miss.io.status.canAllocate && !tagBusy && (!victimValid || !miss.io.status.wbValid)
 
@@ -402,8 +405,9 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     waitingGrant && (!(upgrading && miss.io.status.mshrState === MshrState.Wait) || probe.io.pending.owner)
   val holdForWb = miss.io.status.wbValid && probeLine === miss.io.status.wbLineAddr
   val psSameProbe = ps.valid && line(ps.paddr) === probeLine
-  val cpu1ProbeAddressMatch = Mux(cpuTlbValid && !cpuTlb.miss,
-    line(cpuTlb.paddr) === probeLine, cpu1.req.idx === probeIdx)
+  // Until CPU S1 advances, conservatively compare its VIPT set. This also
+  // avoids putting the kill-qualified TLB Valid on the probe/S2 ready path.
+  val cpu1ProbeAddressMatch = cpu1.req.idx === probeIdx
   val cpu1StoreProbe = cpu1.valid && storeLike(cpu1.req.core.op) && cpu1ProbeAddressMatch
   val cpu2StoreProbe = cpu2.valid && storeLike(cpu2.req.core.op) && line(cpu2.paddr) === probeLine
   probe.io.hold := holdForMiss || holdForWb || psSameProbe
