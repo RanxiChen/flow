@@ -27,6 +27,10 @@ class L2TaskReq(p: CoherenceParams) extends Bundle {
   val refill = UInt(p.lineBits.W)
   val refillErr = Bool()
   val victimTag = UInt(p.tagBits.W)
+  val probeOp = SnpOp()
+  val probeTargets = UInt(p.sharerBits.W)
+  val probeOwner = Bool()
+  val probeCollected = Bool()
 }
 
 /** Slow slots: MISS and PROBE transactions that leave the main pipeline (§5). */
@@ -66,6 +70,7 @@ class L2Slots(p: CoherenceParams) extends Module {
 
   val slots = RegInit(VecInit(Seq.fill(p.l2Slots)(0.U.asTypeOf(new L2SlotRegs(p)))))
   val probeServed = RegInit(VecInit(Seq.fill(p.l2Slots)(false.B)))
+  val answersReady = RegInit(VecInit(Seq.fill(p.l2Slots)(false.B)))
   private def busy(s: L2SlotRegs): Bool = s.state =/= L2SlotState.Idle
 
   // ---------------- Allocation (S2) ----------------
@@ -81,6 +86,7 @@ class L2Slots(p: CoherenceParams) extends Module {
       (io.alloc.bits.typ === L2SlotType.Probe) -> L2SlotState.ProbeWait,
       io.alloc.bits.victimValid -> L2SlotState.Evict))
     probeServed(freeIdx) := false.B
+    answersReady(freeIdx) := false.B
   }
 
   // ---------------- Task requests ----------------
@@ -100,6 +106,10 @@ class L2Slots(p: CoherenceParams) extends Module {
     io.taskReq(i).bits.refill := s.refill
     io.taskReq(i).bits.refillErr := s.refillErr
     io.taskReq(i).bits.victimTag := s.a.victimTag
+    io.taskReq(i).bits.probeOp := s.a.probeOp
+    io.taskReq(i).bits.probeTargets := s.a.probeTargets
+    io.taskReq(i).bits.probeOwner := s.a.probeOwner
+    io.taskReq(i).bits.probeCollected := answersReady(i)
     when(io.taskGrant(i)) {
       s.state := MuxLookup(s.state, s.state)(Seq(
         L2SlotState.Evict -> L2SlotState.EvictInPipe,
@@ -130,13 +140,22 @@ class L2Slots(p: CoherenceParams) extends Module {
         io.released := true.B
       }
     }
+    when(io.taskDone.bits.result =/= L2TaskResult.EvictRetry) {
+      answersReady(io.taskDone.bits.slot) := false.B
+    }
   }
 
   // ---------------- Probe engine hand-off (§6) ----------------
   val wantProbe = VecInit(slots.zip(probeServed).map { case (s, srv) => s.state === L2SlotState.ProbeWait && !srv })
-  val probeIdx = PriorityEncoder(wantProbe) // TODO: round-robin
+  val probeArb = Module(new RRArbiter(UInt(p.slotBits.W), p.l2Slots))
+  for (i <- 0 until p.l2Slots) {
+    probeArb.io.in(i).valid := wantProbe(i)
+    probeArb.io.in(i).bits := i.U
+  }
+  val probeIdx = probeArb.io.out.bits
   val ps = slots(probeIdx)
-  io.probeJob.valid := wantProbe.asUInt.orR
+  io.probeJob.valid := probeArb.io.out.valid
+  probeArb.io.out.ready := io.probeJob.ready
   io.probeJob.bits.slot := probeIdx
   // EVICT probes target the victim line; PROBE slots target the request line.
   io.probeJob.bits.addr := Mux(ps.a.typ === L2SlotType.Miss, ps.a.victimTag ## ps.a.set, ps.a.tag ## ps.a.set)
@@ -147,17 +166,29 @@ class L2Slots(p: CoherenceParams) extends Module {
   when(io.probeCollected.valid) {
     val s = slots(io.probeCollected.bits)
     s.state := Mux(s.a.typ === L2SlotType.Miss, L2SlotState.Evict, L2SlotState.Replay)
+    answersReady(io.probeCollected.bits) := true.B
   }
 
   // ---------------- Memory read (§5.2 MEM_READ) ----------------
   val wantRead = VecInit(slots.map(_.state === L2SlotState.MemRead))
   val readIssued = RegInit(VecInit(Seq.fill(p.l2Slots)(false.B)))
   val readCand = VecInit(wantRead.zip(readIssued).map { case (w, i) => w && !i })
-  val readIdx = PriorityEncoder(readCand)
-  io.memRead.valid := readCand.asUInt.orR
+  // Lock the chosen read until AR accepts it; another slot becoming ready
+  // must not change a backpressured AXI address/ID.
+  val readSelected = RegInit(false.B)
+  val readSlot = Reg(UInt(p.slotBits.W))
+  when(!readSelected && readCand.asUInt.orR) {
+    readSelected := true.B
+    readSlot := PriorityEncoder(readCand)
+  }
+  val readIdx = readSlot
+  io.memRead.valid := readSelected
   io.memRead.bits.slot := readIdx
   io.memRead.bits.addr := slots(readIdx).a.tag ## slots(readIdx).a.set
-  when(io.memRead.fire) { readIssued(readIdx) := true.B }
+  when(io.memRead.fire) {
+    readIssued(readIdx) := true.B
+    readSelected := false.B
+  }
   when(io.memReadDone.valid) {
     val s = slots(io.memReadDone.bits.slot)
     s.refill := io.memReadDone.bits.data

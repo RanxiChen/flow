@@ -7,11 +7,8 @@ import flow.coherence._
 import flow.config.BreezeMemGeometry
 import flow.mmu.sv39.TreePlru
 
-/** Breeze v1 shared L2 / Home (coherence-l2-rtl-spec).
-  *
-  * SKELETON (feat/v1-mem-skeleton). Three-stage main pipeline is the only
-  * array entry; same-set entries are serialised by the in-flight check;
-  * slow transactions live in slots. `TODO` marks the simulate-and-fix work.
+/** Shared L2 / Home. All array updates pass through the main pipeline;
+  * slow transactions retain set ownership in slots until their response.
   */
 class L2Home(g: BreezeMemGeometry) extends Module {
   val p = CoherenceParams(g)
@@ -111,7 +108,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       s1.valid && s1.e.kind === L2Kind.NewReq && s1.e.set === set ||
       s2.valid && s2.e.kind === L2Kind.NewReq && s2.e.set === set
 
-  // Candidates. TODO: round-robin within each class (spec); priority order for now.
+  // Round-robin within each priority class, after excluding busy sets.
   val putCand = VecInit(putBuf.map(b => b.valid && !inFlight(p.setOf(b.addr))))
   val taskCand = VecInit(slots.io.taskReq.map(t => t.valid && !inFlight(t.bits.set)))
   val reqCand = VecInit(reqPorts.zipWithIndex.map { case (r, i) =>
@@ -121,9 +118,19 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   val s0Entry = Wire(new L2PipeEntry(p))
   s0Entry := 0.U.asTypeOf(s0Entry)
   val s0Valid = WireDefault(false.B)
-  val putIdx = PriorityEncoder(putCand)
-  val taskIdx = PriorityEncoder(taskCand)
-  val reqIdx = PriorityEncoder(reqCand)
+  def roundRobin(cand: Vec[Bool]): (UInt, UInt) = {
+    val next = RegInit(0.U((log2Ceil(cand.length) max 1).W))
+    val rotated = VecInit((0 until cand.length).map { offset =>
+      val sum = next +& offset.U
+      val idx = Mux(sum >= cand.length.U, sum - cand.length.U, sum)
+      cand(idx)
+    })
+    val sum = next +& PriorityEncoder(rotated)
+    (Mux(sum >= cand.length.U, sum - cand.length.U, sum), next)
+  }
+  val (putIdx, putNext) = roundRobin(putCand)
+  val (taskIdx, taskNext) = roundRobin(taskCand)
+  val (reqIdx, reqNext) = roundRobin(reqCand)
   val reqSel = VecInit(reqPorts.map(_.bits))(reqIdx)
   for (i <- 0 until p.l2Slots) slots.io.taskGrant(i) := false.B
 
@@ -134,6 +141,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       s0Entry.port := putIdx
       s0Entry.req.addr := putBuf(putIdx).addr
       s0Entry.req.data := putBuf(putIdx).data
+      putNext := Mux(putIdx === (p.nCores - 1).U, 0.U, putIdx + 1.U)
     }.elsewhen(taskCand.asUInt.orR) {
       val t = slots.io.taskReq(taskIdx).bits
       s0Valid := true.B
@@ -142,6 +150,8 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       s0Entry.task := t.task
       s0Entry.port := t.port
       s0Entry.req := t.req
+      s0Entry.taskData := t
+      taskNext := Mux(taskIdx === (p.l2Slots - 1).U, 0.U, taskIdx + 1.U)
       slots.io.taskGrant(taskIdx) := true.B
     }.elsewhen(reqCand.asUInt.orR) {
       s0Valid := true.B
@@ -149,6 +159,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       s0Entry.port := reqIdx
       s0Entry.req := reqSel
       inPipe(reqIdx) := true.B
+      reqNext := Mux(reqIdx === (p.nReqPorts - 1).U, 0.U, reqIdx + 1.U)
     }
   }
   // Slot tasks address their own set (EVICT uses the victim tag but the same set).
@@ -187,12 +198,15 @@ class L2Home(g: BreezeMemGeometry) extends Module {
               action := MuxCase(L2Action.NeedProbe, Seq(
                 (hm.state === DirState.NONE) -> L2Action.FastGetM, // DataE (read copies granted E)
                 (hm.state === DirState.SHARED) -> L2Action.FastGetS))
-              // TODO: protocol errors (§4.4) — GetS hitting UNIQUE{c} or SHARED with c
+              when((hm.sharers & reqBit).orR) { action := L2Action.ProtocolError }
             }
             is(ReqOp.GetM) {
               action := MuxCase(L2Action.NeedProbe, Seq(
                 (hm.state === DirState.NONE) -> L2Action.FastGetM,
                 (hm.state === DirState.SHARED && hm.sharers === reqBit) -> L2Action.FastAckE))
+              when(hm.state === DirState.UNIQUE && hm.sharers === reqBit) {
+                action := L2Action.ProtocolError
+              }
             }
             is(ReqOp.Read) {
               action := Mux(hm.state === DirState.UNIQUE, L2Action.NeedProbe, L2Action.FastRead)
@@ -207,7 +221,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   }
 
   // Data read way: hit way for requests and Put; slot-recorded way for tasks.
-  val s1Way = Mux(s1.e.kind === L2Kind.SlotTask, slots.io.taskReq(s1.e.slot).bits.way, hitWay)
+  val s1Way = Mux(s1.e.kind === L2Kind.SlotTask, s1.e.taskData.way, hitWay)
   val dataRead = data.read(s1.e.set ## s1Way, s1.valid)
 
   s2.valid := s1.valid
@@ -232,6 +246,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   dataWrVal := DontCare
   val dataWrMask = WireDefault(VecInit(Seq.fill(p.lineBytes)(false.B)))
   val plruWrEn = WireDefault(false.B)
+  val plruWrWay = WireDefault(s2.hitWay)
   val rsp = Wire(new CoherenceRspDown(p))
   rsp := 0.U.asTypeOf(rsp)
   val rspEn = WireDefault(false.B)
@@ -242,6 +257,91 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   val s2Core = s2.e.port(p.coreBits - 1, 0)
   val s2Bit = UIntToOH(s2Core, p.nCores)
   val hmS2 = s2.meta(s2.hitWay)
+  val task = s2.e.taskData
+  val taskMeta = s2.meta(s2.way)
+  val invalidWays = VecInit(s2.meta.map(m => !m.valid))
+  val victimWay = Mux(invalidWays.asUInt.orR, PriorityEncoder(invalidWays),
+    TreePlru.victim(s2.plru, p.l2Ways))
+  val victim = s2.meta(victimWay)
+
+  // Only the current slot's targets own the probe buffers. A Put may have
+  // updated the directory while the slot waited, so always use fresh meta.
+  val answerTargets = VecInit((0 until p.nCores).map(c =>
+    task.probeCollected && task.probeTargets(c) && ansBuf(c).valid))
+  val dataAnswers = VecInit((0 until p.nCores).map(c => answerTargets(c) && ansBuf(c).hasData))
+  val ownerData = Mux1H(dataAnswers, ansBuf.map(_.data))
+  val mergedData = Mux(dataAnswers.asUInt.orR, ownerData, lineData)
+  val afterProbe = Wire(new L2MetaEntry(p))
+  afterProbe := taskMeta
+  when(task.probeCollected) {
+    when(task.probeOp === SnpOp.Inv) {
+      val left = taskMeta.sharers & ~task.probeTargets
+      afterProbe.sharers := left
+      afterProbe.state := Mux(left === 0.U, DirState.NONE, taskMeta.state)
+    }.otherwise {
+      // The owner may have sent Put before acknowledging Down.
+      afterProbe.state := Mux(taskMeta.sharers === 0.U, DirState.NONE, DirState.SHARED)
+    }
+    when(dataAnswers.asUInt.orR) { afterProbe.dirty := true.B }
+  }
+
+  def consumeAnswers(): Unit = {
+    when(task.probeCollected) {
+      assert(PopCount(dataAnswers) <= 1.U, "multiple dirty probe answers")
+      for (c <- 0 until p.nCores) {
+        when(task.probeTargets(c)) {
+          assert(ansBuf(c).valid, "slot consumes a missing probe answer")
+          ansBuf(c).valid := false.B
+        }
+      }
+      probeEng.io.release := true.B
+    }
+  }
+
+  // Execute an original request after install/probe. No new slot may be
+  // needed: install starts at NONE, and a probe removed the conflict.
+  def finishRequest(base: L2MetaEntry, contents: UInt): Unit = {
+    metaWrEn := true.B
+    metaWrWay := s2.way
+    metaWrVal := base
+    rspEn := true.B
+    rsp.id := s2.e.req.id
+    rsp.data := contents
+    plruWrEn := true.B
+    plruWrWay := s2.way
+    switch(s2.e.req.op) {
+      is(ReqOp.GetS) {
+        assert(base.state =/= DirState.UNIQUE, "GetS replay still requires a probe")
+        metaWrVal.sharers := base.sharers | s2Bit
+        metaWrVal.state := Mux(base.state === DirState.NONE, DirState.UNIQUE, DirState.SHARED)
+        rsp.op := Mux(base.state === DirState.NONE, RspDownOp.DataE, RspDownOp.DataS)
+      }
+      is(ReqOp.GetM) {
+        assert(base.state === DirState.NONE || (base.state === DirState.SHARED && base.sharers === s2Bit),
+          "GetM replay still requires a probe")
+        metaWrVal.state := DirState.UNIQUE
+        metaWrVal.sharers := s2Bit
+        rsp.op := Mux(base.state === DirState.SHARED && base.sharers === s2Bit, RspDownOp.AckE, RspDownOp.DataE)
+      }
+      is(ReqOp.Read) {
+        assert(base.state =/= DirState.UNIQUE, "Read replay still requires a probe")
+        rsp.op := RspDownOp.ReadData
+      }
+      is(ReqOp.MaskWrite) {
+        assert(base.state === DirState.NONE, "MaskWrite replay still has sharers")
+        val oldBytes = contents.asTypeOf(Vec(p.lineBytes, UInt(8.W)))
+        val newBytes = s2.e.req.data.asTypeOf(Vec(p.lineBytes, UInt(8.W)))
+        dataWrEn := true.B
+        for (b <- 0 until p.lineBytes) {
+          dataWrVal(b) := Mux(s2.e.req.mask(b), newBytes(b), oldBytes(b))
+          // Installing/reforwarding owner data writes the entire line.
+          dataWrMask(b) := s2.e.task === L2SlotTask.Install || dataAnswers.asUInt.orR || s2.e.req.mask(b)
+        }
+        metaWrVal.dirty := true.B
+        rsp.op := RspDownOp.WriteAck
+      }
+    }
+  }
 
   slots.io.alloc.valid := false.B
   slots.io.alloc.bits := 0.U.asTypeOf(slots.io.alloc.bits)
@@ -282,6 +382,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
         metaWrEn := true.B; metaWrWay := s2.hitWay; metaWrVal.dirty := true.B
         rspEn := true.B; rsp.op := RspDownOp.WriteAck
         reqReady := true.B
+        plruWrEn := true.B
       }
       is(L2Action.NeedProbe, L2Action.NeedMiss) {
         when(slots.io.hasFree) {
@@ -291,21 +392,31 @@ class L2Home(g: BreezeMemGeometry) extends Module {
           slots.io.alloc.bits.set := s2.e.set
           slots.io.alloc.bits.tag := s2.e.tag
           slots.io.alloc.bits.typ := Mux(s2.action === L2Action.NeedMiss, L2SlotType.Miss, L2SlotType.Probe)
-          // TODO: victim selection (invalid way first, else PLRU), victimTag,
-          //       probe op/targets/owner per §4.4 rows.
+          val isMiss = s2.action === L2Action.NeedMiss
+          slots.io.alloc.bits.way := Mux(isMiss, victimWay, s2.hitWay)
+          slots.io.alloc.bits.victimValid := isMiss && victim.valid
+          slots.io.alloc.bits.victimTag := victim.tag
+          val isDown = s2.e.req.op === ReqOp.GetS || s2.e.req.op === ReqOp.Read
+          slots.io.alloc.bits.probeOp := Mux(isDown, SnpOp.Down, SnpOp.Inv)
+          slots.io.alloc.bits.probeOwner := hmS2.state === DirState.UNIQUE
+          slots.io.alloc.bits.probeTargets := Mux(s2.e.req.op === ReqOp.GetM,
+            hmS2.sharers & ~s2Bit, hmS2.sharers)
           reqReady := true.B
         }.otherwise {
           reqRetire := true.B
         }
       }
       is(L2Action.Put) {
-        // §4.5: remove sharer, write data if hasData, PutAck. TODO: full rules + asserts.
+        // Put is legal even while a slow slot protects this set.
         val c = s2.e.port(p.coreBits - 1, 0)
         metaWrEn := true.B; metaWrWay := s2.hitWay
         val left = hmS2.sharers & ~UIntToOH(c, p.nCores)
+        assert((hmS2.sharers & UIntToOH(c, p.nCores)).orR, "Put from a non-sharer")
         metaWrVal.sharers := left
         metaWrVal.state := Mux(left === 0.U || hmS2.state === DirState.UNIQUE, DirState.NONE, hmS2.state)
         when(putBuf(c).hasData) {
+          assert(hmS2.state === DirState.UNIQUE && hmS2.sharers === UIntToOH(c, p.nCores),
+            "dirty Put from a non-owner")
           dataWrEn := true.B
           dataWrVal := putBuf(c).data.asTypeOf(dataWrVal)
           dataWrMask := VecInit(Seq.fill(p.lineBytes)(true.B))
@@ -315,13 +426,65 @@ class L2Home(g: BreezeMemGeometry) extends Module {
         putBuf(c).valid := false.B
       }
       is(L2Action.Task) {
-        // TODO: EVICT / INSTALL / REPLAY per §5.2, merging probe answers from
-        //       ansBuf, wbPush for dirty victims, response for the original
-        //       request, taskDone.result, probeEng.release.
         slots.io.taskDone.valid := true.B
         slots.io.taskDone.bits.slot := s2.e.slot
         slots.io.taskDone.bits.result := L2TaskResult.Finished
+        switch(s2.e.task) {
+          is(L2SlotTask.Evict) {
+            when(afterProbe.sharers.orR) {
+              assert(!task.probeCollected, "eviction probe left sharers")
+              slots.io.taskDone.bits.result := L2TaskResult.EvictNeedProbe
+              slots.io.taskDone.bits.probeTargets := afterProbe.sharers
+              slots.io.taskDone.bits.probeOwner := afterProbe.state === DirState.UNIQUE
+            }.elsewhen(afterProbe.dirty && !memEng.io.wbFree) {
+              // Keep answer buffers and probe engine ownership across retry.
+              slots.io.taskDone.bits.result := L2TaskResult.EvictRetry
+            }.otherwise {
+              when(afterProbe.dirty) {
+                memEng.io.wbPush.valid := true.B
+                memEng.io.wbPush.bits.addr := task.victimTag ## task.set
+                memEng.io.wbPush.bits.data := mergedData
+              }
+              metaWrEn := true.B
+              metaWrWay := s2.way
+              metaWrVal := 0.U.asTypeOf(metaWrVal)
+              slots.io.taskDone.bits.result := L2TaskResult.EvictDone
+              consumeAnswers()
+            }
+          }
+          is(L2SlotTask.Install) {
+            when(task.refillErr) {
+              rspEn := true.B
+              rsp.id := s2.e.req.id
+              rsp.op := MuxCase(RspDownOp.DataE, Seq(
+                (s2.e.req.op === ReqOp.Read) -> RspDownOp.ReadData,
+                (s2.e.req.op === ReqOp.MaskWrite) -> RspDownOp.WriteAck))
+              rsp.error := s2.e.req.op =/= ReqOp.MaskWrite
+              when(s2.e.req.op === ReqOp.MaskWrite) { printf(p"DMA refill error at ${s2.e.req.addr}\n") }
+            }.otherwise {
+              val installed = Wire(new L2MetaEntry(p))
+              installed := 0.U.asTypeOf(installed)
+              installed.valid := true.B
+              installed.tag := task.tag
+              dataWrEn := true.B
+              dataWrVal := task.refill.asTypeOf(dataWrVal)
+              dataWrMask := VecInit(Seq.fill(p.lineBytes)(true.B))
+              finishRequest(installed, task.refill)
+            }
+          }
+          is(L2SlotTask.Replay) {
+            assert(s2.hit && s2.hitWay === s2.way, "probe replay lost its protected line")
+            when(dataAnswers.asUInt.orR) {
+              dataWrEn := true.B
+              dataWrVal := mergedData.asTypeOf(dataWrVal)
+              dataWrMask := VecInit(Seq.fill(p.lineBytes)(true.B))
+            }
+            finishRequest(afterProbe, mergedData)
+            consumeAnswers()
+          }
+        }
       }
+      is(L2Action.ProtocolError) { assert(false.B, "illegal coherence request for the current directory") }
     }
   }
   // Put and slot-task responses go to the recorded port; Put's port is the core.
@@ -355,7 +518,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       v(metaWrWay) := metaWrVal
       meta.write(s2.e.set, v, UIntToOH(metaWrWay, p.l2Ways).asBools)
     }
-    when(plruWrEn) { plruArr.write(s2.e.set, TreePlru.touch(s2.plru, s2.hitWay, p.l2Ways)) }
+    when(plruWrEn) { plruArr.write(s2.e.set, TreePlru.touch(s2.plru, plruWrWay, p.l2Ways)) }
   }
   when(dataWrEn) { data.write(s2.e.set ## s2.way, dataWrVal, dataWrMask) }
 
@@ -367,5 +530,14 @@ class L2Home(g: BreezeMemGeometry) extends Module {
     assert((metaWrVal.state === DirState.NONE) === (metaWrVal.sharers === 0.U), "NONE <=> no sharers")
     assert(metaWrVal.state =/= DirState.UNIQUE || PopCount(metaWrVal.sharers) === 1.U, "UNIQUE has one sharer")
   }
-  // TODO: REQ stays stable until ready (§3.1): compare against a registered copy.
+  for ((r, i) <- reqPorts.zipWithIndex) {
+    val held = RegNext(r.valid && !r.ready, false.B)
+    val previous = RegEnable(r.bits, r.valid)
+    when(held) { assert(r.valid && r.bits.asUInt === previous.asUInt, "REQ changed before acceptance") }
+    when(r.valid) {
+      if (i < p.nCores) assert(r.bits.op === ReqOp.GetS || r.bits.op === ReqOp.GetM)
+      else if (i < 2 * p.nCores) assert(r.bits.op === ReqOp.Read)
+      else assert(r.bits.op === ReqOp.Read || r.bits.op === ReqOp.MaskWrite)
+    }
+  }
 }

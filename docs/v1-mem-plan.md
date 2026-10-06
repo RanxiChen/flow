@@ -1,18 +1,18 @@
 # v1 访存子系统：先骨架、后仿真迭代
 
-用户决定（2026-10-06）：先跑通，再完善。正确性靠仿真判定，不做纸面审计轮次。分支 `feat/v1-mem-skeleton`，工作目录 `/home/chen/flow-mem`，与后端分支 `feat/pcie-fase-20260920` 并行，完成后合并。
+用户决定（2026-10-06）：先跑通，再完善。正确性靠仿真判定，不做纸面审计轮次。骨架分支 `feat/v1-mem-skeleton` 已合入 `feat/pcie-fase-20260920`，后续在当前分支与 `/home/chen/leisure/flow` 实现。按事务闭环分批：先提交 RTL，再提交对齐 spec 的 directed 小测试，然后逐步扩大验证。
 
 ## 步骤
 
 | # | 内容 | 负责 | 状态 |
 | --- | --- | --- | --- |
 | 1 | RTL 骨架：L1D、L2 的流水级、阵列、寄存器、状态机、协议 Bundle；能 elaborate；功能留 `TODO` | Claude | 完成：五种几何配置均能 elaborate（`MemSkeletonElabSpec`） |
-| 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 任务书 [`tasks/V1-MEM-interfaces.md`](tasks/V1-MEM-interfaces.md) |
-| 3 | 审核接口 | Claude | |
-| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | |
+| 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 已提交，最终接口提交 `71f4988`；报告 [`tasks/V1-MEM-interfaces-report.md`](tasks/V1-MEM-interfaces-report.md) |
+| 3 | 审核接口 | Claude | 未记录独立审核结论；当前原生 cluster 已接 Backend/L1D/MMU/L2 |
+| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | 第一批 RTL 实现见 [`tasks/MEM-load-store-rtl-report.md`](tasks/MEM-load-store-rtl-report.md)；directed 测试待下一批 |
 | 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude | 与第 4 步并行 |
 | 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | |
-| 7 | 一边改一边完善状态机，消化 `TODO`，spec 随之更新 | 共同 | |
+| 7 | 一边改一边完善状态机，消化 `TODO`，spec 随之更新 | 共同 | 第一批普通 Load/Store 与 L2 槽主流程已写；原子路径及功能验证待完成 |
 
 ## 规则
 

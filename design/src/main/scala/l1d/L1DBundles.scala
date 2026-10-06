@@ -81,11 +81,14 @@ class L1PipeReq(p: L1DParams) extends Bundle {
   /** Whole-line operation beat (refill/writeback-read/probe), 0..wordsPerLine-1. */
   val beat = UInt(p.wordBits.W)
   val lastBeat = Bool()
+  val replayPtw = Bool()
+  val replayError = Bool()
 }
 
 class L1S1(p: L1DParams) extends Bundle {
   val valid = Bool()
   val req = new L1PipeReq(p)
+  val snapInvalid = Bool()
 }
 
 class L1S2(p: L1DParams) extends Bundle {
@@ -98,6 +101,8 @@ class L1S2(p: L1DParams) extends Bundle {
   val tagVec = Vec(p.ways, new L1TagEntry(p))
   val dataVec = Vec(p.ways, UInt(64.W))
   val snapInvalid = Bool()
+  val translationMiss = Bool()
+  val needsRecheck = Bool()
 }
 
 /** pending-store (§3, PS). */
@@ -153,6 +158,8 @@ class L1MissStatus(p: L1DParams) extends Bundle {
   val wbLineAddr = UInt(p.lineAddrBits.W)
   val wbGotAck = Bool()
   val canAllocate = Bool()
+  val wayLocked = Bool()
+  val wbWay = UInt(p.wayBits.W)
 }
 
 /** Miss unit's S0 requests (refill install, writeback read, replay). */

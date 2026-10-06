@@ -18,6 +18,7 @@ class L1DMmio(p: L1DParams) extends Module {
       val error = Bool()
       val rdata = UInt(64.W)        // raw beat; S2 formatter applies §5.4
     })
+    val doneConsume = Input(Bool())
     val axi = new Axi4LiteMasterIO(p.paddrBits, 64)
   })
 
@@ -25,6 +26,9 @@ class L1DMmio(p: L1DParams) extends Module {
   val r = Reg(new L1MmioReq(p))
   val awDone = Reg(Bool())
   val wDone = Reg(Bool())
+  val resultValid = RegInit(false.B)
+  val resultError = Reg(Bool())
+  val resultData = Reg(UInt(64.W))
 
   when(st === MmioState.Idle && io.start.valid) {
     r := io.start.bits
@@ -56,12 +60,17 @@ class L1DMmio(p: L1DParams) extends Module {
     when(st === MmioState.Issue) { st := MmioState.Resp }
   }
 
-  io.axi.r.ready := st === MmioState.Resp
-  io.axi.b.ready := st === MmioState.Resp
-  io.done.valid := io.axi.r.fire || io.axi.b.fire
-  io.done.bits.error := Mux(r.isWrite, io.axi.b.bits =/= Axi4.RespOkay, io.axi.r.bits.resp =/= Axi4.RespOkay)
-  io.done.bits.rdata := io.axi.r.bits.data
-  when(io.done.valid) { st := MmioState.Idle }
+  io.axi.r.ready := st === MmioState.Resp && !resultValid && !r.isWrite
+  io.axi.b.ready := st === MmioState.Resp && !resultValid && r.isWrite
+  when(io.axi.r.fire || io.axi.b.fire) {
+    resultValid := true.B
+    resultError := Mux(r.isWrite, io.axi.b.bits =/= Axi4.RespOkay, io.axi.r.bits.resp =/= Axi4.RespOkay)
+    resultData := io.axi.r.bits.data
+  }
+  io.done.valid := resultValid
+  io.done.bits.error := resultError
+  io.done.bits.rdata := resultData
+  when(io.done.valid && io.doneConsume) { resultValid := false.B; st := MmioState.Idle }
 
   io.busy := st === MmioState.Issue || st === MmioState.Resp
   io.active := st =/= MmioState.Idle

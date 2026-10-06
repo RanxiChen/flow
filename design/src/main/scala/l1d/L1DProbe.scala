@@ -70,7 +70,6 @@ class L1DProbe(p: L1DParams) extends Module {
       way := io.s2Beat.bits.hitWay
     }
     when(io.s2Beat.bits.beat === (p.wordsPerLine - 1).U) {
-      // TODO: use beat-0 state when the final beat is the same cycle (wordsPerLine == 1)
       io.tagUpdate.valid := localState =/= L1State.I
       st := St.Answer
     }
@@ -85,6 +84,5 @@ class L1DProbe(p: L1DParams) extends Module {
     st := St.Idle
     r.valid := false.B
   }
-  // TODO: clear reservation when the probe hits rsvLine (§10.3); snapshot
-  // invalidation of same-set S1/S2 on tag update (§5.3) is done by the top.
+  // Reservation clearing and snapshot invalidation are owned by the top.
 }

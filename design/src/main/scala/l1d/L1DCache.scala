@@ -2,450 +2,508 @@ package flow.l1d
 
 import chisel3._
 import chisel3.util._
-import flow.cache.BreezeAmoAlu
 import flow.coherence._
 import flow.config.BreezeMemGeometry
 import flow.interface.{BreezeMmuAccess, L1DOp, L1DRespKind}
 import flow.mmu.sv39.{MmuCmd, TlbResp, TreePlru}
 
-/** Breeze v1 L1D top: S0–S2 + PS, arrays, S0 arbitration, S2 decision (l1d-rtl-spec).
-  *
-  * SKELETON (feat/v1-mem-skeleton). Structure, registers, arrays and the
-  * cycle-level skeleton follow the spec; every `TODO` is filled in during the
-  * simulate-and-fix phase. Pipeline rule (B01 ruling): S1/S2 hold only while
-  * S2 cannot decide, and every such cycle raises core.s2Hold.
+/** Load/store cache with a single MSHR and a separate completion pipeline.
+  * CPU S1/S2 retain their backend-aligned slots during s2Hold. Internal work
+  * shares the SRAM ports, but can finish an older miss while CPU S2 waits.
   */
 class L1DCache(g: BreezeMemGeometry) extends Module {
   val p = L1DParams(g)
   val io = IO(new L1DIO(p))
+  private def idx(a: UInt): UInt = if (p.idxBits == 0) 0.U(p.idxW.W) else a(p.offBits + p.idxBits - 1, p.offBits)
+  private def word(a: UInt): UInt = a(p.offBits - 1, 3)
+  private def line(a: UInt): UInt = a(p.paddrBits - 1, p.offBits)
+  private def tag(a: UInt): UInt = a(p.paddrBits - 1, p.offBits + p.idxBits)
+  private def key(a: UInt): UInt = a(p.conflictHi, p.conflictLo)
+  private def storeLike(op: L1DOp.Type): Bool = op === L1DOp.Store || op === L1DOp.SC || op === L1DOp.AMO
+  private def formatLoad(data: UInt, pa: UInt, size: UInt, signed: Bool, flw: Bool): UInt = {
+    val shifted = data >> (pa(2, 0) ## 0.U(3.W))
+    val ext = MuxLookup(size, shifted)(Seq(
+      0.U -> Mux(signed, shifted(7, 0).asSInt.pad(64).asUInt, shifted(7, 0).pad(64)),
+      1.U -> Mux(signed, shifted(15, 0).asSInt.pad(64).asUInt, shifted(15, 0).pad(64)),
+      2.U -> Mux(signed, shifted(31, 0).asSInt.pad(64).asUInt, shifted(31, 0).pad(64))))
+    Mux(flw, "hffffffff".U(32.W) ## shifted(31, 0), ext)
+  }
 
-  // ===========================================================================
-  // Helpers
-  // ===========================================================================
-  private def idxOfAddr(a: UInt): UInt = a(p.offBits + p.idxW - 1, p.offBits)
-  private def wordOfAddr(a: UInt): UInt = a(p.offBits - 1, 3)
-  private def lineOf(pa: UInt): UInt = pa(p.paddrBits - 1, p.offBits)
-  private def tagOfPa(pa: UInt): UInt = pa(p.paddrBits - 1, p.offBits + p.idxBits)
-  private def confKey(a: UInt): UInt = a(p.conflictHi, p.conflictLo)
-  private def isStoreLike(op: L1DOp.Type): Bool = op === L1DOp.Store || op === L1DOp.SC || op === L1DOp.AMO
-
-  // ===========================================================================
-  // Arrays (§2)
-  // ===========================================================================
-  val tagArr = SyncReadMem(p.sets, Vec(p.ways, new L1TagEntry(p)))
-  val dataArr = Seq.fill(p.ways)(SyncReadMem(p.sets * p.wordsPerLine, Vec(8, UInt(8.W))))
+  val tags = SyncReadMem(p.sets, Vec(p.ways, new L1TagEntry(p)))
+  val data = Seq.fill(p.ways)(SyncReadMem(p.sets * p.wordsPerLine, Vec(8, UInt(8.W))))
   val plru = RegInit(VecInit(Seq.fill(p.sets)(0.U(p.plruBits.W))))
-
-  // Reset initialisation: one set per cycle, all ways I (§2).
   val initIdx = RegInit(0.U((p.idxBits + 1).W))
   val initDone = initIdx === p.sets.U
-
-  // ===========================================================================
-  // Sub-blocks
-  // ===========================================================================
   val miss = Module(new L1DMiss(p))
   val probe = Module(new L1DProbe(p))
   val mmio = Module(new L1DMmio(p))
-  val amoAlu = Module(new BreezeAmoAlu)
   val pma = Module(new flow.platform.PMAChecker)
   val pmp = Module(new flow.mmu.BreezePmpChecker(64))
 
-  // ===========================================================================
-  // Pipeline registers (§3)
-  // ===========================================================================
-  val s1 = RegInit(0.U.asTypeOf(new L1S1(p)))
-  val s2 = RegInit(0.U.asTypeOf(new L1S2(p)))
+  val cpu1 = RegInit(0.U.asTypeOf(new L1S1(p)))
+  val cpu2 = RegInit(0.U.asTypeOf(new L1S2(p)))
+  val internal1 = RegInit(0.U.asTypeOf(new L1S1(p)))
+  val internal2 = RegInit(0.U.asTypeOf(new L1S2(p)))
   val ps = RegInit(0.U.asTypeOf(new L1PendingStore(p)))
+  val recheckIssued = RegInit(false.B)
+  val ptwOutstanding = RegInit(false.B)
+  val upgrading = RegInit(false.B)
+  val wholeBusy = RegInit(false.B)
+  val wholeOwner = Reg(L1Src())
+  val cpuHold = Wire(Bool())
+  val internalHold = Wire(Bool())
+  val cpuAdvance = !cpuHold
+  val cpu1Advance = cpuAdvance
+  val internalAdvance = !internalHold
+  val internal1Advance = !internal1.valid || internalAdvance
+  val cpuKill = io.core.s1Kill || io.core.s2Kill
 
-  // Translation wait (§7.1): X and Y. TODO: entry/exit and in-order reissue.
-  val xlatWait = Reg(Vec(2, new L1PipeReq(p)))
-  val xlatValid = RegInit(VecInit(Seq.fill(2)(false.B)))
-  val xlatClosed = xlatValid.asUInt.orR
+  // Retain the request in CPU S2 while requery runs through the completion
+  // lane. CPU S1 retains Y, including a dropped TLB response after X misses.
+  // Neither X nor Y reserves an MSHR or a way before translation completes.
+  val cpuRetry = cpu2.valid && cpu2.req.core.op =/= L1DOp.Fence &&
+    (cpu2.translationMiss || cpu2.snapInvalid || cpu2.needsRecheck)
+  val resourcesClear = !miss.io.status.mshrValid && !miss.io.status.wbValid
+  val retryReady = cpuRetry && !recheckIssued && resourcesClear && !probe.io.pending.valid && !cpuKill
 
-  // Recheck queue (§6.1 item 5): snapshot-invalidated or released-hold requests.
-  // TODO: depth and age order; v1 needs at most S1+S2 = 2 entries.
-  val recheck = Reg(Vec(2, new L1PipeReq(p)))
-  val recheckValid = RegInit(VecInit(Seq.fill(2)(false.B)))
-
-  // Reservation (§8.1)
-  val rsvValid = RegInit(false.B)
-  val rsvLine = Reg(UInt(p.lineAddrBits.W))
-  val rsvTimer = RegInit(0.U(log2Ceil(p.rsvWindow + 1).W))
-
-  // AMO exclusive path (§8.3)
-  val amoState = RegInit(AmoState.Idle)
-
-  // ===========================================================================
-  // S2 decision outputs used by earlier stages (computed below)
-  // ===========================================================================
-  val s2Stall = Wire(Bool())        // S2 holds this cycle
-  val s2Advance = !s2Stall          // S2 consumes its slot (or is empty)
-  val s1Advance = !s1.valid || s2Advance
-  val s0CanIssue = s1Advance
-
-  // ===========================================================================
-  // S0: arbitration (§6.1)
-  // ===========================================================================
-  val s0Sel = Wire(L1Src())
-  val s0Req = Wire(new L1PipeReq(p))
-  val s0Fire = Wire(Bool())
-  s0Req := 0.U.asTypeOf(s0Req)
-
-  // Conflict check (§4): S1/S2 store-like by vaddr[11:3], PS by pa[11:3].
-  private def conflicts(key: UInt): Bool = {
-    val s1c = s1.valid && isStoreLike(s1.req.core.op) && confKey(s1.req.core.vaddr) === key
-    val s2c = s2.valid && isStoreLike(s2.req.core.op) && confKey(s2.req.core.vaddr) === key
-    val psc = ps.valid && confKey(ps.paddr) === key
-    s1c || s2c || psc
+  def conflict(k: UInt): Bool = {
+    val s1Store = cpu1.valid && storeLike(cpu1.req.core.op) && key(cpu1.req.core.vaddr) === k
+    val s2Store = cpu2.valid && storeLike(cpu2.req.core.op) && key(cpu2.req.core.vaddr) === k
+    s1Store || s2Store || (ps.valid && key(ps.paddr) === k)
   }
+  // Rechecking the held Store must not conflict with itself or younger CPU S1.
+  val retryConflict = ps.valid && key(ps.paddr) === key(cpu2.req.core.vaddr)
+  // A held younger Store is not older than the MSHR's committed request.
+  val replayConflict = ps.valid && key(ps.paddr) === key(miss.io.s0Req.bits.replayReq.paddr)
+  val cpuLoad = io.core.req.bits.op === L1DOp.Load || io.core.req.bits.op === L1DOp.LR
+  val cpuConflict = cpuLoad && conflict(key(io.core.req.bits.vaddr))
+  // Held untranslated X/Y stores are younger than the PTE read needed for X.
+  val ptwConflict = ps.valid && key(ps.paddr) === key(io.ptw.req.bits.paddr)
 
-  val cpuKey = confKey(io.core.req.bits.vaddr)
-  val cpuIsLoadLike = io.core.req.bits.op === L1DOp.Load || io.core.req.bits.op === L1DOp.LR
-  val cpuConflict = cpuIsLoadLike && conflicts(cpuKey)
-  val ptwConflict = conflicts(io.ptw.req.bits.paddr)
-  // TODO: replay and recheck also go through the conflict check.
+  val s0Req = WireDefault(0.U.asTypeOf(new L1PipeReq(p)))
+  val selected = WireDefault(L1Src.Cpu)
+  val candidate = WireDefault(false.B)
+  val cpuEntryOpen = initDone && !cpuRetry && !recheckIssued && !mmio.io.active &&
+    !probe.io.pending.valid && !wholeBusy
+  // TODO §8: LR/SC, AMO and aq/rl exclusive paths are a separate RTL batch.
+  // They retain their request at S2; they are never silently retired.
+  val canPtw = initDone && resourcesClear && !ptwOutstanding && !ptwConflict && !ps.valid &&
+    (!cpu2.valid || cpuRetry) && (!cpu1.valid || cpuRetry) && !internal1.valid && !internal2.valid
 
-  val probeWantsS0 = probe.io.s0Req.valid
-  // A whole-line op owns S0 until its last beat; while a probe waits, rechecks
-  // and CPU requests are closed (§10.1).
-  val wholeLineBusy = WireDefault(false.B) // TODO: beat counter for install/wbRead/probe
-  val cpuEntryOpen = initDone && !xlatClosed && !mmio.io.active && amoState === AmoState.Idle &&
-    !probe.io.pending.valid && !wholeLineBusy
-  // TODO: aq/rl gating (§8.2): rl waits drained, aq closes entry until done.
-
-  val cand = Wire(Vec(L1Src.all.length, Bool()))
-  cand(L1Src.Init.litValue.toInt) := !initDone
-  cand(L1Src.Probe.litValue.toInt) := probeWantsS0
-  cand(L1Src.Refill.litValue.toInt) := miss.io.s0Req.valid && miss.io.s0Req.bits.install
-  cand(L1Src.WbRead.litValue.toInt) := miss.io.s0Req.valid && miss.io.s0Req.bits.wbRead
-  cand(L1Src.Replay.litValue.toInt) := miss.io.s0Req.valid && miss.io.s0Req.bits.replay
-  cand(L1Src.Ptw.litValue.toInt) := io.ptw.req.valid && !ptwConflict && initDone
-  cand(L1Src.Recheck.litValue.toInt) := recheckValid.asUInt.orR && !probe.io.pending.valid
-  cand(L1Src.Cpu.litValue.toInt) := io.core.req.valid && cpuEntryOpen && !cpuConflict
-  val selOH = PriorityEncoderOH(cand)
-  val anyCand = cand.asUInt.orR
-  s0Sel := L1Src(OHToUInt(selOH))
-
-  // CPU and recheck requests need the dTLB in the same cycle.
-  val needsTlb = s0Sel === L1Src.Cpu || s0Sel === L1Src.Recheck
-  s0Fire := anyCand && s0CanIssue && (!needsTlb || (io.tlb.req.ready && !io.core.s1Kill && !io.core.s2Kill))
-
-  // Build the S0 request from the winning source.
-  switch(s0Sel) {
-    is(L1Src.Cpu) {
-      s0Req.core := io.core.req.bits
-      s0Req.idx := idxOfAddr(io.core.req.bits.vaddr)
-      s0Req.word := wordOfAddr(io.core.req.bits.vaddr)
-    }
-    is(L1Src.Ptw) {
-      s0Req.physicalAddress := io.ptw.req.bits.paddr
-      s0Req.paddr := io.ptw.req.bits.paddr(p.paddrBits - 1, 0)
+  // A non-line internal query reserves its completion lane until S2. Only
+  // beats of the already-owned whole-line operation overlap in that lane.
+  when(initDone && (wholeBusy || (!internal1.valid && !internal2.valid))) {
+    when(probe.io.s0Req.valid && (!wholeBusy || wholeOwner === L1Src.Probe)) {
+      candidate := true.B; selected := L1Src.Probe
       s0Req.hasPaddr := true.B
-      s0Req.idx := idxOfAddr(io.ptw.req.bits.paddr)
-      s0Req.word := wordOfAddr(io.ptw.req.bits.paddr)
-    }
-    is(L1Src.Refill, L1Src.WbRead) {
+      s0Req.paddr := probe.io.pending.addr ## 0.U(p.offBits.W)
+      s0Req.physicalAddress := s0Req.paddr
+      s0Req.idx := idx(s0Req.paddr)
+      s0Req.word := probe.io.s0Req.bits
+      s0Req.beat := probe.io.s0Req.bits
+      s0Req.lastBeat := probe.io.s0Req.bits === (p.wordsPerLine - 1).U
+    }.elsewhen(miss.io.s0Req.valid && miss.io.s0Req.bits.install && (!wholeBusy || wholeOwner === L1Src.Refill)) {
+      candidate := true.B; selected := L1Src.Refill
       s0Req.hasPaddr := true.B
       s0Req.idx := miss.io.s0Req.bits.idx
       s0Req.word := miss.io.s0Req.bits.beat
       s0Req.beat := miss.io.s0Req.bits.beat
-      s0Req.lastBeat := miss.io.s0Req.bits.beat === (p.wordsPerLine - 1).U
-    }
-    is(L1Src.Replay) {
-      s0Req := miss.io.s0Req.bits.replayReq
-    }
-    is(L1Src.Probe) {
+      s0Req.lastBeat := miss.io.s0Req.bits.installIsAckE || s0Req.beat === (p.wordsPerLine - 1).U
+    }.elsewhen(miss.io.s0Req.valid && miss.io.s0Req.bits.wbRead && (!wholeBusy || wholeOwner === L1Src.WbRead)) {
+      candidate := true.B; selected := L1Src.WbRead
       s0Req.hasPaddr := true.B
-      s0Req.paddr := probe.io.pending.addr ## 0.U(p.offBits.W)
-      s0Req.physicalAddress := probe.io.pending.addr ## 0.U(p.offBits.W)
-      s0Req.idx := probe.io.pending.addr(p.idxW - 1, 0)
-      s0Req.word := probe.io.s0Req.bits
-      s0Req.beat := probe.io.s0Req.bits
-      s0Req.lastBeat := probe.io.s0Req.bits === (p.wordsPerLine - 1).U
-    }
-    is(L1Src.Recheck) {
-      s0Req := recheck(0) // TODO: oldest first
-    }
-  }
-  s0Req.src := s0Sel
-
-  // Handshakes
-  io.core.req.ready := s0Fire && s0Sel === L1Src.Cpu && !io.core.s1Kill
-  io.ptw.req.ready := s0Fire && s0Sel === L1Src.Ptw
-  miss.io.s0Grant := s0Fire && (s0Sel === L1Src.Refill || s0Sel === L1Src.WbRead || s0Sel === L1Src.Replay)
-  probe.io.s0Grant := s0Fire && s0Sel === L1Src.Probe
-
-  io.tlb.req.valid := anyCand && needsTlb && s0CanIssue && !io.core.s1Kill && !io.core.s2Kill
-  io.tlb.req.bits.vaddr := s0Req.core.vaddr
-  io.tlb.req.bits.cmd := Mux(isStoreLike(s0Req.core.op), MmuCmd.Store, MmuCmd.Load)
-  io.tlb.kill := io.core.s1Kill || io.core.s2Kill
-
-  // Array reads (data address {idx, word}). Install/PS writes are below.
-  val readEn = s0Fire && s0Sel =/= L1Src.Init
-  val tagRead = tagArr.read(s0Req.idx, readEn)
-  val dataRead = VecInit(dataArr.map(_.read(s0Req.idx ## s0Req.word, readEn).asUInt))
-
-  // ===========================================================================
-  // S1 (§3): capture TLB result; hold-safe capture of array outputs.
-  // ===========================================================================
-  val s1Fresh = RegNext(s0Fire && s0Sel =/= L1Src.Init, false.B)
-  val s1TagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
-  val s1DataHeld = Reg(Vec(p.ways, UInt(64.W)))
-  val s1Tag = Mux(s1Fresh, tagRead, s1TagHeld)
-  val s1Data = Mux(s1Fresh, dataRead, s1DataHeld)
-  s1TagHeld := s1Tag
-  s1DataHeld := s1Data
-
-  // TLB produces a one-cycle S1 response, independent of L1D's S2 hold.
-  // Preserve it on the first S1 cycle; never resample a later transaction.
-  val s1TlbHeld = Reg(new TlbResp)
-  val s1TlbValidHeld = RegInit(false.B)
-  when(s1Fresh && !s1.req.hasPaddr) {
-    s1TlbHeld := io.tlb.resp.bits
-    s1TlbValidHeld := io.tlb.resp.valid
-  }
-  val s1Tlb = Mux(s1Fresh, io.tlb.resp.bits, s1TlbHeld)
-  val s1TlbValid = Mux(s1Fresh, io.tlb.resp.valid, s1TlbValidHeld)
-  val s1PhysicalAddress = Mux(s1.req.hasPaddr, s1.req.physicalAddress, s1Tlb.paddr)
-  val s1Paddr = s1PhysicalAddress(p.paddrBits - 1, 0)
-  val s1TranslationComplete = s1.req.hasPaddr || (s1TlbValid && !s1Tlb.miss)
-  // A miss/dropS1Next has no physical result. X/Y retry ownership is still
-  // the internal translation-wait TODO below; do not use a fabricated PA.
-  // TODO: TLB miss in S1 → xlatWait (X, and Y = this cycle's S0 fire) (§7.1).
-  // TODO: snapshot invalidation of S1 on same-set install/probe/victim (§5.3).
-
-  when(s1Advance) {
-    s1.valid := s0Fire && !(io.core.s1Kill && s0Sel === L1Src.Cpu)
-    s1.req := s0Req
-  }
-  when(io.core.s1Kill || io.core.s2Kill) {
-    // s1Kill: CPU request in S1 is dropped; internal sources are unaffected (PTW reads never die).
-    when(s1.req.src === L1Src.Cpu || s1.req.src === L1Src.Recheck) { s1.valid := false.B }
-  }
-
-  // ===========================================================================
-  // S2 (§5): tag compare, PMA/PMP, decision
-  // ===========================================================================
-  def isCpuSource(src: L1Src.Type): Bool = src === L1Src.Cpu || src === L1Src.Recheck
-
-  when(s2Advance) {
-    s2.valid := s1.valid && s1TranslationComplete &&
-      !(isCpuSource(s1.req.src) && (io.core.s1Kill || io.core.s2Kill))
-    s2.req := s1.req
-    s2.paddr := s1Paddr
-    s2.physicalAddress := s1PhysicalAddress
-    s2.pageFault := !s1.req.hasPaddr && s1Tlb.pageFault
-    s2.accessFault := !s1.req.hasPaddr && s1Tlb.accessFault
-    s2.tagVec := s1Tag
-    s2.dataVec := s1Data
-    s2.snapInvalid := false.B
-  }
-
-  val s2Tag = tagOfPa(s2.paddr)
-  val hitVec = VecInit(s2.tagVec.map(e => e.state =/= L1State.I && e.tag === s2Tag)) // TODO: exclude locked way
-  val hit = hitVec.asUInt.orR
-  val hitWay = OHToUInt(hitVec)
-  val hitState = s2.tagVec(hitWay).state
-  val wOk = hitState === L1State.E || hitState === L1State.M
-  val hitWord = s2.dataVec(hitWay)
-
-  val s2Ptw = s2.req.src === L1Src.Ptw
-  val s2Store = !s2Ptw && isStoreLike(s2.req.core.op)
-  val s2Size = Mux(s2Ptw, 3.U, s2.req.core.size)
-  pma.io.query.addr := s2.physicalAddress
-  pma.io.query.sizeLog2 := s2Size
-  pma.io.query.accessType := Mux(s2Store, flow.platform.PMAAccessType.Store,
-    flow.platform.PMAAccessType.Load)
-  pmp.io.addr := s2.physicalAddress
-  pmp.io.sizeLog2 := s2Size
-  pmp.io.access := Mux(s2Store, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
-  // PTW accesses page tables with S-mode PMP permissions (MMU RTL spec).
-  pmp.io.privilege := Mux(s2Ptw, 1.U,
-    Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
-  pmp.io.context := io.core.csr
-
-  val sameLineMshr = miss.io.status.mshrValid && miss.io.status.mshrLineAddr === lineOf(s2.paddr)
-  val sameLineWb = miss.io.status.wbValid && miss.io.status.wbLineAddr === lineOf(s2.paddr)
-  val isCpuLike = s2.req.src === L1Src.Cpu || s2.req.src === L1Src.Recheck || s2.req.src === L1Src.Replay
-
-  val atomicDenied = !s2Ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !pma.io.result.rsrvOk ||
-    s2.req.core.op === L1DOp.AMO && !pma.io.result.amoOk)
-  val ptwDeviceDenied = s2Ptw && pma.io.result.device
-
-  val outcome = WireDefault(L1S2Outcome.None)
-  when(s2.valid) {
-    when(!isCpuLike && s2.req.src =/= L1Src.Ptw) {
-      outcome := L1S2Outcome.Internal
-    }.elsewhen(s2.snapInvalid) {
-      outcome := L1S2Outcome.Recheck
-    }.elsewhen(s2.pageFault || s2.accessFault || !pma.io.result.allowed || !pmp.io.allowed || atomicDenied || ptwDeviceDenied) {
-      outcome := L1S2Outcome.Exc
-    }.elsewhen(pma.io.result.device) {
-      outcome := L1S2Outcome.ToMmio // TODO: LR/SC/AMO on device → Exc (§5.1 item 5)
-    }.elsewhen(s2.req.core.op === L1DOp.AMO && s2.req.src =/= L1Src.Replay) {
-      outcome := L1S2Outcome.ToAmo
-    }.elsewhen(sameLineMshr || sameLineWb) {
-      outcome := L1S2Outcome.Hold
-    }.elsewhen(s2.req.src === L1Src.Replay) {
-      outcome := L1S2Outcome.Done // replay always hits (assert below)
-    }.elsewhen(s2.req.src === L1Src.Ptw) {
-      outcome := Mux(hit, L1S2Outcome.PtwResp, Mux(miss.io.status.canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
-    }.otherwise {
-      val op = s2.req.core.op
-      when(op === L1DOp.Load) {
-        outcome := Mux(hit, L1S2Outcome.Done, Mux(miss.io.status.canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
-      }.elsewhen(op === L1DOp.Store) {
-        // Store hit E/M → Done into PS; PS busy-and-blocked → Hold. TODO: PS-blocked rule.
-        outcome := Mux(hit && wOk, L1S2Outcome.Done,
-          Mux(miss.io.status.canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
-      }.elsewhen(op === L1DOp.Fence) {
-        outcome := Mux(miss.io.status.mshrValid || ps.valid, L1S2Outcome.Hold, L1S2Outcome.Done)
-      }.otherwise {
-        outcome := L1S2Outcome.Hold // TODO: LR/SC rows of §5.2
+      s0Req.idx := miss.io.s0Req.bits.idx
+      s0Req.word := miss.io.s0Req.bits.beat
+      s0Req.beat := miss.io.s0Req.bits.beat
+      s0Req.lastBeat := s0Req.beat === (p.wordsPerLine - 1).U
+    }.elsewhen(!wholeBusy) {
+      when(miss.io.s0Req.valid && miss.io.s0Req.bits.replay && !replayConflict && !ps.valid) {
+        candidate := true.B; selected := L1Src.Replay
+        s0Req := miss.io.s0Req.bits.replayReq
+      }.elsewhen(io.ptw.req.valid && canPtw) {
+        candidate := true.B; selected := L1Src.Ptw
+        s0Req.hasPaddr := true.B
+        s0Req.physicalAddress := io.ptw.req.bits.paddr
+        s0Req.paddr := io.ptw.req.bits.paddr(p.paddrBits - 1, 0)
+        s0Req.idx := idx(s0Req.paddr)
+        s0Req.word := word(s0Req.paddr)
+        s0Req.core.op := L1DOp.Load
+        s0Req.core.size := 3.U
+      }.elsewhen(retryReady && !retryConflict && io.tlb.req.ready) {
+        candidate := true.B; selected := L1Src.Recheck
+        s0Req := cpu2.req
+        s0Req.hasPaddr := false.B
+      }.elsewhen(io.core.req.valid && cpuEntryOpen && !cpuConflict && !cpuKill) {
+        candidate := true.B; selected := L1Src.Cpu
+        s0Req.core := io.core.req.bits
+        s0Req.idx := idx(io.core.req.bits.vaddr)
+        s0Req.word := word(io.core.req.bits.vaddr)
+        when(io.core.req.bits.op === L1DOp.Fence) { s0Req.hasPaddr := true.B }
       }
     }
   }
-  when(s2.valid && s2.req.src === L1Src.Replay) {
-    assert(hit, "MSHR replay must hit (sec 6.2)")
+  s0Req.src := selected
+  val isCpuIssue = selected === L1Src.Cpu
+  val needsTlb = (isCpuIssue || selected === L1Src.Recheck) && !s0Req.hasPaddr
+  val cpuFire = candidate && isCpuIssue && cpu1Advance && (!needsTlb || io.tlb.req.ready)
+  val internalFire = candidate && !isCpuIssue && internal1Advance && (!needsTlb || io.tlb.req.ready)
+  val s0Fire = cpuFire || internalFire
+  io.core.req.ready := cpuFire
+  io.ptw.req.ready := s0Fire && selected === L1Src.Ptw
+  io.tlb.req.valid := candidate && needsTlb && Mux(isCpuIssue, cpu1Advance, internal1Advance) && !cpuKill
+  io.tlb.req.bits.vaddr := s0Req.core.vaddr
+  io.tlb.req.bits.cmd := Mux(storeLike(s0Req.core.op), MmuCmd.Store, MmuCmd.Load)
+  io.tlb.kill := cpuKill
+  miss.io.s0Grant := s0Fire && (selected === L1Src.Refill || selected === L1Src.WbRead || selected === L1Src.Replay)
+  probe.io.s0Grant := s0Fire && selected === L1Src.Probe
+  when(s0Fire && selected === L1Src.Recheck) { recheckIssued := true.B }
+  when(io.ptw.req.fire) { ptwOutstanding := true.B }
+
+  val wholeIssue = internalFire && (selected === L1Src.Probe || selected === L1Src.Refill || selected === L1Src.WbRead)
+  when(wholeIssue && !wholeBusy) { wholeBusy := true.B; wholeOwner := selected }
+  when(internal2.valid && internalAdvance && internal2.req.lastBeat &&
+    internal2.req.src === wholeOwner) { wholeBusy := false.B }
+
+  val tagRead = tags.read(s0Req.idx, s0Fire)
+  val dataRead = VecInit(data.map(_.read(s0Req.idx ## s0Req.word, s0Fire).asUInt))
+  val cpuFresh = RegNext(cpuFire, false.B)
+  val cpuTagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
+  val cpuDataHeld = Reg(Vec(p.ways, UInt(64.W)))
+  val cpuTlbHeld = Reg(new TlbResp)
+  val cpuTlbValidHeld = RegInit(false.B)
+  when(cpuFresh) {
+    cpuTagHeld := tagRead; cpuDataHeld := dataRead
+    cpuTlbHeld := io.tlb.resp.bits; cpuTlbValidHeld := io.tlb.resp.valid
   }
+  val cpuTags = Mux(cpuFresh, tagRead, cpuTagHeld)
+  val cpuData = Mux(cpuFresh, dataRead, cpuDataHeld)
+  val cpuTlb = Mux(cpuFresh, io.tlb.resp.bits, cpuTlbHeld)
+  val cpuTlbValid = Mux(cpuFresh, io.tlb.resp.valid, cpuTlbValidHeld)
 
-  s2Stall := s2.valid && (outcome === L1S2Outcome.Hold || outcome === L1S2Outcome.ToMmio && true.B)
-  // TODO: ToMmio holds until mmio.done; ToAmo holds during the AMO path.
-
-  // ---- Load formatting (§5.4) ----
-  private def formatLoad(word: UInt, pa: UInt, size: UInt, signed: Bool, isFlw: Bool): UInt = {
-    val shifted = word >> (pa(2, 0) ## 0.U(3.W))
-    val b = shifted(7, 0); val h = shifted(15, 0); val w = shifted(31, 0)
-    val ext = MuxLookup(size, shifted)(Seq(
-      0.U -> Mux(signed, b.asSInt.pad(64).asUInt, b.pad(64)),
-      1.U -> Mux(signed, h.asSInt.pad(64).asUInt, h.pad(64)),
-      2.U -> Mux(signed, w.asSInt.pad(64).asUInt, w.pad(64))))
-    Mux(isFlw, "hffffffff".U(32.W) ## w, ext)
+  val internalFresh = RegNext(internalFire, false.B)
+  val internalTagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
+  val internalDataHeld = Reg(Vec(p.ways, UInt(64.W)))
+  val internalTlbHeld = Reg(new TlbResp)
+  val internalTlbValidHeld = RegInit(false.B)
+  when(internalFresh) {
+    internalTagHeld := tagRead; internalDataHeld := dataRead
+    internalTlbHeld := io.tlb.resp.bits; internalTlbValidHeld := io.tlb.resp.valid
   }
-  val loadData = formatLoad(hitWord, s2.paddr, s2.req.core.size, s2.req.core.signed, s2.req.core.isFlw)
+  val internalTags = Mux(internalFresh, tagRead, internalTagHeld)
+  val internalData = Mux(internalFresh, dataRead, internalDataHeld)
+  val internalTlb = Mux(internalFresh, io.tlb.resp.bits, internalTlbHeld)
+  val internalTlbValid = Mux(internalFresh, io.tlb.resp.valid, internalTlbValidHeld)
 
-  // ---- Backend response: exactly one per CPU request (§1.1) ----
-  // Present the S2 decision independently of WB cancellation. A WB memory
-  // exception uses this very response to generate s2Kill; gating Valid with
-  // that kill creates a combinational cycle and suppresses its own fault.
-  // Kill still gates allocation/PS and clears unfinished pipeline state.
-  val cpuDecided = s2.valid && (s2.req.src === L1Src.Cpu || s2.req.src === L1Src.Recheck)
-  io.core.resp.valid := cpuDecided &&
+  when(cpu1Advance) {
+    cpu1.valid := cpuFire
+    cpu1.req := s0Req
+    cpu1.snapInvalid := false.B
+  }
+  when(cpuAdvance) {
+    cpu2.valid := cpu1.valid && !cpuKill
+    cpu2.req := cpu1.req
+    cpu2.physicalAddress := Mux(cpu1.req.hasPaddr, cpu1.req.physicalAddress, cpuTlb.paddr)
+    cpu2.paddr := Mux(cpu1.req.hasPaddr, cpu1.req.paddr, cpuTlb.paddr(p.paddrBits - 1, 0))
+    cpu2.pageFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.pageFault
+    cpu2.accessFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.accessFault
+    cpu2.translationMiss := !cpu1.req.hasPaddr && (!cpuTlbValid || cpuTlb.miss)
+    cpu2.snapInvalid := cpu1.snapInvalid
+    cpu2.needsRecheck := false.B
+    cpu2.tagVec := cpuTags
+    cpu2.dataVec := cpuData
+  }
+  when(internal1Advance) {
+    internal1.valid := internalFire
+    internal1.req := s0Req
+    internal1.snapInvalid := false.B
+  }
+  when(internalAdvance) {
+    internal2.valid := internal1.valid
+    internal2.req := internal1.req
+    internal2.physicalAddress := Mux(internal1.req.hasPaddr, internal1.req.physicalAddress, internalTlb.paddr)
+    internal2.paddr := Mux(internal1.req.hasPaddr, internal1.req.paddr, internalTlb.paddr(p.paddrBits - 1, 0))
+    internal2.pageFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.pageFault
+    internal2.accessFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.accessFault
+    internal2.translationMiss := !internal1.req.hasPaddr && (!internalTlbValid || internalTlb.miss)
+    internal2.snapInvalid := internal1.snapInvalid
+    internal2.needsRecheck := false.B
+    internal2.tagVec := internalTags
+    internal2.dataVec := internalData
+  }
+  val recheckReturns = internal2.valid && internal2.req.src === L1Src.Recheck && internalAdvance
+  when(recheckReturns && cpu2.valid && !io.core.s2Kill) {
+    cpu2 := internal2
+    cpu2.req.src := L1Src.Cpu
+    cpu2.needsRecheck := false.B
+    recheckIssued := false.B
+  }
+  when(cpuKill) { cpu1.valid := false.B }
+  when(io.core.s2Kill) { cpu2.valid := false.B; recheckIssued := false.B }
+  when(io.core.s2Kill && internal1.req.src === L1Src.Recheck) { internal1.valid := false.B }
+  when(io.core.s2Kill && internal2.req.src === L1Src.Recheck) { internal2.valid := false.B }
+
+  // One S2 executor owns side effects. Completion work has priority over a
+  // CPU snapshot; the CPU slots hold rather than losing a backend response.
+  val s2 = Wire(new L1S2(p))
+  s2 := Mux(internal2.valid, internal2, cpu2)
+  val fromInternal = internal2.valid
+  val replay = fromInternal && s2.req.src === L1Src.Replay
+  val ptw = s2.req.src === L1Src.Ptw || (replay && s2.req.replayPtw)
+  val rechecking = fromInternal && s2.req.src === L1Src.Recheck
+  val normalInternal = fromInternal && !replay && !ptw && !rechecking
+  val hitVec = VecInit((0 until p.ways).map(w => s2.tagVec(w).state =/= L1State.I &&
+    s2.tagVec(w).tag === tag(s2.paddr) && !(miss.io.status.wayLocked &&
+      miss.io.status.mshrWay === w.U && idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)) === s2.req.idx &&
+      !(s2.req.src === L1Src.Probe && upgrading && miss.io.status.mshrState === MshrState.Wait &&
+        !probe.io.pending.owner))))
+  val hit = hitVec.asUInt.orR
+  val hitWay = OHToUInt(hitVec)
+  val hitState = s2.tagVec(hitWay).state
+  val writable = hitState === L1State.E || hitState === L1State.M
+  val hitWord = s2.dataVec(hitWay)
+  val isStore = !ptw && storeLike(s2.req.core.op)
+  val sameMshr = miss.io.status.mshrValid && miss.io.status.mshrLineAddr === line(s2.paddr)
+  val sameWb = miss.io.status.wbValid && miss.io.status.wbLineAddr === line(s2.paddr)
+  val invalidWays = VecInit((0 until p.ways).map(w => s2.tagVec(w).state === L1State.I &&
+    !(miss.io.status.wayLocked && miss.io.status.mshrWay === w.U &&
+      idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)) === s2.req.idx)))
+  val replacement = TreePlru.victim(plru(s2.req.idx), p.ways)
+  val victimWay = Mux(invalidWays.asUInt.orR, PriorityEncoder(invalidWays), replacement)
+  val upgrade = hit && hitState === L1State.S && isStore
+  val allocWay = Mux(upgrade, hitWay, victimWay)
+  val victimEntry = s2.tagVec(allocWay)
+  val victimValid = !upgrade && victimEntry.state =/= L1State.I
+  val victimAddress = if (p.idxBits == 0) victimEntry.tag else victimEntry.tag ## s2.req.idx
+
+  val installNow = internalFire && selected === L1Src.Refill
+  val installLast = installNow && s0Req.lastBeat
+  val psWriteBlocked = wholeBusy || miss.io.status.mshrState === MshrState.Install || probe.io.tagUpdate.valid
+  val psWrites = ps.valid && !psWriteBlocked
+  val tagBusy = installLast || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
+  val psRoom = !ps.valid || psWrites
+  val externalMutation = installNow || probe.io.tagUpdate.valid || (psWrites && ps.setDirty)
+  val externalSet = Mux(installNow, miss.io.s0Req.bits.idx,
+    Mux(probe.io.tagUpdate.valid, idx(probe.io.pending.addr ## 0.U(p.offBits.W)), ps.idx))
+  val canAllocate = miss.io.status.canAllocate && !ptwOutstanding && !tagBusy && !internalFire &&
+    (!victimValid || !miss.io.status.wbValid)
+  val ptwCanAllocate = miss.io.status.canAllocate && !tagBusy && (!victimValid || !miss.io.status.wbValid)
+
+  pma.io.query.addr := s2.physicalAddress
+  pma.io.query.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
+  pma.io.query.accessType := Mux(isStore, flow.platform.PMAAccessType.Store, flow.platform.PMAAccessType.Load)
+  pmp.io.addr := s2.physicalAddress
+  pmp.io.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
+  pmp.io.access := Mux(isStore, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
+  pmp.io.privilege := Mux(ptw, 1.U, Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
+  pmp.io.context := io.core.csr
+  val atomicDenied = !ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !pma.io.result.rsrvOk ||
+    s2.req.core.op === L1DOp.AMO && !pma.io.result.amoOk)
+  val highAddress = (s2.physicalAddress >> p.paddrBits).orR
+  val alignmentMask = (1.U(9.W) << Mux(ptw, 3.U, s2.req.core.size)) - 1.U
+  val misaligned = (s2.req.core.vaddr(2, 0) & alignmentMask(2, 0)).orR && !ptw
+  val permissionFault = s2.pageFault || s2.accessFault || highAddress || !pma.io.result.allowed ||
+    !pmp.io.allowed || atomicDenied || (ptw && pma.io.result.device) ||
+    (pma.io.result.device && !ptw && s2.req.core.op =/= L1DOp.Load && s2.req.core.op =/= L1DOp.Store)
+  val outcome = WireDefault(L1S2Outcome.None)
+  when(s2.valid) {
+    when(normalInternal || rechecking) { outcome := L1S2Outcome.Internal }
+      .elsewhen(replay) {
+        // Replay has already passed all access checks before commitment.
+        when(!s2.req.replayError && s2.req.core.op === L1DOp.Store && !psRoom) {
+          outcome := L1S2Outcome.Hold
+        }.otherwise { outcome := Mux(ptw, L1S2Outcome.PtwResp, L1S2Outcome.Done) }
+      }.elsewhen(!fromInternal && (internal1.valid || wholeBusy)) { outcome := L1S2Outcome.Hold }
+      .elsewhen(s2.req.core.op === L1DOp.Fence && !ptw) {
+        outcome := Mux(io.core.drained, L1S2Outcome.Done, L1S2Outcome.Hold)
+      }.elsewhen(s2.translationMiss || s2.snapInvalid || s2.needsRecheck ||
+        (!fromInternal && externalMutation && s2.req.idx === externalSet)) { outcome := L1S2Outcome.Recheck
+      }.elsewhen(misaligned || permissionFault) { outcome := L1S2Outcome.Exc }
+      .elsewhen(pma.io.result.device) {
+        outcome := Mux(mmio.io.done.valid, Mux(mmio.io.done.bits.error, L1S2Outcome.Exc, L1S2Outcome.Done), L1S2Outcome.ToMmio)
+      }.elsewhen(sameMshr || sameWb) { outcome := L1S2Outcome.Hold }
+      .elsewhen(ptw) {
+        outcome := Mux(hit, L1S2Outcome.PtwResp, Mux(ptwCanAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
+      }.elsewhen(s2.req.core.op === L1DOp.Load) {
+        outcome := Mux(hit, L1S2Outcome.Done, Mux(canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
+      }.elsewhen(s2.req.core.op === L1DOp.Store) {
+        outcome := Mux(hit && writable, Mux(psRoom, L1S2Outcome.Done, L1S2Outcome.Hold),
+          Mux(canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
+      }.otherwise { outcome := L1S2Outcome.Hold }
+  }
+  val undecided = outcome === L1S2Outcome.Hold || outcome === L1S2Outcome.Recheck || outcome === L1S2Outcome.ToMmio
+  // Admission reserves the single internal result's capacity. In particular,
+  // PTW is accepted only with free miss resources, and replay waits for PS.
+  // An internal wait here would prevent that same lane finishing the miss.
+  internalHold := false.B
+  cpuHold := cpu2.valid && (internal2.valid || undecided)
+  io.core.s2Hold := cpuHold
+  // Resource waits must requery SRAM when they resume; do not reuse a tag
+  // snapshot acquired before the older refill/probe/writeback completed.
+  when(cpu2.valid && cpu2.req.core.op =/= L1DOp.Fence && !fromInternal && outcome === L1S2Outcome.Hold &&
+    (sameMshr || sameWb || (!hit && !miss.io.status.canAllocate))) { cpu2.needsRecheck := true.B }
+
+  val rawLoad = Mux(!fromInternal && mmio.io.done.valid, mmio.io.done.bits.rdata, hitWord)
+  val loadData = formatLoad(rawLoad, s2.paddr, s2.req.core.size, s2.req.core.signed, s2.req.core.isFlw)
+  val cpuDecided = cpu2.valid && !fromInternal &&
     (outcome === L1S2Outcome.Done || outcome === L1S2Outcome.Mshr || outcome === L1S2Outcome.Exc)
+  io.core.resp.valid := cpuDecided
   io.core.resp.bits.kind := MuxCase(L1DRespKind.Done, Seq(
     (outcome === L1S2Outcome.Mshr) -> L1DRespKind.Mshr,
     (outcome === L1S2Outcome.Exc) -> L1DRespKind.Exc))
   io.core.resp.bits.data := loadData
-  io.core.resp.bits.excCause := Mux(s2.pageFault, Mux(s2Store, 15.U, 13.U), Mux(s2Store, 7.U, 5.U))
+  io.core.resp.bits.excCause := Mux(misaligned, Mux(isStore, 6.U, 4.U),
+    Mux(s2.pageFault, Mux(isStore, 15.U, 13.U), Mux(isStore, 7.U, 5.U)))
   io.core.resp.bits.tval := s2.req.core.vaddr
-  io.core.s2Hold := s2.valid && s2Stall && isCpuLike
 
-  // ---- MSHR allocation ----
-  miss.io.alloc.valid := s2.valid && outcome === L1S2Outcome.Mshr && !(isCpuLike && io.core.s2Kill)
+  val allocates = s2.valid && outcome === L1S2Outcome.Mshr && (ptw || !io.core.s2Kill)
+  miss.io.alloc.valid := allocates
   miss.io.alloc.bits := 0.U.asTypeOf(miss.io.alloc.bits)
-  miss.io.alloc.bits.lineAddr := lineOf(s2.paddr)
-  miss.io.alloc.bits.isGetM := isStoreLike(s2.req.core.op)
+  miss.io.alloc.bits.lineAddr := line(s2.paddr)
+  miss.io.alloc.bits.isGetM := isStore
+  miss.io.alloc.bits.upgrade := upgrade
+  miss.io.alloc.bits.way := allocWay
+  miss.io.alloc.bits.src := Mux(ptw, MshrSrc.Ptw, MshrSrc.Cpu)
   miss.io.alloc.bits.req := s2.req.core
   miss.io.alloc.bits.word := s2.req.word
-  miss.io.alloc.bits.src := Mux(s2.req.src === L1Src.Ptw, MshrSrc.Ptw, MshrSrc.Cpu)
-  // TODO: victim choice (PLRU skipping locked way, prefer invalid), upgrade, victim tag → I and lock.
-
-  // ---- Replay result → late (B01: S2 never waits for late.ready) ----
-  miss.io.replayDone := s2.valid && s2.req.src === L1Src.Replay
-  miss.io.replayLoad.valid := s2.valid && s2.req.src === L1Src.Replay && s2.req.core.op === L1DOp.Load
+  miss.io.alloc.bits.victimValid := victimValid
+  miss.io.alloc.bits.victimLineAddr := victimAddress
+  miss.io.alloc.bits.victimDirty := victimEntry.state === L1State.M
+  val replayFinishes = replay && !internalHold
+  miss.io.replayDone := replayFinishes
+  miss.io.replayLoad.valid := replayFinishes && !ptw && s2.req.core.op === L1DOp.Load
   miss.io.replayLoad.bits.rd := s2.req.core.rd
   miss.io.replayLoad.bits.data := loadData
-  miss.io.replayLoad.bits.error := false.B // TODO: refill error path
+  miss.io.replayLoad.bits.error := s2.req.replayError
   io.core.late <> miss.io.late
+  when(replayFinishes && !s2.req.replayError) { assert(hit, "MSHR replay must hit") }
 
-  // ---- PTW response ----
-  io.ptw.resp.valid := s2.valid && s2Ptw && (outcome === L1S2Outcome.PtwResp || outcome === L1S2Outcome.Exc)
+  io.ptw.resp.valid := s2.valid && ptw && (outcome === L1S2Outcome.PtwResp || outcome === L1S2Outcome.Exc)
   io.ptw.resp.bits.data := hitWord
-  io.ptw.resp.bits.accessFault := outcome === L1S2Outcome.Exc
-
-  // ---- Writeback-read and probe beats from S2 ----
-  miss.io.wbReadBeat.valid := s2.valid && s2.req.src === L1Src.WbRead
-  miss.io.wbReadBeat.bits := s2.dataVec(miss.io.status.mshrWay) // TODO: writeback slot way
-  probe.io.s2Beat.valid := s2.valid && s2.req.src === L1Src.Probe
-  probe.io.s2Beat.bits.beat := s2.req.beat
+  io.ptw.resp.bits.accessFault := outcome === L1S2Outcome.Exc || (replay && s2.req.replayError)
+  when(io.ptw.resp.valid) { ptwOutstanding := false.B }
+  miss.io.wbReadBeat.valid := internal2.valid && internal2.req.src === L1Src.WbRead
+  miss.io.wbReadBeat.bits := internal2.dataVec(miss.io.status.wbWay)
+  probe.io.s2Beat.valid := internal2.valid && internal2.req.src === L1Src.Probe
+  probe.io.s2Beat.bits.beat := internal2.req.beat
   probe.io.s2Beat.bits.data := hitWord
   probe.io.s2Beat.bits.hitWay := hitWay
   probe.io.s2Beat.bits.localState := Mux(hit, hitState, L1State.I)
-  probe.io.hold := false.B    // TODO: §10.2 table
-  probe.io.startOk := true.B  // TODO: §10.1 start condition
+
+  val probeLine = probe.io.pending.addr
+  val probePaddr = probeLine ## 0.U(p.offBits.W)
+  val probeIdx = idx(probePaddr)
+  // S is retained during an upgrade until an owner/sharer probe arrives.
+  when(allocates) { upgrading := upgrade }
+  when(probe.io.tagUpdate.valid && line(probePaddr) === miss.io.status.mshrLineAddr &&
+    probe.io.tagUpdate.bits.newState === L1State.I) { upgrading := false.B }
+  val waitingGrant = miss.io.status.mshrState === MshrState.Wait || miss.io.status.mshrState === MshrState.Install ||
+    miss.io.status.mshrState === MshrState.Replay
+  val holdForMiss = miss.io.status.mshrValid && probeLine === miss.io.status.mshrLineAddr &&
+    waitingGrant && (!(upgrading && miss.io.status.mshrState === MshrState.Wait) || probe.io.pending.owner)
+  val holdForWb = miss.io.status.wbValid && probeLine === miss.io.status.wbLineAddr
+  val psSameProbe = ps.valid && line(ps.paddr) === probeLine
+  val cpu1ProbeAddressMatch = Mux(cpuTlbValid && !cpuTlb.miss,
+    line(cpuTlb.paddr) === probeLine, cpu1.req.idx === probeIdx)
+  val cpu1StoreProbe = cpu1.valid && storeLike(cpu1.req.core.op) && cpu1ProbeAddressMatch
+  val cpu2StoreProbe = cpu2.valid && storeLike(cpu2.req.core.op) && line(cpu2.paddr) === probeLine
+  probe.io.hold := holdForMiss || holdForWb || psSameProbe
+  // Registered wait reasons avoid feeding S2's arbitration result back into
+  // its own ready decision. A newly blocked store is parked on the next edge.
+  val cpuAlreadyWaiting = cpuRetry || wholeBusy || internal1.valid || internal2.valid
+  probe.io.startOk := (!cpu1StoreProbe || cpuAlreadyWaiting) &&
+    (!cpu2StoreProbe || cpuRetry) && !psSameProbe
   probe.io.initDone := initDone
 
-  // ===========================================================================
-  // PS (§3): store that passed S2 writes the data array next cycle.
-  // ===========================================================================
-  val storeDone = s2.valid && isCpuLike && s2.req.core.op === L1DOp.Store && outcome === L1S2Outcome.Done &&
-    !io.core.s2Kill
-  val psWriteBlocked = WireDefault(false.B) // TODO: whole-line op owns the data write port
-  when(ps.valid && !psWriteBlocked) { ps.valid := false.B }
-  when(storeDone) {
+  val stores = s2.valid && !ptw && s2.req.core.op === L1DOp.Store && outcome === L1S2Outcome.Done &&
+    !pma.io.result.device && !(replay && s2.req.replayError) && (replay || !io.core.s2Kill)
+  when(psWrites) { ps.valid := false.B }
+  when(stores) {
     ps.valid := true.B
-    ps.idx := idxOfAddr(s2.paddr)
-    ps.word := wordOfAddr(s2.paddr)
+    ps.idx := s2.req.idx
+    ps.word := s2.req.word
     ps.way := hitWay
     ps.paddr := s2.paddr
-    ps.mask := 0.U // TODO: size/offset byte mask
-    ps.data := s2.req.core.wdata << (s2.paddr(2, 0) ## 0.U(3.W))
+    val bytes = (1.U(4.W) << s2.req.core.size)(3, 0)
+    ps.mask := ((((1.U(9.W) << bytes) - 1.U)(7, 0)) << s2.paddr(2, 0))(7, 0)
+    ps.data := (s2.req.core.wdata << (s2.paddr(2, 0) ## 0.U(3.W)))(63, 0)
     ps.setDirty := hitState === L1State.E
   }
 
-  // ===========================================================================
-  // Array writes: init, install, PS, probe tag update, victim invalidate.
-  // ===========================================================================
-  val tagWrEn = WireDefault(false.B)
-  val tagWrIdx = WireDefault(0.U(p.idxW.W))
-  val tagWrVal = Wire(Vec(p.ways, new L1TagEntry(p)))
-  val tagWrMask = WireDefault(VecInit(Seq.fill(p.ways)(false.B)))
-  tagWrVal := 0.U.asTypeOf(tagWrVal)
-
-  when(!initDone) {
-    tagWrEn := true.B
-    tagWrIdx := initIdx
-    tagWrMask := VecInit(Seq.fill(p.ways)(true.B))
-    initIdx := initIdx + 1.U
+  val tagWrite = WireDefault(false.B)
+  val tagIdx = WireDefault(0.U(p.idxW.W))
+  val tagWay = WireDefault(0.U(p.wayBits.W))
+  val tagValue = WireDefault(0.U.asTypeOf(new L1TagEntry(p)))
+  when(psWrites && ps.setDirty) {
+    tagWrite := true.B; tagIdx := ps.idx; tagWay := ps.way
+    tagValue.tag := tag(ps.paddr); tagValue.state := L1State.M
   }
-  // TODO: install last beat writes tag {E/S, tag}; probe writes I/S; PS E→M; victim → I.
-  when(tagWrEn) { tagArr.write(tagWrIdx, tagWrVal, tagWrMask) }
-
+  when(allocates && victimValid) {
+    tagWrite := true.B; tagIdx := s2.req.idx; tagWay := allocWay
+    tagValue := victimEntry; tagValue.state := L1State.I
+  }
+  when(probe.io.tagUpdate.valid) {
+    tagWrite := true.B; tagIdx := probeIdx; tagWay := probe.io.tagUpdate.bits.way
+    tagValue.tag := tag(probePaddr); tagValue.state := probe.io.tagUpdate.bits.newState
+  }
+  when(installLast) {
+    tagWrite := true.B; tagIdx := miss.io.s0Req.bits.idx; tagWay := miss.io.s0Req.bits.way
+    tagValue := miss.io.s0Req.bits.installTag
+    when(tagValue.state =/= L1State.I) {
+      plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
+    }
+  }
+  when(!initDone) {
+    tags.write(initIdx, 0.U.asTypeOf(Vec(p.ways, new L1TagEntry(p))))
+    initIdx := initIdx + 1.U
+  }.elsewhen(tagWrite) {
+    tags.write(tagIdx, VecInit(Seq.fill(p.ways)(tagValue)), UIntToOH(tagWay, p.ways).asBools)
+  }
   for (w <- 0 until p.ways) {
-    val installHere = s0Fire && s0Sel === L1Src.Refill && miss.io.s0Req.bits.way === w.U &&
-      !miss.io.s0Req.bits.installIsAckE
-    val psHere = ps.valid && !psWriteBlocked && ps.way === w.U
-    when(installHere) {
-      dataArr(w).write(miss.io.s0Req.bits.idx ## miss.io.s0Req.bits.beat,
+    when(installNow && !miss.io.s0Req.bits.installIsAckE && miss.io.s0Req.bits.way === w.U) {
+      data(w).write(miss.io.s0Req.bits.idx ## miss.io.s0Req.bits.beat,
         miss.io.s0Req.bits.installData.asTypeOf(Vec(8, UInt(8.W))))
-    }.elsewhen(psHere) {
-      dataArr(w).write(ps.idx ## ps.word, ps.data.asTypeOf(Vec(8, UInt(8.W))), ps.mask.asBools)
+    }.elsewhen(psWrites && ps.way === w.U) {
+      data(w).write(ps.idx ## ps.word, ps.data.asTypeOf(Vec(8, UInt(8.W))), ps.mask.asBools)
+    }
+  }
+  when(s2.valid && hit && outcome === L1S2Outcome.Done && !io.core.s2Kill && !installLast) {
+    plru(s2.req.idx) := TreePlru.touch(plru(s2.req.idx), hitWay, p.ways)
+  }
+
+  val invalidatesSnapshot = installNow || probe.io.tagUpdate.valid || (allocates && victimValid) ||
+    (psWrites && ps.setDirty)
+  val changedSet = Mux(installNow, miss.io.s0Req.bits.idx, Mux(probe.io.tagUpdate.valid, probeIdx,
+    Mux(allocates && victimValid, s2.req.idx, ps.idx)))
+  // Include same-edge reads. Held snapshots remember mutation until requery.
+  when(invalidatesSnapshot) {
+    when(cpu1.valid && cpu1.req.idx === changedSet && !cpu1Advance) { cpu1.snapInvalid := true.B }
+    when(cpuFire && s0Req.idx === changedSet) { cpu1.snapInvalid := true.B }
+    when(cpu1.valid && cpu1.req.idx === changedSet && cpuAdvance) { cpu2.snapInvalid := true.B }
+    when(cpu2.valid && cpu2.req.idx === changedSet && cpuHold && !recheckReturns) { cpu2.snapInvalid := true.B }
+    when(internalFire && selected === L1Src.Recheck && s0Req.idx === changedSet) { internal1.snapInvalid := true.B }
+    when(internal1.valid && internal1.req.src === L1Src.Recheck && internal1.req.idx === changedSet && internalAdvance) {
+      internal2.snapInvalid := true.B
     }
   }
 
-  // PLRU touch on hit decision (§5.2). TODO: touch on install, skip locked way on victim.
-  when(s2.valid && hit && outcome === L1S2Outcome.Done && isCpuLike) {
-    plru(idxOfAddr(s2.paddr)) := TreePlru.touch(plru(idxOfAddr(s2.paddr)), hitWay, p.ways)
-  }
-
-  // ===========================================================================
-  // Coherence links
-  // ===========================================================================
   io.coh.req <> miss.io.req
   miss.io.rspDown.valid := io.coh.rspDown.valid
   miss.io.rspDown.bits := io.coh.rspDown.bits
   io.coh.rspDown.ready := true.B
   probe.io.snp <> io.coh.snp
-  // RSP↑: probe answer > Put (§6.4).
-  val upArb = Module(new Arbiter(new CoherenceRspUp(p.coh), 2))
-  upArb.io.in(0) <> probe.io.ack
-  upArb.io.in(1) <> miss.io.put
-  io.coh.rspUp <> upArb.io.out
+  // L2 always accepts RSPup, but retain the selected payload if a test agent
+  // applies backpressure; a later probe answer must not replace a held Put.
+  val upHeld = RegInit(false.B)
+  val upChoice = Reg(Bool())
+  val chooseProbe = Mux(upHeld, upChoice, probe.io.ack.valid)
+  io.coh.rspUp.valid := Mux(chooseProbe, probe.io.ack.valid, miss.io.put.valid)
+  io.coh.rspUp.bits := Mux(chooseProbe, probe.io.ack.bits, miss.io.put.bits)
+  probe.io.ack.ready := io.coh.rspUp.ready && chooseProbe
+  miss.io.put.ready := io.coh.rspUp.ready && !chooseProbe
+  when(io.coh.rspUp.valid && !io.coh.rspUp.ready && !upHeld) { upHeld := true.B; upChoice := chooseProbe }
+  when(io.coh.rspUp.fire) { upHeld := false.B }
 
-  // ===========================================================================
-  // MMIO, AMO, misc
-  // ===========================================================================
-  mmio.io.start.valid := s2.valid && outcome === L1S2Outcome.ToMmio && !mmio.io.active
+  mmio.io.start.valid := !fromInternal && cpu2.valid && outcome === L1S2Outcome.ToMmio && !mmio.io.active && !io.core.s2Kill
   mmio.io.start.bits.paddr := s2.paddr
   mmio.io.start.bits.isWrite := s2.req.core.op === L1DOp.Store
   mmio.io.start.bits.size := s2.req.core.size
@@ -453,51 +511,37 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   mmio.io.start.bits.wdata := s2.req.core.wdata
   mmio.io.start.bits.rd := s2.req.core.rd
   mmio.io.start.bits.isFlw := s2.req.core.isFlw
-  mmio.io.drained := io.core.drained
+  // A completion is only consumed when the held CPU S2 owns the executor.
   mmio.io.s2Kill := io.core.s2Kill
+  mmio.io.doneConsume := !fromInternal && cpuDecided
+  mmio.io.drained := io.core.drained
   io.mmio <> mmio.io.axi
   io.core.mmioBusy := mmio.io.busy
-
-  amoAlu.io.func := s2.req.core.amoFunc
-  amoAlu.io.isWord := s2.req.core.size === 2.U
-  amoAlu.io.oldOperand := hitWord // TODO: AMO.W half select (§8.3 item 5)
-  amoAlu.io.rs2 := s2.req.core.wdata
-
   io.core.drained := !miss.io.status.mshrValid && !ps.valid
 
-  when(io.core.trapClearRsv) { rsvValid := false.B }
-  when(rsvTimer =/= 0.U) { rsvTimer := rsvTimer - 1.U }
-  // TODO: LR sets reservation, SC checks it, probe/victim clears it (§8.1).
-
-  // ===========================================================================
-  // Events and assertions
-  // ===========================================================================
   io.events := 0.U.asTypeOf(io.events)
-  // Access counts are acceptance pulses; miss counts are successful allocation.
-  io.events.load_access := io.core.req.fire && (io.core.req.bits.op === L1DOp.Load || io.core.req.bits.op === L1DOp.LR)
-  io.events.store_access := io.core.req.fire && isStoreLike(io.core.req.bits.op)
-  io.events.load_miss := miss.io.alloc.fire && !s2Ptw && !s2Store
-  io.events.store_miss := miss.io.alloc.fire && !s2Ptw && s2Store
-  io.events.upgrade := miss.io.alloc.fire && miss.io.alloc.bits.upgrade
+  io.events.load_access := io.core.req.fire && cpuLoad
+  io.events.store_access := io.core.req.fire && storeLike(io.core.req.bits.op)
+  io.events.load_miss := allocates && !ptw && !isStore
+  io.events.store_miss := allocates && !ptw && isStore
+  io.events.upgrade := allocates && upgrade
   io.events.ptw_access := io.ptw.req.fire
-  io.events.ptw_miss := miss.io.alloc.fire && s2Ptw
-  io.events.hit_under_miss := cpuDecided && outcome === L1S2Outcome.Done && hit && miss.io.status.mshrValid && !sameLineMshr
+  io.events.ptw_miss := allocates && ptw
+  io.events.hit_under_miss := cpuDecided && outcome === L1S2Outcome.Done && hit && miss.io.status.mshrValid && !sameMshr
   io.events.mshr_busy_cycles := miss.io.status.mshrValid
-  io.events.mshr_full_stall := io.core.s2Hold && outcome === L1S2Outcome.Hold && !hit &&
-    !miss.io.status.canAllocate && !sameLineMshr && !sameLineWb
-  io.events.same_line_stall := io.core.s2Hold && (sameLineMshr || sameLineWb)
+  io.events.mshr_full_stall := cpuHold && !hit && !miss.io.status.canAllocate
+  io.events.same_line_stall := cpuHold && (sameMshr || sameWb)
   io.events.s0_conflict_stall := io.core.req.valid && cpuConflict && cpuEntryOpen
   io.events.writeback_dirty := miss.io.put.fire && miss.io.put.bits.hasData
   io.events.writeback_clean := miss.io.put.fire && !miss.io.put.bits.hasData
   io.events.probe_received := io.coh.snp.fire
   io.events.probe_held_cycles := probe.io.pending.valid && probe.io.hold
-  io.events.lr_count := io.core.req.fire && io.core.req.bits.op === L1DOp.LR
-  io.events.sc_fail := cpuDecided && outcome === L1S2Outcome.Done && s2.req.core.op === L1DOp.SC && io.core.resp.bits.data === 1.U
   io.events.mmio_read := mmio.io.axi.ar.fire
   io.events.mmio_write := mmio.io.axi.aw.fire
   io.events.mmio_cycles := mmio.io.busy
-
-  // B01 ruling: S1/S2 hold only when S2 cannot decide.
-  when(s1.valid && !s1Advance) { assert(s2Stall, "S1 held without an S2 stall") }
   assert(PopCount(hitVec) <= 1.U, "two ways hit the same tag")
+  when(allocates) { assert(!miss.io.status.wayLocked, "allocation selected a locked way") }
+  when(stores) { assert(psRoom && hit && writable, "Store committed without PS capacity/ownership") }
+  when(internal2.valid) { assert(!undecided, "internal result has no reserved completion capacity") }
+  when(cpu1.valid && !cpu1Advance) { assert(cpuHold, "CPU S1 held without s2Hold") }
 }

@@ -3,15 +3,11 @@ package flow.l1d
 import chisel3._
 import chisel3.util._
 import flow.coherence._
-import flow.interface.L1DLate
+import flow.interface.{L1DLate, L1DOp}
 
-/** MSHR (nMshrs = 1 in v1) and writeback slot (l1d-rtl-spec §6.2–6.5).
-  *
-  * SKELETON: state registers and the main transitions are in place; items
-  * marked TODO are left for the iterate-with-simulation phase.
-  */
+/** Single MSHR and independent writeback slot (l1d-rtl-spec §6.2–6.5). */
 class L1DMiss(p: L1DParams) extends Module {
-  require(p.nMshrs == 1, "skeleton implements the v1 single MSHR")
+  require(p.nMshrs == 1, "miss unit supports one MSHR")
 
   val io = IO(new Bundle {
     // S2 → miss unit
@@ -45,6 +41,7 @@ class L1DMiss(p: L1DParams) extends Module {
   val isAckE = Reg(Bool())
   val lateData = Reg(new L1DLate)
   val beat = RegInit(0.U(p.wordBits.W))
+  val replayIssued = RegInit(false.B)
 
   // ---------------- Writeback slot (§6.3) ----------------
   val wbState = RegInit(WbSlotState.Idle)
@@ -52,6 +49,8 @@ class L1DMiss(p: L1DParams) extends Module {
   val wbHasData = Reg(Bool())
   val wbData = Reg(Vec(p.wordsPerLine, UInt(64.W)))
   val wbBeat = RegInit(0.U(p.wordBits.W))
+  val wbIssueBeat = RegInit(0.U(p.wordBits.W))
+  val wbReadIssued = RegInit(false.B)
   val wbWay = Reg(UInt(p.wayBits.W))
   val wbIdx = Reg(UInt(p.idxW.W))
 
@@ -63,13 +62,16 @@ class L1DMiss(p: L1DParams) extends Module {
     m := io.alloc.bits
     err := false.B
     beat := 0.U
+    replayIssued := false.B
     when(io.alloc.bits.victimValid) {
       assert(wbState === WbSlotState.Idle, "writeback slot allocated while busy")
       wbLineAddr := io.alloc.bits.victimLineAddr
       wbHasData := io.alloc.bits.victimDirty
       wbWay := io.alloc.bits.way
-      wbIdx := io.alloc.bits.victimLineAddr(p.idxW - 1, 0)
+      wbIdx := (if (p.idxBits == 0) 0.U else io.alloc.bits.victimLineAddr(p.idxBits - 1, 0))
       wbBeat := 0.U
+      wbIssueBeat := 0.U
+      wbReadIssued := false.B
       wbState := Mux(io.alloc.bits.victimDirty, WbSlotState.Read, WbSlotState.Send)
       state := Mux(io.alloc.bits.victimDirty, MshrState.WbRead, MshrState.Send)
     }.otherwise {
@@ -112,12 +114,15 @@ class L1DMiss(p: L1DParams) extends Module {
         grantE := io.rspDown.bits.op =/= RspDownOp.DataS
         isAckE := io.rspDown.bits.op === RspDownOp.AckE
         beat := 0.U
-        state := Mux(io.rspDown.bits.error, MshrState.Replay, MshrState.Install)
+        // Errors perform a tag-only invalidation before delivering the error;
+        // no refill data is installed and the target way is then unlocked.
+        state := MshrState.Install
       }
       is(RspDownOp.PutAck) {
         assert(wbState === WbSlotState.WaitAck, "PutAck without a waiting writeback slot")
         wbState := WbSlotState.Idle
       }
+      is(RspDownOp.ReadData, RspDownOp.WriteAck) { assert(false.B, "read-client response routed to L1D") }
     }
   }
 
@@ -125,25 +130,38 @@ class L1DMiss(p: L1DParams) extends Module {
   val s0 = Wire(new L1MissS0Req(p))
   s0 := 0.U.asTypeOf(s0)
   s0.install := state === MshrState.Install
-  s0.wbRead := wbState === WbSlotState.Read
-  s0.replay := state === MshrState.Replay
-  s0.idx := Mux(s0.wbRead, wbIdx, m.lineAddr(p.idxW - 1, 0))
+  s0.wbRead := wbState === WbSlotState.Read && !wbReadIssued
+  s0.replay := state === MshrState.Replay && !replayIssued
+  val mshrIdx = if (p.idxBits == 0) 0.U(p.idxW.W) else m.lineAddr(p.idxBits - 1, 0)
+  s0.idx := Mux(s0.wbRead, wbIdx, mshrIdx)
   s0.way := Mux(s0.wbRead, wbWay, m.way)
-  s0.beat := Mux(s0.wbRead, wbBeat, beat)
+  s0.beat := Mux(s0.wbRead, wbIssueBeat, beat)
   s0.installData := refill.asTypeOf(Vec(p.wordsPerLine, UInt(64.W)))(beat)
-  s0.installTag.state := Mux(grantE, L1State.E, L1State.S)
+  s0.installTag.state := Mux(err, L1State.I, Mux(grantE, L1State.E, L1State.S))
   s0.installTag.tag := m.lineAddr >> p.idxBits
-  s0.installIsAckE := isAckE
-  // TODO: replayReq built from m (paddr = lineAddr ## word ## offset)
+  s0.installIsAckE := isAckE || err // both are tag-only operations
+  s0.replayReq.src := L1Src.Replay
+  s0.replayReq.core := m.req
+  s0.replayReq.paddr := m.lineAddr ## m.word ## m.req.vaddr(2, 0)
+  s0.replayReq.physicalAddress := s0.replayReq.paddr
+  s0.replayReq.hasPaddr := true.B
+  s0.replayReq.idx := mshrIdx
+  s0.replayReq.word := m.word
+  s0.replayReq.replayPtw := m.src === MshrSrc.Ptw
+  s0.replayReq.replayError := err
+  when(m.src === MshrSrc.Ptw) { s0.replayReq.core.op := L1DOp.Load; s0.replayReq.core.size := 3.U }
   io.s0Req.valid := s0.install || s0.wbRead || s0.replay
   io.s0Req.bits := s0
 
   when(io.s0Grant && s0.install) {
     beat := beat + 1.U
-    when(isAckE || lastWord(beat)) { state := MshrState.Replay }
+    when(isAckE || err || lastWord(beat)) { state := MshrState.Replay }
   }
-  // Replay issues once and waits for S2; TODO: replay-issued flag so a
-  // recheck after snapshot invalidation can re-issue it.
+  when(io.s0Grant && s0.wbRead) {
+    wbIssueBeat := wbIssueBeat + 1.U
+    when(lastWord(wbIssueBeat)) { wbReadIssued := true.B }
+  }
+  when(io.s0Grant && s0.replay) { replayIssued := true.B }
 
   // ---------------- Replay completion and LATE (B01 ruling) ----------------
   io.late.valid := false.B
@@ -172,6 +190,9 @@ class L1DMiss(p: L1DParams) extends Module {
   io.status.mshrWay := m.way
   io.status.wbValid := wbState =/= WbSlotState.Idle
   io.status.wbLineAddr := wbLineAddr
-  io.status.wbGotAck := false.B // TODO: probe hold release (§10.2)
-  io.status.canAllocate := state === MshrState.Idle // TODO: and writeback-slot rule
+  io.status.wbGotAck := io.rspDown.valid && io.rspDown.bits.op === RspDownOp.PutAck
+  io.status.canAllocate := state === MshrState.Idle
+  io.status.wayLocked := state === MshrState.WbRead || state === MshrState.Send ||
+    state === MshrState.Wait || state === MshrState.Install
+  io.status.wbWay := wbWay
 }

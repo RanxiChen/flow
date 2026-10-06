@@ -54,6 +54,7 @@ class L2MemEngine(p: CoherenceParams) extends Module {
   order.io.deq.ready := io.mem.r.fire && io.mem.r.bits.last
   when(io.mem.r.fire) {
     assert(order.io.deq.valid && io.mem.r.bits.id === order.io.deq.bits, "RID != in-flight queue head")
+    assert(io.mem.r.bits.last === (rBeat === (p.memBeats - 1).U), "RLAST at the wrong line beat")
     rBeats(rBeat) := io.mem.r.bits.data
     rBeat := Mux(io.mem.r.bits.last, 0.U, rBeat + 1.U)
     rErr := Mux(io.mem.r.bits.last, false.B, rErr || io.mem.r.bits.resp =/= Axi4.RespOkay)
@@ -92,7 +93,10 @@ class L2MemEngine(p: CoherenceParams) extends Module {
   io.mem.b.ready := wbValid && awSent && wBeat === p.memBeats.U
   when(io.mem.b.fire) {
     wbValid := false.B
-    when(io.mem.b.bits.resp =/= Axi4.RespOkay) { errCount := errCount + 1.U }
+    when(io.mem.b.bits.resp =/= Axi4.RespOkay) {
+      errCount := errCount + 1.U
+      printf(p"L2 writeback error at ${wbAddr}\n")
+    }
   }
   io.writeErrors := errCount
 }

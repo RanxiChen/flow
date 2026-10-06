@@ -25,6 +25,7 @@ class L2PipeEntry(p: CoherenceParams) extends Bundle {
   val req = new CoherenceReq(p)
   val set = UInt(p.setBits.W)
   val tag = UInt(p.tagBits.W)
+  val taskData = new L2TaskReq(p)
 }
 
 class L2S1(p: CoherenceParams) extends Bundle {

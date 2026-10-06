@@ -22,14 +22,14 @@ final case class BreezeMemGeometry(
     paddrBits: Int = 32
 ) {
   require(nCores >= 1 && nCores <= 8, s"nCores=$nCores")
-  require(lineBytes == 32, "v1 locks lineBytes=32 (one 256-bit link beat)")
+  require(lineBytes == 32, "memory links support lineBytes=32 (one 256-bit beat)")
   require(isPow2(l1Sets) && l1Sets * lineBytes <= 4096, "VIPT without aliasing")
   require(isPow2(l1dWays) && isPow2(l1iWays))
-  require(l1dMshrs == 1, "v1 locks one MSHR; structure is written for N")
+  require(l1dMshrs == 1, "L1D currently supports one MSHR")
   require(isPow2(l2Ways) && isPow2(l2BytesPerCore))
   require(isPow2(nCores * l2BytesPerCore / (l2Ways * lineBytes)), "l2Sets must be a power of two")
   require(l2Slots >= 1)
-  require(paddrBits == 32, "v1 locks paddrBits=32")
+  require(paddrBits == 32, "cache/coherence addresses support paddrBits=32")
 }
 
 object BreezeMemGeometry {

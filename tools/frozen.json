@@ -3,9 +3,7 @@
   "docs/backend-rtl-spec.md": "6d86984e05a75f9e4acb3bfdf7194ca304dc2f6ded376acf11caf15eba4118b6",
   "docs/backend-timing-contract.md": "a4bce4028b04563b9237d38951a83839cbc2b74789ac624390186a6db291c11b",
   "docs/breeze-mmu-rtl-spec.md": "8198b2d99f2e3ae1cba2ef2bd6871b24f10b556775fe6b42d3ec4831c7626a88",
-  "docs/coherence-l2-rtl-spec.md": "b14659f79b86366d0be8d37d4444a58c51efb0b3e084ee4eb8153dca737d48f7",
   "docs/dcache-pipeline-design.md": "1e98b5a10336e9324d363e1105ddd371938750a4699f35039924c0e5647a2444",
-  "docs/l1d-rtl-spec.md": "da6d1dcaebfb272209206663d2cdd276448cd512934e3ec7378fabcb6fe3aec1",
   "docs/tasks/V1-BE-B01-ruling.md": "9db38e24a172ecf7d36ac843b929a61f15222ad01bac344c872dad95660183c7",
   "docs/v1-integration-notes.md": "1de95db467bc074cd7d3bcac097d517f9cc368b8e17da6123ce74624f10a2551"
 }

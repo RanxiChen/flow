@@ -33,12 +33,14 @@
 | 集成备忘 | 完成：[`v1-integration-notes.md`](v1-integration-notes.md)（现有代码事实与集成决定） |
 | L1D spec | 初稿完成（含参数单入口与非默认配置冒烟） |
 | 后端 | **完成**：V1-BE 于 `062c391` 结束，Alan 65/65 合同测试通过（[`tasks/V1-BE-report.md`](tasks/V1-BE-report.md)）；B01、P06 裁定见 [`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md) |
-| 访存 L1D/L2/一致性 | 骨架已合并（`921c4f9`），按 [`v1-mem-plan.md`](v1-mem-plan.md) 迭代；下一步 codex 执行 [`tasks/V1-MEM-interfaces.md`](tasks/V1-MEM-interfaces.md) |
+| 访存 L1D/L2/一致性 | 骨架已合并（`921c4f9`），外部接口已提交（`71f4988`）；按 [`v1-mem-plan.md`](v1-mem-plan.md) 分批实现 RTL → directed 小测试 → 压力/litmus；第一批实现见 [`tasks/MEM-load-store-rtl-report.md`](tasks/MEM-load-store-rtl-report.md) |
 | 集群与外壳 spec | 未开始 |
 | 测试计划、codex 规则 | 未开始 |
-| RTL 实现 | 未开始 |
+| RTL 实现 | 已开始：后端完成；访存第一批代码已写，功能验证与原子路径待完成 |
 | 交接提交 | 未产生 |
 
 ## 4. 交接
 
 全部 RTL、测试和文档完成后，Claude 在最后一个提交的信息中写 `V1-HANDOFF`，并在本文第 3 节记录该提交的 SHA。codex 只从带此标记的提交开始验证；此前的中间提交可能无法编译，不作验证对象。
+
+访存子系统采用 [`v1-mem-plan.md`](v1-mem-plan.md) 的逐批实现/仿真流程，每批指定完整可构建的提交运行门槛和 directed 测试，不等待全量 `V1-HANDOFF`。全量交接标记仍表示整套 RTL、测试与文档交接。

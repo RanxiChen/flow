@@ -45,7 +45,8 @@ class L2ProbeEngine(p: CoherenceParams) extends Module {
       assert(busy && (waitAck(c) || sentNow(c)), "probe answer from a core not probed")
       assert(io.answer(c).bits.addr === j.addr, "probe answer address mismatch")
       assert(!io.answer(c).bits.hasData || j.owner, "probe data from a sharer")
-      // TODO: op matches (Inv→InvAck, Down→DownAck)
+      assert(io.answer(c).bits.op === Mux(j.op === SnpOp.Inv, RspUpOp.InvAck, RspUpOp.DownAck),
+        "probe answer opcode mismatch")
     }
   }
   val toSendNext = toSend & ~sentNow.asUInt

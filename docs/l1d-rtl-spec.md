@@ -4,6 +4,10 @@
 
 修订：2026-10-06 B01 裁定（[`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）——回放的迟到数据不在 S2 等 `late.ready`，改由 MSHR 的 LATE 状态保持（6.2 节）；第 12 节活性论证随之更新。`L1DCoreIO` 字段不变。
 
+实现修订（2026-10-06，普通 Load/Store 第一批）：CPU S1/S2 在后端 `s2Hold` 期间保持；另设两级内部完成流水共享 S0 与阵列端口，服务 probe、install、写回读、MSHR replay、PTW 和 CPU 重查。否则年轻 S2 等 MSHR 时会阻止同一 MSHR 经 S0 安装/回放。内部 S2 优先使用判定与写端口，CPU 本地冲突时保持；普通 CPU hit 的 S0/S1/S2 拍关系不变。资源、翻译和快照等待均由保持的 CPU 请求拥有，内部结果不占用后端 WB 请求槽。
+
+本批仅实现普通 Load/Store、PTW、probe、FENCE 和阻塞 MMIO 的代码路径；第 8 节 LR/SC、AMO、aq/rl 仍待后续实现，不得把本文的目标行为当成已经实现或通过仿真的功能。
+
 ## 0. 范围与参数
 
 ### 0.1 文件
@@ -116,9 +120,10 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | PS | `ps`：valid、idx、word、way、mask、data | pending-store：写 `data`；E→M 写 `tag` |
 
 - S1/S2 保持：S2 暂不判定时 S2 保持，S1 若有效则保持，S0 不 fire。
-- S1 的 TLB miss：S1 请求与可能已 fire 的 S0 请求转入翻译等待（第 7 节），S1、S0 清空。
+- 上述 S0 不 fire 指 CPU 新入口；内部完成流水可以访问共享 S0。非整行内部请求从发射到内部 S2 完成期间独占该完成流水；整行操作只允许同一操作的各 beat 在其中重叠，直到最后一拍离开内部 S2 才解除 S0 所有权。内部来源的接纳保证其结果容量，不允许因等待资源而堵住内部 S2。
+- S1 的 TLB miss：X 进入 CPU S2 翻译等待，可能已 fire 的年轻 Y 保留在 CPU S1（第 7 节），次拍起关闭 CPU S0。
 - `s1Kill`：当拍清 S1；若同拍 S0 fire 的请求更年轻，S0 请求同样丢弃（`req.ready` 置 0 当拍不接收）。
-- `s2Kill`：当拍清 S2（若 S2 尚未判定）与 S1，翻译等待 FIFO 中 CPU 请求一并清除；不撤销 PS（已判定为更老）、MSHR、写回槽、probe。
+- `s2Kill`：当拍清 CPU S2（若尚未判定）与 CPU S1，翻译等待及 CPU 重查一并清除；不撤销 PS（已判定为更老）、MSHR、写回槽、probe、已接受 PTW。
 
 ## 4. S0 冲突检查
 
@@ -170,7 +175,7 @@ S1/S2 请求寄存 `idx`。下列事件发生在其阵列读之后、S2 判定�
 - probe 修改 tag（I 或 S）；
 - 写回 victim 置 I。
 
-PS 写 data 不触发（由第 4 节保证）。
+PS 写 data 不触发（由第 4 节保证）。PS 的 E→M tag 写触发同 set 快照失效，防止后续 victim 查询把刚写脏的 E 行误当成 clean。发生在 S2 判定同拍的 tag/refill 修改同样阻止使用旧快照。
 
 有意偏离 [`l1d-spec-inputs.md`](l1d-spec-inputs.md) 第 14 节的“同 set 同 way”：miss 请求没有命中路可比，而 refill 恰好装入它要的行时它应由 miss 变为 hit，按 way 比较需为 miss 另加规则。按 set 比较对命中与缺失都不漏；代价是同 set 无关请求偶尔多一次重查（约 3 拍），refill 与 probe 低频，可忽略。
 
@@ -204,7 +209,7 @@ PS 写 data 不触发（由第 4 节保证）。
 | `lateData` | 64 bit：回放 S2 格式化后的 Load 数据，LATE 状态下驱动 `late.data` |
 
 - SEND：victim 需写回时等写回读完成（6.3）；REQ `op` = GetS/GetM、`addr` = `lineAddr`、`id` = 0；fire 后 WAIT。
-- WAIT：RSP↓ DataS/DataE/AckE 到达 → 存入 `refill`（AckE 不带数据，安装时保留原数据）→ INSTALL。`error=1` → 不安装，解锁 way（置 I），直接 REPLAY 交付错误。
+- WAIT：RSP↓ DataS/DataE/AckE 到达 → 存入 `refill`（AckE 不带数据，安装时保留原数据）→ INSTALL。`error=1` → INSTALL 执行一拍 tag-only 清理（tag 置 I、不写 data），解锁后 REPLAY 交付错误；不把错误 refill 安装为有效行。
 - INSTALL：S0 内部来源，整行操作：`wordsPerLine` 拍逐字写 `way` 的 data（AckE 跳过 data，只用 1 拍）；最后一拍写 tag `{state = grantE ? E : S, tag}`、PLRU touch、解锁 way、置同 set 在途快照失效。way 在安装期间仍锁定，不会被命中。
 - REPLAY：以 PA 从 S0 进入（经冲突检查），S2 执行原请求：Load → 当拍以 S2 结果直接驱动 `late`（valid、`rd`、格式化数据、`error`），`late.ready=1` 则当拍 fire 并 → IDLE；`late.ready=0` 则数据存入 `lateData` → LATE，**S2 不保持、不发 `s2Hold`**；Store → PS；LR → `resp` Done 并建 reservation；PTW → `ptw.resp`（`ptwKilled` 时丢弃）。错误：Load 送 `late.error=1`（同上，可进 LATE）；Store 丢弃；PTW → `ptw.resp.accessFault=1`。非 Load 完成 → IDLE。
 - LATE：`late.valid=1`，字段取自 MSHR（`rd`、`lateData`、`err`），fire → IDLE。此时行已安装、回放已完成，不压住 probe（10.2 节以“回放完成”为准）；MSHR 未回 IDLE，新 miss 按“MSHR 满”s2Hold。后端写口饥饿保护保证 LATE 至多约 6 拍（[`backend-pipeline-design.md`](backend-pipeline-design.md) 第 6 节）。
@@ -232,16 +237,17 @@ probe 答复 > Put（两者各至多 1 笔待发；probe 答复先发不影响�
 
 ### 7.1 翻译等待
 
-- 2 项 FIFO `xlatWait`：X（S1 miss）与 Y（同拍 S0 已 fire、被 `dropS1Next` 丢弃的年轻请求，显式记录 `hasY`）。
-- 进入等待次拍起关闭 CPU 新入口（`req.ready=0`）；S2、PS、MSHR、写回槽、probe、PTW 照常。
-- `tlb.req.ready` 恢复后按年龄从 S0 重发 X、再 Y（作为第 5 类来源，查 dTLB）；可再次 miss，重新进入等待。pendingFault 由重发同 VPN 得到。
-- `s2Kill` 清空 `xlatWait`；`s1Kill` 只在 X 尚在 S1 时有效（之后 X 已不在 S1，由 `s2Kill` 覆盖）。
+- 两项等待容量直接复用保持的 CPU S2/S1：X（S1 miss）进入 CPU S2 并标记 `translationMiss`；Y（同拍 S0 已 fire、被 `dropS1Next` 丢弃的年轻请求）保留在 CPU S1，显式保留其 TLB Valid 是否出现。无需再复制两份 CPU 请求到 FIFO。
+- X 到达 CPU S2 后关闭 CPU 新入口（`req.ready=0`）；PS、MSHR、写回槽、probe、PTW 经内部完成流水继续。
+- `tlb.req.ready` 恢复后 X 经内部 S0 重查 dTLB，结果回填到保持的 CPU S2，然后作正常判定；X 完成后 Y 才进入 CPU S2。Y 没有 TLB 响应时同样重查。可再次 miss；pendingFault 由重发同 VPN 得到。
+- `s2Kill` 清除 CPU S2/S1 和在途 CPU 重查；`s1Kill` 只清 CPU S1 中尚未进入 WB 的请求，不清更老的 S2 重查。PTW 请求不受 CPU kill 影响。
 - 等待请求不占 MSHR、不锁 way。
 
 ### 7.2 PTW 入口
 
 - `ptw.req` Decoupled{paddr 56}：L1D 在可进入 S0 时拉 `ready`（第 4 类来源，本拍被选中且冲突检查通过）；fire 后进入 S1/S2，不查 dTLB。
 - S2：PMP（S 特权、Load）、PMA（Load、8 B）；不允许或 `device` → `ptw.resp.accessFault=1`；ROM 可读。hit → `ptw.resp.data`；miss → 6.2 MSHR（`src=PTW`），回放时出 `ptw.resp`。
+- 第一批采用保守接纳：PTW 接受前等 MSHR/写回槽和 PS 空，且没有可前进的更老 CPU S1/S2；CPU 翻译等待中的 X/Y 不阻塞其所需 PTE 读。接受后保留一笔 PTW 的 miss 容量，直到唯一响应；这不影响旧 MSHR 完成，但暂不实现 PTW 的 hit-under-miss。
 - `ptw.resp` Valid 单拍；每笔恰一个响应；PTW 读不受 `s1Kill/s2Kill` 影响（MMU 已接受的 walk 不丢）。
 - PTW 读 MSHR 满或同行 → 同 CPU 规则 s2Hold，S2 保持。
 
@@ -279,6 +285,7 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 - 发出条件：该请求在 S2（即 WB，最老）、`drained`、未被 `s2Kill`。发出前可被 `s2Kill` 作废（回 IDLE）。
 - ISSUE：读发 AR（`ARADDR = pa`，`ARPROT = 0`）；写发 AW + W（`WDATA` = `wdata` 左移 `pa[2:0]×8`，`WSTRB` 由 size 与 `pa[2:0]` 生成）。发出后 `mmioBusy=1`，不可取消。
 - RESP：`RRESP/BRESP = OKAY` → resp Done（Load 数据经 5.4 节格式化）；SLVERR/DECERR → resp Exc（Load 5，Store 7）。
+- 总线返回暂存一项结果，直到 CPU S2 获得执行端口并交付 Done/Exc 才释放；返回同拍若内部任务占用执行端口，不丢失 MMIO 完成。
 - 期间 `req.ready=0`；probe、RSP↓、MSHR 不受影响（MSHR 已空）。
 - 集群 `mmio` 1 笔在途、核间轮转在集群层做，L1D 只按 AXI 握手。
 
