@@ -9,9 +9,9 @@
 | 1 | RTL 骨架：L1D、L2 的流水级、阵列、寄存器、状态机、协议 Bundle；能 elaborate；功能留 `TODO` | Claude | 完成：五种几何配置均能 elaborate（`MemSkeletonElabSpec`） |
 | 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 任务书 [`tasks/V1-MEM-interfaces.md`](tasks/V1-MEM-interfaces.md) |
 | 3 | 审核接口 | Claude | |
-| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | |
-| 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude | 与第 4 步并行 |
-| 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | |
+| 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | 测试已写（`memsys/L1DSpec`、`L2Spec`），编译通过、未运行；codex 任务 [`tasks/V1-MEM-tests.md`](tasks/V1-MEM-tests.md) |
+| 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude | 已写（`memsys/Checkers.scala`，自测 `CheckersSpec`） |
+| 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | 随机项已含在第 4 步的 spec 中；litmus 待整核接通后写 |
 | 7 | 一边改一边完善状态机，消化 `TODO`，spec 随之更新 | 共同 | |
 
 ## 规则
