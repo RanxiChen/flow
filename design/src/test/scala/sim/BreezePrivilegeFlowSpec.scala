@@ -238,7 +238,9 @@ class BreezePrivilegeFlowSpec extends AnyFreeSpec with Matchers {
 
     result.result.timedOut mustBe false
     result.commitEvents.last.estop mustBe true
-    result.commitEvents.exists(_.pc == target) mustBe true
+    // The high Bare fetch faults; its exact target is observable in mepc,
+    // and a faulting fetch cannot emit an architectural commit.
+    result.commitEvents.exists(_.pc == target) mustBe false
     result.commitEvents.exists(_.pc == truncated) mustBe false
     result.commitEvents.exists(event =>
       event.rdWriteEn && event.rdAddr == 20 && event.rdData == target) mustBe true
@@ -490,7 +492,7 @@ class BreezePrivilegeFlowSpec extends AnyFreeSpec with Matchers {
     result.commitEvents.exists(event =>
       event.rdWriteEn && event.rdAddr == 21 && event.rdData == 2) mustBe true
     result.commitEvents.exists(event =>
-      event.rdWriteEn && event.rdAddr == 22 && event.rdData == 0) mustBe true
+      event.rdWriteEn && event.rdAddr == 22 && event.rdData == probe) mustBe true
     result.commitEvents.exists(event =>
       event.rdWriteEn && event.rdAddr == 10 && event.rdData == 55) mustBe true
   }

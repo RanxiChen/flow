@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import flow.config.{BreezeCoreConfig, BreezeCoreConfigs, PrivilegeProfile}
 import flow.core.BreezeCore
+import flow.interface.L1DRespKind
 import flow.fpu.BreezeFpSources
 import svsim.{CommonCompilationSettings, CommonSettingsModifications}
 
@@ -356,7 +357,61 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             var dmemRespData: BigInt = 0
             var dmemWaitIsWrite = false
             var exitCode: Option[BigInt] = None
+            var stopped = false
 
+            // Direct L1DCoreIO behavioral memory, independent of the legacy
+            // instruction PTW below. No cache/coherence/PMP/PMA is modeled.
+            case class CpuMemory(addr: BigInt, op: Int, size: Int, signed: Boolean,
+                flw: Boolean, data: BigInt, satp: BigInt, priv: Int, sum: Boolean,
+                mxr: Boolean, delay: Int)
+            var cpuS1: Option[CpuMemory] = None
+            var cpuS2: Option[CpuMemory] = None
+            var reservation: Option[(BigInt,Int)] = None
+            def translate(q: CpuMemory): Either[Int, BigInt] = {
+                val store = q.op == 1 || q.op == 3 || q.op == 4
+                val pageCause = if (store) 15 else 13
+                if (q.priv == 3 || (q.satp >> 60) != 8) Right(q.addr)
+                else if ((q.addr >> 39) != (if (q.addr.testBit(38)) (BigInt(1) << 25)-1 else BigInt(0))) Left(pageCause)
+                else {
+                    var table = (q.satp & ((BigInt(1) << 44)-1)) << 12
+                    var result: Either[Int, BigInt] = Left(pageCause)
+                    var searching = true
+                    for (level <- 2 to 0 by -1 if searching) {
+                        val vpn = (q.addr >> (12+9*level)) & 511
+                        val pte = BreezeCoreSimSupport.read64(memory, table + vpn*8)
+                        val r = pte.testBit(1); val w = pte.testBit(2); val x = pte.testBit(3)
+                        val ppn = (pte >> 10) & ((BigInt(1) << 44)-1)
+                        if (!pte.testBit(0) || (!r && w) || (pte >> 54) != 0) searching = false
+                        else if (r || x) {
+                            val lowerBits = 9*level
+                            val aligned = (ppn & ((BigInt(1) << lowerBits)-1)) == 0
+                            val user = pte.testBit(4)
+                            val permitted = (if (store) w && pte.testBit(7) else r || (q.mxr && x)) &&
+                                pte.testBit(6) && (if (q.priv == 0) user else !user || q.sum)
+                            if (aligned && permitted) {
+                                val pageMask = (BigInt(1) << (12+lowerBits))-1
+                                result = Right((ppn << 12) | (q.addr & pageMask))
+                            }
+                            searching = false
+                        } else if (level == 0) searching = false
+                        else table = ppn << 12
+                    }
+                    result
+                }
+            }
+
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U)
+            dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U)
+            dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B)
+            dut.io.mmuIdle.poke(true.B)
+            dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B)
+            dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke(bootAddr.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.machineSoftwareInterrupt.poke(false.B)
@@ -385,7 +440,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
             dut.clock.step(1)
             dut.reset.poke(false.B)
 
-            while (!dut.io.estop.peek().litToBoolean && exitCode.isEmpty && cycleCount < maxCycles) {
+            while (!stopped && exitCode.isEmpty && cycleCount < maxCycles) {
                 dut.io.machineSoftwareInterrupt.poke(
                     machineSoftwareInterruptAt.exists(cycleCount >= _).B)
                 dut.io.nextLevelRsp.vld.poke(false.B)
@@ -449,9 +504,54 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                     dmemTape = 0
                 }
 
-                dut.clock.step(1)
-                cycleCount += 1
-
+                if (dut.io.l1d.trapClearRsv.peek().litToBoolean) reservation = None
+                val cpuHold = cpuS2.exists(_.delay > 0)
+                dut.io.l1d.s2Hold.poke(cpuHold.B)
+                dut.io.l1d.req.ready.poke((!cpuHold).B)
+                dut.io.l1d.resp.valid.poke((cpuS2.nonEmpty && !cpuHold).B)
+                dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+                dut.io.l1d.resp.bits.data.poke(0.U)
+                cpuS2.filter(_ => !cpuHold).foreach { q =>
+                    val bytes = 1 << q.size
+                    val load = q.op == 0 || q.op == 2
+                    val translated = if ((q.addr & (bytes-1)) != 0)
+                        Left(if (load) 4 else 6) else translate(q)
+                    translated match {
+                        case Left(cause) =>
+                            dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Exc)
+                            dut.io.l1d.resp.bits.excCause.poke(cause.U)
+                            dut.io.l1d.resp.bits.tval.poke(q.addr.U)
+                        case Right(pa) =>
+                            val offset = (pa & 7).toInt
+                            val mask = (BigInt(1) << (bytes*8))-1
+                            val raw = (BreezeCoreSimSupport.read64(memory, pa) >> (8*offset)) & mask
+                            val value = if (q.flw) (BigInt("ffffffff",16) << 32) | raw
+                                else if (q.signed && raw.testBit(bytes*8-1)) raw | (BreezeCoreSimSupport.Mask64 ^ mask)
+                                else raw
+                            val scSuccess = q.op == 3 && reservation.contains(pa -> bytes)
+                            dut.io.l1d.resp.bits.data.poke((if (q.op == 3) (if (scSuccess) BigInt(0) else BigInt(1)) else value).U)
+                            if (!dut.io.l1d.s2Kill.peek().litToBoolean) {
+                                if (q.op == 2) reservation = Some(pa -> bytes)
+                                else if (q.op == 3 || q.op == 1) reservation = None
+                            }
+                            if ((q.op == 1 || scSuccess) && !dut.io.l1d.s2Kill.peek().litToBoolean)
+                                BreezeCoreSimSupport.write64(memory, pa, q.data << (8*offset),
+                                    ((BigInt(1) << bytes)-1) << offset)
+                            require(q.op != 4,
+                                "scalar core runner does not model AMO; use native protocol tests")
+                    }
+                }
+                val acceptedCpu = if (dut.io.l1d.req.valid.peek().litToBoolean && !cpuHold) {
+                    val q = dut.io.l1d.req.bits; val c = dut.io.l1d.csr
+                    val priv = (if (c.mprv.peek().litToBoolean) c.mpp else c.privilege).peek().litValue.toInt
+                    Some(CpuMemory(q.vaddr.peek().litValue, q.op.peek().litValue.toInt,
+                        q.size.peek().litValue.toInt, q.signed.peek().litToBoolean,
+                        q.isFlw.peek().litToBoolean, q.wdata.peek().litValue,
+                        c.satp.peek().litValue, priv, c.sum.peek().litToBoolean,
+                        c.mxr.peek().litToBoolean, dmemLatency))
+                } else None
+                val killCpu = dut.io.l1d.s2Kill.peek().litToBoolean
+                val killS1 = dut.io.l1d.s1Kill.peek().litToBoolean
                 if (collectTandemTrace) {
                     dut.io.tandem.foreach { tandem =>
                         if (tandem.valid.peek().litToBoolean) {
@@ -498,6 +598,14 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
                         }
                     }
                 }
+                val stopAtEdge = dut.io.estop.peek().litToBoolean
+                dut.clock.step(1)
+                stopped = stopAtEdge
+                if (killCpu) { cpuS1 = None; cpuS2 = None }
+                else if (cpuHold) cpuS2 = cpuS2.map(q => q.copy(delay = q.delay-1))
+                else { cpuS2 = if (killS1) None else cpuS1; cpuS1 = acceptedCpu }
+                cycleCount += 1
+
             }
             if (collectTandemTrace) pendingTrace.finish()
 

@@ -325,7 +325,11 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val loadData = formatLoad(hitWord, s2.paddr, s2.req.core.size, s2.req.core.signed, s2.req.core.isFlw)
 
   // ---- Backend response: exactly one per CPU request (§1.1) ----
-  val cpuDecided = s2.valid && (s2.req.src === L1Src.Cpu || s2.req.src === L1Src.Recheck) && !io.core.s2Kill
+  // Present the S2 decision independently of WB cancellation. A WB memory
+  // exception uses this very response to generate s2Kill; gating Valid with
+  // that kill creates a combinational cycle and suppresses its own fault.
+  // Kill still gates allocation/PS and clears unfinished pipeline state.
+  val cpuDecided = s2.valid && (s2.req.src === L1Src.Cpu || s2.req.src === L1Src.Recheck)
   io.core.resp.valid := cpuDecided &&
     (outcome === L1S2Outcome.Done || outcome === L1S2Outcome.Mshr || outcome === L1S2Outcome.Exc)
   io.core.resp.bits.kind := MuxCase(L1DRespKind.Done, Seq(

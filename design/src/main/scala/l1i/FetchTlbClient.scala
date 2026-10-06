@@ -16,12 +16,13 @@ class FetchTlbClient extends Module {
     val tlb = Flipped(new TlbPortIO)
     val context = Input(new BreezeMmuContext(64))
     val kill = Input(Bool())
+    val block = Input(Bool())
   })
   object St extends ChiselEnum { val Idle, Send, Wait, Response = Value }
   val state = RegInit(St.Idle)
   val request = Reg(new BreezeTranslationReq(64))
   val result = Reg(new BreezeTranslationResp(64))
-  io.request.ready := state === St.Idle && !io.kill
+  io.request.ready := state === St.Idle && !io.kill && !io.block
   io.response.valid := state === St.Response && !io.kill
   io.response.bits := result
   io.tlb.req.valid := state === St.Send && !io.kill

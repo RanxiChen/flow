@@ -259,8 +259,9 @@ class BreezeCoreGShareSpec extends AnyFreeSpec with Matchers {
 
         expectArchitecturalMatch(baseline, gshare)
         baseline.commitEvents.count(_.inst == takenBranch) mustBe 1
-        baseline.commitEvents.count(_.inst == EcallInst) mustBe 1
-        baseline.commitEvents.count(_.inst == IllegalInst) mustBe 1
+        // Faulting instructions trap; they do not emit an architectural commit.
+        baseline.commitEvents.count(_.inst == EcallInst) mustBe 0
+        baseline.commitEvents.count(_.inst == IllegalInst) mustBe 0
         baseline.commitEvents.count(_.inst == MretInst) mustBe 2
         val finalX2 = baseline.commitEvents.filter { event =>
             event.rdWriteEn && event.rdAddr == 2

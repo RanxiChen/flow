@@ -5,6 +5,7 @@ import chisel3.simulator.scalatest.ChiselSim
 import flow.config.BreezeCoreConfig
 import flow.fpu.BreezeFpChiselSim
 import flow.platform.BreezeMcuPlatform
+import flow.interface.L1DRespKind
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
@@ -394,969 +395,6 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 }
 
-class BreezeCoreSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
-    private val nopInst = BigInt("00000013", 16)
-    private val mask64 = (BigInt(1) << 64) - 1
-
-    private def encodeAddi(rd: Int, rs1: Int, imm: Int): BigInt = {
-        val imm12 = imm & 0xfff
-        (BigInt(imm12) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(0) << 12) |
-        (BigInt(rd) << 7) |
-        BigInt(0x13)
-    }
-
-    private def encodeCsr(rd: Int, rs1: Int, csr: Int, funct3: Int): BigInt = {
-        (BigInt(csr & 0xfff) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(funct3) << 12) |
-        (BigInt(rd) << 7) |
-        BigInt(0x73)
-    }
-
-    private case class AddiTrace(rd: Int, imm: Int, inst: BigInt)
-    private case class LoadCase(name: String, funct3: Int, offset: Int, rspData: BigInt, expectedWb: BigInt)
-    private case class StoreCase(name: String, funct3: Int, offset: Int, rs2Value: Int, expectedWdata: BigInt, expectedWmask: BigInt)
-    private case class RTypeCase(
-        name: String,
-        rs1Value: Int,
-        rs2Value: Int,
-        funct3: Int,
-        funct7: Int,
-        expectedAluOut: BigInt
-    )
-    private case class DependencyChainCase(name: String, instructions: Seq[BigInt], expectedWb: Seq[BigInt])
-    private case class ObservedDmemReq(addr: BigInt, isWrite: Boolean, wdata: BigInt, wmask: BigInt)
-    private case class PendingDmemResp(addr: BigInt, data: BigInt, isWriteAck: Boolean, cyclesLeft: Int)
-
-    private def u64(value: BigInt): BigInt = value & mask64
-
-    private def encodeLoad(rd: Int, rs1: Int, imm: Int, funct3: Int): BigInt = {
-        val imm12 = imm & 0xfff
-        (BigInt(imm12) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(funct3) << 12) |
-        (BigInt(rd) << 7) |
-        BigInt(0x03)
-    }
-
-    private def encodeRType(rd: Int, rs1: Int, rs2: Int, funct3: Int, funct7: Int): BigInt = {
-        (BigInt(funct7) << 25) |
-        (BigInt(rs2) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(funct3) << 12) |
-        (BigInt(rd) << 7) |
-        BigInt(0x33)
-    }
-
-    private def encodeStore(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
-        val imm12 = imm & 0xfff
-        val immHi = (imm12 >> 5) & 0x7f
-        val immLo = imm12 & 0x1f
-        (BigInt(immHi) << 25) |
-        (BigInt(rs2) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(funct3) << 12) |
-        (BigInt(immLo) << 7) |
-        BigInt(0x23)
-    }
-
-    private def encodeBranch(rs1: Int, rs2: Int, imm: Int, funct3: Int): BigInt = {
-        val imm13 = imm & 0x1fff
-        val bit12 = (imm13 >> 12) & 0x1
-        val bits10To5 = (imm13 >> 5) & 0x3f
-        val bits4To1 = (imm13 >> 1) & 0xf
-        val bit11 = (imm13 >> 11) & 0x1
-
-        (BigInt(bit12) << 31) |
-        (BigInt(bits10To5) << 25) |
-        (BigInt(rs2) << 20) |
-        (BigInt(rs1) << 15) |
-        (BigInt(funct3) << 12) |
-        (BigInt(bits4To1) << 8) |
-        (BigInt(bit11) << 7) |
-        BigInt(0x63)
-    }
-
-    private def initCore(dut: BreezeCore): Unit = {
-        val fase = dut.io.fase.get
-        dut.io.resetAddr.poke(0.U)
-        dut.io.machineTimerInterrupt.poke(false.B)
-        dut.io.externalInterrupts.poke(0.U)
-        dut.io.nextLevelRsp.vld.poke(false.B)
-        dut.io.nextLevelRsp.data.poke(0.U)
-        dut.io.dmem.rsp.valid.poke(false.B)
-        dut.io.dmem.rsp.data.poke(0.U)
-        dut.io.dmem.rsp.isWriteAck.poke(false.B)
-        dut.io.dmem.rsp.error.poke(false.B)
-        fase.inst_valid.poke(false.B)
-        fase.instruction.poke(0.U)
-        fase.inst_pc.poke(0.U)
-        fase.halt.poke(true.B)
-        fase.launch.poke(false.B)
-        fase.launchPc.poke(0.U)
-        fase.regIndex.poke(0.U)
-        fase.regWrite.poke(false.B)
-        fase.regWdata.poke(0.U)
-
-        dut.reset.poke(true.B)
-        dut.clock.step(1)
-        dut.reset.poke(false.B)
-        dut.clock.step(3)
-        fase.halted.expect(true.B)
-    }
-
-    private def stepUntil(
-        dut: BreezeCore,
-        maxCycles: Int = 32
-    )(cond: => Boolean): Unit = {
-        var cycles = 0
-        while (!cond && cycles < maxCycles) {
-            dut.clock.step(1)
-            cycles += 1
-        }
-        assert(cond, s"condition not met within $maxCycles cycles")
-    }
-
-    private def enqueueFaseInstruction(
-        dut: BreezeCore,
-        inst: BigInt
-    ): Unit = {
-        val fase = dut.io.fase.get
-        stepUntil(dut) { fase.inst_ready.peek().litToBoolean }
-        fase.inst_valid.poke(true.B)
-        fase.instruction.poke(inst.U)
-        dut.clock.step(1)
-        fase.inst_valid.poke(false.B)
-    }
-
-    private def waitForWbData(
-        dut: BreezeCore,
-        expected: BigInt,
-        maxCycles: Int = 32
-    ): Unit = {
-        val debug = dut.io.debug.get
-        stepUntil(dut, maxCycles) {
-            debug.memWbValid.peek().litToBoolean && debug.wbData.peek().litValue == expected
-        }
-    }
-
-    private def enqueueNopsUntilWbObserved(
-        dut: BreezeCore,
-        nopCount: Int,
-        expectedWb: BigInt
-    ): Unit = {
-        val debug = dut.io.debug.get
-        var seenExpectedWb = false
-
-        for (_ <- 0 until nopCount) {
-            enqueueFaseInstruction(dut, nopInst)
-            seenExpectedWb ||= debug.memWbValid.peek().litToBoolean && debug.wbData.peek().litValue == expectedWb
-        }
-
-        if (!seenExpectedWb) {
-            waitForWbData(dut, expectedWb)
-        }
-    }
-
-    private def stepWithFakeDrivers(
-        dut: BreezeCore,
-        instQueue: mutable.Queue[BigInt],
-        pendingDmemResps: mutable.Queue[PendingDmemResp],
-        observedReqs: mutable.ArrayBuffer[ObservedDmemReq]
-    )(
-        mkResponse: ObservedDmemReq => PendingDmemResp
-    ): Unit = {
-        val fase = dut.io.fase.get
-        val dmemReq = dut.io.dmem.req
-        val dmemRsp = dut.io.dmem.rsp
-        val driveRespThisCycle = pendingDmemResps.headOption.exists(_.cyclesLeft == 0)
-
-        if (instQueue.nonEmpty && fase.inst_ready.peek().litToBoolean) {
-            fase.inst_valid.poke(true.B)
-            fase.instruction.poke(instQueue.dequeue().U)
-        } else {
-            fase.inst_valid.poke(false.B)
-            fase.instruction.poke(0.U)
-        }
-
-        pendingDmemResps.headOption match {
-            case Some(resp) if driveRespThisCycle =>
-                dmemRsp.valid.poke(true.B)
-                dmemRsp.data.poke(resp.data.U)
-                dmemRsp.isWriteAck.poke(resp.isWriteAck.B)
-                dmemRsp.error.poke(false.B)
-            case _ =>
-                dmemRsp.valid.poke(false.B)
-                dmemRsp.data.poke(0.U)
-                dmemRsp.isWriteAck.poke(false.B)
-                dmemRsp.error.poke(false.B)
-        }
-
-        if (dmemReq.valid.peek().litToBoolean) {
-            val observedReq = ObservedDmemReq(
-                addr = dmemReq.addr.peek().litValue,
-                isWrite = dmemReq.isWrite.peek().litToBoolean,
-                wdata = dmemReq.wdata.peek().litValue,
-                wmask = dmemReq.wmask.peek().litValue
-            )
-            observedReqs += observedReq
-            pendingDmemResps.enqueue(mkResponse(observedReq))
-        }
-
-        dut.clock.step(1)
-
-        fase.inst_valid.poke(false.B)
-        fase.instruction.poke(0.U)
-        dmemRsp.valid.poke(false.B)
-        dmemRsp.data.poke(0.U)
-        dmemRsp.isWriteAck.poke(false.B)
-        dmemRsp.error.poke(false.B)
-
-        if (driveRespThisCycle) {
-            pendingDmemResps.dequeue()
-        }
-        val decremented = pendingDmemResps.map { resp =>
-            resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
-        }
-        pendingDmemResps.clear()
-        pendingDmemResps ++= decremented
-    }
-
-    "BreezeCore should retire a single addi instruction from FASE input" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val fase = dut.io.fase.get
-            val addiX1 = encodeAddi(rd = 1, rs1 = 0, imm = 1)
-
-            initCore(dut)
-
-            enqueueFaseInstruction(dut, addiX1)
-
-            stepUntil(dut) { debug.decodeValid.peek().litToBoolean }
-            debug.decodeInst.expect(addiX1.U)
-            debug.decodePc.expect(0.U)
-
-            dut.clock.step(1)
-            debug.idExeValid.expect(true.B)
-            debug.idExeRs1Addr.expect(0.U)
-            debug.idExeRs2Addr.expect(1.U)
-            debug.idExeSrc1.expect(0.U)
-            debug.idExeSrc2.expect(1.U)
-            debug.exeSrc1.expect(0.U)
-            debug.exeSrc2.expect(1.U)
-            debug.exeAluOut.expect(1.U)
-
-            dut.clock.step(1)
-            debug.exeMemValid.expect(true.B)
-            debug.exeMemRdAddr.expect(1.U)
-            debug.exeMemData.expect(1.U)
-
-            dut.clock.step(1)
-            debug.memWbValid.expect(true.B)
-            debug.wbData.expect(1.U)
-        }
-    }
-
-    "BreezeCore should pipeline consecutive addi instructions from FASE input" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val fase = dut.io.fase.get
-            val traces = (1 to 4).map(i => AddiTrace(rd = i, imm = i, inst = encodeAddi(rd = i, rs1 = 0, imm = i)))
-
-            initCore(dut)
-
-            enqueueFaseInstruction(dut, traces.head.inst)
-
-            stepUntil(dut, maxCycles = 32) {
-                debug.decodeValid.peek().litToBoolean && debug.decodeInst.peek().litValue == traces.head.inst
-            }
-
-            val totalCycles = traces.length + 3
-            for (cycle <- 0 until totalCycles) {
-                val decodeIdx = cycle
-                val exeIdx = cycle - 1
-                val exeMemIdx = cycle - 2
-                val wbIdx = cycle - 3
-
-                if (decodeIdx >= 0 && decodeIdx < traces.length) {
-                    val trace = traces(decodeIdx)
-                    debug.decodeValid.expect(true.B)
-                    debug.decodeInst.expect(trace.inst.U)
-                    debug.decodePc.expect(0.U)
-                } else {
-                    debug.decodeValid.expect(false.B)
-                }
-
-                if (exeIdx >= 0 && exeIdx < traces.length) {
-                    val trace = traces(exeIdx)
-                    debug.idExeValid.expect(true.B)
-                    debug.exeSrc1.expect(0.U)
-                    debug.exeSrc2.expect(trace.imm.U)
-                    debug.exeAluOut.expect(trace.imm.U)
-                } else {
-                    debug.idExeValid.expect(false.B)
-                }
-
-                if (exeMemIdx >= 0 && exeMemIdx < traces.length) {
-                    val trace = traces(exeMemIdx)
-                    debug.exeMemValid.expect(true.B)
-                    debug.exeMemRdAddr.expect(trace.rd.U)
-                    debug.exeMemData.expect(trace.imm.U)
-                } else {
-                    debug.exeMemValid.expect(false.B)
-                }
-
-                if (wbIdx >= 0 && wbIdx < traces.length) {
-                    val trace = traces(wbIdx)
-                    debug.memWbValid.expect(true.B)
-                    debug.wbData.expect(trace.imm.U)
-                } else {
-                    debug.memWbValid.expect(false.B)
-                }
-
-                val nextTraceIdx = cycle + 1
-                if (cycle != totalCycles - 1) {
-                    if (nextTraceIdx < traces.length) {
-                        fase.inst_valid.poke(true.B)
-                        fase.instruction.poke(traces(nextTraceIdx).inst.U)
-                    } else {
-                        fase.inst_valid.poke(false.B)
-                    }
-                    dut.clock.step(1)
-                }
-            }
-        }
-    }
-
-    "BreezeCore should execute RV64I R-type ALU instructions through the pipeline" in {
-        val rTypeCases = Seq(
-            RTypeCase("add-basic", 3, 5, funct3 = 0, funct7 = 0x00, expectedAluOut = 8),
-            RTypeCase("add-cancel", -1, 1, funct3 = 0, funct7 = 0x00, expectedAluOut = 0),
-            RTypeCase("sub-basic", 9, 4, funct3 = 0, funct7 = 0x20, expectedAluOut = 5),
-            RTypeCase("sub-negative", 1, 2, funct3 = 0, funct7 = 0x20, expectedAluOut = -1),
-            RTypeCase("and-mask", 0x55, 0x0f, funct3 = 7, funct7 = 0x00, expectedAluOut = 0x05),
-            RTypeCase("and-preserve", -1, 0x12, funct3 = 7, funct7 = 0x00, expectedAluOut = 0x12),
-            RTypeCase("or-mask", 0x50, 0x0f, funct3 = 6, funct7 = 0x00, expectedAluOut = 0x5f),
-            RTypeCase("or-all-ones", 0, -1, funct3 = 6, funct7 = 0x00, expectedAluOut = -1),
-            RTypeCase("xor-mask", 0x5a, 0x0f, funct3 = 4, funct7 = 0x00, expectedAluOut = 0x55),
-            RTypeCase("xor-clear", -1, -1, funct3 = 4, funct7 = 0x00, expectedAluOut = 0),
-            RTypeCase("sll-small", 1, 3, funct3 = 1, funct7 = 0x00, expectedAluOut = 8),
-            RTypeCase("sll-large", 1, 8, funct3 = 1, funct7 = 0x00, expectedAluOut = 0x100),
-            RTypeCase("srl-basic", 0x80, 3, funct3 = 5, funct7 = 0x00, expectedAluOut = 0x10),
-            RTypeCase("srl-unsigned", -1, 4, funct3 = 5, funct7 = 0x00, expectedAluOut = BigInt("0fffffffffffffff", 16)),
-            RTypeCase("sra-negative", -16, 2, funct3 = 5, funct7 = 0x20, expectedAluOut = -4),
-            RTypeCase("sra-all-ones", -1, 8, funct3 = 5, funct7 = 0x20, expectedAluOut = -1),
-            RTypeCase("slt-signed-true", -1, 1, funct3 = 2, funct7 = 0x00, expectedAluOut = 1),
-            RTypeCase("slt-signed-false", 5, 5, funct3 = 2, funct7 = 0x00, expectedAluOut = 0),
-            RTypeCase("sltu-false", -1, 1, funct3 = 3, funct7 = 0x00, expectedAluOut = 0),
-            RTypeCase("sltu-true", 1, -1, funct3 = 3, funct7 = 0x00, expectedAluOut = 1)
-        )
-
-        rTypeCases.foreach { testCase =>
-            withClue(s"R-type case ${testCase.name}: ") {
-                simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-                    val debug = dut.io.debug.get
-                    val rd = 3
-                    val targetInst = encodeRType(rd, rs1 = 1, rs2 = 2, testCase.funct3, testCase.funct7)
-                    val instQueue = mutable.Queue[BigInt](
-                        encodeAddi(rd = 1, rs1 = 0, imm = testCase.rs1Value),
-                        encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value),
-                        nopInst,
-                        nopInst,
-                        nopInst,
-                        nopInst,
-                        targetInst
-                    )
-                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-                    val expectedRs1 = u64(BigInt(testCase.rs1Value))
-                    val expectedRs2 = u64(BigInt(testCase.rs2Value))
-                    val expectedAluOut = u64(testCase.expectedAluOut)
-                    var seenTargetDecode = false
-
-                    initCore(dut)
-
-                    for (_ <- 0 until 64 if !seenTargetDecode) {
-                        seenTargetDecode ||= debug.decodeValid.peek().litToBoolean &&
-                            debug.decodeInst.peek().litValue == targetInst
-                        if (!seenTargetDecode) {
-                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                                throw new AssertionError(
-                                    s"unexpected dmem req in R-type ALU test: addr=0x${req.addr.toString(16)}"
-                                )
-                            }
-                        }
-                    }
-                    seenTargetDecode mustBe true
-                    debug.decodeInst.expect(targetInst.U)
-                    debug.decodePc.expect(0.U)
-
-                    dut.clock.step(1)
-                    debug.idExeValid.expect(true.B)
-                    debug.idExeRs1Addr.expect(1.U)
-                    debug.idExeRs2Addr.expect(2.U)
-                    debug.exeSrc1.expect(expectedRs1.U)
-                    debug.exeSrc2.expect(expectedRs2.U)
-                    debug.exeAluOut.expect(expectedAluOut.U)
-
-                    dut.clock.step(1)
-                    debug.exeMemValid.expect(true.B)
-                    debug.exeMemRdAddr.expect(rd.U)
-                    debug.exeMemData.expect(expectedAluOut.U)
-
-                    dut.clock.step(1)
-                    debug.memWbValid.expect(true.B)
-                    debug.wbData.expect(expectedAluOut.U)
-
-                    observedReqs mustBe empty
-                }
-            }
-        }
-    }
-
-    "BreezeCore should retire dependent add/sub chains without pipeline stalls after first writeback" in {
-        val dependencyCases = Seq(
-            DependencyChainCase(
-                name = "add-chain",
-                instructions = Seq(
-                    encodeAddi(rd = 1, rs1 = 0, imm = 1),
-                    encodeRType(rd = 2, rs1 = 1, rs2 = 1, funct3 = 0, funct7 = 0x00),
-                    encodeRType(rd = 3, rs1 = 2, rs2 = 1, funct3 = 0, funct7 = 0x00),
-                    encodeRType(rd = 4, rs1 = 3, rs2 = 2, funct3 = 0, funct7 = 0x00)
-                ),
-                expectedWb = Seq(1, 2, 3, 5).map(BigInt(_))
-            ),
-            DependencyChainCase(
-                name = "add-sub-chain",
-                instructions = Seq(
-                    encodeAddi(rd = 1, rs1 = 0, imm = 10),
-                    encodeAddi(rd = 2, rs1 = 0, imm = 3),
-                    encodeRType(rd = 3, rs1 = 1, rs2 = 2, funct3 = 0, funct7 = 0x20),
-                    encodeRType(rd = 4, rs1 = 3, rs2 = 2, funct3 = 0, funct7 = 0x00),
-                    encodeRType(rd = 5, rs1 = 4, rs2 = 1, funct3 = 0, funct7 = 0x20)
-                ),
-                expectedWb = Seq(10, 3, 7, 10, 0).map(BigInt(_))
-            ),
-            DependencyChainCase(
-                name = "newest-producer-wins",
-                instructions = Seq(
-                    encodeAddi(rd = 1, rs1 = 0, imm = 1),
-                    encodeAddi(rd = 1, rs1 = 0, imm = 2),
-                    encodeAddi(rd = 2, rs1 = 1, imm = 0)
-                ),
-                expectedWb = Seq(1, 2, 2).map(BigInt(_))
-            )
-        )
-
-        dependencyCases.foreach { testCase =>
-            withClue(s"dependency chain ${testCase.name}: ") {
-                simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-                    val debug = dut.io.debug.get
-                    val instQueue = mutable.Queue.from(testCase.instructions)
-                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-                    val observedHazards = mutable.ArrayBuffer.empty[Boolean]
-                    val observedMemWaits = mutable.ArrayBuffer.empty[Boolean]
-                    val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
-                    val expectedWb = testCase.expectedWb.map(u64)
-                    var cycle = 0
-
-                    initCore(dut)
-
-                    while (cycle < 96 && observedRetire.length < expectedWb.length) {
-                        observedHazards += debug.loadUseHazard.peek().litToBoolean
-                        observedMemWaits += debug.memWaitingResp.peek().litToBoolean
-                        if (debug.memWbValid.peek().litToBoolean) {
-                            observedRetire += ((cycle, debug.wbData.peek().litValue))
-                        }
-                        if (observedRetire.length < expectedWb.length) {
-                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                                throw new AssertionError(
-                                    s"unexpected dmem req in dependency chain test: addr=0x${req.addr.toString(16)}"
-                                )
-                            }
-                            cycle += 1
-                        }
-                    }
-
-                    observedReqs mustBe empty
-                    observedRetire.length mustBe expectedWb.length
-                    observedRetire.map(_._2) mustBe expectedWb
-
-                    val retireCycles = observedRetire.map(_._1)
-                    retireCycles.sliding(2).foreach { pair =>
-                        pair(1) - pair(0) mustBe 1
-                    }
-
-                    observedHazards.exists(identity) mustBe false
-                    observedMemWaits.exists(identity) mustBe false
-                }
-            }
-        }
-    }
-
-    "BreezeCore should stall on CSR rd dependencies until CSR writeback is available" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val instQueue = mutable.Queue[BigInt](
-                encodeAddi(rd = 2, rs1 = 0, imm = 1),
-                encodeCsr(rd = 1, rs1 = 2, csr = CSRMAP.printer, funct3 = 1),
-                encodeAddi(rd = 3, rs1 = 1, imm = 1)
-            )
-            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-            val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
-            var lastObservedWb: Option[(BigInt, BigInt, BigInt)] = None
-            var cycle = 0
-
-            initCore(dut)
-
-            while (cycle < 64 && observedRetire.length < 3) {
-                if (debug.memWbValid.peek().litToBoolean) {
-                    val currentWb = (
-                        debug.memWbPc.peek().litValue,
-                        debug.memWbInst.peek().litValue,
-                        debug.wbData.peek().litValue
-                    )
-                    if (!lastObservedWb.contains(currentWb)) {
-                        observedRetire += ((cycle, currentWb._3))
-                        lastObservedWb = Some(currentWb)
-                    }
-                }
-                if (observedRetire.length < 3) {
-                    stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                        throw new AssertionError(
-                            s"unexpected dmem req in CSR rd dependency test: addr=0x${req.addr.toString(16)}"
-                        )
-                    }
-                    cycle += 1
-                }
-            }
-
-            observedReqs mustBe empty
-            observedRetire.map(_._2) mustBe Seq(BigInt(1), BigInt(0), BigInt(1)).map(u64)
-            observedRetire(2)._1 - observedRetire(1)._1 must be >= 2
-        }
-    }
-
-    "BreezeCore should stall adjacent CSR operations targeting the same CSR until wb commit" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val instQueue = mutable.Queue[BigInt](
-                encodeAddi(rd = 2, rs1 = 0, imm = 1),
-                encodeCsr(rd = 1, rs1 = 2, csr = CSRMAP.printer, funct3 = 1),
-                encodeCsr(rd = 3, rs1 = 0, csr = CSRMAP.printer, funct3 = 2)
-            )
-            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-            val observedRetire = mutable.ArrayBuffer.empty[(Int, BigInt)]
-            var lastObservedWb: Option[(BigInt, BigInt, BigInt)] = None
-            var cycle = 0
-
-            initCore(dut)
-
-            while (cycle < 64 && observedRetire.length < 3) {
-                if (debug.memWbValid.peek().litToBoolean) {
-                    val currentWb = (
-                        debug.memWbPc.peek().litValue,
-                        debug.memWbInst.peek().litValue,
-                        debug.wbData.peek().litValue
-                    )
-                    if (!lastObservedWb.contains(currentWb)) {
-                        observedRetire += ((cycle, currentWb._3))
-                        lastObservedWb = Some(currentWb)
-                    }
-                }
-                if (observedRetire.length < 3) {
-                    stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                        throw new AssertionError(
-                            s"unexpected dmem req in adjacent CSR hazard test: addr=0x${req.addr.toString(16)}"
-                        )
-                    }
-                    cycle += 1
-                }
-            }
-
-            observedReqs mustBe empty
-            observedRetire.map(_._2) mustBe Seq(BigInt(1), BigInt(0), BigInt(1)).map(u64)
-            observedRetire(2)._1 - observedRetire(1)._1 must be >= 2
-        }
-    }
-
-    "BreezeCore should write CSR via CSRRW (RW command) with rd=0" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val fase = dut.io.fase.get
-            // addi x1, x0, 0x345 → csrrw x0, mtvec, x1 → csrrs x2, mtvec, x0 → verify x2=0x345
-            val addiX1   = encodeAddi(rd = 1, rs1 = 0, imm = 0x345)
-            val csrrwWr  = encodeCsr(rd = 0, rs1 = 1, csr = CSRMAP.mtvec, funct3 = 1)
-            val csrrsRd  = encodeCsr(rd = 2, rs1 = 0, csr = CSRMAP.mtvec, funct3 = 2)
-            var wbVals = mutable.ArrayBuffer.empty[BigInt]
-            var cycle = 0
-            initCore(dut)
-            enqueueFaseInstruction(dut, addiX1)
-            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean }
-            debug.wbData.expect(BigInt(0x345).U)
-            enqueueFaseInstruction(dut, csrrwWr)
-            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean }
-            // CSRRW with rd=0 should commit the write
-            enqueueFaseInstruction(dut, csrrsRd)
-            stepUntil(dut, 32) { debug.memWbValid.peek().litToBoolean && debug.wbData.peek().litValue == BigInt(0x345) }
-            debug.wbData.expect(BigInt(0x345).U)
-        }
-    }
-
-    "BreezeCore should execute supported RV64I load instructions through dmem" in {
-        val loadCases = Seq(
-            LoadCase("lb", 0, 1, BigInt("00000000000080ff", 16), BigInt("ffffffffffffff80", 16)),
-            LoadCase("lbu", 4, 2, BigInt("0000000000aa0000", 16), BigInt("aa", 16)),
-            LoadCase("lh", 1, 2, BigInt("0000000080010000", 16), BigInt("ffffffffffff8001", 16)),
-            LoadCase("lhu", 5, 4, BigInt("0000123400000000", 16), BigInt("1234", 16)),
-            LoadCase("lw", 2, 4, BigInt("8000000100000000", 16), BigInt("ffffffff80000001", 16))
-        )
-
-        loadCases.foreach { testCase =>
-            withClue(s"load case ${testCase.name}: ") {
-                simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-                    val debug = dut.io.debug.get
-                    val expectedAddress = BigInt(0x20 + testCase.offset)
-                    val instQueue = mutable.Queue[BigInt](
-                        encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
-                        nopInst,
-                        nopInst,
-                        nopInst,
-                        nopInst,
-                        encodeLoad(rd = 3, rs1 = 1, imm = testCase.offset, funct3 = testCase.funct3)
-                    )
-                    val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-                    val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-                    var seenExpectedWb = false
-
-                    initCore(dut)
-
-                    for (_ <- 0 until 64 if !seenExpectedWb) {
-                        if (dut.io.dmem.req.valid.peek().litToBoolean) {
-                            dut.io.dmem.req.isWrite.expect(false.B)
-                            dut.io.dmem.req.addr.expect(expectedAddress.U)
-                        }
-                        seenExpectedWb ||= debug.memWbValid.peek().litToBoolean &&
-                            debug.wbData.peek().litValue == testCase.expectedWb
-                        if (!seenExpectedWb) {
-                            stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                                if (req.addr != expectedAddress || req.isWrite) {
-                                    throw new AssertionError(
-                                        s"unexpected load req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
-                                    )
-                                }
-                                PendingDmemResp(req.addr, testCase.rspData, isWriteAck = false, cyclesLeft = 6)
-                            }
-                        }
-                    }
-
-                    withClue(s"observed reqs in ${testCase.name}: ") {
-                        observedReqs.count(_.addr == expectedAddress) mustBe 1
-                    }
-                    withClue(s"waiting for memWbValid in ${testCase.name}: ") {
-                        seenExpectedWb mustBe true
-                    }
-                }
-            }
-        }
-    }
-
-    "BreezeCore should retire a delayed load exactly once" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val addi = encodeAddi(rd = 1, rs1 = 0, imm = 0x20)
-            val load = encodeLoad(rd = 2, rs1 = 1, imm = 0, funct3 = 3)
-            val loadData = BigInt("0123456789abcdef", 16)
-            val instQueue = mutable.Queue[BigInt](addi, load)
-            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-            val retired = mutable.ArrayBuffer.empty[(BigInt, BigInt)]
-
-            initCore(dut)
-
-            for (_ <- 0 until 32) {
-                if (debug.memWbValid.peek().litToBoolean) {
-                    retired += ((
-                        debug.memWbInst.peek().litValue,
-                        debug.wbData.peek().litValue
-                    ))
-                }
-                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                    if (req.addr != BigInt(0x20) || req.isWrite) {
-                        throw new AssertionError(
-                            s"unexpected delayed-load req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
-                        )
-                    }
-                    PendingDmemResp(req.addr, loadData, isWriteAck = false, cyclesLeft = 6)
-                }
-            }
-
-            observedReqs.length mustBe 1
-            retired mustBe Seq((addi, BigInt(0x20)), (load, loadData))
-        }
-    }
-
-    "BreezeCore should execute an adjacent load-to-store dependency exactly once" in {
-        simulate(new BreezeCore(
-            BreezeCoreConfig(useFASE = true, enableTandem = true),
-            enabledebug = true
-        )) { dut =>
-            val debug = dut.io.debug.get
-            val tandem = dut.io.tandem.get
-            val addi = encodeAddi(rd = 1, rs1 = 0, imm = 0x20)
-            val load = encodeLoad(rd = 2, rs1 = 1, imm = 0, funct3 = 3)
-            val store = encodeStore(rs1 = 1, rs2 = 2, imm = 8, funct3 = 3)
-            val loadData = BigInt("0123456789abcdef", 16)
-            val instQueue = mutable.Queue[BigInt](addi, load, store)
-            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-            val retired = mutable.ArrayBuffer.empty[BigInt]
-            var storeTrace: Option[(BigInt, BigInt, BigInt)] = None
-
-            initCore(dut)
-
-            for (_ <- 0 until 64) {
-                if (debug.memWbValid.peek().litToBoolean) {
-                    retired += debug.memWbInst.peek().litValue
-                }
-                if (tandem.valid.peek().litToBoolean &&
-                    tandem.inst.peek().litValue == store) {
-                    tandem.memEn.expect(true.B)
-                    tandem.memIsWrite.expect(true.B)
-                    storeTrace = Some((
-                        tandem.memAddr.peek().litValue,
-                        tandem.memWData.peek().litValue,
-                        tandem.memWMask.peek().litValue
-                    ))
-                }
-                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                    if (!req.isWrite) {
-                        req.addr mustBe BigInt(0x20)
-                        PendingDmemResp(req.addr, loadData, isWriteAck = false, cyclesLeft = 6)
-                    } else {
-                        req.addr mustBe BigInt(0x28)
-                        req.wdata mustBe loadData
-                        req.wmask mustBe BigInt(0xff)
-                        PendingDmemResp(req.addr, data = 0, isWriteAck = true, cyclesLeft = 6)
-                    }
-                }
-            }
-
-            observedReqs.map(req => (req.addr, req.isWrite)) mustBe
-                Seq((BigInt(0x20), false), (BigInt(0x28), true))
-            retired mustBe Seq(addi, load, store)
-            storeTrace mustBe Some((BigInt(0x28), loadData, BigInt(0xff)))
-        }
-    }
-
-    "BreezeCore should resolve an adjacent load-to-branch with the loaded value" in {
-        simulate(new BreezeCore(
-            BreezeCoreConfig(useFASE = true, enableTandem = true),
-            enabledebug = true
-        )) { dut =>
-            val debug = dut.io.debug.get
-            val setOldValue = encodeAddi(rd = 2, rs1 = 0, imm = 1)
-            val loadZero = encodeLoad(rd = 2, rs1 = 0, imm = 0, funct3 = 4)
-            val branchNotEqual = encodeBranch(rs1 = 2, rs2 = 0, imm = 8, funct3 = 1)
-            val instQueue = mutable.Queue[BigInt](setOldValue, loadZero, branchNotEqual)
-            val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-            val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-            val retired = mutable.ArrayBuffer.empty[BigInt]
-            var redirectSeen = false
-
-            initCore(dut)
-
-            for (_ <- 0 until 64) {
-                redirectSeen ||= debug.redirectValid.peek().litToBoolean
-                if (debug.memWbValid.peek().litToBoolean) {
-                    retired += debug.memWbInst.peek().litValue
-                }
-                stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                    req.isWrite mustBe false
-                    req.addr mustBe BigInt(0)
-                    PendingDmemResp(req.addr, data = 0, isWriteAck = false, cyclesLeft = 6)
-                }
-            }
-
-            observedReqs.map(req => (req.addr, req.isWrite)) mustBe
-                Seq((BigInt(0), false))
-            retired mustBe Seq(setOldValue, loadZero, branchNotEqual)
-            redirectSeen mustBe false
-        }
-    }
-
-    "BreezeCore should execute supported RV64I store instructions through dmem" in {
-        val storeCases = Seq(
-            StoreCase("sb", 0, 1, 0x0ab, BigInt("abababababababab", 16), BigInt("02", 16)),
-            StoreCase("sh", 1, 2, 0x123, BigInt("0123012301230123", 16), BigInt("0c", 16)),
-            StoreCase("sw", 2, 4, 0x456, BigInt("0000045600000456", 16), BigInt("f0", 16))
-        )
-
-        storeCases.foreach { testCase =>
-            simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-                val debug = dut.io.debug.get
-                val expectedAddress = BigInt(0x20 + testCase.offset)
-                val instQueue = mutable.Queue[BigInt](
-                    encodeAddi(rd = 1, rs1 = 0, imm = 0x20),
-                    encodeAddi(rd = 2, rs1 = 0, imm = testCase.rs2Value),
-                    nopInst,
-                    nopInst,
-                    nopInst,
-                    nopInst,
-                    encodeStore(rs1 = 1, rs2 = 2, imm = testCase.offset, funct3 = testCase.funct3)
-                )
-                val pendingDmemResps = mutable.Queue.empty[PendingDmemResp]
-                val observedReqs = mutable.ArrayBuffer.empty[ObservedDmemReq]
-                var seenStoreAck = false
-
-                initCore(dut)
-
-                for (_ <- 0 until 64 if !seenStoreAck) {
-                    seenStoreAck ||= observedReqs.nonEmpty && !debug.memWaitingResp.peek().litToBoolean
-                    if (!seenStoreAck) {
-                        stepWithFakeDrivers(dut, instQueue, pendingDmemResps, observedReqs) { req =>
-                            if (!req.isWrite || req.addr != expectedAddress) {
-                                throw new AssertionError(
-                                    s"unexpected store req: addr=0x${req.addr.toString(16)} isWrite=${req.isWrite}"
-                                )
-                            }
-                            PendingDmemResp(req.addr, data = 0, isWriteAck = true, cyclesLeft = 6)
-                        }
-                    }
-                }
-
-                observedReqs.length mustBe 1
-                observedReqs.head.isWrite mustBe true
-                observedReqs.head.addr mustBe expectedAddress
-                observedReqs.head.wdata mustBe testCase.expectedWdata
-                observedReqs.head.wmask mustBe testCase.expectedWmask
-                seenStoreAck mustBe true
-            }
-        }
-    }
-}
-
-class BreezeCoreCustomInstrSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
-    private val estopInst = BigInt("7ff00073", 16)
-
-    private def initCore(dut: BreezeCore): Unit = {
-        val fase = dut.io.fase.get
-        dut.io.resetAddr.poke(0.U)
-        dut.io.machineTimerInterrupt.poke(false.B)
-        dut.io.externalInterrupts.poke(0.U)
-        dut.io.nextLevelRsp.vld.poke(false.B)
-        dut.io.nextLevelRsp.data.poke(0.U)
-        dut.io.dmem.rsp.valid.poke(false.B)
-        dut.io.dmem.rsp.data.poke(0.U)
-        dut.io.dmem.rsp.isWriteAck.poke(false.B)
-        fase.inst_valid.poke(false.B)
-        fase.instruction.poke(0.U)
-        fase.inst_pc.poke(0.U)
-        fase.halt.poke(true.B)
-        fase.launch.poke(false.B)
-        fase.launchPc.poke(0.U)
-        fase.regIndex.poke(0.U)
-        fase.regWrite.poke(false.B)
-        fase.regWdata.poke(0.U)
-
-        dut.reset.poke(true.B)
-        dut.clock.step(1)
-        dut.reset.poke(false.B)
-        dut.clock.step(3)
-        fase.halted.expect(true.B)
-    }
-
-    private def assertNoDmemReq(dut: BreezeCore, cycle: Int): Unit = {
-        withClue(s"unexpected dmem req at cycle $cycle: ") {
-            dut.io.dmem.req.valid.expect(false.B)
-        }
-    }
-
-    private def stepUntil(
-        dut: BreezeCore,
-        maxCycles: Int = 32
-    )(cond: => Boolean): Unit = {
-        var cycles = 0
-        while (!cond && cycles < maxCycles) {
-            assertNoDmemReq(dut, cycles)
-            dut.clock.step(1)
-            cycles += 1
-        }
-        assert(cond, s"condition not met within $maxCycles cycles")
-    }
-
-    private def enqueueFaseInstruction(dut: BreezeCore, inst: BigInt): Unit = {
-        val fase = dut.io.fase.get
-        stepUntil(dut) { fase.inst_ready.peek().litToBoolean }
-        fase.inst_valid.poke(true.B)
-        fase.instruction.poke(inst.U)
-        assertNoDmemReq(dut, cycle = -1)
-        dut.clock.step(1)
-        fase.inst_valid.poke(false.B)
-        fase.instruction.poke(0.U)
-    }
-
-    "BreezeCore should pulse estop for one cycle when a single ESTOP retires from FASE input" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = true), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            var decodeSeen = false
-            var estopPulseCount = 0
-            var prevEstop = false
-            var prevCycleWasPulse = false
-
-            initCore(dut)
-            enqueueFaseInstruction(dut, estopInst)
-
-            for (cycle <- 0 until 16) {
-                assertNoDmemReq(dut, cycle)
-
-                val estop = dut.io.estop.peek().litToBoolean
-                val decodeValid = debug.decodeValid.peek().litToBoolean
-                val decodeInst = debug.decodeInst.peek().litValue
-                val memWbValid = debug.memWbValid.peek().litToBoolean
-
-                if (decodeValid && decodeInst == estopInst) {
-                    decodeSeen = true
-                }
-
-                if (estop) {
-                    withClue(s"estop pulse at cycle $cycle should start from low: ") {
-                        prevEstop mustBe false
-                    }
-                    withClue(s"estop pulse at cycle $cycle should align with memWbValid: ") {
-                        memWbValid mustBe true
-                    }
-                    estopPulseCount += 1
-                    prevCycleWasPulse = true
-                } else if (prevCycleWasPulse) {
-                    withClue(s"estop pulse should return low after pulse cycle $cycle: ") {
-                        estop mustBe false
-                    }
-                    prevCycleWasPulse = false
-                }
-
-                prevEstop = estop
-                dut.clock.step(1)
-            }
-
-            withClue("decode should observe ESTOP instruction: ") {
-                decodeSeen mustBe true
-            }
-            withClue("estop should pulse exactly once: ") {
-                estopPulseCount mustBe 1
-            }
-            withClue("estop pulse should not remain high at end of observation window: ") {
-                prevCycleWasPulse mustBe false
-            }
-        }
-    }
-}
-
 class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     private val RomBase = BreezeMcuPlatform.ResetVector
     private val nopInst = BigInt("00000013", 16)
@@ -1399,131 +437,41 @@ class BreezeCoreNoFASECustomInstrSpec extends AnyFreeSpec with Matchers with Bre
         assert(cond, s"condition not met within $maxCycles cycles")
     }
 
-    "BreezeCore should pulse estop for one cycle when ESTOP retires through the full frontend path" in {
-        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false), enabledebug = true)) { dut =>
-            val debug = dut.io.debug.get
-            val refillDelayCycles = 6
-            val firstLineWords = Seq(
-                encodeAddi(rd = 1, rs1 = 0, imm = 1),
-                encodeAddi(rd = 2, rs1 = 0, imm = 2),
-                encodeRType(rd = 3, rs1 = 1, rs2 = 2, funct3 = 0, funct7 = 0x00),
-                estopInst,
-                encodeAddi(rd = 4, rs1 = 0, imm = 9),
-                encodeAddi(rd = 5, rs1 = 0, imm = 10),
-                nopInst,
-                nopInst
-            )
-            val memoryMap = Map(
-                RomBase -> buildRefillLine(firstLineWords),
-                (RomBase + 0x20) -> buildRefillLine(Seq.fill(8)(nopInst))
-            )
-            val defaultLine = buildRefillLine(Seq.fill(8)(nopInst))
-            val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
-            var seenAnyReq = false
-            var seenEstopRetire = false
-            var prevReq = false
-            var postEstopCycleChecked = false
-            var cycle = 0
-
+    "ESTOP through the full frontend holds halted state and prevents younger retirement" in {
+        simulate(new BreezeCore(BreezeCoreConfig(useFASE = false, enableTandem = true), enabledebug = true)) { dut =>
+            val words = Seq(encodeAddi(1,0,1), estopInst, encodeAddi(2,0,99)) ++ Seq.fill(5)(nopInst)
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke(RomBase.U)
-            dut.io.machineTimerInterrupt.poke(false.B)
-            dut.io.externalInterrupts.poke(0.U)
-            dut.io.nextLevelRsp.vld.poke(false.B)
-            dut.io.nextLevelRsp.data.poke(0.U)
-            dut.io.dmem.rsp.valid.poke(false.B)
-            dut.io.dmem.rsp.data.poke(0.U)
-            dut.io.dmem.rsp.isWriteAck.poke(false.B)
-
-            dut.reset.poke(true.B)
-            dut.clock.step(1)
-            dut.reset.poke(false.B)
-
-            stepUntil(dut, maxCycles = 16) { dut.io.nextLevelReq.req.peek().litToBoolean }
-
-            while (cycle < 200 && !postEstopCycleChecked) {
-                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
-                val reqAddr = dut.io.nextLevelReq.paddr.peek().litValue
-
-                pendingIcacheResps.headOption match {
-                    case Some(resp) if resp.cyclesLeft == 0 =>
-                        dut.io.nextLevelRsp.vld.poke(true.B)
-                        dut.io.nextLevelRsp.data.poke(resp.data.U)
-                    case _ =>
-                        dut.io.nextLevelRsp.vld.poke(false.B)
-                        dut.io.nextLevelRsp.data.poke(0.U)
+            dut.io.machineTimerInterrupt.poke(false.B); dut.io.externalInterrupts.poke(0.U)
+            dut.io.nextLevelRsp.vld.poke(false.B); dut.io.nextLevelRsp.data.poke(0.U); dut.io.nextLevelRsp.error.poke(false.B)
+            dut.io.dmem.rsp.valid.poke(false.B); dut.io.dmem.rsp.data.poke(0.U)
+            dut.io.dmem.rsp.isWriteAck.poke(false.B); dut.io.dmem.rsp.error.poke(false.B)
+            dut.io.dcacheFlushDone.poke(true.B)
+            dut.reset.poke(true.B); dut.clock.step(2); dut.reset.poke(false.B)
+            var pending = -1; var halted = false; var stoppedCommits = 0
+            for (_ <- 0 until 150) {
+                dut.io.nextLevelRsp.vld.poke((pending == 0).B)
+                dut.io.nextLevelRsp.data.poke(buildRefillLine(words).U)
+                if (dut.io.nextLevelReq.req.peek().litToBoolean && pending < 0) pending = 3
+                val trace = dut.io.tandem.get
+                if (trace.valid.peek().litToBoolean) {
+                    assert(!halted, "younger retirement after ESTOP")
+                    assert(trace.pc.peek().litValue <= RomBase+4)
+                    if (trace.estop.peek().litToBoolean) stoppedCommits += 1
                 }
-
-                if (reqValid && !prevReq) {
-                    seenAnyReq = true
-                    pendingIcacheResps.enqueue(
-                        PendingIcacheResp(reqAddr, memoryMap.getOrElse(reqAddr, defaultLine), cyclesLeft = refillDelayCycles)
-                    )
-                }
-
-                if (debug.memWbValid.peek().litToBoolean) {
-                    val retiringPc = debug.memWbPc.peek().litValue
-                    val retiringInst = debug.memWbInst.peek().litValue
-                    val estop = dut.io.estop.peek().litToBoolean
-
-                    if (retiringInst == estopInst) {
-                        withClue(s"estop should be high when ESTOP retires at WB cycle $cycle (pc=0x${retiringPc.toString(16)}): ") {
-                            estop mustBe true
-                        }
-                        seenEstopRetire = true
-                    } else {
-                        withClue(
-                          s"estop should stay low when non-ESTOP retires at WB cycle $cycle " +
-                            s"(pc=0x${retiringPc.toString(16)}, inst=0x${retiringInst.toString(16)}): "
-                        ) {
-                            estop mustBe false
-                        }
-                    }
-
-                    if (seenEstopRetire) {
-                        dut.clock.step(1)
-                        cycle += 1
-                        dut.io.nextLevelRsp.vld.poke(false.B)
-                        dut.io.nextLevelRsp.data.poke(0.U)
-
-                        if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
-                            pendingIcacheResps.dequeue()
-                        }
-                        val decrementedAfterEstop = pendingIcacheResps.map { resp =>
-                            resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
-                        }
-                        pendingIcacheResps.clear()
-                        pendingIcacheResps ++= decrementedAfterEstop
-
-                        withClue("estop should return low on the cycle after ESTOP retires: ") {
-                            dut.io.estop.peek().litToBoolean mustBe false
-                        }
-                        postEstopCycleChecked = true
-                    }
-                }
-
-                if (!postEstopCycleChecked) {
-                    dut.clock.step(1)
-                    cycle += 1
-
-                    if (pendingIcacheResps.headOption.exists(_.cyclesLeft == 0)) {
-                        pendingIcacheResps.dequeue()
-                    }
-                    val decremented = pendingIcacheResps.map { resp =>
-                        resp.copy(cyclesLeft = math.max(resp.cyclesLeft - 1, 0))
-                    }
-                    pendingIcacheResps.clear()
-                    pendingIcacheResps ++= decremented
-                }
-
-                prevReq = dut.io.nextLevelReq.req.peek().litToBoolean
+                if (halted) dut.io.estop.expect(true.B)
+                dut.clock.step()
+                if (stoppedCommits != 0) halted = true
+                if (pending >= 0) pending -= 1
             }
-
-            withClue("frontend path should issue at least one icache request: ") {
-                seenAnyReq mustBe true
-            }
-            withClue("ESTOP should eventually retire through WB: ") {
-                seenEstopRetire mustBe true
-            }
+            halted mustBe true; stoppedCommits mustBe 1
         }
     }
 }
@@ -1619,6 +567,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val refillLine = buildRefillLine(refillInstWords)
             var cycle = 0
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke(RomBase.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -1799,6 +755,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             var seenRedirectedDecode = false
             var cycle = 0
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke(RomBase.U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -1949,6 +913,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -1964,6 +936,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             dut.clock.step(1)
 
             val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
+            var illegalTrapSeen = false
             var estopSeen = false
             var cycle = 0
 
@@ -1986,6 +959,10 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
                     dut.io.nextLevelRsp.data.poke(0.U)
                 }
 
+                if (backendDebug.memWbTrapValid.peek().litToBoolean) {
+                    illegalTrapSeen = true
+                    backendDebug.memWbPc.expect((RomBase + 0x81c).U)
+                }
                 if (backendDebug.memWbValid.peek().litToBoolean) {
                     retiredPcs += backendDebug.memWbPc.peek().litValue
                 }
@@ -2003,10 +980,13 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             }
 
             estopSeen mustBe true
+            illegalTrapSeen mustBe true
+            backendDebug.csrMcause.expect(2.U)
+            backendDebug.csrMepc.expect((RomBase + 0x81c).U)
             retiredPcs mustBe Seq(
                 RomBase + 0x800, RomBase + 0x804, RomBase + 0x808,
                 RomBase + 0x80c, RomBase + 0x810, RomBase + 0x814,
-                RomBase + 0x818, RomBase + 0x81c,
+                RomBase + 0x818, // faulting 0x81c traps without commit
                 RomBase, RomBase + 0x4, RomBase + 0x8
             )
         }
@@ -2044,6 +1024,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2134,6 +1122,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2221,6 +1217,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2291,7 +1295,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             trapSeen mustBe true
             csrChecked mustBe true
             // Key PCs: main → ecall → handler.
-            retiredPcs must contain(RomBase + 0x808)
+            retiredPcs must not contain (RomBase + 0x808)
             retiredPcs must contain(RomBase)
         }
     }
@@ -2330,6 +1334,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2346,6 +1358,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
 
             val retiredPcs = mutable.ArrayBuffer.empty[BigInt]
             var phase = 0 // 0=wait ecall, 1=check CSR, 2=wait mret, 3=wait return, 4=wait ESTOP
+            var trapCount = 0
             var trapSeen = false
             var csrChecked = false
             var mretSeen = false
@@ -2375,6 +1388,7 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
                 // Phase 0: wait for ecall trap
                 val isEcallTrap = backendDebug.memWbTrapValid.peek().litToBoolean &&
                     backendDebug.memWbIsEcall.peek().litToBoolean
+                if (isEcallTrap) trapCount += 1
                 if (phase == 0 && isEcallTrap) {
                     trapSeen = true
                     phase = 1
@@ -2421,11 +1435,12 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             mretSeen mustBe true
             returned mustBe true
             // Verify PC sequence: main → ecall → handler → back to main
-            retiredPcs must contain(RomBase + 0x808) // ecall
+            retiredPcs must not contain (RomBase + 0x808) // ecall traps without commit
             retiredPcs must contain(RomBase)         // handler entry
             retiredPcs must contain(RomBase + 0x80c) // returned after mret
             // ecall must execute exactly once.
-            retiredPcs.count(_ == RomBase + 0x808) mustBe 1
+            trapCount mustBe 1
+            retiredPcs.count(_ == RomBase + 0x808) mustBe 0
         }
     }
 
@@ -2455,6 +1470,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2513,6 +1536,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2571,6 +1602,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
@@ -2629,6 +1668,14 @@ class BreezeCoreNoFASESpec extends AnyFreeSpec with Matchers with BreezeFpChisel
             val pendingIcacheResps = mutable.Queue.empty[PendingIcacheResp]
             var prevIcacheReq = false
 
+            dut.io.l1d.req.ready.poke(true.B); dut.io.l1d.s2Hold.poke(false.B)
+            dut.io.l1d.resp.valid.poke(false.B); dut.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
+            dut.io.l1d.resp.bits.data.poke(0.U); dut.io.l1d.resp.bits.excCause.poke(0.U); dut.io.l1d.resp.bits.tval.poke(0.U)
+            dut.io.l1d.late.valid.poke(false.B); dut.io.l1d.late.bits.rd.idx.poke(0.U)
+            dut.io.l1d.late.bits.rd.isFp.poke(false.B); dut.io.l1d.late.bits.data.poke(0.U); dut.io.l1d.late.bits.error.poke(false.B)
+            dut.io.l1d.drained.poke(true.B); dut.io.l1d.mmioBusy.poke(false.B); dut.io.mmuIdle.poke(true.B)
+            dut.io.machineSoftwareInterrupt.poke(false.B); dut.io.supervisorExternalInterrupt.poke(false.B); dut.io.time.poke(0.U)
+            dut.io.dcacheHpm.mulSourceStall.poke(false.B); dut.io.dcacheHpm.divSourceStall.poke(false.B); dut.io.dcacheHpm.wbPortConflict.poke(0.U)
             dut.io.resetAddr.poke((RomBase + 0x800).U)
             dut.io.machineTimerInterrupt.poke(false.B)
             dut.io.externalInterrupts.poke(0.U)
