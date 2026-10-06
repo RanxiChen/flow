@@ -5,7 +5,7 @@ import chisel3.util._
 import flow.backend.FpResult
 import flow.interface.L1DDestination
 
-class V1FpRequest extends Bundle {
+class FpRequest extends Bundle {
   val operandA = UInt(64.W)
   val operandB = UInt(64.W)
   val operandC = UInt(64.W)
@@ -17,7 +17,7 @@ class V1FpRequest extends Bundle {
   val intFmt = UInt(2.W)
   val rd = new L1DDestination
 }
-class V1FpEntry extends Bundle {
+class FpEntry extends Bundle {
   val valid = Bool()
   val committed = Bool()
   val rd = UInt(5.W)
@@ -27,11 +27,11 @@ class V1FpEntry extends Bundle {
 /** Direct EX-to-CVFPU and CVFPU-to-writeback paths. Only metadata is stored.
   * Kill never flushes CVFPU: already committed calculations must survive.
   */
-class CommittedFpUnit(val depth: Int = 32) extends Module {
+class FpUnit(val depth: Int = 32) extends Module {
   require(depth >= 8 && isPow2(depth), "FP tag table requires a power-of-two depth >= 8")
   val tagWidth = log2Ceil(depth)
   val io = IO(new Bundle {
-    val req = Flipped(Decoupled(new V1FpRequest))
+    val req = Flipped(Decoupled(new FpRequest))
     val commit = Input(Bool())
     val killUncommitted = Input(Bool())
     val result = Decoupled(new FpResult)
@@ -41,7 +41,7 @@ class CommittedFpUnit(val depth: Int = 32) extends Module {
     val committedFlagsOnly = Output(Bool())
   })
   val impl = Module(new FlowFpnewBlackBox(tagWidth))
-  val entries = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new V1FpEntry))))
+  val entries = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new FpEntry))))
   val allocate = RegInit(0.U(tagWidth.W))
   val commitCursor = RegInit(0.U(tagWidth.W))
   // Invalidated tags remain inside CVFPU until it drains. Block tag reuse

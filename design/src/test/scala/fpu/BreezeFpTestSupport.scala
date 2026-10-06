@@ -5,7 +5,7 @@ import org.scalatest.TestSuite
 import svsim.{CommonCompilationSettings, CommonSettingsModifications}
 
 /** Add CVFPU's header directory to every ChiselSim compilation that contains
-  * BreezeFpUnit.  The Verilog source files themselves come from the
+  * FpUnit.  The Verilog source files themselves come from the
   * HasBlackBoxPath annotations on FlowFpnewBlackBox.
   */
 trait BreezeFpChiselSim extends ChiselSim {

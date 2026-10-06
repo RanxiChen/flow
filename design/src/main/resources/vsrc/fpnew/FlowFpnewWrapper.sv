@@ -33,7 +33,7 @@ module FlowFpnewWrapper #(
   // CONV adds a pre-rounding stage between shifting and rounding in our fork.
   // DISTRIBUTED enables the arithmetic units' internal register boundaries;
   // BEFORE alone only registers inputs and leaves the arithmetic path intact.
-  // Breeze's blocking valid/ready protocol waits for the resulting latency.
+  // Tagged valid/ready responses return through FpUnit's commit table.
   localparam fpnew_pkg::fpu_implementation_t FlowImplementation = '{
     PipeRegs:   '{'{3, 4, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
                   '{default: 2},    // DIVSQRT (not the total iterative latency)

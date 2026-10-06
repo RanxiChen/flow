@@ -93,7 +93,7 @@ class BreezeBackend(
   val writeback = Module(new Writeback)
   val mulUnit = Module(new MulUnit)
   val divUnit = Module(new DivUnit)
-  val fpUnit = Module(new CommittedFpUnit)
+  val fpUnit = Module(new FpUnit)
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
   val jau = Module(new JAU(64))

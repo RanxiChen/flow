@@ -4,7 +4,7 @@ import chisel3._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class CommittedFpProbe extends CommittedFpUnit {
+class FpProbe extends FpUnit {
   val rawInFire = IO(Output(Bool()))
   val rawOutFire = IO(Output(Bool()))
   val draining = IO(Output(Bool()))
@@ -16,12 +16,12 @@ class CommittedFpProbe extends CommittedFpUnit {
 /** Component evidence only: this does not instantiate BreezeBackend or ID/WB.
   * Commit pulses are supplied at the specified EX+2 boundary by the testbench.
   */
-class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
+class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   private val one = BigInt("3ff0000000000000", 16)
   private val three = BigInt("4008000000000000", 16)
   private val inf = BigInt("7ff0000000000000", 16)
   private val negInf = BigInt("fff0000000000000", 16)
-  private def init(d: CommittedFpProbe): Unit = {
+  private def init(d: FpProbe): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
     d.io.result.ready.poke(true.B)
     d.io.req.bits.operandA.poke(one.U); d.io.req.bits.operandB.poke(one.U); d.io.req.bits.operandC.poke(one.U)
@@ -32,7 +32,7 @@ class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
   }
   "T14_component_T15_component_P08_component: eight consecutive FMA inputs and direct output handshakes" in {
-    simulate(new CommittedFpProbe) { d =>
+    simulate(new FpProbe) { d =>
       init(d)
       val received = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
       for (cycle <- 0 until 20) {
@@ -54,7 +54,7 @@ class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     }
   }
   "P07_component_S04_S08: cross-unit out-of-order results and cumulative flags" in {
-    simulate(new CommittedFpProbe) { d =>
+    simulate(new FpProbe) { d =>
       init(d)
       val received = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
       var flags = BigInt(0)
@@ -84,7 +84,7 @@ class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     }
   }
   "S05_S15: commit-before-kill preserves old DIV, drops young FMA, drains tags before reuse" in {
-    simulate(new CommittedFpProbe) { d =>
+    simulate(new FpProbe) { d =>
       init(d)
       val received = scala.collection.mutable.ArrayBuffer.empty[Int]
       for (cycle <- 0 until 150) {
@@ -122,7 +122,7 @@ class CommittedFpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     }
   }
   "S01_S08_S14: FP-to-x0 preserves conversion flags and explicit CSR drain state" in {
-    simulate(new CommittedFpProbe) { d =>
+    simulate(new FpProbe) { d =>
       init(d)
       d.io.req.bits.operation.poke(BreezeFpOp.F2I.U)
       d.io.req.bits.operandA.poke(BigInt("3ff8000000000000", 16).U) // 1.5 -> 1, RTZ
