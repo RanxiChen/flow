@@ -185,4 +185,40 @@ class MemAgentsSpec extends AnyFreeSpec with Matchers with ChiselSim {
       intercept[AssertionError] { bench.step() }.getMessage must include("REQ changed before acceptance")
     }
   }
+
+  "Scala L1D waits for a DownAck handshake before starting a store to the probed line" in
+    simulate(new MemAgentTestHarness) { d =>
+      init(d)
+      val arch = new GoldenMem(7)
+      val l = lineOf(MainRam + 0x600)
+      val before = arch.line(l)
+      val proxy = new L1DProxy(d.io.cohPeer, arch, new Random(7))
+      proxy.lines(l) = ('M', before)
+      val h = d.io.coh
+      h.req.ready.poke(true.B); h.rspUp.ready.poke(false.B); h.rspDown.valid.poke(false.B)
+      h.snp.valid.poke(true.B); h.snp.bits.op.poke(SnpOp.Down)
+      h.snp.bits.owner.poke(true.B); h.snp.bits.addr.poke(l.U)
+      val bench = new Bench(d.clock, Seq(proxy))
+      bench.step()
+      h.snp.valid.poke(false.B)
+      proxy.store(l, 8, 0x1234)
+      bench.steps(6)
+      arch.line(l) mustBe before
+      proxy.script.size mustBe 1
+      d.io.cohPeer.req.valid.peek().litToBoolean mustBe false
+      d.io.cohPeer.rspUp.valid.peek().litToBoolean mustBe true
+      d.io.cohPeer.rspUp.bits.op.peek().litValue mustBe RspUpOp.DownAck.litValue
+      d.io.cohPeer.rspUp.bits.hasData.peek().litToBoolean mustBe true
+      d.io.cohPeer.rspUp.bits.data.peek().litValue mustBe before
+      h.rspUp.ready.poke(true.B); bench.step(); bench.step()
+      proxy.script mustBe empty
+      proxy.grants mustBe empty
+      d.io.cohPeer.req.bits.op.peek().litValue mustBe ReqOp.GetM.litValue
+      h.rspDown.valid.poke(true.B); h.rspDown.bits.op.poke(RspDownOp.AckE)
+      h.rspDown.bits.id.poke(0.U); h.rspDown.bits.error.poke(false.B); h.rspDown.bits.data.poke(0.U)
+      bench.step()
+      h.rspDown.valid.poke(false.B); bench.quiesce()
+      arch.read((l << 5) + 8, 8) mustBe BigInt(0x1234)
+      proxy.lines(l)._2 mustBe arch.line(l)
+    }
 }
