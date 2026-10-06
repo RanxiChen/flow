@@ -611,6 +611,21 @@ class BreezeBackend(
     d.memWbIsEcall := wb.inst === "h00000073".U; d.memWbIsMret := wb.mret; d.memWbIsWfi := wb.wfi
     d.wfiSleeping := sleeping; d.csrIllegal := csrFile.io.csr_illegal
   }
+  if (enabledebug) {
+    // Simulation observability only; it never qualifies a functional signal.
+    val cycle = RegInit(0.U(32.W))
+    cycle := cycle + 1.U
+    when(!reset.asBool) {
+      when(idLeave) { printf(cf"[V1-CYCLE] c=${cycle} kind=id pc=0x${io.fetchBuffer.bits.pc}%x inst=0x${inst}%x\n") }
+      when(ex.valid && exAdvance) { printf(cf"[V1-CYCLE] c=${cycle} kind=ex pc=0x${ex.pc}%x\n") }
+      when(wbCommit) { printf(cf"[V1-CYCLE] c=${cycle} kind=commit pc=0x${wb.pc}%x inst=0x${wb.inst}%x\n") }
+      when(fpUnit.io.req.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpIn pc=0x${ex.pc}%x rd=${ex.rd_addr}\n") }
+      when(fpUnit.io.result.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpOut fp=${fpUnit.io.result.bits.rd.isFp} rd=${fpUnit.io.result.bits.rd.idx}\n") }
+      when(writeback.io.gprWrite.valid) { printf(cf"[V1-CYCLE] c=${cycle} kind=gpr rd=${writeback.io.gprWrite.bits.idx} data=0x${writeback.io.gprWrite.bits.data}%x\n") }
+      when(writeback.io.fprWrite.valid) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpr rd=${writeback.io.fprWrite.bits.idx} data=0x${writeback.io.fprWrite.bits.data}%x\n") }
+      when(io.l1d.late.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=late rd=${io.l1d.late.bits.rd.idx} error=${io.l1d.late.bits.error}\n") }
+    }
+  }
   val pastDownHold = RegNext(downHold, false.B)
   val pastKill = RegNext(wbKill, false.B)
   val pastActive = RegNext(!reset.asBool, false.B)
