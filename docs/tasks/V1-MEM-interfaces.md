@@ -1,6 +1,6 @@
 # V1-MEM：扫描现有代码，补 L1D/L2 外部接口（交给 codex）
 
-**开始条件**：V1-BE 已完成（`docs/tasks/V1-BE-report.md` 记录完整后端合同结果）。先把 `feat/v1-mem-skeleton` 合并进 `feat/pcie-fase-20260920`，本任务在合并后的后端分支上做。合并冲突预计只出现在 `config`：保留两边内容，`BreezeMemGeometry` 暂不挂入 `BreezeClusterConfig`（见第 6 项）。先读 [`docs/v1-mem-plan.md`](../v1-mem-plan.md)。
+**开始条件**：已满足。V1-BE 于 `062c391` 结束（65/65），`feat/v1-mem-skeleton` 已合并进 `feat/pcie-fase-20260920`，本任务直接在该分支上做。先读 [`docs/v1-mem-plan.md`](../v1-mem-plan.md)。
 
 ## 0. 先做：命名清理与删除旧实现
 
