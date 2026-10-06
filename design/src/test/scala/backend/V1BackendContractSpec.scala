@@ -51,7 +51,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   private var retryAt: Option[Int] = None
   var lateStored = false
   def bool(x: Bool): Boolean = x.peek().litToBoolean
-  def uint(x: UInt): BigInt = x.peek().litValue
+  def uint[T <: Data](x: T): BigInt = x.peek().litValue
   def record(k: String, p: BigInt = 0, r: Int = -1, data: BigInt = 0): Unit = events += V1Event(cycle,k,p,r,data)
   def reset(): Unit = {
     d.io.resetAddr.poke(0x400.U)
@@ -115,7 +115,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     }
     d.io.l1d.req.ready.poke((!hold).B)
     val reqAddr = uint(d.io.l1d.req.bits.vaddr)
-    val read = uint(d.io.l1d.req.bits.op.asUInt)==0 || uint(d.io.l1d.req.bits.op.asUInt)==2
+    val read = uint(d.io.l1d.req.bits.op)==0 || uint(d.io.l1d.req.bits.op)==2
     val conflict = read && Seq(s1,s2,ps).flatten.exists(q => (q.op==1 || q.op==3 || q.op==4) &&
       ((q.addr>>3)&511)==((reqAddr>>3)&511))
     val installing = pending.exists { case (_,r) => cycle >= r+1 && cycle <= r+5 }
@@ -142,9 +142,9 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     if(bool(d.io.translationBlocked)) record("xlatBlock")
     val fired = bool(d.io.l1d.req.valid) && bool(d.io.l1d.req.ready)
     val newReq = if(fired) Some(V1Request(reqAddr,uint(d.io.l1d.req.bits.rd.idx).toInt,
-      bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op.asUInt).toInt,uint(d.io.l1d.req.bits.wdata))) else None
+      bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op).toInt,uint(d.io.l1d.req.bits.wdata))) else None
     if(fired) record("req",uint(o.exPc))
-    if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind.asUInt))
+    if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind))
     val lateFire = lateValid && bool(d.io.l1d.late.ready)
     if(lateFire) record("late",r=pending.get._1.rd)
     if(lateValid && !lateFire) lateStored = true
@@ -232,7 +232,7 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     val p=m.run(Seq(sd(0),ld(1,8)),12); m.at("req",p(1)) mustBe m.at("ex",p(0))+1
   }}
   "T10_miss_WB_commit_sets_busy" in { check() { m =>
-    m.misses += BigInt(0); val p=m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
+    m.misses += BigInt(0); val p=m.issue(ld(1,0)); m.issue(nop); m.issue(nop); m.issue(nop)
     val e=m.at("ex",p); m.all("resp").head mustBe e+2; m.at("commit",p) mustBe e+2
     m.d.io.observe.gprBusy.expect(2.U)
   }}
