@@ -71,4 +71,17 @@ class BreezeLinuxPmaSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.io.result.allowed.expect(false.B)
     }
   }
+  "atomic and reservation capabilities apply only to complete accesses in SRAM or RAM" in {
+    simulate(new PMAChecker) { dut =>
+      for (address <- Seq("11000000", "80000000", "fffffff8")) {
+        query(dut, BigInt(address, 16), 3, PMAAccessType.Load)
+        dut.io.result.amoOk.expect(true.B); dut.io.result.rsrvOk.expect(true.B)
+      }
+      for (address <- Seq("10000000", "10010000", "12001000", "20000000", "100000000", "fffffffc")) {
+        query(dut, BigInt(address, 16), 3, PMAAccessType.Load)
+        dut.io.result.amoOk.expect(false.B); dut.io.result.rsrvOk.expect(false.B)
+      }
+    }
+  }
+
 }

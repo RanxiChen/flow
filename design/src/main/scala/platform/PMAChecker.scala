@@ -23,6 +23,8 @@ class PMAResult extends Bundle {
   val allowed = Bool()
   val cacheable = Bool()
   val device = Bool()
+  val amoOk = Bool()
+  val rsrvOk = Bool()
 }
 
 /** Static, purely combinational PMA checker for the Breeze MCU platform.
@@ -108,4 +110,6 @@ class PMAChecker extends Module {
   io.result.allowed := regionHit && accessSupported
   io.result.cacheable := regionHit && cacheable
   io.result.device := regionHit && device
+  io.result.amoOk := regionHit && selectAttribute(_.amo == "arithmetic")
+  io.result.rsrvOk := regionHit && selectAttribute(_.reservability == "eventual")
 }

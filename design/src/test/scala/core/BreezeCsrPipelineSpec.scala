@@ -35,6 +35,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.mret_commit.poke(false.B)
     dut.io.sret_commit.poke(false.B)
     eventPorts(dut).foreach(_.poke(false.B))
+    dut.io.hpmEvents.wbPortConflict.poke(0.U)
   }
 
   private def eventPorts(dut: CSRFile): Seq[Bool] = Seq(
@@ -42,7 +43,8 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.hpmEvents.predictionMiss, dut.io.hpmEvents.icacheAccess,
     dut.io.hpmEvents.icacheMiss, dut.io.hpmEvents.dcacheAccess,
     dut.io.hpmEvents.dcacheMiss, dut.io.hpmEvents.dcacheUncached,
-    dut.io.hpmEvents.memStallCycle, dut.io.hpmEvents.loadUseStall)
+    dut.io.hpmEvents.memStallCycle, dut.io.hpmEvents.loadUseStall,
+    dut.io.hpmEvents.mulSourceStall, dut.io.hpmEvents.divSourceStall)
 
   "pipelined HPM matches an immediate-count model at every CSR-visible cycle" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
@@ -80,9 +82,10 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // using the pre-edge configuration and explicit-write priority.
       def tick(events: Int = 0, write: Option[(Int, BigInt)] = None,
                retire: Boolean = false, trap: Boolean = false,
-               valid: Boolean = true, writeEnable: Boolean = true): Unit = {
+               valid: Boolean = true, writeEnable: Boolean = true, conflict: Int = 0): Unit = {
         for ((port, bit) <- eventPorts(dut).zipWithIndex)
           port.poke(((events & (1 << bit)) != 0).B)
+        dut.io.hpmEvents.wbPortConflict.poke(conflict.U)
         dut.io.retire_valid.poke(retire.B)
         dut.io.trap.valid.poke(trap.B)
         dut.io.commit_valid.poke((write.nonEmpty && valid).B)
@@ -94,16 +97,17 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
           case (`address`, value) => value
         }
         for (i <- 0 until 8) {
-          val event = selectors(i) != 0 && (events & (1 << (selectors(i) - 1))) != 0
+          val increment = if (selectors(i) == 13) conflict
+            else if (selectors(i) != 0 && (events & (1 << (selectors(i) - 1))) != 0) 1 else 0
           counts(i) = written(CSRMAP.mhpmcounter3 + i).getOrElse(
-            (counts(i) + (if (!inhibit.testBit(i + 3) && event) 1 else 0)) & mask)
+            (counts(i) + (if (!inhibit.testBit(i + 3)) increment else 0)) & mask)
         }
         cycle = written(CSRMAP.mcycle).getOrElse((cycle + (if (!inhibit.testBit(0)) 1 else 0)) & mask)
         instret = written(CSRMAP.minstret).getOrElse(
           (instret + (if (retire && !inhibit.testBit(2)) 1 else 0)) & mask)
         coreinst = (coreinst + (if (retire) 1 else 0)) & mask
         for (i <- 0 until 8) written(CSRMAP.mhpmevent3 + i).foreach { value =>
-          selectors(i) = if (value <= 10) value.toInt else 0
+          selectors(i) = if (value <= 13) value.toInt else 0
         }
         written(CSRMAP.mcountinhibit).foreach(value => inhibit = value & 0x7fd)
         dut.clock.step()
@@ -115,8 +119,8 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       check()
       // Exercise every selector on every counter, including continuous events
       // across reconfiguration and inhibited/enabled boundaries.
-      for (event <- 1 to 10; i <- 0 until 8)
-        tick(0x3ff, Some((CSRMAP.mhpmevent3 + i, BigInt(event))))
+      for (event <- 1 to 13; i <- 0 until 8)
+        tick(0xfff, Some((CSRMAP.mhpmevent3 + i, BigInt(event))), conflict = 2)
       tick(0x3ff, Some((CSRMAP.mcountinhibit, mask)))
       tick(0x3ff)
       tick(0x3ff, Some((CSRMAP.mcountinhibit, BigInt(0))))
@@ -127,7 +131,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         tick(0x3ff, Some((CSRMAP.mhpmcounter3 + i, BigInt(42))))
         tick()
       }
-      for (value <- Seq(BigInt(11), BigInt(0x101), (BigInt(1) << 63) | 10, mask))
+      for (value <- Seq(BigInt(14), BigInt(0x101), (BigInt(1) << 63) | 13, mask))
         for (i <- 0 until 8) tick(0x3ff, Some((CSRMAP.mhpmevent3 + i, value)))
       tick(write = Some((CSRMAP.mcycle, mask)))
       tick(retire = true, write = Some((CSRMAP.minstret, mask)))
@@ -136,16 +140,16 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       for (_ <- 0 until 400) {
         val i = random.nextInt(8)
         val write = random.nextInt(6) match {
-          case 0 => Some((CSRMAP.mhpmevent3 + i, BigInt(random.nextInt(13))))
+          case 0 => Some((CSRMAP.mhpmevent3 + i, BigInt(random.nextInt(16))))
           case 1 => Some((CSRMAP.mhpmcounter3 + i, BigInt(64, random)))
           case 2 => Some((CSRMAP.mcountinhibit, BigInt(random.nextInt(2048))))
           case 3 => Some((CSRMAP.mcycle, BigInt(64, random)))
           case 4 => Some((CSRMAP.minstret, BigInt(64, random)))
           case _ => None
         }
-        tick(random.nextInt(1024), write, random.nextBoolean(),
+        tick(random.nextInt(4096), write, random.nextBoolean(),
           trap = random.nextInt(7) == 0, valid = random.nextInt(9) != 0,
-          writeEnable = random.nextInt(9) != 0)
+          writeEnable = random.nextInt(9) != 0, conflict = random.nextInt(3))
       }
       // Reset while the last event is still pending must clear the full view.
       tick(write = Some((CSRMAP.mcountinhibit, BigInt(0))))

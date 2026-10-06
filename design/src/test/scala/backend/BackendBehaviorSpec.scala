@@ -45,9 +45,11 @@ class BackendBehaviorSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.all("fpIn") mustBe empty; m.writes(3,true) mustBe empty
     m.d.io.debug.get.csrMcause.expect(2.U)
   }}
-  "misaligned FP64 load traps before L1D acceptance" in { check { m =>
-    m.enableFp(); m.issue(ld(1,3,true)); for(_ <- 0 until 20) m.step()
-    m.all("req") mustBe empty; m.writes(1,true) mustBe empty
+  "unaligned FP64 address reaches L1D and its alignment exception is propagated" in { check { m =>
+    m.enableFp(); m.faults += BigInt(3); m.faultCause=4; m.issue(ld(1,3,true))
+    m.d.io.l1d.req.valid.expect(true.B); m.d.io.l1d.req.bits.vaddr.expect(3.U)
+    for(_ <- 0 until 20) m.step()
+    m.all("req").size mustBe 1; m.writes(1,true) mustBe empty
     m.d.io.debug.get.csrMcause.expect(4.U)
   }}
   "FP load and store carry width, destination bank and NaN-boxing request on native L1D" in { check { m =>
@@ -69,7 +71,8 @@ class BackendBehaviorSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
       val pc=m.issue(nop); m.instructionAccessFault=false; m.instructionPageFault=false
       for(_ <- 0 until 20) m.step()
       m.d.io.debug.get.csrMcause.expect(1.U); m.d.io.debug.get.csrMepc.expect(pc.U)
-      m.d.io.debug.get.csrMtval.expect((pc+(if(second) 2 else 0)).U)
+      m.run(Seq(csr(6,0x343)),12)
+      m.writes(6).last.data mustBe pc+(if(second) 2 else 0)
     }}
   }
 }

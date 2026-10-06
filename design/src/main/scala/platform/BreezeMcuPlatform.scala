@@ -18,12 +18,20 @@ final case class PMARegionConst(
     supportsWrite: Boolean,
     supportsExecute: Boolean,
     cacheable: Boolean,
-    device: Boolean
+    device: Boolean,
+    mainMemory: Boolean,
+    amo: String,
+    reservability: String
 ) {
   require(size > 0, s"PMA region $name must have a non-zero size")
   require((size & (size - 1)) == 0, s"PMA region $name size must be a power of two")
   require((origin & (size - 1)) == 0, s"PMA region $name must be naturally aligned")
   require(!(cacheable && device), s"PMA region $name cannot be both cacheable and device memory")
+
+  require(Set("arithmetic", "none").contains(amo), s"invalid AMO PMA: $amo")
+  require(Set("eventual", "none").contains(reservability), s"invalid reservation PMA: $reservability")
+  require(amo == "none" || (mainMemory && supportsRead && supportsWrite && cacheable))
+  require(reservability == "none" || (mainMemory && supportsRead && supportsWrite && cacheable))
 
   val endExclusive: BigInt = origin + size
 }
@@ -127,7 +135,10 @@ object BreezeMcuPlatform {
         supportsWrite = requiredBoolean(node, "writable"),
         supportsExecute = requiredBoolean(node, "executable"),
         cacheable = requiredBoolean(node, "cacheable"),
-        device = requiredBoolean(node, "device")
+        device = requiredBoolean(node, "device"),
+        mainMemory = requiredBoolean(node, "mainMemory"),
+        amo = requiredText(node, "amo"),
+        reservability = requiredText(node, "reservability")
       )
     }.toSeq
 

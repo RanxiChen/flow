@@ -11,15 +11,29 @@ import flow.mmu.sv39.{PtwMemIO, TlbPortIO}
 // External interface. Backend side is the frozen flow.interface.L1DCoreIO.
 // ---------------------------------------------------------------------------
 
-/** l1d-spec-inputs §12 events. SKELETON: field list to be completed (TODO codex). */
+/** l1d-spec-inputs section 12: occurrence pulses and stall levels. */
 class L1DEvents extends Bundle {
-  val hit = Bool()
-  val miss = Bool()
-  val s2Hold = Bool()
-  val s0Conflict = Bool()
-  val recheck = Bool()
-  val probe = Bool()
-  val writeback = Bool()
+  val load_access = Bool()
+  val load_miss = Bool()
+  val store_access = Bool()
+  val store_miss = Bool()
+  val upgrade = Bool()
+  val ptw_access = Bool()
+  val ptw_miss = Bool()
+  val hit_under_miss = Bool()
+  val mshr_busy_cycles = Bool()
+  val mshr_full_stall = Bool()
+  val same_line_stall = Bool()
+  val s0_conflict_stall = Bool()
+  val writeback_dirty = Bool()
+  val writeback_clean = Bool()
+  val probe_received = Bool()
+  val probe_held_cycles = Bool()
+  val lr_count = Bool()
+  val sc_fail = Bool()
+  val mmio_read = Bool()
+  val mmio_write = Bool()
+  val mmio_cycles = Bool()
 }
 
 class L1DIO(p: L1DParams) extends Bundle {
@@ -59,6 +73,7 @@ class L1PipeReq(p: L1DParams) extends Bundle {
   val core = new L1DCoreReq
   val paddr = UInt(p.paddrBits.W)
   val hasPaddr = Bool()
+  val physicalAddress = UInt(64.W) // preserve high bits until PMA/PMP decision
   val idx = UInt(p.idxW.W)
   val word = UInt(p.wordBits.W)
   /** Program-order age for recheck ordering (§6.1 item 5). */
@@ -74,6 +89,7 @@ class L1S1(p: L1DParams) extends Bundle {
 }
 
 class L1S2(p: L1DParams) extends Bundle {
+  val physicalAddress = UInt(64.W)
   val valid = Bool()
   val req = new L1PipeReq(p)
   val paddr = UInt(p.paddrBits.W)

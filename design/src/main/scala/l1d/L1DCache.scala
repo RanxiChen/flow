@@ -5,8 +5,8 @@ import chisel3.util._
 import flow.cache.BreezeAmoAlu
 import flow.coherence._
 import flow.config.BreezeMemGeometry
-import flow.interface.{L1DOp, L1DRespKind}
-import flow.mmu.sv39.{MmuCmd, TreePlru}
+import flow.interface.{BreezeMmuAccess, L1DOp, L1DRespKind}
+import flow.mmu.sv39.{MmuCmd, TlbResp, TreePlru}
 
 /** Breeze v1 L1D top: S0–S2 + PS, arrays, S0 arbitration, S2 decision (l1d-rtl-spec).
   *
@@ -128,7 +128,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
 
   // CPU and recheck requests need the dTLB in the same cycle.
   val needsTlb = s0Sel === L1Src.Cpu || s0Sel === L1Src.Recheck
-  s0Fire := anyCand && s0CanIssue && (!needsTlb || io.tlb.req.ready)
+  s0Fire := anyCand && s0CanIssue && (!needsTlb || (io.tlb.req.ready && !io.core.s1Kill && !io.core.s2Kill))
 
   // Build the S0 request from the winning source.
   switch(s0Sel) {
@@ -138,7 +138,8 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
       s0Req.word := wordOfAddr(io.core.req.bits.vaddr)
     }
     is(L1Src.Ptw) {
-      s0Req.paddr := io.ptw.req.bits.paddr
+      s0Req.physicalAddress := io.ptw.req.bits.paddr
+      s0Req.paddr := io.ptw.req.bits.paddr(p.paddrBits - 1, 0)
       s0Req.hasPaddr := true.B
       s0Req.idx := idxOfAddr(io.ptw.req.bits.paddr)
       s0Req.word := wordOfAddr(io.ptw.req.bits.paddr)
@@ -156,6 +157,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     is(L1Src.Probe) {
       s0Req.hasPaddr := true.B
       s0Req.paddr := probe.io.pending.addr ## 0.U(p.offBits.W)
+      s0Req.physicalAddress := probe.io.pending.addr ## 0.U(p.offBits.W)
       s0Req.idx := probe.io.pending.addr(p.idxW - 1, 0)
       s0Req.word := probe.io.s0Req.bits
       s0Req.beat := probe.io.s0Req.bits
@@ -173,7 +175,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   miss.io.s0Grant := s0Fire && (s0Sel === L1Src.Refill || s0Sel === L1Src.WbRead || s0Sel === L1Src.Replay)
   probe.io.s0Grant := s0Fire && s0Sel === L1Src.Probe
 
-  io.tlb.req.valid := anyCand && needsTlb && s0CanIssue
+  io.tlb.req.valid := anyCand && needsTlb && s0CanIssue && !io.core.s1Kill && !io.core.s2Kill
   io.tlb.req.bits.vaddr := s0Req.core.vaddr
   io.tlb.req.bits.cmd := Mux(isStoreLike(s0Req.core.op), MmuCmd.Store, MmuCmd.Load)
   io.tlb.kill := io.core.s1Kill || io.core.s2Kill
@@ -194,7 +196,21 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   s1TagHeld := s1Tag
   s1DataHeld := s1Data
 
-  val s1Paddr = Mux(s1.req.hasPaddr, s1.req.paddr, io.tlb.resp.bits.paddr(p.paddrBits - 1, 0))
+  // TLB produces a one-cycle S1 response, independent of L1D's S2 hold.
+  // Preserve it on the first S1 cycle; never resample a later transaction.
+  val s1TlbHeld = Reg(new TlbResp)
+  val s1TlbValidHeld = RegInit(false.B)
+  when(s1Fresh && !s1.req.hasPaddr) {
+    s1TlbHeld := io.tlb.resp.bits
+    s1TlbValidHeld := io.tlb.resp.valid
+  }
+  val s1Tlb = Mux(s1Fresh, io.tlb.resp.bits, s1TlbHeld)
+  val s1TlbValid = Mux(s1Fresh, io.tlb.resp.valid, s1TlbValidHeld)
+  val s1PhysicalAddress = Mux(s1.req.hasPaddr, s1.req.physicalAddress, s1Tlb.paddr)
+  val s1Paddr = s1PhysicalAddress(p.paddrBits - 1, 0)
+  val s1TranslationComplete = s1.req.hasPaddr || (s1TlbValid && !s1Tlb.miss)
+  // A miss/dropS1Next has no physical result. X/Y retry ownership is still
+  // the internal translation-wait TODO below; do not use a fabricated PA.
   // TODO: TLB miss in S1 → xlatWait (X, and Y = this cycle's S0 fire) (§7.1).
   // TODO: snapshot invalidation of S1 on same-set install/probe/victim (§5.3).
 
@@ -210,12 +226,16 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // ===========================================================================
   // S2 (§5): tag compare, PMA/PMP, decision
   // ===========================================================================
+  def isCpuSource(src: L1Src.Type): Bool = src === L1Src.Cpu || src === L1Src.Recheck
+
   when(s2Advance) {
-    s2.valid := s1.valid
+    s2.valid := s1.valid && s1TranslationComplete &&
+      !(isCpuSource(s1.req.src) && (io.core.s1Kill || io.core.s2Kill))
     s2.req := s1.req
     s2.paddr := s1Paddr
-    s2.pageFault := !s1.req.hasPaddr && io.tlb.resp.bits.pageFault
-    s2.accessFault := !s1.req.hasPaddr && io.tlb.resp.bits.accessFault
+    s2.physicalAddress := s1PhysicalAddress
+    s2.pageFault := !s1.req.hasPaddr && s1Tlb.pageFault
+    s2.accessFault := !s1.req.hasPaddr && s1Tlb.accessFault
     s2.tagVec := s1Tag
     s2.dataVec := s1Data
     s2.snapInvalid := false.B
@@ -229,19 +249,28 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val wOk = hitState === L1State.E || hitState === L1State.M
   val hitWord = s2.dataVec(hitWay)
 
-  pma.io.query.addr := s2.paddr
-  pma.io.query.sizeLog2 := s2.req.core.size
-  pma.io.query.accessType := Mux(isStoreLike(s2.req.core.op), flow.platform.PMAAccessType.Store,
+  val s2Ptw = s2.req.src === L1Src.Ptw
+  val s2Store = !s2Ptw && isStoreLike(s2.req.core.op)
+  val s2Size = Mux(s2Ptw, 3.U, s2.req.core.size)
+  pma.io.query.addr := s2.physicalAddress
+  pma.io.query.sizeLog2 := s2Size
+  pma.io.query.accessType := Mux(s2Store, flow.platform.PMAAccessType.Store,
     flow.platform.PMAAccessType.Load)
-  pmp.io.addr := s2.paddr
-  pmp.io.sizeLog2 := s2.req.core.size
-  pmp.io.access := DontCare   // TODO codex: BreezeMmuAccess mapping
-  pmp.io.privilege := DontCare // TODO codex: effective privilege from csr (MPRV)
+  pmp.io.addr := s2.physicalAddress
+  pmp.io.sizeLog2 := s2Size
+  pmp.io.access := Mux(s2Store, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
+  // PTW accesses page tables with S-mode PMP permissions (MMU RTL spec).
+  pmp.io.privilege := Mux(s2Ptw, 1.U,
+    Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
   pmp.io.context := io.core.csr
 
   val sameLineMshr = miss.io.status.mshrValid && miss.io.status.mshrLineAddr === lineOf(s2.paddr)
   val sameLineWb = miss.io.status.wbValid && miss.io.status.wbLineAddr === lineOf(s2.paddr)
   val isCpuLike = s2.req.src === L1Src.Cpu || s2.req.src === L1Src.Recheck || s2.req.src === L1Src.Replay
+
+  val atomicDenied = !s2Ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !pma.io.result.rsrvOk ||
+    s2.req.core.op === L1DOp.AMO && !pma.io.result.amoOk)
+  val ptwDeviceDenied = s2Ptw && pma.io.result.device
 
   val outcome = WireDefault(L1S2Outcome.None)
   when(s2.valid) {
@@ -249,8 +278,8 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
       outcome := L1S2Outcome.Internal
     }.elsewhen(s2.snapInvalid) {
       outcome := L1S2Outcome.Recheck
-    }.elsewhen(s2.pageFault || s2.accessFault || !pma.io.result.allowed || !pmp.io.allowed) {
-      outcome := L1S2Outcome.Exc // TODO: PTW → ptw.resp.accessFault instead
+    }.elsewhen(s2.pageFault || s2.accessFault || !pma.io.result.allowed || !pmp.io.allowed || atomicDenied || ptwDeviceDenied) {
+      outcome := L1S2Outcome.Exc
     }.elsewhen(pma.io.result.device) {
       outcome := L1S2Outcome.ToMmio // TODO: LR/SC/AMO on device → Exc (§5.1 item 5)
     }.elsewhen(s2.req.core.op === L1DOp.AMO && s2.req.src =/= L1Src.Replay) {
@@ -303,12 +332,12 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     (outcome === L1S2Outcome.Mshr) -> L1DRespKind.Mshr,
     (outcome === L1S2Outcome.Exc) -> L1DRespKind.Exc))
   io.core.resp.bits.data := loadData
-  io.core.resp.bits.excCause := 0.U // TODO: 5/7/13/15 per op (§5.1)
+  io.core.resp.bits.excCause := Mux(s2.pageFault, Mux(s2Store, 15.U, 13.U), Mux(s2Store, 7.U, 5.U))
   io.core.resp.bits.tval := s2.req.core.vaddr
   io.core.s2Hold := s2.valid && s2Stall && isCpuLike
 
   // ---- MSHR allocation ----
-  miss.io.alloc.valid := s2.valid && outcome === L1S2Outcome.Mshr && !io.core.s2Kill
+  miss.io.alloc.valid := s2.valid && outcome === L1S2Outcome.Mshr && !(isCpuLike && io.core.s2Kill)
   miss.io.alloc.bits := 0.U.asTypeOf(miss.io.alloc.bits)
   miss.io.alloc.bits.lineAddr := lineOf(s2.paddr)
   miss.io.alloc.bits.isGetM := isStoreLike(s2.req.core.op)
@@ -326,9 +355,9 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   io.core.late <> miss.io.late
 
   // ---- PTW response ----
-  io.ptw.resp.valid := s2.valid && outcome === L1S2Outcome.PtwResp
+  io.ptw.resp.valid := s2.valid && s2Ptw && (outcome === L1S2Outcome.PtwResp || outcome === L1S2Outcome.Exc)
   io.ptw.resp.bits.data := hitWord
-  io.ptw.resp.bits.accessFault := false.B // TODO
+  io.ptw.resp.bits.accessFault := outcome === L1S2Outcome.Exc
 
   // ---- Writeback-read and probe beats from S2 ----
   miss.io.wbReadBeat.valid := s2.valid && s2.req.src === L1Src.WbRead
@@ -440,10 +469,29 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // Events and assertions
   // ===========================================================================
   io.events := 0.U.asTypeOf(io.events)
-  io.events.hit := io.core.resp.valid && io.core.resp.bits.kind === L1DRespKind.Done
-  io.events.miss := miss.io.alloc.valid
-  io.events.s2Hold := io.core.s2Hold
-  io.events.s0Conflict := io.core.req.valid && cpuConflict
+  // Access counts are acceptance pulses; miss counts are successful allocation.
+  io.events.load_access := io.core.req.fire && (io.core.req.bits.op === L1DOp.Load || io.core.req.bits.op === L1DOp.LR)
+  io.events.store_access := io.core.req.fire && isStoreLike(io.core.req.bits.op)
+  io.events.load_miss := miss.io.alloc.fire && !s2Ptw && !s2Store
+  io.events.store_miss := miss.io.alloc.fire && !s2Ptw && s2Store
+  io.events.upgrade := miss.io.alloc.fire && miss.io.alloc.bits.upgrade
+  io.events.ptw_access := io.ptw.req.fire
+  io.events.ptw_miss := miss.io.alloc.fire && s2Ptw
+  io.events.hit_under_miss := cpuDecided && outcome === L1S2Outcome.Done && hit && miss.io.status.mshrValid && !sameLineMshr
+  io.events.mshr_busy_cycles := miss.io.status.mshrValid
+  io.events.mshr_full_stall := io.core.s2Hold && outcome === L1S2Outcome.Hold && !hit &&
+    !miss.io.status.canAllocate && !sameLineMshr && !sameLineWb
+  io.events.same_line_stall := io.core.s2Hold && (sameLineMshr || sameLineWb)
+  io.events.s0_conflict_stall := io.core.req.valid && cpuConflict && cpuEntryOpen
+  io.events.writeback_dirty := miss.io.put.fire && miss.io.put.bits.hasData
+  io.events.writeback_clean := miss.io.put.fire && !miss.io.put.bits.hasData
+  io.events.probe_received := io.coh.snp.fire
+  io.events.probe_held_cycles := probe.io.pending.valid && probe.io.hold
+  io.events.lr_count := io.core.req.fire && io.core.req.bits.op === L1DOp.LR
+  io.events.sc_fail := cpuDecided && outcome === L1S2Outcome.Done && s2.req.core.op === L1DOp.SC && io.core.resp.bits.data === 1.U
+  io.events.mmio_read := mmio.io.axi.ar.fire
+  io.events.mmio_write := mmio.io.axi.aw.fire
+  io.events.mmio_cycles := mmio.io.busy
 
   // B01 ruling: S1/S2 hold only when S2 cannot decide.
   when(s1.valid && !s1Advance) { assert(s2Stall, "S1 held without an S2 stall") }

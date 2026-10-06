@@ -44,6 +44,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var holdUntil = 0
   var randomHold = false
   var lateError = false
+  var faultCause = 13
   var softwareInterrupt = false
   var timerInterrupt = false
   var predictionTaken = false
@@ -121,7 +122,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       val miss = misses(q.addr) && pending.isEmpty && !faults(q.addr)
       d.io.l1d.resp.bits.kind.poke(if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
       d.io.l1d.resp.bits.data.poke(values(q.addr).U)
-      d.io.l1d.resp.bits.excCause.poke(13.U); d.io.l1d.resp.bits.tval.poke(q.addr.U)
+      d.io.l1d.resp.bits.excCause.poke(faultCause.U); d.io.l1d.resp.bits.tval.poke(q.addr.U)
       if (!hold && miss) allocated = Some(q -> (cycle+(if(randomHold) 1+rng.nextInt(40) else returnDelay)))
     }
     d.io.l1d.req.ready.poke((!hold).B)
