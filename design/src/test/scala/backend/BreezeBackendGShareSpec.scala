@@ -40,7 +40,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
         BigInt(0x67)
     }
 
-    private def driveIdleInputs(dut: BreezeBackend): Unit = {
+    private def driveIdleInputs(dut: V1LegacyTestAdapter): Unit = {
         dut.io.resetAddr.poke(0.U)
         dut.io.machineTimerInterrupt.poke(false.B)
         dut.io.machineSoftwareInterrupt.poke(false.B)
@@ -78,7 +78,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
         dut.io.hpmEvents.loadUseStall.poke(false.B)
     }
 
-    private def reset(dut: BreezeBackend): Unit = {
+    private def reset(dut: V1LegacyTestAdapter): Unit = {
         driveIdleInputs(dut)
         dut.reset.poke(true.B)
         dut.clock.step(1)
@@ -86,7 +86,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     private def issueBranch(
-        dut: BreezeBackend,
+        dut: V1LegacyTestAdapter,
         pc: BigInt,
         inst: BigInt,
         predTaken: Boolean,
@@ -107,7 +107,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
         dut.io.fetchBuffer.valid.poke(false.B)
     }
 
-    private def issueInstruction(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+    private def issueInstruction(dut: V1LegacyTestAdapter, pc: BigInt, inst: BigInt): Unit = {
         dut.io.fetchBuffer.valid.poke(true.B)
         dut.io.fetchBuffer.bits.pc.poke(pc.U)
         dut.io.fetchBuffer.bits.inst.poke(inst.U)
@@ -123,7 +123,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     private def issuePredictedControl(
-        dut: BreezeBackend,
+        dut: V1LegacyTestAdapter,
         pc: BigInt,
         inst: BigInt,
         predType: FrontendPredType.Type,
@@ -144,7 +144,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should redirect a predicted-taken branch to fall-through when actually not-taken" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val pc = BigInt(0x100)
             val predictedTarget = BigInt(0x80)
             val phtIdx = 7
@@ -186,7 +186,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should redirect a predicted-not-taken branch to its taken target" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val pc = BigInt(0x100)
             val target = BigInt(0xe0)
             val phtIdx = 3
@@ -220,7 +220,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should train a correctly predicted branch without redirecting" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val pc = BigInt(0x100)
             val phtIdx = 5
             val bneX0X0 = encodeBranch(rs1 = 0, rs2 = 0, imm = -0x20, funct3 = 1)
@@ -250,7 +250,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should not retrain a branch while an older load holds the pipeline" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val loadPc = BigInt(0x100)
             val branchPc = BigInt(0x104)
             val loadX1FromZero = BigInt("00003083", 16) // ld x1, 0(x0)
@@ -313,7 +313,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
         ("divide", BigInt("0220d2b3", 16), Some(BigInt(7))),     // divu x5,x1,x2
         ("floating add", BigInt("020001d3", 16), None))) {     // fadd.d f3,f0,f0
         s"GShare backend should drain $name and train its younger branch before taking a timer interrupt" in {
-            simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+            simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
                 reset(dut)
                 def setup(pc: Int, inst: BigInt): Unit = {
                     issueInstruction(dut, BigInt(pc), inst)
@@ -403,7 +403,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should repair a stale JALR target exactly once" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val producerPc = BigInt(0xfc)
             val jalrPc = BigInt(0x100)
             val staleTarget = BigInt(0x40)
@@ -440,7 +440,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should preserve a high Sv39 JALR target from a load" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val loadPc = BigInt(0xfc)
             val jalrPc = BigInt(0x100)
             val staleTarget = BigInt(0x40)
@@ -486,7 +486,7 @@ class BreezeBackendGShareSpec extends AnyFreeSpec with Matchers with BreezeFpChi
     }
 
     "GShare backend should keep a correct JALR target without retraining" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
             val producerPc = BigInt(0xfc)
             val jalrPc = BigInt(0x100)
             val actualTarget = BigInt(0x80)

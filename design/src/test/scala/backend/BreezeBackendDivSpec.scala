@@ -22,7 +22,7 @@ class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
     (BigInt(funct7) << 25) | (BigInt(rs2) << 20) | (BigInt(rs1) << 15) |
       (BigInt(funct3) << 12) | (BigInt(rd) << 7) | BigInt(opcode)
 
-  private def driveIdle(dut: BreezeBackend): Unit = {
+  private def driveIdle(dut: V1LegacyTestAdapter): Unit = {
     dut.io.resetAddr.poke(0.U)
     dut.io.machineTimerInterrupt.poke(false.B)
     dut.io.externalInterrupts.poke(0.U)
@@ -52,7 +52,7 @@ class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
     dut.io.hpmEvents.loadUseStall.poke(false.B)
   }
 
-  private def issue(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+  private def issue(dut: V1LegacyTestAdapter, pc: BigInt, inst: BigInt): Unit = {
     var waitCycles = 0
     while (!dut.io.fetchBuffer.ready.peek().litToBoolean && waitCycles < 80) {
       dut.clock.step(1)
@@ -67,7 +67,7 @@ class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
     dut.io.fetchBuffer.valid.poke(false.B)
   }
 
-  private def waitForWb(dut: BreezeBackend, inst: BigInt): BigInt = {
+  private def waitForWb(dut: V1LegacyTestAdapter, inst: BigInt): BigInt = {
     var cycles = 0
     while (cycles < 80) {
       if (dut.io.debug.get.memWbValid.peek().litToBoolean &&
@@ -81,7 +81,7 @@ class BreezeBackendDivSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
   }
 
   "RV64 divider executes all eight operations, fast paths, and completion bypass" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(1)

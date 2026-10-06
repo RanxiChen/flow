@@ -348,6 +348,9 @@ class BreezeHpmEvents extends Bundle {
     val dcacheUncached = Bool()
     val memStallCycle = Bool()
     val loadUseStall = Bool()
+    val mulSourceStall = Bool()
+    val divSourceStall = Bool()
+    val wbPortConflict = UInt(2.W)
 }
 
 class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {

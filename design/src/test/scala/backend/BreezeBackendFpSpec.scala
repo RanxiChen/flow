@@ -10,7 +10,7 @@ class BreezeBackendFpSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   import BreezeBackendFpTestUtils._
 
   "trap FP instructions while mstatus.FS is Off" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(2)
@@ -32,7 +32,7 @@ class BreezeBackendFpSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }
 
   "execute dependent FP64 arithmetic/FMA and commit sticky fflags" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(2)

@@ -18,7 +18,7 @@ class BreezeBackendMulSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
     (BigInt(funct7) << 25) | (BigInt(rs2) << 20) | (BigInt(rs1) << 15) |
       (BigInt(funct3) << 12) | (BigInt(rd) << 7) | BigInt(0x33)
 
-  private def driveIdle(dut: BreezeBackend): Unit = {
+  private def driveIdle(dut: V1LegacyTestAdapter): Unit = {
     dut.io.resetAddr.poke(0.U)
     dut.io.machineTimerInterrupt.poke(false.B)
     dut.io.externalInterrupts.poke(0.U)
@@ -48,7 +48,7 @@ class BreezeBackendMulSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
     dut.io.hpmEvents.loadUseStall.poke(false.B)
   }
 
-  private def issue(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+  private def issue(dut: V1LegacyTestAdapter, pc: BigInt, inst: BigInt): Unit = {
     dut.io.fetchBuffer.ready.expect(true.B)
     dut.io.fetchBuffer.valid.poke(true.B)
     dut.io.fetchBuffer.bits.pc.poke(pc.U)
@@ -59,7 +59,7 @@ class BreezeBackendMulSpec extends AnyFreeSpec with Matchers with BreezeFpChisel
   }
 
   "multiply completion bypass feeds the immediately dependent EXE instruction" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(1)

@@ -16,6 +16,8 @@ class CommittedDivUnit extends Module {
   val isRemainder = Reg(Bool())
   val isWord = Reg(Bool())
   val divider = Module(new UnsignedRadix4Divider)
+  val iterating = IO(Output(Bool()))
+  iterating := divider.io.busy
   val cancel = io.killUncommitted && occupied && !committed && !io.commit
   io.req.ready := !occupied
   io.result.valid := occupied && committed && done

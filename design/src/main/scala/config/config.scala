@@ -78,7 +78,8 @@ case class BackendConfig(
     val enableTandem: Boolean = false,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
-    val enableMmu: Boolean = false
+    val enableMmu: Boolean = false,
+    val loadUseBypass: Boolean = false
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -150,7 +151,8 @@ case class BreezeCoreConfig(
     val dcacheWays: Int = 4,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
-    val enableMmu: Boolean = false
+    val enableMmu: Boolean = false,
+    val loadUseBypass: Boolean = false
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -176,7 +178,8 @@ case class BreezeCoreConfig(
         enableTandem = enableTandem,
         privilegeProfile = privilegeProfile,
         enableCompressed = enableCompressed,
-        enableMmu = enableMmu
+        enableMmu = enableMmu,
+        loadUseBypass = loadUseBypass
     )
     val dcacheCfg: DefaultDCacheConfig = DefaultDCacheConfig(
         VLEN = VLEN,
@@ -302,7 +305,8 @@ final case class BreezeClusterConfig(
     profileName: String,
     numHarts: Int,
     corePreset: CorePreset = CorePreset.Gshare,
-    privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+    privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    loadUseBypass: Boolean = false
 ) {
     require(Set(1, 2, 4).contains(numHarts),
         s"cluster profile $profileName requires numHarts in {1,2,4}; got $numHarts. " +
@@ -310,7 +314,7 @@ final case class BreezeClusterConfig(
 
     /** Per-hart core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass)
 
     /** L1 geometries, taken from the core configuration (single source). */
     val l1i: DefaultICacheConfig = coreCfg().frontendCfg.cacheCfg

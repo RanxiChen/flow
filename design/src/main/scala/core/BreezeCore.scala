@@ -24,6 +24,11 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         val supervisorExternalInterrupt = Input(Bool())
         val nextLevelReq = new L1CacheMissReqIO(corecfg.PLEN)
         val nextLevelRsp = new L1CacheMissRespIO(corecfg.frontendCfg.cacheCfg.ICACHE_LINE_WIDTH)
+        // V1 CPU memory boundary. Cluster specification must connect the actual L1D.
+        val l1d = Flipped(new L1DCoreIO)
+        val mmuIdle = Input(Bool())
+        val translationBlocked = Output(Bool())
+        val hartFatal = Output(Bool())
         val dmem = new BackendMemIO(corecfg.VLEN)
         val dcacheArrayReq = if (corecfg.enableMmu) Some(Decoupled(UInt(corecfg.VLEN.W))) else None
         val dcacheFlushReq = Output(Bool())
@@ -81,6 +86,14 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupt
     io.reservationKill := backend.io.reservationKill
     io.estop := backend.io.estop
+    io.l1d <> backend.io.l1d
+    backend.io.mmuIdle := io.mmuIdle
+    io.translationBlocked := backend.io.translationBlocked
+    io.hartFatal := backend.io.hartFatal
+    // Historical data translator no longer receives CPU requests. PTW/core
+    // integration is deferred to the v1 cluster spec, not adapted to old dmem.
+    val inactiveCpu = Wire(new BackendMemIO(corecfg.VLEN))
+    inactiveCpu.req := 0.U.asTypeOf(inactiveCpu.req)
     if (corecfg.enableMmu) {
         val mmu = Module(new BreezeMmu(corecfg.VLEN, entries = 16, useFASE = corecfg.useFASE))
         val dataTranslator = Module(new BreezeDataTranslator(corecfg.VLEN, parallelLookup = true))
@@ -93,7 +106,7 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         frontend.io.translateRsp <> mmu.io.i.resp
         mmu.io.d.req <> dataTranslator.io.translateReq
         dataTranslator.io.translateRsp <> mmu.io.d.resp
-        dataTranslator.io.cpu <> backend.io.dmem
+        dataTranslator.io.cpu <> inactiveCpu
 
         // PTW accesses and translated CPU accesses share the coherent L1D.
         // Only one downstream transaction is outstanding at a time.
@@ -139,13 +152,14 @@ class BreezeCore(val corecfg: BreezeCoreConfig, val enabledebug: Boolean = false
         assert(!io.dmem.rsp.valid || physicalBusy,
             "[BreezeCore] unsolicited DCache response")
     } else {
-        io.dmem <> backend.io.dmem
+        io.dmem.req := 0.U.asTypeOf(io.dmem.req)
+        inactiveCpu.rsp := 0.U.asTypeOf(inactiveCpu.rsp)
         frontend.io.translateReq.ready := false.B
         frontend.io.translateRsp.valid := false.B
         frontend.io.translateRsp.bits := 0.U.asTypeOf(new BreezeTranslationResp(corecfg.VLEN))
     }
-    io.dcacheFlushReq := backend.io.dcacheFlushReq
-    backend.io.dcacheFlushDone := io.dcacheFlushDone
+    // Old shell flush output is inactive; v1 FENCE.I flushes L1I only.
+    io.dcacheFlushReq := false.B
     backend.io.hpmEvents := frontend.io.hpm
     backend.io.hpmEvents.dcacheAccess := io.dcacheHpm.dcacheAccess
     backend.io.hpmEvents.dcacheMiss := io.dcacheHpm.dcacheMiss

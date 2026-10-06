@@ -5,1776 +5,591 @@ import chisel3.util._
 import flow.config.BackendConfig
 import flow.interface._
 import flow.core._
-import flow.divider.RiscvDivUnit
-import flow.multiplier.RiscvMulUnit
+import flow.divider.CommittedDivUnit
+import flow.multiplier.CommittedMulUnit
 import flow.fpu._
 import flow.platform.BreezeMcuPlatform
 
+/** Metadata for MEM/WB, not a completion queue. Arithmetic stays in its source. */
+class V1Stage(val cfg: BackendConfig) extends Bundle {
+  val valid = Bool()
+  val pc = UInt(64.W)
+  val nextPc = UInt(64.W)
+  val inst = UInt(32.W)
+  val rawInst = UInt(32.W)
+  val instLen = UInt(3.W)
+  val rd = new L1DDestination
+  val writes = Bool()
+  val data = UInt(64.W)
+  val address = UInt(64.W)
+  val storeData = UInt(64.W)
+  val mem = Bool()
+  val load = Bool()
+  val mul = Bool()
+  val div = Bool()
+  val fp = Bool()
+  val serial = Bool()
+  val fencei = Bool()
+  val sfence = Bool()
+  val wfi = Bool()
+  val estop = Bool()
+  val mret = Bool()
+  val sret = Bool()
+  val exception = Bool()
+  val cause = UInt(64.W)
+  val tval = UInt(64.W)
+  val csrAddr = UInt(12.W)
+  val csrCmd = UInt(CSR_CMD.width.W)
+  val csrSource = UInt(64.W)
+  val csrWrite = Bool()
+  val csrData = UInt(64.W)
+  val rs1 = UInt(5.W)
+  val rs2 = UInt(5.W)
+  val predictionMiss = Bool()
+}
+
+/** Four-stage v1 backend. EX request acceptance, WB authorization, direct late writes. */
 class BreezeBackend(
-    val cfg: BackendConfig = BackendConfig(),
-    val enabledebug: Boolean = false,
-    val hartId: Int = 0,
-    val useFASE: Boolean = false
+    val cfg: BackendConfig = BackendConfig(), val enabledebug: Boolean = false,
+    val hartId: Int = 0, val useFASE: Boolean = false
 ) extends Module {
-    require(cfg.VLEN == 64, "RV64 M-extension backend requires VLEN=64")
-    require(hartId >= 0, "backend hartId must be non-negative")
-    val io = IO(new Bundle {
-        val resetAddr = Input(UInt(cfg.VLEN.W))
-        val fase = if (useFASE) Some(new FaseBackendIO) else None
-        val machineTimerInterrupt = Input(Bool())
-        val machineSoftwareInterrupt = Input(Bool())
-        val time = Input(UInt(cfg.VLEN.W))
-        val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
-        val supervisorExternalInterrupt = Input(Bool())
-        val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(cfg.VLEN, cfg.ghrLength)))
-        val dmem = new BackendMemIO(cfg.VLEN)
-        val dcacheFlushReq = Output(Bool())
-        val dcacheFlushDone = Input(Bool())
-        val hpmEvents = Input(new BreezeHpmEvents)
-        val frontendBtbUpdate = Output(new BreezeBTBUpdateReq(cfg.VLEN))
-        val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
-        val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
-        val frontendRedirect = Output(new FrontendRedirectIO(cfg.VLEN))
-        val mmuContext = Output(new BreezeMmuContext(cfg.VLEN))
-        val sfence = Output(new BreezeSfenceReq(cfg.VLEN))
-        // One-cycle pulse on every taken trap (exception or interrupt); the
-        // D$ clears its LR/SC reservation on it.
-        val reservationKill = Output(Bool())
-        val estop = Output(Bool())
-        val tandem = if (cfg.enableTandem) Some(Output(new TracePayload(cfg.VLEN))) else None
-        val debug = if (enabledebug) Some(new BackendDebugIO(cfg.VLEN)) else None
-    })
+  require(cfg.VLEN == 64 && hartId >= 0)
+  require(!useFASE, "v1 FASE integration awaits the cluster specification")
+  val io = IO(new Bundle {
+    val resetAddr = Input(UInt(64.W))
+    val fase = if (useFASE) Some(new FaseBackendIO) else None
+    val machineTimerInterrupt = Input(Bool())
+    val machineSoftwareInterrupt = Input(Bool())
+    val time = Input(UInt(64.W))
+    val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
+    val supervisorExternalInterrupt = Input(Bool())
+    val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(64, cfg.ghrLength)))
+    val l1d = Flipped(new L1DCoreIO)
+    val mmuIdle = Input(Bool())
+    val translationBlocked = Output(Bool())
+    val frontendBtbUpdate = Output(new BreezeBTBUpdateReq(64))
+    val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
+    val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
+    val frontendRedirect = Output(new FrontendRedirectIO(64))
+    val mmuContext = Output(new BreezeMmuContext(64))
+    val sfence = Output(new BreezeSfenceReq(64))
+    val reservationKill = Output(Bool())
+    val hpmEvents = Input(new BreezeHpmEvents)
+    val backendEvents = Output(new BreezeHpmEvents)
+    val hartFatal = Output(Bool())
+    val estop = Output(Bool())
+    val tandem = if (cfg.enableTandem) Some(Output(new TracePayload(64))) else None
+    val debug = if (enabledebug) Some(new BackendDebugIO(64)) else None
+    val observe = Output(new V1BackendObservation)
+  })
+  val decoder = Module(new Decoder)
+  val fpDecoder = Module(new BreezeFpDecoder)
+  val immGen = Module(new ImmGen(64))
+  val regFile = Module(new RegFile(64))
+  val fpRegFile = Module(new BreezeFpRegFile)
+  val csrFile = Module(new CSRFile(64, enabledebug = enabledebug, hartId = hartId,
+    privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
+  val scoreboard = Module(new V1Scoreboard)
+  val writeback = Module(new V1Writeback)
+  val mulUnit = Module(new CommittedMulUnit)
+  val divUnit = Module(new CommittedDivUnit)
+  val fpUnit = Module(new CommittedFpUnit)
+  val alu = Module(new ALU(64))
+  val bru = Module(new BRU(64))
+  val jau = Module(new JAU(64))
+  val ex = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(64, cfg.ghrLength)))
+  val exFp = RegInit(0.U.asTypeOf(new BreezeFpCtrl))
+  val exFpr = RegInit(VecInit(Seq.fill(3)(0.U(64.W))))
+  val mem = RegInit(0.U.asTypeOf(new V1Stage(cfg)))
+  val wb = RegInit(0.U.asTypeOf(new V1Stage(cfg)))
+  val sleeping = RegInit(false.B)
+  val stopped = RegInit(false.B)
+  val sfenceSent = RegInit(false.B)
+  val nextPc = RegInit(0.U(64.W))
+  val wbKill = Wire(Bool())
+  val exAdvance = Wire(Bool())
+  val wbCommit = Wire(Bool())
+  val branchRedirect = Wire(Bool())
+  val idLeave = Wire(Bool())
 
-    val faseActive = io.fase.map(_.active).getOrElse(false.B)
-    val faseEnter = io.fase.map(_.enter).getOrElse(false.B)
-    val faseLaunch = io.fase.map(_.launch).getOrElse(false.B)
-    val nopInst = "h00000013".U(32.W)
+  val inst = io.fetchBuffer.bits.inst
+  val ctrl = decoder.io.exe_ctrl
+  val fpCtrl = fpDecoder.io.ctrl
+  val rs1 = inst(19,15)
+  val rs2 = inst(24,20)
+  val rd = inst(11,7)
+  decoder.io.inst := inst
+  fpDecoder.io.inst := inst
+  immGen.io.inst := inst
+  immGen.io.type_sel := ctrl.sel_imm
+  val idCsr = ctrl.csr_cmd =/= CSR_CMD.NOP.U
+  val idEstop = inst === "h7ff00073".U
+  val idSerial = ctrl.fencei || ctrl.is_sfence_vma || ctrl.is_wfi || idEstop
+  val serialInFlight = (ex.valid && (ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.is_wfi || ex.estop)) ||
+    (mem.valid && mem.serial) || (wb.valid && wb.serial)
+  val gpr1Used = Mux(fpCtrl.valid, fpCtrl.usesGpr1,
+    (ctrl.sel_alu1 === SEL_ALU1.RS1.U && !(idCsr && ctrl.csr_cmd(2))) || ctrl.bru_inst ||
+      ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.is_sfence_vma)
+  val gpr2Used = !fpCtrl.valid && (ctrl.sel_alu2 === SEL_ALU2.RS2.U || ctrl.bru_inst ||
+    ctrl.mem_op === BreezeMemOp.Store || ctrl.mem_op === BreezeMemOp.Sc ||
+    ctrl.mem_op === BreezeMemOp.Amo || ctrl.is_sfence_vma)
+  val idWrites = Mux(fpCtrl.valid, fpCtrl.writesFpr || fpCtrl.writesGpr, ctrl.wb_en)
+  val idBank = fpCtrl.valid && fpCtrl.writesFpr
+  val operands = scoreboard.io.operands
+  operands(0).used := gpr1Used || fpCtrl.usesFpr1
+  operands(0).rd.idx := rs1
+  operands(0).rd.isFp := fpCtrl.usesFpr1
+  operands(1).used := gpr2Used || fpCtrl.usesFpr2
+  operands(1).rd.idx := rs2
+  operands(1).rd.isFp := fpCtrl.usesFpr2
+  operands(2).used := fpCtrl.usesFpr3
+  operands(2).rd.idx := inst(31,27)
+  operands(2).rd.isFp := true.B
+  operands(3).used := idWrites
+  operands(3).rd.idx := rd
+  operands(3).rd.isFp := idBank
 
-    val decoder = Module(new Decoder())
-    val fpDecoder = Module(new BreezeFpDecoder)
-    val immGen = Module(new ImmGen(cfg.VLEN))
-    val regFile = Module(new RegFile(cfg.VLEN))
-    val fpRegFile = Module(new BreezeFpRegFile)
-    val csrFile = Module(new CSRFile(cfg.VLEN, enabledebug = enabledebug,
-        hartId = hartId, privilegeProfile = cfg.privilegeProfile,
-        enableCompressed = cfg.enableCompressed, useFASE = useFASE))
-    val memWbReg = RegInit(0.U.asTypeOf(new BreezeBackendMEMWB(cfg.VLEN, cfg.enableTandem)))
-    val retireValid = Wire(Bool())
+  // S2 is consumed directly at WB. A valid response is never captured.
+  val wbResponse = wb.valid && wb.mem && io.l1d.resp.valid
+  val wbDone = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Done
+  val wbMiss = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Mshr
+  val wbMemExc = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Exc
+  val wbExc = wb.valid && (wb.exception || wbMemExc)
+  val serialWait = wb.valid && ((wb.fencei && !io.l1d.drained) ||
+    (wb.sfence && (!sfenceSent || !io.mmuIdle)) ||
+    (wb.estop && (scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.busy)))
+  val downHold = io.l1d.s2Hold || serialWait
+  val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
+  wbCommit := wbCanLeave && !wbExc
+  val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !wb.valid &&
+    !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped
+  val fenceRedirect = wbCommit && (wb.fencei || wb.sfence)
+  val xret = wbCommit && (wb.mret || wb.sret)
+  val satp = wbCommit && wb.csrWrite && wb.csrAddr === CSRMAP.satp.U
+  wbKill := (wbCanLeave && wbExc) || interrupt || fenceRedirect || xret || satp || (wbCommit && wb.wfi)
 
-    val decodeReady = Wire(Bool())
-    val decodeFire = Wire(Bool())
-    val decodeValid = io.fetchBuffer.valid
-    val decodePc = Mux(decodeValid, io.fetchBuffer.bits.pc, 0.U(cfg.VLEN.W))
-    val decodeInst = Mux(decodeValid, io.fetchBuffer.bits.inst, nopInst)
-    val decodeRawInst = Mux(decodeValid, io.fetchBuffer.bits.rawInst, nopInst)
-    // The architectural instruction length is either 2 (RV64C) or 4 bytes.
-    // Treat every other value as 4 so legacy producers, reset bubbles, and
-    // malformed metadata can never create a zero-length sequential PC.
-    val decodeInstLen = Mux(decodeValid && io.fetchBuffer.bits.instLen === 2.U, 2.U(3.W), 4.U(3.W))
-    val decodeInstructionAccessFault = decodeValid && io.fetchBuffer.bits.instructionAccessFault
-    val decodeInstructionPageFault = decodeValid && io.fetchBuffer.bits.instructionPageFault
-    val decodeInstructionFault = decodeInstructionAccessFault || decodeInstructionPageFault
-    val decodeEstop = Wire(Bool())
+  val wbLong = wb.mul || wb.div || wb.fp || (wb.mem && wb.load && wbMiss)
+  val wbOrdinary = wbCommit && wb.writes && !wb.mul && !wb.div && !wb.fp && (!wb.mem || wbDone)
+  val wbData = Mux(wb.mem, io.l1d.resp.bits.data, wb.data)
+  writeback.io.ordinary.valid := wbOrdinary
+  writeback.io.ordinary.bits.rd := wb.rd
+  writeback.io.ordinary.bits.data := wbData
+  writeback.io.ordinary.bits.flags := 0.U
+  writeback.io.late <> io.l1d.late
+  writeback.io.div <> divUnit.io.result
+  writeback.io.mul <> mulUnit.io.result
+  writeback.io.fp <> fpUnit.io.result
+  io.hartFatal := writeback.io.hartFatal
+  regFile.io.rs1_addr := rs1
+  regFile.io.rs2_addr := rs2
+  regFile.io.rd_en := writeback.io.gprWrite.valid
+  regFile.io.rd_addr := writeback.io.gprWrite.bits.idx
+  regFile.io.rd_data := writeback.io.gprWrite.bits.data
+  fpRegFile.io.rs1Addr := rs1
+  fpRegFile.io.rs2Addr := rs2
+  fpRegFile.io.rs3Addr := inst(31,27)
+  fpRegFile.io.rdEn := writeback.io.fprWrite.valid
+  fpRegFile.io.rdAddr := writeback.io.fprWrite.bits.idx
+  fpRegFile.io.rdData := writeback.io.fprWrite.bits.data
+  scoreboard.io.set.valid := wbCommit && wbLong && wb.writes
+  scoreboard.io.set.bits.rd := wb.rd
+  scoreboard.io.set.bits.source := Mux(wb.mem, V1LongSource.L1D.U,
+    Mux(wb.div, V1LongSource.DIV.U, Mux(wb.mul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+  scoreboard.io.clear := writeback.io.clear
+  scoreboard.io.csr := idCsr
+  scoreboard.io.idValid := io.fetchBuffer.valid
+  scoreboard.io.idLeave := idLeave
+  scoreboard.io.fpFlagsPending := fpUnit.io.committedFlagsOnly
+  val exLegal = ex.valid && !ex.illegal_inst && !ex.instruction_access_fault && !ex.instruction_page_fault
+  val exMem = exLegal && (ex.ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U || exFp.isLoad || exFp.isStore ||
+    ex.inst(6,0) === OPCODE.MISC_MEM && !ex.ctrl.fencei)
+  val exLoad = exMem && !(exFp.isStore || ex.ctrl.mem_op === BreezeMemOp.Store || ex.inst(6,0) === OPCODE.MISC_MEM)
+  val exMul = exLegal && ex.ctrl.mul_valid && ex.rd_addr =/= 0.U
+  val exDiv = exLegal && ex.ctrl.div_valid && ex.rd_addr =/= 0.U
+  val exFpLong = exLegal && exFp.fpuValid
+  val exBank = exFp.valid && exFp.writesFpr
+  val exWrites = Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
+  for ((stage, index) <- Seq(mem -> 1, wb -> 2)) {
+    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem) &&
+      (index != 2).B || ((index == 2).B && wb.valid && (wb.mul || wb.div || wb.fp || (wb.mem && !wbDone)))
+    scoreboard.io.pipe(index).bits.rd := stage.rd
+    scoreboard.io.pipe(index).bits.source := Mux(stage.mem, V1LongSource.L1D.U,
+      Mux(stage.div, V1LongSource.DIV.U, Mux(stage.mul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+    // CSR must wait even for a store/Fence or an FP-to-x0 producer.
+    when(!stage.writes) { scoreboard.io.pipe(index).bits.rd.idx := 0.U }
+  }
+  scoreboard.io.pipe(0).valid := exMul || exDiv || exFpLong || exMem
+  scoreboard.io.pipe(0).bits.rd.idx := Mux(exWrites, ex.rd_addr, 0.U)
+  scoreboard.io.pipe(0).bits.rd.isFp := exBank
+  scoreboard.io.pipe(0).bits.source := Mux(exMem, V1LongSource.L1D.U,
+    Mux(exDiv, V1LongSource.DIV.U, Mux(exMul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+  // Optional hit bypass relaxes only the MEM Load RAW check. WAW still waits.
+  if (cfg.loadUseBypass) {
+    val waw = idWrites && idBank === mem.rd.isFp && rd === mem.rd.idx
+    when(mem.valid && mem.mem && mem.load && !mem.rd.isFp && !waw && !idCsr) {
+      scoreboard.io.pipe(1).valid := false.B
+    }
+  }
 
-    val rs1Addr = decodeInst(19, 15)
-    val rs2Addr = decodeInst(24, 20)
-    val rdAddr = decodeInst(11, 7)
-    decodeEstop := decodeInst(6, 0) === OPCODE.SYSTEM &&
-        decodeInst(14, 12) === 0.U &&
-        decodeInst(31, 20) === SIM_SYSTEM.ESTOP_IMM12 &&
-        decodeInst(19, 15) === 0.U &&
-        decodeInst(11, 7) === 0.U
+  def exRead(addr: UInt, saved: UInt): UInt = {
+    val fromWb = wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U && addr === wb.rd.idx
+    val fromMem = mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U &&
+      !mem.mem && !mem.mul && !mem.div && !mem.fp && mem.csrCmd === CSR_CMD.NOP.U && addr === mem.rd.idx
+    Mux(fromMem, mem.data, Mux(fromWb, wbData, saved))
+  }
+  val exR1 = exRead(ex.rs1_addr, ex.rs1_data)
+  val exR2 = exRead(ex.rs2_addr, ex.rs2_data)
+  alu.io.alu_op := ex.ctrl.alu_op
+  alu.io.is_w := ex.ctrl.is_w
+  alu.io.alu_in1 := MuxLookup(ex.ctrl.sel_alu1, 0.U)(Seq(
+    SEL_ALU1.RS1.U -> exR1, SEL_ALU1.PC.U -> ex.pc, SEL_ALU1.ZERO.U -> 0.U))
+  alu.io.alu_in2 := MuxLookup(ex.ctrl.sel_alu2, 0.U)(Seq(
+    SEL_ALU2.RS2.U -> exR2, SEL_ALU2.IMM.U -> ex.imm,
+    SEL_ALU2.CONST4.U -> ex.instLen, SEL_ALU2.CONST0.U -> 0.U))
+  bru.io.bru_op := ex.ctrl.bru_op
+  bru.io.rs1_data := exR1
+  bru.io.rs2_data := exR2
+  jau.io.sel_jpc_i := ex.ctrl.sel_jpc_i
+  jau.io.sel_jpc_o := ex.ctrl.sel_jpc_o
+  jau.io.pc := ex.pc
+  jau.io.rs1_data := exR1
+  jau.io.imm := ex.imm
+  val taken = Mux(ex.ctrl.bru_inst, bru.io.take_branch, ex.ctrl.redir_inst)
+  val exNext = Mux(taken, jau.io.jmp_addr, ex.pc + ex.instLen)
+  val fpImm = Mux(exFp.isStore, Cat(Fill(52, ex.inst(31)), ex.inst(31,25), ex.inst(11,7)),
+    Cat(Fill(52, ex.inst(31)), ex.inst(31,20)))
+  val address = exR1 + Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm)
+  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped
+  io.l1d.req.valid := exMem && allowEx
+  val req = io.l1d.req.bits
+  req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
+    BreezeMemOp.Store.asUInt -> L1DOp.Store, BreezeMemOp.Lr.asUInt -> L1DOp.LR,
+    BreezeMemOp.Sc.asUInt -> L1DOp.SC, BreezeMemOp.Amo.asUInt -> L1DOp.AMO))
+  when(exFp.isStore) { req.op := L1DOp.Store }
+  when(ex.inst(6,0) === OPCODE.MISC_MEM) { req.op := L1DOp.Fence }
+  req.vaddr := address
+  req.size := Mux(exFp.valid, Mux(exFp.isDouble, 3.U, 2.U), ex.inst(13,12))
+  req.signed := !ex.inst(14)
+  req.amoFunc := ex.ctrl.amo_func
+  req.aq := ex.ctrl.amo_aq
+  req.rl := ex.ctrl.amo_rl
+  req.wdata := Mux(exFp.isStore, exFpr(1), exR2)
+  req.rd.idx := ex.rd_addr
+  req.rd.isFp := exBank
+  req.isFlw := exFp.isLoad && !exFp.isDouble
+  io.l1d.s1Kill := wbKill
+  io.l1d.s2Kill := wbKill
+  io.l1d.trapClearRsv := csrFile.io.trap.valid
+  io.l1d.csr := csrFile.io.mmu_context
 
-    decoder.io.inst := decodeInst
-    fpDecoder.io.inst := decodeInst
-    immGen.io.inst := decodeInst
-    immGen.io.type_sel := decoder.io.exe_ctrl.sel_imm
+  mulUnit.io.req.valid := exMul && allowEx
+  mulUnit.io.req.bits.rd := ex.rd_addr
+  mulUnit.io.req.bits.op := ex.ctrl.mul_op
+  mulUnit.io.req.bits.a := Cat(exR1(63), exR1).asSInt
+  mulUnit.io.req.bits.b := Cat(exR2(63), exR2).asSInt
+  when(ex.ctrl.mul_op === MUL_OP.MULHSU.U) { mulUnit.io.req.bits.b := Cat(0.U(1.W), exR2).asSInt }
+  when(ex.ctrl.mul_op === MUL_OP.MULHU.U) {
+    mulUnit.io.req.bits.a := Cat(0.U(1.W), exR1).asSInt
+    mulUnit.io.req.bits.b := Cat(0.U(1.W), exR2).asSInt
+  }
+  when(ex.ctrl.mul_op === MUL_OP.MULW.U) {
+    mulUnit.io.req.bits.a := Cat(Fill(33, exR1(31)), exR1(31,0)).asSInt
+    mulUnit.io.req.bits.b := Cat(Fill(33, exR2(31)), exR2(31,0)).asSInt
+  }
+  val signedDiv = !ex.ctrl.div_op(0)
+  val remDiv = ex.ctrl.div_op(1)
+  val wordDiv = ex.ctrl.div_op(2)
+  val dividend = Mux(wordDiv, Mux(signedDiv, Cat(Fill(32, exR1(31)), exR1(31,0)), Cat(0.U(32.W), exR1(31,0))), exR1)
+  val divisor = Mux(wordDiv, Mux(signedDiv, Cat(Fill(32, exR2(31)), exR2(31,0)), Cat(0.U(32.W), exR2(31,0))), exR2)
+  val negA = signedDiv && dividend(63)
+  val negB = signedDiv && divisor(63)
+  val byZero = divisor === 0.U
+  val overflow = signedDiv && dividend === Mux(wordDiv, "hffffffff80000000".U, "h8000000000000000".U) && divisor.andR
+  val fast = Mux(byZero, Mux(remDiv, dividend, Fill(64, 1.U)), Mux(remDiv, 0.U, dividend))
+  divUnit.io.req.valid := exDiv && allowEx
+  divUnit.io.req.bits.rd := ex.rd_addr
+  divUnit.io.req.bits.dividendMag := Mux(negA, 0.U - dividend, dividend)
+  divUnit.io.req.bits.divisorMag := Mux(negB, 0.U - divisor, divisor)
+  divUnit.io.req.bits.quotientNeg := negA ^ negB
+  divUnit.io.req.bits.remainderNeg := negA
+  divUnit.io.req.bits.isRemainder := remDiv
+  divUnit.io.req.bits.isWord := wordDiv
+  divUnit.io.req.bits.fastValid := byZero || overflow
+  divUnit.io.req.bits.fastData := Mux(wordDiv, Cat(Fill(32, fast(31)), fast(31,0)), fast)
+  fpUnit.io.req.valid := exFpLong && allowEx
+  val fpIn = fpUnit.io.req.bits
+  val fp1 = Mux(exFp.usesGpr1, exR1, exFpr(0))
+  fpIn.operandA := Mux(exFp.operation === BreezeFpOp.ADD.U, 0.U, fp1)
+  fpIn.operandB := Mux(exFp.operation === BreezeFpOp.ADD.U, fp1, exFpr(1))
+  fpIn.operandC := Mux(exFp.operation === BreezeFpOp.ADD.U, exFpr(1), exFpr(2))
+  fpIn.rm := Mux(exFp.usesArchitecturalRm && exFp.rm === 7.U, csrFile.io.frm, exFp.rm)
+  fpIn.operation := exFp.operation
+  fpIn.opMod := exFp.opMod
+  fpIn.srcFmt := exFp.srcFmt
+  fpIn.dstFmt := exFp.dstFmt
+  fpIn.intFmt := exFp.intFmt
+  fpIn.rd.idx := ex.rd_addr
+  fpIn.rd.isFp := exBank
+  val resourceWait = (exMem && !io.l1d.req.ready) || (exMul && !mulUnit.io.req.ready) ||
+    (exDiv && !divUnit.io.req.ready) || (exFpLong && !fpUnit.io.req.ready)
+  exAdvance := allowEx && !resourceWait
+  mulUnit.io.commit := wbCommit && wb.mul
+  divUnit.io.commit := wbCommit && wb.div
+  fpUnit.io.commit := wbCommit && wb.fp
+  mulUnit.io.killUncommitted := wbKill
+  divUnit.io.killUncommitted := wbKill
+  fpUnit.io.killUncommitted := wbKill
+  branchRedirect := exLegal && exAdvance &&
+    ((taken =/= ex.pred.predTaken) || (taken && ex.pred.predTaken && jau.io.jmp_addr =/= ex.pred.predPc))
 
-    csrFile.io.csr_addr := 0.U
-    csrFile.io.csr_cmd := CSR_CMD.NOP.U
-    csrFile.io.csr_reg_data := 0.U
-    csrFile.io.rs1_id := 0.U
-    csrFile.io.rd_id := 0.U
-    csrFile.io.commit_valid := false.B
-    csrFile.io.commit_addr := 0.U
-    csrFile.io.commit_wdata := 0.U
-    csrFile.io.commit_write_en := false.B
-    csrFile.io.sret_commit := false.B
-    csrFile.io.fp_commit_valid := false.B
-    csrFile.io.fp_flags := 0.U
-    retireValid := memWbReg.valid &&
-        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst && !memWbReg.csr_illegal &&
-        !memWbReg.is_ecall && !memWbReg.is_ebreak &&
-        !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
-        !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
-        !memWbReg.load_page_fault && !memWbReg.store_page_fault
-    csrFile.io.retire_valid := retireValid
-    csrFile.io.hpmEvents := io.hpmEvents
-    val retiredOpcode = memWbReg.inst(6, 0)
-    val retiredControl = retiredOpcode === OPCODE.BRANCH ||
-        retiredOpcode === OPCODE.JAL || retiredOpcode === OPCODE.JALR
-    csrFile.io.hpmEvents.controlRetired := retireValid && retiredControl
-    csrFile.io.hpmEvents.controlTaken := retireValid && retiredControl &&
-        memWbReg.nextPc =/= (memWbReg.pc + memWbReg.instLen)
-    csrFile.io.hpmEvents.predictionMiss := retireValid && retiredControl &&
-        memWbReg.prediction_miss
-    csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
-    csrFile.io.machineSoftwareInterrupt := io.machineSoftwareInterrupt
-    csrFile.io.time := io.time
-    csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
-    csrFile.io.supervisorExternalInterrupt := io.supervisorExternalInterrupt
-    csrFile.io.trap.valid := false.B
-    csrFile.io.trap.is_interrupt := false.B
-    csrFile.io.trap.cause := 0.U
-    csrFile.io.trap.pc := 0.U
-    csrFile.io.trap.tval := 0.U
-    csrFile.io.mret_commit := false.B
+  // CSR evaluates in MEM, commits in WB. Existing conservative CSR state hazards remain.
+  csrFile.io.csr_addr := mem.csrAddr
+  csrFile.io.csr_cmd := Mux(mem.valid && !mem.exception, mem.csrCmd, CSR_CMD.NOP.U)
+  csrFile.io.csr_reg_data := mem.csrSource
+  csrFile.io.rs1_id := mem.rs1
+  csrFile.io.rd_id := mem.rd.idx
+  csrFile.io.commit_valid := wbCommit && wb.csrCmd =/= CSR_CMD.NOP.U
+  csrFile.io.commit_addr := wb.csrAddr
+  csrFile.io.commit_wdata := wb.csrData
+  csrFile.io.commit_write_en := wb.csrWrite
+  csrFile.io.fp_commit_valid := writeback.io.fpFlags.valid
+  csrFile.io.fp_flags := writeback.io.fpFlags.bits
+  csrFile.io.retire_valid := wbCommit
+  csrFile.io.machineTimerInterrupt := io.machineTimerInterrupt
+  csrFile.io.machineSoftwareInterrupt := io.machineSoftwareInterrupt
+  csrFile.io.machineExternalInterrupt := io.externalInterrupts.orR
+  csrFile.io.supervisorExternalInterrupt := io.supervisorExternalInterrupt
+  csrFile.io.time := io.time
+  csrFile.io.trap.valid := (wbCanLeave && wbExc) || interrupt
+  csrFile.io.trap.is_interrupt := interrupt
+  csrFile.io.trap.cause := Mux(interrupt, csrFile.io.interruptCause, Mux(wbMemExc, io.l1d.resp.bits.excCause, wb.cause))
+  csrFile.io.trap.pc := Mux(interrupt, nextPc, wb.pc)
+  csrFile.io.trap.tval := Mux(interrupt, 0.U, Mux(wbMemExc, io.l1d.resp.bits.tval, wb.tval))
+  csrFile.io.mret_commit := wbCommit && wb.mret
+  csrFile.io.sret_commit := wbCommit && wb.sret
+  io.mmuContext := csrFile.io.mmu_context
+  io.reservationKill := csrFile.io.trap.valid
+  io.translationBlocked := wb.valid && wb.sfence
+  io.sfence.valid := wb.valid && wb.sfence && !sfenceSent && io.l1d.drained && io.mmuIdle && !wb.exception && !io.hartFatal
+  io.sfence.vaddr := wb.address
+  io.sfence.asid := wb.storeData(15,0)
+  io.sfence.useVaddr := wb.rs1 =/= 0.U
+  io.sfence.useAsid := wb.rs2 =/= 0.U
+  when(io.sfence.valid) { sfenceSent := true.B }
+  when(wbCanLeave) { sfenceSent := false.B }
+  io.frontendRedirect.valid := wbKill || branchRedirect
+  // Flush once when SFENCE reaches WB, without issuing the final redirect early.
+  io.frontendRedirect.flush := io.frontendRedirect.valid || (wb.valid && wb.sfence && !RegNext(wb.valid && wb.sfence, false.B))
+  io.frontendRedirect.cacheFlush := wbCommit && wb.fencei
+  io.frontendRedirect.target := Mux(csrFile.io.trap.valid, csrFile.io.trap_target,
+    Mux(xret, csrFile.io.xret_target, Mux(wbKill, wb.nextPc, exNext)))
+  io.frontendPhtUpdate := 0.U.asTypeOf(io.frontendPhtUpdate)
+  io.frontendGhrUpdate := 0.U.asTypeOf(io.frontendGhrUpdate)
+  val btb = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(64)))
+  btb := 0.U.asTypeOf(btb)
+  val train = exLegal && exAdvance && !wbKill && (ex.ctrl.bru_inst || ex.ctrl.redir_inst)
+  if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
+    when(train) {
+      btb.valid := ex.pred.predType === FrontendPredType.BR || ex.pred.predType === FrontendPredType.JAL ||
+        (ex.pred.predType === FrontendPredType.JALR && branchRedirect)
+      btb.pc := ex.pc
+      btb.target := jau.io.jmp_addr
+      btb.predType := ex.pred.predType
+      btb.taken := taken
+    }
+    io.frontendPhtUpdate.valid := train && ex.pred.predType === FrontendPredType.BR
+    io.frontendPhtUpdate.idx := ex.pred.phtIdx
+    io.frontendPhtUpdate.taken := taken
+    io.frontendGhrUpdate.valid := io.frontendPhtUpdate.valid
+    io.frontendGhrUpdate.taken := taken
+  }
+  io.frontendBtbUpdate := btb
+  io.frontendBtbUpdate.valid := btb.valid && !wbKill
 
-    val wbData = Wire(UInt(cfg.VLEN.W))
-    val estopCommitted = Wire(Bool())
-
-    regFile.io.rs1_addr := rs1Addr
-    regFile.io.rs2_addr := rs2Addr
-    regFile.io.rd_addr := memWbReg.rd_addr
-    regFile.io.rd_en := memWbReg.valid && memWbReg.wb_en &&
-        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst && !memWbReg.csr_illegal &&
-        !memWbReg.is_ecall && !memWbReg.is_ebreak &&
-        !memWbReg.load_addr_misaligned && !memWbReg.store_addr_misaligned &&
-        !memWbReg.load_access_fault && !memWbReg.store_access_fault &&
-        !memWbReg.load_page_fault && !memWbReg.store_page_fault
-    wbData := MuxLookup(memWbReg.wb_sel, 0.U(cfg.VLEN.W))(
-        Seq(
-            SEL_WB.ALU.U -> memWbReg.alu_data,
-            SEL_WB.MEM.U -> memWbReg.mem_data,
-            SEL_WB.CSR.U -> memWbReg.csr_data,
-            SEL_WB.MUL.U -> memWbReg.mul_data
-        )
-    )
-    regFile.io.rd_data := wbData
-    val memWbFpWrite = RegInit(false.B)
-    val memWbFpData = RegInit(0.U(64.W))
-    val memWbFpFlagsValid = RegInit(false.B)
-    val memWbFpFlags = RegInit(0.U(5.W))
-    fpRegFile.io.rs1Addr := rs1Addr
-    fpRegFile.io.rs2Addr := rs2Addr
-    fpRegFile.io.rs3Addr := decodeInst(31, 27)
-    fpRegFile.io.rdAddr := memWbReg.rd_addr
-    fpRegFile.io.rdData := memWbFpData
-    fpRegFile.io.rdEn := memWbReg.valid && memWbFpWrite &&
-        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst &&
-        !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
-        !memWbReg.load_page_fault
-    estopCommitted := memWbReg.valid && memWbReg.estop
-
-    val src1 = Wire(UInt(cfg.VLEN.W))
-    val src2 = Wire(UInt(cfg.VLEN.W))
-    val exeRs1Data = Wire(UInt(cfg.VLEN.W))
-    val exeRs2Data = Wire(UInt(cfg.VLEN.W))
-    val exeSrc1 = Wire(UInt(cfg.VLEN.W))
-    val exeSrc2 = Wire(UInt(cfg.VLEN.W))
-    val mulOperandA = Wire(SInt(65.W))
-    val mulOperandB = Wire(SInt(65.W))
-    val divEffectiveDividend = Wire(UInt(64.W))
-    val divEffectiveDivisor = Wire(UInt(64.W))
-    val divDividendMag = Wire(UInt(64.W))
-    val divDivisorMag = Wire(UInt(64.W))
-    val divQuotientNeg = Wire(Bool())
-    val divRemainderNeg = Wire(Bool())
-    val divIsSigned = Wire(Bool())
-    val divIsRemainder = Wire(Bool())
-    val divIsWord = Wire(Bool())
-    val divFast = Wire(Bool())
-    val divFastResult = Wire(UInt(64.W))
-    val decodeUsesRs1 = Wire(Bool())
-    val decodeUsesRs2 = Wire(Bool())
-    val fpImmediate = Wire(UInt(64.W))
-    val fpLocalResult = Wire(UInt(64.W))
-    val fpRegHazard = Wire(Bool())
-    val fpCsrHazard = Wire(Bool())
-
-    val idFpCtrl = RegInit(0.U.asTypeOf(new BreezeFpCtrl))
-    val idFpOperand1 = RegInit(0.U(64.W))
-    val idFpOperand2 = RegInit(0.U(64.W))
-    val idFpOperand3 = RegInit(0.U(64.W))
-    val exeFpCtrl = RegInit(0.U.asTypeOf(new BreezeFpCtrl))
-    val exeFpOperand1 = RegInit(0.U(64.W))
-    val exeFpOperand2 = RegInit(0.U(64.W))
-    val exeFpOperand3 = RegInit(0.U(64.W))
-    val exeFpRm = RegInit(0.U(3.W))
-
-    src1 := MuxLookup(decoder.io.exe_ctrl.sel_alu1, 0.U(cfg.VLEN.W))(
-        Seq(
-            SEL_ALU1.RS1.U -> regFile.io.rs1_data,
-            SEL_ALU1.PC.U -> decodePc,
-            SEL_ALU1.ZERO.U -> 0.U(cfg.VLEN.W)
-        )
-    )
-
-    src2 := MuxLookup(decoder.io.exe_ctrl.sel_alu2, 0.U(cfg.VLEN.W))(
-        Seq(
-            SEL_ALU2.RS2.U -> regFile.io.rs2_data,
-            SEL_ALU2.IMM.U -> immGen.io.imm,
-            SEL_ALU2.CONST4.U -> decodeInstLen,
-            SEL_ALU2.CONST0.U -> 0.U(cfg.VLEN.W)
-        )
-    )
-
-    decodeUsesRs1 := decoder.io.exe_ctrl.sel_alu1 === SEL_ALU1.RS1.U ||
-        decoder.io.exe_ctrl.bru_inst ||
-        decoder.io.exe_ctrl.is_sfence_vma ||
-        decoder.io.exe_ctrl.sel_jpc_i === SEL_JPC_I.RS1.U ||
-        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RW.U ||
-        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RS.U ||
-        decoder.io.exe_ctrl.csr_cmd === CSR_CMD.RC.U
-    // Stores and AMOs use rs2 as write data even though the ALU's second
-    // operand is an immediate/constant. Keep that architectural source in the
-    // dependency model so a CSR/load result is not sampled one value early.
-    decodeUsesRs2 := decoder.io.exe_ctrl.sel_alu2 === SEL_ALU2.RS2.U ||
-        decoder.io.exe_ctrl.bru_inst || decoder.io.exe_ctrl.is_sfence_vma ||
-        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Store ||
-        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Sc ||
-        decoder.io.exe_ctrl.mem_op === BreezeMemOp.Amo
-
-    val idExeReg = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(cfg.VLEN, cfg.ghrLength)))
-    fpImmediate := Mux(
-        idFpCtrl.isStore,
-        Cat(Fill(52, idExeReg.inst(31)), idExeReg.inst(31, 25), idExeReg.inst(11, 7)),
-        Cat(Fill(52, idExeReg.inst(31)), idExeReg.inst(31, 20))
-    )
-    fpLocalResult := Mux(
-        idFpCtrl.localOp === BreezeFpLocalOp.FMV_X.U,
-        Mux(idFpCtrl.isDouble, idFpOperand1,
-            Cat(Fill(32, idFpOperand1(31)), idFpOperand1(31, 0))),
-        Mux(idFpCtrl.isDouble, exeRs1Data, Cat("hffffffff".U(32.W), exeRs1Data(31, 0)))
-    )
-
-    val actualTaken = Wire(Bool())
-    val actualTarget = Wire(UInt(cfg.VLEN.W))
-    val redirectDirectionMismatch = Wire(Bool())
-    val redirectTargetMismatch = Wire(Bool())
-    val redirectNeeded = Wire(Bool())
-    val fenceiFlush = Wire(Bool())
-    val fenceiPending = Wire(Bool())
-    val fenceiFlushIssuedReg = RegInit(false.B)
-    val frontendRedirectNeeded = Wire(Bool())
-    val wfiCommit = Wire(Bool())
-    val sfenceExecute = Wire(Bool())
-    val satpCommit = Wire(Bool())
-    val predictionMiss = Wire(Bool())
-    val pipelineHold = Wire(Bool())
-    val csrHold = Wire(Bool())
-    val loadUseHazard = Wire(Bool())
-    val csrUseHazard = Wire(Bool())
-    val csrStateHazard = Wire(Bool())
-    val csrRegHazard = Wire(Bool())
-    val idExePendingCsrRd = Wire(Bool())
-    val exeMemPendingCsrRd = Wire(Bool())
-    val memWbPendingCsrRd = Wire(Bool())
-    val idExePendingCsrState = Wire(Bool())
-    val exeMemPendingCsrState = Wire(Bool())
-    val frontendBtbUpdateValid = Wire(Bool())
-    val frontendPhtUpdateValid = Wire(Bool())
-
-    val alu = Module(new ALU(cfg.VLEN))
-    val bru = Module(new BRU(cfg.VLEN))
-    val jau = Module(new JAU(cfg.VLEN))
-
-    when(reset.asBool || frontendRedirectNeeded) {
-        idExeReg.valid := false.B
-        idExeReg.pc := 0.U
-        idExeReg.inst := nopInst
-        idExeReg.rawInst := nopInst
-        idExeReg.instLen := 4.U
-        idExeReg.instruction_access_fault := false.B
-        idExeReg.instruction_page_fault := false.B
-        idExeReg.instruction_fault_second_parcel := false.B
-        idExeReg.illegal_inst := false.B
-        idExeReg.is_ecall := false.B
-        idExeReg.is_ebreak := false.B
-        idExeReg.is_mret := false.B
-        idExeReg.is_sret := false.B
-        idExeReg.is_wfi := false.B
-        idExeReg.pred.predType := FrontendPredType.NONE
-        idExeReg.pred.predTaken := false.B
-        idExeReg.pred.predPc := 0.U
-        idExeReg.pred.phtIdx := 0.U
-        idExeReg.ctrl.alu_op := ALU_OP.XXX.U
-        idExeReg.ctrl.bru_op := BRU_OP.XXX.U
-        idExeReg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
-        idExeReg.ctrl.sel_alu2 := SEL_ALU2.XXX.U
-        idExeReg.ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
-        idExeReg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
-        idExeReg.ctrl.redir_inst := false.B
-        idExeReg.ctrl.bru_inst := false.B
-        idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
-        idExeReg.ctrl.sel_wb := SEL_WB.XXX.U
-        idExeReg.ctrl.wb_en := false.B
-        idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
-        idExeReg.ctrl.is_w := false.B
-        idExeReg.ctrl.mul_valid := false.B
-        idExeReg.ctrl.mul_op := MUL_OP.XXX.U
-        idExeReg.ctrl.div_valid := false.B
-        idExeReg.ctrl.div_op := DIV_OP.XXX.U
-        idExeReg.ctrl.csr_addr := 0.U
-        idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
-        idExeReg.ctrl.fencei := false.B
-        idExeReg.ctrl.mem_op := BreezeMemOp.Load
-        idExeReg.ctrl.amo_func := BreezeAmoFunc.Swap
-        idExeReg.ctrl.amo_aq := false.B
-        idExeReg.ctrl.amo_rl := false.B
-        idExeReg.estop := false.B
-        idExeReg.rs1_addr := 0.U
-        idExeReg.rs2_addr := 0.U
-        idExeReg.rd_addr := 0.U
-        idExeReg.rs1_data := 0.U
-        idExeReg.rs2_data := 0.U
-        idExeReg.imm := 0.U
-        idExeReg.src1 := 0.U
-        idExeReg.src2 := 0.U
-    }.elsewhen(decodeFire) {
-        idExeReg.valid := true.B
-        idExeReg.pc := decodePc
-        idExeReg.inst := decodeInst
-        idExeReg.rawInst := decodeRawInst
-        idExeReg.instLen := decodeInstLen
-        idExeReg.instruction_access_fault := decodeInstructionAccessFault
-        idExeReg.instruction_page_fault := decodeInstructionPageFault
-        idExeReg.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
-        idExeReg.illegal_inst := (io.fetchBuffer.bits.illegalCompressed ||
-            (decoder.io.illegal_inst && !fpDecoder.io.ctrl.valid) ||
-            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled) ||
-            (decoder.io.exe_ctrl.is_mret && csrFile.io.mret_illegal) ||
-            (decoder.io.exe_ctrl.is_sret && csrFile.io.sret_illegal) ||
-            (decoder.io.exe_ctrl.is_wfi && csrFile.io.wfi_illegal) ||
-            (decoder.io.exe_ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)) &&
-            !decodeInstructionFault
-        idExeReg.is_ecall := decoder.io.exe_ctrl.is_ecall && !decodeInstructionFault
-        idExeReg.is_ebreak := decoder.io.exe_ctrl.is_ebreak && !decodeInstructionFault
-        idExeReg.is_mret := decoder.io.exe_ctrl.is_mret && !csrFile.io.mret_illegal &&
-            !decodeInstructionFault
-        idExeReg.is_sret := decoder.io.exe_ctrl.is_sret && !csrFile.io.sret_illegal &&
-            !decodeInstructionFault
-        idExeReg.is_wfi := decoder.io.exe_ctrl.is_wfi && !csrFile.io.wfi_illegal &&
-            !decodeInstructionFault
-        idExeReg.pred := io.fetchBuffer.bits.pred
-        idExeReg.ctrl := decoder.io.exe_ctrl
-        when(decodeInstructionFault) {
-            idExeReg.ctrl.redir_inst := false.B
-            idExeReg.ctrl.bru_inst := false.B
-            idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
-            idExeReg.ctrl.wb_en := false.B
-            idExeReg.ctrl.mul_valid := false.B
-            idExeReg.ctrl.div_valid := false.B
-            idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
-            idExeReg.ctrl.fencei := false.B
-            idExeReg.ctrl.mem_op := BreezeMemOp.Load
-        }
-        idExeReg.estop := decodeEstop && !decodeInstructionFault
-        idExeReg.rs1_addr := rs1Addr
-        idExeReg.rs2_addr := rs2Addr
-        idExeReg.rd_addr := rdAddr
-        idExeReg.rs1_data := regFile.io.rs1_data
-        idExeReg.rs2_data := regFile.io.rs2_data
-        idExeReg.imm := immGen.io.imm
-        idExeReg.src1 := src1
-        idExeReg.src2 := src2
-    }.elsewhen(decodeReady || !pipelineHold) {
-        idExeReg.valid := false.B
-        idExeReg.pc := 0.U
-        idExeReg.inst := nopInst
-        idExeReg.rawInst := nopInst
-        idExeReg.instLen := 4.U
-        idExeReg.instruction_access_fault := false.B
-        idExeReg.instruction_page_fault := false.B
-        idExeReg.instruction_fault_second_parcel := false.B
-        idExeReg.illegal_inst := false.B
-        idExeReg.is_ecall := false.B
-        idExeReg.is_ebreak := false.B
-        idExeReg.is_mret := false.B
-        idExeReg.is_sret := false.B
-        idExeReg.is_wfi := false.B
-        idExeReg.pred.predType := FrontendPredType.NONE
-        idExeReg.pred.predTaken := false.B
-        idExeReg.pred.predPc := 0.U
-        idExeReg.pred.phtIdx := 0.U
-        idExeReg.ctrl.alu_op := ALU_OP.XXX.U
-        idExeReg.ctrl.bru_op := BRU_OP.XXX.U
-        idExeReg.ctrl.sel_alu1 := SEL_ALU1.XXX.U
-        idExeReg.ctrl.sel_alu2 := SEL_ALU2.XXX.U
-        idExeReg.ctrl.sel_jpc_i := SEL_JPC_I.XXX.U
-        idExeReg.ctrl.sel_jpc_o := SEL_JPC_O.XXX.U
-        idExeReg.ctrl.redir_inst := false.B
-        idExeReg.ctrl.bru_inst := false.B
-        idExeReg.ctrl.mem_cmd := MEM_TYPE.NOT_MEM.U
-        idExeReg.ctrl.sel_wb := SEL_WB.XXX.U
-        idExeReg.ctrl.wb_en := false.B
-        idExeReg.ctrl.sel_imm := IMM_TYPE.I_Type.U
-        idExeReg.ctrl.is_w := false.B
-        idExeReg.ctrl.mul_valid := false.B
-        idExeReg.ctrl.mul_op := MUL_OP.XXX.U
-        idExeReg.ctrl.div_valid := false.B
-        idExeReg.ctrl.div_op := DIV_OP.XXX.U
-        idExeReg.ctrl.csr_addr := 0.U
-        idExeReg.ctrl.csr_cmd := CSR_CMD.NOP.U
-        idExeReg.ctrl.fencei := false.B
-        idExeReg.ctrl.mem_op := BreezeMemOp.Load
-        idExeReg.ctrl.amo_func := BreezeAmoFunc.Swap
-        idExeReg.ctrl.amo_aq := false.B
-        idExeReg.ctrl.amo_rl := false.B
-        idExeReg.estop := false.B
-        idExeReg.rs1_addr := 0.U
-        idExeReg.rs2_addr := 0.U
-        idExeReg.rd_addr := 0.U
-        idExeReg.rs1_data := 0.U
-        idExeReg.rs2_data := 0.U
-        idExeReg.imm := 0.U
-        idExeReg.src1 := 0.U
-        idExeReg.src2 := 0.U
+  val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
+    (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
+  val csrRegHazard = idCsr && Seq(
+    (ex.valid && exWrites && !exBank && ex.rd_addr =/= 0.U, ex.rd_addr),
+    (mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U, mem.rd.idx),
+    (wb.valid && wb.writes && !wb.rd.isFp && wb.rd.idx =/= 0.U, wb.rd.idx)
+  ).map { case (v,r) => v && ((gpr1Used && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
+  // Ordinary CSR/local-FP destinations are not EX bypassable; wait for WB write-through.
+  val ordinaryHazard = Seq((ex.valid, exWrites, exBank, ex.rd_addr, ex.ctrl.sel_wb === SEL_WB.CSR.U || exFp.valid),
+    (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp)).map {
+      case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
+  }.reduce(_ || _)
+  io.fetchBuffer.ready := exAdvance && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
+    !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
+  idLeave := io.fetchBuffer.fire
+  when(reset.asBool || wbKill || branchRedirect) { ex.valid := false.B }
+    .elsewhen(exAdvance) {
+      ex.valid := idLeave
+      when(idLeave) {
+        ex.pc := io.fetchBuffer.bits.pc
+        ex.inst := inst
+        ex.rawInst := io.fetchBuffer.bits.rawInst
+        ex.instLen := Mux(io.fetchBuffer.bits.instLen === 2.U, 2.U, 4.U)
+        ex.instruction_access_fault := io.fetchBuffer.bits.instructionAccessFault
+        ex.instruction_page_fault := io.fetchBuffer.bits.instructionPageFault
+        ex.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
+        ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid) ||
+          (fpCtrl.valid && !csrFile.io.fp_enabled) || (ctrl.is_mret && csrFile.io.mret_illegal) ||
+          (ctrl.is_sret && csrFile.io.sret_illegal) || (ctrl.is_wfi && csrFile.io.wfi_illegal) ||
+          (ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)
+        ex.ctrl := ctrl
+        ex.is_ecall := ctrl.is_ecall
+        ex.is_ebreak := ctrl.is_ebreak
+        ex.is_mret := ctrl.is_mret
+        ex.is_sret := ctrl.is_sret
+        ex.is_wfi := ctrl.is_wfi
+        ex.estop := idEstop
+        ex.pred := io.fetchBuffer.bits.pred
+        ex.rs1_addr := rs1
+        ex.rs2_addr := rs2
+        ex.rd_addr := rd
+        ex.rs1_data := regFile.io.rs1_data
+        ex.rs2_data := regFile.io.rs2_data
+        ex.imm := immGen.io.imm
+        ex.src1 := regFile.io.rs1_data
+        ex.src2 := regFile.io.rs2_data
+        exFp := fpCtrl
+        exFpr := VecInit(Seq(fpRegFile.io.rs1Data, fpRegFile.io.rs2Data, fpRegFile.io.rs3Data))
+      }
     }.otherwise {
-        // ID/EXE is stalled behind a memory operation. Preserve any older
-        // producer values that are forwardable now; those producers may have
-        // left MEM/WB by the time the stalled instruction is allowed to run.
-        idExeReg.rs1_data := exeRs1Data
-        idExeReg.rs2_data := exeRs2Data
+      ex.rs1_data := exR1
+      ex.rs2_data := exR2
     }
-
-    // Floating-point decode and operands follow exactly the same validity and
-    // hold conditions as ID/EXE.  Keeping them as sideband registers avoids
-    // perturbing the established integer pipeline bundle.
-    when(reset.asBool || frontendRedirectNeeded) {
-        idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
-        idFpOperand1 := 0.U
-        idFpOperand2 := 0.U
-        idFpOperand3 := 0.U
-    }.elsewhen(decodeFire) {
-        idFpCtrl := fpDecoder.io.ctrl
-        when(decodeInstructionFault ||
-            (fpDecoder.io.ctrl.valid && !csrFile.io.fp_enabled)) {
-            idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
+  when(reset.asBool || wbKill) { mem.valid := false.B; wb.valid := false.B }
+    .elsewhen(!downHold) {
+      // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
+      mem := 0.U.asTypeOf(mem)
+      mem.valid := ex.valid && exAdvance
+      mem.pc := ex.pc
+      mem.nextPc := exNext
+      mem.inst := ex.inst
+      mem.rawInst := ex.rawInst
+      mem.instLen := ex.instLen
+      mem.rd.idx := ex.rd_addr
+      mem.rd.isFp := exBank
+      mem.writes := exWrites
+      val local = Mux(exFp.localOp === BreezeFpLocalOp.FMV_X.U,
+        Mux(exFp.isDouble, exFpr(0), Cat(Fill(32, exFpr(0)(31)), exFpr(0)(31,0))),
+        Mux(exFp.isDouble, exR1, Cat("hffffffff".U(32.W), exR1(31,0))))
+      mem.data := Mux(exFp.localOp =/= BreezeFpLocalOp.NONE.U, local, alu.io.alu_out)
+      mem.address := Mux(ex.ctrl.is_sfence_vma, exR1, address)
+      mem.storeData := req.wdata
+      mem.mem := exMem
+      mem.load := exLoad
+      mem.mul := exMul
+      mem.div := exDiv
+      mem.fp := exFpLong
+      mem.serial := ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.is_wfi || ex.estop
+      mem.fencei := ex.ctrl.fencei
+      mem.sfence := ex.ctrl.is_sfence_vma
+      mem.wfi := ex.is_wfi
+      mem.estop := ex.estop
+      mem.mret := ex.is_mret
+      mem.sret := ex.is_sret
+      mem.exception := ex.instruction_access_fault || ex.instruction_page_fault || ex.illegal_inst || ex.is_ecall || ex.is_ebreak
+      mem.cause := MuxCase(2.U, Seq(ex.instruction_access_fault -> 1.U, ex.instruction_page_fault -> 12.U,
+        ex.is_ebreak -> 3.U, ex.is_ecall -> MuxLookup(csrFile.io.current_privilege, 11.U)(Seq(0.U -> 8.U, 1.U -> 9.U))))
+      mem.tval := Mux(ex.instruction_access_fault || ex.instruction_page_fault,
+        ex.pc + Mux(ex.instruction_fault_second_parcel, 2.U, 0.U), Mux(ex.illegal_inst, ex.rawInst, 0.U))
+      mem.csrAddr := ex.ctrl.csr_addr
+      mem.csrCmd := ex.ctrl.csr_cmd
+      mem.csrSource := Mux(ex.ctrl.csr_cmd(2), Cat(0.U(59.W), ex.rs1_addr), exR1)
+      mem.rs1 := ex.rs1_addr
+      mem.rs2 := ex.rs2_addr
+      mem.predictionMiss := branchRedirect
+      wb := mem
+      when(mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) {
+        wb.data := csrFile.io.csr_old_data
+        wb.csrWrite := csrFile.io.csr_write_en
+        wb.csrData := csrFile.io.csr_new_data
+        when(csrFile.io.csr_illegal && !mem.exception) {
+          wb.exception := true.B; wb.cause := 2.U; wb.tval := mem.rawInst
         }
-        idFpOperand1 := fpRegFile.io.rs1Data
-        idFpOperand2 := fpRegFile.io.rs2Data
-        idFpOperand3 := fpRegFile.io.rs3Data
-    }.elsewhen(decodeReady || !pipelineHold) {
-        idFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
-        idFpOperand1 := 0.U
-        idFpOperand2 := 0.U
-        idFpOperand3 := 0.U
+      }
     }
+  when(reset.asBool) { nextPc := io.resetAddr }
+    .elsewhen(wbKill) { nextPc := io.frontendRedirect.target }
+    .elsewhen(wbCommit) { nextPc := wb.nextPc }
+  when(csrFile.io.wfiWakeup) { sleeping := false.B }
+    .elsewhen(wbCommit && wb.wfi) { sleeping := true.B }
+  when(wbCommit && wb.estop) { stopped := true.B }
+  io.estop := stopped || (wbCommit && wb.estop)
 
-    alu.io.alu_op := idExeReg.ctrl.alu_op
-    alu.io.alu_in1 := exeSrc1
-    alu.io.alu_in2 := exeSrc2
-    alu.io.is_w := idExeReg.ctrl.is_w
+  io.backendEvents := io.hpmEvents
+  io.backendEvents.controlRetired := wbCommit && (wb.inst(6,0) === OPCODE.BRANCH || wb.inst(6,0) === OPCODE.JAL || wb.inst(6,0) === OPCODE.JALR)
+  io.backendEvents.controlTaken := io.backendEvents.controlRetired && wb.nextPc =/= wb.pc + wb.instLen
+  io.backendEvents.predictionMiss := io.backendEvents.controlRetired && wb.predictionMiss
+  io.backendEvents.memStallCycle := io.l1d.s2Hold
+  io.backendEvents.loadUseStall := io.fetchBuffer.valid && !idLeave && scoreboard.io.sourceStall(V1LongSource.L1D)
+  io.backendEvents.mulSourceStall := scoreboard.io.sourceStall(V1LongSource.MUL)
+  io.backendEvents.divSourceStall := scoreboard.io.sourceStall(V1LongSource.DIV)
+  io.backendEvents.wbPortConflict := writeback.io.conflict
+  csrFile.io.hpmEvents := io.backendEvents
 
-    bru.io.bru_op := idExeReg.ctrl.bru_op
-    bru.io.rs1_data := exeRs1Data
-    bru.io.rs2_data := exeRs2Data
-
-    jau.io.sel_jpc_i := idExeReg.ctrl.sel_jpc_i
-    jau.io.sel_jpc_o := idExeReg.ctrl.sel_jpc_o
-    jau.io.pc := idExeReg.pc
-    jau.io.rs1_data := exeRs1Data
-    jau.io.imm := idExeReg.imm
-
-    val exeMemReg = RegInit(0.U.asTypeOf(new BreezeBackendEXEMEM(cfg.VLEN, cfg.ghrLength, cfg.enableTandem)))
-    // RV64A sideband carried alongside exeMemReg (the EXEMEM bundle layout in
-    // interface.scala is frozen; these registers follow exactly the same
-    // reset/flush/advance conditions as exeMemReg below).
-    val exeMemMemOp = RegInit(BreezeMemOp.Load)
-    val exeMemAmoFunc = RegInit(BreezeAmoFunc.Swap)
-    val exeMemAq = RegInit(false.B)
-    val exeMemRl = RegInit(false.B)
-    val memWaitingRespReg = RegInit(false.B)
-    val mulWaitingRespReg = RegInit(false.B)
-    val divWaitingRespReg = RegInit(false.B)
-    val fpWaitingRespReg = RegInit(false.B)
-    val mulUnit = Module(new RiscvMulUnit)
-    val divUnit = Module(new RiscvDivUnit)
-    val fpUnit = Module(new BreezeFpUnit)
-    val memReqIssued = Wire(Bool())
-    val memRspFire = Wire(Bool())
-    val mulReqIssued = Wire(Bool())
-    val mulRspFire = Wire(Bool())
-    val divReqIssued = Wire(Bool())
-    val divRspFire = Wire(Bool())
-    val divFastCompletion = Wire(Bool())
-    val fpReqIssued = Wire(Bool())
-    val fpReqAccepted = Wire(Bool())
-    val fpRspFire = Wire(Bool())
-    val exeMemIsMem = Wire(Bool())
-    val exeMemIsLoad = Wire(Bool())
-    val exeMemIsStore = Wire(Bool())
-    val exeMemIsMul = Wire(Bool())
-    val exeMemIsDiv = Wire(Bool())
-    val exeMemIsFp = Wire(Bool())
-    val memBaseAddr = Wire(UInt(cfg.VLEN.W))
-    val memOffset = Wire(UInt(3.W))
-    val memRspData = Wire(UInt(cfg.VLEN.W))
-    val completionValid = Wire(Bool())
-    val completionRd = Wire(UInt(5.W))
-    val completionData = Wire(UInt(cfg.VLEN.W))
-    val loadAlignBuf = Wire(UInt(64.W))
-    val memReqWData = Wire(UInt(64.W))
-    val memReqWMask = Wire(UInt(8.W))
-    val memReqSizeLog2 = Wire(UInt(3.W))
-    val memAddrMisaligned = Wire(Bool())
-    val loadAddrMisaligned = Wire(Bool())
-    val storeAddrMisaligned = Wire(Bool())
-    val exeMemNeedsDmem = Wire(Bool())
-    val exceptionRedirect = Wire(Bool())
-    val interruptRedirect = Wire(Bool())
-    val pipelineEmpty = Wire(Bool())
-    val architecturalNextPc = RegInit(0.U(cfg.VLEN.W))
-    val wfiSleepingReg = RegInit(false.B)
-    val wfiInFlight = Wire(Bool())
-    val exeNextPc = Wire(UInt(cfg.VLEN.W))
-
-    actualTaken := Mux(
-        idExeReg.ctrl.bru_inst,
-        bru.io.take_branch,
-        idExeReg.ctrl.redir_inst
-    )
-    actualTarget := jau.io.jmp_addr
-    exeNextPc := Mux(actualTaken, actualTarget, idExeReg.pc + idExeReg.instLen)
-
-    // ID/EXE remains valid while an older memory operation holds the pipeline.
-    // Do not resolve or train a branch until that instruction can advance: a
-    // dependent branch may still contain the pre-load register value here.
-    redirectDirectionMismatch := idExeReg.valid && !pipelineHold &&
-        !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault &&
-        (actualTaken =/= idExeReg.pred.predTaken)
-    redirectTargetMismatch := idExeReg.valid && !pipelineHold &&
-        !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault &&
-        actualTaken && idExeReg.pred.predTaken &&
-        (actualTarget =/= idExeReg.pred.predPc)
-    redirectNeeded := redirectDirectionMismatch || redirectTargetMismatch
-    val wbTrap = memWbReg.instruction_access_fault || memWbReg.instruction_page_fault ||
-        memWbReg.illegal_inst ||
-        memWbReg.csr_illegal || memWbReg.is_ecall || memWbReg.is_ebreak ||
-        memWbReg.load_addr_misaligned || memWbReg.store_addr_misaligned ||
-        memWbReg.load_access_fault || memWbReg.store_access_fault ||
-        memWbReg.load_page_fault || memWbReg.store_page_fault
-    wfiCommit := memWbReg.valid && memWbReg.is_wfi && !wbTrap
-    wfiInFlight := (idExeReg.valid && idExeReg.is_wfi) ||
-        (exeMemReg.valid && exeMemReg.is_wfi) ||
-        (memWbReg.valid && memWbReg.is_wfi)
-
-    // WFI retires exactly once, after every older instruction. Stop decode as
-    // soon as it enters the pipeline so no younger side effect can issue.
-    // Wakeup deliberately ignores global xIE; interruptPending remains the
-    // separate decision to take a trap.
-    when(reset.asBool) {
-        wfiSleepingReg := false.B
-    }.elsewhen(csrFile.io.wfiWakeup || faseEnter || faseLaunch) {
-        wfiSleepingReg := false.B
-    }.elsewhen(wfiCommit) {
-        wfiSleepingReg := true.B
-    }
-    when(wfiCommit) {
-        assert(!idExeReg.valid && !exeMemReg.valid,
-            "[BreezeBackend] younger instruction remained in flight at WFI commit")
-    }
-    val mretRedirect = Wire(Bool())
-    val sretRedirect = Wire(Bool())
-    val xretRedirect = Wire(Bool())
-    exceptionRedirect := memWbReg.valid && wbTrap
-    mretRedirect := memWbReg.valid && memWbReg.is_mret && !wbTrap
-    sretRedirect := memWbReg.valid && memWbReg.is_sret && !wbTrap
-    xretRedirect := mretRedirect || sretRedirect
-    // WB is older than MEM, which is older than EX. Cancellation must also
-    // gate same-cycle side effects; clearing pipeline registers is too late.
-    val wbKillsYounger = exceptionRedirect || xretRedirect || satpCommit || wfiCommit
-    sfenceExecute := !wbKillsYounger && !fenceiFlush && idExeReg.valid && idExeReg.ctrl.is_sfence_vma &&
-        !pipelineHold && !idExeReg.illegal_inst && !idExeReg.instruction_access_fault &&
-        !idExeReg.instruction_page_fault
-    satpCommit := memWbReg.valid && memWbReg.csr_write_en &&
-        memWbReg.csr_addr === CSRMAP.satp.U && !wbTrap
-    pipelineEmpty := !idExeReg.valid && !exeMemReg.valid &&
-        !memWbReg.valid && !memWaitingRespReg && !mulWaitingRespReg &&
-        !divWaitingRespReg && !fpWaitingRespReg
-    interruptRedirect := csrFile.io.interruptPending && pipelineEmpty && !faseActive
-    frontendRedirectNeeded := fenceiFlush || sfenceExecute || satpCommit ||
-        redirectNeeded || exceptionRedirect || xretRedirect || interruptRedirect || wfiCommit
-    predictionMiss := redirectNeeded
-
-    // Train BTB in the cycle after EXE resolution. Keep redirect/PHT/GHR
-    // resolution in EXE; only the BTB request crosses this register boundary.
-    val exeBtbUpdate = Wire(new BreezeBTBUpdateReq(cfg.VLEN))
-    val memBtbUpdate = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(cfg.VLEN)))
-    // These events cancel younger work. A branch's own redirectNeeded must
-    // not cancel its training, nor a younger branch cancel a pending update.
-    val btbOlderKill = wbKillsYounger || interruptRedirect || fenceiFlush
-
-    exeBtbUpdate.valid := false.B
-    exeBtbUpdate.pc := 0.U
-    exeBtbUpdate.target := 0.U
-    exeBtbUpdate.predType := FrontendPredType.NONE
-    exeBtbUpdate.taken := false.B
-
-    io.frontendPhtUpdate.valid := false.B
-    io.frontendPhtUpdate.idx := 0.U
-    io.frontendPhtUpdate.taken := false.B
-    io.frontendGhrUpdate.valid := false.B
-    io.frontendGhrUpdate.taken := false.B
-
-    frontendBtbUpdateValid := false.B
-    frontendPhtUpdateValid := false.B
-
-    if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
-        // Present training data independently of the late issue/hold decision.
-        // PHT only consumes it when valid; an invalid request need not select
-        // table entry zero and wait for another full table read when enabled.
-        io.frontendPhtUpdate.idx := idExeReg.pred.phtIdx
-        io.frontendPhtUpdate.taken := actualTaken
-        when(idExeReg.valid && !pipelineHold && !btbOlderKill && !idExeReg.illegal_inst &&
-            !idExeReg.instruction_access_fault && !idExeReg.instruction_page_fault) {
-            switch(idExeReg.pred.predType) {
-                is(FrontendPredType.BR) {
-                    frontendBtbUpdateValid := true.B
-                    frontendPhtUpdateValid := true.B
-                    exeBtbUpdate.pc := idExeReg.pc
-                    exeBtbUpdate.target := actualTarget
-                    exeBtbUpdate.predType := FrontendPredType.BR
-                    exeBtbUpdate.taken := actualTaken
-                    io.frontendGhrUpdate.valid := true.B
-                    io.frontendGhrUpdate.taken := actualTaken
-                }
-                is(FrontendPredType.JAL) {
-                    frontendBtbUpdateValid := true.B
-                    exeBtbUpdate.pc := idExeReg.pc
-                    exeBtbUpdate.target := actualTarget
-                    exeBtbUpdate.predType := FrontendPredType.JAL
-                    exeBtbUpdate.taken := true.B
-                }
-                is(FrontendPredType.JALR) {
-                    when(predictionMiss) {
-                        frontendBtbUpdateValid := true.B
-                        exeBtbUpdate.pc := idExeReg.pc
-                        exeBtbUpdate.target := actualTarget
-                        exeBtbUpdate.predType := FrontendPredType.JALR
-                        exeBtbUpdate.taken := true.B
-                    }
-                }
-            }
-        }
-    }
-
-    exeBtbUpdate.valid := frontendBtbUpdateValid
-    // Consume each request once, even if MEM stalls. With no BTB backpressure,
-    // consecutive branches can replace the request every cycle.
-    memBtbUpdate.valid := exeBtbUpdate.valid && !btbOlderKill
-    when(exeBtbUpdate.valid && !btbOlderKill) {
-        memBtbUpdate.pc := exeBtbUpdate.pc
-        memBtbUpdate.target := exeBtbUpdate.target
-        memBtbUpdate.predType := exeBtbUpdate.predType
-        memBtbUpdate.taken := exeBtbUpdate.taken
-    }
-    io.frontendBtbUpdate := memBtbUpdate
-    io.frontendBtbUpdate.valid := memBtbUpdate.valid && !btbOlderKill && !reset.asBool
-
-    io.frontendPhtUpdate.valid := frontendPhtUpdateValid
-
-    exeMemIsMem := exeMemReg.valid && (exeMemReg.mem_cmd =/= MEM_TYPE.NOT_MEM.U)
-    exeMemIsLoad := exeMemIsMem && (
-        exeMemReg.mem_cmd === MEM_TYPE.LB.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LBU.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LH.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LHU.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LW.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LWU.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.LD.U
-    )
-    exeMemIsStore := exeMemIsMem && (
-        exeMemReg.mem_cmd === MEM_TYPE.SB.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.SH.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.SW.U ||
-        exeMemReg.mem_cmd === MEM_TYPE.SD.U
-    )
-    exeMemIsMul := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.mul_valid &&
-        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-    exeMemIsDiv := exeMemReg.valid && exeMemReg.wb_en && exeMemReg.div_valid &&
-        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-    exeMemIsFp := exeMemReg.valid && exeFpCtrl.fpuValid &&
-        !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault &&
-        !exeMemReg.illegal_inst
-    // LR/AMO carry a load-type mem_cmd (LW/LD) and SC a store-type one
-    // (SW/SD), so exeMemIsLoad/exeMemIsStore include them; the wires below
-    // single the atomics out where the classification differs.
-    val exeMemIsLr = exeMemIsMem && exeMemMemOp === BreezeMemOp.Lr
-    val exeMemIsSc = exeMemIsMem && exeMemMemOp === BreezeMemOp.Sc
-    val exeMemIsAmo = exeMemIsMem && exeMemMemOp === BreezeMemOp.Amo
-    memAddrMisaligned := MuxLookup(exeMemReg.mem_cmd, false.B)(
-        Seq(
-            MEM_TYPE.LH.U -> exeMemReg.data(0),
-            MEM_TYPE.LHU.U -> exeMemReg.data(0),
-            MEM_TYPE.SH.U -> exeMemReg.data(0),
-            MEM_TYPE.LW.U -> exeMemReg.data(1, 0).orR,
-            MEM_TYPE.LWU.U -> exeMemReg.data(1, 0).orR,
-            MEM_TYPE.SW.U -> exeMemReg.data(1, 0).orR,
-            MEM_TYPE.LD.U -> exeMemReg.data(2, 0).orR,
-            MEM_TYPE.SD.U -> exeMemReg.data(2, 0).orR
-        )
-    )
-    // A misaligned AMO is a store/AMO address-misaligned (cause 6), not a
-    // load one, even though its mem_cmd is load-typed for the data path.
-    loadAddrMisaligned := exeMemIsLoad && memAddrMisaligned && !exeMemIsAmo
-    storeAddrMisaligned := (exeMemIsStore || exeMemIsAmo) && memAddrMisaligned
-    exeMemNeedsDmem := exeMemIsMem && !memAddrMisaligned
-    memReqIssued := exeMemNeedsDmem && !memWaitingRespReg && !wbKillsYounger
-    memRspFire := memWaitingRespReg && io.dmem.rsp.valid
-    // Each request requires exeMemReg.valid. interruptRedirect requires
-    // pipelineEmpty, which requires !exeMemReg.valid, so it cannot cancel
-    // one of these requests. Avoid routing interrupt timing through issue
-    // into pipelineHold. Exception/return/fence cancellation is still needed.
-    mulReqIssued := exeMemIsMul && !mulWaitingRespReg &&
-        !wbKillsYounger && !fenceiFlush
-    mulRspFire := mulWaitingRespReg && mulUnit.io.out_valid
-    mulUnit.io.flush := frontendRedirectNeeded
-    mulUnit.io.in_valid := mulReqIssued
-    mulUnit.io.a := exeMemReg.mul_a
-    mulUnit.io.b := exeMemReg.mul_b
-    mulUnit.io.op := exeMemReg.mul_op
-    divFastCompletion := exeMemIsDiv && exeMemReg.div_fast
-    divReqIssued := exeMemIsDiv && !exeMemReg.div_fast && !divWaitingRespReg &&
-        !wbKillsYounger && !fenceiFlush
-    divRspFire := divWaitingRespReg && divUnit.io.out_valid
-    divUnit.io.flush := frontendRedirectNeeded
-    divUnit.io.in_valid := divReqIssued
-    divUnit.io.dividend_mag := exeMemReg.div_dividend_mag
-    divUnit.io.divisor_mag := exeMemReg.div_divisor_mag
-    divUnit.io.quotient_neg := exeMemReg.div_quotient_neg
-    divUnit.io.remainder_neg := exeMemReg.div_remainder_neg
-    divUnit.io.is_remainder := exeMemReg.div_is_remainder
-    divUnit.io.is_word := exeMemReg.div_is_word
-    fpReqIssued := exeMemIsFp && !fpWaitingRespReg &&
-        !wbKillsYounger && !fenceiFlush
-    fpReqAccepted := fpReqIssued && fpUnit.io.inReady
-    fpRspFire := fpWaitingRespReg && fpUnit.io.outValid
-    // A younger branch may resolve in the same cycle that an older FP result
-    // completes and is forwarded.  Do not feed that redirect back into FPnew:
-    // the older result must commit before the younger redirect takes effect.
-    fpUnit.io.flush := reset.asBool || fenceiFlush || wbKillsYounger || interruptRedirect
-    fpUnit.io.inValid := fpReqIssued
-    fpUnit.io.outReady := fpWaitingRespReg
-    fpUnit.io.operandA := exeFpOperand1
-    fpUnit.io.operandB := exeFpOperand2
-    fpUnit.io.operandC := exeFpOperand3
-    fpUnit.io.rm := exeFpRm
-    fpUnit.io.operation := exeFpCtrl.operation
-    fpUnit.io.opMod := exeFpCtrl.opMod
-    fpUnit.io.srcFmt := exeFpCtrl.srcFmt
-    fpUnit.io.dstFmt := exeFpCtrl.dstFmt
-    fpUnit.io.intFmt := exeFpCtrl.intFmt
-    memBaseAddr := (exeMemReg.data >> 3.U) << 3.U
-    memOffset := exeMemReg.data(2, 0)
-    loadAlignBuf := (io.dmem.rsp.data >> (memOffset << 3.U))(63, 0)
-    memRspData := 0.U
-    memReqWData := 0.U
-    memReqWMask := 0.U
-    memReqSizeLog2 := 0.U
-    switch(exeMemReg.mem_cmd) {
-        is(MEM_TYPE.LB.U) { memReqSizeLog2 := 0.U; memRspData := Cat(Fill(cfg.VLEN - 8, loadAlignBuf(7)), loadAlignBuf(7, 0)) }
-        is(MEM_TYPE.LBU.U) { memReqSizeLog2 := 0.U; memRspData := Cat(0.U((cfg.VLEN - 8).W), loadAlignBuf(7, 0)) }
-        is(MEM_TYPE.LH.U) { memReqSizeLog2 := 1.U; memRspData := Cat(Fill(cfg.VLEN - 16, loadAlignBuf(15)), loadAlignBuf(15, 0)) }
-        is(MEM_TYPE.LHU.U) { memReqSizeLog2 := 1.U; memRspData := Cat(0.U((cfg.VLEN - 16).W), loadAlignBuf(15, 0)) }
-        is(MEM_TYPE.LW.U) { memReqSizeLog2 := 2.U; memRspData := Cat(Fill(cfg.VLEN - 32, loadAlignBuf(31)), loadAlignBuf(31, 0)) }
-        is(MEM_TYPE.LWU.U) { memReqSizeLog2 := 2.U; memRspData := Cat(0.U((cfg.VLEN - 32).W), loadAlignBuf(31, 0)) }
-        is(MEM_TYPE.LD.U) { memReqSizeLog2 := 3.U; memRspData := io.dmem.rsp.data }
-        is(MEM_TYPE.SB.U) {
-            memReqSizeLog2 := 0.U
-            memReqWData := Fill(8, exeMemReg.rs2_data(7, 0))
-            memReqWMask := UIntToOH(memOffset, 8)
-        }
-        is(MEM_TYPE.SH.U) {
-            memReqSizeLog2 := 1.U
-            memReqWData := Fill(4, exeMemReg.rs2_data(15, 0))
-            memReqWMask := MuxLookup(memOffset(2, 1), 0.U(8.W))(
-                Seq(
-                    "b00".U -> "b00000011".U,
-                    "b01".U -> "b00001100".U,
-                    "b10".U -> "b00110000".U,
-                    "b11".U -> "b11000000".U
-                )
-            )
-        }
-        is(MEM_TYPE.SW.U) {
-            memReqSizeLog2 := 2.U
-            memReqWData := Fill(2, exeMemReg.rs2_data(31, 0))
-            memReqWMask := Mux(memOffset(2), "b11110000".U, "b00001111".U)
-        }
-        is(MEM_TYPE.SD.U) {
-            memReqSizeLog2 := 3.U
-            memReqWData := exeMemReg.rs2_data
-            memReqWMask := "b11111111".U
-        }
-    }
-    when(exeMemIsAmo) {
-        // AMO carries the raw rs2 operand; the D$ positions it inside the
-        // line itself and ignores the byte mask.
-        memReqWData := exeMemReg.rs2_data
-        memReqWMask := 0.U
-    }
-    // SC writes back its raw 0/1 result; LR/AMO responses are the aligned
-    // 64-bit old word and go through the regular load extraction above.
-    val memCompletionData = Mux(exeMemIsSc, io.dmem.rsp.data, memRspData)
-
-    // All register-producing, unknown/fixed-latency backends converge here.
-    // This is both the MEM completion result and the highest-priority EXE bypass.
-    completionValid := (memRspFire && (exeMemIsLoad || exeMemIsSc) &&
-        exeMemReg.wb_en && !io.dmem.rsp.error) ||
-        (mulRspFire && exeMemReg.wb_en) || divFastCompletion ||
-        (divRspFire && exeMemReg.wb_en) ||
-        (fpRspFire && exeFpCtrl.writesGpr)
-    completionRd := exeMemReg.rd_addr
-    completionData := MuxCase(memCompletionData, Seq(
-        mulRspFire -> mulUnit.io.result,
-        divFastCompletion -> exeMemReg.div_fast_result,
-        divRspFire -> divUnit.io.result,
-        fpRspFire -> fpUnit.io.result
-    ))
-    assert(PopCount(Seq(memRspFire, mulRspFire, divFastCompletion, divRspFire, fpRspFire)) <= 1.U,
-        "[BreezeBackend] multiple long-latency backends completed in one cycle")
-
-    exeRs1Data := idExeReg.rs1_data
-    exeRs2Data := idExeReg.rs2_data
-
-    // Forward the older MEM/WB result first. A matching EXE/MEM producer below
-    // must win when two in-flight instructions write the same register.
-    when(
-        memWbReg.valid &&
-        memWbReg.wb_en &&
-        (memWbReg.rd_addr =/= 0.U)
-    ) {
-        when(idExeReg.rs1_addr === memWbReg.rd_addr) {
-            exeRs1Data := wbData
-        }
-        when(idExeReg.rs2_addr === memWbReg.rd_addr) {
-            exeRs2Data := wbData
-        }
-    }
-
-    when(
-        exeMemReg.valid &&
-        exeMemReg.wb_en &&
-        (exeMemReg.rd_addr =/= 0.U) &&
-        (exeMemReg.mem_cmd === MEM_TYPE.NOT_MEM.U) &&
-        (exeMemReg.wb_sel === SEL_WB.ALU.U)
-    ) {
-        when(idExeReg.rs1_addr === exeMemReg.rd_addr) {
-            exeRs1Data := exeMemReg.data
-        }
-        when(idExeReg.rs2_addr === exeMemReg.rd_addr) {
-            exeRs2Data := exeMemReg.data
-        }
-    }
-
-    // A completing load/multiply is younger than MEM/WB and must win the
-    // forwarding priority.  The held ID/EXE instruction can advance in this
-    // same cycle without an extra load-use/multiply-use bubble.
-    when(completionValid && (completionRd =/= 0.U)) {
-        when(idExeReg.rs1_addr === completionRd) {
-            exeRs1Data := completionData
-        }
-        when(idExeReg.rs2_addr === completionRd) {
-            exeRs2Data := completionData
-        }
-    }
-
-    // SignedMul65x65 always consumes signed 65-bit values.  Sign/zero
-    // extension here encodes each RISC-V multiplication variant.
-    mulOperandA := Cat(exeRs1Data(63), exeRs1Data).asSInt
-    mulOperandB := Cat(exeRs2Data(63), exeRs2Data).asSInt
-    switch(idExeReg.ctrl.mul_op) {
-        is(MUL_OP.MULHSU.U) {
-            mulOperandB := Cat(0.U(1.W), exeRs2Data).asSInt
-        }
-        is(MUL_OP.MULHU.U) {
-            mulOperandA := Cat(0.U(1.W), exeRs1Data).asSInt
-            mulOperandB := Cat(0.U(1.W), exeRs2Data).asSInt
-        }
-        is(MUL_OP.MULW.U) {
-            mulOperandA := Cat(Fill(33, exeRs1Data(31)), exeRs1Data(31, 0)).asSInt
-            mulOperandB := Cat(Fill(33, exeRs2Data(31)), exeRs2Data(31, 0)).asSInt
-        }
-    }
-
-    // Division preprocessing is entirely in EXE.  The iterative unit only
-    // sees unsigned magnitudes; architectural divide-by-zero and signed
-    // overflow are converted into a one-cycle MEM completion.
-    divIsSigned := !idExeReg.ctrl.div_op(0)
-    divIsRemainder := idExeReg.ctrl.div_op(1)
-    divIsWord := idExeReg.ctrl.div_op(2)
-    val divWordDividend = Mux(
-        divIsSigned,
-        Cat(Fill(32, exeRs1Data(31)), exeRs1Data(31, 0)),
-        Cat(0.U(32.W), exeRs1Data(31, 0))
-    )
-    val divWordDivisor = Mux(
-        divIsSigned,
-        Cat(Fill(32, exeRs2Data(31)), exeRs2Data(31, 0)),
-        Cat(0.U(32.W), exeRs2Data(31, 0))
-    )
-    divEffectiveDividend := Mux(divIsWord, divWordDividend, exeRs1Data)
-    divEffectiveDivisor := Mux(divIsWord, divWordDivisor, exeRs2Data)
-
-    val divDividendNeg = divIsSigned && divEffectiveDividend(63)
-    val divDivisorNeg = divIsSigned && divEffectiveDivisor(63)
-    divDividendMag := Mux(
-        divDividendNeg,
-        0.U(64.W) - divEffectiveDividend,
-        divEffectiveDividend
-    )
-    divDivisorMag := Mux(
-        divDivisorNeg,
-        0.U(64.W) - divEffectiveDivisor,
-        divEffectiveDivisor
-    )
-    divQuotientNeg := divDividendNeg ^ divDivisorNeg
-    divRemainderNeg := divDividendNeg
-
-    val divByZero = divEffectiveDivisor === 0.U
-    val divSignedMin = Mux(
-        divIsWord,
-        "hffffffff80000000".U(64.W),
-        "h8000000000000000".U(64.W)
-    )
-    val divSignedOverflow = divIsSigned &&
-        (divEffectiveDividend === divSignedMin) &&
-        (divEffectiveDivisor === Fill(64, 1.U(1.W)))
-    val divSpecialRaw = Mux(
-        divByZero,
-        Mux(divIsRemainder, divEffectiveDividend, Fill(64, 1.U(1.W))),
-        Mux(divIsRemainder, 0.U(64.W), divEffectiveDividend)
-    )
-    val divSpecialWord = Cat(Fill(32, divSpecialRaw(31)), divSpecialRaw(31, 0))
-    divFast := idExeReg.ctrl.div_valid && (divByZero || divSignedOverflow)
-    divFastResult := Mux(divIsWord, divSpecialWord, divSpecialRaw)
-
-    exeSrc1 := MuxLookup(idExeReg.ctrl.sel_alu1, 0.U(cfg.VLEN.W))(
-        Seq(
-            SEL_ALU1.RS1.U -> exeRs1Data,
-            SEL_ALU1.PC.U -> idExeReg.pc,
-            SEL_ALU1.ZERO.U -> 0.U(cfg.VLEN.W)
-        )
-    )
-
-    exeSrc2 := MuxLookup(idExeReg.ctrl.sel_alu2, 0.U(cfg.VLEN.W))(
-        Seq(
-            SEL_ALU2.RS2.U -> exeRs2Data,
-            SEL_ALU2.IMM.U -> idExeReg.imm,
-            SEL_ALU2.CONST4.U -> idExeReg.instLen,
-            SEL_ALU2.CONST0.U -> 0.U(cfg.VLEN.W)
-        )
-    )
-
-    loadUseHazard := exeMemReg.valid && memWaitingRespReg && !memRspFire &&
-        (exeMemIsLoad || exeMemIsSc) && exeMemReg.wb_en && (
-        (idExeReg.rs1_addr =/= 0.U && idExeReg.rs1_addr === exeMemReg.rd_addr) ||
-        (idExeReg.rs2_addr =/= 0.U && idExeReg.rs2_addr === exeMemReg.rd_addr)
-    )
-    idExePendingCsrRd := idExeReg.valid &&
-        idExeReg.ctrl.wb_en &&
-        (idExeReg.ctrl.sel_wb === SEL_WB.CSR.U) &&
-        (idExeReg.rd_addr =/= 0.U)
-    exeMemPendingCsrRd := exeMemReg.valid &&
-        exeMemReg.wb_en &&
-        (exeMemReg.wb_sel === SEL_WB.CSR.U) &&
-        (exeMemReg.rd_addr =/= 0.U)
-    memWbPendingCsrRd := memWbReg.valid &&
-        memWbReg.wb_en &&
-        (memWbReg.wb_sel === SEL_WB.CSR.U) &&
-        (memWbReg.rd_addr =/= 0.U)
-    csrUseHazard := (
-        idExePendingCsrRd && (
-            (decodeUsesRs1 && (rs1Addr === idExeReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === idExeReg.rd_addr))
-        )
-    ) || (
-        exeMemPendingCsrRd && (
-            (decodeUsesRs1 && (rs1Addr === exeMemReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === exeMemReg.rd_addr))
-        )
-    ) || (
-        memWbPendingCsrRd && (
-            (decodeUsesRs1 && (rs1Addr === memWbReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === memWbReg.rd_addr))
-        )
-    )
-    idExePendingCsrState := idExeReg.valid && (idExeReg.ctrl.csr_cmd =/= CSR_CMD.NOP.U)
-    exeMemPendingCsrState := exeMemReg.valid && csrFile.io.csr_write_en
-    // Privilege, interrupt and translation state also has CSR aliases and
-    // implicit consumers (e.g. sstatus -> load/SRET/WFI). Comparing only CSR
-    // addresses lets a younger instruction observe pre-commit state. Drain
-    // every CSR update through WB before decoding the next instruction.
-    csrStateHazard := idExePendingCsrState || exeMemPendingCsrState ||
-        (memWbReg.valid && memWbReg.csr_write_en)
-    // CSR hazards: only stall decode, NOT idExe→exeMem.
-    // CSR producers must flow through to memWb so the register file is updated.
-    //
-    // csrRegHazard: conservative stall — when a CSR instruction enters decode,
-    // if ANY prior instruction in the pipeline (idExe, exeMem, memWb) has a
-    // pending register write to rs1/rs2 that the CSR reads, stall until the
-    // pipeline is clear. This avoids broken forwarding (CORE-003) and the
-    // RegFile synchronous read-before-write race.
-    csrRegHazard := (decoder.io.exe_ctrl.csr_cmd =/= CSR_CMD.NOP.U) && (
-        (idExeReg.valid && idExeReg.ctrl.wb_en && (idExeReg.rd_addr =/= 0.U) && (
-            (decodeUsesRs1 && (rs1Addr === idExeReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === idExeReg.rd_addr))
-        )) ||
-        (exeMemReg.valid && exeMemReg.wb_en && (exeMemReg.rd_addr =/= 0.U) && (
-            (decodeUsesRs1 && (rs1Addr === exeMemReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === exeMemReg.rd_addr))
-        )) ||
-        (memWbReg.valid && memWbReg.wb_en && (memWbReg.rd_addr =/= 0.U) &&
-            (memWbReg.wb_sel =/= SEL_WB.CSR.U) && (
-            (decodeUsesRs1 && (rs1Addr === memWbReg.rd_addr)) ||
-            (decodeUsesRs2 && (rs2Addr === memWbReg.rd_addr))
-        ))
-    )
-    csrHold := csrUseHazard || csrStateHazard || csrRegHazard
-
-    def fpSourceMatches(ctrl: BreezeFpCtrl, rd: UInt): Bool =
-        (ctrl.usesFpr1 && rs1Addr === rd) ||
-        (ctrl.usesFpr2 && rs2Addr === rd) ||
-        (ctrl.usesFpr3 && decodeInst(31, 27) === rd)
-    fpRegHazard := fpDecoder.io.ctrl.valid && (
-        (idExeReg.valid && idFpCtrl.writesFpr && fpSourceMatches(fpDecoder.io.ctrl, idExeReg.rd_addr)) ||
-        (exeMemReg.valid && exeFpCtrl.writesFpr && fpSourceMatches(fpDecoder.io.ctrl, exeMemReg.rd_addr))
-    )
-    val idCsrAffectsFp = idExeReg.ctrl.csr_addr === CSRMAP.mstatus.U ||
-        idExeReg.ctrl.csr_addr === CSRMAP.sstatus.U ||
-        idExeReg.ctrl.csr_addr === CSRMAP.frm.U || idExeReg.ctrl.csr_addr === CSRMAP.fcsr.U
-    val exeCsrAffectsFp = exeMemReg.csr_addr === CSRMAP.mstatus.U ||
-        exeMemReg.csr_addr === CSRMAP.sstatus.U ||
-        exeMemReg.csr_addr === CSRMAP.frm.U || exeMemReg.csr_addr === CSRMAP.fcsr.U
-    val memWbCsrAffectsFp = memWbReg.csr_addr === CSRMAP.mstatus.U ||
-        memWbReg.csr_addr === CSRMAP.sstatus.U ||
-        memWbReg.csr_addr === CSRMAP.frm.U || memWbReg.csr_addr === CSRMAP.fcsr.U
-    fpCsrHazard := fpDecoder.io.ctrl.valid && (
-        (idExePendingCsrState && idCsrAffectsFp) ||
-        (exeMemPendingCsrState && exeCsrAffectsFp) ||
-        (memWbReg.valid && memWbReg.csr_write_en && memWbCsrAffectsFp)
-    )
-
-    // Hold the pipeline in the request cycle as well, otherwise exeMemReg can be
-    // overwritten before the outstanding memory operation receives a response.
-    pipelineHold := memReqIssued || (memWaitingRespReg && !memRspFire) ||
-        mulReqIssued || (mulWaitingRespReg && !mulRspFire) ||
-        divReqIssued || (divWaitingRespReg && !divRspFire) ||
-        fpReqIssued || (fpWaitingRespReg && !fpRspFire) || fenceiPending
-
-    csrFile.io.csr_addr := exeMemReg.csr_addr
-    csrFile.io.csr_cmd := exeMemReg.csr_cmd
-    csrFile.io.csr_reg_data := exeMemReg.data
-    csrFile.io.rs1_id := exeMemReg.rs1_addr
-    csrFile.io.rd_id := exeMemReg.rd_addr
-    csrFile.io.commit_valid := memWbReg.valid
-    csrFile.io.commit_addr := memWbReg.csr_addr
-    csrFile.io.commit_wdata := memWbReg.csr_new_data
-    csrFile.io.commit_write_en := memWbReg.csr_write_en &&
-        !memWbReg.csr_illegal && !memWbReg.illegal_inst
-    // Compute trap cause at WB stage: priority-encode the exception bools
-    val ecallCause = MuxLookup(csrFile.io.current_privilege, BigInt(11).U(cfg.VLEN.W))(Seq(
-        PRIV_MODE.U.U -> BigInt(8).U(cfg.VLEN.W),
-        PRIV_MODE.S.U -> BigInt(9).U(cfg.VLEN.W)
-    ))
-    val mcauseVal = Wire(UInt(cfg.VLEN.W))
-    mcauseVal := MuxCase(0.U(cfg.VLEN.W), Seq(
-        memWbReg.instruction_access_fault -> BigInt(1).U(cfg.VLEN.W),
-        memWbReg.instruction_page_fault -> BigInt(12).U(cfg.VLEN.W),
-        memWbReg.store_addr_misaligned -> BigInt(6).U(cfg.VLEN.W),
-        memWbReg.load_addr_misaligned  -> BigInt(4).U(cfg.VLEN.W),
-        memWbReg.store_access_fault    -> BigInt(7).U(cfg.VLEN.W),
-        memWbReg.load_access_fault     -> BigInt(5).U(cfg.VLEN.W),
-        memWbReg.store_page_fault      -> BigInt(15).U(cfg.VLEN.W),
-        memWbReg.load_page_fault       -> BigInt(13).U(cfg.VLEN.W),
-        memWbReg.is_ecall              -> ecallCause,
-        memWbReg.is_ebreak             -> BigInt(3).U(cfg.VLEN.W),
-        memWbReg.csr_illegal           -> BigInt(2).U(cfg.VLEN.W),
-        memWbReg.illegal_inst          -> BigInt(2).U(cfg.VLEN.W)
-    ))
-
-    // Compute trap value at WB stage: faulting address or zero
-    val instructionFaultVaddr = memWbReg.pc +
-        Mux(memWbReg.instruction_fault_second_parcel, 2.U, 0.U)
-    val mtvalVal = Wire(UInt(cfg.VLEN.W))
-    mtvalVal := MuxCase(0.U(cfg.VLEN.W), Seq(
-        memWbReg.instruction_access_fault -> instructionFaultVaddr,
-        memWbReg.instruction_page_fault -> instructionFaultVaddr,
-        memWbReg.store_addr_misaligned -> memWbReg.alu_data,
-        memWbReg.load_addr_misaligned  -> memWbReg.alu_data,
-        memWbReg.store_access_fault    -> memWbReg.alu_data,
-        memWbReg.load_access_fault     -> memWbReg.alu_data,
-        memWbReg.store_page_fault      -> memWbReg.alu_data,
-        memWbReg.load_page_fault       -> memWbReg.alu_data,
-        memWbReg.is_ecall              -> 0.U(cfg.VLEN.W),
-        memWbReg.is_ebreak             -> 0.U(cfg.VLEN.W),
-        memWbReg.csr_illegal           -> 0.U(cfg.VLEN.W),
-        memWbReg.illegal_inst          -> memWbReg.rawInst
-    ))
-
-    csrFile.io.trap.valid        := exceptionRedirect || interruptRedirect
-    csrFile.io.trap.is_interrupt := interruptRedirect
-    csrFile.io.trap.cause        := Mux(interruptRedirect, csrFile.io.interruptCause, mcauseVal)
-    csrFile.io.trap.pc           := Mux(interruptRedirect, architecturalNextPc, memWbReg.pc)
-    csrFile.io.trap.tval         := Mux(interruptRedirect, 0.U, mtvalVal)
-    csrFile.io.mret_commit       := mretRedirect
-    csrFile.io.sret_commit       := sretRedirect
-
-    if (cfg.enableTandem) {
-        val trapTraceCount = RegInit(0.U(9.W))
-        val wfiTraceCount = RegInit(0.U(9.W))
-        when(csrFile.io.trap.valid && trapTraceCount < 256.U) {
-            printf(cf"[CORE-TRAP] hart=${hartId.U} interrupt=${csrFile.io.trap.is_interrupt} cause=0x${csrFile.io.trap.cause}%x pc=0x${csrFile.io.trap.pc}%x tval=0x${csrFile.io.trap.tval}%x privilege=${csrFile.io.current_privilege} target=0x${csrFile.io.trap_target}%x msip=${io.machineSoftwareInterrupt} mtip=${io.machineTimerInterrupt} meip=${io.externalInterrupts.orR} seip=${io.supervisorExternalInterrupt}\n")
-            trapTraceCount := trapTraceCount + 1.U
-        }
-        when(wfiCommit && !csrFile.io.wfiWakeup && wfiTraceCount < 256.U) {
-            printf(cf"[CORE-WFI-SLEEP] hart=${hartId.U} pc=0x${memWbReg.pc}%x next=0x${memWbReg.nextPc}%x\n")
-            wfiTraceCount := wfiTraceCount + 1.U
-        }.elsewhen(wfiSleepingReg && csrFile.io.wfiWakeup && wfiTraceCount < 256.U) {
-            printf(cf"[CORE-WFI-WAKE] hart=${hartId.U} msip=${io.machineSoftwareInterrupt} mtip=${io.machineTimerInterrupt} meip=${io.externalInterrupts.orR} seip=${io.supervisorExternalInterrupt}\n")
-            wfiTraceCount := wfiTraceCount + 1.U
-        }
-    }
-
-    when(reset.asBool) {
-        architecturalNextPc := io.resetAddr
-    }.elsewhen(faseLaunch) {
-        architecturalNextPc := io.fase.map(_.launchPc).getOrElse(0.U)
-    }.elsewhen(exceptionRedirect || interruptRedirect) {
-        architecturalNextPc := csrFile.io.trap_target
-    }.elsewhen(xretRedirect) {
-        architecturalNextPc := csrFile.io.xret_target
-    }.elsewhen(memWbReg.valid && !wbTrap) {
-        architecturalNextPc := memWbReg.nextPc
-    }
-
-    fenceiPending := exeMemReg.valid && exeMemReg.fencei
-    io.dcacheFlushReq := fenceiPending && !fenceiFlushIssuedReg && !wbKillsYounger
-    fenceiFlush := fenceiPending && fenceiFlushIssuedReg && io.dcacheFlushDone && !wbKillsYounger
-
-    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect ||
-            interruptRedirect || wfiCommit) {
-        fenceiFlushIssuedReg := false.B
-    }.elsewhen(io.dcacheFlushReq) {
-        fenceiFlushIssuedReg := true.B
-    }
-
-    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect ||
-            interruptRedirect || wfiCommit) {
-        exeMemReg.valid := false.B
-        exeMemReg.pc := 0.U
-        exeMemReg.nextPc := 0.U
-        exeMemReg.inst := nopInst
-        exeMemReg.rawInst := nopInst
-        exeMemReg.instLen := 4.U
-        exeMemReg.instruction_access_fault := false.B
-        exeMemReg.instruction_page_fault := false.B
-        exeMemReg.instruction_fault_second_parcel := false.B
-        exeMemReg.illegal_inst := false.B
-        exeMemReg.is_ecall := false.B
-        exeMemReg.is_ebreak := false.B
-        exeMemReg.is_mret := false.B
-        exeMemReg.is_sret := false.B
-        exeMemReg.is_wfi := false.B
-        exeMemReg.csr_illegal := false.B
-        exeMemReg.pred.predType := FrontendPredType.NONE
-        exeMemReg.pred.predTaken := false.B
-        exeMemReg.pred.predPc := 0.U
-        exeMemReg.pred.phtIdx := 0.U
-        exeMemReg.estop := false.B
-        exeMemReg.fencei := false.B
-        exeMemReg.data := 0.U
-        exeMemReg.rs2_data := 0.U
-        exeMemReg.mul_a := 0.S
-        exeMemReg.mul_b := 0.S
-        exeMemReg.mul_valid := false.B
-        exeMemReg.mul_op := MUL_OP.XXX.U
-        exeMemReg.div_valid := false.B
-        exeMemReg.div_fast := false.B
-        exeMemReg.div_fast_result := 0.U
-        exeMemReg.div_dividend_mag := 0.U
-        exeMemReg.div_divisor_mag := 0.U
-        exeMemReg.div_quotient_neg := false.B
-        exeMemReg.div_remainder_neg := false.B
-        exeMemReg.div_is_remainder := false.B
-        exeMemReg.div_is_word := false.B
-        exeMemReg.mem_cmd := MEM_TYPE.NOT_MEM.U
-        exeMemMemOp := BreezeMemOp.Load
-        exeMemAmoFunc := BreezeAmoFunc.Swap
-        exeMemAq := false.B
-        exeMemRl := false.B
-        exeMemReg.rd_addr := 0.U
-        exeMemReg.rs1_addr := 0.U
-        exeMemReg.csr_addr := 0.U
-        exeMemReg.csr_cmd := CSR_CMD.NOP.U
-        exeMemReg.wb_en := false.B
-        exeMemReg.wb_sel := SEL_WB.XXX.U
-        exeMemReg.actual_taken := false.B
-        exeMemReg.actual_target := 0.U
-        exeMemReg.prediction_miss := false.B
-        exeMemReg.trace.foreach { trace =>
-            trace.valid := false.B
-            trace.pc := 0.U
-            trace.inst := 0.U
-            trace.nextPc := 0.U
-            trace.estop := false.B
-            trace.rdWriteEn := false.B
-            trace.rdAddr := 0.U
-            trace.rdData := 0.U
-            trace.memEn := false.B
-            trace.memIsWrite := false.B
-            trace.memAddr := 0.U
-            trace.memAlignedAddr := 0.U
-            trace.memRData := 0.U
-            trace.memWData := 0.U
-            trace.memWMask := 0.U
-        }
-    }.elsewhen(!pipelineHold) {
-        exeMemReg.valid := idExeReg.valid
-        exeMemReg.pc := idExeReg.pc
-        exeMemReg.nextPc := exeNextPc
-        exeMemReg.inst := idExeReg.inst
-        exeMemReg.rawInst := idExeReg.rawInst
-        exeMemReg.instLen := idExeReg.instLen
-        exeMemReg.instruction_access_fault := idExeReg.instruction_access_fault
-        exeMemReg.instruction_page_fault := idExeReg.instruction_page_fault
-        exeMemReg.instruction_fault_second_parcel := idExeReg.instruction_fault_second_parcel
-        exeMemReg.illegal_inst := idExeReg.illegal_inst
-        exeMemReg.is_ecall := idExeReg.is_ecall
-        exeMemReg.is_ebreak := idExeReg.is_ebreak
-        exeMemReg.is_mret := idExeReg.is_mret
-        exeMemReg.is_sret := idExeReg.is_sret
-        exeMemReg.is_wfi := idExeReg.is_wfi
-        // CSRFile is driven from exeMemReg below, so its legality result belongs
-        // to the instruction already in EXE/MEM, not the incoming ID/EXE
-        // instruction captured by this assignment. Sampling it here shifts an
-        // illegal-CSR exception onto the following instruction and lets the
-        // unsupported CSR itself retire. Legality is sampled at EXE/MEM ->
-        // MEM/WB instead, alongside csr_old_data/csr_new_data.
-        exeMemReg.csr_illegal := false.B
-        exeMemReg.pred := idExeReg.pred
-        exeMemReg.estop := idExeReg.estop
-        exeMemReg.fencei := idExeReg.ctrl.fencei
-        exeMemReg.data := Mux(idFpCtrl.isLoad || idFpCtrl.isStore,
-            exeRs1Data + fpImmediate,
-            Mux(idFpCtrl.localOp =/= BreezeFpLocalOp.NONE.U, fpLocalResult, alu.io.alu_out))
-        // Stores need the forwarded rs2 value, especially for an adjacent
-        // load-to-store dependency.
-        exeMemReg.rs2_data := Mux(idFpCtrl.isStore, idFpOperand2, exeRs2Data)
-        exeMemReg.mul_a := mulOperandA
-        exeMemReg.mul_b := mulOperandB
-        exeMemReg.mul_valid := idExeReg.ctrl.mul_valid
-        exeMemReg.mul_op := idExeReg.ctrl.mul_op
-        exeMemReg.div_valid := idExeReg.ctrl.div_valid
-        exeMemReg.div_fast := divFast
-        exeMemReg.div_fast_result := divFastResult
-        exeMemReg.div_dividend_mag := divDividendMag
-        exeMemReg.div_divisor_mag := divDivisorMag
-        exeMemReg.div_quotient_neg := divQuotientNeg
-        exeMemReg.div_remainder_neg := divRemainderNeg
-        exeMemReg.div_is_remainder := divIsRemainder
-        exeMemReg.div_is_word := divIsWord
-        exeMemReg.mem_cmd := MuxCase(idExeReg.ctrl.mem_cmd, Seq(
-            (idFpCtrl.isLoad && idFpCtrl.isDouble) -> MEM_TYPE.LD.U,
-            (idFpCtrl.isLoad && !idFpCtrl.isDouble) -> MEM_TYPE.LW.U,
-            (idFpCtrl.isStore && idFpCtrl.isDouble) -> MEM_TYPE.SD.U,
-            (idFpCtrl.isStore && !idFpCtrl.isDouble) -> MEM_TYPE.SW.U
-        ))
-        exeMemMemOp := Mux(idFpCtrl.isStore, BreezeMemOp.Store,
-            Mux(idFpCtrl.isLoad, BreezeMemOp.Load, idExeReg.ctrl.mem_op))
-        exeMemAmoFunc := idExeReg.ctrl.amo_func
-        exeMemAq := idExeReg.ctrl.amo_aq
-        exeMemRl := idExeReg.ctrl.amo_rl
-        exeMemReg.rd_addr := idExeReg.rd_addr
-        exeMemReg.rs1_addr := idExeReg.rs1_addr
-        exeMemReg.csr_addr := idExeReg.ctrl.csr_addr
-        exeMemReg.csr_cmd := idExeReg.ctrl.csr_cmd
-        exeMemReg.wb_en := idExeReg.ctrl.wb_en || idFpCtrl.writesGpr
-        exeMemReg.wb_sel := Mux(idFpCtrl.fpuValid && idFpCtrl.writesGpr, SEL_WB.MUL.U,
-            Mux(idFpCtrl.localOp === BreezeFpLocalOp.FMV_X.U, SEL_WB.ALU.U,
-                idExeReg.ctrl.sel_wb))
-        exeMemReg.actual_taken := actualTaken
-        exeMemReg.actual_target := actualTarget
-        exeMemReg.prediction_miss := predictionMiss
-        exeMemReg.trace.foreach { trace =>
-            trace.valid := idExeReg.valid
-            trace.pc := idExeReg.pc
-            trace.inst := idExeReg.rawInst
-            trace.nextPc := exeNextPc
-            trace.estop := idExeReg.estop
-            trace.rdWriteEn := idExeReg.ctrl.wb_en && (idExeReg.rd_addr =/= 0.U)
-            trace.rdAddr := idExeReg.rd_addr
-            trace.rdData := 0.U
-            trace.memEn := idExeReg.ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U ||
-                idFpCtrl.isLoad || idFpCtrl.isStore
-            trace.memIsWrite := idFpCtrl.isStore || idExeReg.ctrl.mem_cmd === MEM_TYPE.SB.U ||
-                idExeReg.ctrl.mem_cmd === MEM_TYPE.SH.U ||
-                idExeReg.ctrl.mem_cmd === MEM_TYPE.SW.U ||
-                idExeReg.ctrl.mem_cmd === MEM_TYPE.SD.U
-            trace.memAddr := alu.io.alu_out
-            trace.memAlignedAddr := (alu.io.alu_out >> 3.U) << 3.U
-            trace.memRData := 0.U
-            trace.memWData := 0.U
-            trace.memWMask := 0.U
-        }
-    }
-
-    when(reset.asBool || fenceiFlush || satpCommit || exceptionRedirect || xretRedirect ||
-            interruptRedirect || wfiCommit) {
-        exeFpCtrl := 0.U.asTypeOf(new BreezeFpCtrl)
-        exeFpOperand1 := 0.U
-        exeFpOperand2 := 0.U
-        exeFpOperand3 := 0.U
-        exeFpRm := 0.U
-    }.elsewhen(!pipelineHold) {
-        val fpSource1 = Mux(idFpCtrl.usesGpr1, exeRs1Data, idFpOperand1)
-        exeFpCtrl := idFpCtrl
-        // FPnew ADD consumes operands 1 and 2; all other scalar operations
-        // consume operands starting at operand 0.
-        exeFpOperand1 := Mux(idFpCtrl.operation === BreezeFpOp.ADD.U, 0.U, fpSource1)
-        exeFpOperand2 := Mux(idFpCtrl.operation === BreezeFpOp.ADD.U, fpSource1, idFpOperand2)
-        exeFpOperand3 := Mux(idFpCtrl.operation === BreezeFpOp.ADD.U, idFpOperand2, idFpOperand3)
-        exeFpRm := Mux(idFpCtrl.usesArchitecturalRm && idFpCtrl.rm === 7.U,
-            csrFile.io.frm, idFpCtrl.rm)
-    }
-
-    when(reset.asBool) {
-        memWaitingRespReg := false.B
-    }.elsewhen(memRspFire) {
-        memWaitingRespReg := false.B
-    }.elsewhen(memReqIssued) {
-        memWaitingRespReg := true.B
-    }
-
-    when(reset.asBool || frontendRedirectNeeded) {
-        mulWaitingRespReg := false.B
-    }.elsewhen(mulRspFire) {
-        mulWaitingRespReg := false.B
-    }.elsewhen(mulReqIssued) {
-        mulWaitingRespReg := true.B
-    }
-
-    when(reset.asBool || frontendRedirectNeeded) {
-        divWaitingRespReg := false.B
-    }.elsewhen(divRspFire) {
-        divWaitingRespReg := false.B
-    }.elsewhen(divReqIssued) {
-        divWaitingRespReg := true.B
-    }
-
-    when(reset.asBool || frontendRedirectNeeded) {
-        fpWaitingRespReg := false.B
-    }.elsewhen(fpRspFire) {
-        fpWaitingRespReg := false.B
-    }.elsewhen(fpReqAccepted) {
-        fpWaitingRespReg := true.B
-    }
-
-    when(reset.asBool || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect ||
-            wfiCommit) {
-        memWbReg.valid := false.B
-        memWbReg.pc := 0.U
-        memWbReg.nextPc := 0.U
-        memWbReg.inst := nopInst
-        memWbReg.rawInst := nopInst
-        memWbReg.instLen := 4.U
-        memWbReg.instruction_access_fault := false.B
-        memWbReg.instruction_page_fault := false.B
-        memWbReg.instruction_fault_second_parcel := false.B
-        memWbReg.illegal_inst := false.B
-        memWbReg.is_ecall := false.B
-        memWbReg.is_ebreak := false.B
-        memWbReg.is_mret := false.B
-        memWbReg.is_sret := false.B
-        memWbReg.is_wfi := false.B
-        memWbReg.csr_illegal := false.B
-        memWbReg.load_addr_misaligned := false.B
-        memWbReg.store_addr_misaligned := false.B
-        memWbReg.load_access_fault := false.B
-        memWbReg.store_access_fault := false.B
-        memWbReg.load_page_fault := false.B
-        memWbReg.store_page_fault := false.B
-        memWbReg.estop := false.B
-        memWbReg.wb_en := false.B
-        memWbReg.wb_sel := SEL_WB.XXX.U
-        memWbReg.rd_addr := 0.U
-        memWbReg.alu_data := 0.U
-        memWbReg.mem_data := 0.U
-        memWbReg.csr_data := 0.U
-        memWbReg.mul_data := 0.U
-        memWbReg.csr_addr := 0.U
-        memWbReg.csr_new_data := 0.U
-        memWbReg.csr_write_en := false.B
-        memWbReg.prediction_miss := false.B
-        memWbReg.trace.foreach { trace =>
-            trace.valid := false.B
-            trace.pc := 0.U
-            trace.inst := 0.U
-            trace.nextPc := 0.U
-            trace.estop := false.B
-            trace.rdWriteEn := false.B
-            trace.rdAddr := 0.U
-            trace.rdData := 0.U
-            trace.memEn := false.B
-            trace.memIsWrite := false.B
-            trace.memAddr := 0.U
-            trace.memAlignedAddr := 0.U
-            trace.memRData := 0.U
-            trace.memWData := 0.U
-            trace.memWMask := 0.U
-        }
-    }.elsewhen(!exeMemReg.valid || (!exeMemNeedsDmem && !exeMemIsMul && !exeMemIsDiv && !exeMemIsFp)) {
-        // FENCE.I retires only after DCache clean completes and the frontend
-        // flush is emitted; do not repeatedly retire it while the cache scans.
-        memWbReg.valid := exeMemReg.valid && (!exeMemReg.fencei || fenceiFlush)
-        memWbReg.pc := exeMemReg.pc
-        memWbReg.nextPc := exeMemReg.nextPc
-        memWbReg.inst := exeMemReg.inst
-        memWbReg.rawInst := exeMemReg.rawInst
-        memWbReg.instLen := exeMemReg.instLen
-        memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
-        memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
-        memWbReg.instruction_fault_second_parcel := exeMemReg.instruction_fault_second_parcel
-        memWbReg.illegal_inst := exeMemReg.illegal_inst
-        memWbReg.is_ecall := exeMemReg.is_ecall
-        memWbReg.is_ebreak := exeMemReg.is_ebreak
-        memWbReg.is_mret := exeMemReg.is_mret
-        memWbReg.is_sret := exeMemReg.is_sret
-        memWbReg.is_wfi := exeMemReg.is_wfi
-        memWbReg.csr_illegal := csrFile.io.csr_illegal &&
-            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-        memWbReg.estop := exeMemReg.estop
-        memWbReg.load_addr_misaligned := loadAddrMisaligned
-        memWbReg.store_addr_misaligned := storeAddrMisaligned
-        memWbReg.load_access_fault := false.B
-        memWbReg.store_access_fault := false.B
-        memWbReg.load_page_fault := false.B
-        memWbReg.store_page_fault := false.B
-        memWbReg.wb_en := exeMemReg.wb_en && !memAddrMisaligned &&
-            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-        memWbReg.wb_sel := exeMemReg.wb_sel
-        memWbReg.rd_addr := exeMemReg.rd_addr
-        memWbReg.alu_data := exeMemReg.data
-        memWbReg.mem_data := 0.U
-        memWbReg.csr_data := csrFile.io.csr_old_data
-        memWbReg.mul_data := 0.U
-        memWbReg.csr_addr := exeMemReg.csr_addr
-        memWbReg.csr_new_data := csrFile.io.csr_new_data
-        memWbReg.csr_write_en := csrFile.io.csr_write_en && !memAddrMisaligned &&
-            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault
-        memWbReg.prediction_miss := exeMemReg.prediction_miss
-        memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
-            wbTrace := exeTrace
-            wbTrace.valid := exeMemReg.valid && (!exeMemReg.fencei || fenceiFlush)
-            wbTrace.rdWriteEn := exeTrace.rdWriteEn && !memAddrMisaligned
-            wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
-                Seq(
-                    SEL_WB.ALU.U -> exeMemReg.data,
-                    SEL_WB.MEM.U -> 0.U(cfg.VLEN.W),
-                    SEL_WB.CSR.U -> csrFile.io.csr_old_data,
-                    SEL_WB.MUL.U -> 0.U(cfg.VLEN.W)
-                )
-            )
-            wbTrace.memRData := 0.U
-            wbTrace.memWData := Mux(exeTrace.memIsWrite, memReqWData, 0.U)
-            wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
-        }
-    }.elsewhen(memRspFire || mulRspFire || divFastCompletion || divRspFire || fpRspFire) {
-        memWbReg.valid := exeMemReg.valid
-        memWbReg.pc := exeMemReg.pc
-        memWbReg.nextPc := exeMemReg.nextPc
-        memWbReg.inst := exeMemReg.inst
-        memWbReg.rawInst := exeMemReg.rawInst
-        memWbReg.instLen := exeMemReg.instLen
-        memWbReg.instruction_access_fault := exeMemReg.instruction_access_fault
-        memWbReg.instruction_page_fault := exeMemReg.instruction_page_fault
-        memWbReg.instruction_fault_second_parcel := exeMemReg.instruction_fault_second_parcel
-        memWbReg.illegal_inst := exeMemReg.illegal_inst
-        memWbReg.is_ecall := exeMemReg.is_ecall
-        memWbReg.is_ebreak := exeMemReg.is_ebreak
-        memWbReg.is_mret := exeMemReg.is_mret
-        memWbReg.is_sret := exeMemReg.is_sret
-        memWbReg.is_wfi := exeMemReg.is_wfi
-        memWbReg.csr_illegal := exeMemReg.csr_illegal
-        memWbReg.estop := exeMemReg.estop
-        memWbReg.load_addr_misaligned := false.B
-        memWbReg.store_addr_misaligned := false.B
-        // AMO faults classify as store/AMO access faults (cause 7) despite the
-        // load-typed mem_cmd; LR stays a load access fault (cause 5).
-        memWbReg.load_access_fault := memRspFire && exeMemIsLoad && !exeMemIsAmo &&
-            io.dmem.rsp.error && !io.dmem.rsp.pageFault
-        memWbReg.store_access_fault := memRspFire && (exeMemIsStore || exeMemIsAmo) &&
-            io.dmem.rsp.error && !io.dmem.rsp.pageFault
-        memWbReg.load_page_fault := memRspFire && exeMemIsLoad && !exeMemIsAmo &&
-            io.dmem.rsp.pageFault
-        memWbReg.store_page_fault := memRspFire && (exeMemIsStore || exeMemIsAmo) &&
-            io.dmem.rsp.pageFault
-        memWbReg.wb_en := exeMemReg.wb_en && !exeMemReg.instruction_access_fault &&
-            !exeMemReg.instruction_page_fault &&
-            !(memRspFire && io.dmem.rsp.error)
-        memWbReg.wb_sel := exeMemReg.wb_sel
-        memWbReg.rd_addr := exeMemReg.rd_addr
-        memWbReg.alu_data := exeMemReg.data
-        memWbReg.mem_data := Mux((exeMemIsLoad || exeMemIsSc) && !io.dmem.rsp.error,
-            memCompletionData, 0.U)
-        memWbReg.csr_data := csrFile.io.csr_old_data
-        memWbReg.mul_data := MuxCase(0.U(cfg.VLEN.W), Seq(
-            mulRspFire -> mulUnit.io.result,
-            divFastCompletion -> exeMemReg.div_fast_result,
-            divRspFire -> divUnit.io.result,
-            fpRspFire -> fpUnit.io.result
-        ))
-        memWbReg.csr_addr := exeMemReg.csr_addr
-        memWbReg.csr_new_data := csrFile.io.csr_new_data
-        memWbReg.csr_write_en := csrFile.io.csr_write_en &&
-            !exeMemReg.instruction_access_fault && !exeMemReg.instruction_page_fault &&
-            !(memRspFire && io.dmem.rsp.error)
-        memWbReg.prediction_miss := exeMemReg.prediction_miss
-        memWbReg.trace.zip(exeMemReg.trace).foreach { case (wbTrace, exeTrace) =>
-            wbTrace := exeTrace
-            wbTrace.valid := exeMemReg.valid
-            wbTrace.rdWriteEn := exeTrace.rdWriteEn && !(memRspFire && io.dmem.rsp.error)
-            wbTrace.rdData := MuxLookup(exeMemReg.wb_sel, 0.U(cfg.VLEN.W))(
-                Seq(
-                    SEL_WB.ALU.U -> exeMemReg.data,
-                    SEL_WB.MEM.U -> Mux((exeMemIsLoad || exeMemIsSc) && !io.dmem.rsp.error,
-                        memCompletionData, 0.U),
-                    SEL_WB.CSR.U -> csrFile.io.csr_old_data,
-                    SEL_WB.MUL.U -> MuxCase(0.U(cfg.VLEN.W), Seq(
-                        mulRspFire -> mulUnit.io.result,
-                        divFastCompletion -> exeMemReg.div_fast_result,
-                        divRspFire -> divUnit.io.result,
-                        fpRspFire -> fpUnit.io.result
-                    ))
-                )
-            )
-            wbTrace.memRData := Mux((exeMemIsLoad || exeMemIsSc) && !io.dmem.rsp.error,
-                memCompletionData, 0.U)
-            wbTrace.memWData := Mux(exeTrace.memIsWrite, memReqWData, 0.U)
-            wbTrace.memWMask := Mux(exeTrace.memIsWrite, memReqWMask, 0.U)
-        }
-    }.otherwise {
-        // A memory, multiplication, or division instruction occupies EXE/MEM
-        // until its completion arrives.
-        // Do not leave the previous MEM/WB entry valid during those wait
-        // cycles, otherwise one instruction appears to retire repeatedly.
-        memWbReg.valid := false.B
-        memWbReg.csr_write_en := false.B
-        memWbReg.trace.foreach(_.valid := false.B)
-    }
-
-    // Floating-point writeback sideband, aligned with the common MEM/WB
-    // register above.  FPR writes and accrued flags become architectural only
-    // when memWbReg.valid commits on the following cycle.
-    when(reset.asBool || satpCommit || exceptionRedirect || xretRedirect || interruptRedirect ||
-            wfiCommit) {
-        memWbFpWrite := false.B
-        memWbFpData := 0.U
-        memWbFpFlagsValid := false.B
-        memWbFpFlags := 0.U
-    }.elsewhen(!exeMemReg.valid || (!exeMemNeedsDmem && !exeMemIsMul && !exeMemIsDiv && !exeMemIsFp)) {
-        memWbFpWrite := exeMemReg.valid && exeFpCtrl.writesFpr &&
-            exeFpCtrl.localOp === BreezeFpLocalOp.FMV_F.U && !exeMemReg.illegal_inst
-        memWbFpData := exeMemReg.data
-        memWbFpFlagsValid := false.B
-        memWbFpFlags := 0.U
-    }.elsewhen(memRspFire || mulRspFire || divFastCompletion || divRspFire || fpRspFire) {
-        memWbFpWrite := (memRspFire && exeFpCtrl.isLoad && !io.dmem.rsp.error) ||
-            (fpRspFire && exeFpCtrl.writesFpr)
-        memWbFpData := Mux(
-            memRspFire && exeFpCtrl.isLoad,
-            Mux(exeFpCtrl.isDouble, io.dmem.rsp.data,
-                Cat("hffffffff".U(32.W), loadAlignBuf(31, 0))),
-            fpUnit.io.result
-        )
-        memWbFpFlagsValid := fpRspFire && exeFpCtrl.writeFlags
-        memWbFpFlags := Mux(fpRspFire, fpUnit.io.status, 0.U)
-    }.otherwise {
-        memWbFpWrite := false.B
-        memWbFpFlagsValid := false.B
-    }
-
-    csrFile.io.fp_commit_valid := memWbReg.valid &&
-        !memWbReg.instruction_access_fault && !memWbReg.instruction_page_fault &&
-        !memWbReg.illegal_inst &&
-        !memWbReg.load_addr_misaligned && !memWbReg.load_access_fault &&
-        !memWbReg.load_page_fault &&
-        (memWbFpWrite || memWbFpFlagsValid)
-    csrFile.io.fp_flags := Mux(memWbFpFlagsValid, memWbFpFlags, 0.U)
-
-    // A pending enabled interrupt stops issue while older instructions drain.
-    decodeReady := !pipelineHold && !csrHold && !fpRegHazard && !fpCsrHazard &&
-        !frontendRedirectNeeded &&
-        (!csrFile.io.interruptPending || faseActive) && !wfiInFlight && (!wfiSleepingReg || faseActive)
-    decodeFire := decodeValid && decodeReady
-    io.fetchBuffer.ready := decodeReady
-
-    io.dmem.req.valid := memReqIssued
-    io.dmem.req.isWrite := exeMemIsStore && !exeMemIsSc
-    io.dmem.req.addr := exeMemReg.data
-    io.dmem.req.sizeLog2 := memReqSizeLog2
-    io.dmem.req.wdata := memReqWData
-    io.dmem.req.wmask := memReqWMask
-    io.dmem.req.memOp := exeMemMemOp
-    io.dmem.req.amoFunc := exeMemAmoFunc
-    io.dmem.req.aq := exeMemAq
-    io.dmem.req.rl := exeMemRl
-
-    // aq/rl ordering point: this backend is strictly in-order with a single
-    // outstanding memory operation and no store buffer, so every older memory
-    // operation has completed before an atomic issues (rl) and no younger
-    // memory operation can issue before the atomic's response retires (aq).
-    // That property is load-bearing for RV64A - keep it checked, not assumed.
-    // If a store buffer, MSHR or any second outstanding slot is ever added,
-    // aq/rl must gain real barrier logic here.
-    assert(!(io.dmem.req.valid && memWaitingRespReg),
-        "[BreezeBackend] a memory request was issued while another is outstanding")
-
-    // Any taken trap (exception or interrupt) kills the LR/SC reservation in
-    // the D$; mret needs no kill because SC after a trap round-trip already
-    // fails through the cleared reservation.
-    io.reservationKill := exceptionRedirect || interruptRedirect
-    io.mmuContext := csrFile.io.mmu_context
-    io.sfence.valid := sfenceExecute
-    io.sfence.vaddr := exeRs1Data
-    io.sfence.asid := exeRs2Data(15, 0)
-    io.sfence.useVaddr := idExeReg.rs1_addr =/= 0.U
-    io.sfence.useAsid := idExeReg.rs2_addr =/= 0.U
-
-    csrFile.io.hpmEvents.memStallCycle := memReqIssued ||
-        (memWaitingRespReg && !io.dmem.rsp.valid)
-    csrFile.io.hpmEvents.loadUseStall := loadUseHazard
-
-    io.frontendRedirect.valid := frontendRedirectNeeded
-    io.frontendRedirect.flush := frontendRedirectNeeded
-    io.frontendRedirect.cacheFlush := fenceiFlush
-    // Requests are NOT one-hot: a WB trap and a younger EX branch can
-    // resolve together. Mux1H ORs their addresses (observed on KCU105).
-    // Oldest architectural redirect wins; only then may MEM/EX redirect.
-    io.frontendRedirect.target := MuxCase(0.U(cfg.VLEN.W), Seq(
-        exceptionRedirect -> csrFile.io.trap_target,
-        interruptRedirect -> csrFile.io.trap_target, // only with empty pipeline
-        xretRedirect      -> csrFile.io.xret_target,
-        satpCommit        -> memWbReg.nextPc,
-        wfiCommit         -> memWbReg.nextPc,
-        fenceiFlush       -> (exeMemReg.pc + exeMemReg.instLen),
-        sfenceExecute     -> (idExeReg.pc + idExeReg.instLen),
-        redirectNeeded    -> exeNextPc
-    ))
-    when(exceptionRedirect) {
-        assert(io.frontendRedirect.target === csrFile.io.trap_target,
-            "[BreezeBackend] younger redirect corrupted trap target")
-    }
-    when(wbKillsYounger) {
-        assert(!io.dmem.req.valid && !io.sfence.valid && !io.dcacheFlushReq &&
-            !io.frontendPhtUpdate.valid && !io.frontendGhrUpdate.valid &&
-            !io.frontendBtbUpdate.valid,
-            "[BreezeBackend] younger side effect survived WB redirect")
-    }
-    if (useFASE) {
-        val f = io.fase.get
-        val cs = csrFile.io.faseDiagnostic.get
-        f.flightPrivilege := csrFile.io.current_privilege
-        val ev = f.flightEvents
-        ev := 0.U.asTypeOf(ev)
-        val priv = csrFile.io.current_privilege << 16
-        ev(0).valid := csrFile.io.trap.valid || xretRedirect
-        ev(0).words := VecInit(Seq(
-            priv | Cat(csrFile.io.mret_commit, csrFile.io.sret_commit,
-                csrFile.io.trap.is_interrupt, csrFile.io.trap.valid),
-            Mux(csrFile.io.trap.valid, csrFile.io.trap.pc, memWbReg.pc),
-            Mux(csrFile.io.trap.valid, csrFile.io.trap_target, csrFile.io.xret_target),
-            csrFile.io.trap.cause, csrFile.io.trap.tval, cs(1), cs(2)))
-        ev(1).valid := io.frontendRedirect.valid
-        ev(1).words := VecInit(Seq(
-            priv | Cat(redirectNeeded, wfiCommit, exceptionRedirect, interruptRedirect,
-                xretRedirect, satpCommit, sfenceExecute, fenceiFlush),
-            memWbReg.pc, io.frontendRedirect.target, idExeReg.pc,
-            exeNextPc, csrFile.io.xret_target, csrFile.io.trap_target))
-        ev(2).valid := csrFile.io.commit_valid && csrFile.io.commit_write_en
-        ev(2).words := VecInit(Seq(priv | csrFile.io.commit_addr,
-            memWbReg.pc, csrFile.io.commit_wdata, cs(1), cs(2), cs(6), cs(3)))
-        ev(3).valid := retireValid
-        ev(3).words := VecInit(Seq(priv | (regFile.io.rd_addr << 1) | regFile.io.rd_en,
-            memWbReg.pc, memWbReg.inst, memWbReg.nextPc, wbData, cs(1), cs(2)))
-        csrFile.io.faseEnter.get := f.enter
-        f.empty := pipelineEmpty && !fenceiPending
-        f.retired := retireValid
-        f.fault := exceptionRedirect
-        f.cause := mcauseVal
-        f.tval := mtvalVal
-        f.nextPc := architecturalNextPc
-        f.regRdata := regFile.io.rs1_data
-        // An empty pipeline can accept an injected instruction this cycle.
-        // Its decode operands must win over the host's diagnostic read index.
-        when(f.active && f.empty && !decodeValid) {
-            regFile.io.rs1_addr := f.regIndex
-            when(f.regWrite) {
-                regFile.io.rd_addr := f.regIndex
-                regFile.io.rd_data := f.regWdata
-                regFile.io.rd_en := true.B
-            }
-        }
-        assert(!f.enter || f.empty, "FASE entered before backend drained")
-        assert(!f.regWrite || (f.active && f.empty), "FASE register write while running")
-        f.diagnostic := VecInit(Seq(
-            architecturalNextPc, idExeReg.pc, exeMemReg.pc, memWbReg.pc,
-            Cat(fenceiPending, wfiSleepingReg, fpWaitingRespReg, divWaitingRespReg,
-                mulWaitingRespReg, memWaitingRespReg, memWbReg.valid, exeMemReg.valid, idExeReg.valid),
-            exeMemReg.data, idExeReg.inst, exeMemReg.inst,
-            memWbReg.inst, io.dmem.req.addr, io.dmem.req.valid.asUInt,
-            io.dmem.rsp.valid.asUInt, mcauseVal, mtvalVal,
-            exceptionRedirect.asUInt, retireValid.asUInt) ++ csrFile.io.faseDiagnostic.get.toSeq)
-    }
-    io.estop := estopCommitted
-    io.tandem.zip(memWbReg.trace).foreach { case (tandem, trace) =>
-        tandem := trace
-    }
-
-    io.debug.foreach { debug =>
-        debug.decodeValid := decodeValid
-        debug.decodeInst := decodeInst
-        debug.decodePc := decodePc
-        debug.idExeValid := idExeReg.valid
-        debug.idExeInst := idExeReg.inst
-        debug.idExePc := idExeReg.pc
-        debug.idExeRs1Addr := idExeReg.rs1_addr
-        debug.idExeRs2Addr := idExeReg.rs2_addr
-        debug.idExeSrc1 := idExeReg.src1
-        debug.idExeSrc2 := idExeReg.src2
-        debug.exeSrc1 := exeSrc1
-        debug.exeSrc2 := exeSrc2
-        debug.exeAluOut := alu.io.alu_out
-        debug.exeBruTaken := bru.io.take_branch
-        debug.exeJumpAddr := jau.io.jmp_addr
-        debug.exeMemValid := exeMemReg.valid
-        debug.exeMemPc := exeMemReg.pc
-        debug.exeMemData := exeMemReg.data
-        debug.exeMemRdAddr := exeMemReg.rd_addr
-        debug.memWaitingResp := memWaitingRespReg
-        debug.memWbValid := memWbReg.valid
-        debug.memWbPc := memWbReg.pc
-        debug.memWbInst := memWbReg.inst
-        debug.wbData := wbData
-        debug.exeBypassRs1 := exeRs1Data
-        debug.exeBypassRs2 := exeRs2Data
-        debug.loadUseHazard := loadUseHazard
-        debug.redirectValid := frontendRedirectNeeded
-        debug.csrMtvec       := csrFile.io.mtvec
-        debug.csrMcause      := csrFile.io.debug.get.mcause
-        debug.csrMepc        := csrFile.io.debug.get.mepc
-        debug.memWbException := memWbReg.instruction_access_fault ||
-            memWbReg.instruction_page_fault || memWbReg.illegal_inst
-        debug.memWbTrapValid := wbTrap || interruptRedirect
-        debug.memWbIsEcall := memWbReg.is_ecall
-        debug.memWbIsMret := memWbReg.is_mret
-        debug.memWbIsWfi := memWbReg.is_wfi
-        debug.wfiSleeping := wfiSleepingReg
-        debug.csrIllegal := csrFile.io.csr_illegal
-    }
+  io.observe := 0.U.asTypeOf(io.observe)
+  io.observe.idLeave := idLeave
+  io.observe.exFire := ex.valid && exAdvance
+  io.observe.exPc := ex.pc
+  io.observe.commit := wbCommit
+  io.observe.commitPc := wb.pc
+  io.observe.gprWrite := writeback.io.gprWrite
+  io.observe.fprWrite := writeback.io.fprWrite
+  io.observe.gprBusy := scoreboard.io.gprBusy
+  io.observe.fprBusy := scoreboard.io.fprBusy
+  io.observe.memHold := downHold
+  io.observe.exHold := downHold || resourceWait
+  io.observe.grant := writeback.io.grant
+  io.observe.fpIn := fpUnit.io.req.fire
+  io.observe.fpOut := fpUnit.io.result.fire
+  io.observe.fpFlags := writeback.io.fpFlags
+  io.observe.mulIn := mulUnit.io.req.fire
+  io.observe.divIn := divUnit.io.req.fire
+  io.observe.divIterating := divUnit.iterating
+  io.observe.translationBlocked := io.translationBlocked
+  io.tandem.foreach { t =>
+    t := 0.U.asTypeOf(t)
+    t.valid := wbCommit
+    t.pc := wb.pc; t.inst := wb.rawInst; t.nextPc := wb.nextPc
+    t.estop := wb.estop
+    t.rdWriteEn := wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U
+    t.rdAddr := wb.rd.idx; t.rdData := wbData
+    t.memEn := wb.mem; t.memAddr := wb.address
+    t.memAlignedAddr := wb.address & "hfffffffffffffff8".U
+    t.memIsWrite := wb.mem && !wb.load
+    t.memRData := Mux(wbDone, wbData, 0.U)
+    t.memWData := wb.storeData
+  }
+  io.debug.foreach { d =>
+    d := 0.U.asTypeOf(d)
+    d.decodeValid := io.fetchBuffer.valid; d.decodeInst := inst; d.decodePc := io.fetchBuffer.bits.pc
+    d.idExeValid := ex.valid; d.idExeInst := ex.inst; d.idExePc := ex.pc
+    d.idExeRs1Addr := ex.rs1_addr; d.idExeRs2Addr := ex.rs2_addr
+    d.idExeSrc1 := ex.rs1_data; d.idExeSrc2 := ex.rs2_data
+    d.exeSrc1 := alu.io.alu_in1; d.exeSrc2 := alu.io.alu_in2
+    d.exeAluOut := alu.io.alu_out; d.exeBruTaken := bru.io.take_branch; d.exeJumpAddr := jau.io.jmp_addr
+    d.exeMemValid := mem.valid; d.exeMemPc := mem.pc; d.exeMemData := mem.data; d.exeMemRdAddr := mem.rd.idx
+    d.memWaitingResp := io.l1d.s2Hold
+    d.memWbValid := wbCommit; d.memWbPc := wb.pc; d.memWbInst := wb.inst; d.wbData := wbData
+    d.exeBypassRs1 := exR1; d.exeBypassRs2 := exR2
+    d.loadUseHazard := io.backendEvents.loadUseStall
+    d.redirectValid := io.frontendRedirect.valid
+    d.csrMtvec := csrFile.io.mtvec; d.csrMcause := csrFile.io.debug.get.mcause; d.csrMepc := csrFile.io.debug.get.mepc
+    d.memWbException := wbExc; d.memWbTrapValid := csrFile.io.trap.valid
+    d.memWbIsEcall := wb.inst === "h00000073".U; d.memWbIsMret := wb.mret; d.memWbIsWfi := wb.wfi
+    d.wfiSleeping := sleeping; d.csrIllegal := csrFile.io.csr_illegal
+  }
+  when(!reset.asBool) {
+    assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[V1 S15] L1D resp is not aligned to WB")
+    assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[V1 S15] simultaneous hold and decision")
+    assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[V1 stall direction] MEM memory held without s2Hold")
+    assert(!serialWait || (!ex.valid && !mem.valid), "[V1 stall direction] serial wait with younger pipeline entries")
+    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[V1 S13] younger request survived WB kill")
+    assert(!downHold || !wbCommit, "[V1 S09] held WB retired")
+    assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[V1 S15] memory retired without S2 decision")
+  }
 }

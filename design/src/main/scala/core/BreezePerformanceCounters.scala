@@ -10,7 +10,7 @@ import flow.interface._
   */
 class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Module {
     require(numHpm > 0 && numHpm <= 29)
-    private val eventWidth = log2Ceil(BREEZE_HPM_EVENT.LOAD_USE_STALL + 1)
+    private val eventWidth = log2Ceil(BREEZE_HPM_EVENT.WB_PORT_CONFLICT + 1)
     val io = IO(new Bundle {
         // Already qualified by commit_valid, write_en, and absence of a trap.
         val write = Input(Bool())
@@ -32,7 +32,7 @@ class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Mod
     val inhibit = RegInit(0.U(32.W))
     val counters = RegInit(VecInit(Seq.fill(numHpm)(0.U(xlen.W))))
     val selectors = RegInit(VecInit(Seq.fill(numHpm)(0.U(eventWidth.W))))
-    val pending = RegInit(VecInit(Seq.fill(numHpm)(false.B)))
+    val pending = RegInit(VecInit(Seq.fill(numHpm)(0.U(2.W))))
 
     def writes(address: Int): Bool = io.write && io.address === address.U(12.W)
     when(io.retire) { coreinst := coreinst + 1.U }
@@ -48,7 +48,7 @@ class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Mod
 
     // Validate the FULL software value before truncating. For example, 0x101
     // must still select NONE, not event 1.
-    val legalSelector = Mux(io.data <= BREEZE_HPM_EVENT.LOAD_USE_STALL.U,
+    val legalSelector = Mux(io.data <= BREEZE_HPM_EVENT.WB_PORT_CONFLICT.U,
         io.data(eventWidth - 1, 0), 0.U(eventWidth.W))
     val eventTable = Seq(
         BREEZE_HPM_EVENT.CONTROL_RETIRED -> io.events.controlRetired,
@@ -60,23 +60,26 @@ class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Mod
         BREEZE_HPM_EVENT.DCACHE_MISS -> io.events.dcacheMiss,
         BREEZE_HPM_EVENT.DCACHE_UNCACHED -> io.events.dcacheUncached,
         BREEZE_HPM_EVENT.MEM_STALL_CYCLE -> io.events.memStallCycle,
-        BREEZE_HPM_EVENT.LOAD_USE_STALL -> io.events.loadUseStall
+        BREEZE_HPM_EVENT.LOAD_USE_STALL -> io.events.loadUseStall,
+        BREEZE_HPM_EVENT.MUL_SOURCE_STALL -> io.events.mulSourceStall,
+        BREEZE_HPM_EVENT.DIV_SOURCE_STALL -> io.events.divSourceStall,
+        BREEZE_HPM_EVENT.WB_PORT_CONFLICT -> io.events.wbPortConflict
     )
     for (index <- 0 until numHpm) {
         when(writes(CSRMAP.mhpmevent3 + index)) { selectors(index) := legalSelector }
         val selectedEvent = Mux1H(eventTable.map { case (id, event) =>
-            (selectors(index) === id.U(eventWidth.W)) -> event
+            (selectors(index) === id.U(eventWidth.W)) -> event.asUInt
         })
-        val visible = counters(index) + pending(index).asUInt
+        val visible = counters(index) + pending(index)
         io.counter(index) := visible
         when(writes(CSRMAP.mhpmcounter3 + index)) {
             counters(index) := io.data
-            pending(index) := false.B
+            pending(index) := 0.U
         }.otherwise {
             counters(index) := visible
             // Capture the decision using the OLD selector/inhibit on a CSR
             // configuration write, exactly as the unpipelined counter did.
-            pending(index) := !inhibit(index + 3) && selectedEvent
+            pending(index) := Mux(!inhibit(index + 3), selectedEvent, 0.U)
         }
     }
     io.coreinst := coreinst

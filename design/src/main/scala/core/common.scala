@@ -346,6 +346,9 @@ object BREEZE_HPM_EVENT {
    val DCACHE_UNCACHED  = 8
    val MEM_STALL_CYCLE  = 9
    val LOAD_USE_STALL   = 10
+   val MUL_SOURCE_STALL = 11
+   val DIV_SOURCE_STALL = 12
+   val WB_PORT_CONFLICT = 13
 }
 
 object SIM_SYSTEM {

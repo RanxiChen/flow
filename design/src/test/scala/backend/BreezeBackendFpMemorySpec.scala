@@ -9,7 +9,7 @@ import org.scalatest.matchers.must.Matchers
 class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   import BreezeBackendFpTestUtils._
 
-  private def waitForRequest(dut: BreezeBackend): Unit = {
+  private def waitForRequest(dut: V1LegacyTestAdapter): Unit = {
     var cycles = 0
     while (!dut.io.dmem.req.valid.peek().litToBoolean && cycles < 200) {
       dut.clock.step(1)
@@ -18,7 +18,7 @@ class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpC
     dut.io.dmem.req.valid.expect(true.B)
   }
 
-  private def respond(dut: BreezeBackend, data: BigInt, writeAck: Boolean): Unit = {
+  private def respond(dut: V1LegacyTestAdapter, data: BigInt, writeAck: Boolean): Unit = {
     // First clock accepts the request and sets memWaitingRespReg.
     dut.clock.step(1)
     dut.io.dmem.rsp.valid.poke(true.B)
@@ -30,7 +30,7 @@ class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpC
   }
 
   "load/store FP values with correct width, boxing and byte mask" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(2)
@@ -73,7 +73,7 @@ class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpC
 
   "honor a back-to-back sstatus FS enable before FLD" in {
     val cfg = BackendConfig(privilegeProfile = PrivilegeProfile.Linux)
-    simulate(new BreezeBackend(cfg, enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(2)
@@ -108,7 +108,7 @@ class BreezeBackendFpMemorySpec extends AnyFreeSpec with Matchers with BreezeFpC
   }
 
   "trap a misaligned FP64 load without issuing a memory request" in {
-    simulate(new BreezeBackend(BackendConfig(), enabledebug = true)) { dut =>
+    simulate(new V1LegacyTestAdapter(BackendConfig(), enabledebug = true)) { dut =>
       driveIdle(dut)
       dut.reset.poke(true.B)
       dut.clock.step(2)

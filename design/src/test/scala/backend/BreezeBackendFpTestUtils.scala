@@ -44,7 +44,7 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
       (BigInt(rs1) << 15) | (BigInt(if (isDouble) 3 else 2) << 12) |
       (BigInt(imm & 0x1f) << 7) | BigInt(0x27)
 
-  def driveIdle(dut: BreezeBackend): Unit = {
+  def driveIdle(dut: V1LegacyTestAdapter): Unit = {
     dut.io.resetAddr.poke(0.U)
     dut.io.machineTimerInterrupt.poke(false.B)
     dut.io.externalInterrupts.poke(0.U)
@@ -74,7 +74,7 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
     dut.io.hpmEvents.loadUseStall.poke(false.B)
   }
 
-  def issue(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+  def issue(dut: V1LegacyTestAdapter, pc: BigInt, inst: BigInt): Unit = {
     dut.io.fetchBuffer.valid.poke(true.B)
     dut.io.fetchBuffer.bits.pc.poke(pc.U)
     dut.io.fetchBuffer.bits.inst.poke(inst.U)
@@ -90,7 +90,7 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
     dut.io.fetchBuffer.valid.poke(false.B)
   }
 
-  def waitForWb(dut: BreezeBackend, inst: BigInt, limit: Int = 2000): BigInt = {
+  def waitForWb(dut: V1LegacyTestAdapter, inst: BigInt, limit: Int = 2000): BigInt = {
     var cycles = 0
     while (cycles < limit) {
       if (dut.io.debug.get.memWbValid.peek().litToBoolean &&
@@ -105,7 +105,7 @@ private[backend] object BreezeBackendFpTestUtils extends PeekPokeAPI {
     fail(s"instruction 0x${inst.toString(16)} did not reach WB")
   }
 
-  def enableFp(dut: BreezeBackend, nextPc: () => BigInt): Unit = {
+  def enableFp(dut: V1LegacyTestAdapter, nextPc: () => BigInt): Unit = {
     val one = encodeAddi(30, 0, 1)
     val fsInitial = encodeSlli(30, 30, 13)
     val setMstatus = encodeCsr(2, 0, 0x300, 30) // CSRRS x0,mstatus,x30

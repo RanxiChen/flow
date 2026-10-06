@@ -40,7 +40,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         BigInt(0x67)
     }
 
-    private def driveIdleInputs(dut: BreezeBackend): Unit = {
+    private def driveIdleInputs(dut: V1LegacyTestAdapter): Unit = {
         dut.io.resetAddr.poke(0.U)
         dut.io.machineTimerInterrupt.poke(false.B)
         dut.io.machineSoftwareInterrupt.poke(false.B)
@@ -80,7 +80,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.hpmEvents.loadUseStall.poke(false.B)
     }
 
-    private def reset(dut: BreezeBackend): Unit = {
+    private def reset(dut: V1LegacyTestAdapter): Unit = {
         driveIdleInputs(dut)
         dut.reset.poke(true.B)
         dut.clock.step(1)
@@ -88,7 +88,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
     }
 
     private def issueBranch(
-        dut: BreezeBackend,
+        dut: V1LegacyTestAdapter,
         pc: BigInt,
         inst: BigInt,
         predTaken: Boolean,
@@ -109,7 +109,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.fetchBuffer.valid.poke(false.B)
     }
 
-    private def issueInstruction(dut: BreezeBackend, pc: BigInt, inst: BigInt): Unit = {
+    private def issueInstruction(dut: V1LegacyTestAdapter, pc: BigInt, inst: BigInt): Unit = {
         dut.io.fetchBuffer.valid.poke(true.B)
         dut.io.fetchBuffer.bits.pc.poke(pc.U)
         dut.io.fetchBuffer.bits.inst.poke(inst.U)
@@ -124,14 +124,14 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
         dut.io.fetchBuffer.valid.poke(false.B)
     }
 
-    private def writeCsr(d: BreezeBackend, address: Int, value: Int): Unit = {
+    private def writeCsr(d: V1LegacyTestAdapter, address: Int, value: Int): Unit = {
         issueInstruction(d, 0x40, encodeAddi(1, 0, value)); d.clock.step(4)
         issueInstruction(d, 0x44, (BigInt(address) << 20) | (1 << 15) | 0x1073)
         d.clock.step(4)
     }
 
     "WB store fault beats younger branch, memory, sfence and fence side effects" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { d =>
             for (younger <- Seq("branch", "store", "sfence", "fence")) {
                 reset(d); writeCsr(d, 0x305, 0x400)
                 val pc = BigInt("3fbed9498e", 16)
@@ -174,7 +174,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
     }
 
     "WB mret beats a simultaneous EX branch and satp blocks younger issue" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { d =>
             for (ret <- Seq(true, false)) {
                 reset(d); writeCsr(d, 0x341, 0x600)
                 // Preserve M mode on mret so this test isolates target arbitration.
@@ -212,7 +212,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
     }
 
     "overlapping fetch fault flags select one cause rather than OR causes" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { d =>
             reset(d)
             d.io.fetchBuffer.bits.pc.poke(0x180.U)
             d.io.fetchBuffer.bits.inst.poke(0.U)
@@ -227,7 +227,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
     }
 
     "keep EPC at the instruction start but report a fault on its second parcel" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { d =>
             reset(d)
             d.io.fetchBuffer.bits.pc.poke(0x1ffe.U)
             d.io.fetchBuffer.bits.instructionPageFault.poke(true.B)
@@ -245,7 +245,7 @@ class BreezeRedirectPrioritySpec extends AnyFreeSpec with Matchers with BreezeFp
     }
 
     "forward a CSR result to the following SC store operand" in {
-        simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
+        simulate(new V1LegacyTestAdapter(cfg, enabledebug = true)) { d =>
             reset(d)
             writeCsr(d, 0x340, 0x55)
             issueInstruction(d, 0x100, BigInt("34002173", 16)) // csrr x2,mscratch
