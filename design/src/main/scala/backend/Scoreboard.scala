@@ -4,17 +4,17 @@ import chisel3._
 import chisel3.util._
 import flow.interface.L1DDestination
 
-object V1LongSource {
+object LongSource {
   val L1D = 0
   val DIV = 1
   val MUL = 2
   val FPU = 3
 }
-class V1Producer extends Bundle {
+class Producer extends Bundle {
   val rd = new L1DDestination
   val source = UInt(2.W)
 }
-class V1Operand extends Bundle {
+class Operand extends Bundle {
   val used = Bool()
   val rd = new L1DDestination
 }
@@ -22,12 +22,12 @@ class V1Operand extends Bundle {
 /** WB sets, actual completion clears; kill has no scoreboard write enable.
   * The caller supplies only genuinely issued EX/MEM/WB producers.
   */
-class V1Scoreboard extends Module {
+class Scoreboard extends Module {
   val io = IO(new Bundle {
-    val set = Flipped(Valid(new V1Producer))
+    val set = Flipped(Valid(new Producer))
     val clear = Flipped(Valid(new L1DDestination))
-    val pipe = Input(Vec(3, Valid(new V1Producer)))
-    val operands = Input(Vec(4, new V1Operand)) // real sources + destination (WAW)
+    val pipe = Input(Vec(3, Valid(new Producer)))
+    val operands = Input(Vec(4, new Operand)) // real sources + destination (WAW)
     val idValid = Input(Bool())
     val idLeave = Input(Bool())
     val csr = Input(Bool())
@@ -78,16 +78,16 @@ class V1Scoreboard extends Module {
   io.hazard := matches.reduce(_ || _) || (io.csr && !io.csrDrainOk)
   for (src <- 0 until 4) {
     io.sourceStall(src) := io.idValid && !io.idLeave &&
-      (matches(src) || (io.csr && (csrSources(src) || ((src == V1LongSource.FPU).B && io.fpFlagsPending))))
+      (matches(src) || (io.csr && (csrSources(src) || ((src == LongSource.FPU).B && io.fpFlagsPending))))
   }
   io.gprBusy := gprBusy
   io.fprBusy := fprBusy
   when(!reset.asBool) {
-    assert(!gprBusy(0), "[V1 S01] x0 busy")
-    assert(!(gSet & gClear).orR && !(fSet & fClear).orR, "[V1 S10] same rd set and clear")
-    assert(!(gSet & gprBusy).orR && !(fSet & fprBusy).orR, "[V1 S01] duplicate outstanding rd")
+    assert(!gprBusy(0), "[S01] x0 busy")
+    assert(!(gSet & gClear).orR && !(fSet & fClear).orR, "[S10] same rd set and clear")
+    assert(!(gSet & gprBusy).orR && !(fSet & fprBusy).orR, "[S01] duplicate outstanding rd")
     assert((gClear & ~gprBusy) === 0.U && (fClear & ~fprBusy) === 0.U,
-      "[V1 S08] completion without committed pending destination")
-    assert(!io.idLeave || !io.hazard, "[V1 S03/S14] ID left with dependency or CSR drain hazard")
+      "[S08] completion without committed pending destination")
+    assert(!io.idLeave || !io.hazard, "[S03/S14] ID left with dependency or CSR drain hazard")
   }
 }

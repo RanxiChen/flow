@@ -5,8 +5,8 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private def idle(d: V1Scoreboard): Unit = {
+class ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
+  private def idle(d: Scoreboard): Unit = {
     d.io.set.valid.poke(false.B); d.io.set.bits.rd.idx.poke(0.U)
     d.io.set.bits.rd.isFp.poke(false.B); d.io.set.bits.source.poke(0.U)
     d.io.clear.valid.poke(false.B); d.io.clear.bits.idx.poke(0.U); d.io.clear.bits.isFp.poke(false.B)
@@ -19,7 +19,7 @@ class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
     for (o <- d.io.operands) { o.used.poke(false.B); o.rd.idx.poke(0.U); o.rd.isFp.poke(false.B) }
   }
   "S01_S02_S03_S08_S10: all four sources, f0, cross-bank RAW/WAW and actual-write release" in {
-    simulate(new V1Scoreboard) { d =>
+    simulate(new Scoreboard) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       for (source <- 0 until 4; fp <- Seq(false, true)) {
         val rd = if (fp) 0 else source + 1
@@ -53,21 +53,21 @@ class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
   "T17_component_S14_S16: CSR uses current busy and waits one cycle beyond final write" in {
-    simulate(new V1Scoreboard) { d =>
+    simulate(new Scoreboard) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.csr.poke(true.B)
       for (source <- 0 until 4) {
         d.io.pipe(2).valid.poke(true.B); d.io.pipe(2).bits.source.poke(source.U)
-        d.io.pipe(2).bits.rd.isFp.poke((source == V1LongSource.FPU).B)
+        d.io.pipe(2).bits.rd.isFp.poke((source == LongSource.FPU).B)
         d.io.pipe(2).bits.rd.idx.poke(1.U)
         d.io.csrDrainOk.expect(false.B); d.io.sourceStall(source).expect(true.B)
         d.io.set.valid.poke(true.B)
         d.io.set.bits.source.poke(source.U); d.io.set.bits.rd.idx.poke(1.U)
-        d.io.set.bits.rd.isFp.poke((source == V1LongSource.FPU).B); d.clock.step()
+        d.io.set.bits.rd.isFp.poke((source == LongSource.FPU).B); d.clock.step()
         d.io.set.valid.poke(false.B); d.io.pipe(2).valid.poke(false.B)
         d.io.csrDrainOk.expect(false.B)
         d.io.clear.valid.poke(true.B); d.io.clear.bits.idx.poke(1.U)
-        d.io.clear.bits.isFp.poke((source == V1LongSource.FPU).B)
+        d.io.clear.bits.isFp.poke((source == LongSource.FPU).B)
         d.io.csrDrainOk.expect(false.B); d.io.hazard.expect(true.B)
         d.clock.step(); d.io.clear.valid.poke(false.B)
         d.io.csrDrainOk.expect(true.B); d.io.hazard.expect(false.B)
@@ -75,14 +75,14 @@ class V1ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
   "S01_S14: FP-to-x0 flags keep CSR draining without making x0 busy" in {
-    simulate(new V1Scoreboard) { d =>
+    simulate(new Scoreboard) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.csr.poke(true.B); d.io.fpFlagsPending.poke(true.B)
       d.io.gprBusy.expect(0.U); d.io.fprBusy.expect(0.U)
-      d.io.csrDrainOk.expect(false.B); d.io.sourceStall(V1LongSource.FPU).expect(true.B)
+      d.io.csrDrainOk.expect(false.B); d.io.sourceStall(LongSource.FPU).expect(true.B)
       d.clock.step(4); d.io.csrDrainOk.expect(false.B)
       d.io.fpFlagsPending.poke(false.B)
-      d.io.csrDrainOk.expect(true.B); d.io.sourceStall(V1LongSource.FPU).expect(false.B)
+      d.io.csrDrainOk.expect(true.B); d.io.sourceStall(LongSource.FPU).expect(false.B)
     }
   }
 }

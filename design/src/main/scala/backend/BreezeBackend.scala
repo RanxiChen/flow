@@ -11,7 +11,7 @@ import flow.fpu._
 import flow.platform.BreezeMcuPlatform
 
 /** Metadata for MEM/WB, not a completion queue. Arithmetic stays in its source. */
-class V1Stage(val cfg: BackendConfig) extends Bundle {
+class Stage(val cfg: BackendConfig) extends Bundle {
   val valid = Bool()
   val pc = UInt(64.W)
   val nextPc = UInt(64.W)
@@ -80,7 +80,7 @@ class BreezeBackend(
     val estop = Output(Bool())
     val tandem = if (cfg.enableTandem) Some(Output(new TracePayload(64))) else None
     val debug = if (enabledebug) Some(new BackendDebugIO(64)) else None
-    val observe = Output(new V1BackendObservation)
+    val observe = Output(new BackendObservation)
   })
   val decoder = Module(new Decoder)
   val fpDecoder = Module(new BreezeFpDecoder)
@@ -89,8 +89,8 @@ class BreezeBackend(
   val fpRegFile = Module(new BreezeFpRegFile)
   val csrFile = Module(new CSRFile(64, enabledebug = enabledebug, hartId = hartId,
     privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
-  val scoreboard = Module(new V1Scoreboard)
-  val writeback = Module(new V1Writeback)
+  val scoreboard = Module(new Scoreboard)
+  val writeback = Module(new Writeback)
   val mulUnit = Module(new CommittedMulUnit)
   val divUnit = Module(new CommittedDivUnit)
   val fpUnit = Module(new CommittedFpUnit)
@@ -100,8 +100,8 @@ class BreezeBackend(
   val ex = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(64, cfg.ghrLength)))
   val exFp = RegInit(0.U.asTypeOf(new BreezeFpCtrl))
   val exFpr = RegInit(VecInit(Seq.fill(3)(0.U(64.W))))
-  val mem = RegInit(0.U.asTypeOf(new V1Stage(cfg)))
-  val wb = RegInit(0.U.asTypeOf(new V1Stage(cfg)))
+  val mem = RegInit(0.U.asTypeOf(new Stage(cfg)))
+  val wb = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val sleeping = RegInit(false.B)
   val stopped = RegInit(false.B)
   val sfenceSent = RegInit(false.B)
@@ -194,8 +194,8 @@ class BreezeBackend(
   fpRegFile.io.rdData := writeback.io.fprWrite.bits.data
   scoreboard.io.set.valid := wbCommit && wbLong && wb.writes
   scoreboard.io.set.bits.rd := wb.rd
-  scoreboard.io.set.bits.source := Mux(wb.mem, V1LongSource.L1D.U,
-    Mux(wb.div, V1LongSource.DIV.U, Mux(wb.mul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+  scoreboard.io.set.bits.source := Mux(wb.mem, LongSource.L1D.U,
+    Mux(wb.div, LongSource.DIV.U, Mux(wb.mul, LongSource.MUL.U, LongSource.FPU.U)))
   scoreboard.io.clear := writeback.io.clear
   scoreboard.io.csr := idCsr
   scoreboard.io.idValid := io.fetchBuffer.valid
@@ -214,16 +214,16 @@ class BreezeBackend(
     scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem) &&
       (index != 2).B || ((index == 2).B && wb.valid && (wb.mul || wb.div || wb.fp || (wb.mem && !wbDone)))
     scoreboard.io.pipe(index).bits.rd := stage.rd
-    scoreboard.io.pipe(index).bits.source := Mux(stage.mem, V1LongSource.L1D.U,
-      Mux(stage.div, V1LongSource.DIV.U, Mux(stage.mul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+    scoreboard.io.pipe(index).bits.source := Mux(stage.mem, LongSource.L1D.U,
+      Mux(stage.div, LongSource.DIV.U, Mux(stage.mul, LongSource.MUL.U, LongSource.FPU.U)))
     // CSR must wait even for a store/Fence or an FP-to-x0 producer.
     when(!stage.writes) { scoreboard.io.pipe(index).bits.rd.idx := 0.U }
   }
   scoreboard.io.pipe(0).valid := exMul || exDiv || exFpLong || exMem
   scoreboard.io.pipe(0).bits.rd.idx := Mux(exWrites, ex.rd_addr, 0.U)
   scoreboard.io.pipe(0).bits.rd.isFp := exBank
-  scoreboard.io.pipe(0).bits.source := Mux(exMem, V1LongSource.L1D.U,
-    Mux(exDiv, V1LongSource.DIV.U, Mux(exMul, V1LongSource.MUL.U, V1LongSource.FPU.U)))
+  scoreboard.io.pipe(0).bits.source := Mux(exMem, LongSource.L1D.U,
+    Mux(exDiv, LongSource.DIV.U, Mux(exMul, LongSource.MUL.U, LongSource.FPU.U)))
   // Optional hit bypass relaxes only the MEM Load RAW check. WAW still waits.
   if (cfg.loadUseBypass) {
     val waw = idWrites && idBank === mem.rd.isFp && rd === mem.rd.idx
@@ -544,9 +544,9 @@ class BreezeBackend(
   io.backendEvents.controlTaken := io.backendEvents.controlRetired && wb.nextPc =/= wb.pc + wb.instLen
   io.backendEvents.predictionMiss := io.backendEvents.controlRetired && wb.predictionMiss
   io.backendEvents.memStallCycle := io.l1d.s2Hold
-  io.backendEvents.loadUseStall := io.fetchBuffer.valid && !idLeave && scoreboard.io.sourceStall(V1LongSource.L1D)
-  io.backendEvents.mulSourceStall := scoreboard.io.sourceStall(V1LongSource.MUL)
-  io.backendEvents.divSourceStall := scoreboard.io.sourceStall(V1LongSource.DIV)
+  io.backendEvents.loadUseStall := io.fetchBuffer.valid && !idLeave && scoreboard.io.sourceStall(LongSource.L1D)
+  io.backendEvents.mulSourceStall := scoreboard.io.sourceStall(LongSource.MUL)
+  io.backendEvents.divSourceStall := scoreboard.io.sourceStall(LongSource.DIV)
   io.backendEvents.wbPortConflict := writeback.io.conflict
   csrFile.io.hpmEvents := io.backendEvents
 
@@ -616,14 +616,14 @@ class BreezeBackend(
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
     when(!reset.asBool) {
-      when(idLeave) { printf(cf"[V1-CYCLE] c=${cycle} kind=id pc=0x${io.fetchBuffer.bits.pc}%x inst=0x${inst}%x\n") }
-      when(ex.valid && exAdvance) { printf(cf"[V1-CYCLE] c=${cycle} kind=ex pc=0x${ex.pc}%x\n") }
-      when(wbCommit) { printf(cf"[V1-CYCLE] c=${cycle} kind=commit pc=0x${wb.pc}%x inst=0x${wb.inst}%x\n") }
-      when(fpUnit.io.req.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpIn pc=0x${ex.pc}%x rd=${ex.rd_addr}\n") }
-      when(fpUnit.io.result.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpOut fp=${fpUnit.io.result.bits.rd.isFp} rd=${fpUnit.io.result.bits.rd.idx}\n") }
-      when(writeback.io.gprWrite.valid) { printf(cf"[V1-CYCLE] c=${cycle} kind=gpr rd=${writeback.io.gprWrite.bits.idx} data=0x${writeback.io.gprWrite.bits.data}%x\n") }
-      when(writeback.io.fprWrite.valid) { printf(cf"[V1-CYCLE] c=${cycle} kind=fpr rd=${writeback.io.fprWrite.bits.idx} data=0x${writeback.io.fprWrite.bits.data}%x\n") }
-      when(io.l1d.late.fire) { printf(cf"[V1-CYCLE] c=${cycle} kind=late rd=${io.l1d.late.bits.rd.idx} error=${io.l1d.late.bits.error}\n") }
+      when(idLeave) { printf(cf"[CYCLE] c=${cycle} kind=id pc=0x${io.fetchBuffer.bits.pc}%x inst=0x${inst}%x\n") }
+      when(ex.valid && exAdvance) { printf(cf"[CYCLE] c=${cycle} kind=ex pc=0x${ex.pc}%x\n") }
+      when(wbCommit) { printf(cf"[CYCLE] c=${cycle} kind=commit pc=0x${wb.pc}%x inst=0x${wb.inst}%x\n") }
+      when(fpUnit.io.req.fire) { printf(cf"[CYCLE] c=${cycle} kind=fpIn pc=0x${ex.pc}%x rd=${ex.rd_addr}\n") }
+      when(fpUnit.io.result.fire) { printf(cf"[CYCLE] c=${cycle} kind=fpOut fp=${fpUnit.io.result.bits.rd.isFp} rd=${fpUnit.io.result.bits.rd.idx}\n") }
+      when(writeback.io.gprWrite.valid) { printf(cf"[CYCLE] c=${cycle} kind=gpr rd=${writeback.io.gprWrite.bits.idx} data=0x${writeback.io.gprWrite.bits.data}%x\n") }
+      when(writeback.io.fprWrite.valid) { printf(cf"[CYCLE] c=${cycle} kind=fpr rd=${writeback.io.fprWrite.bits.idx} data=0x${writeback.io.fprWrite.bits.data}%x\n") }
+      when(io.l1d.late.fire) { printf(cf"[CYCLE] c=${cycle} kind=late rd=${io.l1d.late.bits.rd.idx} error=${io.l1d.late.bits.error}\n") }
     }
   }
   val pastDownHold = RegNext(downHold, false.B)
@@ -632,24 +632,24 @@ class BreezeBackend(
   val heldMem = RegNext(mem.asUInt)
   val heldWb = RegNext(wb.asUInt)
   when(pastActive && !reset.asBool && pastDownHold && !pastKill) {
-    assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[V1 S09] held MEM/WB metadata changed")
+    assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
   }
   when(!reset.asBool) {
-    assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[V1 S15] L1D resp is not aligned to WB")
-    assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[V1 S15] simultaneous hold and decision")
-    assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[V1 stall direction] MEM memory held without s2Hold")
-    assert(!serialWait || (!ex.valid && !mem.valid), "[V1 stall direction] serial wait with younger pipeline entries")
-    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[V1 S13] younger request survived WB kill")
+    assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[S15] L1D resp is not aligned to WB")
+    assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
+    assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")
+    assert(!serialWait || (!ex.valid && !mem.valid), "[stall direction] serial wait with younger pipeline entries")
+    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[S13] younger request survived WB kill")
     when(downHold && wb.valid) {
       assert(!(io.frontendBtbUpdate.valid || io.frontendPhtUpdate.valid || io.frontendGhrUpdate.valid ||
         io.frontendRedirect.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
-        csrFile.io.mret_commit || csrFile.io.sret_commit), "[V1 S09] control side effect while WB held")
+        csrFile.io.mret_commit || csrFile.io.sret_commit), "[S09] control side effect while WB held")
       // S09 explicitly permits requests with their own one-shot state (A08/B01).
       // SFENCE must request while WB waits, then wait for the subsequent idle.
       assert(!io.sfence.valid || (wb.sfence && !sfenceSent && io.l1d.drained && io.mmuIdle),
-        "[V1 S09] SFENCE repeated or issued before drain/idle")
+        "[S09] SFENCE repeated or issued before drain/idle")
     }
-    assert(!downHold || !wbCommit, "[V1 S09] held WB retired")
-    assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[V1 S15] memory retired without S2 decision")
+    assert(!downHold || !wbCommit, "[S09] held WB retired")
+    assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[S15] memory retired without S2 decision")
   }
 }

@@ -5,8 +5,8 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class V1WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private def idle(d: V1Writeback): Unit = {
+class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
+  private def idle(d: Writeback): Unit = {
     d.io.late.valid.poke(false.B); d.io.late.bits.rd.idx.poke(1.U)
     d.io.late.bits.rd.isFp.poke(false.B); d.io.late.bits.data.poke(101.U); d.io.late.bits.error.poke(false.B)
     d.io.div.valid.poke(false.B); d.io.div.bits.rd.poke(2.U); d.io.div.bits.data.poke(102.U)
@@ -18,7 +18,7 @@ class V1WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.ordinary.bits.flags.poke(0.U)
   }
   "T12_component_T13_component_S06: fixed priority, four consecutive writes, WB priority without pipeline hold" in {
-    simulate(new V1Writeback) { d =>
+    simulate(new Writeback) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.late.valid.poke(true.B); d.io.div.valid.poke(true.B)
       d.io.mul.valid.poke(true.B); d.io.fp.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
@@ -43,7 +43,7 @@ class V1WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
   "S01_S06_S08: f0 late occupies FPR port, independent GPR write and fatal error" in {
-    simulate(new V1Writeback) { d =>
+    simulate(new Writeback) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.late.valid.poke(true.B); d.io.late.bits.rd.idx.poke(0.U); d.io.late.bits.rd.isFp.poke(true.B)
       d.io.ordinary.valid.poke(true.B)

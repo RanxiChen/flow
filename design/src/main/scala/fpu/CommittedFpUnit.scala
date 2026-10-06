@@ -2,7 +2,7 @@ package flow.fpu
 
 import chisel3._
 import chisel3.util._
-import flow.backend.V1FpResult
+import flow.backend.FpResult
 import flow.interface.L1DDestination
 
 class V1FpRequest extends Bundle {
@@ -34,7 +34,7 @@ class CommittedFpUnit(val depth: Int = 32) extends Module {
     val req = Flipped(Decoupled(new V1FpRequest))
     val commit = Input(Bool())
     val killUncommitted = Input(Bool())
-    val result = Decoupled(new V1FpResult)
+    val result = Decoupled(new FpResult)
     val busy = Output(Bool())
     val committedGpr = Output(UInt(32.W))
     val committedFpr = Output(UInt(32.W))
@@ -111,16 +111,16 @@ class CommittedFpUnit(val depth: Int = 32) extends Module {
     killDrain := true.B
   }
   when(!reset.asBool) {
-    assert(!io.commit || candidates.asUInt.orR, "[V1 S04] FPU commit without live uncommitted item")
-    assert(!(io.req.fire && io.killUncommitted), "[V1 S05] kill did not suppress FP request")
-    assert(!io.result.fire || (returned.valid && returned.committed), "[V1 S05/S08] speculative FP write")
-    assert(io.req.fire === (impl.io.in_valid_i && impl.io.in_ready_o), "[V1 T14] input handshake changed")
+    assert(!io.commit || candidates.asUInt.orR, "[S04] FPU commit without live uncommitted item")
+    assert(!(io.req.fire && io.killUncommitted), "[S05] kill did not suppress FP request")
+    assert(!io.result.fire || (returned.valid && returned.committed), "[S05/S08] speculative FP write")
+    assert(io.req.fire === (impl.io.in_valid_i && impl.io.in_ready_o), "[T14] input handshake changed")
     assert(io.result.fire === (impl.io.out_valid_o && impl.io.out_ready_i && returned.valid),
-      "[V1 T15] output handshake changed")
+      "[T15] output handshake changed")
     for (i <- 0 until depth; j <- i + 1 until depth) {
       assert(!(entries(i).valid && entries(j).valid &&
         entries(i).isFp === entries(j).isFp && entries(i).rd === entries(j).rd &&
-        (entries(i).isFp || entries(i).rd =/= 0.U)), "[V1 S01] duplicate FP destination")
+        (entries(i).isFp || entries(i).rd =/= 0.U)), "[S01] duplicate FP destination")
     }
   }
 }

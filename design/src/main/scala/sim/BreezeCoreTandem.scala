@@ -29,7 +29,7 @@ final case class BreezeCoreSimTandemResult(
 final case class LateRegisterEvent(cycle: Int, isFp: Boolean, rd: Int, data: BigInt, error: Boolean)
 
 /** Protocol accounting only; arithmetic/ISA comparison is a separate task. */
-final class V1PendingTrace {
+final class PendingTrace {
     private val pending = scala.collection.mutable.Set.empty[(Boolean, Int)]
     def commit(event: RawCommitEvent): Unit = {
         val key = (event.rdIsFp, event.rdAddr)

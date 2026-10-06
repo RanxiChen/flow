@@ -4,12 +4,12 @@ import chisel3._
 import chisel3.util._
 import flow.interface.{L1DDestination, L1DLate}
 
-class V1FpResult extends Bundle {
+class FpResult extends Bundle {
   val rd = new L1DDestination
   val data = UInt(64.W)
   val flags = UInt(5.W)
 }
-class V1RegisterWrite extends Bundle {
+class RegisterWrite extends Bundle {
   val idx = UInt(5.W)
   val data = UInt(64.W)
 }
@@ -17,15 +17,15 @@ class V1RegisterWrite extends Bundle {
 /** One background grant, L1D > DIV > MUL > FPU. No result storage.
   * Ordinary WB writes win their bank. Fairness bubbles originate only in ID.
   */
-class V1Writeback extends Module {
+class Writeback extends Module {
   val io = IO(new Bundle {
     val late = Flipped(Decoupled(new L1DLate))
     val div = Flipped(Decoupled(new IntMduResult))
     val mul = Flipped(Decoupled(new IntMduResult))
-    val fp = Flipped(Decoupled(new V1FpResult))
-    val ordinary = Flipped(Valid(new V1FpResult))
-    val gprWrite = Valid(new V1RegisterWrite)
-    val fprWrite = Valid(new V1RegisterWrite)
+    val fp = Flipped(Decoupled(new FpResult))
+    val ordinary = Flipped(Valid(new FpResult))
+    val gprWrite = Valid(new RegisterWrite)
+    val fprWrite = Valid(new RegisterWrite)
     val clear = Valid(new L1DDestination)
     val fpFlags = Valid(UInt(5.W))
     val grant = Output(UInt(4.W))
@@ -93,12 +93,12 @@ class V1Writeback extends Module {
   val wasLateBlocked = RegNext(io.late.valid && !io.late.ready, false.B)
   val heldLate = RegNext(io.late.bits.asUInt)
   when(pastActive && !reset.asBool && wasLateBlocked) {
-    assert(io.late.valid && io.late.bits.asUInt === heldLate, "[V1 S07] stalled late result changed")
+    assert(io.late.valid && io.late.bits.asUInt === heldLate, "[S07] stalled late result changed")
   }
   when(!reset.asBool) {
-    assert(PopCount(selected) <= 1.U, "[V1 S06] background grants not one-hot")
-    assert(!io.gprWrite.valid || io.gprWrite.bits.idx =/= 0.U, "[V1 S01] physical x0 write")
+    assert(PopCount(selected) <= 1.U, "[S06] background grants not one-hot")
+    assert(!io.gprWrite.valid || io.gprWrite.bits.idx =/= 0.U, "[S01] physical x0 write")
     assert(io.clear.valid === (selected.orR && (rd.isFp || rd.idx =/= 0.U)),
-      "[V1 S08] clear must equal actual completion, including fatal late")
+      "[S08] clear must equal actual completion, including fatal late")
   }
 }

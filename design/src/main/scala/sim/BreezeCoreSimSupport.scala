@@ -338,7 +338,7 @@ object BreezeCoreSimRunner extends PeekPokeAPI {
         var result = BreezeCoreSimResult(cycleCount = 0, timedOut = false)
         val commitEvents = mutable.ArrayBuffer.empty[RawCommitEvent]
         val lateEvents = mutable.ArrayBuffer.empty[LateRegisterEvent]
-        val pendingTrace = new V1PendingTrace
+        val pendingTrace = new PendingTrace
 
         implicit val temporary: HasTestingDirectory =
             HasTestingDirectory.temporary(deleteOnExit = true)

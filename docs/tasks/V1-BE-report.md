@@ -7,7 +7,7 @@
 实现起点为用户指定的 `f12d65b44d53f50268eb217ed63b6ea4957c3707`，分支 `feat/pcie-fase-20260920`。已有未跟踪文件和本地报告草稿保留并补全。最后 RTL 实现提交为 `f867297373fe32590f093239431fea13cc041afa`（V1-BE/12）；最终 pull 后的被测提交为 `fe7aef411df6781a415cb126206c0788d25028d0`（P06 合同与测试澄清），RTL 相比 V1-BE/12 未变。最终复验绑定该 SHA，报告提交不替代被测 SHA；本报告以 `V1-BE/13` 单独提交。
 
 - `backend-v1-rtl-spec.md` 按 B01 改写写口、停顿方向、饥饿保护、串行发射、行为 LATE，标注 `[V1-BE-B01-ruling§1]`；ND01/ND02 标注裁定来源。
-- `V1Writeback` 普通 WB 写优先；过滤被普通写占用的 bank 后，后台全局单 grant 按 L1D > DIV > MUL > FPU。每 bank 有 2-bit 饱和计数和在途气泡标记，ID 只读寄存器，不依赖当拍 grant。
+- `Writeback` 普通 WB 写优先；过滤被普通写占用的 bank 后，后台全局单 grant 按 L1D > DIV > MUL > FPU。每 bank 有 2-bit 饱和计数和在途气泡标记，ID 只读寄存器，不依赖当拍 grant。
 - `BreezeBackend` 使用双 bank 记分板、Committed MUL/DIV/FPU、直接 S2→WB 判定与 late→RF 写；资源/依赖等待仅在 ID/EX。MEM/WB 只因 s2Hold 或后方为空的串行 WB 等待保持；不加后端流水级、响应 FIFO、结果缓存。
 - FENCE 是 L1D 请求；FENCE.I/SFENCE/WFI/ESTOP 从 ID 串行。FENCE.I 等 drained；SFENCE 关闭翻译请求、等 drained/idle、单拍发 sfence、后续 idle 才提交。late.error 停 hart、不陷入，保留 committed 后台完成。
 - `loadUseBypass` 默认 false，经 Cluster/Core/Backend 参数传递；true 跑 T02b。可选旁路遇 miss 时，依赖者留在 EX，复用原 RF 读口/操作数寄存器等正确值。
@@ -73,14 +73,14 @@ FP 结果为 `0x3fd5555555555555`；三路目的各写一次。20 条 ADD 连续
 ```bash
 /home/chen/.local/share/coursier/bin/sbt -batch \
   'set Test / parallelExecution := false' \
-  'testOnly flow.backend.V1BackendContractSpec flow.backend.V1WritebackSpec flow.backend.V1ScoreboardSpec flow.backend.V1MduTimingSpec flow.fpu.CommittedFpUnitSpec flow.multiplier.CommittedMulProtocolSpec flow.divider.CommittedDivProtocolSpec flow.backend.MduBoundarySpec flow.fpu.BreezeFpUnitSpec flow.backend.V1HpmSpec flow.backend.V1TraceProtocolSpec'
+  'testOnly flow.backend.BackendContractSpec flow.backend.WritebackSpec flow.backend.ScoreboardSpec flow.backend.MduTimingSpec flow.fpu.CommittedFpUnitSpec flow.multiplier.CommittedMulProtocolSpec flow.divider.CommittedDivProtocolSpec flow.backend.MduBoundarySpec flow.fpu.BreezeFpUnitSpec flow.backend.HpmSpec flow.backend.TraceProtocolSpec'
 ```
 
 最终证据根目录（Alan）：`/home/chen/FUN/flow-runs/20261006-v1-be-final-fe7aef4/`。`tests.log` 为完整日志（SHA256 `8b57e87e6fe28befcfff7e31dabfe44a5e473464db37e43fb7b5eb687e8090a5`），`environment.log` 记录主机、被测 SHA、干净 tracked 工作区、依赖版本与工具；`command.txt` 保存上述完整命令；`run.sh` 保存执行脚本（实际调用 `/tmp/v1-be-run-fe7aef4.sh`）；`exit-code.txt` 为 `0`，`start.txt`/`end.txt` 保存起止时间。2026-10-06 19:06:24 +08:00 开始，sbt 于 19:13:02 +08:00 完成（脚本 19:13:03 结束），总耗时 393 秒，测试耗时 6 分 27 秒。
 
 **最终指定全量结果：65/65 通过，11 suites 完成，0 failed/aborted/canceled/ignored/pending。** 合同 33 项、后端补充 6 项、其他组件/协议 26 项均包含在同一次命令中。下文全部 PASS 均绑定 `fe7aef4` 的 `tests.log`，包括 P06 和两项 BTB 补充。此处“全量”指用户指定的 65 项，不是仓库所有 `sbt test`。
 
-`frozen-before.log` 与 `frozen-after.log` 均为 `frozen check: OK (9 files)`；`status-after.txt` 记录测试后 tracked 工作区干净。`p06-test-before.sha256` 与 `p06-test-after.sha256` 相同，`V1BackendContractSpec.scala` 的 SHA256 为 `161e1d8243e22f22ddcb7df981f52a850c70602816147e48d97b3dc5383b95a6`，与本地相同。
+`frozen-before.log` 与 `frozen-after.log` 均为 `frozen check: OK (9 files)`；`status-after.txt` 记录测试后 tracked 工作区干净。`p06-test-before.sha256` 与 `p06-test-after.sha256` 相同，`BackendContractSpec.scala` 的 SHA256 为 `161e1d8243e22f22ddcb7df981f52a850c70602816147e48d97b3dc5383b95a6`，与本地相同。
 
 | 提交（均已 push） | 内容 |
 | --- | --- |
@@ -158,16 +158,16 @@ FP 结果为 `0x3fd5555555555555`；三路目的各写一次。20 条 ADD 连续
 | --- | --- | --- |
 | Backend 补充 4 项 | 4/4 | 随机 seed B01、可选旁路 miss、f0/跨 bank RAW/WAW、fatal 保留 committed DIV |
 | 两项 BTB 补充 | 2/2 | held WB 无训练/解除单次训练、WB fault 丢年轻 BTB |
-| V1WritebackSpec | 2/2 | WB 优先、四源顺序、跨 bank、fatal 清位 |
-| V1ScoreboardSpec | 3/3 | 双 bank/f0/实际 clear、CSR raw busy、FP→x0 |
-| V1MduTimingSpec | 3/3 | MUL II=1/E+4，DIV fast/实际迭代/释放 |
+| WritebackSpec | 2/2 | WB 优先、四源顺序、跨 bank、fatal 清位 |
+| ScoreboardSpec | 3/3 | 双 bank/f0/实际 clear、CSR raw busy、FP→x0 |
+| MduTimingSpec | 3/3 | MUL II=1/E+4，DIV fast/实际迭代/释放 |
 | CommittedFpUnitSpec | 4/4 | 8 FMA、乱序/flags、kill/tag 回卷、FP→x0 |
 | CommittedMulProtocolSpec | 4/4 | 既有 commit/kill/保持、随机 500 次 seed0x701 |
 | CommittedDivProtocolSpec | 2/2 | 既有 occupied/commit/kill/背压、随机 512 次 seed0x702 |
 | MduBoundarySpec | 3/3 | 空 commit 断言、迭代、reset/kill |
 | BreezeFpUnitSpec | 2/2 | 旧阻塞包装算术/flags/flush，仅此旧 suite |
-| V1HpmSpec | 1/1 | 双 bank 增量、软件写优先、旧 selector/非法编号 |
-| V1TraceProtocolSpec | 2/2 | 独立台账，拒绝重复/缺失/普通写重叠 |
+| HpmSpec | 1/1 | 双 bank 增量、软件写优先、旧 selector/非法编号 |
+| TraceProtocolSpec | 2/2 | 独立台账，拒绝重复/缺失/普通写重叠 |
 
 本地/Alan 冻结检查 `frozen check: OK (9 files)`；本地 `git diff --check`。完整性/静态检查不替代功能证据；没有忽略、取消、pending 或跳过合同。
 

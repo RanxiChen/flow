@@ -5,7 +5,7 @@ import flow.core.BreezePerformanceCounters
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class V1HpmSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class HpmSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "S16_HPM13_bank_count_write_priority_and_selector_bound" in {
     simulate(new BreezePerformanceCounters) { d =>
       d.io.write.poke(false.B); d.io.address.poke(0.U); d.io.data.poke(0.U); d.io.retire.poke(false.B)

@@ -7,11 +7,11 @@ import flow.divider.CommittedDivUnit
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class V1DivProbe extends CommittedDivUnit {
+class DivProbe extends CommittedDivUnit {
   val iterating = IO(Output(Bool()))
   iterating := divider.io.busy
 }
-class V1MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private def divIdle(d: CommittedDivUnit): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
     d.io.result.ready.poke(true.B); d.io.req.bits.rd.poke(5.U)
@@ -57,7 +57,7 @@ class V1MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
   "T06_component: regular DIV writes EX+2+actual arithmetic iteration count" in {
-    simulate(new V1DivProbe) { d =>
+    simulate(new DivProbe) { d =>
       divIdle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       val max = (BigInt(1) << 64) - 1
       d.io.req.bits.dividendMag.poke(max.U); d.io.req.bits.divisorMag.poke(1.U)

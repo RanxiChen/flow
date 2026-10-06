@@ -14,7 +14,7 @@ import scala.collection.mutable
   * A replay that loses its write port moves to MSHR LATE; ordinary hits still
   * generate their unique Valid response. Seeds and response schedules are explicit.
   */
-private[backend] object V1Instructions {
+private[backend] object Instructions {
   val nop: BigInt = 0x13
   val mask: BigInt = (BigInt(1) << 64) - 1
   def add(rd: Int, a: Int = 0, b: Int = 0): BigInt = (BigInt(b)<<20)|(BigInt(a)<<15)|(BigInt(rd)<<7)|0x33
@@ -28,13 +28,13 @@ private[backend] object V1Instructions {
     (BigInt(if(toGpr) 0x60 else if(div) 0x0d else 1)<<25)|(BigInt(b)<<20)|(BigInt(a)<<15)|(BigInt(rd)<<7)|0x53
   def fma(rd: Int): BigInt = (BigInt(1)<<25)|(BigInt(rd)<<7)|0x43
 }
-private[backend] final case class V1Request(addr: BigInt, rd: Int, fp: Boolean, op: Int, data: BigInt)
-private[backend] final case class V1Event(cycle: Int, kind: String, pc: BigInt = 0, rd: Int = -1, data: BigInt = 0)
-private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01) extends PeekPokeAPI {
-  import V1Instructions._
+private[backend] final case class Request(addr: BigInt, rd: Int, fp: Boolean, op: Int, data: BigInt)
+private[backend] final case class Event(cycle: Int, kind: String, pc: BigInt = 0, rd: Int = -1, data: BigInt = 0)
+private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) extends PeekPokeAPI {
+  import Instructions._
   var cycle = 0
   var pc = BigInt(0x400)
-  val events = mutable.ArrayBuffer.empty[V1Event]
+  val events = mutable.ArrayBuffer.empty[Event]
   val values = mutable.Map.empty[BigInt,BigInt].withDefaultValue(BigInt(0x1234))
   val misses = mutable.Set.empty[BigInt]
   val faults = mutable.Set.empty[BigInt]
@@ -46,16 +46,16 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   var lateError = false
   var softwareInterrupt = false
   private val rng = new scala.util.Random(seed)
-  private var s1: Option[V1Request] = None
-  private var s2: Option[V1Request] = None
-  private var ps: Option[V1Request] = None
-  private var pending: Option[(V1Request,Int)] = None // metadata/refill, single MSHR
+  private var s1: Option[Request] = None
+  private var s2: Option[Request] = None
+  private var ps: Option[Request] = None
+  private var pending: Option[(Request,Int)] = None // metadata/refill, single MSHR
   private var retryAt: Option[Int] = None
   var lateStored = false
   private var lateData: Option[BigInt] = None
   def bool(x: Bool): Boolean = x.peek().litToBoolean
   def uint[T <: Data](x: T): BigInt = x.peek().litValue
-  def record(k: String, p: BigInt = 0, r: Int = -1, data: BigInt = 0): Unit = events += V1Event(cycle,k,p,r,data)
+  def record(k: String, p: BigInt = 0, r: Int = -1, data: BigInt = 0): Unit = events += Event(cycle,k,p,r,data)
   def reset(): Unit = {
     d.io.resetAddr.poke(0x400.U)
     d.io.machineTimerInterrupt.poke(false.B); d.io.machineSoftwareInterrupt.poke(false.B)
@@ -109,7 +109,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     d.io.l1d.s2Hold.poke(hold.B)
     d.io.l1d.drained.poke((drained && pending.isEmpty && ps.isEmpty).B)
     d.io.l1d.resp.valid.poke((s2.nonEmpty && !hold).B)
-    var allocated: Option[(V1Request,Int)] = None
+    var allocated: Option[(Request,Int)] = None
     s2.foreach { q =>
       val miss = misses(q.addr) && pending.isEmpty && !faults(q.addr)
       d.io.l1d.resp.bits.kind.poke(if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
@@ -148,7 +148,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     for(_ <- 0 until conflicts) record("conflict")
     if(bool(d.io.translationBlocked)) record("xlatBlock")
     val fired = bool(d.io.l1d.req.valid) && bool(d.io.l1d.req.ready)
-    val newReq = if(fired) Some(V1Request(reqAddr,uint(d.io.l1d.req.bits.rd.idx).toInt,
+    val newReq = if(fired) Some(Request(reqAddr,uint(d.io.l1d.req.bits.rd.idx).toInt,
       bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op).toInt,uint(d.io.l1d.req.bits.wdata))) else None
     if(fired) record("req",uint(o.exPc))
     if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind))
@@ -178,7 +178,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     pcs
   }
   def at(k: String, p: BigInt): Int = events.find(e=>e.kind==k && e.pc==p).getOrElse(sys.error(s"missing $k $p seed=$seed")).cycle
-  def writes(r: Int, fp: Boolean = false): Seq[V1Event] = events.filter(e=>e.kind==(if(fp) "fpr" else "gpr") && e.rd==r).toSeq
+  def writes(r: Int, fp: Boolean = false): Seq[Event] = events.filter(e=>e.kind==(if(fp) "fpr" else "gpr") && e.rd==r).toSeq
   def written(r: Int, fp: Boolean = false): Int = { require(writes(r,fp).size==1,s"writes $r = ${writes(r,fp)}"); writes(r,fp).head.cycle }
   def all(k: String): Seq[Int] = events.filter(_.kind==k).map(_.cycle).toSeq
   def enableFp(): Unit = {
@@ -187,11 +187,11 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   }
 }
 
-class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
-  import V1Instructions._
-  private def check(bypass: Boolean = false)(f: V1Environment => Unit): Unit =
+class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
+  import Instructions._
+  private def check(bypass: Boolean = false)(f: Environment => Unit): Unit =
     simulate(new BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true)) { d =>
-      val m=new V1Environment(d); m.reset(); f(m)
+      val m=new Environment(d); m.reset(); f(m)
     }
   private def consecutive(cs: Seq[Int]): Unit = { cs.sliding(2).foreach(p=> if(p.size==2) p(1) mustBe p(0)+1) }
   "T01_ALU_EX_bypass" in { check() { m =>
