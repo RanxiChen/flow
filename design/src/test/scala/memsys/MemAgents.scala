@@ -781,8 +781,7 @@ class L1DProxy(port: L1DCoherenceIO, arch: GoldenMem, rng: Random) extends Cycle
     // sharer Inv during an upgrade, which invalidates S at once.
     probe.foreach { pr =>
       val st = state(pr.line)
-      val upgradeInv = enumIs(pr.op, SnpOp.Inv) && !pr.owner && st == 'S' && getAccepted &&
-        get.exists(g => g.line == pr.line && enumIs(g.op, ReqOp.GetM))
+      val upgradeInv = enumIs(pr.op, SnpOp.Inv) && st == 'S' && get.exists(_.line == pr.line)
       val held = !upgradeInv && (get.exists(_.line == pr.line) || put.exists(_._1 == pr.line))
       if (answer.isEmpty && now >= pr.readyAt && !held) {
         if (st == 'E' || st == 'M') check(pr.owner, s"probe ${hex(pr.line << 5)} to an owner with owner=0")
