@@ -642,8 +642,12 @@ class BreezeBackend(
     assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[V1 S13] younger request survived WB kill")
     when(downHold && wb.valid) {
       assert(!(io.frontendBtbUpdate.valid || io.frontendPhtUpdate.valid || io.frontendGhrUpdate.valid ||
-        io.frontendRedirect.valid || io.sfence.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
+        io.frontendRedirect.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
         csrFile.io.mret_commit || csrFile.io.sret_commit), "[V1 S09] control side effect while WB held")
+      // S09 explicitly permits requests with their own one-shot state (A08/B01).
+      // SFENCE must request while WB waits, then wait for the subsequent idle.
+      assert(!io.sfence.valid || (wb.sfence && !sfenceSent && io.l1d.drained && io.mmuIdle),
+        "[V1 S09] SFENCE repeated or issued before drain/idle")
     }
     assert(!downHold || !wbCommit, "[V1 S09] held WB retired")
     assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[V1 S15] memory retired without S2 decision")
