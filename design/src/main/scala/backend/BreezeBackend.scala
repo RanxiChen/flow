@@ -549,7 +549,7 @@ class BreezeBackend(
   io.observe.fpFlags := writeback.io.fpFlags
   io.observe.mulIn := mulUnit.io.req.fire
   io.observe.divIn := divUnit.io.req.fire
-  io.observe.divIterating := divUnit.iterating
+  io.observe.divIterating := divUnit.arithmeticActive
   io.observe.translationBlocked := io.translationBlocked
   io.tandem.foreach { t =>
     t := 0.U.asTypeOf(t)
