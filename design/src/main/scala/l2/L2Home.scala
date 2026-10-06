@@ -446,7 +446,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
             }.otherwise {
               when(afterProbe.dirty) {
                 memEng.io.wbPush.valid := true.B
-                memEng.io.wbPush.bits.addr := task.victimTag ## task.set
+                memEng.io.wbPush.bits.addr := p.lineOf(task.victimTag, task.set)
                 memEng.io.wbPush.bits.data := mergedData
               }
               metaWrEn := true.B

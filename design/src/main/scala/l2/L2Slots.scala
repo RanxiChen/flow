@@ -158,7 +158,7 @@ class L2Slots(p: CoherenceParams) extends Module {
   probeArb.io.out.ready := io.probeJob.ready
   io.probeJob.bits.slot := probeIdx
   // EVICT probes target the victim line; PROBE slots target the request line.
-  io.probeJob.bits.addr := Mux(ps.a.typ === L2SlotType.Miss, ps.a.victimTag ## ps.a.set, ps.a.tag ## ps.a.set)
+  io.probeJob.bits.addr := p.lineOf(Mux(ps.a.typ === L2SlotType.Miss, ps.a.victimTag, ps.a.tag), ps.a.set)
   io.probeJob.bits.op := ps.a.probeOp
   io.probeJob.bits.owner := ps.a.probeOwner
   io.probeJob.bits.targets := ps.a.probeTargets
@@ -184,7 +184,7 @@ class L2Slots(p: CoherenceParams) extends Module {
   val readIdx = readSlot
   io.memRead.valid := readSelected
   io.memRead.bits.slot := readIdx
-  io.memRead.bits.addr := slots(readIdx).a.tag ## slots(readIdx).a.set
+  io.memRead.bits.addr := p.lineOf(slots(readIdx).a.tag, slots(readIdx).a.set)
   when(io.memRead.fire) {
     readIssued(readIdx) := true.B
     readSelected := false.B

@@ -456,18 +456,25 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
       plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
     }
   }
+  // Use one masked write port for both initialization and runtime updates.
+  // Mixing an unmasked port with a masked port loses the per-way mask when
+  // the mutually exclusive ports are combined by memory lowering.
+  when(!initDone || tagWrite) {
+    tags.write(Mux(initDone, tagIdx, initIdx),
+      VecInit(Seq.fill(p.ways)(Mux(initDone, tagValue, 0.U.asTypeOf(tagValue)))),
+      Mux(initDone, UIntToOH(tagWay, p.ways), Fill(p.ways, 1.U(1.W))).asBools)
+  }
   when(!initDone) {
-    tags.write(initIdx, 0.U.asTypeOf(Vec(p.ways, new L1TagEntry(p))))
     initIdx := initIdx + 1.U
-  }.elsewhen(tagWrite) {
-    tags.write(tagIdx, VecInit(Seq.fill(p.ways)(tagValue)), UIntToOH(tagWay, p.ways).asBools)
   }
   for (w <- 0 until p.ways) {
-    when(installNow && !miss.io.s0Req.bits.installIsAckE && miss.io.s0Req.bits.way === w.U) {
-      data(w).write(miss.io.s0Req.bits.idx ## miss.io.s0Req.bits.beat,
-        miss.io.s0Req.bits.installData.asTypeOf(Vec(8, UInt(8.W))))
-    }.elsewhen(psWrites && ps.way === w.U) {
-      data(w).write(ps.idx ## ps.word, ps.data.asTypeOf(Vec(8, UInt(8.W))), ps.mask.asBools)
+    val refillWrite = installNow && !miss.io.s0Req.bits.installIsAckE && miss.io.s0Req.bits.way === w.U
+    val storeWrite = psWrites && ps.way === w.U
+    // Refill uses the same byte-masked port, with every byte enabled.
+    when(refillWrite || storeWrite) {
+      data(w).write(Mux(refillWrite, miss.io.s0Req.bits.idx ## miss.io.s0Req.bits.beat, ps.idx ## ps.word),
+        Mux(refillWrite, miss.io.s0Req.bits.installData, ps.data).asTypeOf(Vec(8, UInt(8.W))),
+        Mux(refillWrite, "hff".U(8.W), ps.mask).asBools)
     }
   }
   when(s2.valid && hit && outcome === L1S2Outcome.Done && !io.core.s2Kill && !installLast) {

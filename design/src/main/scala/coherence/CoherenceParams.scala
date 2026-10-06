@@ -36,4 +36,6 @@ final case class CoherenceParams(g: BreezeMemGeometry) {
   def setOf(lineAddr: UInt): UInt =
     if (l2Sets == 1) 0.U(1.W) else lineAddr(log2Ceil(l2Sets) - 1, 0)
   def tagOf(lineAddr: UInt): UInt = lineAddr(lineAddrBits - 1, log2Ceil(l2Sets))
+  /** Reconstruct a physical line address without the single-set placeholder bit. */
+  def lineOf(tag: UInt, set: UInt): UInt = if (l2Sets == 1) tag else tag ## set
 }
