@@ -271,7 +271,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val victimWay = Mux(invalidWays.asUInt.orR, PriorityEncoder(invalidWays), replacement)
   val upgrade = hit && hitState === L1State.S && isStore
   val allocWay = Mux(upgrade, hitWay, victimWay)
-  val victimEntry = s2.tagVec(allocWay)
+  val victimEntry = if (p.ways == 1) s2.tagVec(0) else s2.tagVec(allocWay)
   val victimValid = !upgrade && victimEntry.state =/= L1State.I
   val victimAddress = if (p.idxBits == 0) victimEntry.tag else victimEntry.tag ## s2.req.idx
 
@@ -385,7 +385,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   io.ptw.resp.bits.accessFault := outcome === L1S2Outcome.Exc || (replay && s2.req.replayError)
   when(io.ptw.resp.valid) { ptwOutstanding := false.B }
   miss.io.wbReadBeat.valid := internal2.valid && internal2.req.src === L1Src.WbRead
-  miss.io.wbReadBeat.bits := internal2.dataVec(miss.io.status.wbWay)
+  miss.io.wbReadBeat.bits := (if (p.ways == 1) internal2.dataVec(0) else internal2.dataVec(miss.io.status.wbWay))
   probe.io.s2Beat.valid := internal2.valid && internal2.req.src === L1Src.Probe
   probe.io.s2Beat.bits.beat := internal2.req.beat
   probe.io.s2Beat.bits.data := hitWord

@@ -106,9 +106,14 @@ class L1DMiss(p: L1DParams) extends Module {
 
   // ---------------- RSP↓ (§6.5, ready is 1) ----------------
   when(io.rspDown.valid) {
+    assert(io.rspDown.bits.op === RspDownOp.DataS || io.rspDown.bits.op === RspDownOp.DataE ||
+      io.rspDown.bits.op === RspDownOp.AckE || io.rspDown.bits.op === RspDownOp.PutAck,
+      "unsupported RSPdown opcode at L1D")
     switch(io.rspDown.bits.op) {
       is(RspDownOp.DataS, RspDownOp.DataE, RspDownOp.AckE) {
         assert(state === MshrState.Wait, "RSPdown data/ack without a waiting MSHR")
+        assert(io.rspDown.bits.op =/= RspDownOp.AckE || m.upgrade, "AckE without an upgrade")
+        assert(io.rspDown.bits.op =/= RspDownOp.DataS || !m.isGetM, "GetM granted shared permission")
         refill := io.rspDown.bits.data
         err := io.rspDown.bits.error
         grantE := io.rspDown.bits.op =/= RspDownOp.DataS

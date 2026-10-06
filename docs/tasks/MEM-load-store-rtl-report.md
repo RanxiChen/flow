@@ -22,3 +22,9 @@ LR/SC reservation、80 拍窗口、AMO RMW、aq/rl 未实现；这些请求不�
 ## 验证边界
 
 本地只进行差异/冻结文件静态检查。编译与既有 `MemSkeletonElabSpec` 门槛使用 Alan 上匹配提交执行；结果以该 SHA 对应的命令、日志与退出码为准。新 directed 测试及功能仿真本批未运行，综合、时序、FPGA 与软件运行均未运行。
+
+已取得的生成证据：`7f3ac81` 在 Alan 上生产 Scala 98 文件、测试 Scala 62 文件编译成功；补齐 CVFPU 后 `testOnly flow.memsys.MemSkeletonElabSpec` 37/37 通过、exit=0，覆盖五种几何以及集群/外壳/桥接。该轮最初因独立 worktree 的 CVFPU 未初始化而 suite aborted（0 tests）；未计为 RTL 测试失败，也未隐藏该日志。
+
+证据目录：Alan `/home/chen/FUN/flow-runs/20261006-mem-rtl-109d3a7/`，其中 `sha.txt` 为实际被测提交 `7f3ac81`，`elab.log` 为缺依赖轮，`elab-with-cvfpu.log` 与 `retry-exit_code.txt` 为 37/37 轮。GitHub 拉取发生 TLS/连接失败，使用 Git bundle 验证 prerequisite 后同步确切提交；CVFPU 使用 Alan 已有干净副本 `1b220f3`，nested submodule 版本另存于 `cvfpu-submodules.txt`。
+
+随后修正生成提示的轮转索引位宽与单路索引，并补 RSPdown 权限/opcode 检查。最终提交需重新运行相同生成门槛，单独保存 `final-sha.txt`、`final-elab.log` 与 `final-exit_code.txt`；上述 `7f3ac81` 的通过结果不能代替最终提交的结果。

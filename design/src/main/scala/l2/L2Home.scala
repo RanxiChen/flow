@@ -119,14 +119,18 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   s0Entry := 0.U.asTypeOf(s0Entry)
   val s0Valid = WireDefault(false.B)
   def roundRobin(cand: Vec[Bool]): (UInt, UInt) = {
-    val next = RegInit(0.U((log2Ceil(cand.length) max 1).W))
-    val rotated = VecInit((0 until cand.length).map { offset =>
-      val sum = next +& offset.U
-      val idx = Mux(sum >= cand.length.U, sum - cand.length.U, sum)
-      cand(idx)
-    })
-    val sum = next +& PriorityEncoder(rotated)
-    (Mux(sum >= cand.length.U, sum - cand.length.U, sum), next)
+    val width = log2Ceil(cand.length)
+    val next = RegInit(0.U((width max 1).W))
+    if (cand.length == 1) (0.U(0.W), next)
+    else {
+      val rotated = VecInit((0 until cand.length).map { offset =>
+        val sum = next +& offset.U
+        val idx = Mux(sum >= cand.length.U, sum - cand.length.U, sum)(width - 1, 0)
+        cand(idx)
+      })
+      val sum = next +& PriorityEncoder(rotated)
+      (Mux(sum >= cand.length.U, sum - cand.length.U, sum)(width - 1, 0), next)
+    }
   }
   val (putIdx, putNext) = roundRobin(putCand)
   val (taskIdx, taskNext) = roundRobin(taskCand)
@@ -408,7 +412,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
       }
       is(L2Action.Put) {
         // Put is legal even while a slow slot protects this set.
-        val c = s2.e.port(p.coreBits - 1, 0)
+        val c = if (p.nCores == 1) 0.U(0.W) else s2.e.port(p.coreBits - 1, 0)
         metaWrEn := true.B; metaWrWay := s2.hitWay
         val left = hmS2.sharers & ~UIntToOH(c, p.nCores)
         assert((hmS2.sharers & UIntToOH(c, p.nCores)).orR, "Put from a non-sharer")
