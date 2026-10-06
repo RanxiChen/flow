@@ -45,6 +45,7 @@
 - GPR/FPR 各一个写口；WB 普通写当拍优先写入并提交，同 bank 的后台来源 ready=0；不同 bank 可并行。rd=x0 不需要整数口，v1 没有 wbPortStall。[V1-BE-B01-ruling§1]
 - 后端自身停顿只在 ID 或 EX；EX 不 fire 时 MEM 插气泡，老 MEM/WB 继续。MEM/WB 只因 L1D s2Hold 或 WB 串行指令且其后全是气泡而保持；保持时退休、CSR/PC 更新、训练及年轻发射不得重复，后台完成继续。[V1-BE-B01-ruling§1]
 - 每 bank 一个 2-bit 饱和计数和在途保护标记：有后台 valid 而该 bank 无 grant 时计数 +1（饱和 3），否则清零；计数为 3 且标记为 0 时 ID 停发一拍并置标记，该 bank 获 grant 清标记。ID 只读这两个寄存器，不依赖当拍仲裁。最高优先级来源在连续普通写下首次落败 c、气泡 c+3、grant c+6。[V1-BE-B01-ruling§1]
+- EX 解析的 BTB 请求沿用一个寄存边界；MEM/WB 保持时该请求保持、前端不消费，解除后只发一次；更老 WB kill 丢弃待发训练。PHT/GHR 仅在 EX 真推进时更新。[backend-rtl-spec.md§5/A08及§6][自定]
 - 无 WB 保持时，EX 单元 not-ready 只保持 EX/ID；MEM 消费后插气泡，MEM/WB 前进；ID RAW/WAW 不全局保持。[backend-rtl-spec.md§5.1]
 - 后台写不再次 retire；独立普通提交与不同 rd 后台写同拍要分别输出事件。HPM11/12 可同拍记 MUL/DIV 来源停顿；13 每拍计数有后台 valid 而无后台 grant 的 bank 数（0/1/2），不代表 WB 停顿。[backend-timing-contract.md§4][V1-BE-B01-ruling§1]
 - hartFatal 后取消未提交单元项与 CPU 访存，保留已提交后台项，不产生陷入/前端重定向；防止未提交 FP 输出阻塞更老已提交返回。[自定]

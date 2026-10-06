@@ -402,7 +402,7 @@ class BreezeBackend(
   io.frontendPhtUpdate := 0.U.asTypeOf(io.frontendPhtUpdate)
   io.frontendGhrUpdate := 0.U.asTypeOf(io.frontendGhrUpdate)
   val btb = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(64)))
-  btb := 0.U.asTypeOf(btb)
+  when(!downHold || wbKill) { btb := 0.U.asTypeOf(btb) }
   val train = exLegal && exAdvance && !wbKill && (ex.ctrl.bru_inst || ex.ctrl.redir_inst)
   if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
     when(train) {
@@ -420,7 +420,7 @@ class BreezeBackend(
     io.frontendGhrUpdate.taken := taken
   }
   io.frontendBtbUpdate := btb
-  io.frontendBtbUpdate.valid := btb.valid && !wbKill
+  io.frontendBtbUpdate.valid := btb.valid && !wbKill && !downHold && !io.hartFatal
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
     (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
@@ -640,6 +640,11 @@ class BreezeBackend(
     assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[V1 stall direction] MEM memory held without s2Hold")
     assert(!serialWait || (!ex.valid && !mem.valid), "[V1 stall direction] serial wait with younger pipeline entries")
     assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[V1 S13] younger request survived WB kill")
+    when(downHold && wb.valid) {
+      assert(!(io.frontendBtbUpdate.valid || io.frontendPhtUpdate.valid || io.frontendGhrUpdate.valid ||
+        io.frontendRedirect.valid || io.sfence.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
+        csrFile.io.mret_commit || csrFile.io.sret_commit), "[V1 S09] control side effect while WB held")
+    }
     assert(!downHold || !wbCommit, "[V1 S09] held WB retired")
     assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[V1 S15] memory retired without S2 decision")
   }

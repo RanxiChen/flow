@@ -41,6 +41,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   var returnDelay = 30
   var drained = true
   var mmuIdle = true
+  var holdUntil = 0
   var randomHold = false
   var lateError = false
   var softwareInterrupt = false
@@ -84,7 +85,8 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
         d.io.fetchBuffer.bits.instLen.poke(4.U)
         d.io.fetchBuffer.bits.instructionAccessFault.poke(false.B); d.io.fetchBuffer.bits.instructionPageFault.poke(false.B)
         d.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B); d.io.fetchBuffer.bits.illegalCompressed.poke(false.B)
-        d.io.fetchBuffer.bits.pred.predType.poke(FrontendPredType.NONE); d.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
+        d.io.fetchBuffer.bits.pred.predType.poke(if((i & 0x7f)==0x63) FrontendPredType.BR else FrontendPredType.NONE)
+        d.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
         d.io.fetchBuffer.bits.pred.predPc.poke((p+4).U); d.io.fetchBuffer.bits.pred.phtIdx.poke(0.U)
       case None => d.io.fetchBuffer.valid.poke(false.B)
     }
@@ -103,7 +105,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     val retry = s2.nonEmpty && retryAt.exists(cycle < _)
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
-    val hold = blockedLine || retry || full || fence || (randomHold && s2.nonEmpty && rng.nextInt(4)==0)
+    val hold = blockedLine || retry || full || fence || (s2.nonEmpty && cycle < holdUntil) || (randomHold && s2.nonEmpty && rng.nextInt(4)==0)
     d.io.l1d.s2Hold.poke(hold.B)
     d.io.l1d.drained.poke((drained && pending.isEmpty && ps.isEmpty).B)
     d.io.l1d.resp.valid.poke((s2.nonEmpty && !hold).B)
@@ -136,6 +138,9 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     if(bool(o.divIn)) record("divIn",uint(o.exPc))
     if(bool(o.divIterating)) record("iter")
     if(bool(o.memHold)) record("hold")
+    if(bool(d.io.frontendBtbUpdate.valid)) record("btb")
+    if(bool(d.io.frontendPhtUpdate.valid)) record("pht")
+    if(bool(d.io.frontendGhrUpdate.valid)) record("ghr")
     if(bool(d.io.sfence.valid)) record("sfence")
     if(bool(d.io.frontendRedirect.valid)) record("redirect",data=uint(d.io.frontendRedirect.target))
     if(bool(d.io.frontendRedirect.cacheFlush)) record("icacheFlush")
@@ -415,6 +420,22 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
     for(_ <- 0 until 50) m.step()
     m.d.io.hartFatal.expect(true.B); m.d.io.fetchBuffer.ready.expect(false.B)
     m.all("redirect") mustBe empty; m.writes(1) mustBe empty; m.writes(5).size mustBe 1
+    m.d.io.observe.gprBusy.expect(0.U)
+  }}
+
+  "S09_BTB_training_waits_for_held_WB_once" in { check() { m =>
+    m.holdUntil=8
+    m.issue(ld(1,0)); m.issue(BigInt(0x463)) // beq x0,x0,+8
+    for(_ <- 0 until 12) m.step()
+    m.all("btb") mustBe Seq(8); m.all("pht") mustBe Seq(2); m.all("ghr") mustBe Seq(2)
+    m.all("btb").intersect(m.all("hold")) mustBe empty
+  }}
+  "S13_WB_fault_discards_younger_pending_BTB_training" in { check() { m =>
+    m.holdUntil=8; m.faults += BigInt(0)
+    m.issue(ld(1,0)); m.issue(BigInt(0x463))
+    for(_ <- 0 until 12) m.step()
+    m.all("btb") mustBe empty
+    m.all("redirect").last mustBe 8
     m.d.io.observe.gprBusy.expect(0.U)
   }}
 
