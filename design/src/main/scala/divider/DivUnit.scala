@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import flow.backend.{IntDivRequest, IntMduIO}
 
-class CommittedDivUnit extends Module {
+class DivUnit extends Module {
   val io = IO(new IntMduIO(new IntDivRequest))
   val occupied = RegInit(false.B)
   val committed = RegInit(false.B)

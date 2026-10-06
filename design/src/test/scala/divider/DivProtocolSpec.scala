@@ -5,9 +5,9 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class CommittedDivProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class DivProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val mask = (BigInt(1) << 64) - 1
-  private def init(d: CommittedDivUnit): Unit = {
+  private def init(d: DivUnit): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
     d.io.result.ready.poke(false.B); d.io.req.bits.rd.poke(5.U)
     d.io.req.bits.dividendMag.poke(0.U); d.io.req.bits.divisorMag.poke(1.U)
@@ -17,7 +17,7 @@ class CommittedDivProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
     d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
   }
   "T05/T06/T09/T17: early done waits, commit before kill, stalled result survives kill and release has a gap" in {
-    simulate(new CommittedDivUnit) { d =>
+    simulate(new DivUnit) { d =>
       init(d); d.io.req.bits.fastValid.poke(true.B); d.io.req.bits.fastData.poke(63.U)
       d.io.req.valid.poke(true.B); d.clock.step(); d.io.req.valid.poke(false.B)
       d.clock.step(9); d.io.req.ready.expect(false.B); d.io.result.valid.expect(false.B)
@@ -35,7 +35,7 @@ class CommittedDivProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim 
     }
   }
   "B/T16/T17/U02: eight operations and special values, random commit delay/backpressure (seed 0x702, 512 requests)" in {
-    simulate(new CommittedDivUnit) { d =>
+    simulate(new DivUnit) { d =>
       init(d); val rng = new scala.util.Random(0x702)
       def signed(x: BigInt,w: Int): BigInt = if (x.testBit(w-1)) x-(BigInt(1)<<w) else x
       for (i <- 0 until 512) {

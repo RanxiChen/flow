@@ -73,7 +73,7 @@ FP 结果为 `0x3fd5555555555555`；三路目的各写一次。20 条 ADD 连续
 ```bash
 /home/chen/.local/share/coursier/bin/sbt -batch \
   'set Test / parallelExecution := false' \
-  'testOnly flow.backend.BackendContractSpec flow.backend.WritebackSpec flow.backend.ScoreboardSpec flow.backend.MduTimingSpec flow.fpu.CommittedFpUnitSpec flow.multiplier.MulProtocolSpec flow.divider.CommittedDivProtocolSpec flow.backend.MduBoundarySpec flow.fpu.BreezeFpUnitSpec flow.backend.HpmSpec flow.backend.TraceProtocolSpec'
+  'testOnly flow.backend.BackendContractSpec flow.backend.WritebackSpec flow.backend.ScoreboardSpec flow.backend.MduTimingSpec flow.fpu.CommittedFpUnitSpec flow.multiplier.MulProtocolSpec flow.divider.DivProtocolSpec flow.backend.MduBoundarySpec flow.fpu.BreezeFpUnitSpec flow.backend.HpmSpec flow.backend.TraceProtocolSpec'
 ```
 
 最终证据根目录（Alan）：`/home/chen/FUN/flow-runs/20261006-v1-be-final-fe7aef4/`。`tests.log` 为完整日志（SHA256 `8b57e87e6fe28befcfff7e31dabfe44a5e473464db37e43fb7b5eb687e8090a5`），`environment.log` 记录主机、被测 SHA、干净 tracked 工作区、依赖版本与工具；`command.txt` 保存上述完整命令；`run.sh` 保存执行脚本（实际调用 `/tmp/v1-be-run-fe7aef4.sh`）；`exit-code.txt` 为 `0`，`start.txt`/`end.txt` 保存起止时间。2026-10-06 19:06:24 +08:00 开始，sbt 于 19:13:02 +08:00 完成（脚本 19:13:03 结束），总耗时 393 秒，测试耗时 6 分 27 秒。
@@ -163,7 +163,7 @@ FP 结果为 `0x3fd5555555555555`；三路目的各写一次。20 条 ADD 连续
 | MduTimingSpec | 3/3 | MUL II=1/E+4，DIV fast/实际迭代/释放 |
 | CommittedFpUnitSpec | 4/4 | 8 FMA、乱序/flags、kill/tag 回卷、FP→x0 |
 | MulProtocolSpec | 4/4 | 既有 commit/kill/保持、随机 500 次 seed0x701 |
-| CommittedDivProtocolSpec | 2/2 | 既有 occupied/commit/kill/背压、随机 512 次 seed0x702 |
+| DivProtocolSpec | 2/2 | 既有 occupied/commit/kill/背压、随机 512 次 seed0x702 |
 | MduBoundarySpec | 3/3 | 空 commit 断言、迭代、reset/kill |
 | BreezeFpUnitSpec | 2/2 | 旧阻塞包装算术/flags/flush，仅此旧 suite |
 | HpmSpec | 1/1 | 双 bank 增量、软件写优先、旧 selector/非法编号 |

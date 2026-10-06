@@ -2,12 +2,12 @@ package flow.backend
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import flow.divider.CommittedDivUnit
+import flow.divider.DivUnit
 import flow.multiplier.MulUnit
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class DivDoneProbe extends CommittedDivUnit {
+class DivDoneProbe extends DivUnit {
   val arithmeticDone = IO(Output(Bool()))
   val iterating = IO(Output(Bool()))
   arithmeticDone := done
@@ -15,7 +15,7 @@ class DivDoneProbe extends CommittedDivUnit {
 }
 
 class MduBoundarySpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private def initDiv(d: CommittedDivUnit): Unit = {
+  private def initDiv(d: DivUnit): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
     d.io.result.ready.poke(false.B); d.io.req.bits.rd.poke(5.U)
     d.io.req.bits.dividendMag.poke(0.U); d.io.req.bits.divisorMag.poke(1.U)
@@ -37,7 +37,7 @@ class MduBoundarySpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
   "T06/S04: empty DIV commit triggers its RTL assertion" in {
     intercept[Exception] {
-      simulate(new CommittedDivUnit) { d =>
+      simulate(new DivUnit) { d =>
         initDiv(d); d.clock.step(); d.io.commit.poke(true.B); d.clock.step()
       }
     }

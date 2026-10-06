@@ -5,10 +5,10 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class RiscvDivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
+class DivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private val Mask64 = (BigInt(1) << 64) - 1
 
-  private def reset(dut: CommittedDivUnit): Unit = {
+  private def reset(dut: DivUnit): Unit = {
     dut.io.killUncommitted.poke(false.B)
     dut.io.commit.poke(false.B)
     dut.io.result.ready.poke(true.B)
@@ -28,7 +28,7 @@ class RiscvDivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   private def run(
-      dut: CommittedDivUnit,
+      dut: DivUnit,
       dividendMag: BigInt,
       divisorMag: BigInt,
       quotientNeg: Boolean,
@@ -60,7 +60,7 @@ class RiscvDivUnitSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   "wrapper restores quotient/remainder signs and W sign extension" in {
-    simulate(new CommittedDivUnit) { dut =>
+    simulate(new DivUnit) { dut =>
       reset(dut)
       run(dut, 20, 3, quotientNeg = true, remainderNeg = true,
         isRemainder = false, isWord = false) mustBe (BigInt(-6) & Mask64)

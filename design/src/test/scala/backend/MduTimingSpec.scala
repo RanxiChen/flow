@@ -3,16 +3,16 @@ package flow.backend
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import flow.multiplier.MulUnit
-import flow.divider.CommittedDivUnit
+import flow.divider.DivUnit
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class DivProbe extends CommittedDivUnit {
+class DivProbe extends DivUnit {
   val iterating = IO(Output(Bool()))
   iterating := divider.io.busy
 }
 class MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private def divIdle(d: CommittedDivUnit): Unit = {
+  private def divIdle(d: DivUnit): Unit = {
     d.io.req.valid.poke(false.B); d.io.commit.poke(false.B); d.io.killUncommitted.poke(false.B)
     d.io.result.ready.poke(true.B); d.io.req.bits.rd.poke(5.U)
     d.io.req.bits.dividendMag.poke(0.U); d.io.req.bits.divisorMag.poke(1.U)
@@ -38,7 +38,7 @@ class MduTimingSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
   "T05_component_T07_component_S12: DIV fast write EX+3 and next receive write+1" in {
-    simulate(new CommittedDivUnit) { d =>
+    simulate(new DivUnit) { d =>
       divIdle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       val max = (BigInt(1) << 64) - 1
       d.io.req.bits.fastValid.poke(true.B); d.io.req.bits.fastData.poke(max.U)

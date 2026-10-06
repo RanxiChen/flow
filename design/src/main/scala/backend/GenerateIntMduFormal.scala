@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import _root_.circt.stage.ChiselStage
 import flow.multiplier.MulUnit
-import flow.divider.CommittedDivUnit
+import flow.divider.DivUnit
 
 /** Formal-only observations; the production unit interfaces are unchanged. */
 class FormalMulProbe extends MulUnit {
@@ -34,7 +34,7 @@ class FormalMulProbe extends MulUnit {
   state.incomingProduct := (io.req.bits.a * io.req.bits.b).asUInt
 }
 
-class FormalDivProbe extends CommittedDivUnit {
+class FormalDivProbe extends DivUnit {
   val state = IO(Output(new Bundle {
     val live = UInt(3.W)
     val authorized = UInt(3.W)

@@ -229,7 +229,7 @@ Q18查找证据：`sim/breezecore/README.md:3-26`仅资产/runner说明；`tests
 | `flow.core.CSRFileSpec` | 6 | 0 | 0 | 未运行 |
 | `flow.core.MulDecodeSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.core.RegFileSpec` | 1 | 0 | 0 | 未运行 |
-| `flow.divider.RiscvDivUnitSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.DivUnitSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.divider.UnsignedRadix4DividerSpec` | 2 | 0 | 0 | 未运行 |
 | `flow.fase.FaseIntegrationSpec` | 0 | 2 | 0 | 未运行 |
 | `flow.fase.FlightRecorderSpec` | 1 | 0 | 0 | 未运行 |
@@ -374,7 +374,7 @@ Alan `3adca5e`，完整 `sbt test` 退出码 **1**：56 suites completed、0 abo
 | `flow.core.CSRFileSpec` | 6 | 0 | 0 | 未运行 |
 | `flow.core.MulDecodeSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.core.RegFileSpec` | 1 | 0 | 0 | 未运行 |
-| `flow.divider.RiscvDivUnitSpec` | 1 | 0 | 0 | 未运行 |
+| `flow.divider.DivUnitSpec` | 1 | 0 | 0 | 未运行 |
 | `flow.divider.UnsignedRadix4DividerSpec` | 2 | 0 | 0 | 未运行 |
 | `flow.fase.FaseIntegrationSpec` | 1 | 1 | 0 | 未运行 |
 | `flow.fase.FlightRecorderSpec` | 1 | 0 | 0 | 未运行 |
@@ -431,7 +431,7 @@ ACT4 不重跑，沿用源码 `d5672f5` 的 69/69 PASS、0 FAIL/TIMEOUT/INFRA_ER
 
 实际参数证据 `fpunit-verilator-parameters.dat`：来自本轮 FP 单元构建的 `VsvsimTestbench__verFiles.dat`，首个参数为上述 `.vlt`，没有 `-Wno-fatal`；该 FP suite 2/2 通过。BLKANDNBLK 未再出现于本轮 sbt 失败记录；PINMISSING 仍触发失败，确认未放宽其规则。Test 参数入口源码 JAR SHA256 `354de5e110cbe312449047a8d1f732bdc2c994e8ba0673c579b2a7292fb19139`，本地只读副本 `/tmp/flow-t01-b02-20261005/t01-chisel-7.0.0-sources.jar`。本地 shell 语法和 `git diff --check` 通过，只是静态检查。
 
-单元实施：新增 `backend/IntMduProtocol.scala`、`multiplier/MulUnit.scala`、`divider/CommittedDivUnit.scala`。MUL 四级 product/op/rd/valid/committed，A01 整体 enable，最老未提交 commit、先 commit 后 kill、结果保持。DIV 复用原样 unsigned radix-4，fast 1 拍 done、occupied 保持直到 write/合法 kill、release/accept 隔拍。旧后端暂时使用旧 wrapper，第 4 步再接线删除；没有在第 2 步提前改后端。
+单元实施：新增 `backend/IntMduProtocol.scala`、`multiplier/MulUnit.scala`、`divider/DivUnit.scala`。MUL 四级 product/op/rd/valid/committed，A01 整体 enable，最老未提交 commit、先 commit 后 kill、结果保持。DIV 复用原样 unsigned radix-4，fast 1 拍 done、occupied 保持直到 write/合法 kill、release/accept 隔拍。旧后端暂时使用旧 wrapper，第 4 步再接线删除；没有在第 2 步提前改后端。
 
 B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 500 请求、五 op 各 100，commit 延迟 0–6 拍、result 反压 0–9 拍；DIV seed `0x702` 512 请求、八操作各 64，commit 延迟 0–39 拍、反压 0–9 拍；U01 seed `0x703` 1000 个连续 65-bit 请求，对原样 SignedMul65x65 和独立 BigInt。通过后的实际循环台账分别为 MUL 500 req/commit/write、0 kill；DIV 512 req/commit/write、0 kill；等价性 1000 req/commit/write、0 kill。四级占满定向用例最大占用 4、未提交 P4 停住 9 拍，先 commit 后 kill 丢弃其余项，已提交项再反压/kill 8 拍不丢；DIV 定向用例最大占用 1、早 done 等 commit 9 拍，再反压/kill 7 拍。另覆盖四个 MUL 级的 kill、复位在途、连续 8 个不同 rd MUL 的 II=1/四拍、DIV 迭代中 kill、早 done 未提交 kill/reset。原 SignedMul65x65 的 50k 检查原样运行通过。
 
@@ -446,7 +446,7 @@ B 组预算在运行前已由提交中的测试定义固定：MUL seed `0x701` 5
 | 单元 | 当前模型 | 保留的检查 / 边界 |
 | --- | --- | --- |
 | MUL | `mul_protocol_abc.sby`：唯一组合 `$mul` 的 130-bit 输出换成逐拍任意值；`select -assert-count 1` 检查替换数量 | 全部生产寄存器、控制和断言保留；独立 FIFO 捕获同一个任意乘积，检查所有有效级 rd/product/op 身份、提交前缀和输出身份；不声称数学等价性 |
-| DIV | `div_abc.sby`：只以 `UnsignedRadix4DividerAbstract.sv` 替换生成的 unsigned radix-4 核，quotient/remainder 为任意64位值，完成延迟任意0–34拍 | 原 `CommittedDivUnit` 外壳源代码和生成逻辑不变：occupied/commit/kill/done、符号/W恢复、输出保持、快路径全部保留；独立 FIFO 检查身份与计数，内部 done 尚未提交的保持也检查 |
+| DIV | `div_abc.sby`：只以 `UnsignedRadix4DividerAbstract.sv` 替换生成的 unsigned radix-4 核，quotient/remainder 为任意64位值，完成延迟任意0–34拍 | 原 `DivUnit` 外壳源代码和生成逻辑不变：occupied/commit/kill/done、符号/W恢复、输出保持、快路径全部保留；独立 FIFO 检查身份与计数，内部 done 尚未提交的保持也检查 |
 
 DIV 完成拍数以接受沿为0：0表示接受沿锁存 core 完成、1–34表示后续对应沿完成；core 的 out_valid 是寄存输出（与原核短路径相同），外壳按原逻辑在随后采样拍捕获，不把它改成组合零拍输出。抽象模型仅新增**一条获批准的 assume**：非reset/flush且active、age=33时 `finish_now` 必须为1，保证该请求在接受后的第34拍以内完成；reset/flush 取消本项及其完成义务。模型保留原核“busy时不得接收”断言，并加 age 范围断言、0/34完成端点 cover；没有算术约束。
 
@@ -506,7 +506,7 @@ PDR 和串行 runner 已终止，远端进程检查确认没有剩余求解器�
 | 旧检查（源:行） | 新检查（源:行） | 结果 |
 | --- | --- | --- |
 | `multiplier/MulUnitSpec.scala:23-64`：旧 wrapper 三拍数据/flush；完整路径均为 `design/src/test/scala/` | `multiplier/MulUnitSpec.scala:26-40,56-71`：统一 req，补 commit，四拍 result 和未提交 kill；同五种 op 的原输入/期望值原样，kill 用例 7×9 原样 | 2/2 PASS |
-| `divider/RiscvDivUnitSpec.scala:25-65`：原 req/脉冲完成观测 | `divider/RiscvDivUnitSpec.scala:30-70`：统一 req，在接收后补 commit，改 result 观测；四组输入/期望值及 `cycles < 33` 容差原样；原文件实际没有 flush 测例，新增 kill 用例另在协议 suite | 1/1 PASS |
+| `divider/DivUnitSpec.scala:25-65`：原 req/脉冲完成观测 | `divider/DivUnitSpec.scala:30-70`：统一 req，在接收后补 commit，改 result 观测；四组输入/期望值及 `cycles < 33` 容差原样；原文件实际没有 flush 测例，新增 kill 用例另在协议 suite | 1/1 PASS |
 
 没有删除任何旧 RTL 字段、旧 wrapper、参照单元或测试；只做上述获准驱动/观测迁移并增加检查。旧后端完成断言和旧 wrapper 内断言也保留，第 4 步再按冻结稿迁移/删除。没有改已有期望值、随机次数、深度或 assume。
 

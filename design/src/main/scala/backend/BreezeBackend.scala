@@ -5,7 +5,7 @@ import chisel3.util._
 import flow.config.BackendConfig
 import flow.interface._
 import flow.core._
-import flow.divider.CommittedDivUnit
+import flow.divider.DivUnit
 import flow.multiplier.MulUnit
 import flow.fpu._
 import flow.platform.BreezeMcuPlatform
@@ -92,7 +92,7 @@ class BreezeBackend(
   val scoreboard = Module(new Scoreboard)
   val writeback = Module(new Writeback)
   val mulUnit = Module(new MulUnit)
-  val divUnit = Module(new CommittedDivUnit)
+  val divUnit = Module(new DivUnit)
   val fpUnit = Module(new CommittedFpUnit)
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
