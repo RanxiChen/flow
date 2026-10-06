@@ -45,6 +45,13 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var randomHold = false
   var lateError = false
   var softwareInterrupt = false
+  var timerInterrupt = false
+  var predictionTaken = false
+  var predictionTarget: Option[BigInt] = None
+  var predictionIndex = 0
+  var instructionAccessFault = false
+  var instructionPageFault = false
+  var faultSecondParcel = false
   private val rng = new scala.util.Random(seed)
   private var s1: Option[Request] = None
   private var s2: Option[Request] = None
@@ -83,14 +90,14 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
         d.io.fetchBuffer.valid.poke(true.B); d.io.fetchBuffer.bits.pc.poke(p.U)
         d.io.fetchBuffer.bits.inst.poke(i.U); d.io.fetchBuffer.bits.rawInst.poke(i.U)
         d.io.fetchBuffer.bits.instLen.poke(4.U)
-        d.io.fetchBuffer.bits.instructionAccessFault.poke(false.B); d.io.fetchBuffer.bits.instructionPageFault.poke(false.B)
-        d.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(false.B); d.io.fetchBuffer.bits.illegalCompressed.poke(false.B)
-        d.io.fetchBuffer.bits.pred.predType.poke(if((i & 0x7f)==0x63) FrontendPredType.BR else FrontendPredType.NONE)
-        d.io.fetchBuffer.bits.pred.predTaken.poke(false.B)
-        d.io.fetchBuffer.bits.pred.predPc.poke((p+4).U); d.io.fetchBuffer.bits.pred.phtIdx.poke(0.U)
+        d.io.fetchBuffer.bits.instructionAccessFault.poke(instructionAccessFault.B); d.io.fetchBuffer.bits.instructionPageFault.poke(instructionPageFault.B)
+        d.io.fetchBuffer.bits.instructionFaultSecondParcel.poke(faultSecondParcel.B); d.io.fetchBuffer.bits.illegalCompressed.poke(false.B)
+        d.io.fetchBuffer.bits.pred.predType.poke(if((i & 0x7f)==0x63) FrontendPredType.BR else if((i & 0x7f)==0x67) FrontendPredType.JALR else FrontendPredType.NONE)
+        d.io.fetchBuffer.bits.pred.predTaken.poke(predictionTaken.B)
+        d.io.fetchBuffer.bits.pred.predPc.poke(predictionTarget.getOrElse(p+4).U); d.io.fetchBuffer.bits.pred.phtIdx.poke(predictionIndex.U)
       case None => d.io.fetchBuffer.valid.poke(false.B)
     }
-    d.io.mmuIdle.poke(mmuIdle.B); d.io.machineSoftwareInterrupt.poke(softwareInterrupt.B)
+    d.io.mmuIdle.poke(mmuIdle.B); d.io.machineSoftwareInterrupt.poke(softwareInterrupt.B); d.io.machineTimerInterrupt.poke(timerInterrupt.B)
     val lateAt = pending.map { case (_,r) => (r+7) }
     val lateValid = lateAt.exists(cycle >= _)
     d.io.l1d.late.valid.poke(lateValid.B)
@@ -138,9 +145,9 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(o.divIn)) record("divIn",uint(o.exPc))
     if(bool(o.divIterating)) record("iter")
     if(bool(o.memHold)) record("hold")
-    if(bool(d.io.frontendBtbUpdate.valid)) record("btb")
-    if(bool(d.io.frontendPhtUpdate.valid)) record("pht")
-    if(bool(d.io.frontendGhrUpdate.valid)) record("ghr")
+    if(bool(d.io.frontendBtbUpdate.valid)) record("btb",data=uint(d.io.frontendBtbUpdate.target))
+    if(bool(d.io.frontendPhtUpdate.valid)) record("pht",r=uint(d.io.frontendPhtUpdate.idx).toInt,data=uint(d.io.frontendPhtUpdate.taken))
+    if(bool(d.io.frontendGhrUpdate.valid)) record("ghr",data=uint(d.io.frontendGhrUpdate.taken))
     if(bool(d.io.sfence.valid)) record("sfence")
     if(bool(d.io.frontendRedirect.valid)) record("redirect",data=uint(d.io.frontendRedirect.target))
     if(bool(d.io.frontendRedirect.cacheFlush)) record("icacheFlush")
