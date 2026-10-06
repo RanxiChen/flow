@@ -32,7 +32,7 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
     /** Next tag in the same L1D set and the same L2 set. */
     val stride: BigInt = (BigInt(g.l1Sets) max BigInt(CoherenceParams(g).l2Sets)) * LineBytes
     def ram(off: BigInt): BigInt = MainRam + off
-    def run(ops: CoreOp*): Unit = { core.enqueue(ops: _*); bench.quiesce() }
+    def runOps(ops: CoreOp*): Unit = { core.enqueue(ops: _*); bench.quiesce() }
     def finish(): Unit = {
       bench.quiesce()
       val before = dma.results.size
@@ -78,9 +78,9 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "loads and stores through the real L2 read each line from memory once and match the golden memory" in withSys() { e =>
     import e._
     val ls = (0 until 5).map(k => ram(0x100 + k * LineBytes))
-    run(ls.take(4).map(CoreOp.load(_)): _*)
-    run(CoreOp.store(ls(0) + 8, 0x1234), CoreOp.store(ls(1), 0x55, 0), CoreOp.store(ls(4) + 16, BigInt("abcdef01", 16), 2))
-    run(ls.map(CoreOp.load(_)) ++ Seq(CoreOp.load(ls(4) + 16, 2)): _*)
+    runOps(ls.take(4).map(CoreOp.load(_)): _*)
+    runOps(CoreOp.store(ls(0) + 8, 0x1234), CoreOp.store(ls(1), 0x55, 0), CoreOp.store(ls(4) + 16, BigInt("abcdef01", 16), 2))
+    runOps(ls.map(CoreOp.load(_)) ++ Seq(CoreOp.load(ls(4) + 16, 2)): _*)
     mem.reads.map(_._2).sorted mustBe ls.map(lineOf).sorted
     finish()
   }
@@ -88,19 +88,19 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "L1D and L2 evictions carry dirty data through L2 and AXI, and it reads back correctly" in withSys() { e =>
     import e._
     val ls = (0 until g.l2Ways + g.l1dWays + 2).map(k => ram(0x200 + k * stride))
-    run(ls.zipWithIndex.map { case (a, i) => CoreOp.store(a + 8 * (i % 4), BigInt(i + 1) * 0x0101010101L) }: _*)
+    runOps(ls.zipWithIndex.map { case (a, i) => CoreOp.store(a + 8 * (i % 4), BigInt(i + 1) * 0x0101010101L) }: _*)
     mem.writes must not be empty
-    run(ls.map(CoreOp.load(_)): _*)
+    runOps(ls.map(CoreOp.load(_)): _*)
     finish()
   }
 
   "L1I and DMA reads of a line the core owns return its dirty data, and the core keeps writing it" in withSys() { e =>
     import e._
     val a = ram(0x300)
-    run(CoreOp.store(a, BigInt("feedface", 16), 2))
+    runOps(CoreOp.store(a, BigInt("feedface", 16), 2))
     l1i.pending += ClientReq.read(lineOf(a)); bench.quiesce()
     l1i.results.last._3 mustBe arch.line(lineOf(a))
-    run(CoreOp.store(a + 4, 0x77, 0), CoreOp.load(a))
+    runOps(CoreOp.store(a + 4, 0x77, 0), CoreOp.load(a))
     dma.pending += ClientReq.read(lineOf(a)); bench.quiesce()
     dma.results.last._3 mustBe arch.line(lineOf(a))
     finish()
@@ -109,11 +109,11 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "a DMA write to a line the core holds invalidates it, and the next core load sees the DMA bytes from L2" in withSys() { e =>
     import e._
     val a = ram(0x400)
-    run(CoreOp.store(a, BigInt("1111111111111111", 16)), CoreOp.load(a + 16))
+    runOps(CoreOp.store(a, BigInt("1111111111111111", 16)), CoreOp.load(a + 16))
     dma.pending += ClientReq.write(lineOf(a), BigInt(0xff) << 16, BigInt("2222222222222222", 16) << 128)
     bench.quiesce()
     val reads = mem.reads.size
-    run(CoreOp.load(a + 16), CoreOp.load(a), CoreOp.load(a + 8))
+    runOps(CoreOp.load(a + 16), CoreOp.load(a), CoreOp.load(a + 8))
     core.history.takeRight(3).head.kind mustBe "Mshr"
     mem.reads.size mustBe reads
     finish()
@@ -123,11 +123,11 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
     import e._
     val a = ram(0x500)
     ptw.read(a + 8); bench.quiesce()
-    run(CoreOp.load(a), CoreOp.store(a + 8, 0x31))
+    runOps(CoreOp.load(a), CoreOp.store(a + 8, 0x31))
     ptw.read(a + 8); bench.quiesce()
     ptw.results.size mustBe 2
     device.regs.write(Device, 8, BigInt("0102030405060708", 16))
-    run(CoreOp.load(Device + 2, 1).copy(device = true), CoreOp.store(Device + 4, 0xaabb, 1).copy(device = true))
+    runOps(CoreOp.load(Device + 2, 1).copy(device = true), CoreOp.store(Device + 4, 0xaabb, 1).copy(device = true))
     device.log.map(_._1) mustBe Seq("R", "W")
     finish()
   }
