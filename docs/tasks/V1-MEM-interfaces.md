@@ -43,7 +43,7 @@ v1 是覆盖式重构。规则：
    - `BreezePmpChecker`：`access`、`privilege`（有效特权，MPRV/MPP）的驱动，目前是 `DontCare`。
    - `PMAChecker`：`amoOk`、`rsrvOk` 两个字段按 l1d-rtl-spec §0.1 新增。
 2. **L1I 客户端**：现有 `cache/BreezeCache.scala` 与 `frontend/BreezeFrontend.scala` 怎样改成 `coherence.ReadClientIO`（Read，`id` 区分 demand/预取）。写成单独的适配模块 `l1i/L1IClient.scala`，或者给出改造方案。
-3. **集群与外壳**：`top/BreezeMulticoreClusterWishbone.scala` 换成 L1D/L1I/L2 + AXI4 `mem` + AXI4-Lite `mmio` 的连接方式；LiteX 一侧需要的桥（AXI4→Wishbone，或 LiteX 原生 AXI）。新建 `top/BreezeCluster.scala`，能 elaborate 即可，旧文件保留。
+3. **集群与外壳**：`top/BreezeMulticoreClusterWishbone.scala` 换成 L1D/L1I/L2 + AXI4 `mem` + AXI4-Lite `mmio` 的连接方式；LiteX 一侧需要的桥（AXI4→Wishbone，或 LiteX 原生 AXI）。新建 `top/BreezeCluster.scala`，能 elaborate 即可；之后按第 0 项删除旧集群与旧 cache。
 4. **DMA 端口**：现有 DMA 从口（若有）怎样映射到 `ReadClientIO`（Read / MaskWrite）。
 5. **事件**：`L1DEvents` 按 `docs/l1d-spec-inputs.md` §12 补全字段，对照 `core/BreezePerformanceCounters.scala` 的现有接线。
 6. **几何参数**：列出 `config.scala` 里旧几何字段的全部使用点，写出合并到 `BreezeClusterConfig.mem` 的迁移清单。本任务只列清单，不改 `config.scala`。
