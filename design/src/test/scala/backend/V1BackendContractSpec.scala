@@ -42,6 +42,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
   var drained = true
   var mmuIdle = true
   var randomHold = false
+  var lateError = false
   var softwareInterrupt = false
   private val rng = new scala.util.Random(seed)
   private var s1: Option[V1Request] = None
@@ -93,7 +94,7 @@ private[backend] class V1Environment(val d: BreezeBackend, val seed: Int = 0xB01
     d.io.l1d.late.valid.poke(lateValid.B)
     pending.foreach { case (q,_) =>
       d.io.l1d.late.bits.rd.idx.poke(q.rd.U); d.io.l1d.late.bits.rd.isFp.poke(q.fp.B)
-      d.io.l1d.late.bits.data.poke(lateData.getOrElse(values(q.addr)).U); d.io.l1d.late.bits.error.poke(false.B)
+      d.io.l1d.late.bits.data.poke(lateData.getOrElse(values(q.addr)).U); d.io.l1d.late.bits.error.poke(lateError.B)
     }
     val blockedLine = s2.exists(q => pending.exists { case (a,r) =>
       (q.addr>>5)==(a.addr>>5) && cycle <= (r+7)
@@ -399,11 +400,22 @@ class V1BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChise
   }}
   "S01_S08_f0_and_cross_bank_RAW_WAW" in { check() { m =>
     m.enableFp(); m.values(256)=BigInt("3ff0000000000000",16)
-    val p=m.run(Seq(ld(0,256,true), fp(1,0,0), fp(2,1,toGpr=true),
+    val p=m.run(Seq(ld(0,256,true), fp(1,0,0), (BigInt(0x61)<<25)|(BigInt(1)<<15)|(BigInt(2)<<7)|0x53,
       (BigInt(0x69)<<25)|(BigInt(2)<<15)|(BigInt(2)<<20)|(BigInt(2)<<7)|0x53),40)
     m.writes(0,true).size mustBe 1; m.writes(1,true).head.data mustBe BigInt("4000000000000000",16)
     m.writes(2).head.data mustBe 2; m.writes(2,true).head.data mustBe BigInt("4000000000000000",16)
     m.d.io.observe.gprBusy.expect(0.U); m.d.io.observe.fprBusy.expect(0.U)
+  }}
+
+  "S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV" in { check() { m =>
+    m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
+    m.returnDelay=0; m.misses += BigInt(64)
+    m.issue(mdu(5,10,11,true)); m.issue(ld(1,64)); m.issue(nop); m.issue(nop); m.issue(nop)
+    m.lateError=true
+    for(_ <- 0 until 50) m.step()
+    m.d.io.hartFatal.expect(true.B); m.d.io.fetchBuffer.ready.expect(false.B)
+    m.all("redirect") mustBe empty; m.writes(1) mustBe empty; m.writes(5).size mustBe 1
+    m.d.io.observe.gprBusy.expect(0.U)
   }}
 
 }

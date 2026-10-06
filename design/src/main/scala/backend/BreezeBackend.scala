@@ -293,8 +293,8 @@ class BreezeBackend(
   req.rd.idx := ex.rd_addr
   req.rd.isFp := exBank
   req.isFlw := exFp.isLoad && !exFp.isDouble
-  io.l1d.s1Kill := wbKill
-  io.l1d.s2Kill := wbKill
+  io.l1d.s1Kill := wbKill || io.hartFatal
+  io.l1d.s2Kill := wbKill || io.hartFatal
   io.l1d.trapClearRsv := csrFile.io.trap.valid
   io.l1d.csr := csrFile.io.mmu_context
 
@@ -352,9 +352,9 @@ class BreezeBackend(
   mulUnit.io.commit := wbCommit && wb.mul
   divUnit.io.commit := wbCommit && wb.div
   fpUnit.io.commit := wbCommit && wb.fp
-  mulUnit.io.killUncommitted := wbKill
-  divUnit.io.killUncommitted := wbKill
-  fpUnit.io.killUncommitted := wbKill
+  mulUnit.io.killUncommitted := wbKill || io.hartFatal
+  divUnit.io.killUncommitted := wbKill || io.hartFatal
+  fpUnit.io.killUncommitted := wbKill || io.hartFatal
   branchRedirect := exLegal && exAdvance &&
     ((taken =/= ex.pred.predTaken) || (taken && ex.pred.predTaken && jau.io.jmp_addr =/= ex.pred.predPc))
 
@@ -424,11 +424,14 @@ class BreezeBackend(
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
     (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
+  val oldCsrUsesRs1 = ctrl.sel_alu1 === SEL_ALU1.RS1.U || ctrl.bru_inst || ctrl.is_sfence_vma ||
+    ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.csr_cmd === CSR_CMD.RW.U ||
+    ctrl.csr_cmd === CSR_CMD.RS.U || ctrl.csr_cmd === CSR_CMD.RC.U
   val csrRegHazard = idCsr && Seq(
     (ex.valid && exWrites && !exBank && ex.rd_addr =/= 0.U, ex.rd_addr),
     (mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U, mem.rd.idx),
     (wb.valid && wb.writes && !wb.rd.isFp && wb.rd.idx =/= 0.U, wb.rd.idx)
-  ).map { case (v,r) => v && ((gpr1Used && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
+  ).map { case (v,r) => v && ((oldCsrUsesRs1 && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
   // Ordinary CSR/local-FP destinations are not EX bypassable; wait for WB write-through.
   val ordinaryHazard = Seq((ex.valid, exWrites, exBank, ex.rd_addr, ex.ctrl.sel_wb === SEL_WB.CSR.U || exFp.valid),
     (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp)).map {
@@ -572,7 +575,7 @@ class BreezeBackend(
     t.valid := wbCommit
     t.pc := wb.pc; t.inst := wb.rawInst; t.nextPc := wb.nextPc
     t.estop := wb.estop
-    t.rdWriteEn := wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U
+    t.rdWriteEn := wbOrdinary && (wb.rd.isFp || wb.rd.idx =/= 0.U)
     t.rdAddr := wb.rd.idx; t.rdData := wbData
     t.rdPending := wbCommit && wbLong && wb.writes && (wb.rd.isFp || wb.rd.idx =/= 0.U)
     t.rdIsFp := wb.rd.isFp
@@ -581,11 +584,13 @@ class BreezeBackend(
     t.lateWriteRd := writeback.io.clear.bits.idx
     t.lateWriteData := Mux(writeback.io.clear.bits.isFp, writeback.io.fprWrite.bits.data, writeback.io.gprWrite.bits.data)
     t.lateWriteError := io.l1d.late.fire && io.l1d.late.bits.error
-    t.memEn := wb.mem; t.memAddr := wb.address
+    t.memEn := wb.mem && wb.inst(6,0) =/= OPCODE.MISC_MEM; t.memAddr := wb.address
     t.memAlignedAddr := wb.address & "hfffffffffffffff8".U
-    t.memIsWrite := wb.mem && !wb.load
+    t.memIsWrite := wb.mem && (wb.inst(6,0) === OPCODE.STORE || wb.inst(6,0) === OPCODE.STORE_FP ||
+      (wb.inst(6,0) === OPCODE.AMO && wb.inst(31,27) =/= 2.U))
     t.memRData := Mux(wbDone, wbData, 0.U)
-    t.memWData := wb.storeData
+    t.memWData := (wb.storeData << Cat(wb.address(2,0), 0.U(3.W)))(63,0)
+    t.memWMask := (((1.U(9.W) << (1.U(4.W) << wb.inst(13,12))) - 1.U) << wb.address(2,0))(7,0)
   }
   io.debug.foreach { d =>
     d := 0.U.asTypeOf(d)
@@ -605,6 +610,14 @@ class BreezeBackend(
     d.memWbException := wbExc; d.memWbTrapValid := csrFile.io.trap.valid
     d.memWbIsEcall := wb.inst === "h00000073".U; d.memWbIsMret := wb.mret; d.memWbIsWfi := wb.wfi
     d.wfiSleeping := sleeping; d.csrIllegal := csrFile.io.csr_illegal
+  }
+  val pastDownHold = RegNext(downHold, false.B)
+  val pastKill = RegNext(wbKill, false.B)
+  val pastActive = RegNext(!reset.asBool, false.B)
+  val heldMem = RegNext(mem.asUInt)
+  val heldWb = RegNext(wb.asUInt)
+  when(pastActive && !reset.asBool && pastDownHold && !pastKill) {
+    assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[V1 S09] held MEM/WB metadata changed")
   }
   when(!reset.asBool) {
     assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[V1 S15] L1D resp is not aligned to WB")

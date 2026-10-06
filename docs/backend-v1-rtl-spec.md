@@ -47,6 +47,7 @@
 - 每 bank 一个 2-bit 饱和计数和在途保护标记：有后台 valid 而该 bank 无 grant 时计数 +1（饱和 3），否则清零；计数为 3 且标记为 0 时 ID 停发一拍并置标记，该 bank 获 grant 清标记。ID 只读这两个寄存器，不依赖当拍仲裁。最高优先级来源在连续普通写下首次落败 c、气泡 c+3、grant c+6。[V1-BE-B01-ruling§1]
 - 无 WB 保持时，EX 单元 not-ready 只保持 EX/ID；MEM 消费后插气泡，MEM/WB 前进；ID RAW/WAW 不全局保持。[backend-rtl-spec.md§5.1]
 - 后台写不再次 retire；独立普通提交与不同 rd 后台写同拍要分别输出事件。HPM11/12 可同拍记 MUL/DIV 来源停顿；13 每拍计数有后台 valid 而无后台 grant 的 bank 数（0/1/2），不代表 WB 停顿。[backend-timing-contract.md§4][V1-BE-B01-ruling§1]
+- hartFatal 后取消未提交单元项与 CPU 访存，保留已提交后台项，不产生陷入/前端重定向；防止未提交 FP 输出阻塞更老已提交返回。[自定]
 - late.error 作为完成事件清对应 busy，不写坏数据；hartFatal 当拍可见并保持，停止该 hart 且不发 trap；其他已提交来源可继续被消费，不能因 fatal 执行年轻普通退休。[backend-pipeline-design.md§7][tasks/V1-BE-backend-spec-and-rtl.md§2.1][自定]
 - 对 `Valid` 的 L1D resp，没有 ready；按一次判定消费，不制造 extra capture。WB 写口冲突不保持，resp 与 WB 锁步消费，不加响应缓存或隐藏保持信号。[V1-BE-B01-ruling§1]
 
