@@ -32,7 +32,7 @@
 | 协议与 L2 spec | 初稿完成 |
 | 集成备忘 | 完成：[`v1-integration-notes.md`](v1-integration-notes.md)（现有代码事实与集成决定） |
 | L1D spec | 初稿完成（含参数单入口与非默认配置冒烟） |
-| 后端 spec | 交给 codex：任务书 [`tasks/V1-BE-backend-spec-and-rtl.md`](tasks/V1-BE-backend-spec-and-rtl.md)，冻结拍数合同 [`backend-timing-contract.md`](backend-timing-contract.md)；冻结文件由 `tools/frozen_check.py` 校验 |
+| 后端 spec | 交给 codex：任务书 [`tasks/V1-BE-backend-spec-and-rtl.md`](tasks/V1-BE-backend-spec-and-rtl.md)，冻结拍数合同 [`backend-timing-contract.md`](backend-timing-contract.md)；冻结文件由 `tools/frozen_check.py` 校验。组件已完成（`ea2f645`）；B01 已裁定（[`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)：WB 优先、ID 饥饿保护、串行发射、L1D LATE），待 codex 继续 |
 | 集群与外壳 spec | 未开始 |
 | 测试计划、codex 规则 | 未开始 |
 | RTL 实现 | 未开始 |

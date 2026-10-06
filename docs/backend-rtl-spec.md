@@ -177,6 +177,8 @@ EX req 仅对 valid、合法 MUL/DIV、rd≠0、无取指异常/非法标记、�
 
 ## 5. 写口仲裁、级间 enable 与响应保存
 
+> **v1 覆盖（B01 裁定，[`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）：**本节 `wbPortStall` 让 WB 普通写让拍、四级保持的规则只适用于 T01 阻塞访存基线。v1 改为 WB 普通写优先、后台结果保持，ID 饥饿保护（[`backend-pipeline-design.md`](backend-pipeline-design.md) 第 6 节）；v1 中不存在 `wbPortStall`，`downHold` 只剩 ESTOP 等待，且 ESTOP 按串行发射处理。HPM 13 改按合同第 4 节计数。其余规则（来源保持、MUL 整停、DIV 隔拍、A08 门控）沿用。
+
 固定 **DIV > MUL > 普通 WB**，以后按 D 6 扩展 L1D > DIV > MUL > FPU；没有轮转。每拍至多一个后台写，未选来源 ready=0 并保持结果。
 
 ```text

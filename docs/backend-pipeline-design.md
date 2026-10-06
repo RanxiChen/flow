@@ -2,6 +2,8 @@
 
 本文记录新版 Breeze v1 后端的级划分、提交点、记分板、写口仲裁以及与 L1D、乘除法单元（MDU）、FPU 的接口边界，供微架构审阅。审阅固定后再单独编写 RTL 级 spec；本文不定义 Bundle 字段和逐寄存器状态机，不代表新版已经实现或验证。
 
+修订：2026-10-06 B01 裁定（[`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）——第 3 节增加停顿方向规则，第 6 节写口改为 WB 优先加 ID 饥饿保护，第 7 节 WB 串行指令改为 ID 停发。
+
 输入：L1D 与 L2 的设计见 [`dcache-pipeline-design.md`](dcache-pipeline-design.md)，其中 2.3 节的提交点和 2.9 节的判定/迟到数据接口是本文的直接依据；地址翻译沿用 [`breeze-mmu-rtl-spec.md`](breeze-mmu-rtl-spec.md)。MDU、FPU 的现有接口不构成约束，按本文需要修改。
 
 ## 1. 现状
@@ -39,6 +41,12 @@ pipelineHold := memReqIssued || (memWaitingRespReg && !memRspFire) ||
 **EX 兼做 AGU**（与 Rocket 相同）：EX 的加法器计算 `rs1 + imm`，结果在同拍送入 L1D 的 S0。L1D 的 set index 和 S0 冲突比较只用地址低 12 位，进位链短；完整 64 bit 地址送入 dTLB，按 MMU spec 下一拍出结果。
 
 时序风险在 S0 冲突比较产生的停顿信号：它要反压 EX 与前端，扇出大。v1 先按同拍停顿实现；若综合不满足，退路是把冲突比较结果寄存一拍，在 S1 kill 该 Load 并于下一拍从 S0 重发，多花 1 拍但切断长路径，不需要增加独立 AGU 级。
+
+**停顿方向规则（B01）：**EX/MEM/WB 与 S0/S1/S2 锁步，L1D 没有来自后端的保持输入。因此：
+
+- 后端自己发起的停顿只能落在 ID（不发射）或 EX（不 fire 请求，MEM 插气泡）；
+- MEM、WB 只在 L1D `s2Hold` 时保持（此时 L1D 的 S1/S2 同样保持），或在 WB 中是串行指令且其后各级都是气泡时保持（第 7 节）；
+- 后端不得因写口、记分板或任何后端内部条件让 MEM/WB 保持。
 
 Load 命中时数据在 WB 拍得到并写回；紧随其后的依赖指令要等约 2 拍（load-use 2 拍气泡），与它无关的指令不等。是否从 S2 组合旁路缩短为 1 拍见第 12 节。
 
@@ -80,8 +88,9 @@ MDU 和 FPU 在 EX 接收操作并开始计算，但结果在该指令提交前*
 
 整数和浮点寄存器堆各保留**一个写口**。长延迟结果来源有：L1D 迟到数据、DIV、MUL、FPU。
 
-- **长延迟结果优先。**某拍有长延迟结果要写时占用写口，WB 中要写寄存器的普通指令停一拍。这样长延迟结果不会被持续的 ALU 写回饿死，规则也简单。
-- 多个长延迟来源同拍到达时按固定优先级选择：L1D 迟到数据 > DIV > MUL > FPU；未被选中的来源保持结果（valid/ready）。具体顺序可在 RTL spec 调整，但每个来源都必须能保持结果。
+- **WB 普通写优先**（B01 裁定，与 Rocket 相同）。WB 中要写某寄存器堆的普通指令当拍写入并提交；该寄存器堆的长延迟结果当拍不获写口，保持结果（ready=0）。WB 从不因写口保持（第 3 节停顿方向规则）。
+- **饥饿保护在 ID。**每个寄存器堆一个饥饿计数：本拍有长延迟结果 valid 而该堆没有任何长延迟写获准则 +1（饱和于 3），否则清 0。计数为 3 且该堆没有在途保护气泡时，ID 本拍不发射任何指令，制造 1 个气泡，3 拍后它到达 WB 并空出写口；该堆有长延迟写获准时清除在途标记。最高优先级来源自首次落败起至多 6 拍获写口。L1D 迟到数据的等待因此有界；L1D 的回放不在 S2 等写口（L1D spec 6.2 节），一致性活性不依赖后端。
+- 多个长延迟来源同拍到达时按固定优先级选择：L1D 迟到数据 > DIV > MUL > FPU；未被选中的来源保持结果（valid/ready）。每个来源都必须能保持结果。
 - fflags 在浮点结果写回时按位或累积，与写回顺序无关。
 
 ## 7. 异常、中断、CSR 与栅栏
@@ -91,7 +100,7 @@ MDU 和 FPU 在 EX 接收操作并开始计算，但结果在该指令提交前*
 - **refill 错误：**已提交访存的 refill 错误不可精确交付，L1D 以带错误标记的迟到数据返回，后端清除记分板位并上报 `hartFatal`（见 D-cache 文档 2.4 节）。
 - **CSR 指令：**v1 保守处理，等两组记分板全部清空后再执行。fflags/fcsr 的读写因此必然看到所有已提交浮点运算的结果；frm 的修改也不会影响已在途的浮点运算（这些运算在 EX 已带走舍入模式）。
 - **FENCE：**作为请求发给 L1D，L1D 在 MSHR 与 pending-store 均为空时完成，保证已提交但仍在 MSHR 中的访存先于 FENCE 后的访存生效。
-- **FENCE.I、SFENCE.VMA：**v1 改在 WB 串行执行（[`v1-integration-notes.md`](v1-integration-notes.md) 第 3 节，覆盖旧语义）。FENCE.I：等 L1D 的 MSHR 与 pending-store 为空 → 清 L1I → 重定向到下一条；L1D 不写回、不失效，删除 `dcacheFlushReq/Done`。SFENCE.VMA：更老指令全部完成、前端 kill → 等 MSHR 与 pending-store 为空 → 等 MMU `idle` → 一拍 sfence → 等 `idle` → 重定向到下一条（MMU 合同 C4；MMU spec 所称 store buffer 排空即 MSHR 与 pending-store 为空）。两者在 WB 重定向时作废年轻未提交项（第 5 节）。T01 的 A02（FENCE.I 在 MEM、不发 kill）只适用于旧阻塞访存路径。
+- **FENCE.I、SFENCE.VMA：**v1 改在 WB 串行执行（[`v1-integration-notes.md`](v1-integration-notes.md) 第 3 节，覆盖旧语义）。FENCE.I：等 L1D 的 MSHR 与 pending-store 为空 → 清 L1I → 重定向到下一条；L1D 不写回、不失效，删除 `dcacheFlushReq/Done`。SFENCE.VMA：更老指令全部完成、前端 kill → 等 MSHR 与 pending-store 为空 → 等 MMU `idle` → 一拍 sfence → 等 `idle` → 重定向到下一条（MMU 合同 C4；MMU spec 所称 store buffer 排空即 MSHR 与 pending-store 为空）。两者在 WB 重定向时作废年轻未提交项（第 5 节）。**串行发射（B01）：**FENCE.I、SFENCE.VMA、WFI、ESTOP 这类会在 WB 因后端条件等待的指令，离开 ID 后 ID 不再发射年轻指令，直到它离开 WB；于是它在 WB 等待时 EX/MEM 只有气泡、L1D 中没有其后的 CPU 请求，WB 保持不会与 S1/S2 错位。FENCE.I 与 SFENCE.VMA 本来就重定向到下一条，停发没有代价。T01 的 A02（FENCE.I 在 MEM、不发 kill）只适用于旧阻塞访存路径。
 - **AMO、带 aq/rl 的 LR/SC、MMIO：**由 L1D 保证在 MSHR 与 pending-store 为空后执行；后端在 WB 等结果。不带 aq/rl 的 LR/SC 在流水中执行（D-cache 文档 2.7 节）。
 - **MMIO 与中断：**MMIO 一旦发出就不能取消，中断等它退休后再接受（D-cache 文档 2.10 节）。
 - **WFI：**不需要等后台长延迟操作。

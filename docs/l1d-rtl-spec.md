@@ -2,6 +2,8 @@
 
 状态：Claude 编写，供实现使用（2026-10-06）。设计依据为 [`dcache-pipeline-design.md`](dcache-pipeline-design.md) 第 2 节，输入摘录与已定决定见 [`l1d-spec-inputs.md`](l1d-spec-inputs.md)。协议编码以 [`coherence-l2-rtl-spec.md`](coherence-l2-rtl-spec.md) 第 1 节为准；MMU 合同以 [`breeze-mmu-rtl-spec.md`](breeze-mmu-rtl-spec.md) 为准。
 
+修订：2026-10-06 B01 裁定（[`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md)）——回放的迟到数据不在 S2 等 `late.ready`，改由 MSHR 的 LATE 状态保持（6.2 节）；第 12 节活性论证随之更新。`L1DCoreIO` 字段不变。
+
 ## 0. 范围与参数
 
 ### 0.1 文件
@@ -70,7 +72,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | `s2Kill` | 入 | WB 发起的 kill（更老异常、中断、xRET）；作废 S2 与 S1 |
 | `resp` | 出，Valid | S2 判定：`kind`（Done / Mshr / Exc）、`data` 64、`excCause`、`tval`；每请求恰一次 |
 | `s2Hold` | 出 | S2 暂不判定，后端停在 WB |
-| `late` | 出，Decoupled | 迟到数据：`rd`、`data` 64、`error`；后端 ready=0 时保持 |
+| `late` | 出，Decoupled | 迟到数据：`rd`、`data` 64、`error`；后端 ready=0 时由 MSHR 保持（不占 S2，6.2 节） |
 | `drained` | 出 | MSHR 与 pending-store 均空（FENCE.I、SFENCE.VMA 用） |
 | `mmioBusy` | 出 | MMIO 已发出未退休（中断/调试等待） |
 | `trapClearRsv` | 入 | 本 hart 陷入，清 reservation |
@@ -193,17 +195,19 @@ PS 写 data 不触发（由第 4 节保证）。
 
 | 字段 | 说明 |
 | --- | --- |
-| `valid`、`state` | IDLE → (WB_READ) → SEND → WAIT → INSTALL → REPLAY → IDLE |
+| `valid`、`state` | IDLE → (WB_READ) → SEND → WAIT → INSTALL → REPLAY → (LATE) → IDLE |
 | `lineAddr`、`isGetM`、`way`、`upgrade` | 行 PA、请求类型、目标 way、是否写升级 |
 | `src` | CPU / PTW |
 | `op`、`rd`、`size`、`signed`、`isFlw`、`word`、`mask`、`wdata` | 回放所需原请求 |
 | `isLr`、`ptwKilled` | LR 回放后建 reservation；PTW 请求已 kill 标记 |
 | `refill`、`err`、`grantE` | 256 bit 缓冲、错误位、得 E（DataE/AckE）或 S（DataS） |
+| `lateData` | 64 bit：回放 S2 格式化后的 Load 数据，LATE 状态下驱动 `late.data` |
 
 - SEND：victim 需写回时等写回读完成（6.3）；REQ `op` = GetS/GetM、`addr` = `lineAddr`、`id` = 0；fire 后 WAIT。
 - WAIT：RSP↓ DataS/DataE/AckE 到达 → 存入 `refill`（AckE 不带数据，安装时保留原数据）→ INSTALL。`error=1` → 不安装，解锁 way（置 I），直接 REPLAY 交付错误。
 - INSTALL：S0 内部来源，整行操作：`wordsPerLine` 拍逐字写 `way` 的 data（AckE 跳过 data，只用 1 拍）；最后一拍写 tag `{state = grantE ? E : S, tag}`、PLRU touch、解锁 way、置同 set 在途快照失效。way 在安装期间仍锁定，不会被命中。
-- REPLAY：以 PA 从 S0 进入（经冲突检查），S2 执行原请求：Load → `late`（`late.ready=0` 时 S2 保持，不阻塞 RSP↓ 与 probe）；Store → PS；LR → `resp` Done 并建 reservation；PTW → `ptw.resp`（`ptwKilled` 时丢弃）。错误：Load 送 `late.error=1`；Store 丢弃；PTW → `ptw.resp.accessFault=1`。完成 → IDLE。
+- REPLAY：以 PA 从 S0 进入（经冲突检查），S2 执行原请求：Load → 当拍以 S2 结果直接驱动 `late`（valid、`rd`、格式化数据、`error`），`late.ready=1` 则当拍 fire 并 → IDLE；`late.ready=0` 则数据存入 `lateData` → LATE，**S2 不保持、不发 `s2Hold`**；Store → PS；LR → `resp` Done 并建 reservation；PTW → `ptw.resp`（`ptwKilled` 时丢弃）。错误：Load 送 `late.error=1`（同上，可进 LATE）；Store 丢弃；PTW → `ptw.resp.accessFault=1`。非 Load 完成 → IDLE。
+- LATE：`late.valid=1`，字段取自 MSHR（`rd`、`lateData`、`err`），fire → IDLE。此时行已安装、回放已完成，不压住 probe（10.2 节以“回放完成”为准）；MSHR 未回 IDLE，新 miss 按“MSHR 满”s2Hold。后端写口饥饿保护保证 LATE 至多约 6 拍（[`backend-pipeline-design.md`](backend-pipeline-design.md) 第 6 节）。
 - 回放时行可能已被 probe 收走（回放前 Inv）：回放不再 miss——第 10 节规则压住比回放更晚的 probe 直到回放完成，因此回放必命中（断言）。
 
 ### 6.3 写回槽
@@ -290,7 +294,7 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 
 | 条件 | 解除 |
 | --- | --- |
-| `addr` = MSHR 行 且 MSHR 在 WAIT/INSTALL/REPLAY 且 role > 本地状态（本地 I 收任意；本地 S 收 `owner=1`） | MSHR 回到 IDLE（PTW `ptwKilled` 时 INSTALL 后即解除） |
+| `addr` = MSHR 行 且 MSHR 在 WAIT/INSTALL/REPLAY 且 role > 本地状态（本地 I 收任意；本地 S 收 `owner=1`） | MSHR 离开 REPLAY（进入 LATE 或 IDLE；LATE 不压住）（PTW `ptwKilled` 时 INSTALL 后即解除） |
 | `addr` = 写回槽行 且写回槽未收 PutAck | PutAck 后处理，此时本地 I，答无数据 Ack |
 | `addr` = `rsvLine` 且前进窗口有效 | 窗口结束 |
 | AMO RMW 窗口内同行 | 窗口结束（≤2 拍） |
@@ -319,19 +323,20 @@ S0 进入前检查：`rl` → 等 `drained` 再进入；`aq` → 其完成（res
 | ready | 条件 | 纪律 |
 | --- | --- | --- |
 | `rspDown.ready` | 恒 1 | 1 |
-| `snp.ready` | `!snpValid && initDone`；`snpValid` 的释放只依赖：MSHR 收到 RSP↓ Data/Ack 并回放（回放只等 `late.ready` 与 PS 写口，均为有限拍本地）、写回槽收到 PutAck、LR 80 拍窗口、AMO ≤2 拍窗口、PS 1 拍、10.1 节开始条件 ≤3 拍、整行操作 `wordsPerLine` 拍 | 2 |
+| `snp.ready` | `!snpValid && initDone`；`snpValid` 的释放只依赖：MSHR 收到 RSP↓ Data/Ack 并回放（回放只等 PS 写口，有限拍本地；不等 `late.ready`）、写回槽收到 PutAck、LR 80 拍窗口、AMO ≤2 拍窗口、PS 1 拍、10.1 节开始条件 ≤3 拍、整行操作 `wordsPerLine` 拍 | 2 |
 | `req`（L1D 发送） | — | L2 侧 3 |
 | `rspUp`（L1D 发送） | L2 恒收 | 1 |
 | `ptw.req.ready` | S0 仲裁与冲突检查 | 本地 |
 | `req.ready`（后端） | 冲突、入口关闭、级保持、初始化 | 本地 |
 
-注：MSHR 回放受 `late.ready` 影响，后端写口按 L1D 迟到数据最高优先，至多等 WB 中一拍，属有限拍本地延迟。
+注：回放不等 `late.ready`（6.2 节 LATE），probe 活性与后端写口无关。`late.ready` 只影响 MSHR 何时回 IDLE，后端饥饿保护使其有界。
 
 ## 13. 验证
 
 ### 13.1 断言（仿真）
 
 - 每个后端请求恰一次 `resp`（kill 的除外）；`late` 至多 `nMshrs` 笔在途。
+- S2 有效项的保持只来自本文规则（暂不判定、PTW/MSHR 满等），从不取决于 `late.ready`；S1/S2 保持的每一拍 `s2Hold=1`。
 - 发送端 valid 在 fire 前字段不变（REQ、RSP↑、AXI-Lite）。
 - RSP↓ op 与 MSHR/写回槽状态一致（6.5）。
 - 写回槽有效时不发同行 Get；MSHR 回放必命中。
