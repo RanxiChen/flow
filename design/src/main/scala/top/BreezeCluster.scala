@@ -5,20 +5,21 @@ import flow.backend.BreezeBackend
 import flow.buffer.FetchBuffer
 import flow.bus._
 import flow.coherence._
-import flow.config.{BreezeCoreConfig, BreezeMemGeometry}
+import flow.config.BreezeClusterConfig
 import flow.frontend.BreezeFrontend
 import flow.interface.TracePayload
 import flow.l1d.{L1DCache, L1DEvents}
 import flow.l1i.{FetchTlbClient, L1IClient}
-import flow.l2.L2Home
+import flow.l2.{L2Events, L2Home}
 import flow.mmu.sv39.Sv39Mmu
 import flow.platform.BreezeMcuPlatform
 
 /** Native memory-system connection boundary. Cache miss/replay execution is
   * still the responsibility of the L1D/L2 implementations, not this shell.
   */
-class BreezeCluster(val mem: BreezeMemGeometry,
-    val coreCfg: BreezeCoreConfig = BreezeCoreConfig(enableMmu = true)) extends Module {
+class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false) extends Module {
+  val mem = cfg.mem
+  val coreCfg = cfg.coreCfg(enableTandem)
   require(!coreCfg.useFASE, "FASE backend/cluster contract remains unresolved")
   private val p = CoherenceParams(mem)
   val io = IO(new Bundle {
@@ -35,8 +36,10 @@ class BreezeCluster(val mem: BreezeMemGeometry,
     val hartEStop = Output(Vec(p.nCores, Bool()))
     val retire = Output(Vec(p.nCores, new TracePayload(64)))
     val l1dEvents = Output(Vec(p.nCores, new L1DEvents))
+    val l2Events = Output(new L2Events(p))
   })
   val l2 = Module(new L2Home(mem))
+  io.l2Events := l2.io.events
   val mmio = Module(new Axi4LiteArbiter(p.nCores))
   io.mem <> l2.io.mem
   io.mmio <> mmio.io.out
@@ -111,9 +114,9 @@ class BreezeCluster(val mem: BreezeMemGeometry,
 /** LiteX shell. The native cluster keeps AXI memory/MMIO and a ReadClient DMA
   * port; only this optional outer shell exposes word-addressed Wishbone.
   */
-class BreezeClusterWishbone(mem: BreezeMemGeometry,
-    coreCfg: BreezeCoreConfig = BreezeCoreConfig(enableMmu = true),
+class BreezeClusterWishbone(cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     withDma: Boolean = false) extends Module {
+  private val mem = cfg.mem
   private val p = CoherenceParams(mem)
   private val wb = LiteXWishboneParameters(p.paddrBits, 64)
   val io = IO(new Bundle {
@@ -128,14 +131,16 @@ class BreezeClusterWishbone(mem: BreezeMemGeometry,
     val hartFatal = Output(Vec(p.nCores, Bool())); val hartEStop = Output(Vec(p.nCores, Bool()))
     val retire = Output(Vec(p.nCores, new TracePayload(64)))
     val l1dEvents = Output(Vec(p.nCores, new L1DEvents))
+    val l2Events = Output(new L2Events(p))
   })
-  val cluster = Module(new BreezeCluster(mem, coreCfg))
+  val cluster = Module(new BreezeCluster(cfg, enableTandem))
   cluster.io.resetAddr := io.resetAddr; cluster.io.msip := io.msip
   cluster.io.mtip := io.mtip; cluster.io.time := io.time
   cluster.io.externalInterrupts := io.externalInterrupts
   cluster.io.supervisorExternalInterrupts := io.supervisorExternalInterrupts
   io.hartFatal := cluster.io.hartFatal; io.hartEStop := cluster.io.hartEStop
   io.retire := cluster.io.retire; io.l1dEvents := cluster.io.l1dEvents
+  io.l2Events := cluster.io.l2Events
   val memory = Module(new Axi4WishboneBridge(Axi4Params(p.paddrBits, p.memDataBits, p.slotBits)))
   val mmio = Module(new Axi4LiteWishboneBridge(p.paddrBits))
   memory.io.axi <> cluster.io.mem; io.memoryWishbone <> memory.io.wishbone

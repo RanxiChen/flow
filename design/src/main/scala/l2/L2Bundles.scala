@@ -104,3 +104,27 @@ class L2PutBuf(p: CoherenceParams) extends Bundle {
   val addr = UInt(p.lineAddrBits.W)
   val data = UInt(p.lineBits.W)
 }
+
+/** Event pulses (coherence-l2-rtl-spec §11, observability-design §2.5).
+  * Per-source vectors use REQ port order L1D(0..n-1), L1I(0..n-1), DMA.
+  * Counters live in the observability step; this is only the event wiring.
+  */
+class L2Events(p: CoherenceParams) extends Bundle {
+  /** Request accepted at S2, split by how it was served. */
+  val req = Vec(p.nReqPorts, Bool())
+  val hit = Vec(p.nReqPorts, Bool())
+  val needProbe = Vec(p.nReqPorts, Bool())
+  val miss = Vec(p.nReqPorts, Bool())
+  /** Per-cycle: request waits because every slot was full / its set is protected. */
+  val slotFullStall = Vec(p.nReqPorts, Bool())
+  val setWait = Vec(p.nReqPorts, Bool())
+  val put = Vec(p.nCores, Bool())
+  val probeSent = Vec(p.nCores, Bool())
+  /** Per-cycle: a probe job is waiting for answers. */
+  val probeCycles = Bool()
+  val memRead = Bool()
+  /** Reads in flight this cycle; summed it gives mem_read_cycles. */
+  val memReadsInFlight = UInt(log2Ceil(p.l2Slots + 1).W)
+  val memTwoInflight = Bool()
+  val memWrite = Bool()
+}

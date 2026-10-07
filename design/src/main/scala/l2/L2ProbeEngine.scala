@@ -15,6 +15,8 @@ class L2ProbeEngine(p: CoherenceParams) extends Module {
     val collected = Valid(UInt(p.slotBits.W))
     /** The slot's next task cleared the answer buffers in S2: engine may take the next job. */
     val release = Input(Bool())
+    /** A job is outstanding and not all answers are in (event only). */
+    val active = Output(Bool())
   })
 
   val busy = RegInit(false.B)
@@ -60,6 +62,7 @@ class L2ProbeEngine(p: CoherenceParams) extends Module {
   io.collected.valid := allIn
   io.collected.bits := j.slot
   when(allIn) { done := true.B }
+  io.active := busy && !done
   when(io.release) {
     assert(busy && done)
     busy := false.B

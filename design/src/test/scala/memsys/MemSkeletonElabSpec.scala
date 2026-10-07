@@ -2,7 +2,7 @@ package flow.memsys
 
 import chisel3._
 import circt.stage.ChiselStage
-import flow.config.BreezeMemGeometry
+import flow.config.{BreezeClusterConfig, BreezeClusterPresets, BreezeMemGeometry, PrivilegeProfile}
 import flow.bus._
 import flow.coherence.CoherenceParams
 import flow.top.{BreezeCluster, BreezeClusterWishbone}
@@ -21,11 +21,13 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
     "stress" -> BreezeMemGeometry.stress)
 
   for ((name, g) <- geometries) {
+    // Linux profile: the Sv39 MMU and parallel L1I lookup are elaborated.
+    val cluster = BreezeClusterConfig(name, g, privilegeProfile = PrivilegeProfile.Linux)
     s"BreezeCluster elaborates ($name)" in {
-      ChiselStage.emitSystemVerilog(new BreezeCluster(g), firtoolOpts = Array("-disable-all-randomization"))
+      ChiselStage.emitSystemVerilog(new BreezeCluster(cluster), firtoolOpts = Array("-disable-all-randomization"))
     }
     s"BreezeClusterWishbone elaborates with DMA ($name)" in {
-      ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(g, withDma = true), firtoolOpts = Array("-disable-all-randomization"))
+      ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(cluster, withDma = true), firtoolOpts = Array("-disable-all-randomization"))
     }
     s"DMA and AXI bridges elaborate ($name)" in {
       val p = CoherenceParams(g)
@@ -48,7 +50,7 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
   }
   "AXI-Lite bridge and cluster without DMA elaborate" in {
     ChiselStage.emitSystemVerilog(new Axi4LiteWishboneBridge, firtoolOpts = Array("-disable-all-randomization"))
-    ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(BreezeMemGeometry.singleCore), firtoolOpts = Array("-disable-all-randomization"))
+    ChiselStage.emitSystemVerilog(new BreezeClusterWishbone(BreezeClusterPresets.single), firtoolOpts = Array("-disable-all-randomization"))
   }
   "FetchTlbClient elaborates" in {
     ChiselStage.emitSystemVerilog(new FetchTlbClient, firtoolOpts = Array("-disable-all-randomization"))

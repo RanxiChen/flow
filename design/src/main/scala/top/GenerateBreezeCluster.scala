@@ -1,7 +1,7 @@
 package flow.top
 
 import _root_.circt.stage.ChiselStage
-import flow.config.{BreezeClusterPresets, BreezeMemGeometry, CorePreset, PrivilegeProfile}
+import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 
 /** Native memory cluster with a LiteX Wishbone shell.
   * sbt 'runMain flow.top.GenerateBreezeCluster single gshare linux dma tandem'
@@ -10,20 +10,21 @@ import flow.config.{BreezeClusterPresets, BreezeMemGeometry, CorePreset, Privile
   */
 object GenerateBreezeCluster extends App {
     require(args.nonEmpty && args.length <= 5,
-        "usage: GenerateBreezeCluster <single|dual|small|stress> [gshare|baseline] [mcu|linux] [dma] [tandem]")
+        s"usage: GenerateBreezeCluster <${BreezeClusterPresets.all.map(_.profileName).mkString("|")}> " +
+            "[gshare|baseline] [mcu|linux] [dma] [tandem]")
     require(args.drop(3).forall(Set("dma", "tandem")), "unsupported optional feature (FASE contract pending)")
     private val corePreset = CorePreset.fromName(args.lift(1).getOrElse("gshare"))
     private val privilegeProfile = PrivilegeProfile.fromName(args.lift(2).getOrElse("mcu"))
     private val withDma = args.drop(3).contains("dma")
     private val enableTandem = args.drop(3).contains("tandem")
-    private val mem = if(args(0) == "stress") BreezeMemGeometry.stress else
-        BreezeMemGeometry(nCores = BreezeClusterPresets.fromName(args(0)).numHarts)
-    private val coreCfg = flow.config.BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile)
+    private val cfg = BreezeClusterPresets.fromName(args(0))
+        .copy(corePreset = corePreset, privilegeProfile = privilegeProfile)
+    private val mem = cfg.mem
     private val targetDir = os.pwd / "build" / "rtl" / "mem-cluster" /
         args(0) / corePreset.name / privilegeProfile.name /
         (if(withDma) "dma" else "cpu") / (if(enableTandem) "tandem" else "production")
     ChiselStage.emitSystemVerilogFile(
-        new BreezeClusterWishbone(mem, coreCfg, withDma),
+        new BreezeClusterWishbone(cfg, enableTandem, withDma),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
@@ -63,5 +64,5 @@ object GenerateBreezeCluster extends App {
     os.write.over(targetDir / "filelist.f", completeFilelist.mkString("", "\n", "\n"))
 
     os.write.over(targetDir / "cluster-profile.txt",
-        s"nCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\ndma=$withDma\ntandem=$enableTandem\n")
+        s"profile=${cfg.profileName}\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\ndma=$withDma\ntandem=$enableTandem\n")
 }

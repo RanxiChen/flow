@@ -19,7 +19,7 @@
 - 骨架任何时候都必须能 elaborate；`MemSkeletonElabSpec` 是门槛。
 - L1D/L2 的 spec 降为参考文档，不进冻结清单。仿真与 spec 冲突时，先判断哪个是对的，再改另一个。
 - 后端接口 `L1DCoreIO` 仍然冻结（`interface/L1DCoreIO.scala`），骨架直接复用，不再定义第二份。
-- 几何参数暂放 `config/BreezeMemConfig.scala`（`BreezeMemGeometry`），以免与后端分支在 `config.scala` 冲突。合并时挂到 `BreezeClusterConfig.mem` 下。
+- 几何参数定义在 `config/BreezeMemConfig.scala`（`BreezeMemGeometry`），由 `BreezeClusterConfig.mem` 持有（2026-10-07 合并）；`BreezeCluster`、`BreezeClusterWishbone` 与生成器只接收 `BreezeClusterConfig`，L1D/L1I/L2/协议模块接收几何并自行推导。旧 `DefaultDCacheConfig`、`BreezeCoreConfig.dcache*`、`L2CacheGeometry`、`numHarts`/`hartIdWidth`/`sharerWidth`/`txnIdWidth` 已删除。
 
 ## 骨架文件
 

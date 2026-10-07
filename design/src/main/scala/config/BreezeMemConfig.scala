@@ -2,12 +2,9 @@ package flow.config
 
 import chisel3.util.isPow2
 
-/** v1 memory-system geometry (l1d-rtl-spec §0.2).
-  *
-  * SKELETON: lives in its own file so this branch does not collide with the
-  * backend work in config.scala. At merge, BreezeClusterConfig gains
-  * `val mem: BreezeMemGeometry` and numHarts is renamed nCores; every module
-  * keeps taking BreezeMemGeometry, so only the construction site changes.
+/** v1 memory-system geometry (l1d-rtl-spec §0.2), held by
+  * `BreezeClusterConfig.mem`. Modules take this geometry and derive their
+  * constants from it; the cluster configuration is the only construction site.
   */
 final case class BreezeMemGeometry(
     nCores: Int = 4,

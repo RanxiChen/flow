@@ -63,62 +63,67 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         an[IllegalArgumentException] must be thrownBy BreezeCoreConfigs.fromPreset("max")
     }
 
-    "cluster presets derive the frozen geometry from numHarts alone" in {
+    "cluster presets carry the memory geometry as the single entry point" in {
         val single = BreezeClusterPresets.single
         single.profileName mustBe "single"
-        single.numHarts mustBe 1
-        single.hartIdWidth mustBe 1
-        single.sharerWidth mustBe 1
-        single.txnIdWidth mustBe 2
+        single.nCores mustBe 1
+        single.mem mustBe BreezeMemGeometry.singleCore
         single.corePreset mustBe CorePreset.Gshare
-        // L1D geometry comes from the core configuration (single source).
-        single.l1d.capacityBytes mustBe 8192
-        single.l1d.lineBytes mustBe 32
-        single.l1d.ways mustBe 4
-        single.l1d.sets mustBe 64
-        single.l1d mustBe single.coreCfg().dcacheCfg
-        // L1I matches the L1D geometry.
-        single.l1i.ICACHE_SET_NUM mustBe 64
-        single.l1i.ICACHE_WAY_NUM mustBe 4
-        single.l1i.ICACHE_LINE_BYTES mustBe 32
-        single.l2.capacityBytes mustBe 16384
-        single.l2.ways mustBe 8
-        single.l2.sets mustBe 64
-        single.l2.lineBytes mustBe 32
+        BreezeClusterPresets.dual.nCores mustBe 2
+        BreezeClusterPresets.small.nCores mustBe 4
+        BreezeClusterPresets.small.mem mustBe BreezeMemGeometry.default
+        BreezeClusterPresets.stress.mem mustBe BreezeMemGeometry.stress
+        BreezeClusterPresets.smokeL2w4.mem.l2Ways mustBe 4
+        BreezeClusterPresets.smokeL1dw2.mem.l1dWays mustBe 2
+        BreezeClusterPresets.smokeL1dw2.mem.l1iWays mustBe 4
+        BreezeClusterPresets.smoke1core.nCores mustBe 1
+        for (cfg <- BreezeClusterPresets.all)
+            BreezeClusterPresets.fromName(cfg.profileName) mustBe cfg
+    }
 
-        val dual = BreezeClusterPresets.dual
-        dual.numHarts mustBe 2
-        dual.hartIdWidth mustBe 1
-        dual.sharerWidth mustBe 2
-        dual.l2.capacityBytes mustBe 32768
-        dual.l2.sets mustBe 128
-        dual.corePreset mustBe CorePreset.Gshare
-
-        val small = BreezeClusterPresets.small
-        small.numHarts mustBe 4
-        small.hartIdWidth mustBe 2
-        small.sharerWidth mustBe 4
-        small.l2.capacityBytes mustBe 65536
-        small.l2.sets mustBe 256
-        small.corePreset mustBe CorePreset.Gshare
+    "default geometry derives the l1d-rtl-spec §0.2 constants" in {
+        val l1d = flow.l1d.L1DParams(BreezeMemGeometry.default)
+        l1d.ways mustBe 4
+        l1d.sets mustBe 128
+        l1d.offBits mustBe 5
+        l1d.idxBits mustBe 7
+        l1d.tagBits mustBe 20
+        l1d.wordsPerLine mustBe 4
+        l1d.capacityBytes mustBe 16384
+        l1d.lineAddrBits mustBe 27
+        l1d.nMshrs mustBe 1
+        l1d.plruBits mustBe 3
+        val coh = flow.coherence.CoherenceParams(BreezeMemGeometry.default)
+        coh.nCores mustBe 4
+        coh.l2Sets mustBe 1024
+        coh.sharerBits mustBe 4
+        coh.coreBits mustBe 2
+        coh.nReqPorts mustBe 9
+        flow.coherence.CoherenceParams(BreezeMemGeometry.l2FourWay).l2Sets mustBe 2048
+        flow.coherence.CoherenceParams(BreezeMemGeometry.singleCore).sharerBits mustBe 1
+        flow.coherence.CoherenceParams(BreezeMemGeometry.stress).l2Sets mustBe 4
+        val l1i = flow.l1i.L1IParams(BreezeMemGeometry.l1dTwoWay)
+        l1i.ICACHE_WAY_NUM mustBe 4
+        l1i.ICACHE_SET_NUM mustBe 128
     }
 
     "cluster presets keep explicit baseline without changing geometry" in {
         val dualBaseline = BreezeClusterPresets.dual.copy(corePreset = CorePreset.Baseline)
         dualBaseline.corePreset mustBe CorePreset.Baseline
         dualBaseline.coreCfg().useGShare mustBe false
-        dualBaseline.numHarts mustBe 2
-        dualBaseline.l2.capacityBytes mustBe 32768
-        dualBaseline.l1d mustBe BreezeClusterPresets.dual.l1d
+        dualBaseline.mem mustBe BreezeClusterPresets.dual.mem
     }
 
-    "8/16-hart profiles are rejected" in {
-        an[IllegalArgumentException] must be thrownBy
-            BreezeClusterConfig(profileName = "standard", numHarts = 8)
-        an[IllegalArgumentException] must be thrownBy
-            BreezeClusterConfig(profileName = "max", numHarts = 16)
+    "geometry outside the v1 constraints is rejected at construction" in {
+        // l1d-rtl-spec §13.4 negative test: 256 x 32 B > 4096 breaks VIPT.
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(l1Sets = 256)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(nCores = 0)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(nCores = 9)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(l1dWays = 3)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(l1dMshrs = 2)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(lineBytes = 64)
+        an[IllegalArgumentException] must be thrownBy BreezeMemGeometry(paddrBits = 40)
         an[IllegalArgumentException] must be thrownBy BreezeClusterPresets.fromName("standard")
-        an[IllegalArgumentException] must be thrownBy BreezeClusterPresets.fromName("max")
         an[IllegalArgumentException] must be thrownBy BreezeClusterPresets.fromName("8")
     }
 }

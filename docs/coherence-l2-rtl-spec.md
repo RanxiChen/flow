@@ -344,3 +344,5 @@ REPLAY 任务：重新读取命中路（不保存快照）；S2：
 ## 11. 计数器接口
 
 按 [`observability-design.md`](observability-design.md) 2.5 节输出事件脉冲（按来源细分）：请求数、命中、miss、set 保护等待拍数、槽满撤销次数、probe 发出数、内存读写数、写缓冲等待拍数。计数器本体在 observability 步骤实现，本步只引出事件线。
+
+实现（2026-10-07）：`L2Home.io.events`（`L2Events`，经 `BreezeCluster.io.l2Events` 引出）。请求类事件按 REQ 端口顺序细分：`req` 为 S2 握手，`hit`/`needProbe`/`miss` 为握手时的分类（快路径 / 需 probe / 需访问内存）；`slotFullStall` 为槽满撤销后等待的拍，`setWait` 为因 set 保护不参加仲裁的拍。`put`、`probeSent` 按核；`probeCycles` 为 probe 任务已接受、答复未收齐的拍；`memRead`/`memWrite` 为 AR/AW 握手；`memReadsInFlight` 是在途读数（逐拍累加即 `mem_read_cycles`），`memTwoInflight` 为在途读 ≥ 2 的拍。

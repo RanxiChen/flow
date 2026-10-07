@@ -17,6 +17,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
     val l1i = Vec(p.nCores, Flipped(new ReadClientIO(p)))
     val dma = Flipped(new ReadClientIO(p))
     val mem = new Axi4MasterIO(Axi4Params(p.paddrBits, p.memDataBits, p.slotBits))
+    val events = Output(new L2Events(p))
   })
 
   // ===========================================================================
@@ -525,6 +526,31 @@ class L2Home(g: BreezeMemGeometry) extends Module {
     when(plruWrEn) { plruArr.write(s2.e.set, TreePlru.touch(s2.plru, plruWrWay, p.l2Ways)) }
   }
   when(dataWrEn) { data.write(s2.e.set ## s2.way, dataWrVal, dataWrMask) }
+
+  // ===========================================================================
+  // Events (§11)
+  // ===========================================================================
+  for ((r, i) <- reqPorts.zipWithIndex) {
+    io.events.req(i) := r.fire
+    io.events.hit(i) := r.fire && VecInit(Seq(L2Action.FastGetS, L2Action.FastGetM, L2Action.FastAckE,
+      L2Action.FastRead, L2Action.FastMaskWrite).map(_ === s2.action)).asUInt.orR
+    io.events.needProbe(i) := r.fire && s2.action === L2Action.NeedProbe
+    io.events.miss(i) := r.fire && s2.action === L2Action.NeedMiss
+    io.events.slotFullStall(i) := r.valid && slotWait(i)
+    io.events.setWait(i) := r.valid && !inPipe(i) && !slotWait(i) && isProtected(p.setOf(r.bits.addr))
+  }
+  for (c <- 0 until p.nCores) {
+    io.events.put(c) := io.l1d(c).rspUp.fire && io.l1d(c).rspUp.bits.op === RspUpOp.Put
+    io.events.probeSent(c) := io.l1d(c).snp.fire
+  }
+  io.events.probeCycles := probeEng.io.active
+  val memReadsInFlight = RegInit(0.U(log2Ceil(p.l2Slots + 1).W))
+  val memReadDone = io.mem.r.fire && io.mem.r.bits.last
+  memReadsInFlight := memReadsInFlight + io.mem.ar.fire.asUInt - memReadDone.asUInt
+  io.events.memRead := io.mem.ar.fire
+  io.events.memReadsInFlight := memReadsInFlight
+  io.events.memTwoInflight := memReadsInFlight >= 2.U
+  io.events.memWrite := io.mem.aw.fire
 
   // ===========================================================================
   // Assertions (§10)
