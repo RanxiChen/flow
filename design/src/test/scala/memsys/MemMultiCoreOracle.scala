@@ -294,8 +294,10 @@ class ProgramFeeder(core: CoreDriver, val name: String) extends CycleAgent {
   var scMutate: CoreOp => CoreOp = identity
   var killedLr = 0
   var killedSc = 0
-  private var waitLr: Option[BigInt] = None
-  private var waitSc = false
+  // A queued pair can sit behind unrelated LR/SCs (including faults).
+  // Only that exact request's completion/cancellation advances the pair.
+  private var waitLr: Option[(CoreOp, BigInt)] = None
+  private var waitSc: Option[CoreOp] = None
   core.onDone = done
   core.onKilled = killed
 
@@ -307,37 +309,38 @@ class ProgramFeeder(core: CoreDriver, val name: String) extends CycleAgent {
     * Never called without kills.
     */
   private def killed(t: CoreTxn): Unit = {
-    if (enumIs(t.op.op, L1DOp.LR) && waitLr.nonEmpty) {
-      waitLr = None; waitSc = true; killedLr += 1
-      core.enqueue(CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = 0, scExpected = Some(1)))
-    } else if (enumIs(t.op.op, L1DOp.SC) && waitSc) {
-      waitSc = false; killedSc += 1
+    if (waitLr.exists(_._1 eq t.op)) {
+      val sc = CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = 0, scExpected = Some(1))
+      waitLr = None; waitSc = Some(sc); killedLr += 1
+      core.enqueue(sc)
+    } else if (waitSc.exists(_ eq t.op)) {
+      waitSc = None; killedSc += 1
       core.trapNextCycle()
     }
   }
 
   private def done(t: CoreTxn): Unit = {
-    if (enumIs(t.op.op, L1DOp.LR) && waitLr.nonEmpty) {
-      val sc = scMutate(CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = (t.value + waitLr.get) & mask(8 << t.op.size),
+    if (waitLr.exists(_._1 eq t.op)) {
+      val sc = scMutate(CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = (t.value + waitLr.get._2) & mask(8 << t.op.size),
         aq = t.op.aq, rl = t.op.rl))
-      waitLr = None; waitSc = true
+      waitLr = None; waitSc = Some(sc)
       core.enqueue(sc)
-    } else if (enumIs(t.op.op, L1DOp.SC) && waitSc) {
-      waitSc = false
+    } else if (waitSc.exists(_ eq t.op)) {
+      waitSc = None
       if (t.value == 0) successes += 1 else failures += 1
       if (stopAfterSuccesses.exists(successes >= _)) remaining = 0
     }
   }
 
   protected def drive(): Unit =
-    while (waitLr.isEmpty && !waitSc && remaining > 0 && core.pending.size < depth) {
+    while (waitLr.isEmpty && waitSc.isEmpty && remaining > 0 && core.pending.size < depth) {
       val (op, inc) = next()
       remaining -= 1
       core.enqueue(op)
-      if (enumIs(op.op, L1DOp.LR) && inc.nonEmpty) waitLr = inc
+      if (enumIs(op.op, L1DOp.LR) && inc.nonEmpty) waitLr = Some((op, inc.get))
     }
   def sample(): Unit = ()
-  def idle: Boolean = remaining == 0 && waitLr.isEmpty && !waitSc
+  def idle: Boolean = remaining == 0 && waitLr.isEmpty && waitSc.isEmpty
   override def describe: String =
-    s"$name: remaining $remaining, waiting LR ${waitLr.nonEmpty}, waiting SC $waitSc, SC ok $successes fail $failures"
+    s"$name: remaining $remaining, waiting LR ${waitLr.nonEmpty}, waiting SC ${waitSc.nonEmpty}, SC ok $successes fail $failures"
 }
