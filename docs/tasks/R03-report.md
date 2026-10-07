@@ -2,11 +2,11 @@
 
 起点 `79f6c5a`，分支 `feat/rvv-20261005`，本地worktree `/home/chen/leisure/flow-rvv`。第0步 `1e53ef4` 已提交并push三份指定文档。验证RTL为 **`148c267ee7777541af0625d6bde9937bb7d5e3eb`**；后续报告/原始证据提交不自动变成旧验证的SHA。
 
-当前结论：C1/C2通过，C3种子0–999 **1000/1000**。总面积低于77k及60k，但P1/P2和P1的P4失败，单项面积仍有超标，**R03未全部通过**。保留规定默认容量与设计第3节结构，完成测量后交付最好结果及结构限制，不放宽合同。
+最终结论：C1/C2通过，C3种子0–999 **1000/1000**。最终S1为46719 LUT / +0.107ns；S2为47120 LUT / −3.350ns。总面积低于77k及60k，但P1/P2和P1的P4失败，单项面积仍有超标，**R03未全部通过**。保留规定默认容量与设计第3节结构，最终S1/S2测量均完成，交付最好结果及结构限制，不放宽合同。
 
 ## 执行位置、版本与证据
 
-Alan独立clone `/home/chen/FUN/flow-rvv-r03-20261007`，证据根 `/home/chen/FUN/flow-r03-evidence`；本地仅编辑/提交/push。工具：Vivado2022.2 Build3671981、Verilator5.028、Java11、工程sbt1.9.7、Chisel7。所有构建/仿真/Spike/Vivado使用nice10；Java、MAKEFLAGS和Vivado并行上限4；综合CPU0–3、仿真CPU4–7，最多8/20核。无形式化、无新增FP或串行指令、无测试标签进入RTL。
+Alan独立clone `/home/chen/FUN/flow-rvv-r03-20261007`，证据根 `/home/chen/FUN/flow-r03-evidence`；本地仅编辑/提交/push。工具：Vivado2022.2 Build3671981、Verilator5.028、Java11、工程sbt1.9.7、Chisel7。Spike源码 `76ce016b6765d66c93522b0ea9a16a44841cb331`、源码工作区干净，二进制SHA256 `c0a8eb834cc94e92afb372f29bd7d2a87215c5fb6ee0dc19ed84792e64222c2a`；本次点积插件SHA256 `653d926293e66da58f88e5bba635a09a7b57ac898f1dbe9609f80fe62251986c`，原始manifest保存在final-c3/reference。所有构建/仿真/Spike/Vivado使用nice10；Java、MAKEFLAGS和Vivado并行上限4；综合CPU0–3、仿真CPU4–7，最多8/20核。无形式化、无新增FP或串行指令、无测试标签进入RTL。
 
 新增未跟踪 `AGENTS.md` 和共享 `docs/cross-project/simulation-host.md` 已读取，cloud_chen SSH/环境/工具/资源预检通过；已完成的C1/C2/C3/P及RTL生成均在Alan独立工作区，实际主机已记录。用户随后明确要求优先cloud_chen，后续仿真将重读配置并优先使用cloud_chen，Vivado仍使用Alan；不迁移已完成的验证证据。未修改共享配置或未跟踪文件。Alan余约20GiB，所有证据保留，不清理他人目录/进程。
 
@@ -52,18 +52,18 @@ v0影子静态索引项未采用：默认rowsPerReg=1时原索引可静态化，
 
 ## 最终验收
 
-验证源码148c267。cwd同独立clone，flow环境激活；所有命令nice受限并行。
+验证源码148c267，RTL Git tree `4aeaebdbc783d0fe78bc2dc74b79ce5f0431e3dc`；后续报告/证据提交的RTL、测试、参考生成器与工具脚本diff退出0，见[`source-equivalence.json`](../../rvv/r03/evidence/source-equivalence.json)。最终S1与C1候选的24项RTL/Tcl/XDC哈希完全一致。cwd同独立clone，flow环境激活；所有命令nice受限并行。
 
 | 项目 | 命令（相对cwd）与证据根相对路径 | 退出/结果 |
 | --- | --- | --- |
-| C1 | `taskset -c 4-7 bash rvv/r02/run-c1.sh .../control/c1` | 0；512/512、256/256、512/256生成及Verilator3/3 |
-| C2 | `taskset -c 4-7 bash rvv/r03/run-c2.sh .../control/c2` | 0；前端8/8、VRF1/1、Spike种子0–7、R03机制3/3 |
-| C3 | `taskset -c 4-7 bash rvv/r02/run-c3.sh .../final/c3` | 0；种子0–999，1000/1000；插件10675条；参考全部重新生成 |
-| P1–P5 | `taskset -c 4-7 bash rvv/r02/run-performance.sh .../final/performance` | 测量脚本退出0不代表性能阈值通过；下表逐条判断 |
-| S1 | `taskset -c 0-3 bash rvv/r03/run-s1.sh .../final/s1` | 0；LUT≤77k、WNS≥0、VRF LUTRAM=0通过；源码/输入哈希及原报告绑定 |
-| S2 | `taskset -c 0-3 bash rvv/r03/run-s2.sh .../final/s1 .../final/s2` | 仍在执行；尚无布线后时序/资源结论。 |
+| C1 | `taskset -c 4-7 bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r03-evidence/control/c1` | 0；512/512、256/256、512/256生成及Verilator3/3 |
+| C2 | `taskset -c 4-7 bash rvv/r03/run-c2.sh /home/chen/FUN/flow-r03-evidence/control/c2` | 0；前端8/8、VRF1/1、Spike种子0–7、R03机制3/3 |
+| C3 | `taskset -c 4-7 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r03-evidence/final/c3` | 0；种子0–999，1000/1000；插件10675条；参考全部重新生成 |
+| P1–P5 | `taskset -c 4-7 bash rvv/r02/run-performance.sh /home/chen/FUN/flow-r03-evidence/final/performance` | 测量脚本退出0不代表性能阈值通过；下表逐条判断 |
+| S1 | `taskset -c 0-3 bash rvv/r03/run-s1.sh /home/chen/FUN/flow-r03-evidence/final/s1` | 0；LUT≤77k、WNS≥0、VRF LUTRAM=0通过；源码/输入哈希及原报告绑定 |
+| S2 | `taskset -c 0-3 bash rvv/r03/run-s2.sh /home/chen/FUN/flow-r03-evidence/final/s1 /home/chen/FUN/flow-r03-evidence/final/s2` | 已完成，退出0。布线后WNS **-3.350 ns**；LUT 47120（LUTRAM 564），FF 15874，DSP 154，RAMB36/RAMB18=199/1。完整路由状态见原报告，不把S2作为通过门槛。 |
 
-P表（数据源 `final-performance`；最终P完成后以最终重跑目录为准）：所有组Spike最终状态正确，224/223对完整，最终B时/总drain时缓冲均0字节。
+P表（数据源 `final-performance`，最终重跑已完成）：所有组Spike最终状态正确，224/223对完整，最终B时/总drain时缓冲均0字节。
 
 | 项目 | 延迟拍/缓冲字节 | 峰值占比 | 相对R02 | kernel拍/读窗口拍 | P4最大（≤4） | P5提前范围（全部>0） | 带宽合同 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -103,7 +103,11 @@ P表（数据源 `final-performance`；最终P完成后以最终重跑目录为�
 | 9 | `vrf/banks_2_3/memory_reg_0/CLKARDCLK` | `vrf/banks_0_1/memory_reg_0/DINBDIN[29]` | 23 | 0.107 |
 | 10 | `vrf/banks_2_3/memory_reg_1/CLKARDCLK` | `vrf/banks_0_1/memory_reg_1/DINBDIN[29]` | 23 | 0.107 |
 
-S2：仍在执行；尚无布线后时序/资源结论。
+S2：已完成，退出0。布线后WNS **-3.350 ns**；LUT 47120（LUTRAM 564），FF 15874，DSP 154，RAMB36/RAMB18=199/1。完整路由状态见原报告，不把S2作为通过门槛。
+
+最终S2可布线网络71171/71171，路由错误0；TNS −39396.062ns，19629/52172个setup端点失败；WHS +0.053ns、hold失败端点0。最差路径 `vrf/banks_0_3/memory_reg_0/CLKARDCLK` → `vrf/banks_0_2/memory_reg_0/DINBDIN[31]`，22个逻辑级（DSP及7个CARRY8等），数据延迟13.013ns，其中logic6.125ns、route6.888ns。100MHz布线后时序未闭合。需要研究真实乘加数据流水及其RAW/链接/同单元交接代价，不能把正的综合WNS当物理收敛。
+
+默认布局阶段为 `mac/captureSlow`、`mac/operandsHeld2`、`alu/operandsHeld2` 三个高扇出控制各插入一只BUFG（1536/1536/1024负载）；布局后WNS −3.684ns。整机接入必须评估这些全局缓冲和实际时序，不能用S1估计替代。
 
 S1/S2为协处理器OOC内部路径证据，未接入整机/板卡。OOC输入输出未设I/O delay，HD.CLK_SRC未指定时工具不能估计挂载时钟插入延迟/skew；未添加假时序例外、未改10ns或默认策略。综合小正裕量不能代替布线和平台时序。非默认配置只有要求的C1编译证明，不宣称非默认全功能/PPA验证。
 
@@ -119,4 +123,4 @@ P2有序分派遇到2项MAC队列满会停，seq占1条，等待40拍load时提�
 
 单项面积：记分板32位多读/写mask、年龄选择和五客户端判断仍昂贵；VRF包含4bank×6副本的读选择、共享执行读口映射、仲裁/v0影子；ALU包含共享移位/分段算术及操作数保持/选择。可继续试实际端口范围裁剪、mask编码/比较流水等实现手段，但本次未证明单项预算闭合。若降低读副本/写bank或改变并发客户端结构，需要修改3.6/3.4并重新定吞吐与冲突规则，当前保持冻结组织。
 
-完成最终测量后停止在已交付结果，不扩FP/形式化或擅改结构。全部原始报告可审阅；DCP/固定RTL/full工具日志留Alan证据根。
+最终测量已完成，停止在已交付结果，不扩FP/形式化或擅改结构。全部原始报告可审阅；DCP/固定RTL/full工具日志留Alan证据根。

@@ -1,0 +1,1107 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 17:26:34 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r03-evidence/final/s2/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -3.350ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_2/memory_reg_0/DINBDIN[31]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        13.013ns  (logic 6.125ns (47.068%)  route 6.888ns (52.932%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT6=5)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[7])
+                                                      0.186    10.753 r  mac/memory_reg_0_i_1070/O[7]
+                         net (fo=1, routed)           0.699    11.452    mac/_GEN_10[2]043_out[31]
+    SLICE_X30Y161        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071    11.523 r  mac/memory_reg_0_i_556/O
+                         net (fo=1, routed)           0.216    11.739    mac/memory_reg_0_i_556_n_0
+    SLICE_X30Y157        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040    11.779 r  mac/memory_reg_0_i_198/O
+                         net (fo=4, routed)           0.227    12.006    alu/_mac_io_write_bits_data[63]
+    SLICE_X30Y157        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.177    12.183 r  alu/memory_reg_0_i_38__0/O
+                         net (fo=7, routed)           0.830    13.013    vrf/banks_0_2/memory_reg_7_0[63]
+    RAMB36_X5Y27         RAMB36E2                                     r  vrf/banks_0_2/memory_reg_0/DINBDIN[31]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y27         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[31])
+                                                     -0.302     9.663    vrf/banks_0_2/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.663    
+                         arrival time                         -13.013    
+  -------------------------------------------------------------------
+                         slack                                 -3.350    
+
+Slack (VIOLATED) :        -3.321ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_2/memory_reg_0/DINBDIN[27]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.995ns  (logic 5.912ns (45.494%)  route 7.083ns (54.506%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.138    10.705 r  mac/memory_reg_0_i_1070/O[3]
+                         net (fo=1, routed)           0.688    11.393    mac/_GEN_10[2]043_out[27]
+    SLICE_X29Y167        LUT5 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.040    11.433 r  mac/memory_reg_0_i_592/O
+                         net (fo=1, routed)           0.267    11.700    mac/memory_reg_0_i_592_n_0
+    SLICE_X30Y162        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043    11.743 r  mac/memory_reg_0_i_213/O
+                         net (fo=4, routed)           0.302    12.045    alu/_mac_io_write_bits_data[59]
+    SLICE_X30Y157        LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.040    12.085 r  alu/memory_reg_0_i_42__1/O
+                         net (fo=7, routed)           0.910    12.995    vrf/banks_0_2/memory_reg_7_0[59]
+    RAMB36_X5Y27         RAMB36E2                                     r  vrf/banks_0_2/memory_reg_0/DINBDIN[27]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y27         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[27])
+                                                     -0.291     9.674    vrf/banks_0_2/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.674    
+                         arrival time                         -12.995    
+  -------------------------------------------------------------------
+                         slack                                 -3.321    
+
+Slack (VIOLATED) :        -3.307ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_0/DINBDIN[28]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        13.004ns  (logic 5.912ns (45.463%)  route 7.092ns (54.537%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[4])
+                                                      0.141    10.708 r  mac/memory_reg_0_i_1070/O[4]
+                         net (fo=1, routed)           0.642    11.350    mac/_GEN_10[2]043_out[28]
+    SLICE_X28Y163        LUT5 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.040    11.390 r  mac/memory_reg_0_i_583/O
+                         net (fo=1, routed)           0.309    11.699    mac/memory_reg_0_i_583_n_0
+    SLICE_X30Y161        LUT6 (Prop_G6LUT_SLICEM_I5_O)
+                                                      0.040    11.739 r  mac/memory_reg_0_i_210/O
+                         net (fo=4, routed)           0.457    12.196    alu/_mac_io_write_bits_data[60]
+    SLICE_X31Y152        LUT6 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.040    12.236 r  alu/memory_reg_0_i_44/O
+                         net (fo=6, routed)           0.768    13.004    vrf/banks_1_3/p_1_in[60]
+    RAMB36_X5Y29         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_0/DINBDIN[28]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y29         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[28])
+                                                     -0.268     9.697    vrf/banks_1_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.697    
+                         arrival time                         -13.004    
+  -------------------------------------------------------------------
+                         slack                                 -3.307    
+
+Slack (VIOLATED) :        -3.302ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_2/memory_reg_0/DINBDIN[26]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.941ns  (logic 5.890ns (45.514%)  route 7.051ns (54.486%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[2])
+                                                      0.089    10.656 r  mac/memory_reg_0_i_1070/O[2]
+                         net (fo=1, routed)           0.500    11.156    mac/_GEN_10[2]043_out[26]
+    SLICE_X27Y164        LUT5 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.040    11.196 r  mac/memory_reg_0_i_601/O
+                         net (fo=1, routed)           0.321    11.517    mac/memory_reg_0_i_601_n_0
+    SLICE_X28Y161        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.040    11.557 r  mac/memory_reg_0_i_216/O
+                         net (fo=4, routed)           0.374    11.931    alu/_mac_io_write_bits_data[58]
+    SLICE_X28Y153        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.070    12.001 r  alu/memory_reg_0_i_43__1/O
+                         net (fo=7, routed)           0.940    12.941    vrf/banks_0_2/memory_reg_7_0[58]
+    RAMB36_X5Y27         RAMB36E2                                     r  vrf/banks_0_2/memory_reg_0/DINBDIN[26]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y27         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[26])
+                                                     -0.326     9.639    vrf/banks_0_2/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.639    
+                         arrival time                         -12.941    
+  -------------------------------------------------------------------
+                         slack                                 -3.302    
+
+Slack (VIOLATED) :        -3.288ns  (required time - arrival time)
+  Source:                 vrf/banks_3_1/memory_reg_6/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_5/memory_reg_6/DINBDIN[25]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.930ns  (logic 5.900ns (45.630%)  route 7.030ns (54.370%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT6=5)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X7Y17         RAMB36E2                     0.000     0.000 r  vrf/banks_3_1/memory_reg_6/CLKARDCLK
+    RAMB36_X7Y17         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[6])
+                                                      1.272     1.272 f  vrf/banks_3_1/memory_reg_6/DOUTBDOUT[6]
+                         net (fo=1, routed)           0.856     2.128    vrf/_banks_3_1_readData[422]
+    SLICE_X62Y104        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.191     2.319 f  vrf/heldOperands_1[422]_i_1/O
+                         net (fo=4, routed)           0.414     2.733    vrf/banks_3_3/heldOperands_0_reg[511][422]
+    SLICE_X65Y112        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116     2.849 f  vrf/banks_3_3/heldOperands_0[422]_i_1__0/O
+                         net (fo=2, routed)           0.655     3.504    mac/heldOperands_0_reg[511]_0[383]
+    SLICE_X65Y151        LUT3 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.040     3.544 f  mac/_GEN_10[1]0__25_i_26/O
+                         net (fo=8, routed)           0.763     4.307    mac/resultData_candidates_values_dotProducts_0_13/A[6]
+    DSP48E2_X10Y80       DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[6]_A2_DATA[6])
+                                                      0.337     4.644 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA_INST/A2_DATA[6]
+                         net (fo=1, routed)           0.000     4.644    mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA.A2_DATA<6>
+    DSP48E2_X10Y80       DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[6]_A2A1[6])
+                                                      0.155     4.799 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA_INST/A2A1[6]
+                         net (fo=1, routed)           0.000     4.799    mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA.A2A1<6>
+    DSP48E2_X10Y80       DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[6]_V[6])
+                                                      0.871     5.670 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER_INST/V[6]
+                         net (fo=1, routed)           0.000     5.670    mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER.V<6>
+    DSP48E2_X10Y80       DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_V[6]_V_DATA[6])
+                                                      0.110     5.780 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA_INST/V_DATA[6]
+                         net (fo=1, routed)           0.000     5.780    mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA.V_DATA<6>
+    DSP48E2_X10Y80       DSP_ALU (Prop_DSP_ALU_DSP48E2_V_DATA[6]_ALU_OUT[6])
+                                                      0.687     6.467 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU_INST/ALU_OUT[6]
+                         net (fo=1, routed)           0.000     6.467    mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU.ALU_OUT<6>
+    DSP48E2_X10Y80       DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[6]_P[6])
+                                                      0.193     6.660 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_OUTPUT_INST/P[6]
+                         net (fo=2, routed)           0.487     7.147    mac/resultData_candidates_values_dotProducts_0_13_n_99
+    SLICE_X66Y200        CARRY8 (Prop_CARRY8_SLICEM_DI[6]_O[7])
+                                                      0.187     7.334 r  mac/memory_reg_6_i_2704/O[7]
+                         net (fo=2, routed)           0.311     7.645    mac/memory_reg_6_i_2704_n_8
+    SLICE_X65Y195        LUT2 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     7.761 r  mac/memory_reg_6_i_2705/O
+                         net (fo=1, routed)           0.000     7.761    mac/memory_reg_6_i_2705_n_0
+    SLICE_X65Y195        CARRY8 (Prop_CARRY8_SLICEL_S[7]_CO[7])
+                                                      0.176     7.937 r  mac/memory_reg_6_i_2546/CO[7]
+                         net (fo=1, routed)           0.027     7.964    mac/memory_reg_6_i_2546_n_0
+    SLICE_X65Y196        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     8.063 r  mac/memory_reg_6_i_2529/O[0]
+                         net (fo=2, routed)           0.666     8.729    mac/memory_reg_6_i_2529_n_15
+    SLICE_X61Y174        LUT2 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.800 r  mac/memory_reg_6_i_2537/O
+                         net (fo=1, routed)           0.000     8.800    mac/memory_reg_6_i_2537_n_0
+    SLICE_X61Y174        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.204 r  mac/memory_reg_6_i_2326/CO[7]
+                         net (fo=1, routed)           0.027     9.231    mac/memory_reg_6_i_2326_n_0
+    SLICE_X61Y175        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.330 r  mac/memory_reg_6_i_2305/O[0]
+                         net (fo=1, routed)           0.630     9.960    mac/p_1_in39_out[16]
+    SLICE_X61Y149        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040    10.000 r  mac/memory_reg_6_i_1826/O
+                         net (fo=1, routed)           0.000    10.000    mac/memory_reg_6_i_1826_n_0
+    SLICE_X61Y149        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.404 r  mac/memory_reg_6_i_938/CO[7]
+                         net (fo=1, routed)           0.040    10.444    mac/memory_reg_6_i_938_n_0
+    SLICE_X61Y150        CARRY8 (Prop_CARRY8_SLICEM_CI_O[1])
+                                                      0.133    10.577 r  mac/memory_reg_6_i_877/O[1]
+                         net (fo=1, routed)           0.533    11.110    mac/_GEN_10[2]07_out[25]
+    SLICE_X62Y131        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.150 r  mac/memory_reg_6_i_481/O
+                         net (fo=1, routed)           0.360    11.510    mac/memory_reg_6_i_481_n_0
+    SLICE_X62Y119        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.043    11.553 r  mac/memory_reg_6_i_187/O
+                         net (fo=4, routed)           0.453    12.006    alu/_mac_io_write_bits_data[441]
+    SLICE_X62Y105        LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.116    12.122 r  alu/memory_reg_6_i_39/O
+                         net (fo=7, routed)           0.808    12.930    vrf/banks_0_5/memory_reg_7_0[441]
+    RAMB36_X6Y11         RAMB36E2                                     r  vrf/banks_0_5/memory_reg_6/DINBDIN[25]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y11         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[25])
+                                                     -0.323     9.642    vrf/banks_0_5/memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.642    
+                         arrival time                         -12.930    
+  -------------------------------------------------------------------
+                         slack                                 -3.288    
+
+Slack (VIOLATED) :        -3.287ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_0/DINBDIN[24]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.965ns  (logic 5.870ns (45.276%)  route 7.095ns (54.724%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=2 LUT4=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099    10.666 r  mac/memory_reg_0_i_1070/O[0]
+                         net (fo=1, routed)           0.534    11.200    mac/_GEN_10[2]043_out[24]
+    SLICE_X27Y162        LUT6 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.040    11.240 r  mac/memory_reg_0_i_619/O
+                         net (fo=1, routed)           0.441    11.681    mac/_GEN_10[56]
+    SLICE_X29Y159        LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040    11.721 r  mac/memory_reg_0_i_222/O
+                         net (fo=4, routed)           0.454    12.175    alu/_mac_io_write_bits_data[56]
+    SLICE_X31Y152        LUT6 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.040    12.215 r  alu/memory_reg_0_i_48/O
+                         net (fo=6, routed)           0.750    12.965    vrf/banks_1_3/p_1_in[56]
+    RAMB36_X5Y29         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_0/DINBDIN[24]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y29         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[24])
+                                                     -0.287     9.678    vrf/banks_1_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.678    
+                         arrival time                         -12.965    
+  -------------------------------------------------------------------
+                         slack                                 -3.287    
+
+Slack (VIOLATED) :        -3.277ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_0/DINBDIN[26]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.916ns  (logic 5.863ns (45.393%)  route 7.053ns (54.607%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[2])
+                                                      0.089    10.656 r  mac/memory_reg_0_i_1070/O[2]
+                         net (fo=1, routed)           0.500    11.156    mac/_GEN_10[2]043_out[26]
+    SLICE_X27Y164        LUT5 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.040    11.196 r  mac/memory_reg_0_i_601/O
+                         net (fo=1, routed)           0.321    11.517    mac/memory_reg_0_i_601_n_0
+    SLICE_X28Y161        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.040    11.557 r  mac/memory_reg_0_i_216/O
+                         net (fo=4, routed)           0.572    12.129    alu/_mac_io_write_bits_data[58]
+    SLICE_X30Y152        LUT6 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.172 r  alu/memory_reg_0_i_46/O
+                         net (fo=6, routed)           0.744    12.916    vrf/banks_1_3/p_1_in[58]
+    RAMB36_X5Y29         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_0/DINBDIN[26]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X5Y29         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[26])
+                                                     -0.326     9.639    vrf/banks_1_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.639    
+                         arrival time                         -12.916    
+  -------------------------------------------------------------------
+                         slack                                 -3.277    
+
+Slack (VIOLATED) :        -3.273ns  (required time - arrival time)
+  Source:                 vrf/banks_0_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_5/memory_reg_0/DINBDIN[30]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.849ns  (logic 5.942ns (46.245%)  route 6.907ns (53.755%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X5Y30         RAMB36E2                     0.000     0.000 r  vrf/banks_0_3/memory_reg_0/CLKARDCLK
+    RAMB36_X5Y30         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[2])
+                                                      1.275     1.275 f  vrf/banks_0_3/memory_reg_0/DOUTBDOUT[2]
+                         net (fo=1, routed)           0.716     1.991    vrf/_banks_0_3_readData[34]
+    SLICE_X35Y147        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.040     2.031 f  vrf/heldOperands_1[34]_i_4/O
+                         net (fo=3, routed)           0.669     2.700    vrf/banks_3_3/_vrf_io_readData_3[34]
+    SLICE_X23Y159        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.137     2.837 f  vrf/banks_3_3/heldOperands_0[34]_i_1__0/O
+                         net (fo=2, routed)           0.506     3.343    mac/heldOperands_0_reg[511]_0[32]
+    SLICE_X18Y172        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     3.386 f  mac/_GEN_10[1]0__1_i_30/O
+                         net (fo=15, routed)          0.650     4.036    mac/resultData_candidates_values_dotProducts_0_1/A[2]
+    DSP48E2_X1Y76        DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[2]_A2_DATA[2])
+                                                      0.337     4.373 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[2]
+                         net (fo=1, routed)           0.000     4.373    mac/resultData_candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<2>
+    DSP48E2_X1Y76        DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[2]_A2A1[2])
+                                                      0.155     4.528 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[2]
+                         net (fo=1, routed)           0.000     4.528    mac/resultData_candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<2>
+    DSP48E2_X1Y76        DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[2]_U[2])
+                                                      0.866     5.394 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, routed)           0.000     5.394    mac/resultData_candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+    DSP48E2_X1Y76        DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[2]_U_DATA[2])
+                                                      0.110     5.504 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, routed)           0.000     5.504    mac/resultData_candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+    DSP48E2_X1Y76        DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     6.206 f  mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, routed)           0.000     6.206    mac/resultData_candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+    DSP48E2_X1Y76        DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[2]_P[2])
+                                                      0.193     6.399 r  mac/resultData_candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, routed)           0.690     7.089    mac/resultData_candidates_values_dotProducts_0_1_n_103
+    SLICE_X4Y190         CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342     7.431 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, routed)           0.027     7.458    mac/memory_reg_0_i_3042_n_0
+    SLICE_X4Y191         CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.557 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, routed)           0.519     8.076    mac/memory_reg_0_i_3029_n_15
+    SLICE_X12Y191        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     8.147 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, routed)           0.000     8.147    mac/memory_reg_0_i_3037_n_0
+    SLICE_X12Y191        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.379     8.526 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, routed)           0.439     8.965    mac/memory_reg_0_i_2835_n_10
+    SLICE_X17Y187        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     9.040 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, routed)           0.000     9.040    mac/memory_reg_0_i_2838_n_0
+    SLICE_X17Y187        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     9.293 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, routed)           0.027     9.320    mac/memory_reg_0_i_2620_n_0
+    SLICE_X17Y188        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.419 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, routed)           0.646    10.065    mac/p_1_in3_out[16]
+    SLICE_X23Y178        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.071    10.136 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, routed)           0.000    10.136    mac/memory_reg_0_i_2240_n_0
+    SLICE_X23Y178        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.540 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, routed)           0.027    10.567    mac/memory_reg_0_i_1121_n_0
+    SLICE_X23Y179        CARRY8 (Prop_CARRY8_SLICEM_CI_O[6])
+                                                      0.136    10.703 r  mac/memory_reg_0_i_1070/O[6]
+                         net (fo=1, routed)           0.581    11.284    mac/_GEN_10[2]043_out[30]
+    SLICE_X29Y163        LUT5 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071    11.355 r  mac/memory_reg_0_i_565/O
+                         net (fo=1, routed)           0.141    11.496    mac/memory_reg_0_i_565_n_0
+    SLICE_X29Y161        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043    11.539 r  mac/memory_reg_0_i_204/O
+                         net (fo=4, routed)           0.551    12.090    alu/_mac_io_write_bits_data[62]
+    SLICE_X31Y151        LUT6 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    12.131 r  alu/memory_reg_0_i_39__1/O
+                         net (fo=6, routed)           0.718    12.849    vrf/banks_3_5/memory_reg_7_0[62]
+    RAMB36_X2Y27         RAMB36E2                                     r  vrf/banks_3_5/memory_reg_0/DINBDIN[30]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X2Y27         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[30])
+                                                     -0.389     9.576    vrf/banks_3_5/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.576    
+                         arrival time                         -12.849    
+  -------------------------------------------------------------------
+                         slack                                 -3.273    
+
+Slack (VIOLATED) :        -3.272ns  (required time - arrival time)
+  Source:                 vrf/banks_3_1/memory_reg_6/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_2/memory_reg_6/DINBDIN[22]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.911ns  (logic 5.980ns (46.317%)  route 6.931ns (53.683%))
+  Logic Levels:           22  (CARRY8=6 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X7Y17         RAMB36E2                     0.000     0.000 r  vrf/banks_3_1/memory_reg_6/CLKARDCLK
+    RAMB36_X7Y17         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[6])
+                                                      1.272     1.272 f  vrf/banks_3_1/memory_reg_6/DOUTBDOUT[6]
+                         net (fo=1, routed)           0.856     2.128    vrf/_banks_3_1_readData[422]
+    SLICE_X62Y104        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.191     2.319 f  vrf/heldOperands_1[422]_i_1/O
+                         net (fo=4, routed)           0.414     2.733    vrf/banks_3_3/heldOperands_0_reg[511][422]
+    SLICE_X65Y112        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116     2.849 f  vrf/banks_3_3/heldOperands_0[422]_i_1__0/O
+                         net (fo=2, routed)           0.655     3.504    mac/heldOperands_0_reg[511]_0[383]
+    SLICE_X65Y151        LUT3 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.040     3.544 f  mac/_GEN_10[1]0__25_i_26/O
+                         net (fo=8, routed)           0.763     4.307    mac/resultData_candidates_values_dotProducts_0_13/A[6]
+    DSP48E2_X10Y80       DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[6]_A2_DATA[6])
+                                                      0.337     4.644 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA_INST/A2_DATA[6]
+                         net (fo=1, routed)           0.000     4.644    mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA.A2_DATA<6>
+    DSP48E2_X10Y80       DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[6]_A2A1[6])
+                                                      0.155     4.799 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA_INST/A2A1[6]
+                         net (fo=1, routed)           0.000     4.799    mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA.A2A1<6>
+    DSP48E2_X10Y80       DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[6]_U[7])
+                                                      0.866     5.665 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER_INST/U[7]
+                         net (fo=1, routed)           0.000     5.665    mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER.U<7>
+    DSP48E2_X10Y80       DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_U[7]_U_DATA[7])
+                                                      0.110     5.775 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA_INST/U_DATA[7]
+                         net (fo=1, routed)           0.000     5.775    mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA.U_DATA<7>
+    DSP48E2_X10Y80       DSP_ALU (Prop_DSP_ALU_DSP48E2_U_DATA[7]_ALU_OUT[7])
+                                                      0.702     6.477 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU_INST/ALU_OUT[7]
+                         net (fo=1, routed)           0.000     6.477    mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU.ALU_OUT<7>
+    DSP48E2_X10Y80       DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[7]_P[7])
+                                                      0.193     6.670 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_OUTPUT_INST/P[7]
+                         net (fo=2, routed)           0.420     7.090    mac/resultData_candidates_values_dotProducts_0_13_n_98
+    SLICE_X66Y200        LUT2 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.073     7.163 r  mac/memory_reg_6_i_2745/O
+                         net (fo=1, routed)           0.000     7.163    mac/memory_reg_6_i_2745_n_0
+    SLICE_X66Y200        CARRY8 (Prop_CARRY8_SLICEM_S[7]_CO[7])
+                                                      0.176     7.339 r  mac/memory_reg_6_i_2704/CO[7]
+                         net (fo=1, routed)           0.027     7.366    mac/memory_reg_6_i_2704_n_0
+    SLICE_X66Y201        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     7.465 r  mac/memory_reg_6_i_2691/O[0]
+                         net (fo=2, routed)           0.311     7.776    mac/memory_reg_6_i_2691_n_15
+    SLICE_X65Y196        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.115     7.891 r  mac/memory_reg_6_i_2699/O
+                         net (fo=1, routed)           0.000     7.891    mac/memory_reg_6_i_2699_n_0
+    SLICE_X65Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     8.295 r  mac/memory_reg_6_i_2529/CO[7]
+                         net (fo=1, routed)           0.027     8.322    mac/memory_reg_6_i_2529_n_0
+    SLICE_X65Y197        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     8.421 r  mac/memory_reg_6_i_2493/O[0]
+                         net (fo=1, routed)           0.547     8.968    mac/memory_reg_6_i_2493_n_15
+    SLICE_X61Y175        LUT2 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.132     9.100 r  mac/memory_reg_6_i_2497/O
+                         net (fo=1, routed)           0.000     9.100    mac/memory_reg_6_i_2497_n_0
+    SLICE_X61Y175        CARRY8 (Prop_CARRY8_SLICEM_S[0]_O[3])
+                                                      0.275     9.375 r  mac/memory_reg_6_i_2305/O[3]
+                         net (fo=13, routed)          0.638    10.013    mac/p_1_in39_out__0[19]
+    SLICE_X61Y149        LUT4 (Prop_E6LUT_SLICEM_I1_O)
+                                                      0.072    10.085 r  mac/memory_reg_6_i_1822/O
+                         net (fo=1, routed)           0.000    10.085    mac/memory_reg_6_i_1822_n_0
+    SLICE_X61Y149        CARRY8 (Prop_CARRY8_SLICEM_S[4]_O[6])
+                                                      0.262    10.347 r  mac/memory_reg_6_i_938/O[6]
+                         net (fo=1, routed)           0.461    10.808    mac/_GEN_10[2]07_out[22]
+    SLICE_X62Y129        LUT5 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.136    10.944 r  mac/memory_reg_6_i_498/O
+                         net (fo=1, routed)           0.436    11.380    mac/memory_reg_6_i_498_n_0
+    SLICE_X64Y111        LUT6 (Prop_G6LUT_SLICEM_I5_O)
+                                                      0.040    11.420 r  mac/memory_reg_6_i_196/O
+                         net (fo=4, routed)           0.437    11.857    alu/_mac_io_write_bits_data[438]
+    SLICE_X63Y100        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115    11.972 r  alu/memory_reg_6_i_42__0/O
+                         net (fo=6, routed)           0.939    12.911    vrf/banks_1_2/p_1_in[438]
+    RAMB36_X6Y8          RAMB36E2                                     r  vrf/banks_1_2/memory_reg_6/DINBDIN[22]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y8          RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[22])
+                                                     -0.326     9.639    vrf/banks_1_2/memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.639    
+                         arrival time                         -12.911    
+  -------------------------------------------------------------------
+                         slack                                 -3.272    
+
+Slack (VIOLATED) :        -3.270ns  (required time - arrival time)
+  Source:                 vrf/banks_3_1/memory_reg_6/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_1/memory_reg_6/DINBDIN[25]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        12.912ns  (logic 5.900ns (45.694%)  route 7.012ns (54.306%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT4=1 LUT6=5)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    RAMB36_X7Y17         RAMB36E2                     0.000     0.000 r  vrf/banks_3_1/memory_reg_6/CLKARDCLK
+    RAMB36_X7Y17         RAMB36E2 (Prop_RAMB36E2_RAMB36_CLKARDCLK_DOUTBDOUT[6])
+                                                      1.272     1.272 f  vrf/banks_3_1/memory_reg_6/DOUTBDOUT[6]
+                         net (fo=1, routed)           0.856     2.128    vrf/_banks_3_1_readData[422]
+    SLICE_X62Y104        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.191     2.319 f  vrf/heldOperands_1[422]_i_1/O
+                         net (fo=4, routed)           0.414     2.733    vrf/banks_3_3/heldOperands_0_reg[511][422]
+    SLICE_X65Y112        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116     2.849 f  vrf/banks_3_3/heldOperands_0[422]_i_1__0/O
+                         net (fo=2, routed)           0.655     3.504    mac/heldOperands_0_reg[511]_0[383]
+    SLICE_X65Y151        LUT3 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.040     3.544 f  mac/_GEN_10[1]0__25_i_26/O
+                         net (fo=8, routed)           0.763     4.307    mac/resultData_candidates_values_dotProducts_0_13/A[6]
+    DSP48E2_X10Y80       DSP_A_B_DATA (Prop_DSP_A_B_DATA_DSP48E2_A[6]_A2_DATA[6])
+                                                      0.337     4.644 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA_INST/A2_DATA[6]
+                         net (fo=1, routed)           0.000     4.644    mac/resultData_candidates_values_dotProducts_0_13/DSP_A_B_DATA.A2_DATA<6>
+    DSP48E2_X10Y80       DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_DSP48E2_A2_DATA[6]_A2A1[6])
+                                                      0.155     4.799 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA_INST/A2A1[6]
+                         net (fo=1, routed)           0.000     4.799    mac/resultData_candidates_values_dotProducts_0_13/DSP_PREADD_DATA.A2A1<6>
+    DSP48E2_X10Y80       DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_DSP48E2_A2A1[6]_V[6])
+                                                      0.871     5.670 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER_INST/V[6]
+                         net (fo=1, routed)           0.000     5.670    mac/resultData_candidates_values_dotProducts_0_13/DSP_MULTIPLIER.V<6>
+    DSP48E2_X10Y80       DSP_M_DATA (Prop_DSP_M_DATA_DSP48E2_V[6]_V_DATA[6])
+                                                      0.110     5.780 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA_INST/V_DATA[6]
+                         net (fo=1, routed)           0.000     5.780    mac/resultData_candidates_values_dotProducts_0_13/DSP_M_DATA.V_DATA<6>
+    DSP48E2_X10Y80       DSP_ALU (Prop_DSP_ALU_DSP48E2_V_DATA[6]_ALU_OUT[6])
+                                                      0.687     6.467 f  mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU_INST/ALU_OUT[6]
+                         net (fo=1, routed)           0.000     6.467    mac/resultData_candidates_values_dotProducts_0_13/DSP_ALU.ALU_OUT<6>
+    DSP48E2_X10Y80       DSP_OUTPUT (Prop_DSP_OUTPUT_DSP48E2_ALU_OUT[6]_P[6])
+                                                      0.193     6.660 r  mac/resultData_candidates_values_dotProducts_0_13/DSP_OUTPUT_INST/P[6]
+                         net (fo=2, routed)           0.487     7.147    mac/resultData_candidates_values_dotProducts_0_13_n_99
+    SLICE_X66Y200        CARRY8 (Prop_CARRY8_SLICEM_DI[6]_O[7])
+                                                      0.187     7.334 r  mac/memory_reg_6_i_2704/O[7]
+                         net (fo=2, routed)           0.311     7.645    mac/memory_reg_6_i_2704_n_8
+    SLICE_X65Y195        LUT2 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     7.761 r  mac/memory_reg_6_i_2705/O
+                         net (fo=1, routed)           0.000     7.761    mac/memory_reg_6_i_2705_n_0
+    SLICE_X65Y195        CARRY8 (Prop_CARRY8_SLICEL_S[7]_CO[7])
+                                                      0.176     7.937 r  mac/memory_reg_6_i_2546/CO[7]
+                         net (fo=1, routed)           0.027     7.964    mac/memory_reg_6_i_2546_n_0
+    SLICE_X65Y196        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     8.063 r  mac/memory_reg_6_i_2529/O[0]
+                         net (fo=2, routed)           0.666     8.729    mac/memory_reg_6_i_2529_n_15
+    SLICE_X61Y174        LUT2 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.800 r  mac/memory_reg_6_i_2537/O
+                         net (fo=1, routed)           0.000     8.800    mac/memory_reg_6_i_2537_n_0
+    SLICE_X61Y174        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.204 r  mac/memory_reg_6_i_2326/CO[7]
+                         net (fo=1, routed)           0.027     9.231    mac/memory_reg_6_i_2326_n_0
+    SLICE_X61Y175        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     9.330 r  mac/memory_reg_6_i_2305/O[0]
+                         net (fo=1, routed)           0.630     9.960    mac/p_1_in39_out[16]
+    SLICE_X61Y149        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040    10.000 r  mac/memory_reg_6_i_1826/O
+                         net (fo=1, routed)           0.000    10.000    mac/memory_reg_6_i_1826_n_0
+    SLICE_X61Y149        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404    10.404 r  mac/memory_reg_6_i_938/CO[7]
+                         net (fo=1, routed)           0.040    10.444    mac/memory_reg_6_i_938_n_0
+    SLICE_X61Y150        CARRY8 (Prop_CARRY8_SLICEM_CI_O[1])
+                                                      0.133    10.577 r  mac/memory_reg_6_i_877/O[1]
+                         net (fo=1, routed)           0.533    11.110    mac/_GEN_10[2]07_out[25]
+    SLICE_X62Y131        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.150 r  mac/memory_reg_6_i_481/O
+                         net (fo=1, routed)           0.360    11.510    mac/memory_reg_6_i_481_n_0
+    SLICE_X62Y119        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.043    11.553 r  mac/memory_reg_6_i_187/O
+                         net (fo=4, routed)           0.515    12.068    alu/_mac_io_write_bits_data[441]
+    SLICE_X63Y104        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116    12.184 r  alu/memory_reg_6_i_39__2/O
+                         net (fo=6, routed)           0.728    12.912    vrf/banks_3_1/memory_reg_7_0[441]
+    RAMB36_X7Y17         RAMB36E2                                     r  vrf/banks_3_1/memory_reg_6/DINBDIN[25]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X7Y17         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKBWRCLK_DINBDIN[25])
+                                                     -0.323     9.642    vrf/banks_3_1/memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.642    
+                         arrival time                         -12.912    
+  -------------------------------------------------------------------
+                         slack                                 -3.270    
+
+
+
+

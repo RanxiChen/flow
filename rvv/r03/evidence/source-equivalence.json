@@ -1,0 +1,35 @@
+{
+  "validationCommit": "148c267ee7777541af0625d6bde9937bb7d5e3eb",
+  "checkedReportCommit": "afdf91899202208ad5945491ba8bb07fd2bebd15",
+  "sourceDiffExitCode": 0,
+  "paths": [
+    "design/src/main/scala/rvv",
+    "design/src/test/scala/rvv",
+    "rvv/r02",
+    "rvv/r03/clock.xdc",
+    "rvv/r03/synthesize.tcl",
+    "rvv/r03/implement.tcl",
+    "rvv/r03/run-s1.sh",
+    "rvv/r03/run-s2.sh",
+    "rvv/r03/prepare-snapshot.sh",
+    "rvv/r03/run-snapshot.sh",
+    "rvv/r03/run-c2.sh",
+    "rvv/r03/summarize.py"
+  ],
+  "gitObjects": {
+    "design/src/main/scala/rvv": "4aeaebdbc783d0fe78bc2dc74b79ce5f0431e3dc",
+    "design/src/test/scala/rvv": "2364166c6ce9466cd65c8de173413c9e7d4c5f83",
+    "rvv/r02": "c03fcba98fe95aa8ed3f84742e8bc51e2f5ba02c",
+    "rvv/r03/clock.xdc": "7a60d08741bfdfd7e9c9f97963339c2a1649208e",
+    "rvv/r03/synthesize.tcl": "57153d3b00d91abb8e1cf863469fcb7b960a57e4",
+    "rvv/r03/implement.tcl": "c2c5fc2372c429cfacfd1a537cf66aa9ff8f0206",
+    "rvv/r03/run-s1.sh": "162af386948851c903cb12fac43466e4710b23b6",
+    "rvv/r03/run-s2.sh": "66a7d9f1f228d5425446c03ac2410a0927dee770",
+    "rvv/r03/prepare-snapshot.sh": "005196cab927a0bab29d6ea9600868ee0ede82c4",
+    "rvv/r03/run-snapshot.sh": "0668124a4b5c999f93ee8ae48b9fa023d15a6c05",
+    "rvv/r03/run-c2.sh": "48ee95d269553554534e8e20263c8e64141950dd",
+    "rvv/r03/summarize.py": "691dde9a21b200c0c6c92fbfd8620097597c64d3"
+  },
+  "finalS1MatchesC1SnapshotInputs": true,
+  "matchingInputs": 24
+}
