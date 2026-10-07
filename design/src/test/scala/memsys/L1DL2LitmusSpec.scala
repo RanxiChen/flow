@@ -290,12 +290,17 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val points = s.axes.foldLeft(Seq(Map.empty[String, Int])) { (acc, a) =>
       for (m <- acc; v <- axisValues(a, t)) yield m + (a.name -> v)
     }
+    // Integer-cycle deduplication can leave fewer than the planned points.
+    // Preserve every original pass and repeat the whole sweep until at least
+    // the task's nominal round count is exercised; never reduce the scale.
+    val nominalRounds = s.passes * s.axes.map(_.points).product
+    val passes = s.passes max ((nominalRounds + points.size - 1) / points.size)
     val combos = s.vars.foldLeft(Seq(Seq.empty[Char]))((acc, _) => for (c <- acc; w <- "ISWO") yield c :+ w)
     val seen = mutable.Map.empty[String, Int].withDefaultValue(0)
     val hits = mutable.Map.empty[String, ArrayBuffer[Map[String, Int]]]
     s.required.foreach(r => hits(r._1) = ArrayBuffer.empty)
     var r = 0
-    for (_ <- 0 until s.passes; pt <- points) {
+    for (_ <- 0 until passes; pt <- points) {
       val warm = combos((r * 5) % combos.size)
       val inst = new Inst(e, r, s.vars, spread = r % 3 == 0)
       val where = s"round $r, ${pt.toSeq.sorted.map { case (k, v) => s"$k=$v" }.mkString(", ")}, " +
@@ -338,6 +343,8 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
     def range(ps: Seq[Map[String, Int]]): String =
       if (ps.isEmpty) "never" else s.axes.map(a => s"${a.name} ${ps.map(_(a.name)).min}..${ps.map(_(a.name)).max}").mkString(", ")
     info(s"${s.name}: T=$t cycles, $r rounds, oracle ${oracle.counts.toSeq.sorted.mkString(" ")}")
+    info(s"${s.name} scan: ${points.size} unique points, $passes passes, nominal minimum $nominalRounds rounds")
+    assert(r >= nominalRounds, s"${s.name}: $r rounds below the planned $nominalRounds")
     info(s"${s.name} outcomes: " + seen.toSeq.sortBy(-_._2).map { case (k, v) => s"[$k]=$v" }.mkString(", "))
     for ((name, _) <- s.required)
       info(s"${s.name} required '$name': ${hits(name).size} hits (${range(hits(name).toSeq)})")
