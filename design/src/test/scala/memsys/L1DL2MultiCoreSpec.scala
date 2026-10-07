@@ -337,7 +337,14 @@ class L1DL2MultiCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val shared = (0 until sharedLines).map(i => lineOf(ram(0x2000 + (i % 2) * LineBytes + (i / 2) * stride)))
     for ((l, i) <- shared.zipWithIndex)
       oracle.classifyLine(l, Seq(Counter, Racy, Owned(i % n), Owned((i + 1) % n)))
-    val priv = (0 until n).map(c => (0 to g.l1dWays).map(t =>
+    // Private sets are split by core parity. Keep existing pressure when
+    // it already overflows L2; otherwise extend the private conflict set.
+    // Two default cores originally use five private + two shared lines
+    // per eight-way L2 set, so they cannot cover AXI writeback.
+    val basePrivateLines = g.l1dWays + 1
+    val privateLines = if (basePrivateLines * (n / 2) + sharedLines / 2 > g.l2Ways)
+      basePrivateLines else (g.l1dWays max g.l2Ways) + 1
+    val priv = (0 until n).map(c => (0 until privateLines).map(t =>
       lineOf(ram(BigInt(0x100000) * (c + 1) + (c % 2) * LineBytes + t * stride))))
     for (c <- 0 until n; l <- priv(c)) oracle.classifyLine(l, Seq.fill(4)(Owned(c)))
     val words = (shared ++ priv.flatten).flatMap(l => (0 until 4).map(k => (l << 5) + 8 * k))
