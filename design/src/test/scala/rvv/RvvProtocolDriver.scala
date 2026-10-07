@@ -1,6 +1,7 @@
 package flow.rvv
 
 import chisel3._
+import chisel3.simulator.PeekPokeAPI
 import com.fasterxml.jackson.databind.{JsonNode,ObjectMapper}
 import java.nio.file.{Files,Path}
 import scala.collection.mutable
@@ -38,7 +39,7 @@ case class R02Measurement(cycles: Long, readBeats: Long, firstRead: Long, lastRe
   * Expected bytes and scalar results are supplied by the executed Spike ELF. */
 class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   seed: Long, randomize: Boolean = true, readLatency: Int = 3, writeLatency: Int = 3,
-  translationLatency: Int = 2, injectKills: Boolean = true) {
+  translationLatency: Int = 2, injectKills: Boolean = true) extends PeekPokeAPI {
   private val rng = new Random(seed)
   private val memory = mutable.Map.empty[BigInt,Int]
   private def physical(va: BigInt): BigInt = BigInt("90000000",16)+((va-fixture.base)>>12)*12288+(va & 4095)

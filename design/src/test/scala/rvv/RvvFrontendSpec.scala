@@ -85,6 +85,32 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
       issue(d,BigInt("5e05c257",16),vl=1)
     }
   }
+  "a committed store blocks overlapping scalar reads and writes while still queued" in {
+    simulate(new RvvFrontend(p)) { d =>
+      initialize(d); issue(d,BigInt("02056427",16))
+      val first=request(d); response(d,first,BigInt("90000ff0",16))
+      val second=request(d); response(d,second,BigInt("94000000",16))
+      verdict(d,0)
+      d.io.scalarQuery.valid.poke(true.B); d.io.scalarQuery.pa.poke("h90000ff0".U)
+      d.io.scalarQuery.bytes.poke(8.U); d.io.scalarQuery.write.poke(false.B)
+      d.io.scalarConflict.expect(false.B)
+      d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B)
+      d.io.scalarConflict.expect(true.B); d.clock.step(1)
+      d.io.commit.poke(false.B); d.io.verdict.ready.poke(false.B)
+      for(write <- Seq(false,true);pa <- Seq(BigInt("90000ff0",16),BigInt("94000000",16))) {
+        d.io.scalarQuery.write.poke(write.B); d.io.scalarQuery.pa.poke(pa.U); d.io.scalarConflict.expect(true.B)
+      }
+      d.io.scalarQuery.pa.poke("h95000000".U); d.io.scalarConflict.expect(false.B)
+      val age=d.io.dispatch.bits.age.peek().litValue
+      d.io.vectorQueryValid.poke(true.B); d.io.vectorQuery.age.poke((age+1).U)
+      d.io.vectorQuery.decoded.store.poke(false.B)
+      d.io.vectorQuery.pa(0).poke("h94000000".U); d.io.vectorQuery.length(0).poke(8.U)
+      d.io.vectorQuery.pa(1).poke(0.U); d.io.vectorQuery.length(1).poke(0.U)
+      d.io.vectorConflict.expect(true.B)
+      d.io.released.valid.poke(true.B); d.io.released.bits.poke(age.U); d.clock.step(1)
+      d.io.released.valid.poke(false.B); d.io.vectorConflict.expect(false.B)
+    }
+  }
   "Serial decisions cover mask, FOF, vstart, strided, indexed, segmented, faults and device" in {
     simulate(new RvvFrontend(p)) { d =>
       initialize(d)
