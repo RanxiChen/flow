@@ -477,7 +477,11 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // An LR/AMO waiting for its grant has no local write in flight. In
   // particular, a sharer Inv during GetM upgrade must be able to produce
   // the Ack that the grant depends on. Miss/PS/RMW holds still apply above.
-  val cpuAlreadyWaiting = cpuRetry || atomicWait || wholeBusy || internal1.valid || internal2.valid
+  // FENCE parks the younger S1 request until older memory work drains.
+  // That request cannot write while FENCE owns S2; probes must still pass
+  // so the older MSHR can receive the grant that FENCE is waiting for.
+  val fenceWaiting = cpu2.valid && cpu2.req.core.op === L1DOp.Fence
+  val cpuAlreadyWaiting = cpuRetry || atomicWait || fenceWaiting || wholeBusy || internal1.valid || internal2.valid
   probe.io.startOk := (!cpu1StoreProbe || cpuAlreadyWaiting) &&
     (!cpu2StoreProbe || cpuRetry || atomicWait) && !psSameProbe
   probe.io.initDone := initDone
