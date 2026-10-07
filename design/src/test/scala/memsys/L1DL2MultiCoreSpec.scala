@@ -47,9 +47,9 @@ class L1DL2MultiCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val l1Stride: BigInt = BigInt(g.l1Sets) * LineBytes
     def ram(off: BigInt): BigInt = MainRam + off
 
-    def run(c: Int, ops: CoreOp*): Unit = { cores(c).enqueue(ops: _*); bench.quiesce() }
+    def runOps(c: Int, ops: CoreOp*): Unit = { cores(c).enqueue(ops: _*); bench.quiesce() }
     def together(ops: (Int, Seq[CoreOp])*): Unit = { ops.foreach { case (c, o) => cores(c).enqueue(o: _*) }; bench.quiesce() }
-    def ld(c: Int, a: BigInt, size: Int = 3): BigInt = { run(c, CoreOp.load(a, size)); cores(c).last.value }
+    def ld(c: Int, a: BigInt, size: Int = 3): BigInt = { runOps(c, CoreOp.load(a, size)); cores(c).last.value }
     def loadsOf(c: Int, a: BigInt): Seq[CoreTxn] =
       cores(c).history.filter(t => t.op.addr == a && enumIs(t.op.op, L1DOp.Load)).toSeq
 
@@ -131,7 +131,7 @@ class L1DL2MultiCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     import e._
     val a = ram(0x200); val l = lineOf(a)
     ld(0, a); ld(1, a)
-    run(0, CoreOp.store(a, BigInt("1122334455667788", 16)))
+    runOps(0, CoreOp.store(a, BigInt("1122334455667788", 16)))
     monitor.probesTo(1, l) must contain("Inv")
     monitor.state(1, l) mustBe 'I'
     monitor.state(0, l) mustBe 'X'
@@ -143,7 +143,7 @@ class L1DL2MultiCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "a load of a line another core holds M pulls the dirty data by Down and L2 keeps the merged line" in withMc() { e =>
     import e._
     val a = ram(0x300); val l = lineOf(a)
-    run(0, CoreOp.store(a + 8, BigInt("cafef00d", 16), 2), CoreOp.store(a + 24, 0x5a, 0))
+    runOps(0, CoreOp.store(a + 8, BigInt("cafef00d", 16), 2), CoreOp.store(a + 24, 0x5a, 0))
     monitor.state(0, l) mustBe 'X'
     ld(1, a + 8) mustBe arch.read(a + 8, 8)
     monitor.probesTo(0, l) mustBe Seq("Down")
@@ -178,7 +178,7 @@ class L1DL2MultiCoreSpec extends AnyFreeSpec with Matchers with ChiselSim {
     for (r <- 0 until 16) {
       val x = ram(0x4000 + r * LineBytes); val l = lineOf(x)
       val v = BigInt(r + 1) * BigInt("0102030405060708", 16) & mask(64)
-      run(0, CoreOp.store(x, v))
+      runOps(0, CoreOp.store(x, v))
       // Same L1D set, different tags: the last store evicts x (tree-PLRU, all ways touched after x).
       val evict = (1 to g.l1dWays).map(k => CoreOp.store(x + k * l1Stride, BigInt(k)))
       together(0 -> evict, 1 -> (Seq.fill(r % 8)(CoreOp.fence) :+ CoreOp.load(x)))
