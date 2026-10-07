@@ -2,7 +2,6 @@ package flow.rvv
 
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.annotate
 
 /** Byte-enable memory-order rows. Asynchronous read ports infer replicated
   * distributed RAM; each low-address bank has exactly one accepted writer. */
@@ -22,14 +21,13 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   // A single six-read Mem can fall back to flip-flops in Vivado. Construct the
   // documented read replicas explicitly: each copy has one read and one write.
   val banks = Seq.tabulate(p.writeBanks,p.execReadPorts+2) { (_,_) =>
-    val m=Mem(p.rows/p.writeBanks,Vec(p.rowBytes,UInt(8.W)))
-    annotate(m)(Seq(firrtl.AttributeAnnotation(m.toNamed,"ram_style = \"distributed\"")))
-    m
+    Module(new RvvVrfBank(p.rows/p.writeBanks,p.dlen))
   }
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
   def index(row: UInt): UInt = row >> bankBits
   for(r <- 0 until p.execReadPorts+2) {
-    io.readData(r) := VecInit(banks.map(copies => copies(r)(index(io.readRows(r))).asUInt))(bank(io.readRows(r)))
+    banks.foreach(copies => copies(r).io.readAddress := index(io.readRows(r)))
+    io.readData(r) := VecInit(banks.map(copies => copies(r).io.readData))(bank(io.readRows(r)))
   }
   io.write.foreach(_.ready := false.B)
   for(b <- 0 until p.writeBanks) {
@@ -44,10 +42,14 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
         bankValid := true.B; bankWrite := io.write(w).bits
       }
     }
-    // Exactly one physical memory write port per bank, after arbitration.
+    // One logical write port per bank, broadcast to its read replicas.
+    banks(b).foreach { copy =>
+      copy.io.clock := clock; copy.io.writeValid := bankValid
+      copy.io.writeAddress := index(bankWrite.row)
+      copy.io.writeData := bankWrite.data; copy.io.writeEnables := bankWrite.enables
+    }
     when(bankValid) {
       val x=bankWrite
-      banks(b).foreach(_.write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools))
       when(x.row < p.rowsPerReg.U) {
         for(j <- 0 until p.rowBytes) {
           when(x.enables(j)) { shadowBytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
@@ -59,6 +61,39 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
     assert(!(io.write(a).fire && io.write(b).fire && io.write(a).bits.row === io.write(b).bits.row),
       "two writers accepted for the same VRF row")
   }
+}
+
+/** Technology-neutral 1R/1W asynchronous byte-write RAM template. The Vivado
+  * attribute selects the frozen LUTRAM implementation; Verilator executes the
+  * same uninitialized-memory and edge-write semantics as the Chisel Mem. */
+class RvvVrfBank(rows: Int,dataBits: Int) extends BlackBox(Map(
+  "ROWS" -> rows,"DATA_BITS" -> dataBits,"ADDR_BITS" -> math.max(1,log2Ceil(rows)))) with HasBlackBoxInline {
+  private val addrBits=math.max(1,log2Ceil(rows))
+  val io=IO(new Bundle {
+    val clock=Input(Clock())
+    val readAddress=Input(UInt(addrBits.W)); val readData=Output(UInt(dataBits.W))
+    val writeValid=Input(Bool()); val writeAddress=Input(UInt(addrBits.W))
+    val writeData=Input(UInt(dataBits.W)); val writeEnables=Input(UInt((dataBits/8).W))
+  })
+  setInline("RvvVrfBank.sv","""module RvvVrfBank #(
+    |  parameter int ROWS=8, DATA_BITS=512, ADDR_BITS=3
+    |)(
+    |  input logic clock,
+    |  input logic [ADDR_BITS-1:0] readAddress,
+    |  output logic [DATA_BITS-1:0] readData,
+    |  input logic writeValid,
+    |  input logic [ADDR_BITS-1:0] writeAddress,
+    |  input logic [DATA_BITS-1:0] writeData,
+    |  input logic [DATA_BITS/8-1:0] writeEnables
+    |);
+    |  (* ram_style = "distributed" *) logic [DATA_BITS-1:0] memory [0:ROWS-1];
+    |  assign readData=memory[readAddress];
+    |  always @(posedge clock) begin
+    |    for(integer b=0;b<DATA_BITS/8;b=b+1)
+    |      if(writeValid && writeEnables[b]) memory[writeAddress][8*b +: 8] <= writeData[8*b +: 8];
+    |  end
+    |endmodule
+    |""".stripMargin)
 }
 
 class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {

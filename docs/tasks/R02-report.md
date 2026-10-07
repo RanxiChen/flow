@@ -154,3 +154,4 @@
 - 相对第 0 步父提交的范围核对：仅设计文档发生 baseline 文件修改（第 0 步授权）；其余均为 R02 允许目录的新文件。共享构建、Breeze 与其他任务工作区未修改。R01 没有继续。
 - S1 初步 RAM 映射暴露物理实现遗漏：`s1-default/vivado.stdout` 的 preliminary distributed RAM 表没有 VRF，六读口的单个 Chisel Mem 被展开为寄存器。返回缓冲已映射 7 RAMB36 + 1 RAMB18，但该表不是最终资源证据。为符合设计 3.6 的“六份读副本 + LUTRAM”，改成每个 bank 显式六份单读单写 Mem，并对存储器添加 `ram_style=distributed`。仲裁后同一逻辑写口广播到副本，字节使能、v0 shadow、读延迟和外部合同不变。
 - 这是对既定物理结构的实现修正；不推翻设计，不改合同、不修改共享文件。保存第一次 S1 预映射日志，停止本任务旧综合，随后重新执行 C1→C2→C3→P→S1；前面的通过结果保留其旧 SHA，不代替修正版验证。
+- `487a5ce` C1 生成退出码 **1**，`vrf-replicas-c1/emit-512-512.log`：安装的 CIRCT 不支持把 `firrtl.AttributeAnnotation` 附加到 Mem，只接受 module/wire/node/register。按仓库已有 SRAM 的 Chisel BlackBox inline 模板方式，新增 R02 专用参数化 1R/1W RAM primitive，把 distributed 属性放在真实 SV memory 上；主体仍为 Chisel，只有 RAM 模板为 inline SV。无时序级增加、无初始化变化、无厂商模拟模型依赖，保留六读副本与单 bank 逻辑写口。
