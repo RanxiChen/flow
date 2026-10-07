@@ -34,7 +34,8 @@ static reg_t dot(processor_t* p, insn_t insn, reg_t pc) {
 // the DUT driver consumes these records, never its own arithmetic model.
 static reg_t snapshot(processor_t* p, insn_t insn, reg_t pc) {
   if (insn.funct3() == 0) {
-    const uint32_t word = p->get_mmu()->load<uint32_t>(pc+4);
+    uint32_t word=0;
+    for(unsigned b=0;b<4;++b) word |= uint32_t(p->get_mmu()->load<uint8_t>(pc+4+b))<<(8*b);
     insn_t next(word);
     std::fprintf(stderr,"R02_TRACE {\"instruction\":%u,\"rs1\":%llu,\"rs2\":%llu,\"vl\":%llu,\"vtype\":%llu,\"vstart\":%llu,\"rd\":%u,\"regs\":[",
       word,(unsigned long long)p->get_state()->XPR[next.rs1()],

@@ -22,7 +22,7 @@ class Program:
         self.rng = random.Random(seed)
         self.vlen = vlen
         self.initial = bytes(self.rng.randrange(256) for _ in range(SIZE))
-        self.lines = ['.section .text', '.global _start', '_start:', 'li t0, 0x600', 'csrs mstatus, t0']
+        self.lines = ['.section .text', '.global _start', '_start:', 'la t0, reference_trap', 'csrw mtvec, t0', 'li t0, 0x600', 'csrs mstatus, t0']
         self.metadata = []
         for reg in range(32):
             self.emit(memory(reg,0),0,0,vlen//8,base=BASE+reg*(vlen//8),label=f'init-v{reg}')
@@ -39,6 +39,8 @@ class Program:
         self.lines += ['.word 0x0000000b', 'nop', f'li a0, {BASE}', f'li a2, {SIZE}',
                        f'.word 0x{((12 << 20) | (10 << 15) | 0x100b):08x}',
                        'la t0, tohost', 'li t1, 1', 'sd t1, 0(t0)', '1: j 1b',
+                       '.balign 4', 'reference_trap:', 'csrr a0, mcause', 'csrr a1, mtval',
+                       '.word 0x0000000b', 'nop', 'la t0, tohost', 'li t1, 3', 'sd t1, 0(t0)', '2: j 2b',
                        '.section .data', '.global image', 'image:']
         self.lines += ['.byte '+','.join(str(b) for b in self.initial[i:i+64]) for i in range(0,SIZE,64)]
         self.lines += ['.section .tohost,"aw",@progbits', '.balign 64', '.global tohost', 'tohost: .dword 0', '.global fromhost', 'fromhost: .dword 0']
@@ -125,7 +127,7 @@ def run(p, path, reference):
     with (path/'compile.log').open('w') as log:
         subprocess.run(['nice','-n','10',compiler,'-nostdlib','-nostartfiles','-static','-march=rv64gcv','-mabi=lp64d','-Wl,--build-id=none','-T',str(root/'link.ld'),str(source),'-o',str(path/'program.elf')],stdout=log,stderr=log,check=True)
     with (path/'spike.log').open('w') as log:
-        subprocess.run(['nice','-n','10',spike,f'--isa=rv64gcv_zvl{p.vlen}b',f'--extlib={reference}/r02_dot.so','--extension=r02_dot',str(path/'program.elf')],stdout=log,stderr=log,check=True,timeout=60)
+        subprocess.run(['nice','-n','10',spike,f'--isa=rv64gcv_zicclsm_zvl{p.vlen}b',f'--extlib={reference}/r02_dot.so','--extension=r02_dot',str(path/'program.elf')],stdout=log,stderr=log,check=True,timeout=60)
     lines = (path/'spike.log').read_text().splitlines()
     snapshots = [json.loads(l[len('R02_TRACE '):]) for l in lines if l.startswith('R02_TRACE ')]
     assert snapshots and all(len(s['regs'][0])==p.vlen//4 for s in snapshots), 'Spike VLEN does not match the DUT'
