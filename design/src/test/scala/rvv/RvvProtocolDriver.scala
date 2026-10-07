@@ -309,6 +309,16 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       val previous=(0 until index).reverse.find(i => fixture.records(i).label.startsWith("gemv-dot-"))
       for(prev <- previous;done <- macCompleted.get(prev.toLong);requested <- kernelRequests.get(index)) yield done-requested
     }.toVector
+    if(!randomize) sys.env.get("R02_RESULTS").foreach { destination =>
+      val out=Path.of(destination); Files.createDirectories(out)
+      val rows=loadIndices.map { index =>
+        val reg=((fixture.records(index).word>>7)&31).toInt
+        val previous=(0 until index).reverse.find(i => fixture.records(i).label.startsWith("gemv-dot-"))
+        s"$index,${kernelRequests.getOrElse(index,-1L)},${loadRegisterDone.getOrElse((index.toLong,reg),-1L)},${macRegisterRead.getOrElse((index.toLong+1,reg),-1L)},${previous.flatMap(i => macCompleted.get(i.toLong)).getOrElse(-1L)}"
+      }
+      Files.writeString(out.resolve(s"links-lat$readLatency-buffer${p.returnBytes}.csv"),
+        "loadRecord,firstAR,firstRegisterDone,dependentMacRead,previousMacDone\n"+rows.mkString("\n")+"\n")
+    }
     R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations,kernelRemaining,links,advances)
   }
 }
