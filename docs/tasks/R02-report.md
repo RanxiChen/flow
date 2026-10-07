@@ -17,7 +17,7 @@
 | 合同 | 状态 | 提交、命令与日志 |
 | --- | --- | --- |
 | C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `9052c21`；日志 `vrf-inline-c1` |
-| C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `4c1fc28`；`final-c3/c2-check/` |
+| C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `9052c21`；`vrf-inline-c3/c2-check/` |
 | C3 | 通过：种子 0–999，1000/1000 | `4c1fc28`；`final-c3/`，退出码 0 |
 | P1 | 通过：100% 峰值 | `d904bd1`；`gemv-performance/` |
 | P2 | 通过：97.07% 峰值 | 同上；40 拍、16 KiB |
@@ -28,7 +28,7 @@
 
 ## 实现决定与文档处理
 
-当前 `9052c21` 物理 RAM 修正版：C1 已重验通过，C2/C3 正在重验。上表其余 C/P 数值暂保留旧 SHA，修正版通过后更新，不把旧证据当作新版结论。
+当前 `9052c21` 物理 RAM 修正版：C1/C2 已重验通过，C3 正在重验。上表其余 C/P 数值暂保留旧 SHA，修正版通过后更新，不把旧证据当作新版结论。
 
 - 区间在 Ok 时登记；提交当拍旁路查询；仅匹配已提交项，load 在全部 R 接收后释放、store 在全部 B 后释放。
 - kill 撤销被作废项判定；同拍 commit 保留最老项；已握手翻译编号保留到响应被接收并丢弃，禁止提前复用。
@@ -163,3 +163,4 @@
 - `9052c21` 已 push；命令 `bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c1`，退出码 **0**，三组 emit 成功、`smoke.log` **3/3**。
 - 六个异步读副本及 distributed 属性已存在于生成的 `RvvRegisterFile.sv` / `RvvVrfBank.sv`，最终是否推断 LUTRAM 由重跑 S1 的工具报告确认。
 - 后接 `R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3`，依次重跑 C2 与全部 1000 种子 C3。
+- 同 SHA 的 C2：入口 `bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3/c2-check`，退出码 **0**；`frontend.log` **6/6**、`vrf.log` **1/1**、`integration.log` **8/8**，全部 Spike 比对及 WAR/多 load 检查通过。C3 已进入随机执行。
