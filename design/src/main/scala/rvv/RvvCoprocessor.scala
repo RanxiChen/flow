@@ -116,7 +116,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   sb.io.progress(6).valid := RegNext(RegNext(alu.io.readProgress.valid,false.B),false.B)
   for((unit,j) <- Seq((alu,2),(mac,3))) {
     unit.io.internalWrites := sb.io.internalWrites(j)
-    unit.io.accumulatorPending := sb.io.dotAccumulatorPending(j)
+    unit.io.internalRows := sb.io.internalWriteRows(j)
+    unit.io.accumulatorPending := sb.io.dotWriteRows(j)(unit.io.readRows(1))
     unit.io.otherRawBlocked := sb.io.rawExceptObserved(j)
     unit.io.rawBlocked := sb.io.raw(j); unit.io.warBlocked := sb.io.war(j); unit.io.wawBlocked := sb.io.waw(j)
   }

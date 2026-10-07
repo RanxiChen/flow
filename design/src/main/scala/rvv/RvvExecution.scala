@@ -233,6 +233,7 @@ class RvvIntegerPorts(p: RvvParams) extends Bundle {
     val complete = Valid(UInt(64.W))
   val readProgress = Valid(new RvvProgress(p))
   val writeAge = Output(UInt(p.ageBits.W))
+  val internalRows = Input(UInt(p.rows.W))
   val internalWrites = Input(UInt(32.W)); val readEnables = Output(UInt(3.W))
   val accumulatorPending = Input(Bool()); val skipAccumulator = Output(Bool())
   val otherRawBlocked = Input(Bool())

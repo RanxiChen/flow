@@ -170,7 +170,7 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
     io.in.ready := Mux(isDot,dot.io.in.ready && !legacy.io.busy,legacy.io.in.ready && !dot.io.busy)
     for(x <- Seq(legacy.io,dot.io)) {
       x.readData := io.readData; x.grant := io.grant; x.mask := io.mask
-      x.internalWrites := io.internalWrites
+      x.internalWrites := io.internalWrites; x.internalRows := io.internalRows
       x.accumulatorPending := io.accumulatorPending
       x.otherRawBlocked := io.otherRawBlocked
       x.blocked := io.blocked; x.rawBlocked := io.rawBlocked; x.warBlocked := io.warBlocked; x.wawBlocked := io.wawBlocked

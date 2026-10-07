@@ -115,6 +115,8 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val slot = Output(UInt(p.slotBits.W))
     val check = Input(Vec(clients,new RvvHazard(p)))
     val internalWrites = Output(Vec(clients,UInt(32.W)))
+    val internalWriteRows = Output(Vec(clients,UInt(p.rows.W)))
+    val dotWriteRows = Output(Vec(clients,UInt(p.rows.W)))
     val dotAccumulatorPending = Output(Vec(clients,Bool()))
     val rawExceptObserved = Output(Vec(clients,Bool()))
     val raw = Output(Vec(clients,Bool())); val war = Output(Vec(clients,Bool())); val waw = Output(Vec(clients,Bool()))
@@ -128,6 +130,7 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   val reads = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   val writes = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   val forwardWrites = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
+  val forwardRows = Reg(Vec(p.scoreboardDepth,UInt(p.rows.W)))
   io.ageAllowed := (0 until p.scoreboardDepth).map(j => !valid(j) || (io.nextAge-ages(j)) < p.ageLimit.U).reduce(_ && _)
   val free = PriorityEncoder(~valid.asUInt)
   io.slot := free; io.allocate.ready := !valid.asUInt.andR; io.empty := !valid.asUInt.orR
@@ -136,6 +139,9 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val older = (0 until p.scoreboardDepth).map(j => valid(j) && RvvAge.older(ages(j),ages(q.slot)))
     val aluWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j) && alu(j),writes(j) & forwardWrites(j),0.U)).reduce(_ | _)
     io.internalWrites(c) := aluWrites
+    val liveRows = (0 until p.scoreboardDepth).map(j => VecInit((0 until p.rows).map(r => writes(j)(r/p.rowsPerReg))).asUInt & forwardRows(j))
+    io.internalWriteRows(c) := (0 until p.scoreboardDepth).map(j => Mux(older(j) && alu(j),liveRows(j),0.U)).reduce(_ | _)
+    io.dotWriteRows(c) := (0 until p.scoreboardDepth).map(j => Mux(q.valid && q.dotBypass && older(j) && dot(j),liveRows(j),0.U)).reduce(_ | _)
     val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j) && !((q.dotBypass && dot(j)) || (q.aluBypass && alu(j))),reads(j),0.U)).reduce(_ | _)
     val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j) & ~Mux(q.aluBypass && alu(j),Mux(q.maskRead,"hfffffffe".U,"hffffffff".U),Mux(q.dotBypass && dot(j),q.accumulator,0.U)),0.U)).reduce(_ | _)
     io.dotAccumulatorPending(c) := q.valid && q.dotBypass && (0 until p.scoreboardDepth).map(j => older(j) && dot(j) && (writes(j) & forwardWrites(j) & q.accumulator).orR).reduce(_ || _)
@@ -168,6 +174,9 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     dot(free) := (io.allocate.bits.decoded.op === RvvOp.dot.U || io.allocate.bits.decoded.op === RvvOp.dotsu.U) && hasElements
     val allocated = io.allocate.bits.decoded
     val touched = (allocated.bytes+(p.regBytes-1).U) >> log2Ceil(p.regBytes)
+    val touchedRows = (allocated.bytes+(p.rowBytes-1).U) >> log2Ceil(p.rowBytes)
+    val firstRow = allocated.vd*p.rowsPerReg.U
+    forwardRows(free) := VecInit((0 until p.rows).map(r => r.U >= firstRow && r.U < firstRow +& touchedRows)).asUInt
     forwardWrites(free) := VecInit((0 until 32).map(r => r.U >= allocated.vd && r.U < allocated.vd +& touched)).asUInt
     reads(free) := allocated.readMask; writes(free) := allocated.writeMask
   }

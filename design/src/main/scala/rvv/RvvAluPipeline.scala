@@ -34,9 +34,9 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val aUsed = !noRead; val bUsed = !move && !d.decoded.scalarOperand
   io.readRows(0) := Mux(move,d.decoded.vs1,d.decoded.vs2)*p.rowsPerReg.U+row
   io.readRows(1) := d.decoded.vs1*p.rowsPerReg.U+row; io.readRows(2) := d.decoded.vd*p.rowsPerReg.U+row
-  val skipA = aUsed && (io.internalWrites & bit(srcA)).orR && (!d.decoded.masked || srcA =/= 0.U)
-  val skipB = bUsed && (io.internalWrites & bit(srcB)).orR && (!d.decoded.masked || srcB =/= 0.U)
-  val skipOld = needsOld && (io.internalWrites & bit(dst)).orR && (!d.decoded.masked || dst =/= 0.U)
+  val skipA = aUsed && io.internalRows(io.readRows(0)) && (!d.decoded.masked || srcA =/= 0.U)
+  val skipB = bUsed && io.internalRows(io.readRows(1)) && (!d.decoded.masked || srcB =/= 0.U)
+  val skipOld = needsOld && io.internalRows(io.readRows(2)) && (!d.decoded.masked || dst =/= 0.U)
   io.readEnables := Cat(needsOld && !skipOld,!skipB && bUsed,!skipA && aUsed)
   io.skipAccumulator := false.B
   io.readDemand := Mux(active,Mux(needsOld,3.U,Mux(noRead,0.U,Mux(bUsed,2.U,1.U))),0.U)
