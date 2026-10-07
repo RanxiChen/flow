@@ -28,7 +28,7 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean) extends Module {
   val sfS1Valid = RegInit(false.B)
   val sfVaddr = Reg(UInt(64.W)); val sfRs2Nz = Reg(Bool()); val sfAsid = Reg(UInt(16.W))
   io.port.req.ready := !missValid && !io.sfence.valid && !sfS1Valid && !io.port.kill
-  io.idle := !missValid && !pendingFault && !sfS1Valid
+  io.idle := !missValid && !pendingFault && !sfS1Valid && !s1Valid
   io.miss.valid := missValid; io.miss.granted := missGranted
   io.miss.vpn := missVpn; io.miss.asid := missAsid; io.miss.rootPpn := missRootPpn
   val sfRead = io.sfence.valid && io.sfence.rs1Nz

@@ -361,7 +361,10 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         entry(Cat(frm, fflags), CSRMAP.fcsr), entry(printer, CSRMAP.printer),
         entry(misa, CSRMAP.misa), entry(mvendorid, CSRMAP.mvendorid),
         entry(marchid, CSRMAP.marchid), entry(mimpid, CSRMAP.mimpid),
-        entry(mhartid, CSRMAP.mhartid)
+        entry(mhartid, CSRMAP.mhartid),
+        // No triggers: tselect/tdata1/tdata2 read zero and ignore writes, so
+        // tdata1.type == 0 tells probing software that no trigger exists.
+        entry(0.U, CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2)
     )
     val readBanks = Seq(statusReads, protectionReads, performanceReads, otherReads)
     val implementedAddresses = readBanks.flatten.flatMap(_._1)

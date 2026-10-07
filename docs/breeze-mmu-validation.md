@@ -38,6 +38,7 @@ sbt 'testOnly flow.mmu.sv39.*'
 | T15 | 基础页和超页 invalid-first 分配；填满并 touch 后按 tree PLRU 替换 |
 | T16 | L=1、5 的随机 PTW ready 反压，地址稳定断言、结果正确；seed `0x1639` |
 | T17 | 随机稀疏页表、400 次随机访问，与独立 Scala Sv39 walker 比对；含超页、权限、结构错、access fault、sfence；seed `0x1739` |
+| T18 | I/D 各一次：请求进入 S1 后 `idle == 0`；同拍 kill 抑制 resp 且 `idle` 仍为 0；下一拍 S1 清空后 `idle == 1` |
 
 T3–T5 按延迟分成两个测试，其余各一项，共 16 个 MMU 场景。另有 13 个结构测试：参数约束；1/2/4/8/16 路 PLRU 的随机软件树比对；4 种 walk-cache 组/路配置的 ASID、替换、flush；1 set、1/2/8 ways MMU 和单超页项配置的翻译及 sfence。
 

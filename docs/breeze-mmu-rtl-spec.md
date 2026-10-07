@@ -119,7 +119,9 @@ object MmuCmd extends ChiselEnum { val Fetch, Load, Store = Value }
 
 ### 4.4 MMU 状态输出
 
-`idle`：两侧 `missValid == 0`、两侧 `pendingFault == 0`、PTW 处于 `sIdle`、TLB 的 sfence 流水级为空。
+`idle`：两侧 `missValid == 0`、两侧 `pendingFault == 0`、PTW 处于 `sIdle`、TLB 的 sfence 流水级为空、两侧查询 S1（`s1Valid`）为空。
+
+查询 S1 计入 `idle`（2026-10-07 修订，见 [`tasks/CLUSTER-sfence-idle-fix.md`](tasks/CLUSTER-sfence-idle-fix.md)）：前端 kill 与 SFENCE 首次到 WB 同拍时，上一拍收下的取指查询仍在 S1；`idle` 必须在该拍为 0，使 `sfence.valid` 不早于 kill 生效后的一拍。后端 T20 的“第一个 `drained && mmu.idle` 拍”按本定义计算，条文不变。
 
 核心执行 `sfence.vma` 的顺序：冲刷前端（对 iTLB 拉 `kill`）→ 等 store buffer 排空 → 等 `idle` → 发 `sfence.valid` 单拍 → 等 `idle` → 从下一条指令重新取指。
 

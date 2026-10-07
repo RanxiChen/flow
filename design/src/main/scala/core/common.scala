@@ -244,6 +244,9 @@ object CSRMAP{
    val mtvec       = 0x305
    val mcounteren  = 0x306
 
+   val tselect     = 0x7a0
+   val tdata1      = 0x7a1
+   val tdata2      = 0x7a2
    val mscratch    = 0x340
    val mepc        = 0x341
    val mcause      = 0x342

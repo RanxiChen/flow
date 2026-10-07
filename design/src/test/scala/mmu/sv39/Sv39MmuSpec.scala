@@ -283,4 +283,15 @@ class Sv39MmuSpec extends AnyFreeSpec with ChiselSim {
       }
     }
   }
+  "T18 a lookup held in S1 keeps the MMU busy until kill retires it" in {
+    simulate(new Sv39Mmu()) { d =>
+      val h = new Driver(d)
+      for (cmd <- Seq(0, 1)) {
+        d.io.idle.expect(true.B); h.setRequest(0x1000, cmd); h.tick(); h.port(cmd).req.valid.poke(false.B)
+        d.io.idle.expect(false.B); h.port(cmd).kill.poke(true.B)
+        h.port(cmd).resp.valid.expect(false.B); d.io.idle.expect(false.B)
+        h.tick(); h.port(cmd).kill.poke(false.B); d.io.idle.expect(true.B)
+      }
+    }
+  }
 }

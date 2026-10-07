@@ -150,6 +150,31 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
     }
 
+    "CSRFile should report no triggers through tselect, tdata1 and tdata2" in {
+        simulate(new CSRFile(64)) { dut =>
+            driveIdle(dut)
+            dut.reset.poke(true.B)
+            dut.clock.step(1)
+            dut.reset.poke(false.B)
+            for (address <- Seq(CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2)) {
+                dut.io.csr_addr.poke(address.U)
+                dut.io.csr_cmd.poke(CSR_CMD.RW.U)
+                dut.io.rs1_id.poke(1.U)
+                dut.io.csr_reg_data.poke("hffffffffffffffff".U)
+                dut.io.csr_illegal.expect(false.B)
+                dut.io.csr_old_data.expect(0.U)
+                dut.io.commit_valid.poke(true.B)
+                dut.io.commit_write_en.poke(true.B)
+                dut.io.commit_addr.poke(address.U)
+                dut.io.commit_wdata.poke("hffffffffffffffff".U)
+                dut.clock.step(1)
+                dut.io.commit_valid.poke(false.B)
+                dut.io.commit_write_en.poke(false.B)
+                dut.io.csr_old_data.expect(0.U)
+            }
+        }
+    }
+
     "CSRFile should write mtvec via CSRRW (RW command) and read back" in {
         simulate(new CSRFile(64)) { dut =>
             clearHpmEvents(dut)

@@ -239,6 +239,11 @@
 - event `0` 表示不计数，Breeze 平台事件 `1` 至 `10` 见 `docs/pmu.md`；
 - `mhpmcounter11` 至 `mhpmcounter31` 及对应 selector 保持只读 `0`。
 
+### Debug Trigger CSRs
+
+- 不实现 trigger；`tselect`（0x7a0）、`tdata1`（0x7a1）、`tdata2`（0x7a2）仅 M 态可访问，读为 `0`，写忽略
+- `tdata1.type == 0` 表示所选 trigger 不存在，供 riscv-tests `breakpoint` 与固件探测；`tdata3`、`tinfo`、`tcontrol` 等仍触发 illegal instruction exception
+
 ### RV32 High-Half Counter CSRs
 
 - 本设计为 `RV64` 实现，不提供 `RV32` 使用的高半部分计数器 CSR
