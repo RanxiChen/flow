@@ -19,16 +19,16 @@
 | C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `9052c21`；日志 `vrf-inline-c1` |
 | C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `9052c21`；`vrf-inline-c3/c2-check/` |
 | C3 | 通过：种子 0–999，1000/1000 | `9052c21`；`vrf-inline-c3/`，退出码 0 |
-| P1 | 通过：100% 峰值 | `d904bd1`；`gemv-performance/` |
+| P1 | 通过：100% 峰值 | `d0bbc0a`；`vrf-inline-performance/` |
 | P2 | 通过：97.07% 峰值 | 同上；40 拍、16 KiB |
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
-| P4 | 未达标：最大 4 拍（合同 ≤2） | 全部 224 对；`b47d529` 时间线复核 |
+| P4 | 未达标：最大 4 拍（合同 ≤2） | `d0bbc0a`；全部 224 对，事件 CSV 完整保存 |
 | P5 | 通过：P1 提前 3–70 拍，P2 提前 42–70 拍 | 同上；全部 223 对均提前 |
 | S1 | 首次因 VRF 映射遗漏停止；修正版待重跑 | `38b59e7`；保留 `s1-default/` 预映射证据 |
 
 ## 实现决定与文档处理
 
-当前 `9052c21` 物理 RAM 修正版：C1/C2/C3 已重验通过，P/S 待重跑。上表 P 数值暂保留旧 SHA，修正版测量后更新，不把旧证据当作新版结论。
+当前物理 RAM 修正版：C1/C2/C3 已重验通过，P1/P2/P5 达标、P3 已测量、P4 未达标；S1 待重新确认资源与时序。上表采用本轮精确 SHA。
 
 - 区间在 Ok 时登记；提交当拍旁路查询；仅匹配已提交项，load 在全部 R 接收后释放、store 在全部 B 后释放。
 - kill 撤销被作废项判定；同拍 commit 保留最老项；已握手翻译编号保留到响应被接收并丢弃，禁止提前复用。
@@ -166,3 +166,6 @@
 - 同 SHA 的 C2：入口 `bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3/c2-check`，退出码 **0**；`frontend.log` **6/6**、`vrf.log` **1/1**、`integration.log` **8/8**，全部 Spike 比对及 WAR/多 load 检查通过。C3 已进入随机执行。
 - C3 同一入口最终退出码 **0**，`vrf-inline-c3/exit-code.txt` 和 `random.log`：种子 **0–999，1000/1000**；`plugin-test.log` 独立点积 **10,675 条**通过。所有 DUT 程序重新执行，未沿用旧通过结论。
 - 该版本 RTL 源目录 tree：`47360ce04085f324694c4fb0a53b160dc0d412dc`。先前 tree `11ec229...` 只用于初轮历史证据；之后 P/S 必须绑定本轮源目录。
+- S1 重跑采用 `synth_design -directive RuntimeOptimized`，其余默认参数、XCKU040、10 ns 时钟、OOC 模式不变。首次默认策略的时序搜索较长；S1 不要求闭合 100 MHz，因此选用较少时序搜索的策略取得资源与实际 WNS，并在结果中明确策略；不改约束、不隐藏负 WNS，不把估计当作布局布线时序。
+- P 重跑 SHA `d0bbc0a37a3043da63c71854c8ad0129a8deef4a`，命令 `bash rvv/r02/run-performance.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-performance`，退出码 **0**；`performance.log` **3/3** 严格匹配 Spike，独立插件 **224 条**通过。
+- 新版指标与首轮相同：P1 **100% / 972 拍**、P2 **97.07% / 1011 拍**、P3 **89.07% / 1067 拍**；各组 B 时缓冲剩余 **0 B**。P4 默认 **1–4 拍**，未达标；P5 默认两种延迟下分别 **3–70 / 42–70 拍**，全部提前。全部 224/223 对及三组事件 CSV 保存到 [`gemv-d0bbc0a/`](../../rvv/r02/evidence/gemv-d0bbc0a/)。没有把初轮测量当作新版证据。
