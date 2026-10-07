@@ -32,7 +32,8 @@ case class CoreOp(
     amoFunc: BreezeAmoFunc.Type = BreezeAmoFunc.Swap,
     aq: Boolean = false,
     rl: Boolean = false,
-    scExpected: Option[Int] = None) {
+    scExpected: Option[Int] = None,
+    s2KillAfter: Option[Int] = None) {
   override def toString: String =
     s"${op.litValue.toInt match { case 0 => "Load"; case 1 => "Store"; case 5 => "Fence"; case x => s"op$x" }}" +
       s"(${hex(addr)}, size $size${if (op.litValue == 1) ", data " + hex(data) else ""})"
@@ -111,7 +112,8 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     // A request accepted in the previous cycle is in S1 now.
     s1Victim = inPipe.lastOption.filter(t => t.op.s1Kill && t.fired == now - 1)
     respValid = core.resp.valid.peek().litToBoolean
-    s2KillNow = respValid && inPipe.headOption.exists(_.op.s2KillAtResp)
+    s2KillNow = inPipe.headOption.exists(t => (respValid && t.op.s2KillAtResp) ||
+      t.op.s2KillAfter.exists(delay => now >= t.fired + delay))
     core.s1Kill.poke(s1Victim.nonEmpty.B)
     core.s2Kill.poke(s2KillNow.B)
   }
@@ -133,6 +135,10 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
         inPipe.foreach(_.killed = true); inPipe.clear()
       } else respond(t, kind, r.data.peek().litValue, r.excCause.peek().litValue, r.tval.peek().litValue)
       progress()
+    }
+    if (s2KillNow && !respValid) {
+      check(inPipe.nonEmpty, "S2 cancellation without an outstanding request")
+      inPipe.foreach(_.killed = true); inPipe.clear(); progress()
     }
     s1Victim.foreach { v =>
       if (inPipe.exists(_ eq v)) { v.killed = true; inPipe.dequeueAll(_ eq v) }

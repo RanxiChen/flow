@@ -425,8 +425,10 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val replayFinishes = replay && !internalHold
   when(allocates && blockingAtomic) { atomicWait := true.B }
   when(replayFinishes && blockingAtomic) { atomicWait := false.B }
-  when(cpuDecided) { acquireBusy := false.B; amoRmw := false.B }
-  when(cpuKill) { acquireBusy := false.B }
+  when(cpuDecided && (isAmo || ((isLr || isSc) && s2.req.core.aq))) { acquireBusy := false.B }
+  when(cpuDecided) { amoRmw := false.B }
+  when(io.core.s2Kill || (io.core.s1Kill && cpu1.valid &&
+    (cpu1.req.core.op === L1DOp.AMO || cpu1.req.core.aq))) { acquireBusy := false.B }
   when(io.core.s2Kill) { atomicWait := false.B; amoRmw := false.B }
   miss.io.replayDone := replayFinishes
   miss.io.replayLoad.valid := replayFinishes && !ptw && s2.req.core.op === L1DOp.Load
@@ -629,6 +631,10 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   when(stores) { assert(psRoom && hit && writable, "Store committed without PS capacity/ownership") }
   when(lrCompletes) { assert(hit && writable, "LR reservation without exclusive ownership") }
   when(atomicReplayResp) { assert(cpu2.valid, "atomic replay without held CPU owner") }
-  when(internal2.valid) { assert(!undecided, "internal result has no reserved completion capacity") }
+  when(internal2.valid) {
+    assert(!undecided || (outcome === L1S2Outcome.ToAmo && psRoom),
+      "internal result has no reserved completion capacity")
+  }
+  when(amoRmw) { assert(psCompletes, "AMO RMW protection exceeded two local beats") }
   when(cpu1.valid && !cpu1Advance) { assert(cpuHold, "CPU S1 held without s2Hold") }
 }

@@ -498,6 +498,10 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     runOps(CoreOp.amo(a, 4, BreezeAmoFunc.Add).copy(s1Kill = true), CoreOp.load(a))
     runOps(CoreOp.amo(a, 5, BreezeAmoFunc.Add).copy(s2KillAtResp = true), CoreOp.load(a))
     runOps(CoreOp.amo(a + stride, 6, BreezeAmoFunc.Swap).copy(s2KillAtResp = true), CoreOp.load(a + stride))
+    l2.minLatency = 30; l2.maxLatency = 30
+    val b = a + 2 * stride; val c = a + 3 * stride
+    runOps(CoreOp.lr(b).copy(aq = true, s2KillAfter = Some(8)), CoreOp.sc(b, 7, success = false), CoreOp.load(b))
+    runOps(CoreOp.amo(c, 8, BreezeAmoFunc.Add).copy(s2KillAfter = Some(8)), CoreOp.load(c))
   }
 
   "aq blocks younger requests and rl or AMO admission waits for older misses to drain" in withL1D() { e =>
@@ -513,6 +517,13 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val u = txns(n)
     u(1).fired must be > l2.grants.find(_._3 == line(a + stride)).get._1
     u(2).fired must be > u(1).respCycle
+    // aq alone can enter behind an older hit; that older response must not
+    // release the acquire gate while the LR still owns it in S1/S2.
+    val k = core.history.size
+    runOps(CoreOp.load(b), CoreOp.lr(b).copy(aq = true), CoreOp.load(b + 8))
+    val v = txns(k)
+    v(1).fired mustBe v(0).fired + 1
+    v(2).fired must be > v(1).respCycle
   }
 
   /** Random loads/stores over three sets, each with more tags than ways, with
