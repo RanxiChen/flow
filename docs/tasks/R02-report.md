@@ -16,7 +16,7 @@
 
 | 合同 | 状态 | 提交、命令与日志 |
 | --- | --- | --- |
-| C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `3644575`；日志 `3644575-c1` |
+| C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `9052c21`；日志 `vrf-inline-c1` |
 | C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `4c1fc28`；`final-c3/c2-check/` |
 | C3 | 通过：种子 0–999，1000/1000 | `4c1fc28`；`final-c3/`，退出码 0 |
 | P1 | 通过：100% 峰值 | `d904bd1`；`gemv-performance/` |
@@ -24,9 +24,11 @@
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
 | P4 | 未达标：最大 4 拍（合同 ≤2） | 全部 224 对；`b47d529` 时间线复核 |
 | P5 | 通过：P1 提前 3–70 拍，P2 提前 42–70 拍 | 同上；全部 223 对均提前 |
-| S1 | 运行中：Vivado 时序优化 | `38b59e7`；`s1-default/`；XCKU040 OOC 100 MHz |
+| S1 | 首次因 VRF 映射遗漏停止；修正版待重跑 | `38b59e7`；保留 `s1-default/` 预映射证据 |
 
 ## 实现决定与文档处理
+
+当前 `9052c21` 物理 RAM 修正版：C1 已重验通过，C2/C3 正在重验。上表其余 C/P 数值暂保留旧 SHA，修正版通过后更新，不把旧证据当作新版结论。
 
 - 区间在 Ok 时登记；提交当拍旁路查询；仅匹配已提交项，load 在全部 R 接收后释放、store 在全部 B 后释放。
 - kill 撤销被作废项判定；同拍 commit 保留最老项；已握手翻译编号保留到响应被接收并丢弃，禁止提前复用。
@@ -155,3 +157,9 @@
 - S1 初步 RAM 映射暴露物理实现遗漏：`s1-default/vivado.stdout` 的 preliminary distributed RAM 表没有 VRF，六读口的单个 Chisel Mem 被展开为寄存器。返回缓冲已映射 7 RAMB36 + 1 RAMB18，但该表不是最终资源证据。为符合设计 3.6 的“六份读副本 + LUTRAM”，改成每个 bank 显式六份单读单写 Mem，并对存储器添加 `ram_style=distributed`。仲裁后同一逻辑写口广播到副本，字节使能、v0 shadow、读延迟和外部合同不变。
 - 这是对既定物理结构的实现修正；不推翻设计，不改合同、不修改共享文件。保存第一次 S1 预映射日志，停止本任务旧综合，随后重新执行 C1→C2→C3→P→S1；前面的通过结果保留其旧 SHA，不代替修正版验证。
 - `487a5ce` C1 生成退出码 **1**，`vrf-replicas-c1/emit-512-512.log`：安装的 CIRCT 不支持把 `firrtl.AttributeAnnotation` 附加到 Mem，只接受 module/wire/node/register。按仓库已有 SRAM 的 Chisel BlackBox inline 模板方式，新增 R02 专用参数化 1R/1W RAM primitive，把 distributed 属性放在真实 SV memory 上；主体仍为 Chisel，只有 RAM 模板为 inline SV。无时序级增加、无初始化变化、无厂商模拟模型依赖，保留六读副本与单 bank 逻辑写口。
+
+### VRF LUTRAM 修正版重验
+
+- `9052c21` 已 push；命令 `bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c1`，退出码 **0**，三组 emit 成功、`smoke.log` **3/3**。
+- 六个异步读副本及 distributed 属性已存在于生成的 `RvvRegisterFile.sv` / `RvvVrfBank.sv`，最终是否推断 LUTRAM 由重跑 S1 的工具报告确认。
+- 后接 `R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3`，依次重跑 C2 与全部 1000 种子 C3。
