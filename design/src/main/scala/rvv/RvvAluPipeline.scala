@@ -68,7 +68,10 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val addrD = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   def operand(at: UInt,port: Int): UInt = {
     val hit = cacheValid(at) && RvvAge.older(cacheAges(at),t.desc.age)
-    when(valid(3) && t.expected(port)) { assert(hit,"in-unit ALU bypass unavailable") }
+    when(valid(3) && t.expected(port)) {
+      when(!hit) { printf(p"ALU_BYPASS age=${t.desc.age} row=$at port=${port.U} cachedValid=${cacheValid(at)} cachedAge=${cacheAges(at)} op=${t.desc.decoded.op} vl=${t.desc.issue.vl} start=${t.desc.issue.vstart}\n") }
+      assert(hit,"in-unit ALU bypass unavailable")
+    }
     Mux(hit,cacheData.read(at),operands(port))
   }
   val aInput = operand(addrA,0); val bInput = operand(addrB,1)
