@@ -77,9 +77,10 @@ def directed():
         p.emit(memory(12,2,True),2,2,64,base=other,label='load-store-young')
         p.emit(memory(16,2,True),2,2,64,base=other,label='store-store-young')
     for lmul in (0,1,2,3,5,6,7):
-        vlmax = int(512/32 * (2**lmul if lmul<4 else 2**(lmul-8)))
-        p.emit(vector(0,8,16,24,0),2,lmul,max(0,vlmax-1),label='lmul-tail')
-        p.emit(memory(8,2),2,lmul,0,base=0xdead0000,label='zero-load-no-translation')
+        sew = min(2,3+lmul-8) if lmul>=4 else 2
+        vlmax = int(512/(8 << sew) * (2**lmul if lmul<4 else 2**(lmul-8)))
+        p.emit(vector(0,8,16,24,0),sew,lmul,max(0,vlmax-1),label='lmul-tail')
+        p.emit(memory(8,sew),sew,lmul,0,base=0xdead0000,label='zero-load-no-translation')
     return p
 
 def randomized(seed):
@@ -87,6 +88,7 @@ def randomized(seed):
     rng = p.rng
     for _ in range(64):
         sew = rng.randrange(4); lm = rng.choice([0,1,2,3,5,6,7])
+        if lm>=4: sew=min(sew,3+lm-8)
         group = 1 << lm if lm < 4 else 1
         vmax = int(512/(8 << sew)*(2**lm if lm<4 else 2**(lm-8)))
         vl = rng.randrange(vmax+1)
@@ -99,6 +101,7 @@ def randomized(seed):
         else:
             f6,f3 = {2:(0,0),3:(0,4),4:(2,0),5:(9,4),6:(40,4),7:(23,4),8:(23,0),9:(45,2),10:(44,6),11:(42,6)}[op]
             if op >= 10:
+                if lm in (5,6): lm=7 # e32 requires LMUL >= 1/2 with ELEN=64
                 sew = 2; vmax = int(16*(2**lm if lm<4 else 2**(lm-8))); vl = rng.randrange(vmax+1)
             masked = op in (2,3,4,5,6,9,10,11) and bool(rng.getrandbits(1))
             p.emit(vector(f6,vd,0 if f6==23 else vs2,11 if f3 in (4,6) else vs1,f3,masked),sew,lm,vl,scalar=scalar,label='random-compute')
@@ -131,6 +134,7 @@ def run(p, path, reference):
     lines = (path/'spike.log').read_text().splitlines()
     snapshots = [json.loads(l[len('R02_TRACE '):]) for l in lines if l.startswith('R02_TRACE ')]
     assert snapshots and all(len(s['regs'][0])==p.vlen//4 for s in snapshots), 'Spike VLEN does not match the DUT'
+    assert all(not (s['vtype'] >> 63) for s in snapshots), 'reference generator emitted an illegal SEW/LMUL combination'
     mem = [l.split(' ',2) for l in lines if l.startswith('R02_MEMORY ')]
     records = []
     for index,s in enumerate(snapshots):
