@@ -132,7 +132,8 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val releaseMask = VecInit((0 until p.memoryInflight).map(k =>
     live(k) && intervalLive(k) && requestDone(k) && responses(k) === 0.U))
   val releaseIndex = PriorityEncoder(releaseMask.asUInt)
-  io.released.valid := releaseMask.asUInt.orR && !(desc(releaseIndex).decoded.store && gathering)
+  io.released.valid := releaseMask.asUInt.orR && !(desc(releaseIndex).decoded.store && gathering) &&
+    !(generating && noAccess)
   io.released.bits := desc(releaseIndex).age
   when(io.released.valid) {
     intervalLive(releaseIndex) := false.B

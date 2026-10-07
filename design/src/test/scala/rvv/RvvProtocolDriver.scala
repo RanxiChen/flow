@@ -30,7 +30,8 @@ object R02Fixture {
 }
 case class R02Measurement(cycles: Long, readBeats: Long, firstRead: Long, lastRead: Long,
   kernelFirstIssue: Long, kernelLastB: Long, kernelReadBeats: Long, kernelFirstRead: Long, kernelLastRead: Long,
-  remainingBytes: BigInt, invalidations: Long)
+  remainingBytes: BigInt, invalidations: Long, kernelRemaining: BigInt,
+  linkDelays: Vector[Long], requestAdvances: Vector[Long])
 
 /** Core, translation service and memory use only the mounting contract. Every
   * accepted item is accounted for, including reissued items after random kill.
@@ -61,6 +62,12 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private var kernelFirstIssue = -1L; private var kernelLastB = -1L
   private var kernelReadBeats=0L; private var kernelFirstRead = -1L; private var kernelLastRead = -1L
   private var invalidations=0L
+  private var kernelRemaining=BigInt(-1)
+  private val loadRegisterDone=mutable.Map.empty[(Long,Int),Long]
+  private val macRegisterRead=mutable.Map.empty[(Long,Int),Long]
+  private val macCompleted=mutable.Map.empty[Long,Long]
+  private val kernelRequests=mutable.Map.empty[Int,Long]
+  private var scalarGap=0
   private val invalidated=mutable.Set.empty[BigInt]
   private val touchedLines=mutable.Set.empty[BigInt]
   private def bool(x: Bool): Boolean=x.peek().litToBoolean
@@ -105,7 +112,8 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       dut.io.commit.poke(false.B); dut.io.killUncommitted.poke(false.B)
       val kill=injectKills && randomize && pending.nonEmpty && rng.nextInt(35)==0
       dut.io.killUncommitted.poke(kill.B)
-      val issue=cursor<fixture.records.size && !kill && (!randomize || rng.nextInt(3)!=0)
+      val setupBarrier= !randomize && cursor<fixture.records.size && fixture.records(cursor).label=="zero-acc" && !bool(dut.io.drained)
+      val issue=cursor<fixture.records.size && !kill && scalarGap==0 && !setupBarrier && (!randomize || rng.nextInt(3)!=0)
       dut.io.issue.valid.poke(issue.B)
       if(issue) pokeIssue(fixture.records(cursor))
       val verdictReady=ready(); dut.io.verdict.ready.poke(verdictReady.B)
@@ -164,6 +172,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         val address=uint(dut.io.axi.ar.bits.addr); val beats=uint(dut.io.axi.ar.bits.len).toInt+1
         assert((address&4095)+beats*p.memBytes<=4096,s"AR crosses a page at $cycle")
         val label=acceptRequest(address,beats,false)
+        if(label.startsWith("gemv-load-") && !randomize) {
+          val index=fixture.records.indexWhere(_.label==label)
+          if(!kernelRequests.contains(index)) kernelRequests(index)=cycle
+        }
         reads.enqueue(Read(address,beats,0,cycle+math.max(1,readLatency),label))
       }
       if(bool(dut.io.axi.aw.valid) && bool(dut.io.axi.aw.ready)) {
@@ -200,13 +212,27 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         r.beat+=1; if(r.beat==r.beats) reads.dequeue()
       }
       if(responding.nonEmpty) {
-        if(responding.get.label=="kernel-final-store") kernelLastB=cycle
+        if(responding.get.label=="kernel-final-store") {
+          kernelLastB=cycle; kernelRemaining=uint(dut.io.counters.bufferedBytes)
+        }
         responses.dequeue()
       }
       if(tr.nonEmpty) translations -= tr.get
+      if(bool(dut.io.loadRegisterComplete.valid)) {
+        loadRegisterDone((uint(dut.io.loadRegisterComplete.bits.age).toLong,uint(dut.io.loadRegisterComplete.bits.register).toInt))=cycle
+      }
+      if(bool(dut.io.macRead.valid)) {
+        val key=(uint(dut.io.macRead.bits.age).toLong,uint(dut.io.macRead.bits.register).toInt)
+        if(!macRegisterRead.contains(key)) macRegisterRead(key)=cycle
+      }
+      if(bool(dut.io.macComplete.valid)) macCompleted(uint(dut.io.macComplete.bits).toLong)=cycle
+      if(scalarGap>0) scalarGap-=1
       if(accepted) {
         if(fixture.records(cursor).label=="zero-acc") kernelFirstIssue=cycle
         pending += Pending(cursor); cursor+=1
+        // One scalar lw placeholder between a GEMV weight load and its dot.
+        // Reference instrumentation/setup is excluded from the kernel model.
+        if(!randomize && fixture.records(cursor-1).label.startsWith("gemv-load-")) scalarGap=1
       }
       if(doCommit) { pending.remove(0); committed+=1 }
       if(kill) { pending.clear(); cursor=committed }
@@ -223,6 +249,15 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
     dut.io.counters.readBytes.expect((readBeats*p.memBytes).U)
     val remaining=uint(dut.io.counters.bufferedBytes)
     assert(remaining==0,s"unconsumed data at drain seed=$seed bytes=$remaining")
-    R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations)
+    val loadIndices=fixture.records.indices.filter(i => fixture.records(i).label.startsWith("gemv-load-"))
+    val links=if(randomize) Vector.empty else loadIndices.flatMap { index =>
+      val reg=((fixture.records(index).word>>7)&31).toInt
+      for(done <- loadRegisterDone.get((index.toLong,reg));read <- macRegisterRead.get((index.toLong+1,reg))) yield read-done
+    }.toVector
+    val advances=if(randomize) Vector.empty else loadIndices.drop(1).flatMap { index =>
+      val previous=(0 until index).reverse.find(i => fixture.records(i).label.startsWith("gemv-dot-"))
+      for(prev <- previous;done <- macCompleted.get(prev.toLong);requested <- kernelRequests.get(index)) yield done-requested
+    }.toVector
+    R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations,kernelRemaining,links,advances)
   }
 }

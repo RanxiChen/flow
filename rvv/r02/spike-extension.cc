@@ -35,7 +35,7 @@ static reg_t dot(processor_t* p, insn_t insn, reg_t pc) {
 static reg_t snapshot(processor_t* p, insn_t insn, reg_t pc) {
   if (insn.funct3() == 0) {
     const uint32_t word = p->get_mmu()->load<uint32_t>(pc+4);
-    const insn_t next(word);
+    insn_t next(word);
     std::fprintf(stderr,"R02_TRACE {\"instruction\":%u,\"rs1\":%llu,\"rs2\":%llu,\"vl\":%llu,\"vtype\":%llu,\"vstart\":%llu,\"rd\":%u,\"regs\":[",
       word,(unsigned long long)p->get_state()->XPR[next.rs1()],
       (unsigned long long)p->get_state()->XPR[next.rs2()],
