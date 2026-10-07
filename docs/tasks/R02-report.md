@@ -24,11 +24,11 @@
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
 | P4 | 未达标：最大 4 拍（合同 ≤2） | `d0bbc0a`；全部 224 对，事件 CSV 完整保存 |
 | P5 | 通过：P1 提前 3–70 拍，P2 提前 42–70 拍 | 同上；全部 223 对均提前 |
-| S1 | 首次因 VRF 映射遗漏停止；修正版待重跑 | `38b59e7`；保留 `s1-default/` 预映射证据 |
+| S1 | 已完成 OOC 综合与报告；WNS −2.117 ns，100 MHz 未满足 | `0255e8a`；`vrf-inline-s1/`，退出码 0 |
 
 ## 实现决定与文档处理
 
-当前物理 RAM 修正版：C1/C2/C3 已重验通过，P1/P2/P5 达标、P3 已测量、P4 未达标；S1 待重新确认资源与时序。上表采用本轮精确 SHA。
+最终物理 RAM 版本：C1/C2/C3 已重验通过，P1/P2/P5 达标、P3 已测量、P4 未达标；S1 已完成资源/时序测量，100 MHz 未满足。全部阶段已执行并按段提交、push；P4 尚未闭合，未把 R02 写成全部合同通过。上表采用最终版本各阶段的精确 SHA。
 
 - 区间在 Ok 时登记；提交当拍旁路查询；仅匹配已提交项，load 在全部 R 接收后释放、store 在全部 B 后释放。
 - kill 撤销被作废项判定；同拍 commit 保留最老项；已握手翻译编号保留到响应被接收并丢弃，禁止提前复用。
@@ -79,7 +79,7 @@
 - 发起时分配 64 位单调年龄号；判定/commit 不依赖核心流水级数。单 AXI ID 对应多 outstanding，按 burst FIFO 归还；没有多 ID 乱序返回实现或证据。
 - ALU/乘加按行推进、按整个寄存器完成释放读写掩码；可在最后一行 fire 当拍接纳下一条同单元指令。VRF 六个读口中四个执行读口按需求/年龄分配，store/跨 lane 各自独立。
 - 访存区间存储在判定得到 PA 后有效，提交当拍旁路到查询，释放与 VRF 写回分离。翻译请求编号独立于被 kill 的描述符，迟到响应仍接收并丢弃。
-- 当前定向程序使用 tu/mu，对尾部与屏蔽前值逐字节检查；不把不同 agnostic 取值判为错误。VL=0 不翻译/不访存，`vmv.x.s` 按 ISA 仍读取元素 0。
+- 本轮定向、随机和 GEMV 都使用 tu/mu，对尾部与屏蔽前值逐字节检查；因此没有需排除的 agnostic 元素，不声称覆盖 ta/ma 场景。VL=0 不翻译/不访存，`vmv.x.s` 按 ISA 仍读取元素 0。
 
 ### 修复与诊断记录
 
@@ -169,3 +169,42 @@
 - S1 重跑采用 `synth_design -directive RuntimeOptimized`，其余默认参数、XCKU040、10 ns 时钟、OOC 模式不变。首次默认策略的时序搜索较长；S1 不要求闭合 100 MHz，因此选用较少时序搜索的策略取得资源与实际 WNS，并在结果中明确策略；不改约束、不隐藏负 WNS，不把估计当作布局布线时序。
 - P 重跑 SHA `d0bbc0a37a3043da63c71854c8ad0129a8deef4a`，命令 `bash rvv/r02/run-performance.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-performance`，退出码 **0**；`performance.log` **3/3** 严格匹配 Spike，独立插件 **224 条**通过。
 - 新版指标与首轮相同：P1 **100% / 972 拍**、P2 **97.07% / 1011 拍**、P3 **89.07% / 1067 拍**；各组 B 时缓冲剩余 **0 B**。P4 默认 **1–4 拍**，未达标；P5 默认两种延迟下分别 **3–70 / 42–70 拍**，全部提前。全部 224/223 对及三组事件 CSV 保存到 [`gemv-d0bbc0a/`](../../rvv/r02/evidence/gemv-d0bbc0a/)。没有把初轮测量当作新版证据。
+
+### S1 最终结果
+
+- SHA：`0255e8a398f38260974fbd5f63a756c326e173ed`，已 push；cwd `/home/chen/FUN/flow-rvv-r02-20261007`，工作区干净。
+- 命令：激活 flow 后 `bash rvv/r02/run-s1.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-s1`，退出码 **0**（`exit-code.txt`）。默认 RTL 生成、Vivado 综合、资源/时序报告及 DCP 均完成。
+- 工具 **Vivado 2022.2 Build 3671981**；top `RvvCoprocessor`；part `xcku040-ffva1156-2-e`；OOC、`RuntimeOptimized`、4 工作线程、nice 10；时钟 **10.000 ns / 100 MHz**。未做布局布线或板上验证。
+- RTL 源目录 tree `47360ce04085f324694c4fb0a53b160dc0d412dc` 与本轮 C1/C2/C3/P 完全一致；策略与约束均由该 SHA 的 `synthesize.tcl` / `clock.xdc` 确定。
+- 最终原始报告保存到 [`s1-0255e8a/`](../../rvv/r02/evidence/s1-0255e8a/)，Alan 全日志根为 `/home/chen/FUN/flow-r02-evidence/vrf-inline-s1/`；综合 DCP 留在其 `reports/rvv-r02-synth.dcp`。
+
+| 部件（层级报告原值） | Total LUT | 其中 LUTRAM | FF | DSP | RAMB36 / RAMB18 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **全设计总量** | **206,029** | **25,368** | **55,789** | **154** | **7 / 1** |
+| 前端（含未提交区、判定、区间表、VIQ） | 39,670 | 256 | 30,969 | 0 | 0 / 0 |
+| Scoreboard | 26,233 | 0 | 10,707 | 0 | 0 / 0 |
+| 整数 ALU | 18,621 | 0 | 369 | 0 | 0 / 0 |
+| 整数乘加 | 23,894 | 0 | 2,305 | 154 | 0 / 0 |
+| VLSU（含返回缓冲与 burst/B FIFO） | 52,886 | 160 | 9,733 | 0 | 7 / 1 |
+| **VRF（含读写选择与 v0 shadow）** | **44,460** | **24,576** | **512** | **0** | **0 / 0** |
+| 跨 lane | 4,771 | 0 | 202 | 0 | 0 / 0 |
+| 五个单元队列 | 54 | 12 | 32 | 0 | 0 / 0 |
+| 顶层直接归属逻辑 | 4,919 | 364 | 960 | 0 | 0 / 0 |
+
+- 总 LUT 使用器件 **85.00%**；BRAM 为 **7.5 个 36 Kib tile 等价量**。总量以 `utilization.rpt` 为准；层级值按 `utilization-hierarchical.rpt` 原样摘录，Vivado 的跨层级 LUT combining/共享归属使 LUT 分解不能直接重加作为总量。
+- VRF 的 **4 bank × 6 读副本**已实际映射为 distributed RAM：每副本层级报告 **1,024 LUTRAM**，24 份共 **24,576 LUTRAM**；其余 **19,884 logic LUT**，FF **512** 对应 v0 shadow。Final RAM mapping 明确 `User Attribute / RAM16X1D`。设计文档中 10–12k LUT 的估计没有在此实现/策略上成立；记录实际资源，不修改已定布局、端口或 bank 结构。
+- 返回缓冲映射 **7 RAMB36E2 + 1 RAMB18E2**；16 KiB 是配置的数据容量，metadata 和物理 RAM 粒度另计。FP 与串行执行仍仅框架，其执行逻辑没有计入完整后端面积。
+
+时序：**WNS −2.117 ns**，TNS **−49,117.223 ns**，59,097 / 250,206 setup endpoints 失败；100 MHz 未满足。
+
+- 最差路径：`mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK` → `sb/writes_0_reg[0]/D`。
+- 路径数据延迟 **12.141 ns**：logic **3.818 ns**、估计 route **8.323 ns**，**36** 个逻辑级。报告中可见返回槽号（fanout 690）→ descriptor/年龄选择 → older/WAW 检查 → load 写回及 bank ready → scoreboard 写掩码动态更新；不是乘法器路径。
+- `Synth 8-295` 在中间优化阶段记录 **100 条** timing loop 告警，指向 `_wLogical_T_2` 的临时网；未压制或隐藏。最终 `timing-summary.rpt` 的 **loops=0、latch_loops=0、no_clock=0、unconstrained_internal_endpoints=0**，因此没有把中间告警当作最终组合环，也没有改 RTL 或插入假时序例外。
+- OOC 只约束内部时钟；741 个 input、2606 个 output 没有 I/O delay，`HD.CLK_SRC` 未指定，工具说明无法估计实际时钟插入延迟/skew。以上是综合网表的内部路径估计，不是 routed 时序或平台完整接口证明。
+
+### 已知限制与后续方向
+
+- **P4 尚未达标**；真实的下一条操作数读取/流水调度与块边界依赖需要后续研究。本轮没有把推迟 load 写回当作解决办法。
+- **100 MHz 综合估计未满足，LUT 占用 85%**；后续优先分析 VLSU/scoreboard 的选择和更新长路径、VRF 复制/选择开销及区间表成本。任何改变已定流水/布局/排序结构的方案需另行确定，不在本轮偷偷改变。
+- 功能证据以默认配置为主；两组非默认配置为 C1 冒烟，另有 DLEN<VLEN 的 VRF 局部功能回归。ta/ma、FP、串行执行、Breeze 集成、P&R、FPGA、Linux 运行不在本轮通过声明中。
+- 本地只编辑、提交与准备脚本；所有硬件执行在 Alan。没有形式化、没有继续 R01，没有改共享文件或降低任何合同阈值。
