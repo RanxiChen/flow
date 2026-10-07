@@ -125,9 +125,10 @@ def run(p, path, reference):
     with (path/'compile.log').open('w') as log:
         subprocess.run(['nice','-n','10',compiler,'-nostdlib','-nostartfiles','-static','-march=rv64gcv','-mabi=lp64d','-Wl,--build-id=none','-T',str(root/'link.ld'),str(source),'-o',str(path/'program.elf')],stdout=log,stderr=log,check=True)
     with (path/'spike.log').open('w') as log:
-        subprocess.run(['nice','-n','10',spike,'--isa=rv64gcv','--varch',f'vlen:{p.vlen},elen:64',f'--extlib={reference}/r02_dot.so','--extension=r02_dot',str(path/'program.elf')],stdout=log,stderr=log,check=True,timeout=60)
+        subprocess.run(['nice','-n','10',spike,f'--isa=rv64gcv_zvl{p.vlen}b',f'--extlib={reference}/r02_dot.so','--extension=r02_dot',str(path/'program.elf')],stdout=log,stderr=log,check=True,timeout=60)
     lines = (path/'spike.log').read_text().splitlines()
     snapshots = [json.loads(l[len('R02_TRACE '):]) for l in lines if l.startswith('R02_TRACE ')]
+    assert snapshots and all(len(s['regs'][0])==p.vlen//4 for s in snapshots), 'Spike VLEN does not match the DUT'
     mem = [l.split(' ',2) for l in lines if l.startswith('R02_MEMORY ')]
     records = []
     for index,s in enumerate(snapshots):
