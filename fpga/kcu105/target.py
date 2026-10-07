@@ -16,7 +16,7 @@ FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
 from flow.core import BreezeTinyDebug
-from flow.axi_router import check_soc_regions, platform_regions
+from flow.axi_router import check_soc_regions, platform_regions, add_inactive_boot_rom
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
 from flow.wiring import pack_plic_sources
@@ -67,6 +67,7 @@ class BreezeKCU105SoC(SoCCore):
             sys_clk_freq=sys_clk_freq, iodelay_clk_freq=200e6)
         self.add_sdram(name='sdram', phy=self.ddrphy, module=EDY4016A(sys_clk_freq, '1:4'),
             size=DDR_SIZE, l2_cache_size=0)
+        add_inactive_boot_rom(self, FLOW_ROOT)
         check_soc_regions(self, FLOW_ROOT)
         self.clint = BreezeClintVerilog(platform=platform, sys_clk_freq=sys_clk_freq,
             timebase_freq=MTIME_FREQ, num_harts=self.cpu.num_harts, region_size=CLINT_SIZE,

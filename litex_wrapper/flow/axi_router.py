@@ -117,10 +117,24 @@ class BreezeAxiRouter(Module):
             If(master.b.ready, NextState("IDLE")))
 
 
+def add_inactive_boot_rom(soc, root=None):
+    """Back both frozen cacheable ROM windows. The unused window is zero ROM.
+
+    The integrated BIOS occupies the product's fixed reset window. There is
+    no second payload in this task, but reads of the other PMA ROM must still
+    complete rather than entering an undecoded Wishbone address.
+    """
+    regions = platform_regions(root)
+    name = "boot_rom" if soc.cpu.privilege_profile == "linux" else "linux_boot_rom"
+    region = regions[name]
+    soc.add_rom(name=name, origin=region["origin"], size=region["size"], contents=[0])
+
+
 def check_soc_regions(soc, root=None):
     regions = platform_regions(root)
+    inactive = "boot_rom" if soc.cpu.privilege_profile == "linux" else "linux_boot_rom"
     for soc_name, pma_name in (("rom", "linux_boot_rom" if soc.cpu.privilege_profile == "linux" else "boot_rom"),
-                               ("sram", "sram"), ("main_ram", "main_ram")):
+                               (inactive, inactive), ("sram", "sram"), ("main_ram", "main_ram")):
         actual, expected = soc.bus.regions[soc_name], regions[pma_name]
         if (actual.origin, actual.size) != (expected["origin"], expected["size"]):
             raise ValueError(f"{soc_name}/PMA mismatch: SoC={actual.origin:#x}+{actual.size:#x}, "

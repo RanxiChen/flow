@@ -84,3 +84,5 @@ multicore_sim.py 改为与 FPGA 相同的生产 CPU/路由，SDRAMPHYModel DDR4�
 - BIOS 预构建首轮 picolibc 发布 wheel 的 newlib/libc 布局不符合 LiteX minimal libc；prepare-single.log exit 1，保留。对齐 Alan 的 pythondata-software-picolibc 源提交 6a13ccce7c575b32c102dd9dc52178505b81fe39 到本任务依赖目录；prepare-single-v2.log exit 0。BIOS ROM 17.86 KiB、SRAM 0.37 KiB，尚非仿真证据。
 - 冒烟驱动明确启用 Verilator --assert，用 evidence 私有 shim 引入仓库现有 sim/verilator/cvfpu.vlt，未改任何 RTL assertion；成功必须有真实 UART BIOS 横幅、Memtest OK、litex>，再检查退出尾部无错误。
 - 全量 sbt test 已启动；开始 SHA 为 3b580a3，期间只更新了非 design 的 Python/文档，设计/测试源不变。待结束再重跑有 ELF 的集群门槛。
+
+地址连线审查补充：LiteX 默认只实例化当前 reset window 的 ROM，而 router 按冻结 map 接受两段 ROM。新增 add_inactive_boot_rom，在当前 Linux reset=0x10010000 的 BIOS ROM 外，给 0x10000000 的未装载 ROM 显式只读零内容后端；不改变复位或 BIOS 内容。两段 ROM 均按 JSON 精确检查，避免合法 PMA ROM 读卡在未译码 Wishbone 上；本轮没有第二个 firmware payload。

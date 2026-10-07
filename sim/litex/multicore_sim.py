@@ -19,7 +19,7 @@ from litedram.phy.model import SDRAMPHYModel
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
-from flow.axi_router import platform_regions, check_soc_regions
+from flow.axi_router import platform_regions, check_soc_regions, add_inactive_boot_rom
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
 from flow.wiring import pack_plic_sources
@@ -57,6 +57,7 @@ class MulticoreSimSoC(SoCCore):
         self.submodules.ddrphy = SDRAMPHYModel(module=module, data_width=64, clk_freq=sdram_clk_freq)
         self.add_sdram(name='sdram', phy=self.ddrphy, module=module,
                        size=REGIONS['main_ram']['size'], l2_cache_size=0)
+        add_inactive_boot_rom(self, FLOW_ROOT)
         check_soc_regions(self, FLOW_ROOT)
         self.submodules.machine_timer = BreezeClintVerilog(platform=platform,
             sys_clk_freq=sys_clk_freq, timebase_freq=1_000_000, num_harts=self.cpu.num_harts,
