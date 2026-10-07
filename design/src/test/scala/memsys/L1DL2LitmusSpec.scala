@@ -232,7 +232,9 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
       /** Some(reason) for an outcome RVWMO forbids. */
       forbidden: Outcome => Option[String],
       /** Outcomes that must each be observed at least Threshold times. */
-      required: Seq[(String, Outcome => Boolean)])
+      required: Seq[(String, Outcome => Boolean)],
+      /** Append a wider grid after every original point (coverage expansion). */
+      extraAxes: Seq[Axis] = Seq.empty)
 
   private def req(name: String)(p: Outcome => Boolean): (String, Outcome => Boolean) = (name, p)
   private def ban(cond: Boolean, why: String): Option[String] = if (cond) Some(why) else None
@@ -287,9 +289,12 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
     import e._
     for (c <- s.cores) runOps(c, CoreOp.load(priv(c)))
     val t = calibrate(e)
-    val points = s.axes.foldLeft(Seq(Map.empty[String, Int])) { (acc, a) =>
-      for (m <- acc; v <- axisValues(a, t)) yield m + (a.name -> v)
-    }
+    def grid(axes: Seq[Axis]): Seq[Map[String, Int]] =
+      axes.foldLeft(Seq(Map.empty[String, Int])) { (acc, a) =>
+        for (m <- acc; v <- axisValues(a, t)) yield m + (a.name -> v)
+      }
+    require(s.extraAxes.isEmpty || s.extraAxes.map(_.name) == s.axes.map(_.name), "expanded grid axes must match")
+    val points = (grid(s.axes) ++ (if (s.extraAxes.isEmpty) Seq.empty else grid(s.extraAxes))).distinct
     // Integer-cycle deduplication can leave fewer than the planned points.
     // Preserve every original pass and repeat the whole sweep until at least
     // the task's nominal round count is exercised; never reduce the scale.
@@ -472,7 +477,8 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
         2 -> Seq(i.ld("z", "r2"), i.fence, i.ld("x", "r3"))),
       finals = false,
       o => ban(o("r1") == "1" && o("r2") == "1" && o("r3") == "0", "transitive order lost"),
-      Seq(req("chain observed (r1=1 r2=1)")(o => o("r1") == "1" && o("r2") == "1"))), four, 43),
+      Seq(req("chain observed (r1=1 r2=1)")(o => o("r1") == "1" && o("r2") == "1")),
+      extraAxes = Seq(Axis("d1", -1, 6, 32), Axis("d2", -1, 6, 32))), four, 43),
     // IRIW+fences: P0 Wx=1 || P1 Wy=1 || P2 Rx; F; Ry || P3 Ry; F; Rx. Forbidden a=1 b=0 c=1 d=0
     // (readers disagree on the order of independent writes; RVWMO is multi-copy atomic).
     (Shape("IRIW+fence.rw.rws", Seq("x", "y"), Racy, Map("x" -> 0, "y" -> 1), Seq(0, 1, 2, 3),
@@ -484,7 +490,8 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
       finals = false,
       o => ban(o("a") == "1" && o("b") == "0" && o("c") == "1" && o("d") == "0", "readers saw the writes in opposite orders"),
       Seq(req("P2 sees x first (a=1 b=0)")(o => o("a") == "1" && o("b") == "0"),
-        req("P3 sees y first (c=1 d=0)")(o => o("c") == "1" && o("d") == "0"))), four, 44)
+        req("P3 sees y first (c=1 d=0)")(o => o("c") == "1" && o("d") == "0")),
+      extraAxes = Seq(Axis("w", -8, 8, 32), Axis("s", -1, 6, 32))), four, 44)
   )
 
   for ((s, g, seed) <- shapes)
