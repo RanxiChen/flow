@@ -14,6 +14,15 @@ import time
 from pathlib import Path
 
 
+def bios_console_ready(output):
+    # UART uses ANSI colors even with the lite console. Match rendered text;
+    # the raw capture remains unchanged for diagnostics and assertion checks.
+    plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', output)
+    return all(marker in plain for marker in (
+        '(c) Copyright 2007-2015 M-Labs', 'Build your hardware, easily!',
+        'Memtest OK', 'litex>'))
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--profile', required=True, choices=('single', 'small'))
@@ -60,9 +69,7 @@ def main():
                 break
             # Success is based only on actual firmware UART output. Require
             # the console after memtest, so later initialization errors survive.
-            if ('Memtest OK' in captured and 'litex>' in captured and
-                    '(c) Copyright 2007-2015 M-Labs' in captured and
-                    'Build your hardware, easily!' in captured):
+            if bios_console_ready(captured):
                 passed = True
                 outcome = 'PASS'
                 break
