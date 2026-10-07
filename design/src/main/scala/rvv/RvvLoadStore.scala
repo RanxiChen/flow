@@ -180,7 +180,9 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val zeroMask = VecInit((0 until p.memoryInflight).map(k => live(k) && bound(k) && requestDone(k) &&
     (desc(k).issue.vl === 0.U || desc(k).issue.vstart >= desc(k).issue.vl)))
   val zeroIndex = PriorityEncoder(zeroMask.asUInt)
-  when(zeroMask.asUInt.orR) {
+  val retiringStore = io.released.valid && desc(releaseIndex).decoded.store &&
+    desc(releaseIndex).issue.vl =/= 0.U && desc(releaseIndex).issue.vstart < desc(releaseIndex).issue.vl
+  when(zeroMask.asUInt.orR && !gathering && !retiringStore) {
     io.progress(0).valid := true.B; io.progress(0).bits.slot := desc(zeroIndex).slot
     io.progress(0).bits.finished := true.B; dataDone(zeroIndex) := true.B; live(zeroIndex) := false.B
   }

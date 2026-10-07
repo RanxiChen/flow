@@ -178,6 +178,7 @@ class RvvWrite(p: RvvParams) extends Bundle {
 class RvvHazard(p: RvvParams) extends Bundle {
   val valid = Bool(); val slot = UInt(p.slotBits.W)
   val reads = UInt(32.W); val writes = UInt(32.W)
+  val aluBypass = Bool(); val maskRead = Bool()
   val dotBypass = Bool(); val accumulator = UInt(32.W)
   val observedSource = UInt(32.W)
 }

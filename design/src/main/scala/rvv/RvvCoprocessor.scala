@@ -31,7 +31,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   front.io.commit := io.commit; front.io.kill := io.killUncommitted; front.io.serialGo := io.serialGo
   io.translation <> front.io.translation; front.io.translated <> io.translated
   front.io.scalarQuery := io.conflictQuery; io.conflict := front.io.scalarConflict
-  val sb = Module(new RvvScoreboard(p,6))
+  val sb = Module(new RvvScoreboard(p,7))
   sb.io.nextAge := front.io.nextAge; val memAgeAllowed = Wire(Bool())
   front.io.externalAgeAllowed := sb.io.ageAllowed && memAgeAllowed
   val queues = p.unitDepths.map(depth => Module(new Queue(new RvvDescriptor(p),depth)))
@@ -80,11 +80,11 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     alu.io.readData(j) := vrf.io.readData(j)
     mac.io.readData(j) := vrf.io.readData((macDataBase+&j.U)(log2Ceil(p.execReadPorts+2)-1,0))
     when(alu.io.grant && j.U < alu.io.readDemand) {
-      vrf.io.readRows(j) := alu.io.readRows(j); vrf.io.readValid(j) := alu.io.readValid
+      vrf.io.readRows(j) := alu.io.readRows(j); vrf.io.readValid(j) := alu.io.readValid && alu.io.readEnables(j)
     }
     val index = (macBase+&j.U).pad(log2Ceil(p.execReadPorts+2))
     when(mac.io.grant && j.U < mac.io.readDemand) {
-      vrf.io.readRows(index) := mac.io.readRows(j); vrf.io.readValid(index) := mac.io.readValid && !(if(j == 1) mac.io.skipAccumulator else false.B)
+      vrf.io.readRows(index) := mac.io.readRows(j); vrf.io.readValid(index) := mac.io.readValid && mac.io.readEnables(j)
     }
   }
   vrf.io.readValid(p.execReadPorts) := mem.io.storeReadValid
@@ -95,11 +95,12 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   vrf.io.write(1) <> alu.io.write; vrf.io.age(1) := alu.io.writeAge
   vrf.io.write(2) <> mac.io.write; vrf.io.age(2) := mac.io.writeAge
   for(unit <- Seq(alu,mac); j <- 0 until 2) {
-    unit.snoop(j).valid := vrf.io.write(j).fire
-    unit.snoop(j).bits.row := vrf.io.write(j).bits.row
-    unit.snoop(j).bits.age := vrf.io.age(j)
+    val w = if(unit == alu && j == 1) 2 else j
+    unit.snoop(j).valid := vrf.io.write(w).fire
+    unit.snoop(j).bits.row := vrf.io.write(w).bits.row
+    unit.snoop(j).bits.age := vrf.io.age(w)
   }
-  val checks = Seq(mem.io.hazard(0),mem.io.hazard(1),alu.io.hazard,mac.io.hazard,cross.io.hazard,0.U.asTypeOf(new RvvHazard(p)))
+  val checks = Seq(mem.io.hazard(0),mem.io.hazard(1),alu.io.hazard,mac.io.hazard,cross.io.hazard,0.U.asTypeOf(new RvvHazard(p)),0.U.asTypeOf(new RvvHazard(p)))
   val updates = Seq(mem.io.progress(0),mem.io.progress(1),alu.io.progress,mac.io.progress,cross.io.progress)
   checks.zipWithIndex.foreach { case(x,j) => sb.io.check(j) := x }
   updates.zipWithIndex.foreach { case(x,j) =>
@@ -108,7 +109,10 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   }
   sb.io.progress(5) := RegNext(RegNext(mac.io.readProgress))
   sb.io.progress(5).valid := RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B)
+  sb.io.progress(6) := RegNext(RegNext(alu.io.readProgress))
+  sb.io.progress(6).valid := RegNext(RegNext(alu.io.readProgress.valid,false.B),false.B)
   for((unit,j) <- Seq((alu,2),(mac,3))) {
+    unit.io.internalWrites := sb.io.internalWrites(j)
     unit.io.accumulatorPending := sb.io.dotAccumulatorPending(j)
     unit.io.otherRawBlocked := sb.io.rawExceptObserved(j)
     unit.io.rawBlocked := sb.io.raw(j); unit.io.warBlocked := sb.io.war(j); unit.io.wawBlocked := sb.io.waw(j)
@@ -122,7 +126,6 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   cross.io.blocked := sb.io.raw(4) || sb.io.war(4) || sb.io.waw(4)
   io.drained := front.io.empty && queues.map(_.io.count === 0.U).reduce(_ && _) &&
     sb.io.empty && !mem.io.busy && !alu.io.busy && !mac.io.busy && !fp.io.busy && !cross.io.busy
-  drainState := Cat(queues.map(_.io.count.pad(6)).reverse)
   drainState := Cat(front.io.empty,sb.io.empty,mem.io.busy,alu.io.busy,mac.io.busy,cross.io.busy,queues.map(_.io.count.pad(5)).reverse.reduce(Cat(_,_)))
   io.vxsat := false.B; io.fflags := 0.U
   io.counters := 0.U.asTypeOf(new RvvCounters)

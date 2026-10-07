@@ -30,6 +30,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   io.hazard.writes := bit(dest)
   // Accumulator forwarding applies only to older dots. Weight RAWs, v0,
   // and all cross-unit dependencies still use the registered scoreboard.
+  io.hazard.aluBypass := false.B; io.hazard.maskRead := d.decoded.masked
   io.hazard.dotBypass := source =/= dest && (!d.decoded.masked || dest =/= 0.U)
   io.hazard.accumulator := bit(dest)
   io.hazard.observedSource := bit(source)
@@ -55,6 +56,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   launch.desc := d; launch.row := row; launch.last := last
   launch.bypassExpected := io.accumulatorPending
   io.skipAccumulator := io.accumulatorPending
+  io.readEnables := Mux(io.accumulatorPending,5.U,7.U)
   launch.enables := VecInit((0 until p.rowBytes).map { b =>
     val element = (row*p.rowBytes.U+b.U) >> d.decoded.sew
     element < d.issue.vl && element >= d.issue.vstart && (!d.decoded.masked || (io.mask >> element)(0))
@@ -146,9 +148,11 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
   val snoop = IO(Input(Vec(2,Valid(new Bundle {
     val row = UInt(p.rowBits.W); val age = UInt(p.ageBits.W)
   }))))
-  val legacy = Module(new RvvLegacyIntegerSequencer(p,multiply))
-  if(!multiply) { io <> legacy.io }
+  if(!multiply) {
+    val alu = Module(new RvvAluPipeline(p)); alu.snoop := snoop; io <> alu.io
+  }
   else {
+    val legacy = Module(new RvvLegacyIntegerSequencer(p,true))
     val dot = Module(new RvvDotPipeline(p)); dot.snoop := snoop
     val isDot = io.in.bits.decoded.op === RvvOp.dot.U || io.in.bits.decoded.op === RvvOp.dotsu.U
     legacy.io.in.valid := io.in.valid && !isDot && !dot.io.busy
@@ -157,12 +161,14 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
     io.in.ready := Mux(isDot,dot.io.in.ready && !legacy.io.busy,legacy.io.in.ready && !dot.io.busy)
     for(x <- Seq(legacy.io,dot.io)) {
       x.readData := io.readData; x.grant := io.grant; x.mask := io.mask
+      x.internalWrites := io.internalWrites
       x.accumulatorPending := io.accumulatorPending
       x.otherRawBlocked := io.otherRawBlocked
       x.blocked := io.blocked; x.rawBlocked := io.rawBlocked; x.warBlocked := io.warBlocked; x.wawBlocked := io.wawBlocked
       x.write.ready := io.write.ready
     }
     val useDot = dot.io.busy
+    io.readEnables := Mux(useDot,dot.io.readEnables,legacy.io.readEnables)
     io.skipAccumulator := useDot && dot.io.skipAccumulator
     io.readRows := Mux(useDot,dot.io.readRows,legacy.io.readRows)
     io.readDemand := Mux(useDot,dot.io.readDemand,legacy.io.readDemand)

@@ -27,7 +27,8 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   io.age := d.age; io.writeAge := d.age; io.busy := active
   io.readProgress.valid := false.B; io.readProgress.bits := 0.U.asTypeOf(new RvvProgress(p))
   io.readyEvent.valid := false.B; io.readyEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
-  io.blocking := 0.U; io.skipAccumulator := false.B
+  io.blocking := 0.U; io.skipAccumulator := false.B; io.readEnables := 7.U
+  io.hazard.aluBypass := false.B; io.hazard.maskRead := false.B
   io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U; io.hazard.observedSource := 0.U
   io.readRows(0) := address(d.decoded.vs2,row)
   io.readRows(1) := address(if(multiply) d.decoded.vd else d.decoded.vs1,row)
@@ -181,6 +182,7 @@ class RvvCrossLaneSequencer(p: RvvParams) extends Module {
   val readReturned = RegNext(RegNext(io.readValid,false.B),false.B)
   io.in.ready := !active && !held
   when(io.in.fire) { d := io.in.bits; active := true.B }
+  io.hazard.aluBypass := false.B; io.hazard.maskRead := false.B
   io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U; io.hazard.observedSource := 0.U
   io.row := d.decoded.vs2 * p.rowsPerReg.U
   io.hazard.valid := active; io.hazard.slot := d.slot
@@ -222,6 +224,7 @@ class RvvIntegerPorts(p: RvvParams) extends Bundle {
     val complete = Valid(UInt(64.W))
   val readProgress = Valid(new RvvProgress(p))
   val writeAge = Output(UInt(p.ageBits.W))
+  val internalWrites = Input(UInt(32.W)); val readEnables = Output(UInt(3.W))
   val accumulatorPending = Input(Bool()); val skipAccumulator = Output(Bool())
   val otherRawBlocked = Input(Bool())
   val rawBlocked = Input(Bool()); val warBlocked = Input(Bool()); val wawBlocked = Input(Bool())
