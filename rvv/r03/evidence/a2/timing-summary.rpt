@@ -1,0 +1,366 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 16:27:02 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing_summary -file /home/chen/FUN/flow-r03-evidence/a2/s1/reports/timing-summary.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (741)
+6. checking no_output_delay (2606)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (741)
+--------------------------------
+ There are 741 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (2606)
+----------------------------------
+ There are 2606 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.064        0.000                      0               122690        0.097        0.000                      0               122690        4.020        0.000                       0                 48647  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock      Waveform(ns)       Period(ns)      Frequency(MHz)
+-----      ------------       ----------      --------------
+rvv_clock  {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+rvv_clock           0.064        0.000                      0               122690        0.097        0.000                      0               122690        4.020        0.000                       0                 48647  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  rvv_clock
+  To Clock:  rvv_clock
+
+Setup :            0  Failing Endpoints,  Worst Slack        0.064ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.097ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.020ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.064ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_0/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.592ns  (logic 6.114ns (63.741%)  route 3.478ns (36.259%))
+  Logic Levels:           22  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=2 LUT3=1 LUT5=2 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=48646, unset)        0.000     0.000    vrf/banks_2_3/clock
+                         RAMB36E2                                     r  vrf/banks_2_3/memory_reg_0/CLKARDCLK
+  -------------------------------------------------------------------    -------------------
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[1])
+                                                      1.249     1.249 f  vrf/banks_2_3/memory_reg_0/DOUTBDOUT[1]
+                         net (fo=1, unplaced)         0.366     1.615    vrf/_banks_2_3_readData[33]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.791 f  vrf/heldOperands_1[33]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.048    vrf/banks_3_3/_vrf_io_readData_3[33]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.180 f  vrf/banks_3_3/heldOperands_0[33]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.447    mac/heldOperands_0_reg[511]_0[26]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.487 f  mac/_GEN_10[1]0__1_i_31/O
+                         net (fo=17, unplaced)        0.256     2.743    mac/candidates_values_dotProducts_0_1/A[1]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[1]_A2_DATA[1])
+                                                      0.337     3.080 r  mac/candidates_values_dotProducts_0_1/DSP_A_B_DATA_INST/A2_DATA[1]
+                         net (fo=1, unplaced)         0.000     3.080    mac/candidates_values_dotProducts_0_1/DSP_A_B_DATA.A2_DATA<1>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[1]_A2A1[1])
+                                                      0.155     3.235 r  mac/candidates_values_dotProducts_0_1/DSP_PREADD_DATA_INST/A2A1[1]
+                         net (fo=1, unplaced)         0.000     3.235    mac/candidates_values_dotProducts_0_1/DSP_PREADD_DATA.A2A1<1>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[1]_U[2])
+                                                      0.866     4.101 f  mac/candidates_values_dotProducts_0_1/DSP_MULTIPLIER_INST/U[2]
+                         net (fo=1, unplaced)         0.000     4.101    mac/candidates_values_dotProducts_0_1/DSP_MULTIPLIER.U<2>
+                         DSP_M_DATA (Prop_DSP_M_DATA_U[2]_U_DATA[2])
+                                                      0.110     4.211 r  mac/candidates_values_dotProducts_0_1/DSP_M_DATA_INST/U_DATA[2]
+                         net (fo=1, unplaced)         0.000     4.211    mac/candidates_values_dotProducts_0_1/DSP_M_DATA.U_DATA<2>
+                         DSP_ALU (Prop_DSP_ALU_U_DATA[2]_ALU_OUT[2])
+                                                      0.702     4.913 f  mac/candidates_values_dotProducts_0_1/DSP_ALU_INST/ALU_OUT[2]
+                         net (fo=1, unplaced)         0.000     4.913    mac/candidates_values_dotProducts_0_1/DSP_ALU.ALU_OUT<2>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[2]_P[2])
+                                                      0.193     5.106 r  mac/candidates_values_dotProducts_0_1/DSP_OUTPUT_INST/P[2]
+                         net (fo=2, unplaced)         0.417     5.523    mac/candidates_values_dotProducts_0_1_n_103
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[7])
+                                                      0.349     5.872 r  mac/memory_reg_0_i_6171/CO[7]
+                         net (fo=1, unplaced)         0.000     5.872    mac/memory_reg_0_i_6171_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.971 r  mac/memory_reg_0_i_6150/O[0]
+                         net (fo=2, unplaced)         0.249     6.220    mac/memory_reg_0_i_6150_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.260 r  mac/memory_reg_0_i_6158/O
+                         net (fo=1, unplaced)         0.000     6.260    mac/memory_reg_0_i_6158_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.639 r  mac/memory_reg_0_i_5795/O[5]
+                         net (fo=2, unplaced)         0.310     6.949    mac/memory_reg_0_i_5795_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.992 r  mac/memory_reg_0_i_5798/O
+                         net (fo=1, unplaced)         0.000     6.992    mac/memory_reg_0_i_5798_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.254 r  mac/memory_reg_0_i_5267/CO[7]
+                         net (fo=1, unplaced)         0.000     7.254    mac/memory_reg_0_i_5267_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.353 r  mac/memory_reg_0_i_5157/O[0]
+                         net (fo=1, unplaced)         0.249     7.602    mac/p_1_in3_out[16]
+                         LUT6 (Prop_LUT6_I3_O)        0.040     7.642 r  mac/memory_reg_0_i_4082/O
+                         net (fo=1, unplaced)         0.000     7.642    mac/memory_reg_0_i_4082_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.055 r  mac/memory_reg_0_i_1705/CO[7]
+                         net (fo=1, unplaced)         0.000     8.055    mac/memory_reg_0_i_1705_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.229 r  mac/memory_reg_0_i_1563/O[5]
+                         net (fo=1, unplaced)         0.310     8.539    mac/_GEN_10[2]043_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.579 r  mac/memory_reg_0_i_612/O
+                         net (fo=1, unplaced)         0.249     8.828    mac/memory_reg_0_i_612_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     8.868 r  mac/memory_reg_0_i_205/O
+                         net (fo=4, unplaced)         0.243     9.111    mac/_mac_io_write_bits_data[61]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.287 r  mac/memory_reg_0_i_43__1/O
+                         net (fo=7, unplaced)         0.305     9.592    vrf/banks_0_0/p_1_in[61]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_0/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=48646, unset)        0.000    10.000    vrf/banks_0_0/clock
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_0/CLKBWRCLK
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.592    
+  -------------------------------------------------------------------
+                         slack                                  0.064    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.097ns  (arrival time - required time)
+  Source:                 mem/readBeat_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/readBeat_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (rvv_clock rise@0.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        0.153ns  (logic 0.064ns (41.732%)  route 0.089ns (58.268%))
+  Logic Levels:           1  (LUT6=1)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=48646, unset)        0.000     0.000    mem/clock
+                         FDRE                                         r  mem/readBeat_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.049     0.049 r  mem/readBeat_reg[4]/Q
+                         net (fo=3, unplaced)         0.077     0.126    mem/readBeat_reg[4]
+                         LUT6 (Prop_LUT6_I5_O)        0.015     0.141 r  mem/readBeat[5]_i_2/O
+                         net (fo=1, unplaced)         0.012     0.153    mem/_readBeat_T[5]
+                         FDRE                                         r  mem/readBeat_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=48646, unset)        0.000     0.000    mem/clock
+                         FDRE                                         r  mem/readBeat_reg[5]/C
+                         clock pessimism              0.000     0.000    
+                         FDRE (Hold_FDRE_C_D)         0.056     0.056    mem/readBeat_reg[5]
+  -------------------------------------------------------------------
+                         required time                         -0.056    
+                         arrival time                           0.153    
+  -------------------------------------------------------------------
+                         slack                                  0.097    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         rvv_clock
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clock }
+
+Check Type        Corner  Lib Pin             Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     RAMB36E2/CLKARDCLK  n/a            1.961         10.000      8.039                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+Low Pulse Width   Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+High Pulse Width  Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+
+
+
