@@ -21,8 +21,16 @@
 | 阶段 | 提交 | 部件前后 LUT/FF/BRAM | 总 LUT / WNS | 验证与日志 |
 | --- | --- | --- | --- | --- |
 | R02 历史 | 79f6c5a | VRF 44.5k LUT；前端39.7k；记分板26.2k；VLSU52.9k；ALU18.6k；乘加23.9k | 206k / -2.117 ns（RuntimeOptimized） | R02-report |
-| A1 | 待记录 | 未运行 | 未运行 | 未运行 |
+| A1 | 0cf6c3e | 综合运行中 | 综合运行中 | C1 3/3；C2 前端6/6、VRF1/1、Spike种子0–7通过；`a1/` |
 
 ## 最终验收
 
 C1/C2/C3、P1–P5、S1、S2：未运行。面积、时序、功能和带宽尚无 R03 通过声明。后续按 A2/A5 → A4 → A3/A6 → 其他面积手段推进，每段更新实际提交、命令、退出码和日志。
+
+## A2/A5：独立记分板上限与小单元队列
+
+`scoreboardDepth` 独立参数默认 16，替代由队列和访存在途数推导的 83；分派仍同时要求目标队列与记分板空位。VLSU burst 信用不分配记分板条目。队列默认改为 4/2/2/2/2，满时按原 valid/ready 反压。新增 `RvvR03Spec` 检查满表期间不接受分派分配，以及同址写时禁用读、随后有效读取得新值。
+
+命令：激活 flow 后 `bash rvv/r03/run-stage.sh /home/chen/FUN/flow-r03-evidence/a2`，C1/C2/S1 依次运行，各阶段单独记录退出码。当前未运行。R03 C2 包装脚本完整运行 R02 原套件，再运行新增套件，不筛除原用例。
+
+A1 命令：`bash rvv/r02/run-c1.sh .../a1/c1 && bash rvv/r02/run-c2.sh .../a1/c2 && bash rvv/r03/run-s1.sh .../a1/s1`。C1、C2 均完成，原日志目录同前；综合未完成。默认策略基线使用 `/home/chen/FUN/flow-r02-evidence/vrf-inline-s1/rtl`（生成提交0255e8a，其 RVV RTL 与79f6c5a的差异为空），日志 `baseline-default/`；直接 nice 运行 R03 synthesis Tcl，不重新生成或修改基线。
