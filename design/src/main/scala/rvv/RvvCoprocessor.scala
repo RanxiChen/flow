@@ -52,6 +52,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   mem.io.nextAge := front.io.nextAge; memAgeAllowed := mem.io.ageAllowed
   val alu = Module(new RvvIntegerSequencer(p,false)); alu.io.in <> queues(1).io.deq
   val mac = Module(new RvvIntegerSequencer(p,true)); mac.io.in <> queues(2).io.deq
+  for(unit <- Seq(alu,mac)) { unit.ageAdvance := dispatchEvent }
   val fp = Module(new RvvFpSequencer(p)); fp.io.in <> queues(3).io.deq
   val cross = Module(new RvvCrossLaneSequencer(p)); cross.io.in <> queues(4).io.deq
   io.axi <> mem.io.axi; io.invalidate <> mem.io.invalidate

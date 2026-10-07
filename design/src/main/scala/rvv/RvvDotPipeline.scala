@@ -4,11 +4,12 @@ import chisel3._
 import chisel3.util._
 
 /** Fixed-latency lane pipeline. Output credits are acquired at the read edge,
-  * so downstream arbitration cannot stall the DSP registers. The eight-row
+  * so downstream arbitration cannot stall the DSP registers. The row-tagged
   * accumulator cache is tagged and snooped; it is a bypass, not architectural
   * storage. Ordinary VRF writes invalidate a matching older cached value. */
 class RvvDotPipeline(p: RvvParams) extends Module {
   val io = IO(new RvvIntegerPorts(p))
+  val ageAdvance = IO(Input(Valid(UInt(p.ageBits.W))))
   val snoop = IO(Input(Vec(3,Valid(new Bundle {
     val row = UInt(p.rowBits.W); val age = UInt(p.ageBits.W)
   }))))
@@ -98,8 +99,9 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   val result = Cat(values.reverse)
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),acc(8*b+7,8*b)))).asUInt
   for(k <- 0 until cacheDepth) {
+    when(ageAdvance.valid && cacheValid(k) && !RvvAge.older(cacheAges(k),ageAdvance.bits) && cacheAges(k) =/= ageAdvance.bits) { cacheValid(k) := false.B }
     for(s <- snoop) {
-      when(s.valid && cacheValid(k) && cacheTags(k) === s.bits.row) {
+      when(s.valid && cacheValid(k) && cacheTags(k) === s.bits.row && !RvvAge.older(s.bits.age,cacheAges(k))) {
         cacheValid(k) := false.B
       }
     }
@@ -148,15 +150,16 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   * existing single-instruction sequencer and cannot cross a dot drain. */
 class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
   val io = IO(new RvvIntegerPorts(p))
+  val ageAdvance = IO(Input(Valid(UInt(p.ageBits.W))))
   val snoop = IO(Input(Vec(2,Valid(new Bundle {
     val row = UInt(p.rowBits.W); val age = UInt(p.ageBits.W)
   }))))
   if(!multiply) {
-    val alu = Module(new RvvAluPipeline(p)); alu.snoop := snoop; io <> alu.io
+    val alu = Module(new RvvAluPipeline(p)); alu.snoop := snoop; alu.ageAdvance := ageAdvance; io <> alu.io
   }
   else {
     val legacy = Module(new RvvLegacyIntegerSequencer(p,true))
-    val dot = Module(new RvvDotPipeline(p))
+    val dot = Module(new RvvDotPipeline(p)); dot.ageAdvance := ageAdvance
     for(j <- 0 until 2) { dot.snoop(j) := snoop(j) }
     dot.snoop(2).valid := legacy.io.write.fire
     dot.snoop(2).bits.row := legacy.io.write.bits.row; dot.snoop(2).bits.age := legacy.io.writeAge

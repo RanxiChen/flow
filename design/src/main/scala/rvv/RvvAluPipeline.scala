@@ -5,6 +5,7 @@ import chisel3.util._
 
 class RvvAluPipeline(p: RvvParams) extends Module {
   val io = IO(new RvvIntegerPorts(p))
+  val ageAdvance = IO(Input(Valid(UInt(p.ageBits.W))))
   val snoop = IO(Input(Vec(2,Valid(new Bundle {
     val row = UInt(p.rowBits.W); val age = UInt(p.ageBits.W)
   }))))
@@ -83,8 +84,9 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),old(8*b+7,8*b)))).asUInt
   when(valid(3)) { cacheData.write(addrD,merged) }
   for(k <- 0 until p.rows) {
+    when(ageAdvance.valid && cacheValid(k) && !RvvAge.older(cacheAges(k),ageAdvance.bits) && cacheAges(k) =/= ageAdvance.bits) { cacheValid(k) := false.B }
     for(s <- snoop) {
-      when(s.valid && s.bits.row === k.U && cacheValid(k) ) { cacheValid(k) := false.B }
+      when(s.valid && s.bits.row === k.U && cacheValid(k) && !RvvAge.older(s.bits.age,cacheAges(k))) { cacheValid(k) := false.B }
     }
     when(valid(3) && addrD === k.U) { cacheValid(k) := true.B; cacheAges(k) := t.desc.age }
   }
