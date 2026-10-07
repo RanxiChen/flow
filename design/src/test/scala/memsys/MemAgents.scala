@@ -68,9 +68,13 @@ class CoreTxn(val id: Int, val op: CoreOp, val fired: Long) {
   * `late`. Loads are checked against `golden` at their response; stores
   * update `golden` at their response (the commit point).
   */
-class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevice], rng: Random)
+/** With `oracle`, loads/atomics on shared memory are checked by the
+  * multi-core oracle instead of exact single-core golden equality, and
+  * `onDone` sees every completed transaction (used to build LR→SC programs).
+  */
+class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevice], rng: Random,
+    val name: String = "core", hart: Int = 0, oracle: Option[MultiCoreOracle] = None)
     extends CycleAgent {
-  val name = "core"
   val pending = mutable.Queue.empty[CoreOp]
   val inPipe = mutable.Queue.empty[CoreTxn]
   val awaitingLate = mutable.Queue.empty[CoreTxn]
@@ -80,6 +84,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   var holdCycles = 0L
   var mmioBusyCycles = 0L
   var trapClear = false
+  var onDone: CoreTxn => Unit = _ => ()
   private var nextId = 0
   private var presenting: Option[CoreOp] = None
   private var lateReady = true
@@ -134,6 +139,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
         t.kind = kind; t.killed = true
         inPipe.foreach(_.killed = true); inPipe.clear()
       } else respond(t, kind, r.data.peek().litValue, r.excCause.peek().litValue, r.tval.peek().litValue)
+      if (t.done) onDone(t)
       progress()
     }
     if (s2KillNow && !respValid) {
@@ -160,15 +166,20 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       else {
         check(!err, s"$t: unexpected late error")
         t.value = core.late.bits.data.peek().litValue
-        check(t.value == t.expected, s"$t: late ${hex(t.value)}, expected ${hex(t.expected)}")
+        oracle match {
+          case Some(o) => o.load(hart, t.op, t.value, now)
+          case None => check(t.value == t.expected, s"$t: late ${hex(t.value)}, expected ${hex(t.expected)}")
+        }
       }
       t.done = true
+      onDone(t)
       progress()
     }
   }
 
   private def respond(t: CoreTxn, kind: String, data: BigInt, cause: BigInt, tval: BigInt): Unit = {
     t.kind = kind
+    if (oracle.nonEmpty && t.op.expectExc.isEmpty && !t.op.device) return respondShared(oracle.get, t, kind, data)
     t.op.expectExc match {
       case Some(c) =>
         check(kind == "Exc", s"$t: expected exception $c, got $kind")
@@ -212,6 +223,36 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
           check(kind == "Done", s"$t must complete as Done")
           t.done = true
         }
+    }
+  }
+
+  /** Multi-core path: values are judged by the oracle at the commit point
+    * (S2 resp; late for a load miss), never against a single golden value.
+    */
+  private def respondShared(o: MultiCoreOracle, t: CoreTxn, kind: String, data: BigInt): Unit = {
+    check(kind != "Exc", s"$t: unexpected exception")
+    val op = t.op.op
+    if (enumIs(op, L1DOp.Load)) {
+      if (kind == "Done") { t.value = data; o.load(hart, t.op, data, now); t.done = true }
+      else awaitingLate.enqueue(t)
+    } else if (enumIs(op, L1DOp.LR)) {
+      check(kind == "Done", s"$t: LR must wait for Done, not $kind")
+      t.value = data; o.lr(hart, t.op, data, now); t.done = true
+    } else if (enumIs(op, L1DOp.AMO)) {
+      check(kind == "Done", s"$t: AMO must wait for Done, not $kind")
+      t.value = data
+      o.amo(hart, t.op, data, raw => atomicResult(raw, t.op.data, t.op.size, t.op.amoFunc), now)
+      t.done = true
+    } else if (enumIs(op, L1DOp.SC)) {
+      check(kind == "Done", s"$t: SC must complete as Done")
+      check(data == 0 || data == 1, s"$t: SC returned $data")
+      t.op.scExpected.foreach(e => check(data == e, s"$t: SC returned $data, expected $e"))
+      t.value = data; o.sc(hart, t.op, data == 0, now); t.done = true
+    } else if (enumIs(op, L1DOp.Store)) {
+      o.store(hart, t.op, now); t.done = true
+    } else {
+      check(kind == "Done", s"$t must complete as Done")
+      t.done = true
     }
   }
 

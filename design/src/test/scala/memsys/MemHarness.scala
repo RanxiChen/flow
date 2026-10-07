@@ -101,3 +101,59 @@ class L1DL2Harness(g: BreezeMemGeometry) extends Module {
   l2.io.dma <> io.dma
   io.mem <> l2.io.mem
 }
+
+/** Handshakes of one core's four links, exported so the test-side
+  * coherence monitor can rebuild per-core line states.
+  */
+class CohLinkObs(p: CoherenceParams) extends Bundle {
+  val reqFire = Bool()
+  val req = new CoherenceReq(p)
+  val rspUpFire = Bool()
+  val rspUp = new CoherenceRspUp(p)
+  val snpFire = Bool()
+  val snp = new CoherenceSnp(p)
+  val rspDownFire = Bool()
+  val rspDown = new CoherenceRspDown(p)
+}
+
+/** `nCores` real L1Ds on one real L2 (l1d-rtl-spec 13.3). Each core has its
+  * own CPU port, identity dTLB, PTW entry and MMIO port; L1I ports and the
+  * DMA port are driven by the test. `obs` mirrors every L1D link handshake.
+  */
+class L1DL2MultiHarness(g: BreezeMemGeometry) extends Module {
+  val p = L1DParams(g)
+  val n = g.nCores
+  val io = IO(new Bundle {
+    val core = Vec(n, new L1DCoreIO)
+    val ptw = Vec(n, Flipped(new PtwMemIO))
+    val mmio = Vec(n, new Axi4LiteMasterIO(p.paddrBits, 64))
+    val tlb = Vec(n, new TlbKnobIO)
+    val mem = new Axi4MasterIO(Axi4Params(p.paddrBits, p.coh.memDataBits, p.coh.slotBits))
+    val l1i = Vec(n, Flipped(new ReadClientIO(p.coh)))
+    val dma = Flipped(new ReadClientIO(p.coh))
+    val obs = Output(Vec(n, new CohLinkObs(p.coh)))
+  })
+  val l2 = Module(new L2Home(g))
+  for (c <- 0 until n) {
+    val l1d = Module(new L1DCache(g))
+    val tlb = Module(new IdentityTlb)
+    l1d.io.core <> io.core(c)
+    l1d.io.ptw <> io.ptw(c)
+    io.mmio(c) <> l1d.io.mmio
+    l1d.io.tlb <> tlb.io.port
+    tlb.io.ready := io.tlb(c).tlbReady
+    tlb.io.miss := io.tlb(c).tlbMiss
+    tlb.io.pageFault := io.tlb(c).tlbPageFault
+    io.tlb(c).tlbRequests := tlb.io.requests
+    l2.io.l1d(c) <> l1d.io.coh
+    l2.io.l1i(c) <> io.l1i(c)
+    val coh = l1d.io.coh
+    val o = io.obs(c)
+    o.reqFire := coh.req.fire; o.req := coh.req.bits
+    o.rspUpFire := coh.rspUp.fire; o.rspUp := coh.rspUp.bits
+    o.snpFire := coh.snp.fire; o.snp := coh.snp.bits
+    o.rspDownFire := coh.rspDown.fire; o.rspDown := coh.rspDown.bits
+  }
+  l2.io.dma <> io.dma
+  io.mem <> l2.io.mem
+}

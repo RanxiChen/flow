@@ -10,8 +10,8 @@
 | 2 | V1-BE 完成后合并本分支；先做命名清理、删除旧实现，再扫描现有代码补外部接口：MMU/PMP/PMA、L1I 客户端、集群、LiteX 外壳、事件 | codex | 已提交，最终接口提交 `71f4988`；报告 [`tasks/V1-MEM-interfaces-report.md`](tasks/V1-MEM-interfaces-report.md) |
 | 3 | 审核接口 | Claude | 未记录独立审核结论；当前原生 cluster 已接 Backend/L1D/MMU/L2 |
 | 4 | 小测试与时序约定：单核 hit/miss/写回/升级；L1D 接行为级 L2，L2 接行为级 L1 代理 | Claude 写测试，codex 跑和修 | Alan `4f81993` 模块 88/88（驱动 10/10、L1D 24/24、L2 12/12、骨架 37/37、权限 5/5）、真实单核 L1D + L2 系统 10/10，两个命令均 exit=0。已修 L1D 写掩码、L2 单 set 行地址、shared Store 等 MSHR 的 probe 死锁及行为 L2 同行 probe/Get 接受顺序；既有断言、黄金期望、随机规模和 watchdog 保持。报告 [`tasks/MEM-single-core-tests-report.md`](tasks/MEM-single-core-tests-report.md)，任务书 [`tasks/MEM-single-core-tests.md`](tasks/MEM-single-core-tests.md) |
-| 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude 写，codex 修和跑 | 黄金内存、协议行为模型、看门狗已写（`memsys/MemTestKit.scala`、`MemAgents.scala`）；Alan `4f81993` 独立驱动回归 10/10；三个 spec 的成功用例公共收尾均强制最终内存检查，L1D/L2/系统均已通过。多核 SWMR 监视器待第 6 步 |
-| 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | |
+| 5 | 校验设施：黄金内存逐 load 比对；SWMR 与目录一致性监视器；看门狗 | Claude 写，codex 修和跑 | 黄金内存、协议行为模型、看门狗已写（`memsys/MemTestKit.scala`、`MemAgents.scala`）；Alan `4f81993` 独立驱动回归 10/10；三个 spec 的成功用例公共收尾均强制最终内存检查，L1D/L2/系统均已通过。多核链路监视器 `MemCoherenceMonitor.scala`、多核 oracle `MemMultiCoreOracle.scala` 已写，未运行 |
+| 6 | 压力测试：`BreezeMemGeometry.stress` 极小 cache，多核随机；再跑 litmus | Claude 写，codex 跑 | 测试已写（`L1DL2MultiCoreSpec`：directed、LR/SC 前进、MP/SB litmus、2/4 核默认与 stress 随机），任务书 [`tasks/MEM-multicore-tests.md`](tasks/MEM-multicore-tests.md)；待 Alan 运行 |
 | 7 | 一边改一边完善状态机，消化 `TODO`，spec 随之更新 | 共同 | 普通 Load/Store 与 L2 槽主流程已通过现有单核 directed/随机系统门槛，L1D §5.3 同步资源等待说明；原子路径及多核验证待完成 |
 
 ## 规则
