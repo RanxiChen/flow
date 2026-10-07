@@ -58,6 +58,8 @@ class CoreTxn(val id: Int, val op: CoreOp, val fired: Long) {
   var expected: BigInt = 0
   var lateCycle = -1L
   var killed = false
+  /** Cycle of the kill that removed this request (-1 if never killed). */
+  var killedAt = -1L
   var done = false
   override def toString: String = s"#$id $op fired $fired resp $respCycle $kind late $lateCycle" +
     (if (killed) " killed" else "")
@@ -85,18 +87,31 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   var mmioBusyCycles = 0L
   var trapClear = false
   var onDone: CoreTxn => Unit = _ => ()
+  /** Sees every request removed by s1Kill/s2Kill (never called without kills). */
+  var onKilled: CoreTxn => Unit = _ => ()
+  /** Backend trap model (L1DPermissionHarness killOnFault): an Exc response
+    * raises s2Kill and trapClearRsv in its own cycle. The faulting request is
+    * still checked as an exception; younger requests in S1 are killed.
+    */
+  var killOnExc = false
+  /** Pulse trapClearRsv for one cycle starting with the next cycle. */
+  def trapNextCycle(): Unit = trapNext = true
+  private var trapNext = false
+  private var trapNow = false
   private var nextId = 0
   private var presenting: Option[CoreOp] = None
   private var lateReady = true
   private var respValid = false
   private var s1Victim: Option[CoreTxn] = None
   private var s2KillNow = false
+  private var excKillNow = false
 
   def enqueue(ops: CoreOp*): Unit = pending ++= ops
   def last: CoreTxn = history.last
   def drained: Boolean = core.drained.peek().litToBoolean
 
   protected def drive(): Unit = {
+    trapNow = trapNext; trapNext = false
     lateReady = rng.nextDouble() < lateReadyProb
     core.late.ready.poke(lateReady.B)
     if (presenting.isEmpty && pending.nonEmpty && rng.nextDouble() < issueProb) presenting = Some(pending.dequeue())
@@ -110,7 +125,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     }
     core.s1Kill.poke(false.B)
     core.s2Kill.poke(false.B)
-    core.trapClearRsv.poke(trapClear.B)
+    core.trapClearRsv.poke((trapClear || trapNow).B)
   }
 
   override def decide(): Unit = {
@@ -119,9 +134,15 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     respValid = core.resp.valid.peek().litToBoolean
     s2KillNow = inPipe.headOption.exists(t => (respValid && t.op.s2KillAtResp) ||
       t.op.s2KillAfter.exists(delay => now >= t.fired + delay))
+    excKillNow = killOnExc && respValid && !s2KillNow &&
+      core.resp.bits.kind.peek().litValue == L1DRespKind.Exc.litValue
+    if (excKillNow) s2KillNow = true
     core.s1Kill.poke(s1Victim.nonEmpty.B)
     core.s2Kill.poke(s2KillNow.B)
+    core.trapClearRsv.poke((trapClear || trapNow || excKillNow).B)
   }
+
+  private def kill(t: CoreTxn): Unit = { t.killed = true; t.killedAt = now; onKilled(t) }
 
   def sample(): Unit = {
     val fired = presenting.nonEmpty && core.req.ready.peek().litToBoolean
@@ -135,19 +156,22 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       val r = core.resp.bits
       val k = r.kind.peek().litValue
       val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else "Exc"
-      if (s2KillNow) {
-        t.kind = kind; t.killed = true
-        inPipe.foreach(_.killed = true); inPipe.clear()
-      } else respond(t, kind, r.data.peek().litValue, r.excCause.peek().litValue, r.tval.peek().litValue)
+      if (s2KillNow && !excKillNow) {
+        t.kind = kind; kill(t)
+        inPipe.foreach(kill); inPipe.clear()
+      } else {
+        respond(t, kind, r.data.peek().litValue, r.excCause.peek().litValue, r.tval.peek().litValue)
+        if (excKillNow) { inPipe.foreach(kill); inPipe.clear() }
+      }
       if (t.done) onDone(t)
       progress()
     }
     if (s2KillNow && !respValid) {
       check(inPipe.nonEmpty, "S2 cancellation without an outstanding request")
-      inPipe.foreach(_.killed = true); inPipe.clear(); progress()
+      inPipe.foreach(kill); inPipe.clear(); progress()
     }
     s1Victim.foreach { v =>
-      if (inPipe.exists(_ eq v)) { v.killed = true; inPipe.dequeueAll(_ eq v) }
+      if (inPipe.exists(_ eq v)) { kill(v); inPipe.dequeueAll(_ eq v) }
       progress()
     }
     if (fired) {
@@ -249,7 +273,9 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       t.op.scExpected.foreach(e => check(data == e, s"$t: SC returned $data, expected $e"))
       t.value = data; o.sc(hart, t.op, data == 0, now); t.done = true
     } else if (enumIs(op, L1DOp.Store)) {
-      o.store(hart, t.op, now); t.done = true
+      // A refill error drops the store at replay (l1d-rtl-spec 6.2): no commit.
+      if (!t.op.refillError) o.store(hart, t.op, now)
+      t.done = true
     } else {
       check(kind == "Done", s"$t must complete as Done")
       t.done = true
@@ -310,6 +336,10 @@ class TlbKnobs(io: TlbKnobIO, rng: Random) extends CycleAgent {
 /** PTW reads through the L1D entry (one outstanding, like the PTW). */
 class PtwDriver(ptw: PtwMemIO, golden: GoldenMem) extends CycleAgent {
   val name = "ptw"
+  /** When set, judges (paddr, data) of a non-faulting read instead of exact
+    * golden equality (multi-core: another core may be writing the PTE).
+    */
+  var judge: Option[(BigInt, BigInt) => Unit] = None
   val pending = mutable.Queue.empty[(BigInt, Boolean)]
   val results = ArrayBuffer.empty[(BigInt, BigInt, Boolean)]
   private var presenting: Option[(BigInt, Boolean)] = None
@@ -327,7 +357,10 @@ class PtwDriver(ptw: PtwMemIO, golden: GoldenMem) extends CycleAgent {
       val f = ptw.resp.bits.accessFault.peek().litToBoolean
       val d = ptw.resp.bits.data.peek().litValue
       check(f == fault, s"PTW ${hex(a)}: accessFault $f, expected $fault")
-      if (!fault) check(d == golden.read(a & ~BigInt(7), 8), s"PTW ${hex(a)}: ${hex(d)}, golden ${hex(golden.read(a & ~BigInt(7), 8))}")
+      if (!fault) judge match {
+        case Some(j) => j(a, d)
+        case None => check(d == golden.read(a & ~BigInt(7), 8), s"PTW ${hex(a)}: ${hex(d)}, golden ${hex(golden.read(a & ~BigInt(7), 8))}")
+      }
       results += ((a, d, f)); waiting = None; progress()
     }
     if (presenting.nonEmpty && ptw.req.ready.peek().litToBoolean) { waiting = presenting; presenting = None; progress() }

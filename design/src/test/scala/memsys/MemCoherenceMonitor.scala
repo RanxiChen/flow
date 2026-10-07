@@ -18,7 +18,7 @@ import MemTestKit._
   * before it can grant, so a grant that only becomes legal through an
   * answer in the same cycle is reported.
   */
-class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32) extends CycleAgent {
+class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32, allowErrors: Boolean = false) extends CycleAgent {
   val name = "coherence-monitor"
   val n: Int = obs.size
   private val held = Array.fill(n)(mutable.Map.empty[BigInt, Char])
@@ -32,6 +32,10 @@ class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32) extends Cyc
   val probes = ArrayBuffer.empty[(Long, Int, String, BigInt, Boolean)]
   /** (cycle, core, "Put"|"InvAck"|"DownAck", line, hasData). */
   val answers = ArrayBuffer.empty[(Long, Int, String, BigInt, Boolean)]
+  /** (cycle, core, "GetS"|"GetM", line) at the REQ handshake. */
+  val reqs = ArrayBuffer.empty[(Long, Int, String, BigInt)]
+  /** (cycle, core, op, line) of grants that carried error=1 (allowErrors only). */
+  val errorGrants = ArrayBuffer.empty[(Long, Int, String, BigInt)]
 
   def state(core: Int, line: BigInt): Char = held(core).getOrElse(line, 'I')
   def holders(line: BigInt): Seq[(Int, Char)] = (0 until n).map(c => (c, state(c, line))).filter(_._2 != 'I')
@@ -65,8 +69,15 @@ class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32) extends Cyc
       } else {
         val (isGetM, l) = getOut(c).getOrElse(fail(c, -1, s"$op without an outstanding Get"))
         note(s"core $c $op ${hex(l << 5)}${if (err) " error" else ""}")
-        ensure(!err, c, l, s"$op carries a refill error (none injected in multi-core tests)")
-        op match {
+        ensure(!err || allowErrors, c, l, s"$op carries a refill error (none injected in multi-core tests)")
+        if (err) {
+          // l1d-rtl-spec 6.2: an error refill is never installed (tag-only
+          // clean-up to I), so it grants no permission.
+          ensure(op == "DataS" || op == "DataE", c, l, s"$op with error=1")
+          ensure(state(c, l) != 'X', c, l, s"error $op while the core holds E/M")
+          held(c) -= l
+          errorGrants += ((now, c, op, l))
+        } else op match {
           case "DataS" =>
             ensure(!isGetM, c, l, "GetM granted DataS")
             ensure(state(c, l) == 'I', c, l, s"DataS while the core holds ${state(c, l)}")
@@ -83,7 +94,7 @@ class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32) extends Cyc
             held(c)(l) = 'X'
           case other => fail(c, l, s"L1D received $other")
         }
-        grants += ((now, c, op, l))
+        if (!err) grants += ((now, c, op, l))
         getOut(c) = None
       }
     }
@@ -142,6 +153,7 @@ class CoherenceMonitor(obs: Vec[CohLinkObs], val logDepth: Int = 32) extends Cyc
       val st = state(c, l)
       ensure(if (isGetM) st != 'X' else st == 'I', c, l, s"${if (isGetM) "GetM" else "GetS"} from state $st")
       getOut(c) = Some((isGetM, l))
+      reqs += ((now, c, if (isGetM) "GetM" else "GetS", l))
     }
   }
 

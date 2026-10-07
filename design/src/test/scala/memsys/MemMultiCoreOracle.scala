@@ -224,7 +224,10 @@ class MultiCoreOracle(arch: GoldenMem) {
         if (success) ownedWrite(w, o.addr, n, o.data & mask(8 * n), cycle)
       case Counter =>
         requireFull(core, o, cycle, "counter")
-        if (!lr.exists(_._1 == w)) fail(core, cycle, s"$o: counter SC without a preceding LR of the word")
+        // An SC after a killed LR has no LR to pair with; it is issued with
+        // scExpected = 1 and must fail (the driver checks the status first).
+        val orphanFail = !success && o.scExpected.contains(1)
+        if (!lr.exists(_._1 == w) && !orphanFail) fail(core, cycle, s"$o: counter SC without a preceding LR of the word")
         if (success) {
           val old = lr.get._2
           val inc = wrap(o.data - old)
@@ -287,14 +290,36 @@ class ProgramFeeder(core: CoreDriver, val name: String) extends CycleAgent {
   var failures = 0
   var stopAfterSuccesses: Option[Int] = None
   var depth = 2
+  /** Applied to the SC built after an LR (e.g. to kill some of them). */
+  var scMutate: CoreOp => CoreOp = identity
+  var killedLr = 0
+  var killedSc = 0
   private var waitLr: Option[BigInt] = None
   private var waitSc = false
   core.onDone = done
+  core.onKilled = killed
+
+  /** A killed LR established no reservation (l1d-rtl-spec 3, 8): its SC must
+    * fail. A killed SC ends the attempt; in the backend only a trap kills an
+    * SC at WB, so the trap's trapClearRsv is modelled one cycle later (the
+    * next LR cannot reach S2 earlier). Without it a killed SC could leave
+    * the old reservation and make the next orphan SC's status unknowable.
+    * Never called without kills.
+    */
+  private def killed(t: CoreTxn): Unit = {
+    if (enumIs(t.op.op, L1DOp.LR) && waitLr.nonEmpty) {
+      waitLr = None; waitSc = true; killedLr += 1
+      core.enqueue(CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = 0, scExpected = Some(1)))
+    } else if (enumIs(t.op.op, L1DOp.SC) && waitSc) {
+      waitSc = false; killedSc += 1
+      core.trapNextCycle()
+    }
+  }
 
   private def done(t: CoreTxn): Unit = {
     if (enumIs(t.op.op, L1DOp.LR) && waitLr.nonEmpty) {
-      val sc = CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = (t.value + waitLr.get) & mask(8 << t.op.size),
-        aq = t.op.aq, rl = t.op.rl)
+      val sc = scMutate(CoreOp(L1DOp.SC, t.op.addr, t.op.size, data = (t.value + waitLr.get) & mask(8 << t.op.size),
+        aq = t.op.aq, rl = t.op.rl))
       waitLr = None; waitSc = true
       core.enqueue(sc)
     } else if (enumIs(t.op.op, L1DOp.SC) && waitSc) {

@@ -12,8 +12,10 @@ import flow.mmu.sv39._
 
 /** Identity-mapped dTLB. The response follows the request by one cycle, as
   * the L1D expects in S1. Busy, miss and page-fault are test inputs.
+  * `faultRegion` (base, bytes) additionally page-faults every lookup inside
+  * it, so a fault follows its address across TLB-miss re-lookups.
   */
-class IdentityTlb extends Module {
+class IdentityTlb(faultRegion: Option[(BigInt, BigInt)] = None) extends Module {
   val io = IO(new Bundle {
     val port = new TlbPortIO
     val ready = Input(Bool())
@@ -26,7 +28,10 @@ class IdentityTlb extends Module {
   val valid = RegNext(fire, false.B)
   val va = RegEnable(io.port.req.bits.vaddr, fire)
   val miss = RegEnable(io.miss, fire)
-  val pageFault = RegEnable(io.pageFault, fire)
+  val regionFault = faultRegion.map { case (base, bytes) =>
+    io.port.req.bits.vaddr >= base.U && io.port.req.bits.vaddr < (base + bytes).U
+  }.getOrElse(false.B)
+  val pageFault = RegEnable(io.pageFault || regionFault, fire)
   io.port.resp.valid := valid
   io.port.resp.bits.hit := !miss
   io.port.resp.bits.miss := miss
@@ -120,7 +125,7 @@ class CohLinkObs(p: CoherenceParams) extends Bundle {
   * own CPU port, identity dTLB, PTW entry and MMIO port; L1I ports and the
   * DMA port are driven by the test. `obs` mirrors every L1D link handshake.
   */
-class L1DL2MultiHarness(g: BreezeMemGeometry) extends Module {
+class L1DL2MultiHarness(g: BreezeMemGeometry, faultRegion: Option[(BigInt, BigInt)] = None) extends Module {
   val p = L1DParams(g)
   val n = g.nCores
   val io = IO(new Bundle {
@@ -136,7 +141,7 @@ class L1DL2MultiHarness(g: BreezeMemGeometry) extends Module {
   val l2 = Module(new L2Home(g))
   for (c <- 0 until n) {
     val l1d = Module(new L1DCache(g))
-    val tlb = Module(new IdentityTlb)
+    val tlb = Module(new IdentityTlb(faultRegion))
     l1d.io.core <> io.core(c)
     l1d.io.ptw <> io.ptw(c)
     io.mmio(c) <> l1d.io.mmio
