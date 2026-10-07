@@ -21,8 +21,9 @@ class L1DPermissionHarness(killOnFault: Boolean = false) extends Module {
   val mmu = Module(new Sv39Mmu)
   cache.io.core <> io.core; cache.io.ptw <> io.ptw
   if (killOnFault) {
-    cache.io.core.s2Kill := io.core.s2Kill ||
-      (cache.io.core.resp.valid && cache.io.core.resp.bits.kind === L1DRespKind.Exc)
+    val fault = cache.io.core.resp.valid && cache.io.core.resp.bits.kind === L1DRespKind.Exc
+    cache.io.core.s2Kill := io.core.s2Kill || fault
+    cache.io.core.trapClearRsv := io.core.trapClearRsv || fault
   }
   cache.io.tlb <> mmu.io.dtlb
   mmu.io.csr.sv39 := io.core.csr.satp(63,60) === 8.U
@@ -81,7 +82,7 @@ class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM" in {
     simulate(new L1DPermissionHarness) { d => init(d); fault(d,BigInt("180000000",16),L1DOp.Load,5); fault(d,BigInt("180000000",16),L1DOp.Store,7) }
   }
-  "WB fault cancellation cannot combinationally suppress the fault that generated it" in {
+  "WB fault cancellation and reservation clearing cannot combinationally suppress their fault" in {
     simulate(new L1DPermissionHarness(killOnFault = true)) { d =>
       init(d); fault(d, BigInt("180000000",16), L1DOp.Store, 7)
     }
