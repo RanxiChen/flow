@@ -83,7 +83,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     }
     val index = (macBase+&j.U).pad(log2Ceil(p.execReadPorts+2))
     when(mac.io.grant && j.U < mac.io.readDemand) {
-      vrf.io.readRows(index) := mac.io.readRows(j); vrf.io.readValid(index) := mac.io.readValid
+      vrf.io.readRows(index) := mac.io.readRows(j); vrf.io.readValid(index) := mac.io.readValid && !(if(j == 1) mac.io.skipAccumulator else false.B)
     }
   }
   vrf.io.readValid(p.execReadPorts) := mem.io.storeReadValid
@@ -108,6 +108,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   sb.io.progress(5) := RegNext(RegNext(mac.io.readProgress))
   sb.io.progress(5).valid := RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B)
   for((unit,j) <- Seq((alu,2),(mac,3))) {
+    unit.io.accumulatorPending := sb.io.dotAccumulatorPending(j)
     unit.io.otherRawBlocked := sb.io.rawExceptObserved(j)
     unit.io.rawBlocked := sb.io.raw(j); unit.io.warBlocked := sb.io.war(j); unit.io.wawBlocked := sb.io.waw(j)
   }

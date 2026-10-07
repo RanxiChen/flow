@@ -32,7 +32,7 @@ object R02Fixture {
 case class R02Measurement(cycles: Long, readBeats: Long, firstRead: Long, lastRead: Long,
   kernelFirstIssue: Long, kernelLastB: Long, kernelReadBeats: Long, kernelFirstRead: Long, kernelLastRead: Long,
   remainingBytes: BigInt, invalidations: Long, kernelRemaining: BigInt,
-  linkDelays: Vector[Long], requestAdvances: Vector[Long])
+  linkDelays: Vector[Long], requestAdvances: Vector[Long], r04Links: Vector[Long], prefetchDepth: Int, peakBuffered: BigInt, chainReadCycles: Long, fullQueuePrefetch: Int, prefetchWarCycles: Int)
 
 /** Core, translation service and memory use only the mounting contract. Every
   * accepted item is accounted for, including reissued items after random kill.
@@ -73,6 +73,12 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private val macRegisterRead=mutable.Map.empty[(Long,Int),Long]
   private val macCompleted=mutable.Map.empty[Long,Long]
   private val kernelRequests=mutable.Map.empty[Int,Long]
+  private val macEligible=mutable.Map.empty[(Long,Int),Long]
+  private var highestDispatched = -1
+  private var maxPrefetchDepth=0; private var peakBuffered=BigInt(0)
+  private var fullQueuePrefetch=0; private var prefetchWarCycles=0
+  private var chainFirst = -1L; private var chainLast = -1L
+  private val prefetched=mutable.Set.empty[Int]
   private var scalarGap=0
   private var nextIssueAge=0L
   private val acceptedAges=mutable.Map.empty[Int,Long]
@@ -209,6 +215,8 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         val address=uint(dut.io.axi.ar.bits.addr); val beats=uint(dut.io.axi.ar.bits.len).toInt+1
         assert((address&4095)+beats*p.memBytes<=4096,s"AR crosses a page at $cycle")
         val (label,index)=acceptRequest(address,beats,false)
+        if(index>highestDispatched) prefetched+=index
+        if(bool(dut.dispatchMacFull) && index>highestDispatched) fullQueuePrefetch+=1
         if(bool(dut.io.loadWriteWar)) {
           requestsDuringWar+=1
           if(label=="slow-reader-independent-load") slowWarRequests+=1
@@ -264,6 +272,17 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         responses.dequeue()
       }
       if(tr.nonEmpty) translations -= tr.get
+      if(bool(dut.dispatchEvent.valid)) {
+        highestDispatched=ageToRecord(logicalAge(uint(dut.dispatchEvent.bits)))
+        prefetched.filterInPlace(_>highestDispatched)
+      }
+      maxPrefetchDepth=math.max(maxPrefetchDepth,prefetched.size)
+      peakBuffered=peakBuffered.max(uint(dut.io.counters.bufferedBytes))
+      if(bool(dut.io.loadWriteWar) && prefetched.nonEmpty) prefetchWarCycles+=1
+      if(bool(dut.macReady.valid)) {
+        val key=(logicalAge(uint(dut.macReady.bits.age)),uint(dut.macReady.bits.register).toInt)
+        if(!macEligible.contains(key)) macEligible(key)=cycle
+      }
       if(bool(dut.io.loadRegisterComplete.valid)) {
         val age=logicalAge(uint(dut.io.loadRegisterComplete.bits.age))
         val reg=uint(dut.io.loadRegisterComplete.bits.register).toInt
@@ -275,6 +294,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(bool(dut.io.macRead.valid)) {
         val key=(logicalAge(uint(dut.io.macRead.bits.age)),uint(dut.io.macRead.bits.register).toInt)
         if(!macRegisterRead.contains(key)) macRegisterRead(key)=cycle
+        if(fixture.records(ageToRecord(key._1)).label.startsWith("p6-dot-")) {
+          if(chainFirst<0) chainFirst=cycle
+          chainLast=cycle
+        }
       }
       if(bool(dut.io.macComplete.valid)) macCompleted(logicalAge(uint(dut.io.macComplete.bits)))=cycle
       if(scalarGap>0) scalarGap-=1
@@ -316,6 +339,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       val reg=((fixture.records(index).word>>7)&31).toInt
       for(done <- loadRegisterDone.get((index.toLong,reg));read <- macRegisterRead.get((index.toLong+1,reg))) yield read-done
     }.toVector
+    val r04Links=if(randomize) Vector.empty else loadIndices.flatMap { index =>
+      val reg=((fixture.records(index).word>>7)&31).toInt
+      for(done <- loadRegisterDone.get((index.toLong,reg)); eligible <- macEligible.get((index.toLong+1,reg)); read <- macRegisterRead.get((index.toLong+1,reg))) yield read-math.max(done,eligible)
+    }.toVector
     val advances=if(randomize) Vector.empty else loadIndices.drop(1).flatMap { index =>
       val previous=(0 until index).reverse.find(i => fixture.records(i).label.startsWith("gemv-dot-"))
       for(prev <- previous;done <- macCompleted.get(prev.toLong);requested <- kernelRequests.get(index)) yield done-requested
@@ -329,7 +356,16 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       }
       Files.writeString(out.resolve(s"links-lat$readLatency-buffer${p.returnBytes}.csv"),
         "loadRecord,firstAR,firstRegisterDone,dependentMacRead,previousMacDone\n"+rows.mkString("\n")+"\n")
+      val newRows=loadIndices.map { index =>
+        val reg=((fixture.records(index).word>>7)&31).toInt
+        val done=loadRegisterDone.getOrElse((index.toLong,reg),-1L)
+        val eligible=macEligible.getOrElse((index.toLong+1,reg),-1L)
+        val read=macRegisterRead.getOrElse((index.toLong+1,reg),-1L)
+        s"$index,$reg,$done,$eligible,${math.max(done,eligible)},$read,${read-math.max(done,eligible)},${read-done},current-sequencer-otherRAW-WAR-WAW-port-credit"
+      }
+      Files.writeString(out.resolve(s"r04-links-lat$readLatency-buffer${p.returnBytes}.csv"),
+        "loadRecord,register,producerDone,consumerExceptRAWReady,tReady,firstRead,linkDelay,oldDelay,eligibilityChecks\n"+newRows.mkString("\n")+"\n")
     }
-    R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations,kernelRemaining,links,advances)
+    R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations,kernelRemaining,links,advances,r04Links,maxPrefetchDepth,peakBuffered,if(chainFirst>=0) chainLast-chainFirst+1 else 0,fullQueuePrefetch,prefetchWarCycles)
   }
 }

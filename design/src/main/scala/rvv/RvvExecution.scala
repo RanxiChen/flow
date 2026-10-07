@@ -27,7 +27,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   io.age := d.age; io.writeAge := d.age; io.busy := active
   io.readProgress.valid := false.B; io.readProgress.bits := 0.U.asTypeOf(new RvvProgress(p))
   io.readyEvent.valid := false.B; io.readyEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
-  io.blocking := 0.U
+  io.blocking := 0.U; io.skipAccumulator := false.B
   io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U; io.hazard.observedSource := 0.U
   io.readRows(0) := address(d.decoded.vs2,row)
   io.readRows(1) := address(if(multiply) d.decoded.vd else d.decoded.vs1,row)
@@ -43,23 +43,33 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   // SEW=64 multiplication is the documented slow path: capture one DLEN row,
   // reuse one 64-bit multiplier across its elements, then perform one bank write.
   val slow = if(multiply) d.decoded.sew === 3.U else false.B
-  val slowInputs = Reg(Vec(3,UInt(p.dlen.W)))
+  val slowLanes = Seq.tabulate(3,p.dlen/64) { (port,lane) =>
+    val localEnable = RegNext(RegNext(io.readValid,false.B),false.B)
+    dontTouch(localEnable)
+    RegEnable(io.readData(port)(64*lane+63,64*lane),localEnable)
+  }
+  val slowInputs = VecInit(slowLanes.map(xs => Cat(xs.reverse)))
   val slowValues = Reg(Vec(p.dlen/64,UInt(64.W)))
   val slowIndex = RegInit(0.U(math.max(1,log2Ceil(p.dlen/64)).W))
   val slowActive = RegInit(false.B); val slowDone = RegInit(false.B)
   val zero = d.issue.vl === 0.U || d.issue.vstart >= d.issue.vl
-  val captureSlow = returned && slow && !slowActive && !slowDone
-  when(captureSlow) {
-    slowInputs := operandData; slowIndex := 0.U; slowActive := true.B
+  val beginSlow = returned && slow && !slowActive && !slowDone
+  when(beginSlow) {
+    slowIndex := 0.U; slowActive := true.B
   }
+  val slowProduct = Reg(UInt(64.W)); val slowAcc = Reg(UInt(64.W))
+  val slowProductValid = RegNext(slowActive && slow,false.B)
+  val slowProductIndex = RegNext(slowIndex)
   when(slowActive && slow) {
     val shift = slowIndex << 6
-    val a=(slowInputs(0) >> shift)(63,0)
-    val b=(slowInputs(2) >> shift)(63,0)
-    val acc=(slowInputs(1) >> shift)(63,0)
-    slowValues(slowIndex) := (a*b+acc)(63,0)
-    when(slowIndex === (p.dlen/64-1).U) { slowActive := false.B; slowDone := true.B }
+    val a=(slowInputs(0) >> shift)(63,0); val b=(slowInputs(2) >> shift)(63,0)
+    slowProduct := (a*b)(63,0); slowAcc := (slowInputs(1) >> shift)(63,0)
+    when(slowIndex === (p.dlen/64-1).U) { slowActive := false.B }
       .otherwise { slowIndex := slowIndex+1.U }
+  }
+  when(slowProductValid) {
+    slowValues(slowProductIndex) := slowProduct+slowAcc
+    when(slowProductIndex === (p.dlen/64-1).U) { slowDone := true.B }
   }
   when(slow && (slowActive || slowDone)) { io.readDemand := 0.U }
   def readsAt(at: UInt): UInt = if(multiply) bit(d.decoded.vs2,at) | bit(d.decoded.vd,at) |
@@ -72,37 +82,21 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   when(slow && (slowActive || slowDone)) { io.hazard.reads := Mux(d.decoded.masked,1.U,0.U) }
   io.hazard.writes := bit(d.decoded.vd,Mux(noRead,row,Mux(pending,operandRow,row)))
 
-  val resultData = if(multiply) {
-  val candidates = (0 until 4).map { sew =>
-    val width = 8 << sew
-    val values = (0 until p.dlen/width).map { e =>
-      val a = operandData(0)(e*width+width-1,e*width)
-      val b = Mux(d.decoded.scalarOperand,d.issue.rs1(width-1,0),operandData(1)(e*width+width-1,e*width))
-      if(multiply) {
-        val acc = operandData(1)(e*width+width-1,e*width)
-        val v1 = operandData(2)(e*width+width-1,e*width)
-        val product = if(width==64) 0.U(64.W) else (a * v1 + acc)(width-1,0)
-        if(width == 32) {
-          val dotProducts = (0 until 4).map { j =>
-            val av = a(8*j+7,8*j).asSInt
-            val bv = Mux(d.decoded.op === RvvOp.dotsu.U,
-              Cat(0.U(1.W),d.issue.rs1(8*j+7,8*j)).asSInt,
-              Cat(d.issue.rs1(8*j+7),d.issue.rs1(8*j+7,8*j)).asSInt)
-            av * bv
-          }
-          val dot = (dotProducts.reduce(_ +& _) +& Cat(0.U(1.W),acc).asSInt).asUInt
-          Mux(d.decoded.op === RvvOp.macc.U,product,dot(31,0))
-        } else product
-      } else {
-        val moved = Mux(d.decoded.scalarOperand,d.issue.rs1(width-1,0),a)
-        MuxLookup(d.decoded.op,moved)(Seq(
-          RvvOp.add.U -> (a+b)(width-1,0), RvvOp.sub.U -> (a-b)(width-1,0),
-          RvvOp.and.U -> (a & b), RvvOp.shift.U -> (a >> d.issue.rs1(log2Ceil(width)-1,0))))
-      }
-    }
-    Cat(values.reverse)
+  val productCandidates = (0 until 3).map { sew =>
+    val width=8 << sew
+    Cat((0 until p.dlen/width).reverse.map(e =>
+      (operandData(0)(e*width+width-1,e*width)*operandData(2)(e*width+width-1,e*width))(width-1,0)))
   }
-    VecInit(candidates)(d.decoded.sew)
+  val maccProduct = RegNext(VecInit(productCandidates)(d.decoded.sew(1,0)))
+  val maccAcc = RegNext(operandData(1))
+  val maccReturned = RegNext(returned,false.B)
+  val resultData = if(multiply) {
+    val sums=(0 until 3).map { sew =>
+      val width=8 << sew
+      Cat((0 until p.dlen/width).reverse.map(e =>
+        (maccProduct(e*width+width-1,e*width)+maccAcc(e*width+width-1,e*width))(width-1,0)))
+    }
+    VecInit(sums)(d.decoded.sew(1,0))
   } else {
     val a = operandData(0)
     val broadcasts = (0 until 4).map(sew => Fill(p.dlen/(8 << sew),d.issue.rs1((8 << sew)-1,0)))
@@ -134,7 +128,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
       RvvOp.and.U -> (a & b), RvvOp.shift.U -> shifted))
   }
   val registeredResult = Reg(UInt(p.dlen.W))
-  when((returned && !slow) || (active && noRead && !computed)) { registeredResult := resultData; computed := true.B }
+  when(((if(multiply) maccReturned else returned) && !slow) || (active && noRead && !computed)) { registeredResult := resultData; computed := true.B }
   io.write.bits.row := address(d.decoded.vd,resultRow)
   io.write.bits.data := registeredResult
   when(slow) { io.write.bits.data := slowValues.asUInt }
@@ -157,7 +151,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   io.progress.bits.readDone := Mux(regLast,readMask & Mux(d.decoded.masked,"hfffffffe".U,"hffffffff".U),0.U)
   io.progress.bits.writeDone := Mux(regLast,bit(d.decoded.vd,resultRow),0.U)
   io.progress.bits.finished := zero || last
-  when(captureSlow) {
+  when(beginSlow) {
     io.progress.valid := true.B
     io.progress.bits.readDone := Mux(regLast,readMask & Mux(d.decoded.masked,"hfffffffe".U,"hffffffff".U),0.U)
     io.progress.bits.writeDone := 0.U; io.progress.bits.finished := false.B
@@ -228,6 +222,7 @@ class RvvIntegerPorts(p: RvvParams) extends Bundle {
     val complete = Valid(UInt(64.W))
   val readProgress = Valid(new RvvProgress(p))
   val writeAge = Output(UInt(p.ageBits.W))
+  val accumulatorPending = Input(Bool()); val skipAccumulator = Output(Bool())
   val otherRawBlocked = Input(Bool())
   val rawBlocked = Input(Bool()); val warBlocked = Input(Bool()); val wawBlocked = Input(Bool())
   val readyEvent = Valid(new RvvRegisterEvent)

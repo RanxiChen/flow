@@ -18,10 +18,11 @@ class RvvPerformanceSpec extends AnyFreeSpec with ChiselSim {
         val cycles=m.kernelLastB-m.kernelFirstIssue+1
         val ideal=m.kernelReadBeats
         assert(ideal==896L/4*4,"GEMV read-byte accounting must include all 224 weight blocks")
+        assert(m.r04Links.size==224,"all R04 readiness pairs must be observed")
         assert(m.linkDelays.size==224 && m.requestAdvances.size==223,"all link/advance pairs must be observed")
         val required=if(name=="P1") "0.95" else if(name=="P2") "0.90" else "null"
         val bandwidthPass=if(name=="P3") "null" else (bandwidth>=required.toDouble).toString
-        val result=s"""{"contract":"$name","readLatency":$latency,"returnBytes":$buffer,"readBytes":${m.kernelReadBeats*p.memBytes},"readWindowCycles":$window,"peakFraction":$bandwidth,"kernelCycles":$cycles,"idealReadCycles":$ideal,"kernelToIdealRatio":${cycles.toDouble/ideal},"bufferedBytesAtKernelB":${m.kernelRemaining},"bufferedBytesAtDrain":${m.remainingBytes},"linkMin":${m.linkDelays.min},"linkMax":${m.linkDelays.max},"advanceMin":${m.requestAdvances.min},"advanceMax":${m.requestAdvances.max}}"""
+        val result=s"""{"contract":"$name","readLatency":$latency,"returnBytes":$buffer,"readBytes":${m.kernelReadBeats*p.memBytes},"readWindowCycles":$window,"peakFraction":$bandwidth,"kernelCycles":$cycles,"idealReadCycles":$ideal,"kernelToIdealRatio":${cycles.toDouble/ideal},"bufferedBytesAtKernelB":${m.kernelRemaining},"bufferedBytesAtDrain":${m.remainingBytes},"linkMin":${m.linkDelays.min},"linkMax":${m.linkDelays.max},"advanceMin":${m.requestAdvances.min},"advanceMax":${m.requestAdvances.max},"r04LinkMin":${m.r04Links.min},"r04LinkMax":${m.r04Links.max},"prefetchDepth":${m.prefetchDepth},"peakBufferedBytes":${m.peakBuffered}}"""
         println(s"R02_PERFORMANCE $result")
         val out=Paths.get(sys.env("R02_RESULTS")); Files.createDirectories(out)
         Files.writeString(out.resolve(s"$name.json"),result+"\n")

@@ -36,6 +36,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
 
   class Token extends Bundle {
     val desc = new RvvDescriptor(p); val row = UInt(log2Ceil(p.rows+1).W)
+    val bypassExpected = Bool()
     val last = Bool(); val enables = UInt(p.rowBytes.W)
   }
   class Result extends Bundle {
@@ -52,6 +53,8 @@ class RvvDotPipeline(p: RvvParams) extends Module {
 
   val launch = Wire(new Token)
   launch.desc := d; launch.row := row; launch.last := last
+  launch.bypassExpected := io.accumulatorPending
+  io.skipAccumulator := io.accumulatorPending
   launch.enables := VecInit((0 until p.rowBytes).map { b =>
     val element = (row*p.rowBytes.U+b.U) >> d.decoded.sew
     element < d.issue.vl && element >= d.issue.vstart && (!d.decoded.masked || (io.mask >> element)(0))
@@ -77,7 +80,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   val sums = pairs.map(xs => RegNext(xs(0)+&xs(1)))
   val t = tokens(6)
   val address = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
-  val cacheDepth = 8*p.rowsPerReg
+  val cacheDepth = p.rows
   val cacheValid = RegInit(VecInit(Seq.fill(cacheDepth)(false.B)))
   val cacheTags = Reg(Vec(cacheDepth,UInt(p.rowBits.W)))
   val cacheAges = Reg(Vec(cacheDepth,UInt(p.ageBits.W)))
@@ -87,6 +90,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
     RvvAge.older(cacheAges(cacheIndex),t.desc.age)
   // Also forward within a single instruction only for an identical row (rows
   // are issued once); equality never substitutes another instruction's value.
+  when(valid(6) && t.bypassExpected) { assert(forwarded,"in-unit accumulator bypass unavailable") }
   val acc = Mux(forwarded,cacheData(cacheIndex),rawAccumulator(4))
   val values = (0 until p.dlen/32).map(e => (sums(e).asUInt+acc(32*e+31,32*e))(31,0))
   val result = Cat(values.reverse)
@@ -153,11 +157,13 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
     io.in.ready := Mux(isDot,dot.io.in.ready && !legacy.io.busy,legacy.io.in.ready && !dot.io.busy)
     for(x <- Seq(legacy.io,dot.io)) {
       x.readData := io.readData; x.grant := io.grant; x.mask := io.mask
+      x.accumulatorPending := io.accumulatorPending
       x.otherRawBlocked := io.otherRawBlocked
       x.blocked := io.blocked; x.rawBlocked := io.rawBlocked; x.warBlocked := io.warBlocked; x.wawBlocked := io.wawBlocked
       x.write.ready := io.write.ready
     }
     val useDot = dot.io.busy
+    io.skipAccumulator := useDot && dot.io.skipAccumulator
     io.readRows := Mux(useDot,dot.io.readRows,legacy.io.readRows)
     io.readDemand := Mux(useDot,dot.io.readDemand,legacy.io.readDemand)
     io.readValid := Mux(useDot,dot.io.readValid,legacy.io.readValid)

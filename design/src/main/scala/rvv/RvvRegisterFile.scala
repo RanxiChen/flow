@@ -114,6 +114,7 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val allocate = Flipped(Decoupled(new RvvDescriptor(p)))
     val slot = Output(UInt(p.slotBits.W))
     val check = Input(Vec(clients,new RvvHazard(p)))
+    val dotAccumulatorPending = Output(Vec(clients,Bool()))
     val rawExceptObserved = Output(Vec(clients,Bool()))
     val raw = Output(Vec(clients,Bool())); val war = Output(Vec(clients,Bool())); val waw = Output(Vec(clients,Bool()))
     val progress = Input(Vec(clients,Valid(new RvvProgress(p))))
@@ -132,6 +133,7 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val older = (0 until p.scoreboardDepth).map(j => valid(j) && RvvAge.older(ages(j),ages(q.slot)))
     val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j) && !(q.dotBypass && dot(j)),reads(j),0.U)).reduce(_ | _)
     val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j) & ~Mux(q.dotBypass && dot(j),q.accumulator,0.U),0.U)).reduce(_ | _)
+    io.dotAccumulatorPending(c) := q.valid && q.dotBypass && (0 until p.scoreboardDepth).map(j => older(j) && dot(j) && (writes(j) & q.accumulator).orR).reduce(_ || _)
     io.raw(c) := q.valid && (q.reads & oldWrites).orR
     io.rawExceptObserved(c) := q.valid && (q.reads & ~q.observedSource & oldWrites).orR
     io.war(c) := q.valid && (q.writes & oldReads).orR
