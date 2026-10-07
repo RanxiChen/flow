@@ -29,3 +29,17 @@
 ## 待执行
 
 挂死检测、SoC 路由、LiteX/ILA/仿真包装、直接及集群门槛、全量门槛、两个 BIOS+memtest 冒烟、Alan 三个顺序 Vivado 构建、README/进度更新。未完成项不得视为 PASS。
+
+## 已执行门槛
+
+| SHA | 主机 / cwd | 命令 | 结果 / exit | 日志 |
+| --- | --- | --- | --- | --- |
+| d3f2309 | cloud_chen / /home/cloud_chen/work/flow-soc-20261007/design | sbt "testOnly flow.memsys.ClusterAxiElabSpec flow.memsys.MemoryBridgeSpec flow.memsys.MemSkeletonElabSpec" | 41/41，0 | /home/cloud_chen/evidence/soc-d3f2309/direct.log（direct.exit） |
+
+## 2. 挂死检测
+
+BreezeHangMonitor 只接收观察输入，没有总线控制输出。debug=true 才实例化。noRetireCycles 为 32 bit 饱和计数；最后退休 PC/指令与 seenRetire 在 Chisel 保留。阈值默认 10,000,000 周期（100 MHz 的 0.1 s），生成环境参数 BREEZE_HANG_CYCLES 可设正整数，不扩展冻结的 positional CLI，marker 记录实际值。
+
+hangReasons 粘滞位：bit0 无退休；bit1..10 mem/mmio 的 AR,R,AW,W,B valid&&!ready；bit11..14 mem read/write、mmio read/write 响应超时。mem read 依 cfg.mem.l2Slots 逐项保存请求年龄，完成最老读不会清掉后续请求的年龄；各写从首个 AW 或 W 接受开始计时，适配现有 L2MemEngine/MMIO arbiter 的单写在途合同。
+
+新增 BreezeHangMonitorSpec：无退休阈值边界与粘滞、10 通道分别停顿、4 类响应分别超时、最老读完成保留下一读年龄、正常流量与短停顿无误报。ILA/LED 将在包装步骤连接。

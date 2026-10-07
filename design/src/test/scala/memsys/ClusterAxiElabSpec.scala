@@ -17,6 +17,8 @@ class ClusterAxiElabSpec extends AnyFreeSpec {
       assert(ports.contains("io_mmio_aw_bits_addr"))
       assert(ports.contains("io_debug_retire_lateWriteData") == debug)
       assert(ports.contains("io_debug_l1dEvents_load_access") == debug)
+      assert(ports.contains("io_debug_hangReasons") == debug)
+      assert(ports.contains("io_debug_noRetireCycles") == debug)
       assert(!ports.contains("Wishbone") && !ports.contains("dma"))
     }
   }

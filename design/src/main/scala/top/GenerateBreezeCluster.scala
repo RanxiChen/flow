@@ -13,6 +13,9 @@ object GenerateBreezeCluster extends App {
     private val corePreset = CorePreset.fromName(args(1))
     private val privilegeProfile = PrivilegeProfile.fromName(args(2))
     private val debug = args.drop(3).contains("fpga-debug")
+    // Generation parameter without extending the frozen positional CLI.
+    private val hangThreshold = sys.env.getOrElse("BREEZE_HANG_CYCLES", "10000000").toInt
+    require(hangThreshold > 0, "BREEZE_HANG_CYCLES must be positive")
     private val enableTandem = args.drop(3).contains("tandem") || debug
     private val cfg = BreezeClusterPresets.fromName(args(0))
         .copy(corePreset = corePreset, privilegeProfile = privilegeProfile)
@@ -21,7 +24,7 @@ object GenerateBreezeCluster extends App {
         args(0) / corePreset.name / privilegeProfile.name /
         (if(enableTandem) "tandem" else "production") / (if(debug) "fpga-debug" else "cpu")
     ChiselStage.emitSystemVerilogFile(
-        new BreezeClusterAxi(cfg, enableTandem, debug),
+        new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
@@ -64,5 +67,5 @@ object GenerateBreezeCluster extends App {
     private val platformHash = java.security.MessageDigest.getInstance("SHA-256")
         .digest(platformBytes).map(b => f"${b & 0xff}%02x").mkString
     os.write.over(targetDir / "cluster-profile.txt",
-        s"bus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
+        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
 }
