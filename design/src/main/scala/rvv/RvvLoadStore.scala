@@ -14,7 +14,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val released = Valid(UInt(64.W))
     val invalidate = Decoupled(UInt(64.W))
     val storeReadValid = Output(Bool()); val storeRow = Output(UInt(p.rowBits.W)); val storeData = Input(UInt(p.dlen.W))
-    val write = Decoupled(new RvvWrite(p)); val writeAge = Output(UInt(64.W))
+    val write = Decoupled(new RvvWrite(p)); val writeAge = Output(UInt(p.ageBits.W))
     val hazard = Output(Vec(2,new RvvHazard(p))); val blocked = Input(Vec(2,Bool()))
     val progress = Vec(2,Valid(new RvvProgress(p)))
     val writeWar = Input(Bool())

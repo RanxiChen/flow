@@ -11,7 +11,7 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
     val readRows = Input(Vec(p.execReadPorts+2,UInt(p.rowBits.W)))
     val readData = Output(Vec(p.execReadPorts+2,UInt(p.dlen.W)))
     val write = Vec(writers,Flipped(Decoupled(new RvvWrite(p))))
-    val age = Input(Vec(writers,UInt(64.W)))
+    val age = Input(Vec(writers,UInt(p.ageBits.W)))
     val mask = Output(UInt(p.vlen.W))
   })
   val shadow = RegInit(0.U(p.vlen.W)); io.mask := shadow
@@ -41,7 +41,7 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
     val bankWrite = WireDefault(0.U.asTypeOf(new RvvWrite(p)))
     for(w <- 0 until writers) {
       val wins = eligible(w) && (0 until writers).filter(_ != w).map(o =>
-        !eligible(o) || io.age(w) < io.age(o) || (io.age(w) === io.age(o) && (w < o).B)).foldLeft(true.B)(_ && _)
+        !eligible(o) || RvvAge.older(io.age(w),io.age(o)) || (io.age(w) === io.age(o) && (w < o).B)).foldLeft(true.B)(_ && _)
       when(wins) {
         io.write(w).ready := true.B
         bankValid := true.B; bankWrite := io.write(w).bits
@@ -107,6 +107,7 @@ class RvvVrfBank(rows: Int,dataBits: Int) extends BlackBox(Map(
 
 class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   val io = IO(new Bundle {
+    val nextAge = Input(UInt(p.ageBits.W)); val ageAllowed = Output(Bool())
     val allocate = Flipped(Decoupled(new RvvDescriptor(p)))
     val slot = Output(UInt(p.slotBits.W))
     val check = Input(Vec(clients,new RvvHazard(p)))
@@ -115,14 +116,15 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val empty = Output(Bool())
   })
   val valid = RegInit(VecInit(Seq.fill(p.scoreboardDepth)(false.B)))
-  val ages = Reg(Vec(p.scoreboardDepth,UInt(64.W)))
+  val ages = Reg(Vec(p.scoreboardDepth,UInt(p.ageBits.W)))
   val reads = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   val writes = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
+  io.ageAllowed := (0 until p.scoreboardDepth).map(j => !valid(j) || (io.nextAge-ages(j)) < p.ageLimit.U).reduce(_ && _)
   val free = PriorityEncoder(~valid.asUInt)
   io.slot := free; io.allocate.ready := !valid.asUInt.andR; io.empty := !valid.asUInt.orR
   for(c <- 0 until clients) {
     val q = io.check(c)
-    val older = (0 until p.scoreboardDepth).map(j => valid(j) && ages(j) < ages(q.slot))
+    val older = (0 until p.scoreboardDepth).map(j => valid(j) && RvvAge.older(ages(j),ages(q.slot)))
     val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j),reads(j),0.U)).reduce(_ | _)
     val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j),0.U)).reduce(_ | _)
     io.raw(c) := q.valid && (q.reads & oldWrites).orR

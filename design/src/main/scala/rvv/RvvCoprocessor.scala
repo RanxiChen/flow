@@ -26,6 +26,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   io.translation <> front.io.translation; front.io.translated <> io.translated
   front.io.scalarQuery := io.conflictQuery; io.conflict := front.io.scalarConflict
   val sb = Module(new RvvScoreboard(p,5))
+  sb.io.nextAge := front.io.nextAge; front.io.externalAgeAllowed := sb.io.ageAllowed
   val queues = p.unitDepths.map(depth => Module(new Queue(new RvvDescriptor(p),depth)))
   val dispatch = front.io.dispatch
   val qReady = VecInit(queues.map(_.io.enq.ready))(dispatch.bits.decoded.unit)
@@ -53,8 +54,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   alu.io.mask := vrf.io.mask; mac.io.mask := vrf.io.mask
   // Allocate the shared execution read ports by age when demand exceeds supply.
   val bothFit = alu.io.readDemand +& mac.io.readDemand <= p.execReadPorts.U
-  alu.io.grant := !mac.io.busy || bothFit || alu.io.age < mac.io.age
-  mac.io.grant := !alu.io.busy || bothFit || mac.io.age < alu.io.age
+  alu.io.grant := !mac.io.busy || bothFit || RvvAge.older(alu.io.age,mac.io.age)
+  mac.io.grant := !alu.io.busy || bothFit || RvvAge.older(mac.io.age,alu.io.age)
   vrf.io.readValid.foreach(_ := false.B)
   vrf.io.readRows.foreach(_ := 0.U)
   alu.io.readData.foreach(_ := 0.U); mac.io.readData.foreach(_ := 0.U)

@@ -14,7 +14,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     val mask = Input(UInt(p.vlen.W))
     val hazard = Output(new RvvHazard(p)); val blocked = Input(Bool())
     val progress = Valid(new RvvProgress(p)); val write = Decoupled(new RvvWrite(p))
-    val age = Output(UInt(64.W)); val busy = Output(Bool())
+    val age = Output(UInt(p.ageBits.W)); val busy = Output(Bool())
     val readEvent = Valid(new RvvRegisterEvent)
     val complete = Valid(UInt(64.W))
   })

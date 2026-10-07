@@ -22,7 +22,7 @@
 | --- | --- | --- | --- | --- |
 | R02 历史 | 79f6c5a | VRF 44.5k LUT；前端39.7k；记分板26.2k；VLSU52.9k；ALU18.6k；乘加23.9k | 206k / -2.117 ns（RuntimeOptimized） | R02-report |
 | R02 默认策略重跑 | 源码0255e8a，与79f6c5a的RVV RTL一致 | VRF 42358 LUT / 512 FF / 0 BRAM；前端42321；记分板25387；VLSU49130；ALU18811；乘加16787 | 196270 / -1.412 ns | Alan默认综合退出0；`baseline-default/` |
-| A1 | 0cf6c3e | 综合运行中 | 综合运行中 | C1 3/3；C2 前端6/6、VRF1/1、Spike种子0–7通过；`a1/` |
+| A1 | 0cf6c3e | VRF 42358/512/0 → 14266/568/192（LUT/FF/BRAM36）；VRF LUTRAM 24576 → 0 | 171156 / -1.089 ns；总 LUT 减25114 | C1 3/3；C2 前端6/6、VRF1/1、Spike种子0–7通过；S1退出0；`a1/` |
 
 ## 最终验收
 
@@ -45,3 +45,21 @@ A1 命令：`bash rvv/r02/run-c1.sh .../a1/c1 && bash rvv/r02/run-c2.sh .../a1/c
 默认策略基线（Vivado2022.2）：总量196270 LUT，LUTRAM25364，FF55542，DSP154，RAMB36=7、RAMB18=1，WNS -1.412 ns。与RuntimeOptimized的206029 LUT / -2.117 ns分开记录；后续变更面积账优先用默认策略相邻候选比较。原始报告已下载至 `rvv/r03/evidence/baseline-default/`（不含DCP；DCP留在Alan）。
 
 `6ffadb6`追加慢读者后，原覆盖断言已在种子0–2通过；新增窗口专属断言在种子2未触发（最终Spike状态仍一致），说明独立AR仍可能早于被阻塞数据返回。保留 `a2-fixed/`。继续只增加普通刺激：在独立load前加8条无寄存器重叠的vadd，再加2条独立load，保留已加用例与全部断言；给返回进入WAR边界留出时间，并覆盖连续独立请求。没有修改随机握手模型或RTL。
+
+### A1 综合实测
+
+总量171156 LUT（LUTRAM788）、FF58220、DSP154、RAMB36=199/RAMB18=1；VRF全部24组各8块RAMB36，共192，LUTRAM为0，结构与预算组织一致。默认策略基线 → A1 总LUT下降25114，VRF层级下降28092；增加操作数保持级使ALU/MAC的FF与组合选择增加，故总收益小于VRF收益。VRF层级仍14266 LUT，超过5k；其中Vivado把9216 LUT归到store读副本 `banks_3_4`，后续必须检查VLSU逐字节旋转与跨层级归属，不能把BRAM映射成功当成面积闭合。最差路径仍从返回缓冲BRAM槽号输出（扇出720）到记分板掩码更新，32级；A3/A6将切断该控制链。
+
+A2/A5通过提交 `05b2353`（RTL与9d99190相同，新增刺激与报告）。C1 3/3；原C2前端6/6、VRF1/1、Spike种子0–7均通过（124 beat/组）；新增满表/BRAM2/2；原WAR与新增慢读者窗口检查全过。命令 `taskset -c 4-7 bash rvv/r02/run-c1.sh .../a2-window/c1`、`taskset -c 4-7 bash rvv/r03/run-c2.sh .../a2-window/c2`，命令链退出0；日志保持 `a2`、`a2-fixed` 的失败尝试。固定S1输入 `a2/s1/` 由C1生成复制并校验SHA与RTL/Tcl/XDC哈希，默认策略综合运行中。
+
+## A4：VIQ与前端字段收窄
+
+VIQ默认8，用显式1W1R异步LUTRAM FIFO、无payload复位，保留原发起容量预留与不可反压commit规则。执行描述符不再保存原指令码、rs2；保留64位rs1（VA翻译或标量操作数不可截断）、vl/vstart、vtype8位、vxrm/frm/rd及译码结果。PA新增参数 `paBits=34`，正常翻译结果超出配置宽度时断言，挂载接口仍保留RV64字段。访存跟踪默认16（与记分板指令上限一致），区间表16项，不把burst作为指令条目。
+
+年龄默认8位（宽度由在途上限之和的log2推导），以模差符号判断先后；前端未提交/VIQ头、区间、迟到翻译tag和记分板共同限制年龄跨度小于半空间，达到边界时发起停住。翻译tag包括已kill但未应答的请求，防止回绕后迟到响应串入新指令。被动事件仍输出零扩展年龄，测试驱动器用线上的年龄恢复其软件代数编号，保留全部224个GEMV配对和Spike预期。
+
+新增年龄回绕RAW/WAR/WAW、迟到响应回绕和2项VIQ的commit/kill/反压容量测试。原测试与阈值不变，当前A4未运行。
+
+### GitHub网络恢复
+
+Alan直接pull出现GnuTLS中断，带低速超时重试仍无进展。只终止本任务的该Git进程树。随后本地 `git ls-remote origin refs/heads/feat/rvv-20261005` 核对GitHub为05b2353281c25994d19553e9155504861cf9f033；生成增量bundle（要求Alan已有6ffadb6），scp后Alan `git fetch /tmp/flow-r03-05b2353.bundle refs/heads/feat/rvv-20261005 && git merge --ff-only FETCH_HEAD`，HEAD一致。未传未提交源码；后续若直连仍不稳定，沿用对已push SHA的增量Git传输。

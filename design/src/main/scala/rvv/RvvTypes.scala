@@ -4,10 +4,10 @@ import chisel3._
 import chisel3.util._
 
 case class RvvParams(vlen: Int = 512, dlen: Int = 512, lanes: Int = 8,
-  viqDepth: Int = 32, unitDepths: Seq[Int] = Seq(4, 2, 2, 2, 2),
+  viqDepth: Int = 8, unitDepths: Seq[Int] = Seq(4, 2, 2, 2, 2),
   writeBanks: Int = 4, execReadPorts: Int = 4, returnBytes: Int = 16384,
   memoryBits: Int = 512, axiIds: Int = 1, burstBeats: Int = 4,
-  scoreboardDepth: Int = 16, memoryInflight: Int = 32, translationIds: Int = 8, cacheLineBytes: Int = 32) {
+  scoreboardDepth: Int = 16, memoryInflight: Int = 16, translationIds: Int = 8, cacheLineBytes: Int = 32, paBits: Int = 34) {
   require(vlen >= 128 && vlen <= 4096 && isPow2(vlen))
   require(dlen >= 64 && dlen <= vlen && isPow2(dlen) && vlen % dlen == 0)
   require(lanes > 0 && dlen % lanes == 0 && dlen / lanes >= 8)
@@ -17,6 +17,9 @@ case class RvvParams(vlen: Int = 512, dlen: Int = 512, lanes: Int = 8,
   require(returnBytes % (memoryBits / 8) == 0 && returnBytes >= memoryBits / 8)
   require(axiIds == 1, "R02 uses one ID, with multiple ordered outstanding bursts")
   require(burstBeats > 0 && burstBeats <= 256 && translationIds >= 2)
+  require(paBits >= 32 && paBits <= 64)
+  val ageBits = log2Ceil(2*(viqDepth+scoreboardDepth+memoryInflight+translationIds+unitDepths.sum+5))
+  val ageLimit = (BigInt(1) << (ageBits-1))-1
   val rowBytes = dlen / 8
   val regBytes = vlen / 8
   val rowsPerReg = vlen / dlen
@@ -115,12 +118,21 @@ object RvvDecode {
   }
 }
 
+object RvvAge {
+  def older(a: UInt,b: UInt): Bool = (a-b).asSInt < 0.S
+}
+/** Only fields used after decode. The mounted issue interface remains RV64. */
+class RvvExecuteIssue(p: RvvParams) extends Bundle {
+  val rs1 = UInt(64.W); val vl = UInt(p.lengthBits.W)
+  val vtype = UInt(8.W); val vstart = UInt(p.lengthBits.W)
+  val vxrm = UInt(2.W); val frm = UInt(3.W); val rd = UInt(5.W)
+}
 class RvvDescriptor(p: RvvParams) extends Bundle {
-  val issue = new RvvIssue(p)
+  val issue = new RvvExecuteIssue(p)
   val decoded = new RvvDecoded(p)
-  val age = UInt(64.W)
+  val age = UInt(p.ageBits.W)
   val slot = UInt(p.slotBits.W)
-  val pa = Vec(2, UInt(64.W))
+  val pa = Vec(2, UInt(p.paBits.W))
   val length = Vec(2, UInt(p.lengthBits.W))
 }
 class RvvVerdict(p: RvvParams) extends Bundle {

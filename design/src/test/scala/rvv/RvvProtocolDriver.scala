@@ -76,6 +76,8 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private var scalarGap=0
   private var nextIssueAge=0L
   private val acceptedAges=mutable.Map.empty[Int,Long]
+  private val wireAgeToLogical=mutable.Map.empty[Long,Long]
+  private def logicalAge(wire: BigInt): Long = wireAgeToLogical(wire.toLong)
   private val ageToRecord=mutable.Map.empty[Long,Int]
   private val liveLoads=mutable.Set.empty[Long]
   private var peakLiveLoads=0
@@ -263,7 +265,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       }
       if(tr.nonEmpty) translations -= tr.get
       if(bool(dut.io.loadRegisterComplete.valid)) {
-        val age=uint(dut.io.loadRegisterComplete.bits.age).toLong
+        val age=logicalAge(uint(dut.io.loadRegisterComplete.bits.age))
         val reg=uint(dut.io.loadRegisterComplete.bits.register).toInt
         loadRegisterDone((age,reg))=cycle
         val record=fixture.records(ageToRecord(age))
@@ -271,13 +273,14 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         if(reg==lastReg) liveLoads-=age
       }
       if(bool(dut.io.macRead.valid)) {
-        val key=(uint(dut.io.macRead.bits.age).toLong,uint(dut.io.macRead.bits.register).toInt)
+        val key=(logicalAge(uint(dut.io.macRead.bits.age)),uint(dut.io.macRead.bits.register).toInt)
         if(!macRegisterRead.contains(key)) macRegisterRead(key)=cycle
       }
-      if(bool(dut.io.macComplete.valid)) macCompleted(uint(dut.io.macComplete.bits).toLong)=cycle
+      if(bool(dut.io.macComplete.valid)) macCompleted(logicalAge(uint(dut.io.macComplete.bits)))=cycle
       if(scalarGap>0) scalarGap-=1
       if(accepted) {
         if(fixture.records(cursor).label=="zero-acc") kernelFirstIssue=cycle
+        wireAgeToLogical(nextIssueAge & ((1L << p.ageBits)-1))=nextIssueAge
         acceptedAges(cursor)=nextIssueAge; ageToRecord(nextIssueAge)=cursor; nextIssueAge+=1
         pending += Pending(cursor); cursor+=1
         // One scalar lw placeholder between a GEMV weight load and its dot.

@@ -7,6 +7,7 @@ import org.scalatest.freespec.AnyFreeSpec
 class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
   private val p=RvvParams(viqDepth=4,translationIds=2)
   private def initialize(d: RvvFrontend): Unit = {
+    d.io.externalAgeAllowed.poke(true.B)
     d.io.issue.valid.poke(false.B); d.io.verdict.ready.poke(false.B)
     d.io.commit.poke(false.B); d.io.kill.poke(false.B); d.io.serialGo.poke(false.B)
     d.io.translation.ready.poke(true.B); d.io.translated.valid.poke(false.B)
@@ -162,6 +163,49 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
       d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B)
       d.io.scalarConflict.expect(true.B); d.clock.step(1)
       d.io.commit.poke(false.B); d.io.scalarConflict.expect(true.B)
+    }
+  }
+  "an orphan translation age prevents wrap alias until its late response drains" in {
+    simulate(new RvvFrontend(p)) { d =>
+      initialize(d); issue(d); val orphan=request(d)
+      d.io.kill.poke(true.B); d.clock.step(1); d.io.kill.poke(false.B)
+      var issued=0
+      while(d.io.issue.ready.peek().litToBoolean && issued < (1 << p.ageBits)) {
+        issue(d,BigInt("5e05c257",16),vl=1)
+        d.io.kill.poke(true.B); d.clock.step(1); d.io.kill.poke(false.B)
+        issued+=1
+      }
+      assert(issued==p.ageLimit.toInt-1,"must stop before the orphan age reaches half-range")
+      d.io.issue.ready.expect(false.B)
+      response(d,orphan,BigInt("a0000000",16))
+      d.io.issue.ready.expect(true.B)
+      for(_ <- 0 until (1 << p.ageBits)) {
+        issue(d,BigInt("5e05c257",16),vl=1)
+        d.io.kill.poke(true.B); d.clock.step(1); d.io.kill.poke(false.B)
+      }
+      issue(d); val fresh=request(d)
+      response(d,fresh,BigInt("90000ff0",16))
+      val second=request(d); response(d,second,BigInt("94000000",16)); verdict(d,0)
+    }
+  }
+  "a two-entry LUTRAM VIQ reserves commits across simultaneous kill and backpressure" in {
+    simulate(new RvvFrontend(RvvParams(viqDepth=2,translationIds=2))) { d =>
+      initialize(d)
+      issue(d,BigInt("5e05c257",16),vl=1); issue(d,BigInt("5e05c257",16),vl=1)
+      d.io.issue.ready.expect(false.B); verdict(d,0)
+      d.io.verdict.ready.poke(true.B); d.clock.step(1); d.io.verdict.ready.poke(false.B)
+      d.io.commit.poke(true.B)
+      d.io.kill.poke(true.B); d.clock.step(1)
+      d.io.verdict.ready.poke(false.B); d.io.commit.poke(false.B); d.io.kill.poke(false.B)
+      d.io.dispatch.valid.expect(true.B); d.io.dispatch.bits.age.expect(0.U)
+      d.io.issue.ready.expect(true.B)
+      issue(d,BigInt("5e05c257",16),vl=1); verdict(d,0)
+      d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B); d.clock.step(1)
+      d.io.verdict.ready.poke(false.B); d.io.commit.poke(false.B)
+      d.io.issue.ready.expect(false.B); d.clock.step(3); d.io.issue.ready.expect(false.B)
+      d.io.dispatch.bits.age.expect(0.U); d.io.dispatch.ready.poke(true.B); d.clock.step(1)
+      d.io.dispatch.bits.age.expect(2.U); d.io.issue.ready.expect(true.B)
+      d.clock.step(1); d.io.dispatch.valid.expect(false.B); d.io.empty.expect(true.B)
     }
   }
 }
