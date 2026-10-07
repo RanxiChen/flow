@@ -141,7 +141,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       dut.io.commit.poke(false.B); dut.io.killUncommitted.poke(false.B)
       val kill=injectKills && randomize && pending.nonEmpty && rng.nextInt(35)==0
       dut.io.killUncommitted.poke(kill.B)
-      val setupBarrier= !randomize && cursor<fixture.records.size && fixture.records(cursor).label=="zero-acc" && !bool(dut.io.drained)
+      val setupBarrier= !randomize && cursor<fixture.records.size && Set("zero-acc","p6-dot-0")(fixture.records(cursor).label) && !bool(dut.io.drained)
       val issue=cursor<fixture.records.size && !kill && scalarGap==0 && !setupBarrier && (!randomize || rng.nextInt(3)!=0)
       dut.io.issue.valid.poke(issue.B)
       if(issue) pokeIssue(fixture.records(cursor))
@@ -302,7 +302,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(bool(dut.io.macComplete.valid)) macCompleted(logicalAge(uint(dut.io.macComplete.bits)))=cycle
       if(scalarGap>0) scalarGap-=1
       if(accepted) {
-        if(fixture.records(cursor).label=="zero-acc") kernelFirstIssue=cycle
+        if(Set("zero-acc","p6-dot-0")(fixture.records(cursor).label)) kernelFirstIssue=cycle
         wireAgeToLogical(nextIssueAge & ((1L << p.ageBits)-1))=nextIssueAge
         acceptedAges(cursor)=nextIssueAge; ageToRecord(nextIssueAge)=cursor; nextIssueAge+=1
         pending += Pending(cursor); cursor+=1

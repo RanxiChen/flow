@@ -8,7 +8,6 @@ r = importlib.util.module_from_spec(s); s.loader.exec_module(r)
 
 def chain():
     p=r.Program(0x523034)
-    p.emit(r.vector(23,16,0,11,4),2,2,64,scalar=0,label='p6-zero')
     for i in range(16):
         p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=0x817fff01+i,label=f'p6-dot-{i}')
     return p
