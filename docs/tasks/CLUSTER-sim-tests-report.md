@@ -412,7 +412,8 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 
 ### 版本、裁定与环境
 
-- 本轮起点/被测 SHA：`cc60ebf659625ccc874a1eea8e33e866981fb1e3`，本地提交通过 GitHub 同步到 cloud_chen。
+- 本轮起点及 01—06 被测 SHA：`cc60ebf659625ccc874a1eea8e33e866981fb1e3`，本地提交通过 GitHub 同步到 cloud_chen。
+- 测试修正后的最终被测 SHA：`62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`（07 定向、08 全量）；报告提交只更新文档，不能替代被测源码 SHA。
 - 本轮预检实际主机：`cloud_chen@47.111.104.2:22`；免密 SSH、Flow 环境、GitHub loopback 反向代理、29 GiB 可用内存、141 GiB 可用磁盘通过检查，无其他仿真任务。
 - cwd：`/home/cloud_chen/work/flow-cluster-20261007/design`；本轮证据根：`/home/cloud_chen/evidence/cluster-round2-20261007-cc60ebf/`，首轮归档保留。
 - R1 裁定：MMU idle 包含 I/D 查询 S1；T20 不变，按新 idle 计算首次 SFENCE 允许拍。已有 TLB 排空断言保留；新增 T18 检查两侧 S1、kill 当拍与下一拍 idle。
@@ -431,9 +432,9 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 | 5 | `sbt "testOnly flow.cluster.ClusterProgramSpec"` | 4/4 测试组，25/25 次程序 PASS | 0 | `05-program.log` |
 | 6 | `sbt test` | 408/410，2 失败 | 1 | `06-full.log` |
 | 7 | 修正后 `sbt "testOnly flow.core.BreezePrivilegeSpec"` | 19/19 | 0 | 新证据根 `07-privilege.log` |
-| 8 | 修正后 `sbt test` | 执行中 | 待定 | 新证据根 `08-full.log` |
+| 8 | 修正后 `sbt test` | 410/410，57 suite 全部完成 | 0 | 新证据根 `08-full.log` |
 
-直接门槛、模块/配置、单核系统、ISA 与自写程序均已通过。首次全量暴露两个未同步 R2 的旧 CSR 测试；按裁定修正后该 suite 19/19 通过。最终提交全量正在重跑，不把定向通过当作全量通过。
+直接门槛、模块/配置、单核系统、ISA 与自写程序均已通过。首次全量暴露两个未同步 R2 的旧 CSR 测试；按裁定修正后该 suite 19/19 通过。最终提交全量 410/410、exit 0，确认两个旧测试问题已修正，其他 suite 未回退。
 
 ### R1/R2 四个失败转为 PASS
 
@@ -519,7 +520,7 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 
 本地修正提交 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103` 仅修改 `BreezePrivilegeSpec.scala`：两个 4096 地址扫描保留；原有六个 OpenSBI 探测地址保留，五个无关扩展仍要求非法，tselect 改为明确的合法读零检查；补充 tdata1/tdata2 合法读零及 tdata3/tinfo/tcontrol 非法检查；在既有 S/U 切换用例中分别检查三个 M-only CSR 被拒绝。依据来自显式 R2 裁定，不是放宽未定义行为，不改 RTL、冻结文件或 expectedUnsupported。
 
-修正通过 GitHub 传递；独立证据根 `/home/cloud_chen/evidence/cluster-round2-20261007-62ceea9/`。后台 `followup.sh` 等首轮全量进程结束、exit 和归档完成后，核对旧 SHA/干净工作区/冻结检查，再同步准确新 SHA，并执行 `sbt "testOnly flow.core.BreezePrivilegeSpec"`，结果写 `07-privilege.*`。已保存实际首次全量失败证据，修正后定向 suite 为 19/19、exit 0；源码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，冻结检查 7/7，tracked 工作区干净。
+修正通过 GitHub 传递；独立证据根 `/home/cloud_chen/evidence/cluster-round2-20261007-62ceea9/`。后台 `followup.sh` 等本轮首次全量进程结束、exit 和归档完成后，核对旧 SHA/干净工作区/冻结检查，再同步准确新 SHA，并执行 `sbt "testOnly flow.core.BreezePrivilegeSpec"`，结果写 `07-privilege.*`。已保存实际首次全量失败证据，修正后定向 suite 为 19/19、exit 0；源码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，冻结检查 7/7，tracked 工作区干净。
 
 
 首次全量实际失败信息：
@@ -531,65 +532,85 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 
 ### 全量逐 suite
 
-最终源代码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，相较起点仅追加报告并同步一个 CSR 测试文件，全部 RTL、其他测试及冻结文件不变。2026-10-07 19:13 在重新读取主机配置、核对 cloud_chen 环境/版本/准确 SHA/干净工作区以及约 24 GiB 可用内存、90 GiB 可用磁盘后，启动后台 `final-full.sh`。`08-full.*` 单独记录最终提交的完整回归，前后核对冻结检查；失败不改检查或自行修改代码。最终结果待定。
+最终源代码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，相较起点仅追加报告并同步一个 CSR 测试文件，全部 RTL、其他测试及冻结文件不变。2026-10-07 19:13 在重新读取主机配置、核对 cloud_chen 环境/版本/准确 SHA/干净工作区以及约 24 GiB 可用内存、90 GiB 可用磁盘后，启动后台 `final-full.sh`。`08-full.*` 单独记录最终提交的完整回归，前后核对冻结检查；失败不改检查或自行修改代码。最终全量于 20:38:28 完成：57 suite、410/410 通过，0 failed/aborted/canceled/ignored/pending，exit 0，实际 sbt 耗时 5066 秒。前后冻结检查均 OK (7 files)，被测前后 HEAD 均为上述 SHA，tracked 工作区干净。逐 suite XML 仅统计本次开始时间之后、命令为全量 test 的结果；日志总数与 XML 汇总一致。
 
 | suite | cc60ebf 首次全量通过/总数 | 62ceea9 最终全量通过/总数 |
 | --- | --- | --- |
-| `flow.backend.BackendBehaviorSpec` | 16/16 | 待定 |
-| `flow.backend.BackendContractSpec` | 39/39 | 待定 |
-| `flow.backend.HpmSpec` | 1/1 | 待定 |
-| `flow.backend.MduBoundarySpec` | 3/3 | 待定 |
-| `flow.backend.MduTimingSpec` | 3/3 | 待定 |
-| `flow.backend.ScoreboardSpec` | 3/3 | 待定 |
-| `flow.backend.TraceProtocolSpec` | 2/2 | 待定 |
-| `flow.backend.WritebackSpec` | 2/2 | 待定 |
-| `flow.cache.BreezeAmoAluSpec` | 2/2 | 待定 |
-| `flow.cache.BreezeParallelLookupSpec` | 1/1 | 待定 |
-| `flow.cache.L1ICacheSpec` | 3/3 | 待定 |
-| `flow.cluster.ClusterIsaSpec` | 8/8 | 待定 |
-| `flow.cluster.ClusterProgramSpec` | 4/4 | 待定 |
-| `flow.config.BreezeCoreConfigSpec` | 8/8 | 待定 |
-| `flow.core.BreezeCsrPipelineSpec` | 2/2 | 待定 |
-| `flow.core.BreezePrivilegeSpec` | 17/19 | 待定 |
-| `flow.core.BreezeRegisterStorageSpec` | 2/2 | 待定 |
-| `flow.core.CSRFileSpec` | 7/7 | 待定 |
-| `flow.core.MulDecodeSpec` | 1/1 | 待定 |
-| `flow.core.RegFileSpec` | 1/1 | 待定 |
-| `flow.divider.DivProtocolSpec` | 2/2 | 待定 |
-| `flow.divider.DivUnitSpec` | 1/1 | 待定 |
-| `flow.divider.UnsignedRadix4DividerSpec` | 2/2 | 待定 |
-| `flow.fase.FlightRecorderSpec` | 1/1 | 待定 |
-| `flow.fpu.BreezeFpDecoderSpec` | 2/2 | 待定 |
-| `flow.fpu.FpUnitSpec` | 5/5 | 待定 |
-| `flow.frontend.BreezeBTBSpec` | 2/2 | 待定 |
-| `flow.frontend.BreezeCompressedDecoderSpec` | 1/1 | 待定 |
-| `flow.frontend.BreezeFrontendFE001Spec` | 1/1 | 待定 |
-| `flow.frontend.BreezeFrontendFE002Spec` | 1/1 | 待定 |
-| `flow.frontend.BreezeFrontendGShareSpec` | 4/4 | 待定 |
-| `flow.frontend.BreezeFrontendSpec` | 2/2 | 待定 |
-| `flow.frontend.BreezeInstrRealignerSpec` | 3/3 | 待定 |
-| `flow.frontend.BreezePHTSpec` | 3/3 | 待定 |
-| `flow.frontend.MiniDecodeSpec` | 1/1 | 待定 |
-| `flow.memsys.L1DCacheSpec` | 39/39 | 待定 |
-| `flow.memsys.L1DL2LitmusSpec` | 14/14 | 待定 |
-| `flow.memsys.L1DL2MultiCoreFaultSpec` | 20/20 | 待定 |
-| `flow.memsys.L1DL2MultiCoreSpec` | 21/21 | 待定 |
-| `flow.memsys.L1DL2SystemSpec` | 12/12 | 待定 |
-| `flow.memsys.L1DPermissionsSpec` | 5/5 | 待定 |
-| `flow.memsys.L1IClientSpec` | 2/2 | 待定 |
-| `flow.memsys.L2HomeSpec` | 12/12 | 待定 |
-| `flow.memsys.MemAgentsSpec` | 10/10 | 待定 |
-| `flow.memsys.MemSkeletonElabSpec` | 37/37 | 待定 |
-| `flow.memsys.MemoryBridgeSpec` | 3/3 | 待定 |
-| `flow.mmu.BreezeMmuAdSpec` | 5/5 | 待定 |
-| `flow.mmu.BreezeMmuSpec` | 5/5 | 待定 |
-| `flow.mmu.BreezeParallelTranslatorSpec` | 2/2 | 待定 |
-| `flow.mmu.BreezePmpSharingSpec` | 1/1 | 待定 |
-| `flow.mmu.sv39.Sv39MmuSpec` | 17/17 | 待定 |
-| `flow.mmu.sv39.Sv39StructuresSpec` | 13/13 | 待定 |
-| `flow.multiplier.MulEquivalenceSpec` | 1/1 | 待定 |
-| `flow.multiplier.MulProtocolSpec` | 4/4 | 待定 |
-| `flow.multiplier.MulUnitSpec` | 2/2 | 待定 |
-| `flow.multiplier.SignedMul65x65Spec` | 22/22 | 待定 |
-| `flow.platform.BreezeLinuxPmaSpec` | 5/5 | 待定 |
-| **总计** | **408/410，exit 1** | **待定** |
+| `flow.backend.BackendBehaviorSpec` | 16/16 | 16/16 |
+| `flow.backend.BackendContractSpec` | 39/39 | 39/39 |
+| `flow.backend.HpmSpec` | 1/1 | 1/1 |
+| `flow.backend.MduBoundarySpec` | 3/3 | 3/3 |
+| `flow.backend.MduTimingSpec` | 3/3 | 3/3 |
+| `flow.backend.ScoreboardSpec` | 3/3 | 3/3 |
+| `flow.backend.TraceProtocolSpec` | 2/2 | 2/2 |
+| `flow.backend.WritebackSpec` | 2/2 | 2/2 |
+| `flow.cache.BreezeAmoAluSpec` | 2/2 | 2/2 |
+| `flow.cache.BreezeParallelLookupSpec` | 1/1 | 1/1 |
+| `flow.cache.L1ICacheSpec` | 3/3 | 3/3 |
+| `flow.cluster.ClusterIsaSpec` | 8/8 | 8/8 |
+| `flow.cluster.ClusterProgramSpec` | 4/4 | 4/4 |
+| `flow.config.BreezeCoreConfigSpec` | 8/8 | 8/8 |
+| `flow.core.BreezeCsrPipelineSpec` | 2/2 | 2/2 |
+| `flow.core.BreezePrivilegeSpec` | 17/19 | 19/19 |
+| `flow.core.BreezeRegisterStorageSpec` | 2/2 | 2/2 |
+| `flow.core.CSRFileSpec` | 7/7 | 7/7 |
+| `flow.core.MulDecodeSpec` | 1/1 | 1/1 |
+| `flow.core.RegFileSpec` | 1/1 | 1/1 |
+| `flow.divider.DivProtocolSpec` | 2/2 | 2/2 |
+| `flow.divider.DivUnitSpec` | 1/1 | 1/1 |
+| `flow.divider.UnsignedRadix4DividerSpec` | 2/2 | 2/2 |
+| `flow.fase.FlightRecorderSpec` | 1/1 | 1/1 |
+| `flow.fpu.BreezeFpDecoderSpec` | 2/2 | 2/2 |
+| `flow.fpu.FpUnitSpec` | 5/5 | 5/5 |
+| `flow.frontend.BreezeBTBSpec` | 2/2 | 2/2 |
+| `flow.frontend.BreezeCompressedDecoderSpec` | 1/1 | 1/1 |
+| `flow.frontend.BreezeFrontendFE001Spec` | 1/1 | 1/1 |
+| `flow.frontend.BreezeFrontendFE002Spec` | 1/1 | 1/1 |
+| `flow.frontend.BreezeFrontendGShareSpec` | 4/4 | 4/4 |
+| `flow.frontend.BreezeFrontendSpec` | 2/2 | 2/2 |
+| `flow.frontend.BreezeInstrRealignerSpec` | 3/3 | 3/3 |
+| `flow.frontend.BreezePHTSpec` | 3/3 | 3/3 |
+| `flow.frontend.MiniDecodeSpec` | 1/1 | 1/1 |
+| `flow.memsys.L1DCacheSpec` | 39/39 | 39/39 |
+| `flow.memsys.L1DL2LitmusSpec` | 14/14 | 14/14 |
+| `flow.memsys.L1DL2MultiCoreFaultSpec` | 20/20 | 20/20 |
+| `flow.memsys.L1DL2MultiCoreSpec` | 21/21 | 21/21 |
+| `flow.memsys.L1DL2SystemSpec` | 12/12 | 12/12 |
+| `flow.memsys.L1DPermissionsSpec` | 5/5 | 5/5 |
+| `flow.memsys.L1IClientSpec` | 2/2 | 2/2 |
+| `flow.memsys.L2HomeSpec` | 12/12 | 12/12 |
+| `flow.memsys.MemAgentsSpec` | 10/10 | 10/10 |
+| `flow.memsys.MemSkeletonElabSpec` | 37/37 | 37/37 |
+| `flow.memsys.MemoryBridgeSpec` | 3/3 | 3/3 |
+| `flow.mmu.BreezeMmuAdSpec` | 5/5 | 5/5 |
+| `flow.mmu.BreezeMmuSpec` | 5/5 | 5/5 |
+| `flow.mmu.BreezeParallelTranslatorSpec` | 2/2 | 2/2 |
+| `flow.mmu.BreezePmpSharingSpec` | 1/1 | 1/1 |
+| `flow.mmu.sv39.Sv39MmuSpec` | 17/17 | 17/17 |
+| `flow.mmu.sv39.Sv39StructuresSpec` | 13/13 | 13/13 |
+| `flow.multiplier.MulEquivalenceSpec` | 1/1 | 1/1 |
+| `flow.multiplier.MulProtocolSpec` | 4/4 | 4/4 |
+| `flow.multiplier.MulUnitSpec` | 2/2 | 2/2 |
+| `flow.multiplier.SignedMul65x65Spec` | 22/22 | 22/22 |
+| `flow.platform.BreezeLinuxPmaSpec` | 5/5 | 5/5 |
+| **总计** | **408/410，exit 1** | **410/410，exit 0** |
+
+
+### 第二轮最终 expectedUnsupported 与边界
+
+`ClusterIsaSpec.scala` 未修改；列表保持原来的四个程序名：
+
+- `rv64ui-p-ma_data`：L1D misaligned cause 4/6 与 MMU closure C2 规定非对齐访问 trap，要求 tohost=`1 | 1337`（0x539）。本轮三次运行均达到指定结束值。
+- `rv64ua-p-amocas_w`、`rv64ua-p-amocas_d`、`rv64ua-p-amocas_q`：InstDecode 未实现 Zacas，若有 ELF 必须到达 tohost 非 1 且 `(value & 1337) == 1337`。当前三个 ELF 因工具链不支持 Zacas 未构建，按 NOT_BUILT 明确报告，未视为 DUT PASS。
+
+breakpoint 未加入列表，实际必须且已经 tohost=1。所有程序、原有扫描、断言、golden、反压和看门狗检查保留。R1 的冻结修订仅来自 Claude 起点提交；本轮测试修正未触及冻结文件或 `L1DCoreIO`。
+
+
+### 最终复核与仍失败/未运行项
+
+- 最终 `62ceea9` 全量再次包含 ClusterIsaSpec 8/8、ClusterProgramSpec 4/4；四个 R1/R2 目标程序均 tohost=1，周期仍分别为 illegal 4701、dirty 2892、icache-alias 3187、breakpoint 1934。
+- 最终完整 ISA 的 238 次实际执行、逐程序 cycles/retired/tohost 及 6 次 NOT_BUILT 清单保存在最终证据根 `isa-results.json`：235 次普通 PASS，3 次 ma_data 达到指定 0x539，0 次非预期失败。
+- 最终全量中的 25 次自写程序均 PASS，逐程序 cycles、retired、hart 结果与上面的首次独立程序表逐项一致；结构化结果另存最终证据根 `program-results.json`。控制台、AXI、oracle、断言和看门狗均按原检查执行。
+- 最终证据根 `full-results.json` 为 57 个 suite/410 个测试的结构化结果；`08-full-reports/` 保留原始 XML，`08-full.sha`、`final-source.sha` 均为最终被测 SHA，`final-source.status` 为空，冻结前后检查均 7/7。
+- 没有仍失败的已执行测试，没有遗漏任务要求的命令。三个 Zacas ELF 仍 NOT_BUILT；ma_data 的三次指定 trap 结束仍属于原有 expectedUnsupported，不算普通程序 PASS。
+- 本轮新增修复只有 R2 旧 CSR 测试同步，未再修改 RTL/规格/冻结文件或 L1DCoreIO。起点中的 R1/R2 RTL 与规格修订由 Claude 提供，已按本任务顺序验证；首轮报告保留不变。
