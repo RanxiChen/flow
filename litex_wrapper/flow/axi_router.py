@@ -8,6 +8,7 @@ import json
 import os
 
 from migen import Array, Cat, Constant, FSM, If, Module, NextState, NextValue, Signal
+from litex.soc.integration.soc import SoCRegion
 from litex.soc.interconnect import axi, wishbone
 
 
@@ -117,6 +118,17 @@ class BreezeAxiRouter(Module):
             If(master.b.ready, NextState("IDLE")))
 
 
+class ZeroBootRom(Module):
+    """Read-only zero content without an empty inferred block RAM."""
+    def __init__(self, data_width, address_width):
+        self.bus = wishbone.Interface(data_width=data_width,
+            address_width=address_width, addressing='word')
+        active = self.bus.cyc & self.bus.stb
+        self.comb += [self.bus.dat_r.eq(0),
+                      self.bus.ack.eq(active & ~self.bus.we),
+                      self.bus.err.eq(active & self.bus.we)]
+
+
 def add_inactive_boot_rom(soc, root=None):
     """Back both frozen cacheable ROM windows. The unused window is zero ROM.
 
@@ -127,7 +139,11 @@ def add_inactive_boot_rom(soc, root=None):
     regions = platform_regions(root)
     name = "boot_rom" if soc.cpu.privilege_profile == "linux" else "linux_boot_rom"
     region = regions[name]
-    soc.add_rom(name=name, origin=region["origin"], size=region["size"], contents=[0])
+    rom = ZeroBootRom(soc.bus.data_width, soc.bus.address_width)
+    soc.add_module(name=name, module=rom)
+    soc.bus.add_slave(name=name, slave=rom.bus, region=SoCRegion(
+        origin=region['origin'], size=region['size'],
+        mode='r' + ('x' if region['executable'] else ''), cached=region['cacheable']))
 
 
 def check_soc_regions(soc, root=None):

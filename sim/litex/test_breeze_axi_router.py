@@ -7,10 +7,37 @@ from migen.sim import run_simulation
 from litex.soc.interconnect import axi
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../litex_wrapper')))
-from flow.axi_router import BreezeAxiRouter, platform_regions
+from flow.axi_router import BreezeAxiRouter, ZeroBootRom, platform_regions
 
 
 class BreezeAxiRouterTest(unittest.TestCase):
+    def test_inactive_zero_rom_completes_reads_and_rejects_writes(self):
+        dut = ZeroBootRom(data_width=64, address_width=32)
+        def stimulus():
+            yield
+            self.assertEqual((yield dut.bus.ack), 0)
+            self.assertEqual((yield dut.bus.err), 0)
+            yield dut.bus.cyc.eq(1)
+            yield dut.bus.stb.eq(1)
+            for address in (0, 1, platform_regions()['boot_rom']['size'] // 8 - 1):
+                yield dut.bus.adr.eq(address)
+                yield
+                yield
+                self.assertEqual((yield dut.bus.dat_r), 0)
+                self.assertEqual((yield dut.bus.ack), 1)
+                self.assertEqual((yield dut.bus.err), 0)
+            yield dut.bus.we.eq(1)
+            yield
+            yield
+            self.assertEqual((yield dut.bus.ack), 0)
+            self.assertEqual((yield dut.bus.err), 1)
+            yield dut.bus.cyc.eq(0)
+            yield
+            yield
+            self.assertEqual((yield dut.bus.ack), 0)
+            self.assertEqual((yield dut.bus.err), 0)
+        run_simulation(dut, stimulus())
+
     def run_case(self, scenario):
         master = axi.AXIInterface(data_width=64, address_width=32, id_width=1)
         dut = BreezeAxiRouter(master)
