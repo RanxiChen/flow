@@ -8,7 +8,7 @@
 
 Alan独立clone `/home/chen/FUN/flow-rvv-r03-20261007`，证据根 `/home/chen/FUN/flow-r03-evidence`；本地仅编辑/提交/push。工具：Vivado2022.2 Build3671981、Verilator5.028、Java11、工程sbt1.9.7、Chisel7。所有构建/仿真/Spike/Vivado使用nice10；Java、MAKEFLAGS和Vivado并行上限4；综合CPU0–3、仿真CPU4–7，最多8/20核。无形式化、无新增FP或串行指令、无测试标签进入RTL。
 
-新增未跟踪 `AGENTS.md` 和共享 `docs/cross-project/simulation-host.md` 已读取，cloud_chen SSH/环境/工具/资源预检通过；本任务用户明确指定Alan，因此继续使用Alan独立工作区。共享配置在启动批次前重读，未修改该配置或未跟踪文件。Alan余约20GiB，所有证据保留，不清理他人目录/进程。
+新增未跟踪 `AGENTS.md` 和共享 `docs/cross-project/simulation-host.md` 已读取，cloud_chen SSH/环境/工具/资源预检通过；已完成的C1/C2/C3/P及RTL生成均在Alan独立工作区，实际主机已记录。用户随后明确要求优先cloud_chen，后续仿真将重读配置并优先使用cloud_chen，Vivado仍使用Alan；不迁移已完成的验证证据。未修改共享配置或未跟踪文件。Alan余约20GiB，所有证据保留，不清理他人目录/进程。
 
 Alan直连GitHub曾发生GnuTLS中断；只终止本任务的失败Git进程。后续每段先push、`git ls-remote`核对GitHub准确SHA，再生成要求Alan已有前一HEAD的增量bundle，scp后 `git fetch bundle refs/heads/feat/rvv-20261005`、`git merge --ff-only FETCH_HEAD`。没有传未提交源文件。综合输入由同SHA C1输出冻结，保存RTL/Tcl/XDC哈希和完整日志，后续checkout不影响在跑的候选。
 
@@ -60,7 +60,7 @@ v0影子静态索引项未采用：默认rowsPerReg=1时原索引可静态化，
 | C2 | `taskset -c 4-7 bash rvv/r03/run-c2.sh .../control/c2` | 0；前端8/8、VRF1/1、Spike种子0–7、R03机制3/3 |
 | C3 | `taskset -c 4-7 bash rvv/r02/run-c3.sh .../final/c3` | 0；种子0–999，1000/1000；插件10675条；参考全部重新生成 |
 | P1–P5 | `taskset -c 4-7 bash rvv/r02/run-performance.sh .../final/performance` | 测量脚本退出0不代表性能阈值通过；下表逐条判断 |
-| S1 | `taskset -c 0-3 bash rvv/r03/run-s1.sh .../final/s1` | control候选148c267，最终S1待完成；源码/输入哈希及原报告绑定 |
+| S1 | `taskset -c 0-3 bash rvv/r03/run-s1.sh .../final/s1` | 0；LUT≤77k、WNS≥0、VRF LUTRAM=0通过；源码/输入哈希及原报告绑定 |
 | S2 | `taskset -c 0-3 bash rvv/r03/run-s2.sh .../final/s1 .../final/s2` | 仍在执行；尚无布线后时序/资源结论。 |
 
 P表（数据源 `final-performance`；最终P完成后以最终重跑目录为准）：所有组Spike最终状态正确，224/223对完整，最终B时/总drain时缓冲均0字节。
@@ -75,7 +75,7 @@ P表（数据源 `final-performance`；最终P完成后以最终重跑目录为�
 
 ## S1资源预算与最差10路径
 
-control候选148c267，最终S1待完成：LUT **46719**（LUTRAM 564）、FF 15599、DSP 154、RAMB36/RAMB18=199/1，WNS **+0.107ns**。VRF LUTRAM=0、192 RAMB36（24组各8）实际映射成立。FP尚未实现，其20k预算留出。
+最终S1：LUT **46719**（LUTRAM 564）、FF 15599、DSP 154、RAMB36/RAMB18=199/1，WNS **+0.107ns**。VRF LUTRAM=0、192 RAMB36（24组各8）实际映射成立。FP尚未实现，其20k预算留出。
 
 | 部件（原始层级归属） | LUT预算 | R02 Runtime LUT | 本次LUT | LUTRAM | FF | DSP | BRAM36/18 | 判断 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |

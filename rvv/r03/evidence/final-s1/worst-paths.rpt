@@ -1,0 +1,1037 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 17:17:28 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r03-evidence/final/s1/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_0/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_0/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_0/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[45]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[45]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[45]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[45]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[45]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__1_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_1/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_1/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_1/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_1/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_1/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_1/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_1/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_1/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_1_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_0_i_3197/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_0_i_3197_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_0_i_3042_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_0_i_3029_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_0_i_3037_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_0_i_2835_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_0_i_2838_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_0_i_2620_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in3_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_0_i_2240_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_0_i_1121_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_0_i_1070/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]043_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_0_i_574/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_0_i_574_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_0_i_207/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[61]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_0_i_40__0/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[61]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_0/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_1/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_1/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_1/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_1/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[109]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[109]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[109]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[109]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[109]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__5_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_3/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_3/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_3/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_3/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_3/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_3/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_3/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_3/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_3_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_1_i_2649/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_1_i_2649_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_1_i_2606/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_1_i_2606_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_1_i_2593/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_1_i_2593_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_1_i_2601/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_1_i_2601_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_1_i_2495/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_1_i_2495_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_1_i_2498/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_1_i_2498_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_1_i_2342/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_1_i_2342_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_1_i_2321/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in9_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_1_i_1977/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_1_i_1977_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_1_i_966/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_1_i_966_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_1_i_910/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]037_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_1_i_494/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_1_i_494_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_1_i_187/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[125]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_1_i_39/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[125]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_1/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_1
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_2/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_2/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_2/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_2/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[173]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[173]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[173]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[173]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[173]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__9_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_5/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_5/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_5/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_5/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_5/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_5/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_5/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_5/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_5/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_5/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_5/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_5/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_5_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_2_i_2673/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_2_i_2673_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_2_i_2630/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_2_i_2630_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_2_i_2617/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_2_i_2617_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_2_i_2625/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_2_i_2625_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_2_i_2515/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_2_i_2515_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_2_i_2518/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_2_i_2518_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_2_i_2355/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_2_i_2355_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_2_i_2334/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in15_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_2_i_1884/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_2_i_1884_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_2_i_944/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_2_i_944_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_2_i_882/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]031_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_2_i_454/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_2_i_454_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_2_i_178/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[189]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_2_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[189]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_2/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_2
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_3/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_3/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_3/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_3/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[237]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[237]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[237]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[237]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[237]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__13_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_7/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_7/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_7/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_7/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_7/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_7/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_7/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_7/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_7/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_7/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_7/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_7/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_7_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_3_i_2938/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_3_i_2938_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_3_i_2767/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_3_i_2767_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_3_i_2754/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_3_i_2754_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_3_i_2762/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_3_i_2762_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_3_i_2592/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_3_i_2592_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_3_i_2595/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_3_i_2595_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_3_i_2368/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_3_i_2368_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_3_i_2347/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in21_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_3_i_1915/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_3_i_1915_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_3_i_948/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_3_i_948_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_3_i_887/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]025_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_3_i_457/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_3_i_457_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_3_i_175/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[253]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_3_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[253]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_3/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_3
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_4/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_4/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_4/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_4/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[301]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[301]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[301]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[301]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[301]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__17_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_9/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_9/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_9/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_9/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_9/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_9/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_9/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_9/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_9/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_9/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_9/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_9/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_9_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_4_i_2668/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_4_i_2668_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_4_i_2625/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_4_i_2625_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_4_i_2612/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_4_i_2612_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_4_i_2620/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_4_i_2620_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_4_i_2530/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_4_i_2530_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_4_i_2533/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_4_i_2533_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_4_i_2323/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_4_i_2323_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_4_i_2302/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in27_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_4_i_1972/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_4_i_1972_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_4_i_941/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_4_i_941_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_4_i_880/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]019_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_4_i_454/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_4_i_454_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_4_i_176/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[317]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_4_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[317]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_4/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_5/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_5/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_5/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_5/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[365]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[365]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[365]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[365]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[365]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__21_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_11/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_11/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_11/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_11/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_11/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_11/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_11/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_11/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_11/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_11/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_11/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_11/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_11_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_5_i_2643/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_5_i_2643_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_5_i_2600/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_5_i_2600_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_5_i_2587/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_5_i_2587_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_5_i_2595/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_5_i_2595_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_5_i_2505/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_5_i_2505_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_5_i_2508/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_5_i_2508_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_5_i_2349/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_5_i_2349_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_5_i_2328/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in33_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_5_i_1993/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_5_i_1993_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_5_i_953/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_5_i_953_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_5_i_892/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]013_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_5_i_462/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_5_i_462_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_5_i_178/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[381]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_5_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[381]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_5/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_5
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_6/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_6/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_6/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_6/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[429]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[429]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[429]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[429]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[429]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__25_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_13/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_13/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_13/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_13/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_13/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_13/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_13/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_13/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_13/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_13/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_13/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_13/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_13_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_6_i_2747/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_6_i_2747_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_6_i_2704/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_6_i_2704_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_6_i_2691/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_6_i_2691_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_6_i_2699/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_6_i_2699_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_6_i_2529/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_6_i_2529_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_6_i_2532/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_6_i_2532_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_6_i_2326/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_6_i_2326_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_6_i_2305/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in39_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_6_i_1826/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_6_i_1826_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_6_i_938/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_6_i_938_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_6_i_877/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]07_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_6_i_453/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_6_i_453_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_6_i_175/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[445]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_6_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[445]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_6/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_7/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_0/memory_reg_7/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_7/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_7/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[493]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[493]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[493]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[493]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[493]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__29_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_15/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_15/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_15/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_15/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_15/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_15/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_15/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_15/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_15/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_15/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_15/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_15/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_15_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_7_i_2587/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_7_i_2587_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_7_i_2544/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_7_i_2544_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_7_i_2531/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_7_i_2531_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_7_i_2539/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_7_i_2539_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_7_i_2385/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_7_i_2385_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_7_i_2388/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_7_i_2388_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_7_i_2210/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_7_i_2210_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_7_i_2189/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in45_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_7_i_1767/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_7_i_1767_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_7_i_873/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_7_i_873_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_7_i_844/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]0[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_7_i_453/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_7_i_453_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_7_i_175/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[509]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_7_i_35/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_0/memory_reg_7_0[509]
+                         RAMB36E2                                     r  vrf/banks_0_0/memory_reg_7/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_0/memory_reg_7
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_0/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_1/memory_reg_0/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_0/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_0/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[45]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[45]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[45]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[45]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[45]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__1_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_1/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_1/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_1/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_1/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_1/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_1/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_1/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_1/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_1/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_1_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_0_i_3197/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_0_i_3197_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_0_i_3042/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_0_i_3042_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_0_i_3029/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_0_i_3029_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_0_i_3037/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_0_i_3037_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_0_i_2835/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_0_i_2835_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_0_i_2838/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_0_i_2838_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_0_i_2620/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_0_i_2620_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_0_i_2599/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in3_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_0_i_2240/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_0_i_2240_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_0_i_1121/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_0_i_1121_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_0_i_1070/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]043_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_0_i_574/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_0_i_574_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_0_i_207/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[61]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_0_i_40__0/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_1/memory_reg_7_0[61]
+                         RAMB36E2                                     r  vrf/banks_0_1/memory_reg_0/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_1/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+Slack (MET) :             0.107ns  (required time - arrival time)
+  Source:                 vrf/banks_2_3/memory_reg_1/CLKARDCLK
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_1/memory_reg_1/DINBDIN[29]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.549ns  (logic 6.094ns (63.818%)  route 3.455ns (36.182%))
+  Logic Levels:           23  (CARRY8=7 DSP_A_B_DATA=1 DSP_ALU=1 DSP_M_DATA=1 DSP_MULTIPLIER=1 DSP_OUTPUT=1 DSP_PREADD_DATA=1 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=4)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         RAMB36E2                     0.000     0.000 r  vrf/banks_2_3/memory_reg_1/CLKARDCLK
+                         RAMB36E2 (Prop_RAMB36E2_CLKARDCLK_DOUTBDOUT[13])
+                                                      1.252     1.252 f  vrf/banks_2_3/memory_reg_1/DOUTBDOUT[13]
+                         net (fo=1, unplaced)         0.348     1.600    vrf/_banks_2_3_readData[109]
+                         LUT6 (Prop_LUT6_I1_O)        0.176     1.776 f  vrf/heldOperands_1[109]_i_4/O
+                         net (fo=3, unplaced)         0.257     2.033    vrf/banks_3_3/_vrf_io_readData_3[109]
+                         LUT6 (Prop_LUT6_I0_O)        0.132     2.165 f  vrf/banks_3_3/heldOperands_0[109]_i_1__0/O
+                         net (fo=5, unplaced)         0.267     2.432    mac/heldOperands_0_reg[109]_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     2.472 f  mac/_GEN_10[1]0__5_i_19/O
+                         net (fo=5, unplaced)         0.314     2.786    mac/resultData_candidates_values_dotProducts_1_3/A[5]
+                         DSP_A_B_DATA (Prop_DSP_A_B_DATA_A[5]_A2_DATA[5])
+                                                      0.337     3.123 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_A_B_DATA_INST/A2_DATA[5]
+                         net (fo=1, unplaced)         0.000     3.123    mac/resultData_candidates_values_dotProducts_1_3/DSP_A_B_DATA.A2_DATA<5>
+                         DSP_PREADD_DATA (Prop_DSP_PREADD_DATA_A2_DATA[5]_A2A1[5])
+                                                      0.155     3.278 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_PREADD_DATA_INST/A2A1[5]
+                         net (fo=1, unplaced)         0.000     3.278    mac/resultData_candidates_values_dotProducts_1_3/DSP_PREADD_DATA.A2A1<5>
+                         DSP_MULTIPLIER (Prop_DSP_MULTIPLIER_A2A1[5]_V[5])
+                                                      0.871     4.149 f  mac/resultData_candidates_values_dotProducts_1_3/DSP_MULTIPLIER_INST/V[5]
+                         net (fo=1, unplaced)         0.000     4.149    mac/resultData_candidates_values_dotProducts_1_3/DSP_MULTIPLIER.V<5>
+                         DSP_M_DATA (Prop_DSP_M_DATA_V[5]_V_DATA[5])
+                                                      0.110     4.259 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_M_DATA_INST/V_DATA[5]
+                         net (fo=1, unplaced)         0.000     4.259    mac/resultData_candidates_values_dotProducts_1_3/DSP_M_DATA.V_DATA<5>
+                         DSP_ALU (Prop_DSP_ALU_V_DATA[5]_ALU_OUT[5])
+                                                      0.687     4.946 f  mac/resultData_candidates_values_dotProducts_1_3/DSP_ALU_INST/ALU_OUT[5]
+                         net (fo=1, unplaced)         0.000     4.946    mac/resultData_candidates_values_dotProducts_1_3/DSP_ALU.ALU_OUT<5>
+                         DSP_OUTPUT (Prop_DSP_OUTPUT_ALU_OUT[5]_P[5])
+                                                      0.193     5.139 r  mac/resultData_candidates_values_dotProducts_1_3/DSP_OUTPUT_INST/P[5]
+                         net (fo=1, unplaced)         0.420     5.559    mac/resultData_candidates_values_dotProducts_1_3_n_100
+                         LUT2 (Prop_LUT2_I1_O)        0.043     5.602 r  mac/memory_reg_1_i_2649/O
+                         net (fo=1, unplaced)         0.000     5.602    mac/memory_reg_1_i_2649_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     5.864 r  mac/memory_reg_1_i_2606/CO[7]
+                         net (fo=1, unplaced)         0.000     5.864    mac/memory_reg_1_i_2606_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     5.963 r  mac/memory_reg_1_i_2593/O[0]
+                         net (fo=2, unplaced)         0.249     6.212    mac/memory_reg_1_i_2593_n_15
+                         LUT2 (Prop_LUT2_I0_O)        0.040     6.252 r  mac/memory_reg_1_i_2601/O
+                         net (fo=1, unplaced)         0.000     6.252    mac/memory_reg_1_i_2601_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.379     6.631 r  mac/memory_reg_1_i_2495/O[5]
+                         net (fo=2, unplaced)         0.310     6.941    mac/memory_reg_1_i_2495_n_10
+                         LUT2 (Prop_LUT2_I0_O)        0.043     6.984 r  mac/memory_reg_1_i_2498/O
+                         net (fo=1, unplaced)         0.000     6.984    mac/memory_reg_1_i_2498_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[7])
+                                                      0.262     7.246 r  mac/memory_reg_1_i_2342/CO[7]
+                         net (fo=1, unplaced)         0.000     7.246    mac/memory_reg_1_i_2342_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.099     7.345 r  mac/memory_reg_1_i_2321/O[0]
+                         net (fo=1, unplaced)         0.249     7.594    mac/p_1_in9_out[16]
+                         LUT4 (Prop_LUT4_I1_O)        0.040     7.634 r  mac/memory_reg_1_i_1977/O
+                         net (fo=1, unplaced)         0.000     7.634    mac/memory_reg_1_i_1977_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.413     8.047 r  mac/memory_reg_1_i_966/CO[7]
+                         net (fo=1, unplaced)         0.000     8.047    mac/memory_reg_1_i_966_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     8.221 r  mac/memory_reg_1_i_910/O[5]
+                         net (fo=1, unplaced)         0.244     8.465    mac/_GEN_10[2]037_out[29]
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.536 r  mac/memory_reg_1_i_494/O
+                         net (fo=1, unplaced)         0.249     8.785    mac/memory_reg_1_i_494_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.825 r  mac/memory_reg_1_i_187/O
+                         net (fo=4, unplaced)         0.243     9.068    alu/_mac_io_write_bits_data[125]
+                         LUT6 (Prop_LUT6_I0_O)        0.176     9.244 r  alu/memory_reg_1_i_39/O
+                         net (fo=7, unplaced)         0.305     9.549    vrf/banks_0_1/memory_reg_7_0[125]
+                         RAMB36E2                                     r  vrf/banks_0_1/memory_reg_1/DINBDIN[29]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMB36E2 (Setup_RAMB36E2_CLKBWRCLK_DINBDIN[29])
+                                                     -0.309     9.656    vrf/banks_0_1/memory_reg_1
+  -------------------------------------------------------------------
+                         required time                          9.656    
+                         arrival time                          -9.549    
+  -------------------------------------------------------------------
+                         slack                                  0.107    
+
+
+
+
