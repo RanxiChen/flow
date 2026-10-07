@@ -107,7 +107,8 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
         CSRMAP.mstatus, CSRMAP.mie, CSRMAP.mtvec, CSRMAP.mcounteren,
         CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval, CSRMAP.mip,
         CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
-        CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2
+        CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2,
+        CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2
       ) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
         (0 until 8).flatMap(index => Seq(
           CSRMAP.mhpmcounter3 + index,
@@ -124,7 +125,7 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "reject OpenSBI extension probes and every unimplemented Linux CSR" in {
+  "check OpenSBI extension probes and reject every unimplemented Linux CSR" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)
 
@@ -141,7 +142,7 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
         CSRMAP.mcounteren, CSRMAP.mscratch, CSRMAP.mepc, CSRMAP.mcause, CSRMAP.mtval,
         CSRMAP.mip, CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time,
         CSRMAP.instret, CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0,
-        CSRMAP.pmpcfg2,
+        CSRMAP.pmpcfg2, CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2,
         CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
         CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval, CSRMAP.sip,
         CSRMAP.stimecmp, CSRMAP.satp
@@ -151,17 +152,25 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
           CSRMAP.hpmcounter3 + index,
           CSRMAP.mhpmevent3 + index))
 
-      val openSbiUnsupportedProbes = Seq(
-        0xfb0 -> "mtopi/Smaia",
-        0xda0 -> "scountovf/Sscofpmf",
-        0x30c -> "mstateen0/Smstateen",
-        0x10c -> "sstateen0/Ssstateen",
-        0x321 -> "mcyclecfg/Smcntrpmf",
-        0x7a0 -> "tselect/Sdtrig")
-      openSbiUnsupportedProbes.foreach { case (address, name) =>
+      // The R2 trigger contract exposes only these three M-mode CSRs, with
+      // zero reads and ignored writes. Other trigger CSRs remain illegal.
+      val openSbiProbes = Seq(
+        (0xfb0, "mtopi/Smaia", true),
+        (0xda0, "scountovf/Sscofpmf", true),
+        (0x30c, "mstateen0/Smstateen", true),
+        (0x10c, "sstateen0/Ssstateen", true),
+        (0x321, "mcyclecfg/Smcntrpmf", true),
+        (CSRMAP.tselect, "tselect/Sdtrig", false),
+        (CSRMAP.tdata1, "tdata1/Sdtrig", false),
+        (CSRMAP.tdata2, "tdata2/Sdtrig", false),
+        (0x7a3, "tdata3/Sdtrig", true),
+        (0x7a4, "tinfo/Sdtrig", true),
+        (0x7a5, "tcontrol/Sdtrig", true))
+      openSbiProbes.foreach { case (address, name, expectedIllegal) =>
         selectRead(dut, address)
         withClue(s"OpenSBI probe $name at 0x${address.toHexString}: ") {
-          dut.io.csr_illegal.peek().litValue mustBe 1
+          (dut.io.csr_illegal.peek().litValue != 0) mustBe expectedIllegal
+          if (!expectedIllegal) dut.io.csr_old_data.expect(0.U)
         }
       }
 
@@ -191,10 +200,20 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       mret(dut)
       dut.io.current_privilege.expect(PRIV_MODE.S.U)
 
+      for (address <- Seq(CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2)) {
+        selectRead(dut, address)
+        dut.io.csr_illegal.expect(true.B)
+      }
+
       commit(dut, CSRMAP.sepc, 0x2000)
       commit(dut, CSRMAP.sstatus, 0)
       sret(dut)
       dut.io.current_privilege.expect(PRIV_MODE.U.U)
+
+      for (address <- Seq(CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2)) {
+        selectRead(dut, address)
+        dut.io.csr_illegal.expect(true.B)
+      }
 
       selectRead(dut, CSRMAP.sstatus)
       dut.io.csr_illegal.expect(true.B)
