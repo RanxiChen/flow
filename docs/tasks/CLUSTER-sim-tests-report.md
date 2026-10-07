@@ -428,10 +428,12 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 | 2 | 原六 suite 模块/配置门槛 | 111/111 | 0 | `02-unit.log` |
 | 3 | `sbt "testOnly flow.memsys.L1DL2SystemSpec"` | 12/12 | 0 | `03-system.log` |
 | 4 | `sbt "testOnly flow.cluster.ClusterIsaSpec"` | 8/8 | 0 | `04-isa.log` |
-| 5 | `sbt "testOnly flow.cluster.ClusterProgramSpec"` | 已加入服务器后台队列 | 待定 | `05-program.log` |
-| 6 | `sbt test` | 等待自写程序结束，后台自动启动 | 待定 | `06-full.log` |
+| 5 | `sbt "testOnly flow.cluster.ClusterProgramSpec"` | 4/4 测试组，25/25 次程序 PASS | 0 | `05-program.log` |
+| 6 | `sbt test` | 408/410，2 失败 | 1 | `06-full.log` |
+| 7 | 修正后 `sbt "testOnly flow.core.BreezePrivilegeSpec"` | 19/19 | 0 | 新证据根 `07-privilege.log` |
+| 8 | 修正后 `sbt test` | 执行中 | 待定 | 新证据根 `08-full.log` |
 
-直接门槛、模块/配置、单核系统与 ISA 门槛均已通过；自写程序与全量回归的结果待服务器后台队列结束后填入，不提前声称通过。
+直接门槛、模块/配置、单核系统、ISA 与自写程序均已通过。首次全量暴露两个未同步 R2 的旧 CSR 测试；按裁定修正后该 suite 19/19 通过。最终提交全量正在重跑，不把定向通过当作全量通过。
 
 ### R1/R2 四个失败转为 PASS
 
@@ -453,3 +455,141 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 每阶段之前核对 HEAD=`cc60ebf659625ccc874a1eea8e33e866981fb1e3`、tracked 工作区干净、冻结检查通过；身份/冻结文件变化时停止。两个阶段由 `run-stage.sh` 保存 SHA、cwd、命令、开始/结束时间、exit、日志和 XML。自写程序生成物在全量复用目录前归档为 `05-program-artifacts.tar.gz`。后台状态见 `background.status`，PID 见 `background.pid`，队列日志为 `background.log`；完成后记录 `queue-program.exit`、`queue-full.exit`。
 
 主机配置已在排队前重新读取并验证 cloud_chen；队列使用这次已确认的主机和环境，不启动 Alan 或本地仿真。待回来后依据日志诊断新问题、按原任务规则本地修复；后台不会自动放宽测试或修改冻结契约。
+
+
+### 第二轮门槛逐 suite
+
+| 命令 | suite | 通过/总数 | 命令 exit |
+| --- | --- | --- | --- |
+| 01-direct | Sv39MmuSpec | 17/17 | 0 |
+| 01-direct | CSRFileSpec | 7/7 | 0 |
+| 01-direct | RegFileSpec | 1/1 | 0 |
+| 01-direct | BackendContractSpec | 39/39 | 0 |
+| 02-unit | BreezeCoreConfigSpec | 8/8 | 0 |
+| 02-unit | MemAgentsSpec | 10/10 | 0 |
+| 02-unit | L1DCacheSpec | 39/39 | 0 |
+| 02-unit | L2HomeSpec | 12/12 | 0 |
+| 02-unit | MemSkeletonElabSpec | 37/37 | 0 |
+| 02-unit | L1DPermissionsSpec | 5/5 | 0 |
+| 03-system | L1DL2SystemSpec | 12/12 | 0 |
+| 04-isa | ClusterIsaSpec | 8/8 | 0 |
+| 05-program | ClusterProgramSpec | 4/4 | 0 |
+
+直接门槛 T18、三个 trigger CSR 的新增检查及原 T20 通过。以上各批均 0 aborted/canceled/ignored/pending。XML 目录为 `<stage>-reports/`，包含累计 suite XML，按各阶段实际执行 suite 筛选，不能重复累计。
+
+### 首次 ClusterProgramSpec 结果
+
+同一 `cc60ebf` 在 cloud_chen 上首次执行，4/4 测试组通过、命令 exit 0。全部 19 个唯一 ELF 在 single（7）、dual（6）、small（6）、small+随机反压 seed 7（6）共 25 次执行，各参与 hart 都提交 tohost=1；console 用例的文本精确断言也通过。没有新发现需要修复的 RTL、测试台或程序问题，没有延长 watchdog/maxCycles 或改变随机种子、程序规模、检查强度。
+
+| 配置 | 程序 | 结果 | cycles | 每 hart 提交数 |
+| --- | --- | --- | --- | --- |
+| single | fencei_smc | PASS | 5140 | 350 |
+| single | sv39_basic | PASS | 10273 | 778 |
+| single | sv39_ptw_cache | PASS | 10555 | 869 |
+| single | trap_misc | PASS | 25511 | 2092 |
+| single | mmio_console | PASS | 43372 | 4258 |
+| single | timer_irq | PASS | 6821 | 456 |
+| single | lrsc_amo_single | PASS | 14389 | 1127 |
+| dual | mh_amo_lock_2 | PASS | 37718 | 3278/3375 |
+| dual | mh_lrsc_counter_2 | PASS | 13634 | 1282/1276 |
+| dual | mh_message_pass_2 | PASS | 22918 | 2175/2155 |
+| dual | mh_ipi_2 | PASS | 6866 | 572/545 |
+| dual | mh_sv39_2 | PASS | 6729 | 532/517 |
+| dual | mh_fencei_2 | PASS | 3946 | 263/259 |
+| small | mh_amo_lock_4 | PASS | 109412 | 7431/7012/8712/6729 |
+| small | mh_lrsc_counter_4 | PASS | 22136 | 1286/1280/1280/1276 |
+| small | mh_message_pass_4 | PASS | 26815 | 2335/2359/2435/2415 |
+| small | mh_ipi_4 | PASS | 16256 | 1428/550/550/545 |
+| small | mh_sv39_4 | PASS | 8973 | 537/518/523/533 |
+| small | mh_fencei_4 | PASS | 4665 | 267/271/271/259 |
+| small-backpressure | mh_amo_lock_4 | PASS | 111682 | 6789/7023/8419/7596 |
+| small-backpressure | mh_lrsc_counter_4 | PASS | 22408 | 1282/1280/1280/1276 |
+| small-backpressure | mh_message_pass_4 | PASS | 26762 | 2363/2363/2335/2327 |
+| small-backpressure | mh_ipi_4 | PASS | 16664 | 1440/550/550/545 |
+| small-backpressure | mh_sv39_4 | PASS | 9679 | 546/521/525/537 |
+| small-backpressure | mh_fencei_4 | PASS | 4914 | 271/263/255/263 |
+
+
+逐程序结构化结果保存于证据根 `program-results.json`。`05-program-artifacts.tar.gz` 在全量开始前保存了单核、双核、四核配置的生成 RTL/构建及仿真日志；两组 small 使用相同测试台目录，原始 small 仿真日志最终由 small-backpressure 覆盖，正常 small 的每程序结果/周期/提交数保留在 `05-program.log`。两组运行参数与刺激结果按日志分别统计，不把反压结果代替正常组。
+
+
+### 全量中发现的旧 CSR 测试未同步 R2
+
+静态检查 `BreezePrivilegeSpec.scala` 发现 MCU/Linux 两个 4096 地址白名单均缺少 R2 新增的 `tselect/tdata1/tdata2`，旧 OpenSBI 探测表还要求 `tselect` 非法。该期望与本轮任务 R2 和 `m-mode-implementation.md` 的 Debug Trigger CSRs 裁定冲突；先保留 `cc60ebf` 首次全量结果，再按裁定同步测试。
+
+本地修正提交 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103` 仅修改 `BreezePrivilegeSpec.scala`：两个 4096 地址扫描保留；原有六个 OpenSBI 探测地址保留，五个无关扩展仍要求非法，tselect 改为明确的合法读零检查；补充 tdata1/tdata2 合法读零及 tdata3/tinfo/tcontrol 非法检查；在既有 S/U 切换用例中分别检查三个 M-only CSR 被拒绝。依据来自显式 R2 裁定，不是放宽未定义行为，不改 RTL、冻结文件或 expectedUnsupported。
+
+修正通过 GitHub 传递；独立证据根 `/home/cloud_chen/evidence/cluster-round2-20261007-62ceea9/`。后台 `followup.sh` 等首轮全量进程结束、exit 和归档完成后，核对旧 SHA/干净工作区/冻结检查，再同步准确新 SHA，并执行 `sbt "testOnly flow.core.BreezePrivilegeSpec"`，结果写 `07-privilege.*`。已保存实际首次全量失败证据，修正后定向 suite 为 19/19、exit 0；源码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，冻结检查 7/7，tracked 工作区干净。
+
+
+首次全量实际失败信息：
+
+- MCU 地址扫描：`MCU CSR 0x7a0: false was not equal to true`（旧文件第 121 行）。
+- Linux 固件探测：`OpenSBI probe tselect/Sdtrig at 0x7a0: 0 was not equal to 1`（旧文件第 164 行）。
+
+两项均是旧测试还要求 tselect 非法，与明确的 R2 裁定冲突；不是 RTL 失败。首次全量 57 个 suite 全部完成，410 个测试中 408 通过、2 失败；0 aborted/canceled/ignored/pending，无其他失败。日志 `06-full.log`、原始 XML `06-full-reports/`、结构化结果 `full-results.json` 保留于 cc60ebf 证据根，实际 sbt 耗时 5142 秒。之后新 SHA 的定向 19/19 包含原有全部用例及新增的探测/权限检查。
+
+### 全量逐 suite
+
+最终源代码 SHA 为 `62ceea9e00c90edeaf9dc43ba9c7e2f23f5bb103`，相较起点仅追加报告并同步一个 CSR 测试文件，全部 RTL、其他测试及冻结文件不变。2026-10-07 19:13 在重新读取主机配置、核对 cloud_chen 环境/版本/准确 SHA/干净工作区以及约 24 GiB 可用内存、90 GiB 可用磁盘后，启动后台 `final-full.sh`。`08-full.*` 单独记录最终提交的完整回归，前后核对冻结检查；失败不改检查或自行修改代码。最终结果待定。
+
+| suite | cc60ebf 首次全量通过/总数 | 62ceea9 最终全量通过/总数 |
+| --- | --- | --- |
+| `flow.backend.BackendBehaviorSpec` | 16/16 | 待定 |
+| `flow.backend.BackendContractSpec` | 39/39 | 待定 |
+| `flow.backend.HpmSpec` | 1/1 | 待定 |
+| `flow.backend.MduBoundarySpec` | 3/3 | 待定 |
+| `flow.backend.MduTimingSpec` | 3/3 | 待定 |
+| `flow.backend.ScoreboardSpec` | 3/3 | 待定 |
+| `flow.backend.TraceProtocolSpec` | 2/2 | 待定 |
+| `flow.backend.WritebackSpec` | 2/2 | 待定 |
+| `flow.cache.BreezeAmoAluSpec` | 2/2 | 待定 |
+| `flow.cache.BreezeParallelLookupSpec` | 1/1 | 待定 |
+| `flow.cache.L1ICacheSpec` | 3/3 | 待定 |
+| `flow.cluster.ClusterIsaSpec` | 8/8 | 待定 |
+| `flow.cluster.ClusterProgramSpec` | 4/4 | 待定 |
+| `flow.config.BreezeCoreConfigSpec` | 8/8 | 待定 |
+| `flow.core.BreezeCsrPipelineSpec` | 2/2 | 待定 |
+| `flow.core.BreezePrivilegeSpec` | 17/19 | 待定 |
+| `flow.core.BreezeRegisterStorageSpec` | 2/2 | 待定 |
+| `flow.core.CSRFileSpec` | 7/7 | 待定 |
+| `flow.core.MulDecodeSpec` | 1/1 | 待定 |
+| `flow.core.RegFileSpec` | 1/1 | 待定 |
+| `flow.divider.DivProtocolSpec` | 2/2 | 待定 |
+| `flow.divider.DivUnitSpec` | 1/1 | 待定 |
+| `flow.divider.UnsignedRadix4DividerSpec` | 2/2 | 待定 |
+| `flow.fase.FlightRecorderSpec` | 1/1 | 待定 |
+| `flow.fpu.BreezeFpDecoderSpec` | 2/2 | 待定 |
+| `flow.fpu.FpUnitSpec` | 5/5 | 待定 |
+| `flow.frontend.BreezeBTBSpec` | 2/2 | 待定 |
+| `flow.frontend.BreezeCompressedDecoderSpec` | 1/1 | 待定 |
+| `flow.frontend.BreezeFrontendFE001Spec` | 1/1 | 待定 |
+| `flow.frontend.BreezeFrontendFE002Spec` | 1/1 | 待定 |
+| `flow.frontend.BreezeFrontendGShareSpec` | 4/4 | 待定 |
+| `flow.frontend.BreezeFrontendSpec` | 2/2 | 待定 |
+| `flow.frontend.BreezeInstrRealignerSpec` | 3/3 | 待定 |
+| `flow.frontend.BreezePHTSpec` | 3/3 | 待定 |
+| `flow.frontend.MiniDecodeSpec` | 1/1 | 待定 |
+| `flow.memsys.L1DCacheSpec` | 39/39 | 待定 |
+| `flow.memsys.L1DL2LitmusSpec` | 14/14 | 待定 |
+| `flow.memsys.L1DL2MultiCoreFaultSpec` | 20/20 | 待定 |
+| `flow.memsys.L1DL2MultiCoreSpec` | 21/21 | 待定 |
+| `flow.memsys.L1DL2SystemSpec` | 12/12 | 待定 |
+| `flow.memsys.L1DPermissionsSpec` | 5/5 | 待定 |
+| `flow.memsys.L1IClientSpec` | 2/2 | 待定 |
+| `flow.memsys.L2HomeSpec` | 12/12 | 待定 |
+| `flow.memsys.MemAgentsSpec` | 10/10 | 待定 |
+| `flow.memsys.MemSkeletonElabSpec` | 37/37 | 待定 |
+| `flow.memsys.MemoryBridgeSpec` | 3/3 | 待定 |
+| `flow.mmu.BreezeMmuAdSpec` | 5/5 | 待定 |
+| `flow.mmu.BreezeMmuSpec` | 5/5 | 待定 |
+| `flow.mmu.BreezeParallelTranslatorSpec` | 2/2 | 待定 |
+| `flow.mmu.BreezePmpSharingSpec` | 1/1 | 待定 |
+| `flow.mmu.sv39.Sv39MmuSpec` | 17/17 | 待定 |
+| `flow.mmu.sv39.Sv39StructuresSpec` | 13/13 | 待定 |
+| `flow.multiplier.MulEquivalenceSpec` | 1/1 | 待定 |
+| `flow.multiplier.MulProtocolSpec` | 4/4 | 待定 |
+| `flow.multiplier.MulUnitSpec` | 2/2 | 待定 |
+| `flow.multiplier.SignedMul65x65Spec` | 22/22 | 待定 |
+| `flow.platform.BreezeLinuxPmaSpec` | 5/5 | 待定 |
+| **总计** | **408/410，exit 1** | **待定** |
