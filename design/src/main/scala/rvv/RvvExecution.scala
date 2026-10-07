@@ -75,6 +75,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   when(slow && (slowActive || slowDone)) { io.hazard.reads := Mux(d.decoded.masked,1.U,0.U) }
   io.hazard.writes := bit(d.decoded.vd,Mux(pending,operandRow,row))
 
+  val resultData = if(multiply) {
   val candidates = (0 until 4).map { sew =>
     val width = 8 << sew
     val values = (0 until p.dlen/width).map { e =>
@@ -104,8 +105,39 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     }
     Cat(values.reverse)
   }
+    VecInit(candidates)(d.decoded.sew)
+  } else {
+    val a = operandData(0)
+    val broadcasts = (0 until 4).map(sew => Fill(p.dlen/(8 << sew),d.issue.rs1((8 << sew)-1,0)))
+    val scalar = VecInit(broadcasts)(d.decoded.sew)
+    val b = Mux(d.decoded.scalarOperand,scalar,operandData(1))
+    val subtract = d.decoded.op === RvvOp.sub.U
+    var carry: UInt = subtract.asUInt
+    val sums = (0 until p.rowBytes).map { j =>
+      val boundary = VecInit((0 until 4).map(sew => (j % (1 << sew) == 0).B))(d.decoded.sew)
+      val cin = Mux(boundary,subtract.asUInt,carry)
+      val bv = Mux(subtract,~b(8*j+7,8*j),b(8*j+7,8*j))
+      val sum = (a(8*j+7,8*j) +& bv) + cin
+      carry = sum(8)
+      sum(7,0)
+    }
+    var shifted: UInt = a
+    for(k <- 0 until 6) {
+      val distance = 1 << k
+      val bits = (0 until p.dlen).map { j =>
+        val inside = VecInit((0 until 4).map(sew => (j % (8 << sew)+distance < (8 << sew)).B))(d.decoded.sew)
+        val source = if(j+distance < p.dlen) shifted(j+distance) else false.B
+        Mux(d.issue.rs1(k) && k.U < (3.U +& d.decoded.sew),source && inside,shifted(j))
+      }
+      shifted = VecInit(bits).asUInt
+    }
+    val moved = Mux(d.decoded.scalarOperand,scalar,a)
+    MuxLookup(d.decoded.op,moved)(Seq(
+      RvvOp.add.U -> Cat(sums.reverse), RvvOp.sub.U -> Cat(sums.reverse),
+      RvvOp.and.U -> (a & b), RvvOp.shift.U -> shifted))
+  }
   io.write.bits.row := address(d.decoded.vd)
-  io.write.bits.data := VecInit(candidates)(d.decoded.sew)
+  io.write.bits.data := resultData
   when(slow) { io.write.bits.data := slowValues.asUInt }
   io.write.bits.enables := VecInit((0 until p.rowBytes).map { b =>
     val element = (bytePosition + b.U) >> d.decoded.sew
