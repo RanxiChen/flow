@@ -1,5 +1,7 @@
 # BreezeCore Simulation Workspace
 
+> 2026-10-07：旧 `BreezeCore` 与 `BreezeCoreSimApp` runner 已删除（见 `docs/tasks/CLUSTER-sim-tests.md`），本目录的程序不再能直接运行；需要时迁移到 `tests/cluster/`，在 `flow.cluster.ClusterSim` 上以 tohost 约定（`docs/tasks/CLUSTER-sim-abi.md`）运行。
+
 这个目录用于组织 `BreezeCoreSimApp` 相关的仿真测试资产和后续运行入口。
 
 当前先建立最小目录骨架，不改动现有的 `design/breeze_core_memory_map.json`。该 JSON 继续保留在 `design/` 下，作为现有示例输入。

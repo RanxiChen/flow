@@ -20,12 +20,6 @@ final case class RawCommitEvent(
     rdIsFp: Boolean = false
 )
 
-final case class BreezeCoreSimTandemResult(
-    result: BreezeCoreSimResult,
-    commitEvents: Seq[RawCommitEvent],
-    lateEvents: Seq[LateRegisterEvent] = Seq.empty
-)
-
 final case class LateRegisterEvent(cycle: Int, isFp: Boolean, rd: Int, data: BigInt, error: Boolean)
 
 /** Protocol accounting only; arithmetic/ISA comparison is a separate task. */
