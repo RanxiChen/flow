@@ -98,7 +98,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val writeBeat = RegInit(0.U(9.W)); val gathered = RegInit(false.B)
   val gatheredData = RegInit(0.U(p.memoryBits.W)); val gatherRow = Reg(UInt(p.rowBits.W))
   val gathering = RegInit(false.B); val storePending = RegInit(false.B)
-  val storeReturned = RegNext(RegNext(io.storeReadValid,false.B),false.B)
+  val storeReturned = RegNext(RegNext(RegNext(io.storeReadValid,false.B),false.B),false.B)
 
   io.axi.ar.valid := canRequest && !d.decoded.store && creditOk && bursts.io.enq.ready
   io.axi.ar.bits := 0.U.asTypeOf(new RvvAxiAddress(p))

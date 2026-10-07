@@ -56,10 +56,10 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val launch = Wire(new Token)
   launch.desc := d; launch.row := row; launch.last := last; launch.expected := Cat(skipB,skipA)
   launch.enables := enables
-  val valid = Seq.iterate(launchValid,5)(v => RegNext(v,false.B))
-  val tokens = Seq.iterate(launch,5)(t => RegNext(t))
+  val valid = Seq.iterate(launchValid,6)(v => RegNext(v,false.B))
+  val tokens = Seq.iterate(launch,6)(t => RegNext(t))
   val operands = RegNext(io.readData)
-  val t = tokens(3)
+  val t = tokens(4)
   val cacheValid = RegInit(VecInit(Seq.fill(p.rows)(false.B)))
   val cacheAges = Reg(Vec(p.rows,UInt(p.ageBits.W)))
   val cacheData = Mem(p.rows,UInt(p.dlen.W))
@@ -68,7 +68,7 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val addrD = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   def operand(at: UInt,port: Int): UInt = {
     val hit = cacheValid(at) && RvvAge.older(cacheAges(at),t.desc.age)
-    when(valid(3) && t.expected(port)) {
+    when(valid(4) && t.expected(port)) {
       when(!hit) { printf(p"ALU_BYPASS age=${t.desc.age} row=$at port=${port.U} cachedValid=${cacheValid(at)} cachedAge=${cacheAges(at)} op=${t.desc.decoded.op} vl=${t.desc.issue.vl} start=${t.desc.issue.vstart}\n") }
       assert(hit,"in-unit ALU bypass unavailable")
     }
@@ -85,16 +85,16 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val oldKnown = cacheValid(addrD) && RvvAge.older(cacheAges(addrD),t.desc.age)
   val old = Mux(oldKnown,cacheData.read(addrD),operands(2))
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),old(8*b+7,8*b)))).asUInt
-  when(valid(3)) { cacheData.write(addrD,merged) }
+  when(valid(4)) { cacheData.write(addrD,merged) }
   for(k <- 0 until p.rows) {
     when(ageAdvance.valid && cacheValid(k) && !RvvAge.older(cacheAges(k),ageAdvance.bits) && cacheAges(k) =/= ageAdvance.bits) { cacheValid(k) := false.B }
     for(s <- snoop) {
       when(s.valid && s.bits.row === k.U && cacheValid(k) && !RvvAge.older(s.bits.age,cacheAges(k))) { cacheValid(k) := false.B }
     }
-    when(valid(3) && addrD === k.U) { cacheValid(k) := true.B; cacheAges(k) := t.desc.age }
+    when(valid(4) && addrD === k.U) { cacheValid(k) := true.B; cacheAges(k) := t.desc.age }
   }
-  out.io.enq.valid := valid(4); out.io.enq.bits.token := tokens(4); out.io.enq.bits.data := computed
-  when(valid(4)) { assert(out.io.enq.ready,"ALU output credit lost") }
+  out.io.enq.valid := valid(5); out.io.enq.bits.token := tokens(5); out.io.enq.bits.data := computed
+  when(valid(5)) { assert(out.io.enq.ready,"ALU output credit lost") }
   val wt = out.io.deq.bits.token
   io.write.valid := out.io.deq.valid; out.io.deq.ready := io.write.ready
   io.write.bits.row := wt.desc.decoded.vd*p.rowsPerReg.U+wt.row

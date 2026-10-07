@@ -12,7 +12,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   val pending = RegInit(false.B); val readAll = RegInit(false.B)
   val heldOperands = RegNext(io.readData)
   val operandData = heldOperands
-  val returned = RegNext(RegNext(RegNext(io.readValid,false.B),false.B),false.B)
+  val returned = RegNext(RegNext(RegNext(RegNext(io.readValid,false.B),false.B),false.B),false.B)
   val computed = RegInit(false.B)
   val operandRow = Reg(UInt(log2Ceil(p.rows+1).W))
   // Scalar moves need no BRAM operand and can write directly from the
@@ -47,7 +47,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   val slow = if(multiply) d.decoded.sew === 3.U else false.B
   val slowLanes = Seq.tabulate(3,p.dlen/64) { (port,lane) =>
     val localEnable = Module(new RvvLocalEnable)
-    localEnable.io.clock := clock; localEnable.io.valid := RegNext(io.readValid,false.B)
+    localEnable.io.clock := clock; localEnable.io.valid := RegNext(RegNext(io.readValid,false.B),false.B)
     RegEnable(io.readData(port)(64*lane+63,64*lane),localEnable.io.enable)
   }
   val slowInputs = VecInit(slowLanes.map(xs => Cat(xs.reverse)))
@@ -188,7 +188,7 @@ class RvvCrossLaneSequencer(p: RvvParams) extends Module {
   })
   val active = RegInit(false.B); val held = RegInit(false.B); val pending = RegInit(false.B)
   val d = Reg(new RvvDescriptor(p)); val result = Reg(new RvvScalar)
-  val readReturned = RegNext(RegNext(io.readValid,false.B),false.B)
+  val readReturned = RegNext(RegNext(RegNext(io.readValid,false.B),false.B),false.B)
   io.in.ready := !active && !held
   when(io.in.fire) { d := io.in.bits; active := true.B }
   io.hazard.aluBypass := false.B; io.hazard.maskRead := false.B

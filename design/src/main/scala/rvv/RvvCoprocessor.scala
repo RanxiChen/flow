@@ -62,7 +62,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   io.scalarResult <> cross.io.result
   macCandidate := mac.io.candidateEvent
   macReady := mac.io.readyEvent; macBlocking := mac.io.blocking
-  io.macRead <> mac.io.readEvent
+  io.macRead := RegNext(mac.io.readEvent)
+  io.macRead.valid := RegNext(mac.io.readEvent.valid,false.B)
   io.macComplete := RegNext(mac.io.complete)
   io.macComplete.valid := RegNext(mac.io.complete.valid,false.B)
   io.loadRegisterComplete.valid := RegNext(mem.io.progress(1).valid && mem.io.progress(1).bits.writeDone.orR,false.B)
@@ -78,7 +79,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   vrf.io.readRows.foreach(_ := 0.U)
   alu.io.readData.foreach(_ := 0.U); mac.io.readData.foreach(_ := 0.U)
   val macBase = Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)
-  val macDataBase = RegNext(RegEnable(macBase,mac.io.readValid))
+  val macDataBase = RegNext(RegNext(RegEnable(macBase,mac.io.readValid)))
   for(j <- 0 until 3) {
     alu.io.readData(j) := vrf.io.readData(j)
     mac.io.readData(j) := vrf.io.readData((macDataBase+&j.U)(log2Ceil(p.execReadPorts+2)-1,0))
@@ -110,10 +111,10 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     if(j == 1 || j == 2 || j == 3) { sb.io.progress(j) := RegNext(x); sb.io.progress(j).valid := RegNext(x.valid,false.B) }
     else sb.io.progress(j) := x
   }
-  sb.io.progress(5) := RegNext(RegNext(mac.io.readProgress))
-  sb.io.progress(5).valid := RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B)
-  sb.io.progress(6) := RegNext(RegNext(alu.io.readProgress))
-  sb.io.progress(6).valid := RegNext(RegNext(alu.io.readProgress.valid,false.B),false.B)
+  sb.io.progress(5) := RegNext(RegNext(RegNext(mac.io.readProgress)))
+  sb.io.progress(5).valid := RegNext(RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B),false.B)
+  sb.io.progress(6) := RegNext(RegNext(RegNext(alu.io.readProgress)))
+  sb.io.progress(6).valid := RegNext(RegNext(RegNext(alu.io.readProgress.valid,false.B),false.B),false.B)
   for((unit,j) <- Seq((alu,2),(mac,3))) {
     unit.io.internalWrites := sb.io.internalWrites(j)
     unit.io.internalRows := sb.io.internalWriteRows(j)

@@ -26,12 +26,14 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   }
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
   def index(row: UInt): UInt = row >> bankBits
+  val readValid = VecInit(io.readValid.map(v => RegNext(v,false.B)))
+  val readRows = RegNext(io.readRows)
   for(r <- 0 until p.execReadPorts+2) {
     for(b <- 0 until p.writeBanks) {
-      banks(b)(r).io.readAddress := index(io.readRows(r))
-      banks(b)(r).io.readEnable := io.readValid(r) && bank(io.readRows(r)) === b.U
+      banks(b)(r).io.readAddress := index(readRows(r))
+      banks(b)(r).io.readEnable := readValid(r) && bank(readRows(r)) === b.U
     }
-    val selectedBank = RegNext(RegEnable(bank(io.readRows(r)),io.readValid(r)))
+    val selectedBank = RegNext(RegEnable(bank(readRows(r)),readValid(r)))
     val outputs = banks.map(copies => RegNext(copies(r).io.readData))
     io.readData(r) := VecInit(outputs)(selectedBank)
   }
@@ -57,7 +59,7 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
       copy.io.writeData := physicalWrite.data; copy.io.writeEnables := physicalWrite.enables
     }
     for(r <- 0 until p.execReadPorts+2) {
-      assert(!(physicalValid && io.readValid(r) && io.readRows(r) === physicalWrite.row),
+      assert(!(physicalValid && readValid(r) && readRows(r) === physicalWrite.row),
         "BRAM same-row read/write must never be consumed")
     }
     when(physicalValid) {
