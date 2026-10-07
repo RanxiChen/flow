@@ -524,6 +524,11 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val v = txns(k)
     v(1).fired mustBe v(0).fired + 1
     v(2).fired must be > v(1).respCycle
+    val m = core.history.size
+    runOps(CoreOp.lr(b), CoreOp.lr(b).copy(aq = true), CoreOp.load(b + 8))
+    val w = txns(m)
+    w(1).fired mustBe w(0).fired + 1
+    w(2).fired must be > w(1).respCycle
   }
 
   private def randomAtomics(e: Env): Unit = {
