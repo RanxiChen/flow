@@ -192,7 +192,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         case Some(f) =>
           dut.io.conflictQuery.pa.poke(physical(f.r.rs1).U)
           dut.io.conflictQuery.write.poke((!f.r.store).B)
-          dut.io.conflict.expect(true.B) // includes a newly committed queued item
+          assert(bool(dut.io.conflict),s"missing committed memory interval seed=$seed cycle=$cycle index=${f.index} label=${f.r.label} bytes=${f.r.bytes} PA=${physical(f.r.rs1)} allIssued=${f.allIssued} readRemaining=${f.readRemaining} writeRemaining=${f.writeRemaining} commit=$doCommit kill=$kill")
         case None =>
           dut.io.conflictQuery.pa.poke("hdead00000000".U); dut.io.conflictQuery.write.poke(true.B)
           dut.io.conflict.expect(false.B)
