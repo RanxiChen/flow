@@ -526,6 +526,36 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     v(2).fired must be > v(1).respCycle
   }
 
+  private def randomAtomics(e: Env): Unit = {
+    import e._
+    val funcs = Seq(BreezeAmoFunc.Swap, BreezeAmoFunc.Add, BreezeAmoFunc.Xor, BreezeAmoFunc.Or,
+      BreezeAmoFunc.And, BreezeAmoFunc.Min, BreezeAmoFunc.Max, BreezeAmoFunc.MinU, BreezeAmoFunc.MaxU)
+    val lines = (0 until g.l1dWays + 3).map(k => ram(0x2400 + k * stride))
+    l2.sharedLines ++= lines.take(2).map(line)
+    l2.reqReadyProb = 0.6; l2.rspUpReadyProb = 0.6; l2.minLatency = 1; l2.maxLatency = 12
+    l2.randomProbeProb = 0.04
+    core.issueProb = 0.8; core.lateReadyProb = 0.5
+    tlb.missProb = 0.03; tlb.busyProb = 0.05
+    for (_ <- 0 until 300) {
+      val size = 2 + rng.nextInt(2)
+      val a = lines(rng.nextInt(lines.size)) + (rng.nextInt(LineBytes >> size) << size)
+      core.enqueue(rng.nextInt(4) match {
+        case 0 => CoreOp.load(a, size, signed = true)
+        case 1 => CoreOp.store(a, BigInt(64, rng), size)
+        case _ => CoreOp.amo(a, BigInt(64, rng), funcs(rng.nextInt(funcs.size)), size)
+          .copy(aq = rng.nextBoolean(), rl = rng.nextBoolean(), rd = rng.nextInt(32))
+      })
+    }
+    bench.runUntil(core.idle)
+    tlb.missProb = 0; tlb.busyProb = 0; l2.randomProbeProb = 0
+    finish()
+  }
+
+  for ((g, seed) <- Seq((BreezeMemGeometry.singleCore, 73), (BreezeMemGeometry.l1dTwoWay, 74),
+    (BreezeMemGeometry.stress, 75)))
+    s"atomic random traffic with probes and backpressure matches golden memory with seed $seed" in
+      withL1D(g, seed) { e => randomAtomics(e) }
+
   /** Random loads/stores over three sets, each with more tags than ways, with
     * random backpressure on every link, random probes, shared grants (so
     * stores upgrade) and TLB misses.
