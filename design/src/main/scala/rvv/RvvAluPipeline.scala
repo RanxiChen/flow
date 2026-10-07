@@ -126,14 +126,21 @@ object RvvAluArithmetic {
     val scalar = VecInit(broadcasts)(sewInput)
     val b = Mux(scalarOperand,scalar,bInput)
     val subtract = opInput === RvvOp.sub.U
-    var carry: UInt = subtract.asUInt
-    val sums = (0 until p.rowBytes).map { j =>
-      val boundary = VecInit((0 until 4).map(sew => (j % (1 << sew) == 0).B))(sewInput)
-      val cin = Mux(boundary,subtract.asUInt,carry)
+    // Byte generate/propagate avoids chaining two nine-bit additions per
+    // byte. No element exceeds eight bytes; unconditional block boundaries
+    // keep the physical carry network local even with runtime SEW.
+    val byteBase = (0 until p.rowBytes).map { j =>
       val bv = Mux(subtract,~b(8*j+7,8*j),b(8*j+7,8*j))
-      val sum = (a(8*j+7,8*j) +& bv) + cin
-      carry = sum(8)
-      sum(7,0)
+      a(8*j+7,8*j) +& bv
+    }
+    val sums = (0 until p.rowBytes).map { j =>
+      var cin: Bool = subtract
+      val block = j-j%8
+      for(k <- block until j) {
+        val nextBoundary = VecInit((0 until 4).map(sew => ((k+1) % (1 << sew) == 0).B))(sewInput)
+        cin = Mux(nextBoundary,subtract,byteBase(k)(8) || (byteBase(k)(7,0).andR && cin))
+      }
+      (byteBase(j)(7,0) + cin.asUInt)(7,0)
     }
     var shifted: UInt = a
     for(k <- 0 until 6) {

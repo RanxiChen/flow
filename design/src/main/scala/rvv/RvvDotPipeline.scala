@@ -73,9 +73,9 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   val products = (0 until p.dlen/32).map { e =>
     (0 until 4).map { j =>
       val a = weights(32*e+8*j+7,32*e+8*j).asSInt
-      val b = Mux(tokens(3).desc.decoded.op === RvvOp.dotsu.U,
-        Cat(0.U(1.W),tokens(3).desc.issue.rs1(8*j+7,8*j)).asSInt,
-        Cat(tokens(3).desc.issue.rs1(8*j+7),tokens(3).desc.issue.rs1(8*j+7,8*j)).asSInt)
+      val b = RegNext(Mux(tokens(2).desc.decoded.op === RvvOp.dotsu.U,
+        Cat(0.U(1.W),tokens(2).desc.issue.rs1(8*j+7,8*j)).asSInt,
+        Cat(tokens(2).desc.issue.rs1(8*j+7),tokens(2).desc.issue.rs1(8*j+7,8*j)).asSInt))
       RegNext(a*b)
     }
   }
