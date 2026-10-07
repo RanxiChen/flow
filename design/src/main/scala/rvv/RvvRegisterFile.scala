@@ -127,17 +127,18 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   val dot = Reg(Vec(p.scoreboardDepth,Bool()))
   val reads = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   val writes = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
+  val forwardWrites = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   io.ageAllowed := (0 until p.scoreboardDepth).map(j => !valid(j) || (io.nextAge-ages(j)) < p.ageLimit.U).reduce(_ && _)
   val free = PriorityEncoder(~valid.asUInt)
   io.slot := free; io.allocate.ready := !valid.asUInt.andR; io.empty := !valid.asUInt.orR
   for(c <- 0 until clients) {
     val q = io.check(c)
     val older = (0 until p.scoreboardDepth).map(j => valid(j) && RvvAge.older(ages(j),ages(q.slot)))
-    val aluWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j) && alu(j),writes(j),0.U)).reduce(_ | _)
+    val aluWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j) && alu(j),writes(j) & forwardWrites(j),0.U)).reduce(_ | _)
     io.internalWrites(c) := aluWrites
     val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j) && !((q.dotBypass && dot(j)) || (q.aluBypass && alu(j))),reads(j),0.U)).reduce(_ | _)
     val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j) & ~Mux(q.aluBypass && alu(j),Mux(q.maskRead,"hfffffffe".U,"hffffffff".U),Mux(q.dotBypass && dot(j),q.accumulator,0.U)),0.U)).reduce(_ | _)
-    io.dotAccumulatorPending(c) := q.valid && q.dotBypass && (0 until p.scoreboardDepth).map(j => older(j) && dot(j) && (writes(j) & q.accumulator).orR).reduce(_ || _)
+    io.dotAccumulatorPending(c) := q.valid && q.dotBypass && (0 until p.scoreboardDepth).map(j => older(j) && dot(j) && (writes(j) & forwardWrites(j) & q.accumulator).orR).reduce(_ || _)
     io.raw(c) := q.valid && (q.reads & oldWrites).orR
     io.rawExceptObserved(c) := q.valid && (q.reads & ~q.observedSource & oldWrites).orR
     io.war(c) := q.valid && (q.writes & oldReads).orR
@@ -165,6 +166,9 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     val hasElements = io.allocate.bits.issue.vstart < io.allocate.bits.issue.vl
     alu(free) := io.allocate.bits.decoded.unit === 1.U && hasElements
     dot(free) := (io.allocate.bits.decoded.op === RvvOp.dot.U || io.allocate.bits.decoded.op === RvvOp.dotsu.U) && hasElements
-    reads(free) := io.allocate.bits.decoded.readMask; writes(free) := io.allocate.bits.decoded.writeMask
+    val allocated = io.allocate.bits.decoded
+    val touched = (allocated.bytes+(p.regBytes-1).U) >> log2Ceil(p.regBytes)
+    forwardWrites(free) := VecInit((0 until 32).map(r => r.U >= allocated.vd && r.U < allocated.vd +& touched)).asUInt
+    reads(free) := allocated.readMask; writes(free) := allocated.writeMask
   }
 }
