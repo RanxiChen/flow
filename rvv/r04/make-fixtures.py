@@ -14,6 +14,11 @@ def chain():
     p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=2,label='r04-after-zero-dot')
     p.emit(r.vector(0,4,8,12,0),2,2,0,label='r04-zero-alu')
     p.emit(r.vector(0,4,4,12,0),2,2,64,label='r04-after-zero-alu')
+    # LMUL ownership must not promise bypasses for untouched tail registers.
+    p.emit(r.vector(23,8,0,8,0),3,3,23,label='r04-short-lmul-move')
+    p.emit(r.vector(9,12,11,11,4),1,6,3,scalar=0xffff,label='r04-untouched-tail-alu')
+    p.emit(r.vector(44,16,8,11,6),2,2,16,scalar=3,label='r04-short-dot')
+    p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=4,label='r04-after-short-dot')
     return p
 
 def prefetch():
