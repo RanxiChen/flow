@@ -22,7 +22,7 @@
 | P1 | 通过：100% 峰值 | `d904bd1`；`gemv-performance/` |
 | P2 | 通过：97.07% 峰值 | 同上；40 拍、16 KiB |
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
-| P4 | 未达标：最大 4 拍（合同 ≤2） | 同上；全部 224 对统计，补时间线诊断 |
+| P4 | 未达标：最大 4 拍（合同 ≤2） | 全部 224 对；`b47d529` 时间线复核 |
 | P5 | 通过：P1 提前 3–70 拍，P2 提前 42–70 拍 | 同上；全部 223 对均提前 |
 | S1 | 未运行 | 待性能段；XCKU040 OOC 100 MHz |
 
@@ -140,3 +140,7 @@
 - P5：P1 全部 223 对提前 **3–70 拍**，P2 全部提前 **42–70 拍**，均通过；P3 为 **38–50 拍**。
 - 原始值在 `results/P1.json`、`P2.json`、`P3.json`；`*-pairs.json` 保存所有配对延迟、提前量及原合同判断。
 - 针对 P4 加入只在非随机性能运行输出的事件 CSV，记录首 AR、首寄存器写完、依赖 MAC 开始读、前一 MAC 完成时刻。不改刺激、RTL 或阈值；补 P1 时间线后记录原因，按 0.3 节继续 S1。
+- 时间线复核 SHA `b47d529`，cwd 同前；命令 `R02_FIXTURES=/home/chen/FUN/flow-r02-evidence/gemv-performance/fixtures R02_RESULTS=/home/chen/FUN/flow-r02-evidence/p4-timeline/results MAKEFLAGS=-j4 JAVA_TOOL_OPTIONS='-XX:ActiveProcessorCount=4 -Xmx6g' nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvPerformanceSpec -- -z P1'`（cwd `design/`），退出码 **0**；`p4-timeline/performance.log` 与首轮全部指标相同。
+- 原因由时间线与顺序 sequencer 对应：load record 54 在第 **120** 拍完成首寄存器，前一 MAC 在 **122** 拍完成，依赖 MAC 在 **123** 拍开始读，差 **3** 拍；record 70 的首寄存器完成 **149**、前一 MAC 完成 **150**、依赖 MAC 读 **153**，块边界的累加器 reset RAW 依赖使差值达到 **4**。当前允许 load 提前写完一部分寄存器，而顺序 MAC sequencer 正在消费前一条指令，其余元素组与块边界依赖计入 P4 的整体间隔。
+- 不通过推迟 producer 写回、忽略排队配对或改口径来取得 ≤2；按任务 0.3 报告未达标并继续 S1。若后续要满足所有配对，需研究真实操作数预取/流水与块边界调度，不能把当前结果写成已达标。
+- 可审阅原始文件已保存到 [`rvv/r02/evidence/gemv-d904bd1/`](../../rvv/r02/evidence/gemv-d904bd1/) 与 [`p4-b47d529/links-lat1-buffer16384.csv`](../../rvv/r02/evidence/p4-b47d529/links-lat1-buffer16384.csv)。P1/P2 原 JSON 分别判断 95%/90%，全部配对文件明确 `P4Pass=false`；没有放宽验收。

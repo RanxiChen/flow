@@ -1,0 +1,1 @@
+{"contract":"P1","readLatency":1,"returnBytes":16384,"readBytes":57344,"readWindowCycles":896,"peakFraction":1.0,"kernelCycles":972,"idealReadCycles":896,"kernelToIdealRatio":1.0848214285714286,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":4,"advanceMin":3,"advanceMax":70}
