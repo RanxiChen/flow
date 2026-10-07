@@ -59,7 +59,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private val reads=mutable.Queue.empty[Read]
   private val writes=mutable.Queue.empty[Write]
   private val responses=mutable.Queue.empty[Response]
-  private val scalar=mutable.Queue.empty[BigInt]
+  private val scalar=mutable.Queue.empty[(Int,BigInt)]
   private val committedMemory=mutable.Queue.empty[(R02Instruction,Int)]
   private var requestInstruction: Option[(R02Instruction,Int)]=None
   private var requestPosition=0
@@ -184,7 +184,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         if(r.memory && !r.store && r.bytes>0 && r.vstart<r.vl) {
           liveLoads += acceptedAges(item.index); peakLiveLoads=math.max(peakLiveLoads,liveLoads.size)
         }
-        r.scalarExpected.foreach(scalar.enqueue(_))
+        r.scalarExpected.foreach(value => scalar.enqueue((r.rd,value)))
       }
       dut.io.conflictQuery.valid.poke(true.B); dut.io.conflictQuery.bytes.poke(1.U)
       val query=frames.find(!_.complete)
@@ -200,7 +200,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(bool(dut.io.translation.valid) && translationReady) {
         val id=uint(dut.io.translation.bits.id).toInt
         assert(!translations.exists(_.id==id),s"translation ID reused before response at $cycle")
-        translations += Translation(id,uint(dut.io.translation.bits.va),cycle+1+jitter(translationLatency))
+        translations += Translation(id,uint(dut.io.translation.bits.va),cycle+math.max(1,jitter(translationLatency)))
       }
       if(bool(dut.io.axi.ar.valid) && bool(dut.io.axi.ar.ready)) {
         val address=uint(dut.io.axi.ar.bits.addr); val beats=uint(dut.io.axi.ar.bits.len).toInt+1
@@ -229,14 +229,16 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
           touchedLines += address & ~(BigInt(p.cacheLineBytes)-1)
         }
         w.beat+=1
-        if(w.beat==w.beats) { writes.dequeue(); responses.enqueue(Response(cycle+1+jitter(writeLatency),w.label,w.index)) }
+        if(w.beat==w.beats) { writes.dequeue(); responses.enqueue(Response(cycle+math.max(1,jitter(writeLatency)),w.label,w.index)) }
       }
       if(bool(dut.io.invalidate.valid) && bool(dut.io.invalidate.ready)) {
         invalidations+=1; invalidated += uint(dut.io.invalidate.bits)
       }
       if(bool(dut.io.scalarResult.valid) && scalarReady) {
         assert(scalar.nonEmpty,s"scalar result from killed/uncommitted item at $cycle")
-        assert(uint(dut.io.scalarResult.bits.data)==scalar.dequeue(),s"scalar mismatch at $cycle")
+        val (rd,value)=scalar.dequeue()
+        assert(uint(dut.io.scalarResult.bits.data)==value,s"scalar mismatch at $cycle")
+        dut.io.scalarResult.bits.rd.expect(rd.U); dut.io.scalarResult.bits.floating.expect(false.B)
       }
       if(returning.nonEmpty) {
         dut.io.axi.r.ready.expect(true.B)
