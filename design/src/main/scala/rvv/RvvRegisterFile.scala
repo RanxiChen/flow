@@ -130,12 +130,22 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     io.raw(c) := q.valid && (q.reads & oldWrites).orR
     io.war(c) := q.valid && (q.writes & oldReads).orR
     io.waw(c) := q.valid && (q.writes & oldWrites).orR
-    val u = io.progress(c)
-    when(u.valid) {
-      assert(valid(u.bits.slot),"progress for a non-live instruction")
-      reads(u.bits.slot) := reads(u.bits.slot) & ~u.bits.readDone
-      writes(u.bits.slot) := writes(u.bits.slot) & ~u.bits.writeDone
-      when(u.bits.finished) { valid(u.bits.slot) := false.B }
+  }
+  // Retire masks only from registered progress; no BRAM/data-to-control path.
+  val updates = (0 until clients).map { c =>
+    val u = Wire(Valid(new RvvProgress(p)))
+    u.valid := RegNext(io.progress(c).valid,false.B)
+    u.bits := RegEnable(io.progress(c).bits,io.progress(c).valid)
+    when(u.valid) { assert(valid(u.bits.slot),"progress for a non-live instruction") }
+    u
+  }
+  for(j <- 0 until p.scoreboardDepth) {
+    val hit = updates.map(u => u.valid && u.bits.slot === j.U)
+    val clearReads = updates.zip(hit).map { case(u,h) => Mux(h,u.bits.readDone,0.U) }.reduce(_ | _)
+    val clearWrites = updates.zip(hit).map { case(u,h) => Mux(h,u.bits.writeDone,0.U) }.reduce(_ | _)
+    when(hit.reduce(_ || _)) {
+      reads(j) := reads(j) & ~clearReads; writes(j) := writes(j) & ~clearWrites
+      when(updates.zip(hit).map { case(u,h) => h && u.bits.finished }.reduce(_ || _)) { valid(j) := false.B }
     }
   }
   when(io.allocate.fire) {

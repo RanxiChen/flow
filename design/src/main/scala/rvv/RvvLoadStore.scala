@@ -226,8 +226,18 @@ class RvvLoadStore(p: RvvParams) extends Module {
 
   // Rotate each buffered bus beat into one or more DLEN rows with byte enables.
   // The data FIFO uses synchronous memory; WAR stalls never reach the R channel.
-  val returned = returnBuffer.io.deq.bits
-  val ld = desc(returned.slot)
+  val returned = Reg(new ReturnBeat)
+  val ld = Reg(new RvvDescriptor(p))
+  val returnedValid = RegInit(false.B)
+  val consumeReturned = Wire(Bool())
+  // A registered beat and selected descriptor separate RAM output from hazards.
+  returnBuffer.io.deq.ready := !returnedValid || consumeReturned
+  when(returnBuffer.io.deq.ready) {
+    returnedValid := returnBuffer.io.deq.valid
+    when(returnBuffer.io.deq.valid) {
+      returned := returnBuffer.io.deq.bits; ld := desc(returnBuffer.io.deq.bits.slot)
+    }
+  }
   val piece = RegInit(0.U(log2Ceil(p.rows+1).W))
   val firstByte = Mux(returned.logical < 0.S,0.U,returned.logical.asUInt)
   val lastByte = Mux(returned.logical+p.memBytes.S > ld.decoded.bytes.zext,
@@ -236,7 +246,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val lastVrfRow = (lastByte-1.U) >> log2Ceil(p.rowBytes)
   val targetRow = firstVrfRow+piece
   val targetReg = ld.decoded.vd + (targetRow >> log2Ceil(p.rowsPerReg))
-  io.hazard(1).valid := returnBuffer.io.deq.valid
+  io.hazard(1).valid := returnedValid
   io.hazard(1).slot := ld.slot; io.hazard(1).writes := (1.U(32.W) << targetReg)(31,0)
   val outputData = Wire(Vec(p.rowBytes,UInt(8.W))); val outputMask = Wire(Vec(p.rowBytes,Bool()))
   for(b <- 0 until p.rowBytes) {
@@ -245,12 +255,12 @@ class RvvLoadStore(p: RvvParams) extends Module {
     outputMask(b) := logicalByte < ld.decoded.bytes && sourceByte >= 0.S && sourceByte < p.memBytes.S
     outputData(b) := (returned.data >> (sourceByte.asUInt(log2Ceil(p.memBytes)-1,0) << 3))(7,0)
   }
-  io.write.valid := returnBuffer.io.deq.valid && !io.blocked(1)
+  io.write.valid := returnedValid && !io.blocked(1)
   io.write.bits.row := ld.decoded.vd*p.rowsPerReg.U+targetRow
   io.write.bits.data := outputData.asUInt; io.write.bits.enables := outputMask.asUInt
   io.writeAge := ld.age
   val lastPiece = targetRow === lastVrfRow
-  returnBuffer.io.deq.ready := io.write.fire && lastPiece
+  consumeReturned := io.write.fire && lastPiece
   when(io.write.fire) {
     piece := Mux(lastPiece,0.U,piece+1.U)
     val regEnd = ((targetRow >> log2Ceil(p.rowsPerReg))+1.U)*p.regBytes.U
@@ -262,20 +272,20 @@ class RvvLoadStore(p: RvvParams) extends Module {
     when(returned.finalInstruction && lastPiece) { dataDone(returned.slot) := true.B }
   }
   val incomingCredit = Mux(io.axi.ar.fire,beats,0.U)
-  val outgoingCredit = returnBuffer.io.deq.fire.asUInt
-  when(io.axi.ar.fire || returnBuffer.io.deq.fire) {
+  val outgoingCredit = consumeReturned.asUInt
+  when(io.axi.ar.fire || consumeReturned) {
     reserved := reserved+incomingCredit-outgoingCredit
     assert(reserved+&incomingCredit >= outgoingCredit,"negative return credit")
   }
   assert(reserved <= p.returnBeats.U)
-  io.busy := live.asUInt.orR || generating || writeBurst || returnBuffer.io.deq.valid
+  io.busy := live.asUInt.orR || generating || writeBurst || returnBuffer.io.deq.valid || returnedValid
   def counter(event: Bool, amount: UInt = 1.U): UInt = {
     val x = RegInit(0.U(64.W)); when(event) { x := x+amount }; x
   }
   io.readBytes := counter(io.axi.r.fire,p.memBytes.U)
   io.writeBytes := counter(io.axi.w.fire,PopCount(io.axi.w.bits.strb))
-  io.bufferedBytes := returnBuffer.io.count*p.memBytes.U
-  io.war := counter(returnBuffer.io.deq.valid && io.writeWar)
+  io.bufferedBytes := (returnBuffer.io.count +& returnedValid.asUInt)*p.memBytes.U
+  io.war := counter(returnedValid && io.writeWar)
   io.overlap := counter(generating && io.conflict)
   io.credit := counter(canRequest && !d.decoded.store && !creditOk)
   io.axiStall := counter((io.axi.ar.valid && !io.axi.ar.ready) || (io.axi.aw.valid && !io.axi.aw.ready) || (io.axi.w.valid && !io.axi.w.ready))

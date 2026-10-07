@@ -22,6 +22,8 @@
 | --- | --- | --- | --- | --- |
 | R02 历史 | 79f6c5a | VRF 44.5k LUT；前端39.7k；记分板26.2k；VLSU52.9k；ALU18.6k；乘加23.9k | 206k / -2.117 ns（RuntimeOptimized） | R02-report |
 | R02 默认策略重跑 | 源码0255e8a，与79f6c5a的RVV RTL一致 | VRF 42358 LUT / 512 FF / 0 BRAM；前端42321；记分板25387；VLSU49130；ALU18811；乘加16787 | 196270 / -1.412 ns | Alan默认综合退出0；`baseline-default/` |
+| A2/A5 | 05b2353 | 综合排队中 | 未获得综合数值 | C1/C2全过；`a2-window/`，固定S1=`a2/s1/` |
+| A4 | d0db5f2 | 综合排队中 | 未获得综合数值 | C1/C2全过；`a4/` |
 | A1 | 0cf6c3e | VRF 42358/512/0 → 14266/568/192（LUT/FF/BRAM36）；VRF LUTRAM 24576 → 0 | 171156 / -1.089 ns；总 LUT 减25114 | C1 3/3；C2 前端6/6、VRF1/1、Spike种子0–7通过；S1退出0；`a1/` |
 
 ## 最终验收
@@ -63,3 +65,15 @@ VIQ默认8，用显式1W1R异步LUTRAM FIFO、无payload复位，保留原发起
 ### GitHub网络恢复
 
 Alan直接pull出现GnuTLS中断，带低速超时重试仍无进展。只终止本任务的该Git进程树。随后本地 `git ls-remote origin refs/heads/feat/rvv-20261005` 核对GitHub为05b2353281c25994d19553e9155504861cf9f033；生成增量bundle（要求Alan已有6ffadb6），scp后Alan `git fetch /tmp/flow-r03-05b2353.bundle refs/heads/feat/rvv-20261005 && git merge --ff-only FETCH_HEAD`，HEAD一致。未传未提交源码；后续若直连仍不稳定，沿用对已push SHA的增量Git传输。
+
+A4通过提交 `d0db5f2`：C1 3/3，前端8/8、VRF1/1、Spike定向种子0–7、新增机制3/3，全通过；命令链退出0。命令为 `taskset -c 4-7 bash rvv/r02/run-c1.sh .../a4/c1`、`taskset -c 4-7 bash rvv/r03/run-c2.sh .../a4/c2`；证据 `a4/`，S1已固定同SHA输入并排队。默认VIQ使用1W1R分布式模板，实际映射仍待综合核对。
+
+## A3/A6：控制状态与数据返回分离
+
+返回缓冲输出增加一项弹性寄存器（beat及按槽号选出的描述符）；冒险判断、返回写行号/年龄、进度掩码只取该寄存器的元数据，不从缓冲BRAM组合取槽号。吞吐仍可每拍替换一项。返回信用直到整beat全部piece写VRF后才归还；bufferedBytes包含弹性级，不能把弹性级当作提前消费。
+
+记分板进度先寄存一拍，按静态条目合并各客户端的readDone/writeDone/finished，避免动态写目的选择，并让写回当拍清位下一拍后才影响放行。掩码和年龄只从寄存状态计算，无数据旁路。后续用功能回归、带宽和链接测量验证增加流水的代价，不通过推迟生产者写回改善P4。
+
+时序断言逐条调整：新增满表用例“finished进度输入后1个沿ready恢复” → “2个沿恢复”，原因是新增进度寄存级；分配满表期间ready为低、空位编号和内容等检查全部保留。A1原VRF数据检查的同步读调整已记录；其他既有断言与阈值保持不变。
+
+A3/A6当前未运行；将跑C1/C2和默认策略S1，并额外提前测量P1–P5，检查流水是否导致链接>4拍或带宽退化；最后仍在最终RTL提交完整重跑验收。

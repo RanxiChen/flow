@@ -23,7 +23,7 @@ class RvvR03Spec extends AnyFreeSpec with ChiselSim {
       d.io.progress(0).valid.poke(true.B); d.io.progress(0).bits.slot.poke(0.U)
       d.io.progress(0).bits.readDone.poke(0.U); d.io.progress(0).bits.writeDone.poke(1.U)
       d.io.progress(0).bits.finished.poke(true.B); d.clock.step(1)
-      d.io.progress(0).valid.poke(false.B)
+      d.io.progress(0).valid.poke(false.B); d.clock.step(1)
       d.io.allocate.ready.expect(true.B); d.io.slot.expect(0.U)
     }
   }
