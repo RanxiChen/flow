@@ -44,8 +44,8 @@ class FlowClintVerilogContractTest(unittest.TestCase):
         sim = read_text("sim/litex/multicore_sim.py")
         wrapper = read_text("litex_wrapper/flow/clint_verilog.py")
         self.assertIn("BreezeClintVerilog", sim)
-        self.assertIn('privilege_profile == "linux"', sim)
-        self.assertIn("BreezeClint)", sim)
+        self.assertIn("num_harts=self.cpu.num_harts", sim)
+        self.assertIn("self.cpu.time.eq(self.machine_timer.mtime)", sim)
         self.assertIn('Instance(\n            "FlowClint"', wrapper)
         self.assertTrue(os.path.isfile(os.path.join(
             FLOW_ROOT, "litex_wrapper", "flow", "clint.py")))

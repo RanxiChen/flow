@@ -35,7 +35,7 @@
 | 后端 | **完成**：V1-BE 于 `062c391` 结束，Alan 65/65 合同测试通过（[`tasks/V1-BE-report.md`](tasks/V1-BE-report.md)）；B01、P06 裁定见 [`tasks/V1-BE-B01-ruling.md`](tasks/V1-BE-B01-ruling.md) |
 | 访存 L1D/L2/一致性 | 骨架已合并（`921c4f9`），外部接口已提交（`71f4988`）；按 [`v1-mem-plan.md`](v1-mem-plan.md) 分批实现 RTL → directed 小测试 → 压力/litmus；第一批实现见 [`tasks/MEM-load-store-rtl-report.md`](tasks/MEM-load-store-rtl-report.md) |
 | 整机仿真 | 测试台 `design/src/test/scala/cluster/`（接口 [`tasks/CLUSTER-sim-abi.md`](tasks/CLUSTER-sim-abi.md)）、riscv-tests submodule、自写程序 `tests/cluster/` 已写，旧 `BreezeCore` 及其仿真已删；任务书 [`tasks/CLUSTER-sim-tests.md`](tasks/CLUSTER-sim-tests.md)，待 Alan 运行 |
-| 集群与外壳 spec | 未开始（整机仿真通过后进行） |
+| 集群与外壳 spec | 冻结：[`cluster-soc-rtl-spec.md`](cluster-soc-rtl-spec.md)（AXI 直连 LiteDRAM、无 Wishbone、无 FASE）；任务书 [`tasks/SOC-axi-fpga-bringup.md`](tasks/SOC-axi-fpga-bringup.md)，分支 `feat/v1-soc` |
 | 测试计划、codex 规则 | 未开始 |
 | RTL 实现 | 已开始：后端完成；访存第一批代码已写，功能验证与原子路径待完成 |
 | 交接提交 | 未产生 |

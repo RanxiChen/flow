@@ -1,200 +1,119 @@
-#!/usr/bin/env python3
-"""Contract tests for the fixed Breeze LiteX CPU product."""
-
+"""AXI product marker, RTL port and memory-routing contract tests."""
+import hashlib
 import os
+import shutil
 import sys
 import tempfile
 import unittest
 from unittest import mock
 
-
-FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-WRAPPER_ROOT = os.path.join(FLOW_ROOT, "litex_wrapper")
-if WRAPPER_ROOT not in sys.path:
-    sys.path.insert(0, WRAPPER_ROOT)
-
-from flow import Breeze, BreezeTiny  # noqa: E402
-from flow.core import BreezeTinyDebug  # noqa: E402
-from flow.cluster import Flow  # noqa: E402
+FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
+from flow import Breeze, BreezeTiny
+from flow.core import BreezeTinyDebug, RETIRE_LAYOUT
+from litex.soc.interconnect import axi
 
 
 class _Platform:
     def __init__(self):
-        self.sources = []
-        self.include_paths = []
-
+        self.sources, self.include_paths = [], []
     def add_source(self, path):
         self.sources.append(path)
-
     def add_verilog_include_path(self, path):
         self.include_paths.append(path)
 
 
 def _write_production_rtl(root, cpu_cls=Breeze):
-    rtl_dir = os.path.join(
-        root, "design", "build", "rtl", "cluster", cpu_cls.cluster_profile, "gshare", "linux")
-    if cpu_cls.rtl_mode == "fpga-debug":
-        rtl_dir = os.path.join(rtl_dir, "fpga-debug")
+    os.makedirs(os.path.join(root, 'config'), exist_ok=True)
+    shutil.copyfile(os.path.join(FLOW_ROOT, 'config/breeze_mcu_platform.json'),
+                    os.path.join(root, 'config/breeze_mcu_platform.json'))
+    with mock.patch.object(cpu_cls, 'flow_root_dir', return_value=root):
+        rtl_dir = cpu_cls.rtl_dir()
     os.makedirs(rtl_dir)
-    source = os.path.join(rtl_dir, "BreezeMulticoreClusterWishbone.sv")
-    with open(source, "w", encoding="utf-8") as source_file:
-        source_file.write("module BreezeMulticoreClusterWishbone; endmodule\n")
-    with open(os.path.join(rtl_dir, "filelist.f"), "w", encoding="utf-8") as manifest:
-        manifest.write("BreezeMulticoreClusterWishbone.sv\n")
-    marker = f"""profile={cpu_cls.cluster_profile}
-numHarts={cpu_cls.num_harts}
-l1iBytes=8192
-l1dBytes=8192
-l2Bytes={cpu_cls.l2_bytes}
-lineBytes=32
-l1Ways=4
-l2Ways=8
-corePreset=gshare
-privilegeProfile=linux
-rtlMode={cpu_cls.rtl_mode}
-tandem={str(cpu_cls.tandem_enabled).lower()}
-compressed=true
-addressTranslation=bare,sv39
-"""
-    marker_path = os.path.join(rtl_dir, "cluster-profile.txt")
-    with open(marker_path, "w", encoding="utf-8") as marker_file:
-        marker_file.write(marker)
+    with open(os.path.join(rtl_dir, 'BreezeClusterAxi.sv'), 'w') as f:
+        f.write('module BreezeClusterAxi; endmodule\n')
+    with open(os.path.join(rtl_dir, 'filelist.f'), 'w') as f:
+        f.write('BreezeClusterAxi.sv\n')
+    with open(os.path.join(root, 'config/breeze_mcu_platform.json'), 'rb') as f:
+        digest = hashlib.sha256(f.read()).hexdigest()
+    values = dict(bus='axi', profile=cpu_cls.cluster_profile, preset=cpu_cls.core_preset,
+        privilege=cpu_cls.privilege_profile, tandem=str(cpu_cls.tandem_enabled).lower(),
+        debug=str(cpu_cls.debug_enabled).lower(), platformSha256=digest,
+        nCores=str(cpu_cls.num_harts), idBits='1', l2Slots='2', l2BytesPerCore='65536',
+        hangThresholdCycles='10000000')
+    marker_path = os.path.join(rtl_dir, 'cluster-profile.txt')
+    with open(marker_path, 'w') as f:
+        f.write(''.join(f'{key}={value}\n' for key, value in values.items()))
     return rtl_dir, marker_path
 
 
 class BreezeCpuWrapperTest(unittest.TestCase):
-    def test_fpga_debug_is_isolated_and_rejects_disabled_trace(self):
-        with tempfile.TemporaryDirectory() as root:
-            production_dir, _ = _write_production_rtl(root, BreezeTiny)
-            debug_dir, marker_path = _write_production_rtl(root, BreezeTinyDebug)
-            with mock.patch.object(BreezeTinyDebug, "flow_root_dir", return_value=root):
-                cpu = BreezeTinyDebug(_Platform())
-                self.assertEqual(cpu.rtl_dir(), debug_dir)
-                self.assertTrue(cpu.tandem_enabled)
-                with open(marker_path, encoding="utf-8") as stream:
-                    marker = stream.read()
-                with open(marker_path, "w", encoding="utf-8") as stream:
-                    stream.write(marker.replace("tandem=true", "tandem=false"))
-                with self.assertRaisesRegex(RuntimeError, "tandem"):
-                    BreezeTinyDebug(_Platform())
-            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
-                self.assertEqual(BreezeTiny(_Platform()).rtl_dir(), production_dir)
-            self.assertFalse(BreezeTiny.tandem_enabled)
+    def test_production_products_use_axi_and_only_dram_exit_is_direct(self):
+        for cls in (Breeze, BreezeTiny):
+            with tempfile.TemporaryDirectory() as root:
+                rtl_dir, _ = _write_production_rtl(root, cls)
+                platform = _Platform()
+                with mock.patch.object(cls, 'flow_root_dir', return_value=root):
+                    cpu = cls(platform)
+                self.assertIsInstance(cpu.memory_bus, axi.AXIInterface)
+                self.assertIsInstance(cpu.mmio_bus, axi.AXILiteInterface)
+                self.assertEqual(cpu.memory_buses, [cpu.axi_router.dram])
+                self.assertEqual(cpu.periph_buses, [cpu.axi_router.low, cpu.mmio_bus])
+                self.assertEqual(cpu.l2_bytes, cls.num_harts * 65536)
+                self.assertEqual(cpu.id_width, 1)
+                self.assertEqual(platform.sources, [os.path.join(rtl_dir, 'BreezeClusterAxi.sv')])
+                self.assertFalse(any('Wishbone' in p or 'debug' in p for p in cpu.cpu_params))
+                self.assertFalse(hasattr(cpu, 'dma_bus'))
+                cpu.set_reset_address(0x10010000)
+                with self.assertRaisesRegex(ValueError, 'reset address is fixed'):
+                    cpu.set_reset_address(0x10000000)
+                self.assertIn('-march=rv64imafdc_zicsr_zifencei', cpu.gcc_flags)
+                self.assertIn('-mabi=lp64d', cpu.gcc_flags)
+                self.assertIn('-D__riscv_plic__', cpu.gcc_flags)
 
-    def test_tiny_preserves_linux_buses_and_one_hart_interrupts(self):
+    def test_debug_is_isolated_and_exports_every_retire_field_and_hang(self):
+        with tempfile.TemporaryDirectory() as root:
+            production, _ = _write_production_rtl(root, BreezeTiny)
+            debug, _ = _write_production_rtl(root, BreezeTinyDebug)
+            with mock.patch.object(BreezeTinyDebug, 'flow_root_dir', return_value=root):
+                cpu = BreezeTinyDebug(_Platform())
+            self.assertNotEqual(production, debug)
+            self.assertEqual(cpu.hang_threshold, 10000000)
+            self.assertIn('o_io_debug_hangReasons', cpu.cpu_params)
+            self.assertIn('o_io_debug_retire_lateWriteData', cpu.cpu_params)
+            self.assertEqual(len([p for p in cpu.cpu_params if p.startswith('o_io_debug_retire_')]),
+                             len(RETIRE_LAYOUT))
+            self.assertIn('o_io_debug_l1dEvents_mmio_cycles', cpu.cpu_params)
+            self.assertIn('o_io_debug_l2Events_memReadsInFlight', cpu.cpu_params)
+
+    def test_each_required_marker_mismatch_is_rejected(self):
+        for key in ('bus', 'profile', 'preset', 'privilege', 'tandem', 'debug', 'platformSha256', 'nCores'):
+            with tempfile.TemporaryDirectory() as root:
+                _, path = _write_production_rtl(root, BreezeTiny)
+                with open(path) as f:
+                    marker = f.read()
+                lines = [key + '=WRONG' if line.startswith(key + '=') else line for line in marker.splitlines()]
+                with open(path, 'w') as f:
+                    f.write('\n'.join(lines) + '\n')
+                with mock.patch.object(BreezeTiny, 'flow_root_dir', return_value=root):
+                    with self.assertRaisesRegex(RuntimeError, key):
+                        BreezeTiny(_Platform())
+
+    def test_axilite_b_and_axi_r_port_directions_and_ids(self):
         with tempfile.TemporaryDirectory() as root:
             _write_production_rtl(root, BreezeTiny)
-            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
+            with mock.patch.object(BreezeTiny, 'flow_root_dir', return_value=root):
                 cpu = BreezeTiny(_Platform())
-            self.assertEqual(cpu.name, "breeze-tiny")
-            self.assertEqual(cpu.l2_bytes, 16384)
-            self.assertEqual(cpu.mem_map, Breeze.mem_map)
-            self.assertEqual(cpu.gcc_arch, Breeze.gcc_arch)
-            self.assertEqual(cpu.gcc_abi, Breeze.gcc_abi)
-            self.assertEqual(cpu.gcc_defines, Breeze.gcc_defines)
-            self.assertEqual(len(cpu.retires), 1)
-            self.assertEqual(len(cpu.msip), 1)
-            self.assertEqual(len(cpu.mtip), 1)
-            self.assertEqual(len(cpu.meip), 1)
-            self.assertEqual(len(cpu.seip), 1)
-            self.assertIn("i_io_externalInterrupts_0", cpu.cpu_params)
-            self.assertIn("i_io_supervisorExternalInterrupts_0", cpu.cpu_params)
-            self.assertNotIn("i_io_msip_1", cpu.cpu_params)
-            self.assertEqual(cpu.periph_buses, [cpu.memory_bus, cpu.mmio_bus])
-            cpu.set_reset_address(0x10010000)
-            self.assertEqual(Breeze.num_harts, 4)
+            self.assertIs(cpu.cpu_params['i_io_mem_r_bits_id'], cpu.memory_bus.r.id)
+            self.assertIs(cpu.cpu_params['o_io_mem_r_ready'], cpu.memory_bus.r.ready)
+            self.assertIs(cpu.cpu_params['o_io_mem_aw_bits_id'], cpu.memory_bus.aw.id)
+            self.assertIs(cpu.cpu_params['i_io_mmio_b_bits'], cpu.mmio_bus.b.resp)
+            self.assertIs(cpu.cpu_params['o_io_mmio_b_ready'], cpu.mmio_bus.b.ready)
+            self.assertNotIn('i_io_msip_1', cpu.cpu_params)
 
-    def test_tiny_rejects_mismatched_hart_count(self):
-        with tempfile.TemporaryDirectory() as root:
-            _, marker_path = _write_production_rtl(root, BreezeTiny)
-            with open(marker_path, encoding="utf-8") as stream:
-                marker = stream.read()
-            with open(marker_path, "w", encoding="utf-8") as stream:
-                stream.write(marker.replace("numHarts=1", "numHarts=4"))
-            with mock.patch.object(BreezeTiny, "flow_root_dir", return_value=root):
-                with self.assertRaisesRegex(RuntimeError, "numHarts"):
-                    BreezeTiny(_Platform())
-
-    def test_public_product_is_fixed_four_hart_linux(self):
-        self.assertEqual(Breeze.name, "breeze")
-        self.assertEqual(Breeze.variants, ("standard",))
-        self.assertEqual(Breeze.num_harts, 4)
-        self.assertEqual(Breeze.cluster_profile, "small")
-        self.assertEqual(Breeze.core_preset, "gshare")
-        self.assertEqual(Breeze.privilege_profile, "linux")
-        self.assertEqual(Breeze.rtl_mode, "production")
-        self.assertFalse(Breeze.tandem_enabled)
-        self.assertEqual(Breeze.mem_map["rom"], 0x1001_0000)
-
-    def test_instantiation_requires_and_loads_matching_production_rtl(self):
-        with tempfile.TemporaryDirectory() as root:
-            rtl_dir, _ = _write_production_rtl(root)
-            platform = _Platform()
-            with mock.patch.object(Breeze, "flow_root_dir", return_value=root):
-                cpu = Breeze(platform)
-
-            self.assertEqual(len(cpu.retires), 4)
-            self.assertEqual(cpu.periph_buses, [cpu.memory_bus, cpu.mmio_bus])
-            self.assertEqual(cpu.memory_buses, [])
-            self.assertEqual(
-                platform.sources,
-                [os.path.join(rtl_dir, "BreezeMulticoreClusterWishbone.sv")])
-            self.assertIn("-march=rv64imafdc_zicsr_zifencei", cpu.gcc_flags)
-            self.assertIn("-mabi=lp64d", cpu.gcc_flags)
-            self.assertIn("-D__riscv_plic__", cpu.gcc_flags)
-
-            cpu.set_reset_address(0x1001_0000)
-            with self.assertRaisesRegex(ValueError, "reset address is fixed"):
-                cpu.set_reset_address(0x1000_0000)
-
-    def test_debug_marker_is_rejected(self):
-        with tempfile.TemporaryDirectory() as root:
-            _, marker_path = _write_production_rtl(root)
-            with open(marker_path, "r", encoding="utf-8") as marker_file:
-                marker = marker_file.read()
-            with open(marker_path, "w", encoding="utf-8") as marker_file:
-                marker_file.write(marker.replace(
-                    "rtlMode=production", "rtlMode=debug"))
-
-            with mock.patch.object(Breeze, "flow_root_dir", return_value=root):
-                with self.assertRaisesRegex(RuntimeError, "rtlMode"):
-                    Breeze(_Platform())
-
-    def test_legacy_mcu_wrapper_keeps_direct_interrupt_wiring(self):
-        with tempfile.TemporaryDirectory() as root:
-            rtl_dir = os.path.join(
-                root, "design", "build", "rtl", "cluster", "single", "gshare")
-            os.makedirs(rtl_dir)
-            source = os.path.join(rtl_dir, "BreezeMulticoreClusterWishbone.sv")
-            with open(source, "w", encoding="utf-8") as source_file:
-                source_file.write(
-                    "module BreezeMulticoreClusterWishbone; endmodule\n")
-            with open(os.path.join(rtl_dir, "filelist.f"), "w",
-                      encoding="utf-8") as manifest:
-                manifest.write("BreezeMulticoreClusterWishbone.sv\n")
-            marker = """profile=single
-numHarts=1
-l1iBytes=8192
-l1dBytes=8192
-l2Bytes=16384
-lineBytes=32
-l1Ways=4
-l2Ways=8
-corePreset=gshare
-privilegeProfile=mcu
-rtlMode=debug
-tandem=true
-"""
-            with open(os.path.join(rtl_dir, "cluster-profile.txt"), "w",
-                      encoding="utf-8") as marker_file:
-                marker_file.write(marker)
-
-            Flow.set_core_preset("gshare")
-            with mock.patch.object(Flow, "flow_root_dir", return_value=root):
-                cpu = Flow(_Platform())
-
-            self.assertIs(cpu.cpu_params["i_io_externalInterrupts_0"], cpu.interrupt)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_fixed_public_profiles_and_memory_map(self):
+        self.assertEqual((Breeze.cluster_profile, Breeze.num_harts), ('small', 4))
+        self.assertEqual((BreezeTiny.cluster_profile, BreezeTiny.num_harts), ('single', 1))
+        self.assertEqual(BreezeTiny.mem_map, Breeze.mem_map)
+        self.assertEqual(Breeze.mem_map['rom'], 0x10010000)
+        self.assertEqual(Breeze.mem_map['sram'], 0x11000000)
