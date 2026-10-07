@@ -11,7 +11,7 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
     d.io.issue.valid.poke(false.B); d.io.verdict.ready.poke(false.B)
     d.io.commit.poke(false.B); d.io.kill.poke(false.B); d.io.serialGo.poke(false.B)
     d.io.translation.ready.poke(true.B); d.io.translated.valid.poke(false.B)
-    d.io.dispatch.ready.poke(false.B); d.io.scalarQuery.valid.poke(false.B)
+    d.io.prefetch.ready.poke(true.B); d.io.dispatch.ready.poke(false.B); d.io.scalarQuery.valid.poke(false.B)
     d.io.scalarQuery.pa.poke(0.U); d.io.scalarQuery.bytes.poke(0.U); d.io.scalarQuery.write.poke(false.B)
     d.io.vectorQueryValid.poke(false.B); d.io.released.valid.poke(false.B)
     d.reset.poke(true.B); d.clock.step(3); d.reset.poke(false.B)
@@ -81,7 +81,7 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
         d.clock.step(1); d.io.verdict.ready.poke(false.B); d.io.commit.poke(false.B)
       }
       d.io.issue.ready.expect(false.B)
-      d.io.dispatch.ready.poke(true.B); d.clock.step(1)
+      d.io.prefetch.ready.poke(true.B); d.io.dispatch.ready.poke(true.B); d.clock.step(1)
       d.io.issue.ready.expect(true.B)
       issue(d,BigInt("5e05c257",16),vl=1)
     }
@@ -145,7 +145,7 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
       initialize(d)
       issue(d,vl=1); issue(d,vl=1) // leave age 1 in the second interval payload
       initialize(d) // validity resets, payload intentionally does not
-      d.io.dispatch.ready.poke(true.B)
+      d.io.prefetch.ready.poke(true.B); d.io.dispatch.ready.poke(true.B)
       def commit(): Unit = {
         verdict(d,0); d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B)
         d.clock.step(1); d.io.commit.poke(false.B); d.io.verdict.ready.poke(false.B)
@@ -203,7 +203,7 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
       d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B); d.clock.step(1)
       d.io.verdict.ready.poke(false.B); d.io.commit.poke(false.B)
       d.io.issue.ready.expect(false.B); d.clock.step(3); d.io.issue.ready.expect(false.B)
-      d.io.dispatch.bits.age.expect(0.U); d.io.dispatch.ready.poke(true.B); d.clock.step(1)
+      d.io.dispatch.bits.age.expect(0.U); d.io.prefetch.ready.poke(true.B); d.io.dispatch.ready.poke(true.B); d.clock.step(1)
       d.io.dispatch.bits.age.expect(2.U); d.io.issue.ready.expect(true.B)
       d.clock.step(1); d.io.dispatch.valid.expect(false.B); d.io.empty.expect(true.B)
     }

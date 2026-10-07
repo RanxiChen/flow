@@ -22,23 +22,32 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   })
   val macReady = IO(Output(Valid(new RvvRegisterEvent)))
   val macBlocking = IO(Output(UInt(4.W)))
+  val dispatchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
+  val prefetchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
+  val dispatchMacFull = IO(Output(Bool()))
   val front = Module(new RvvFrontend(p))
   front.io.issue <> io.issue; io.verdict <> front.io.verdict
   front.io.commit := io.commit; front.io.kill := io.killUncommitted; front.io.serialGo := io.serialGo
   io.translation <> front.io.translation; front.io.translated <> io.translated
   front.io.scalarQuery := io.conflictQuery; io.conflict := front.io.scalarConflict
   val sb = Module(new RvvScoreboard(p,6))
-  sb.io.nextAge := front.io.nextAge; front.io.externalAgeAllowed := sb.io.ageAllowed
+  sb.io.nextAge := front.io.nextAge; val memAgeAllowed = Wire(Bool())
+  front.io.externalAgeAllowed := sb.io.ageAllowed && memAgeAllowed
   val queues = p.unitDepths.map(depth => Module(new Queue(new RvvDescriptor(p),depth)))
   val dispatch = front.io.dispatch
   val qReady = VecInit(queues.map(_.io.enq.ready))(dispatch.bits.decoded.unit)
   dispatch.ready := qReady && sb.io.allocate.ready
+  dispatchEvent.valid := dispatch.fire; dispatchEvent.bits := dispatch.bits.age
+  dispatchMacFull := dispatch.valid && dispatch.bits.decoded.unit === 2.U && !queues(2).io.enq.ready
   sb.io.allocate.valid := dispatch.valid && qReady; sb.io.allocate.bits := dispatch.bits
   for((q,j) <- queues.zipWithIndex) {
     q.io.enq.valid := dispatch.valid && sb.io.allocate.ready && dispatch.bits.decoded.unit === j.U
     q.io.enq.bits := dispatch.bits; q.io.enq.bits.slot := sb.io.slot
   }
   val mem = Module(new RvvLoadStore(p)); mem.io.in <> queues(0).io.deq
+  mem.io.prefetch <> front.io.prefetch
+  prefetchEvent := mem.io.prefetchEvent
+  mem.io.nextAge := front.io.nextAge; memAgeAllowed := mem.io.ageAllowed
   val alu = Module(new RvvIntegerSequencer(p,false)); alu.io.in <> queues(1).io.deq
   val mac = Module(new RvvIntegerSequencer(p,true)); mac.io.in <> queues(2).io.deq
   val fp = Module(new RvvFpSequencer(p)); fp.io.in <> queues(3).io.deq
@@ -99,6 +108,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   sb.io.progress(5) := RegNext(RegNext(mac.io.readProgress))
   sb.io.progress(5).valid := RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B)
   for((unit,j) <- Seq((alu,2),(mac,3))) {
+    unit.io.otherRawBlocked := sb.io.rawExceptObserved(j)
     unit.io.rawBlocked := sb.io.raw(j); unit.io.warBlocked := sb.io.war(j); unit.io.wawBlocked := sb.io.waw(j)
   }
   mem.io.blocked(0) := sb.io.raw(0) || sb.io.war(0) || sb.io.waw(0)

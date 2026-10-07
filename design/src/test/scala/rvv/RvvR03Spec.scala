@@ -8,7 +8,7 @@ class RvvR03Spec extends AnyFreeSpec with ChiselSim {
   "a full scoreboard stalls dispatch allocation until an instruction completes" in {
     val p=RvvParams()
     simulate(new RvvScoreboard(p,1)) { d =>
-      d.io.nextAge.poke(0.U); d.io.allocate.valid.poke(false.B); d.io.check(0).dotBypass.poke(false.B); d.io.check(0).accumulator.poke(0.U); d.io.check(0).valid.poke(false.B)
+      d.io.nextAge.poke(0.U); d.io.allocate.valid.poke(false.B); d.io.check(0).observedSource.poke(0.U); d.io.check(0).dotBypass.poke(false.B); d.io.check(0).accumulator.poke(0.U); d.io.check(0).valid.poke(false.B)
       d.io.progress(0).valid.poke(false.B)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
       for(j <- 0 until p.scoreboardDepth) {
@@ -52,7 +52,7 @@ class RvvR03Spec extends AnyFreeSpec with ChiselSim {
     val p=RvvParams()
     simulate(new RvvScoreboard(p,1)) { d =>
       d.io.nextAge.poke(1.U); d.io.allocate.valid.poke(false.B)
-      d.io.check(0).dotBypass.poke(false.B); d.io.check(0).accumulator.poke(0.U); d.io.check(0).valid.poke(false.B); d.io.progress(0).valid.poke(false.B)
+      d.io.check(0).observedSource.poke(0.U); d.io.check(0).dotBypass.poke(false.B); d.io.check(0).accumulator.poke(0.U); d.io.check(0).valid.poke(false.B); d.io.progress(0).valid.poke(false.B)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
       val end=(BigInt(1)<<p.ageBits)
       for((age,j) <- Seq(end-2,end-1,BigInt(0)).zipWithIndex) {

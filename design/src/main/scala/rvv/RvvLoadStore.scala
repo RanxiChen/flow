@@ -8,6 +8,9 @@ import chisel3.util._
 class RvvLoadStore(p: RvvParams) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new RvvDescriptor(p)))
+    val prefetch = Flipped(Decoupled(new RvvDescriptor(p)))
+    val nextAge = Input(UInt(p.ageBits.W)); val ageAllowed = Output(Bool())
+    val prefetchEvent = Valid(UInt(p.ageBits.W))
     val axi = new RvvAxi(p)
     val scalarWritesVisible = Input(Bool())
     val ordering = Output(new RvvDescriptor(p)); val orderingValid = Output(Bool()); val conflict = Input(Bool())
@@ -24,6 +27,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val invalidations = Output(UInt(64.W))
   })
   val desc = Reg(Vec(p.memoryInflight,new RvvDescriptor(p)))
+  val bound = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
   val live = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
   val intervalLive = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
   val requestDone = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
@@ -34,14 +38,26 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val scalarVisible = RegInit(false.B)
   val invalidatePosition = RegInit(0.U(p.lengthBits.W)); val invalidateDone = RegInit(true.B)
   val free = PriorityEncoder(~live.asUInt)
-  io.in.ready := !generating && !live.asUInt.andR
+  // Request stream is a separate committed VIQ cursor, including stores.
+  // Allocation never changes the dispatch cursor or scoreboard ownership.
+  val binding = VecInit((0 until p.memoryInflight).map(k => live(k) && !bound(k) && desc(k).age === io.in.bits.age))
+  val bindingIndex = PriorityEncoder(binding.asUInt)
+  io.in.ready := binding.asUInt.orR
   when(io.in.fire) {
-    current := free; desc(free) := io.in.bits; live(free) := true.B; intervalLive(free) := true.B
-    requestDone(free) := false.B; responses(free) := 0.U
-    dataDone(free) := false.B
-    generating := true.B; position := 0.U; firstRequest := true.B
-    scalarVisible := false.B
-    invalidatePosition := 0.U; invalidateDone := !io.in.bits.decoded.store || io.in.bits.decoded.bytes === 0.U
+    assert(PopCount(binding) === 1.U,"prefetch binding must be unique across age wrap")
+    bound(bindingIndex) := true.B; desc(bindingIndex).slot := io.in.bits.slot
+  }
+  io.ageAllowed := (0 until p.memoryInflight).map(k => !live(k) || (io.nextAge-desc(k).age) < p.ageLimit.U).reduce(_ && _)
+  io.prefetch.ready := !io.prefetch.bits.decoded.memory || (!generating && !live.asUInt.andR)
+  io.prefetchEvent.valid := io.prefetch.fire && io.prefetch.bits.decoded.memory && !io.prefetch.bits.decoded.store
+  io.prefetchEvent.bits := io.prefetch.bits.age
+  when(io.prefetch.fire && io.prefetch.bits.decoded.memory) {
+    current := free; desc(free) := io.prefetch.bits; live(free) := true.B; bound(free) := false.B
+    intervalLive(free) := io.prefetch.bits.decoded.bytes =/= 0.U
+    requestDone(free) := false.B; responses(free) := 0.U; dataDone(free) := false.B
+    generating := true.B; position := 0.U; firstRequest := true.B; scalarVisible := false.B
+    invalidatePosition := 0.U
+    invalidateDone := !io.prefetch.bits.decoded.store || io.prefetch.bits.decoded.bytes === 0.U
   }
   val d = desc(current)
   val noAccess = d.issue.vl === 0.U || d.issue.vstart >= d.issue.vl
@@ -88,7 +104,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   bursts.io.enq.valid := io.axi.ar.fire
   bursts.io.enq.bits.slot := current; bursts.io.enq.bits.logical := logical
   bursts.io.enq.bits.beats := beats; bursts.io.enq.bits.finalInstruction := finalBurst
-  io.axi.aw.valid := canRequest && d.decoded.store && !writeBurst && invalidateDone && bSlots.io.enq.ready
+  io.axi.aw.valid := canRequest && d.decoded.store && bound(current) && !writeBurst && invalidateDone && bSlots.io.enq.ready
   io.axi.aw.bits := io.axi.ar.bits
   bSlots.io.enq.valid := io.axi.aw.fire; bSlots.io.enq.bits := current
   val requestFire = io.axi.ar.fire || io.axi.aw.fire
@@ -138,8 +154,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   io.released.bits := desc(releaseIndex).age
   when(io.released.valid) {
     intervalLive(releaseIndex) := false.B
-    when(dataDone(releaseIndex) || desc(releaseIndex).decoded.store || desc(releaseIndex).decoded.bytes === 0.U ||
-      desc(releaseIndex).issue.vstart >= desc(releaseIndex).issue.vl) { live(releaseIndex) := false.B }
+    when(dataDone(releaseIndex) || (desc(releaseIndex).decoded.store && bound(releaseIndex))) { live(releaseIndex) := false.B }
   }
   for(k <- 0 until p.memoryInflight) {
     when(live(k) && dataDone(k) && !intervalLive(k)) { live(k) := false.B }
@@ -152,7 +167,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val invRemaining = d.length(invSeg)-invOffset
   val lineRemaining = p.cacheLineBytes.U - invPa(log2Ceil(p.cacheLineBytes)-1,0)
   val invAdvance = Mux(invRemaining < lineRemaining,invRemaining,lineRemaining)
-  io.invalidate.valid := generating && d.decoded.store && !invalidateDone && !noAccess
+  io.invalidate.valid := generating && d.decoded.store && bound(current) && !invalidateDone && !noAccess
   io.invalidate.bits := invPa & (~(p.cacheLineBytes-1).U(64.W))
   when(io.invalidate.fire) {
     invalidatePosition := invalidatePosition+invAdvance
@@ -161,9 +176,13 @@ class RvvLoadStore(p: RvvParams) extends Module {
 
   io.progress.foreach { x => x.valid := false.B; x.bits := 0.U.asTypeOf(new RvvProgress(p)) }
   io.hazard.foreach(_ := 0.U.asTypeOf(new RvvHazard(p)))
-  when(generating && noAccess) {
-    generating := false.B; requestDone(current) := true.B
-    io.progress(0).valid := true.B; io.progress(0).bits.slot := d.slot; io.progress(0).bits.finished := true.B
+  when(generating && noAccess) { generating := false.B; requestDone(current) := true.B }
+  val zeroMask = VecInit((0 until p.memoryInflight).map(k => live(k) && bound(k) && requestDone(k) &&
+    (desc(k).issue.vl === 0.U || desc(k).issue.vstart >= desc(k).issue.vl)))
+  val zeroIndex = PriorityEncoder(zeroMask.asUInt)
+  when(zeroMask.asUInt.orR) {
+    io.progress(0).valid := true.B; io.progress(0).bits.slot := desc(zeroIndex).slot
+    io.progress(0).bits.finished := true.B; dataDone(zeroIndex) := true.B; live(zeroIndex) := false.B
   }
   // Store gathering uses only its dedicated read port, one memory-order row at
   // a time. It holds a complete W beat stable through arbitrary W backpressure.
@@ -236,11 +255,14 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val returned = Reg(new ReturnBeat)
   val ld = Reg(new RvvDescriptor(p))
   val returnedValid = RegInit(false.B)
+  val writeBound = RegInit(false.B); val writeSlot = Reg(UInt(p.slotBits.W))
   val consumeReturned = Wire(Bool())
   // A registered beat and selected descriptor separate RAM output from hazards.
   returnBuffer.io.deq.ready := !returnedValid || consumeReturned
   when(returnBuffer.io.deq.ready) {
     returnedValid := returnBuffer.io.deq.valid
+    writeBound := returnBuffer.io.deq.valid && bound(returnBuffer.io.deq.bits.slot)
+    writeSlot := desc(returnBuffer.io.deq.bits.slot).slot
     when(returnBuffer.io.deq.valid) {
       returned := returnBuffer.io.deq.bits; ld := desc(returnBuffer.io.deq.bits.slot)
     }
@@ -253,8 +275,11 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val lastVrfRow = (lastByte-1.U) >> log2Ceil(p.rowBytes)
   val targetRow = firstVrfRow+piece
   val targetReg = ld.decoded.vd + (targetRow >> log2Ceil(p.rowsPerReg))
-  io.hazard(1).valid := returnedValid
-  io.hazard(1).slot := ld.slot; io.hazard(1).writes := (1.U(32.W) << targetReg)(31,0)
+  when(returnedValid && !writeBound && !returnBuffer.io.deq.ready) {
+    writeBound := bound(returned.slot); writeSlot := desc(returned.slot).slot
+  }
+  io.hazard(1).valid := returnedValid && writeBound
+  io.hazard(1).slot := writeSlot; io.hazard(1).writes := (1.U(32.W) << targetReg)(31,0)
   val outputData = Wire(Vec(p.rowBytes,UInt(8.W))); val outputMask = Wire(Vec(p.rowBytes,Bool()))
   val loadRotation = (targetRow*p.rowBytes.U-returned.logical.asUInt)(log2Ceil(p.memBytes)-1,0)
   val loadRotated = rotateBytesRight(returned.data,p.memBytes,loadRotation)
@@ -264,7 +289,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     outputMask(b) := logicalByte < ld.decoded.bytes && sourceByte >= 0.S && sourceByte < p.memBytes.S
     outputData(b) := loadRotated(8*(b%p.memBytes)+7,8*(b%p.memBytes))
   }
-  io.write.valid := returnedValid && !io.blocked(1)
+  io.write.valid := returnedValid && writeBound && !io.blocked(1)
   io.write.bits.row := ld.decoded.vd*p.rowsPerReg.U+targetRow
   io.write.bits.data := outputData.asUInt; io.write.bits.enables := outputMask.asUInt
   io.writeAge := ld.age
@@ -275,7 +300,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val regEnd = ((targetRow >> log2Ceil(p.rowsPerReg))+1.U)*p.regBytes.U
     val registerComplete = (lastByte >= regEnd && ((targetRow+1.U) % p.rowsPerReg.U) === 0.U) ||
       (returned.finalInstruction && lastPiece)
-    io.progress(1).valid := true.B; io.progress(1).bits.slot := ld.slot
+    io.progress(1).valid := true.B; io.progress(1).bits.slot := writeSlot
     io.progress(1).bits.writeDone := Mux(registerComplete,(1.U(32.W) << targetReg)(31,0),0.U)
     io.progress(1).bits.finished := returned.finalInstruction && lastPiece
     when(returned.finalInstruction && lastPiece) { dataDone(returned.slot) := true.B }

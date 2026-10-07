@@ -16,6 +16,7 @@ class RvvFrontend(p: RvvParams) extends Module {
     val translation = Decoupled(new RvvTranslationRequest(p))
     val translated = Flipped(Decoupled(new RvvTranslationResponse(p)))
     val dispatch = Decoupled(new RvvDescriptor(p))
+    val prefetch = Decoupled(new RvvDescriptor(p))
     val scalarQuery = Input(new RvvConflict); val scalarConflict = Output(Bool())
     val vectorQuery = Input(new RvvDescriptor(p)); val vectorQueryValid = Input(Bool())
     val vectorConflict = Output(Bool())
@@ -32,10 +33,13 @@ class RvvFrontend(p: RvvParams) extends Module {
   val nextAge = RegInit(0.U(p.ageBits.W)); io.nextAge := nextAge
   val viq = Module(new RvvLutramQueue(p))
   io.dispatch <> viq.io.deq
+  val requests = Module(new RvvLutramQueue(p))
+  io.prefetch <> requests.io.deq
+  requests.io.enq.valid := io.commit; requests.io.enq.bits := pending(0)
   viq.io.enq.valid := io.commit
   viq.io.enq.bits := pending(0)
   val decoded = RvvDecode(io.issue.bits,p)
-  val occupied = count +& viq.io.count
+  val occupied = count +& Mux(viq.io.count > requests.io.count,viq.io.count,requests.io.count)
 
   class Interval extends Bundle {
     val age = UInt(p.ageBits.W); val committed = Bool(); val store = Bool()
@@ -47,7 +51,7 @@ class RvvFrontend(p: RvvParams) extends Module {
   val localAgeAllowed = Wire(Bool())
   io.issue.ready := occupied < p.viqDepth.U && !io.kill && localAgeAllowed && io.externalAgeAllowed &&
     (!decoded.memory || decoded.bytes === 0.U || !intervalValid.asUInt.andR)
-  io.empty := count === 0.U && viq.io.count === 0.U
+  io.empty := count === 0.U && viq.io.count === 0.U && requests.io.count === 0.U
   val serialCount = RegInit(0.U(64.W)); io.serialCount := serialCount
 
   // The first not-yet-delivered verdict is authoritative; later translation
@@ -60,7 +64,7 @@ class RvvFrontend(p: RvvParams) extends Module {
   io.verdict.bits.newVl := pending(judgementIndex).issue.vl
 
   when(io.commit) {
-    assert(count =/= 0.U && viq.io.enq.ready,"commit lacks its reserved VIQ slot")
+    assert(count =/= 0.U && viq.io.enq.ready && requests.io.enq.ready,"commit lacks its reserved VIQ slot")
     assert(prepared(0) && !serial(0) && (sent(0) || (io.verdict.fire && judgementIndex === 0.U)),
       "commit requires the oldest item to have received Ok")
   }
@@ -92,6 +96,7 @@ class RvvFrontend(p: RvvParams) extends Module {
   def ageFits(age: UInt): Bool = (nextAge-age) < p.ageLimit.U
   localAgeAllowed := (0 until p.viqDepth).map(j => j.U >= count || ageFits(pending(j).age)).reduce(_ && _) &&
     (!viq.io.deq.valid || ageFits(viq.io.deq.bits.age)) &&
+    (!requests.io.deq.valid || ageFits(requests.io.deq.bits.age)) &&
     (0 until intervalDepth).map(j => !intervalValid(j) || ageFits(intervals(j).age)).reduce(_ && _) &&
     (0 until p.translationIds).map(j => !tagLive(j) || ageFits(tagAge(j))).reduce(_ && _)
   val freeTag = PriorityEncoder(~tagLive.asUInt)

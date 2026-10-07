@@ -4,10 +4,10 @@ import chisel3._
 import chisel3.util._
 
 case class RvvParams(vlen: Int = 512, dlen: Int = 512, lanes: Int = 8,
-  viqDepth: Int = 8, unitDepths: Seq[Int] = Seq(4, 2, 2, 2, 2),
+  viqDepth: Int = 32, unitDepths: Seq[Int] = Seq(4, 2, 2, 2, 2),
   writeBanks: Int = 4, execReadPorts: Int = 4, returnBytes: Int = 16384,
   memoryBits: Int = 512, axiIds: Int = 1, burstBeats: Int = 4,
-  scoreboardDepth: Int = 16, memoryInflight: Int = 16, translationIds: Int = 8, cacheLineBytes: Int = 32, paBits: Int = 34) {
+  scoreboardDepth: Int = 16, memoryInflight: Int = 32, translationIds: Int = 8, cacheLineBytes: Int = 32, paBits: Int = 34) {
   require(vlen >= 128 && vlen <= 4096 && isPow2(vlen))
   require(dlen >= 64 && dlen <= vlen && isPow2(dlen) && vlen % dlen == 0)
   require(lanes > 0 && dlen % lanes == 0 && dlen / lanes >= 8)
@@ -179,6 +179,7 @@ class RvvHazard(p: RvvParams) extends Bundle {
   val valid = Bool(); val slot = UInt(p.slotBits.W)
   val reads = UInt(32.W); val writes = UInt(32.W)
   val dotBypass = Bool(); val accumulator = UInt(32.W)
+  val observedSource = UInt(32.W)
 }
 class RvvProgress(p: RvvParams) extends Bundle {
   val slot = UInt(p.slotBits.W); val readDone = UInt(32.W); val writeDone = UInt(32.W); val finished = Bool()

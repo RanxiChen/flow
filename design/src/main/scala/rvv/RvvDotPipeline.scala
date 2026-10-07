@@ -32,6 +32,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   // and all cross-unit dependencies still use the registered scoreboard.
   io.hazard.dotBypass := source =/= dest && (!d.decoded.masked || dest =/= 0.U)
   io.hazard.accumulator := bit(dest)
+  io.hazard.observedSource := bit(source)
 
   class Token extends Bundle {
     val desc = new RvvDescriptor(p); val row = UInt(log2Ceil(p.rows+1).W)
@@ -129,7 +130,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   io.complete.bits := Mux(io.write.fire,wt.desc.age,d.age)
   io.readEvent.valid := io.readValid && (row % p.rowsPerReg.U) === 0.U
   io.readEvent.bits.age := d.age; io.readEvent.bits.register := source
-  io.readyEvent.valid := active && !zero && room && io.grant && !io.warBlocked && !io.wawBlocked && (row % p.rowsPerReg.U) === 0.U
+  io.readyEvent.valid := active && !zero && room && io.grant && !io.otherRawBlocked && !io.warBlocked && !io.wawBlocked && (row % p.rowsPerReg.U) === 0.U
   io.readyEvent.bits := io.readEvent.bits
   io.blocking := Cat(!room,!io.grant,io.warBlocked,io.wawBlocked)
 }
@@ -152,6 +153,7 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
     io.in.ready := Mux(isDot,dot.io.in.ready && !legacy.io.busy,legacy.io.in.ready && !dot.io.busy)
     for(x <- Seq(legacy.io,dot.io)) {
       x.readData := io.readData; x.grant := io.grant; x.mask := io.mask
+      x.otherRawBlocked := io.otherRawBlocked
       x.blocked := io.blocked; x.rawBlocked := io.rawBlocked; x.warBlocked := io.warBlocked; x.wawBlocked := io.wawBlocked
       x.write.ready := io.write.ready
     }
