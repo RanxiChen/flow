@@ -10,6 +10,10 @@ def chain():
     p=r.Program(0x523034)
     for i in range(16):
         p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=0x817fff01+i,label=f'p6-dot-{i}')
+    p.emit(r.vector(44,16,8,11,6),2,2,0,scalar=1,label='r04-zero-dot')
+    p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=2,label='r04-after-zero-dot')
+    p.emit(r.vector(0,4,8,12,0),2,2,0,label='r04-zero-alu')
+    p.emit(r.vector(0,4,4,12,0),2,2,64,label='r04-after-zero-alu')
     return p
 
 def prefetch():

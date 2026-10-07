@@ -162,8 +162,9 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   }
   when(io.allocate.fire) {
     valid(free) := true.B; ages(free) := io.allocate.bits.age
-    alu(free) := io.allocate.bits.decoded.unit === 1.U
-    dot(free) := io.allocate.bits.decoded.op === RvvOp.dot.U || io.allocate.bits.decoded.op === RvvOp.dotsu.U
+    val hasElements = io.allocate.bits.issue.vstart < io.allocate.bits.issue.vl
+    alu(free) := io.allocate.bits.decoded.unit === 1.U && hasElements
+    dot(free) := (io.allocate.bits.decoded.op === RvvOp.dot.U || io.allocate.bits.decoded.op === RvvOp.dotsu.U) && hasElements
     reads(free) := io.allocate.bits.decoded.readMask; writes(free) := io.allocate.bits.decoded.writeMask
   }
 }
