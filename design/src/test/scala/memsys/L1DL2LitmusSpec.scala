@@ -163,10 +163,20 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
     * Old value (after warm) reads as "0"; written values read as their label.
     */
   private class Inst(e: Env, val r: Int, vars: Seq[String], spread: Boolean) {
+    // Reserve a disjoint block even for the furthest same-set variable.
+    // Keep the original round's set rotation inside that block.
+    private val block = e.stride * (vars.size + 1)
+    private val base = e.ram(BigInt(0x100000) + BigInt(r) * block + (BigInt(r) * 0x100 % e.stride))
     /** `spread` puts the variables into the same L1D and L2 set. */
     val addr: Map[String, BigInt] = vars.zipWithIndex.map { case (v, i) =>
-      v -> (e.ram(0x100000 + r * 0x100 + i * LineBytes) + (if (spread) e.stride * i else 0))
+      v -> (base + i * (if (spread) e.stride else BigInt(LineBytes)))
     }.toMap
+    require(addr.values.map(lineOf).toSet.size == vars.size, "litmus variables must use distinct lines")
+    if (spread) {
+      require(addr.values.map(a => lineOf(a) % e.g.l1Sets).toSet.size == 1, "spread must share an L1D set")
+      require(addr.values.map(a => lineOf(a) % CoherenceParams(e.g).l2Sets).toSet.size == 1,
+        "spread must share an L2 set")
+    }
     val old = mutable.Map.empty[String, BigInt]
     private val labels = mutable.Map.empty[(String, BigInt), String]
     private var serial = 0
@@ -288,35 +298,41 @@ class L1DL2LitmusSpec extends AnyFreeSpec with Matchers with ChiselSim {
     for (_ <- 0 until s.passes; pt <- points) {
       val warm = combos((r * 5) % combos.size)
       val inst = new Inst(e, r, s.vars, spread = r % 3 == 0)
-      s.vars.foreach(v => oracle.classify(inst.addr(v), s.cls))
-      applyWarm(e, s, inst, warm)
-      val progs = s.prog(inst, pt)
-      val st = s.starts(pt)
-      val min = st.values.min
-      val mark = progs.keys.map(c => c -> cores(c).history.size).toMap
-      val base = bench.cycle + 2
-      for ((c, steps) <- progs) sched.at(base + st(c) - min, c, steps.map(_.op))
-      bench.quiesce()
       val where = s"round $r, ${pt.toSeq.sorted.map { case (k, v) => s"$k=$v" }.mkString(", ")}, " +
         s"warm ${s.vars.zip(warm).map { case (v, w) => s"$v:$w" }.mkString(" ")}, T=$t"
-      val reads = for ((c, steps) <- progs.toSeq; (step, txn) <- steps.zip(cores(c).history.drop(mark(c)));
-                       (as, v) <- step.read) yield {
-        if (!txn.done || txn.killed) throw new AssertionError(s"${s.name}: $txn did not complete at $where")
-        as -> inst.label(v, txn.value)
+      try {
+        s.vars.foreach(v => oracle.classify(inst.addr(v), s.cls))
+        applyWarm(e, s, inst, warm)
+        val progs = s.prog(inst, pt)
+        val st = s.starts(pt)
+        val min = st.values.min
+        val mark = progs.keys.map(c => c -> cores(c).history.size).toMap
+        val base = bench.cycle + 2
+        for ((c, steps) <- progs) sched.at(base + st(c) - min, c, steps.map(_.op))
+        bench.quiesce()
+        val reads = for ((c, steps) <- progs.toSeq; (step, txn) <- steps.zip(cores(c).history.drop(mark(c)));
+                         (as, v) <- step.read) yield {
+          if (!txn.done || txn.killed) throw new AssertionError(s"${s.name}: $txn did not complete at $where")
+          as -> inst.label(v, txn.value)
+        }
+        for ((c, steps) <- progs if cores(c).history.size - mark(c) != steps.size)
+          throw new AssertionError(s"${s.name}: core $c issued ${cores(c).history.size - mark(c)} of ${steps.size} steps at $where")
+        val fin = if (!s.finals) Map.empty[String, String] else {
+          val back = readLines(s.vars.map(v => lineOf(inst.addr(v))).distinct)
+          s.vars.map { v =>
+            val a = inst.addr(v)
+            v -> inst.label(v, (back(lineOf(a)) >> (8 * (a & 31).toInt)) & mask(64))
+          }.toMap
+        }
+        val o = Outcome(reads.toMap, fin)
+        s.forbidden(o).foreach(why => throw new AssertionError(s"${s.name}: forbidden outcome [$o] ($why) at $where"))
+        seen(o.toString) += 1
+        for ((name, p) <- s.required if p(o)) hits(name) += pt
+      } catch {
+        case t: Throwable =>
+          info(s"${s.name}: failure at $where, cycle ${bench.cycle}\n${monitor.describe}")
+          throw t
       }
-      for ((c, steps) <- progs if cores(c).history.size - mark(c) != steps.size)
-        throw new AssertionError(s"${s.name}: core $c issued ${cores(c).history.size - mark(c)} of ${steps.size} steps at $where")
-      val fin = if (!s.finals) Map.empty[String, String] else {
-        val back = readLines(s.vars.map(v => lineOf(inst.addr(v))).distinct)
-        s.vars.map { v =>
-          val a = inst.addr(v)
-          v -> inst.label(v, (back(lineOf(a)) >> (8 * (a & 31).toInt)) & mask(64))
-        }.toMap
-      }
-      val o = Outcome(reads.toMap, fin)
-      s.forbidden(o).foreach(why => throw new AssertionError(s"${s.name}: forbidden outcome [$o] ($why) at $where"))
-      seen(o.toString) += 1
-      for ((name, p) <- s.required if p(o)) hits(name) += pt
       r += 1
     }
     def range(ps: Seq[Map[String, Int]]): String =
