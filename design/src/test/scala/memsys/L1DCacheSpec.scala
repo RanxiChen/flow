@@ -190,6 +190,30 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     finish()
   }
 
+  "a shared store waiting for the MSHR lets a probe pass a younger same-set store" in withL1D() { e =>
+    import e._
+    val a = ram(0x1200); val b = a + stride; val m = a + 2 * stride; val y = a + 3 * stride
+    l2.sharedLines += line(a)
+    runOps(CoreOp.load(a), CoreOp.load(b))
+    val n = core.history.size
+    l2.reqReadyProb = 0
+    core.enqueue(CoreOp.load(m, rd = 2), CoreOp.store(a, 0x1234), CoreOp.store(y, 0x5678))
+    bench.runUntil(core.history.size > n && core.history(n).kind == "Mshr")
+    bench.steps(3)
+    l2.probe(SnpOp.Inv, line(b))
+    // The older Get stays backpressured. Probe progress must be local and
+    // must not depend on freeing its MSHR or advancing either younger Store.
+    bench.runUntil(l2.acks.nonEmpty)
+    (l2.acks.head._2, l2.acks.head._3) mustBe (("InvAck", line(b)))
+    l2.getsOf(line(m)) mustBe empty
+    core.history(n + 1).respCycle mustBe -1L
+    l2.reqReadyProb = 1
+    bench.quiesce()
+    core.history(n + 1).respCycle must be > core.history(n).lateCycle
+    runOps(CoreOp.load(a), CoreOp.load(y))
+    finish()
+  }
+
   "killed stores never write, and a load miss killed at WB sends no GetS" in withL1D() { e =>
     import e._
     val k = ram(0x600); val n = ram(0x640)
