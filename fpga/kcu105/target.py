@@ -109,7 +109,7 @@ def main():
     output = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
                                TINY_BUILD_DIR if args.cpu_type == 'breeze-tiny' else BUILD_DIR)
     builder = SnapshotBuilder(soc, output_dir=output, csr_csv=os.path.join(output, 'csr.csv'),
-        csr_json=os.path.join(output, 'csr.json'), integrated_rom_auto_size=False)
+        csr_json=os.path.join(output, 'csr.json'), integrated_rom_auto_size=False, bios_console='lite')
     os.makedirs(output, exist_ok=True)
     if args.debug:
         soc.debug_ila.write_probe_map(os.path.join(output, 'ila-probes.json'))
