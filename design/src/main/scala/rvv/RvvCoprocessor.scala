@@ -18,6 +18,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     // Passive measurement events; they do not control the mounted core model.
     val loadRegisterComplete = Valid(new RvvRegisterEvent)
     val macRead = Valid(new RvvRegisterEvent); val macComplete = Valid(UInt(64.W))
+    val loadWriteWar = Output(Bool())
   })
   val front = Module(new RvvFrontend(p))
   front.io.issue <> io.issue; io.verdict <> front.io.verdict
@@ -76,6 +77,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   updates.zipWithIndex.foreach { case(x,j) => sb.io.progress(j) := x }
   mem.io.blocked(0) := sb.io.raw(0) || sb.io.war(0) || sb.io.waw(0)
   mem.io.blocked(1) := sb.io.raw(1) || sb.io.war(1) || sb.io.waw(1)
+  mem.io.writeWar := sb.io.war(1)
+  io.loadWriteWar := sb.io.war(1) && mem.io.hazard(1).valid
   alu.io.blocked := sb.io.raw(2) || sb.io.war(2) || sb.io.waw(2)
   mac.io.blocked := sb.io.raw(3) || sb.io.war(3) || sb.io.waw(3)
   cross.io.blocked := sb.io.raw(4) || sb.io.war(4) || sb.io.waw(4)

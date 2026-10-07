@@ -46,9 +46,14 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   for(b <- fixture.initial.indices) memory(physical(fixture.base+b))=fixture.initial(b)
   private case class Pending(index: Int,var judged: Boolean=false,var due: Long=Long.MaxValue)
   private case class Translation(id: Int,va: BigInt,due: Long)
-  private case class Read(address: BigInt,beats: Int,var beat: Int,due: Long,label: String)
-  private case class Write(address: BigInt,beats: Int,var beat: Int,label: String)
-  private case class Response(due: Long,label: String)
+  private case class Read(address: BigInt,beats: Int,var beat: Int,due: Long,label: String,index: Int)
+  private case class Write(address: BigInt,beats: Int,var beat: Int,label: String,index: Int)
+  private case class Response(due: Long,label: String,index: Int)
+  private case class MemoryFrame(r: R02Instruction,index: Int,var allIssued: Boolean=false,var readRemaining: Int=0,var writeRemaining: Int=0) {
+    def complete: Boolean=allIssued && readRemaining==0 && writeRemaining==0
+  }
+  private val frames=mutable.ArrayBuffer.empty[MemoryFrame]
+  private var completesThisCycle=Set.empty[Int]
   private val pending=mutable.ArrayBuffer.empty[Pending]
   private val translations=mutable.ArrayBuffer.empty[Translation]
   private val reads=mutable.Queue.empty[Read]
@@ -69,6 +74,12 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private val macCompleted=mutable.Map.empty[Long,Long]
   private val kernelRequests=mutable.Map.empty[Int,Long]
   private var scalarGap=0
+  private var nextIssueAge=0L
+  private val acceptedAges=mutable.Map.empty[Int,Long]
+  private val ageToRecord=mutable.Map.empty[Long,Int]
+  private val liveLoads=mutable.Set.empty[Long]
+  private var peakLiveLoads=0
+  private var requestsDuringWar=0
   private val invalidated=mutable.Set.empty[BigInt]
   private val touchedLines=mutable.Set.empty[BigInt]
   private def bool(x: Bool): Boolean=x.peek().litToBoolean
@@ -92,9 +103,15 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
     dut.io.axi.r.valid.poke(false.B); dut.io.axi.b.valid.poke(false.B)
     dut.reset.poke(true.B); dut.clock.step(3); dut.reset.poke(false.B); dut.clock.step(2)
   }
-  private def acceptRequest(address: BigInt,beats: Int,store: Boolean): String = {
+  private def acceptRequest(address: BigInt,beats: Int,store: Boolean): (String,Int) = {
     if(requestInstruction.isEmpty) { assert(committedMemory.nonEmpty,s"AXI before commit at $cycle"); requestInstruction=Some(committedMemory.dequeue()); requestPosition=0 }
     val (r,index)=requestInstruction.get
+    for(old <- frames if old.index<index && !old.complete && !completesThisCycle(old.index) && (old.r.store || store)) {
+      // The mapping is injective; logical overlap is equivalent to physical
+      // overlap, while AR/AW splitting is independently checked below.
+      val overlaps=old.r.rs1<r.rs1+r.bytes && r.rs1<old.r.rs1+old.r.bytes
+      assert(!overlaps,s"overlapping ${if(old.r.store) "store" else "load"} -> ${if(store) "store" else "load"} request before older R/B completion at cycle=$cycle old=${old.index} young=$index")
+    }
     assert(r.store==store,s"memory issue order changed at $cycle")
     val va=r.rs1+requestPosition
     val expected=physical(va) & ~(BigInt(p.memBytes)-1)
@@ -104,8 +121,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
     val expectedBeats=math.min(p.burstBeats,math.min((remaining+prefix+p.memBytes-1)/p.memBytes,(4096-(address&4095).toInt)/p.memBytes))
     assert(beats==expectedBeats,s"burst split changed record=$index expected=$expectedBeats actual=$beats")
     requestPosition += math.min(remaining,beats*p.memBytes-prefix)
-    if(requestPosition==r.bytes) requestInstruction=None
-    r.label
+    val frame=frames.find(_.index==index).get
+    if(store) frame.writeRemaining+=1 else frame.readRemaining+=beats
+    if(requestPosition==r.bytes) { frame.allIssued=true; requestInstruction=None }
+    (r.label,index)
   }
   def run(maxCycles: Int=200000): R02Measurement = {
     reset()
@@ -140,11 +159,9 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       val responding=responses.headOption.filter(b => b.due<=cycle && ready())
       dut.io.axi.b.valid.poke(responding.nonEmpty.B)
       dut.io.axi.b.bits.id.poke(0.U); dut.io.axi.b.bits.resp.poke(0.U)
-      // A non-overlapping scalar query must never be blocked by speculative
-      // or committed vector descriptors.
-      dut.io.conflictQuery.valid.poke(true.B); dut.io.conflictQuery.pa.poke("hdead00000000".U)
-      dut.io.conflictQuery.bytes.poke(8.U); dut.io.conflictQuery.write.poke(true.B)
-      dut.io.conflict.expect(false.B)
+      completesThisCycle=Set.empty
+      returning.foreach(r => frames.find(_.index==r.index).foreach(f => if(f.allIssued && f.readRemaining==1) completesThisCycle+=f.index))
+      responding.foreach(b => frames.find(_.index==b.index).foreach(f => if(f.allIssued && f.writeRemaining==1) completesThisCycle+=f.index))
       val judgement=bool(dut.io.verdict.valid) && verdictReady && !kill
       val unjudged=pending.find(!_.judged)
       var justJudged: Option[Pending]=None
@@ -161,8 +178,24 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         val item=pending.head
         assert(item.index==committed,s"commit reordered at cycle $cycle")
         val r=fixture.records(item.index)
-        if(r.memory && r.bytes>0 && r.vstart<r.vl) committedMemory.enqueue((r,item.index))
+        if(r.memory && r.bytes>0 && r.vstart<r.vl) {
+          committedMemory.enqueue((r,item.index)); frames += MemoryFrame(r,item.index)
+        }
+        if(r.memory && !r.store && r.bytes>0 && r.vstart<r.vl) {
+          liveLoads += acceptedAges(item.index); peakLiveLoads=math.max(peakLiveLoads,liveLoads.size)
+        }
         r.scalarExpected.foreach(scalar.enqueue(_))
+      }
+      dut.io.conflictQuery.valid.poke(true.B); dut.io.conflictQuery.bytes.poke(1.U)
+      val query=frames.find(!_.complete)
+      query match {
+        case Some(f) =>
+          dut.io.conflictQuery.pa.poke(physical(f.r.rs1).U)
+          dut.io.conflictQuery.write.poke((!f.r.store).B)
+          dut.io.conflict.expect(true.B) // includes a newly committed queued item
+        case None =>
+          dut.io.conflictQuery.pa.poke("hdead00000000".U); dut.io.conflictQuery.write.poke(true.B)
+          dut.io.conflict.expect(false.B)
       }
       if(bool(dut.io.translation.valid) && translationReady) {
         val id=uint(dut.io.translation.bits.id).toInt
@@ -172,17 +205,19 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(bool(dut.io.axi.ar.valid) && bool(dut.io.axi.ar.ready)) {
         val address=uint(dut.io.axi.ar.bits.addr); val beats=uint(dut.io.axi.ar.bits.len).toInt+1
         assert((address&4095)+beats*p.memBytes<=4096,s"AR crosses a page at $cycle")
-        val label=acceptRequest(address,beats,false)
+        val (label,index)=acceptRequest(address,beats,false)
+        if(bool(dut.io.loadWriteWar)) requestsDuringWar+=1
         if(label.startsWith("gemv-load-") && !randomize) {
           val index=fixture.records.indexWhere(_.label==label)
           if(!kernelRequests.contains(index)) kernelRequests(index)=cycle
         }
-        reads.enqueue(Read(address,beats,0,cycle+math.max(1,readLatency),label))
+        reads.enqueue(Read(address,beats,0,cycle+math.max(1,readLatency),label,index))
       }
       if(bool(dut.io.axi.aw.valid) && bool(dut.io.axi.aw.ready)) {
         val address=uint(dut.io.axi.aw.bits.addr); val beats=uint(dut.io.axi.aw.bits.len).toInt+1
         assert((address&4095)+beats*p.memBytes<=4096,s"AW crosses a page at $cycle")
-        writes.enqueue(Write(address,beats,0,acceptRequest(address,beats,true)))
+        val (label,index)=acceptRequest(address,beats,true)
+        writes.enqueue(Write(address,beats,0,label,index))
       }
       if(bool(dut.io.axi.w.valid) && bool(dut.io.axi.w.ready)) {
         assert(writes.nonEmpty,s"W without AW at $cycle")
@@ -194,7 +229,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
           touchedLines += address & ~(BigInt(p.cacheLineBytes)-1)
         }
         w.beat+=1
-        if(w.beat==w.beats) { writes.dequeue(); responses.enqueue(Response(cycle+1+jitter(writeLatency),w.label)) }
+        if(w.beat==w.beats) { writes.dequeue(); responses.enqueue(Response(cycle+1+jitter(writeLatency),w.label,w.index)) }
       }
       if(bool(dut.io.invalidate.valid) && bool(dut.io.invalidate.ready)) {
         invalidations+=1; invalidated += uint(dut.io.invalidate.bits)
@@ -206,6 +241,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(returning.nonEmpty) {
         dut.io.axi.r.ready.expect(true.B)
         val r=returning.get
+        frames.find(_.index==r.index).get.readRemaining-=1
         readBeats+=1; if(firstRead<0) firstRead=cycle; lastRead=cycle
         if(r.label.startsWith("gemv-load-")) {
           kernelReadBeats+=1; if(kernelFirstRead<0) kernelFirstRead=cycle; kernelLastRead=cycle
@@ -213,6 +249,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         r.beat+=1; if(r.beat==r.beats) reads.dequeue()
       }
       if(responding.nonEmpty) {
+        frames.find(_.index==responding.get.index).get.writeRemaining-=1
         if(responding.get.label=="kernel-final-store") {
           kernelLastB=cycle; kernelRemaining=uint(dut.io.counters.bufferedBytes)
         }
@@ -220,7 +257,12 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       }
       if(tr.nonEmpty) translations -= tr.get
       if(bool(dut.io.loadRegisterComplete.valid)) {
-        loadRegisterDone((uint(dut.io.loadRegisterComplete.bits.age).toLong,uint(dut.io.loadRegisterComplete.bits.register).toInt))=cycle
+        val age=uint(dut.io.loadRegisterComplete.bits.age).toLong
+        val reg=uint(dut.io.loadRegisterComplete.bits.register).toInt
+        loadRegisterDone((age,reg))=cycle
+        val record=fixture.records(ageToRecord(age))
+        val lastReg=((record.word>>7)&31).toInt+(record.bytes+p.regBytes-1)/p.regBytes-1
+        if(reg==lastReg) liveLoads-=age
       }
       if(bool(dut.io.macRead.valid)) {
         val key=(uint(dut.io.macRead.bits.age).toLong,uint(dut.io.macRead.bits.register).toInt)
@@ -230,6 +272,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(scalarGap>0) scalarGap-=1
       if(accepted) {
         if(fixture.records(cursor).label=="zero-acc") kernelFirstIssue=cycle
+        acceptedAges(cursor)=nextIssueAge; ageToRecord(nextIssueAge)=cursor; nextIssueAge+=1
         pending += Pending(cursor); cursor+=1
         // One scalar lw placeholder between a GEMV weight load and its dot.
         // Reference instrumentation/setup is excluded from the kernel model.
@@ -247,6 +290,11 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       assert(actual==fixture.expected(b),f"Spike memory/VRF mismatch seed=$seed VA=0x${fixture.base+b}%x expected=0x${fixture.expected(b)}%02x actual=0x$actual%02x")
     }
     assert(touchedLines.subsetOf(invalidated),s"missing store invalidations seed=$seed lines=${touchedLines--invalidated}")
+    if(fixture.records.exists(_.label=="held-war-load")) {
+      assert(peakLiveLoads>=2,s"multiple-load lifetime never overlapped seed=$seed")
+      assert(requestsDuringWar>0,s"no younger AR was issued while an older load writeback waited for WAR seed=$seed")
+      println(s"R02_WAR_BYPASS seed=$seed peakLiveLoads=$peakLiveLoads requestsDuringWar=$requestsDuringWar")
+    }
     dut.io.counters.readBytes.expect((readBeats*p.memBytes).U)
     val remaining=uint(dut.io.counters.bufferedBytes)
     assert(remaining==0,s"unconsumed data at drain seed=$seed bytes=$remaining")

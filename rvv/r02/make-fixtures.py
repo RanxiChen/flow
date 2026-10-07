@@ -68,6 +68,12 @@ def directed():
     p.emit(vector(44,16,8,11,6),2,2,64,scalar=0x807fff01,label='raw-consumer')
     p.emit(memory(8,2),2,2,64,base=BASE+0x9000,label='war-young-load')
     p.emit(memory(12,2),2,2,64,base=BASE+0xa000,label='concurrent-load')
+    # Keep several older readers live long enough that a young v8 load's
+    # writeback must wait, while a second load's AR is still allowed to issue.
+    for _ in range(8):
+        p.emit(vector(44,16,8,11,6),2,3,128,scalar=0x817f00ff,label='long-war-reader')
+    p.emit(memory(8,2),2,3,128,base=BASE+0x8000,label='held-war-load')
+    p.emit(memory(24,2),2,3,128,base=BASE+0xa000,label='load-behind-held-war')
     for overlap in (True,False):
         b = BASE+0xb003
         other = b if overlap else BASE+0xc001

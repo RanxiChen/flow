@@ -17,6 +17,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val write = Decoupled(new RvvWrite(p)); val writeAge = Output(UInt(64.W))
     val hazard = Output(Vec(2,new RvvHazard(p))); val blocked = Input(Vec(2,Bool()))
     val progress = Vec(2,Valid(new RvvProgress(p)))
+    val writeWar = Input(Bool())
     val busy = Output(Bool())
     val readBytes = Output(UInt(64.W)); val writeBytes = Output(UInt(64.W)); val bufferedBytes = Output(UInt(64.W))
     val war = Output(UInt(64.W)); val overlap = Output(UInt(64.W)); val credit = Output(UInt(64.W)); val axiStall = Output(UInt(64.W))
@@ -271,7 +272,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   io.readBytes := counter(io.axi.r.fire,p.memBytes.U)
   io.writeBytes := counter(io.axi.w.fire,PopCount(io.axi.w.bits.strb))
   io.bufferedBytes := returnBuffer.io.count*p.memBytes.U
-  io.war := counter(returnBuffer.io.deq.valid && io.blocked(1))
+  io.war := counter(returnBuffer.io.deq.valid && io.writeWar)
   io.overlap := counter(generating && io.conflict)
   io.credit := counter(canRequest && !d.decoded.store && !creditOk)
   io.axiStall := counter((io.axi.ar.valid && !io.axi.ar.ready) || (io.axi.aw.valid && !io.axi.aw.ready) || (io.axi.w.valid && !io.axi.w.ready))
