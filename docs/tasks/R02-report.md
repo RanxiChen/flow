@@ -17,8 +17,8 @@
 | 合同 | 状态 | 提交、命令与日志 |
 | --- | --- | --- |
 | C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `3644575`；日志 `3644575-c1` |
-| C2 | 旧版通过；最终区间/影子修正版重验中 | `c2e436f` 5/5+8/8；当前 `3644575` 重验 |
-| C3 | 首次失败，修正后重跑 | `36ca203-c3`；DUT seed 7 查询检查失败；参考 1000 组完成 |
+| C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `4c1fc28`；`final-c3/c2-check/` |
+| C3 | 修正后 1000 种子重跑中 | `4c1fc28`；`final-c3/`；参考 1000 组完成 |
 | P1–P5 | 未运行 | 待 C3；保持任务书原测量口径与阈值 |
 | S1 | 未运行 | 待性能段；XCKU040 OOC 100 MHz |
 
@@ -105,5 +105,7 @@
 - `ab1ae1d` 的中间验证 `fix-valid-c1` 因合并影子修正而主动停止，保留部分日志，不算通过；只停止本任务脚本及其子进程。
 - `3644575` 已 push。cwd 同前；命令 `bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/3644575-c1`，退出码 **0**；三个 emit 日志和 `smoke.log` **3/3**。后接 `R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/3644575-c3`，先执行 C2，仍在运行。
 - `3644575-c3` 退出码 **1**：C2 前端 **6/6**，新增区间回归通过；VRF 双子行与仲裁检查通过，但最终 row 4 比较失败。分类为测试初始化遗漏：该行只写过低字节，却把其余从未初始化字节预期为 0。先整行初始化为 0x33，再只改低字节，并逐位比较“0x33 保留 + 0x77 低字节”；增加有效的保留字节检查，不改变 RTL、不屏蔽比较。C3 尚未启动。
+- `4c1fc28` 已 push；`git diff --exit-code 3644575 4c1fc28 -- design/src/main/scala/rvv` 退出码 **0**，C1 对应 RTL 完全一致；仅修正 VRF 测试初始化与报告。
+- C2 命令：`bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/final-c3/c2-check`（C3 入口先执行），退出码 **0**。`frontend.log` **6/6**，`vrf.log` **1/1**，`integration.log` **8/8**、全部匹配 Spike，WAR 越位/多 load 机制检查通过。C3 继续运行。
 
 与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
