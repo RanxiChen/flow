@@ -15,6 +15,6 @@ cd design
 export MAKEFLAGS=-j4
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:ActiveProcessorCount=4 -Xmx6g"
 for config in 512-512 256-256 512-256; do
-  nice -n 10 /home/chen/.local/share/coursier/bin/sbt "runMain flow.rvv.GenerateRvv $config $R02_EVIDENCE/rtl/$config" > "$R02_EVIDENCE/emit-$config.log" 2>&1
+  nice -n 10 "${R04_SBT:-/home/chen/.local/share/coursier/bin/sbt}" "runMain flow.rvv.GenerateRvv $config $R02_EVIDENCE/rtl/$config" > "$R02_EVIDENCE/emit-$config.log" 2>&1
 done
-nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvSmokeSpec' > "$R02_EVIDENCE/smoke.log" 2>&1
+nice -n 10 "${R04_SBT:-/home/chen/.local/share/coursier/bin/sbt}" 'testOnly flow.rvv.RvvSmokeSpec' > "$R02_EVIDENCE/smoke.log" 2>&1

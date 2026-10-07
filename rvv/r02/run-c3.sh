@@ -25,4 +25,4 @@ export R02_FIXTURES="$R02_EVIDENCE/fixtures"
 export MAKEFLAGS=-j4
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:ActiveProcessorCount=4 -Xmx6g"
 cd design
-nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvIntegrationSpec -- -z C3' > "$R02_EVIDENCE/random.log" 2>&1
+nice -n 10 "${R04_SBT:-/home/chen/.local/share/coursier/bin/sbt}" 'testOnly flow.rvv.RvvIntegrationSpec -- -z C3' > "$R02_EVIDENCE/random.log" 2>&1

@@ -15,4 +15,4 @@ export R02_RESULTS="$R02_EVIDENCE/results"
 export MAKEFLAGS=-j4
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:ActiveProcessorCount=4 -Xmx6g"
 cd design
-nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvPerformanceSpec' > "$R02_EVIDENCE/performance.log" 2>&1
+nice -n 10 "${R04_SBT:-/home/chen/.local/share/coursier/bin/sbt}" 'testOnly flow.rvv.RvvPerformanceSpec' > "$R02_EVIDENCE/performance.log" 2>&1

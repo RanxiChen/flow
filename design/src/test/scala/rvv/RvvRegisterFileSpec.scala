@@ -18,20 +18,20 @@ class RvvRegisterFileSpec extends AnyFreeSpec with ChiselSim {
       val low=BigInt("11"*32,16); val high=BigInt("22"*32,16)
       write(0,0,low,1); write(1,1,high,2)
       d.io.write(0).ready.expect(true.B); d.io.write(1).ready.expect(true.B)
-      d.clock.step(1); d.io.write.foreach(_.valid.poke(false.B))
+      d.clock.step(1); d.io.write.foreach(_.valid.poke(false.B)); d.clock.step(1)
       d.io.mask.expect((low | (high<<256)).U)
-      d.io.readValid(0).poke(true.B); d.io.readRows(0).poke(0.U); d.clock.step(1); d.io.readData(0).expect(low.U)
-      d.io.readRows(0).poke(1.U); d.clock.step(1); d.io.readData(0).expect(high.U); d.io.readValid(0).poke(false.B)
+      d.io.readValid(0).poke(true.B); d.io.readRows(0).poke(0.U); d.clock.step(2); d.io.readData(0).expect(low.U)
+      d.io.readRows(0).poke(1.U); d.clock.step(2); d.io.readData(0).expect(high.U); d.io.readValid(0).poke(false.B)
       val other=BigInt("33"*32,16)
-      write(0,4,other,0); d.clock.step(1); d.io.write(0).valid.poke(false.B)
+      write(0,4,other,0); d.clock.step(1); d.io.write(0).valid.poke(false.B); d.clock.step(1)
       write(0,0,0x55,4,1); write(1,4,0x77,3,1) // same bank, different rows
       d.io.write(0).ready.expect(false.B); d.io.write(1).ready.expect(true.B)
       d.clock.step(1); d.io.write(1).valid.poke(false.B)
       d.io.mask.expect((low | (high<<256)).U)
       d.io.write(0).ready.expect(true.B); d.clock.step(1)
-      d.io.write(0).valid.poke(false.B)
+      d.io.write(0).valid.poke(false.B); d.clock.step(1)
       d.io.mask.expect(((low & ~BigInt(255)) | 0x55 | (high<<256)).U)
-      d.io.readValid(0).poke(true.B); d.io.readRows(0).poke(4.U); d.clock.step(1); d.io.readData(0).expect(((other & ~BigInt(255)) | 0x77).U)
+      d.io.readValid(0).poke(true.B); d.io.readRows(0).poke(4.U); d.clock.step(2); d.io.readData(0).expect(((other & ~BigInt(255)) | 0x77).U)
     }
   }
 }

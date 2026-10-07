@@ -20,12 +20,14 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     val macRead = Valid(new RvvRegisterEvent); val macComplete = Valid(UInt(64.W))
     val loadWriteWar = Output(Bool())
   })
+  val macReady = IO(Output(Valid(new RvvRegisterEvent)))
+  val macBlocking = IO(Output(UInt(4.W)))
   val front = Module(new RvvFrontend(p))
   front.io.issue <> io.issue; io.verdict <> front.io.verdict
   front.io.commit := io.commit; front.io.kill := io.killUncommitted; front.io.serialGo := io.serialGo
   io.translation <> front.io.translation; front.io.translated <> io.translated
   front.io.scalarQuery := io.conflictQuery; io.conflict := front.io.scalarConflict
-  val sb = Module(new RvvScoreboard(p,5))
+  val sb = Module(new RvvScoreboard(p,6))
   sb.io.nextAge := front.io.nextAge; front.io.externalAgeAllowed := sb.io.ageAllowed
   val queues = p.unitDepths.map(depth => Module(new Queue(new RvvDescriptor(p),depth)))
   val dispatch = front.io.dispatch
@@ -46,10 +48,13 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   front.io.vectorQuery := mem.io.ordering; front.io.vectorQueryValid := mem.io.orderingValid
   mem.io.conflict := front.io.vectorConflict; front.io.released <> mem.io.released
   io.scalarResult <> cross.io.result
-  io.macRead <> mac.io.readEvent; io.macComplete <> mac.io.complete
-  io.loadRegisterComplete.valid := mem.io.progress(1).valid && mem.io.progress(1).bits.writeDone.orR
-  io.loadRegisterComplete.bits.age := mem.io.writeAge
-  io.loadRegisterComplete.bits.register := PriorityEncoder(mem.io.progress(1).bits.writeDone)
+  macReady := mac.io.readyEvent; macBlocking := mac.io.blocking
+  io.macRead <> mac.io.readEvent
+  io.macComplete := RegNext(mac.io.complete)
+  io.macComplete.valid := RegNext(mac.io.complete.valid,false.B)
+  io.loadRegisterComplete.valid := RegNext(mem.io.progress(1).valid && mem.io.progress(1).bits.writeDone.orR,false.B)
+  io.loadRegisterComplete.bits.age := RegNext(mem.io.writeAge)
+  io.loadRegisterComplete.bits.register := RegNext(PriorityEncoder(mem.io.progress(1).bits.writeDone))
   val vrf = Module(new RvvRegisterFile(p))
   alu.io.mask := vrf.io.mask; mac.io.mask := vrf.io.mask
   // Allocate the shared execution read ports by age when demand exceeds supply.
@@ -60,7 +65,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   vrf.io.readRows.foreach(_ := 0.U)
   alu.io.readData.foreach(_ := 0.U); mac.io.readData.foreach(_ := 0.U)
   val macBase = Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)
-  val macDataBase = RegEnable(macBase,mac.io.readValid)
+  val macDataBase = RegNext(RegEnable(macBase,mac.io.readValid))
   for(j <- 0 until 3) {
     alu.io.readData(j) := vrf.io.readData(j)
     mac.io.readData(j) := vrf.io.readData((macDataBase+&j.U)(log2Ceil(p.execReadPorts+2)-1,0))
@@ -77,12 +82,25 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   vrf.io.readRows(p.execReadPorts) := mem.io.storeRow; mem.io.storeData := vrf.io.readData(p.execReadPorts)
   vrf.io.readRows(p.execReadPorts+1) := cross.io.row; cross.io.data := vrf.io.readData(p.execReadPorts+1)
   vrf.io.write(0) <> mem.io.write; vrf.io.age(0) := mem.io.writeAge
-  vrf.io.write(1) <> alu.io.write; vrf.io.age(1) := alu.io.age
-  vrf.io.write(2) <> mac.io.write; vrf.io.age(2) := mac.io.age
-  val checks = Seq(mem.io.hazard(0),mem.io.hazard(1),alu.io.hazard,mac.io.hazard,cross.io.hazard)
+  vrf.io.write(1) <> alu.io.write; vrf.io.age(1) := alu.io.writeAge
+  vrf.io.write(2) <> mac.io.write; vrf.io.age(2) := mac.io.writeAge
+  for(unit <- Seq(alu,mac); j <- 0 until 2) {
+    unit.snoop(j).valid := vrf.io.write(j).fire
+    unit.snoop(j).bits.row := vrf.io.write(j).bits.row
+    unit.snoop(j).bits.age := vrf.io.age(j)
+  }
+  val checks = Seq(mem.io.hazard(0),mem.io.hazard(1),alu.io.hazard,mac.io.hazard,cross.io.hazard,0.U.asTypeOf(new RvvHazard(p)))
   val updates = Seq(mem.io.progress(0),mem.io.progress(1),alu.io.progress,mac.io.progress,cross.io.progress)
   checks.zipWithIndex.foreach { case(x,j) => sb.io.check(j) := x }
-  updates.zipWithIndex.foreach { case(x,j) => sb.io.progress(j) := x }
+  updates.zipWithIndex.foreach { case(x,j) =>
+    if(j == 1 || j == 2 || j == 3) { sb.io.progress(j) := RegNext(x); sb.io.progress(j).valid := RegNext(x.valid,false.B) }
+    else sb.io.progress(j) := x
+  }
+  sb.io.progress(5) := RegNext(RegNext(mac.io.readProgress))
+  sb.io.progress(5).valid := RegNext(RegNext(mac.io.readProgress.valid,false.B),false.B)
+  for((unit,j) <- Seq((alu,2),(mac,3))) {
+    unit.io.rawBlocked := sb.io.raw(j); unit.io.warBlocked := sb.io.war(j); unit.io.wawBlocked := sb.io.waw(j)
+  }
   mem.io.blocked(0) := sb.io.raw(0) || sb.io.war(0) || sb.io.waw(0)
   mem.io.blocked(1) := sb.io.raw(1) || sb.io.war(1) || sb.io.waw(1)
   mem.io.writeWar := sb.io.war(1)

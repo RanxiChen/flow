@@ -31,8 +31,9 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
       banks(b)(r).io.readAddress := index(io.readRows(r))
       banks(b)(r).io.readEnable := io.readValid(r) && bank(io.readRows(r)) === b.U
     }
-    val selectedBank = RegEnable(bank(io.readRows(r)),io.readValid(r))
-    io.readData(r) := VecInit(banks.map(copies => copies(r).io.readData))(selectedBank)
+    val selectedBank = RegNext(RegEnable(bank(io.readRows(r)),io.readValid(r)))
+    val outputs = banks.map(copies => RegNext(copies(r).io.readData))
+    io.readData(r) := VecInit(outputs)(selectedBank)
   }
   io.write.foreach(_.ready := false.B)
   for(b <- 0 until p.writeBanks) {
@@ -47,18 +48,20 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
         bankValid := true.B; bankWrite := io.write(w).bits
       }
     }
-    // One logical write port per bank, broadcast to its read replicas.
+    val physicalValid = RegNext(bankValid,false.B)
+    val physicalWrite = RegNext(bankWrite)
+    // One logical write port per bank, registered before all replicas.
     banks(b).foreach { copy =>
-      copy.io.clock := clock; copy.io.writeValid := bankValid
-      copy.io.writeAddress := index(bankWrite.row)
-      copy.io.writeData := bankWrite.data; copy.io.writeEnables := bankWrite.enables
+      copy.io.clock := clock; copy.io.writeValid := physicalValid
+      copy.io.writeAddress := index(physicalWrite.row)
+      copy.io.writeData := physicalWrite.data; copy.io.writeEnables := physicalWrite.enables
     }
     for(r <- 0 until p.execReadPorts+2) {
-      assert(!(bankValid && io.readValid(r) && io.readRows(r) === bankWrite.row),
+      assert(!(physicalValid && io.readValid(r) && io.readRows(r) === physicalWrite.row),
         "BRAM same-row read/write must never be consumed")
     }
-    when(bankValid) {
-      val x=bankWrite
+    when(physicalValid) {
+      val x=physicalWrite
       when(x.row < p.rowsPerReg.U) {
         for(j <- 0 until p.rowBytes) {
           when(x.enables(j)) { shadowBytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
@@ -117,6 +120,7 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   })
   val valid = RegInit(VecInit(Seq.fill(p.scoreboardDepth)(false.B)))
   val ages = Reg(Vec(p.scoreboardDepth,UInt(p.ageBits.W)))
+  val dot = Reg(Vec(p.scoreboardDepth,Bool()))
   val reads = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   val writes = Reg(Vec(p.scoreboardDepth,UInt(32.W)))
   io.ageAllowed := (0 until p.scoreboardDepth).map(j => !valid(j) || (io.nextAge-ages(j)) < p.ageLimit.U).reduce(_ && _)
@@ -125,8 +129,8 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   for(c <- 0 until clients) {
     val q = io.check(c)
     val older = (0 until p.scoreboardDepth).map(j => valid(j) && RvvAge.older(ages(j),ages(q.slot)))
-    val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j),reads(j),0.U)).reduce(_ | _)
-    val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j),0.U)).reduce(_ | _)
+    val oldReads = (0 until p.scoreboardDepth).map(j => Mux(older(j) && !(q.dotBypass && dot(j)),reads(j),0.U)).reduce(_ | _)
+    val oldWrites = (0 until p.scoreboardDepth).map(j => Mux(older(j),writes(j) & ~Mux(q.dotBypass && dot(j),q.accumulator,0.U),0.U)).reduce(_ | _)
     io.raw(c) := q.valid && (q.reads & oldWrites).orR
     io.war(c) := q.valid && (q.writes & oldReads).orR
     io.waw(c) := q.valid && (q.writes & oldWrites).orR
@@ -150,6 +154,7 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
   }
   when(io.allocate.fire) {
     valid(free) := true.B; ages(free) := io.allocate.bits.age
+    dot(free) := io.allocate.bits.decoded.op === RvvOp.dot.U || io.allocate.bits.decoded.op === RvvOp.dotsu.U
     reads(free) := io.allocate.bits.decoded.readMask; writes(free) := io.allocate.bits.decoded.writeMask
   }
 }

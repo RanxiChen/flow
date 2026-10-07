@@ -5,26 +5,15 @@ import chisel3.util._
 
 /** One row per accepted beat, with register-granularity progress. The shared
   * read-port grant is separate from register hazards and bank arbitration. */
-class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new RvvDescriptor(p)))
-    val readRows = Output(Vec(3,UInt(p.rowBits.W))); val readData = Input(Vec(3,UInt(p.dlen.W)))
-    val readValid = Output(Bool())
-    val readDemand = Output(UInt(2.W)); val grant = Input(Bool())
-    val mask = Input(UInt(p.vlen.W))
-    val hazard = Output(new RvvHazard(p)); val blocked = Input(Bool())
-    val progress = Valid(new RvvProgress(p)); val write = Decoupled(new RvvWrite(p))
-    val age = Output(UInt(p.ageBits.W)); val busy = Output(Bool())
-    val readEvent = Valid(new RvvRegisterEvent)
-    val complete = Valid(UInt(64.W))
-  })
+class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
+  val io = IO(new RvvIntegerPorts(p))
   val active = RegInit(false.B); val d = Reg(new RvvDescriptor(p))
   val row = RegInit(0.U(log2Ceil(p.rows+1).W))
   val pending = RegInit(false.B); val readAll = RegInit(false.B)
-  val operandsHeld = RegInit(false.B)
-  val heldOperands = Reg(Vec(3,UInt(p.dlen.W)))
-  val operandData = Mux(operandsHeld,heldOperands,io.readData)
-  when(pending && !operandsHeld) { heldOperands := io.readData; operandsHeld := true.B }
+  val heldOperands = RegNext(io.readData)
+  val operandData = heldOperands
+  val returned = RegNext(RegNext(RegNext(io.readValid,false.B),false.B),false.B)
+  val computed = RegInit(false.B)
   val operandRow = Reg(UInt(log2Ceil(p.rows+1).W))
   // Scalar moves need no BRAM operand and can write directly from the
   // registered descriptor. Vector reads retain the synchronous operand stage.
@@ -35,7 +24,11 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   val subrow = if(p.rowsPerReg == 1) 0.U else resultRow(log2Ceil(p.rowsPerReg)-1,0)
   def address(base: UInt, at: UInt = operandRow): UInt = (base*p.rowsPerReg.U+at)(p.rowBits-1,0)
   def bit(base: UInt, at: UInt = operandRow): UInt = (1.U(32.W) << (base+(at >> log2Ceil(p.rowsPerReg))))(31,0)
-  io.age := d.age; io.busy := active
+  io.age := d.age; io.writeAge := d.age; io.busy := active
+  io.readProgress.valid := false.B; io.readProgress.bits := 0.U.asTypeOf(new RvvProgress(p))
+  io.readyEvent.valid := false.B; io.readyEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
+  io.blocking := 0.U
+  io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U
   io.readRows(0) := address(d.decoded.vs2,row)
   io.readRows(1) := address(if(multiply) d.decoded.vd else d.decoded.vs1,row)
   io.readRows(2) := address(d.decoded.vs1,row)
@@ -55,7 +48,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   val slowIndex = RegInit(0.U(math.max(1,log2Ceil(p.dlen/64)).W))
   val slowActive = RegInit(false.B); val slowDone = RegInit(false.B)
   val zero = d.issue.vl === 0.U || d.issue.vstart >= d.issue.vl
-  val captureSlow = pending && slow && !slowActive && !slowDone
+  val captureSlow = returned && slow && !slowActive && !slowDone
   when(captureSlow) {
     slowInputs := operandData; slowIndex := 0.U; slowActive := true.B
   }
@@ -140,21 +133,24 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
       RvvOp.add.U -> Cat(sums.reverse), RvvOp.sub.U -> Cat(sums.reverse),
       RvvOp.and.U -> (a & b), RvvOp.shift.U -> shifted))
   }
+  val registeredResult = Reg(UInt(p.dlen.W))
+  when((returned && !slow) || (active && noRead && !computed)) { registeredResult := resultData; computed := true.B }
   io.write.bits.row := address(d.decoded.vd,resultRow)
-  io.write.bits.data := resultData
+  io.write.bits.data := registeredResult
   when(slow) { io.write.bits.data := slowValues.asUInt }
   io.write.bits.enables := VecInit((0 until p.rowBytes).map { b =>
     val element = (bytePosition + b.U) >> d.decoded.sew
     element < d.issue.vl && element >= d.issue.vstart &&
       (!d.decoded.masked || (io.mask >> element)(0))
   }).asUInt
-  io.write.valid := (pending || (active && noRead)) && !zero && (!slow || slowDone) && !io.blocked
+  io.write.valid := (pending || (active && noRead)) && !zero && Mux(slow,slowDone,computed) && !io.blocked
   io.readValid := active && !noRead && !zero && !readAll && !slowActive && !slowDone &&
-    (!pending || io.write.fire) && io.grant && !io.blocked
+    !pending && io.grant && !io.blocked
   when(io.readValid) {
-    pending := true.B; operandsHeld := false.B; operandRow := row; row := row+1.U
+    pending := true.B; computed := false.B; operandRow := row; row := row+1.U
     when(row+1.U >= rowsTotal) { readAll := true.B }
   }.elsewhen(io.write.fire) { pending := false.B }
+  when(io.write.fire) { computed := false.B }
   when(io.write.fire && noRead) { row := row+1.U }
   io.progress.valid := (io.write.fire || (active && zero))
   io.progress.bits.slot := d.slot
@@ -171,7 +167,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     when(zero || last) { active := false.B }
   }
   io.in.ready := !active || (io.progress.valid && io.progress.bits.finished)
-  when(io.in.fire) { d := io.in.bits; active := true.B; row := 0.U; pending := false.B; readAll := false.B; slowActive := false.B; slowDone := false.B }
+  when(io.in.fire) { d := io.in.bits; active := true.B; computed := false.B; row := 0.U; pending := false.B; readAll := false.B; slowActive := false.B; slowDone := false.B }
   io.readEvent.valid := io.readValid && (if(p.rowsPerReg == 1) true.B else row(log2Ceil(p.rowsPerReg)-1,0) === 0.U)
   io.readEvent.bits.age := d.age; io.readEvent.bits.register := d.decoded.vs2+(row >> log2Ceil(p.rowsPerReg))
   io.complete.valid := io.progress.valid && io.progress.bits.finished
@@ -188,6 +184,7 @@ class RvvCrossLaneSequencer(p: RvvParams) extends Module {
   })
   val active = RegInit(false.B); val held = RegInit(false.B); val pending = RegInit(false.B)
   val d = Reg(new RvvDescriptor(p)); val result = Reg(new RvvScalar)
+  val readReturned = RegNext(RegNext(io.readValid,false.B),false.B)
   io.in.ready := !active && !held
   when(io.in.fire) { d := io.in.bits; active := true.B }
   io.row := d.decoded.vs2 * p.rowsPerReg.U
@@ -195,7 +192,7 @@ class RvvCrossLaneSequencer(p: RvvParams) extends Module {
   io.hazard.reads := (1.U(32.W) << d.decoded.vs2)(31,0); io.hazard.writes := 0.U
   io.readValid := active && !pending && !io.blocked
   when(io.readValid) { pending := true.B }
-  io.progress.valid := active && pending && !io.blocked
+  io.progress.valid := active && pending && readReturned && !io.blocked
   io.progress.bits.slot := d.slot; io.progress.bits.readDone := "hffffffff".U
   io.progress.bits.writeDone := 0.U; io.progress.bits.finished := true.B
   when(io.progress.valid) {
@@ -215,4 +212,22 @@ class RvvFpSequencer(p: RvvParams) extends Module {
   val io = IO(new Bundle { val in = Flipped(Decoupled(new RvvDescriptor(p))); val busy = Output(Bool()) })
   io.in.ready := false.B; io.busy := io.in.valid
   assert(!io.in.valid,"R02 FP execution is not implemented")
+}
+
+class RvvIntegerPorts(p: RvvParams) extends Bundle {
+    val in = Flipped(Decoupled(new RvvDescriptor(p)))
+    val readRows = Output(Vec(3,UInt(p.rowBits.W))); val readData = Input(Vec(3,UInt(p.dlen.W)))
+    val readValid = Output(Bool())
+    val readDemand = Output(UInt(2.W)); val grant = Input(Bool())
+    val mask = Input(UInt(p.vlen.W))
+    val hazard = Output(new RvvHazard(p)); val blocked = Input(Bool())
+    val progress = Valid(new RvvProgress(p)); val write = Decoupled(new RvvWrite(p))
+    val age = Output(UInt(p.ageBits.W)); val busy = Output(Bool())
+    val readEvent = Valid(new RvvRegisterEvent)
+    val complete = Valid(UInt(64.W))
+  val readProgress = Valid(new RvvProgress(p))
+  val writeAge = Output(UInt(p.ageBits.W))
+  val rawBlocked = Input(Bool()); val warBlocked = Input(Bool()); val wawBlocked = Input(Bool())
+  val readyEvent = Valid(new RvvRegisterEvent)
+  val blocking = Output(UInt(4.W))
 }

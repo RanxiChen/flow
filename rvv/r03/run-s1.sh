@@ -9,7 +9,7 @@ git rev-parse HEAD > "$R02_EVIDENCE/sha.txt"
 test -z "$(git status --porcelain --untracked-files=no)"
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:ActiveProcessorCount=4 -Xmx6g"
 cd design
-nice -n 10 /home/chen/.local/share/coursier/bin/sbt "runMain flow.rvv.GenerateRvv 512-512 $R02_EVIDENCE/rtl" > "$R02_EVIDENCE/emit.log" 2>&1
+nice -n 10 "${R04_SBT:-/home/chen/.local/share/coursier/bin/sbt}" "runMain flow.rvv.GenerateRvv 512-512 $R02_EVIDENCE/rtl" > "$R02_EVIDENCE/emit.log" 2>&1
 cd "$R02_EVIDENCE"
 nice -n 10 /home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado -mode batch \
   -source "$R02_ROOT/rvv/r03/synthesize.tcl" -tclargs "$R02_EVIDENCE/rtl" "$R02_EVIDENCE/reports" \

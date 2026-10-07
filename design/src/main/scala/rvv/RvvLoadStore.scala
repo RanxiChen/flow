@@ -177,6 +177,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   when(writeBurst && !gathered && !gathering) {
     gatherRow := firstRow; gatheredData := 0.U; gathering := true.B
   }
+  val storeReturned = RegNext(RegNext(io.storeReadValid,false.B),false.B)
   val storeReg = wd.decoded.vd + (gatherRow >> log2Ceil(p.rowsPerReg))
   io.storeRow := wd.decoded.vd*p.rowsPerReg.U+gatherRow
   io.hazard(0).valid := gathering
@@ -201,7 +202,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   }
   io.storeReadValid := gathering && !storePending && !io.blocked(0)
   when(io.storeReadValid) { storePending := true.B }
-  when(gathering && storePending && !io.blocked(0)) {
+  when(gathering && storePending && storeReturned && !io.blocked(0)) {
     storePending := false.B
     gatheredData := gatheredBytes.asUInt
     when(gatherRow === lastRow) { gathering := false.B; gathered := true.B }
