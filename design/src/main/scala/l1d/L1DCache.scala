@@ -94,7 +94,9 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val s0Req = WireDefault(0.U.asTypeOf(new L1PipeReq(p)))
   val selected = WireDefault(L1Src.Cpu)
   val candidate = WireDefault(false.B)
-  val rsvProbeHeld = rsvValid && rsvTimer =/= 0.U && probe.io.pending.addr === rsvLine && !io.core.trapClearRsv
+  // Trap is derived from this cache's response in the integrated backend.
+  // It clears state at the edge, never feeds the response/hold decision.
+  val rsvProbeHeld = rsvValid && rsvTimer =/= 0.U && probe.io.pending.addr === rsvLine
   val incomingAtomic = io.core.req.bits.op === L1DOp.LR || io.core.req.bits.op === L1DOp.SC ||
     io.core.req.bits.op === L1DOp.AMO
   val needsDrain = io.core.req.bits.op === L1DOp.AMO || (incomingAtomic && io.core.req.bits.rl)
@@ -296,7 +298,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val isSc = !ptw && s2.req.core.op === L1DOp.SC
   val isAmo = !ptw && s2.req.core.op === L1DOp.AMO
   val blockingAtomic = isLr || isAmo
-  val scSuccess = rsvValid && rsvLine === line(s2.paddr) && !io.core.trapClearRsv
+  val scSuccess = rsvValid && rsvLine === line(s2.paddr)
   val upgrade = hit && hitState === L1State.S && (isStore || isLr)
   val allocWay = Mux(upgrade, hitWay, victimWay)
   val victimEntry = if (p.ways == 1) s2.tagVec(0) else s2.tagVec(allocWay)
