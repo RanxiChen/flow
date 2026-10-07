@@ -24,20 +24,26 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   io.write.foreach(_.ready := false.B)
   for(b <- 0 until p.writeBanks) {
     val eligible = (0 until writers).map(w => io.write(w).valid && bank(io.write(w).bits.row) === b.U)
+    val bankValid = WireDefault(false.B)
+    val bankWrite = WireDefault(0.U.asTypeOf(new RvvWrite(p)))
     for(w <- 0 until writers) {
       val wins = eligible(w) && (0 until writers).filter(_ != w).map(o =>
         !eligible(o) || io.age(w) < io.age(o) || (io.age(w) === io.age(o) && (w < o).B)).foldLeft(true.B)(_ && _)
       when(wins) {
         io.write(w).ready := true.B
-        val x = io.write(w).bits
-        banks(b).write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools)
-        when(x.row < p.rowsPerReg.U) {
-          val bytes = Wire(Vec(p.regBytes,UInt(8.W))); bytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
-          for(j <- 0 until p.rowBytes) {
-            when(x.enables(j)) { bytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
-          }
-          shadow := bytes.asUInt
+        bankValid := true.B; bankWrite := io.write(w).bits
+      }
+    }
+    // Exactly one physical memory write port per bank, after arbitration.
+    when(bankValid) {
+      val x=bankWrite
+      banks(b).write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools)
+      when(x.row < p.rowsPerReg.U) {
+        val bytes=Wire(Vec(p.regBytes,UInt(8.W))); bytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
+        for(j <- 0 until p.rowBytes) {
+          when(x.enables(j)) { bytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
         }
+        shadow := bytes.asUInt
       }
     }
   }
