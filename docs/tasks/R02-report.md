@@ -16,8 +16,8 @@
 
 | 合同 | 状态 | 提交、命令与日志 |
 | --- | --- | --- |
-| C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `63fbe8d`，见下方 C1 证据 |
-| C2 | 未运行 | 待 C1 |
+| C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `3a5202e`；重跑日志 `3a5202e-c1` |
+| C2 | 通过：前端 5/5；定向/冒险程序 8 组握手与 kill 随机种子全部与 Spike 一致 | `3a5202e`；见 C2 证据 |
 | C3 | 未运行 | 待 C2；至少 1000 种子 |
 | P1–P5 | 未运行 | 待 C3；保持任务书原测量口径与阈值 |
 | S1 | 未运行 | 待性能段；XCKU040 OOC 100 MHz |
@@ -46,3 +46,48 @@
 - 参数默认：VLEN=DLEN=512、8 lane、VIQ 32、五队列深度 16/8/16/2/4、4 写 bank、4 共用执行读口、512 位 AXI、单 ID、多 outstanding、4 beat burst、16 KiB 返回缓冲、32 条在途访存、8 个翻译编号、32 B L1D 作废行。
 - FP 队列和 sequencer 已存在；serialGo 与未实现指令均断言。返回缓冲使用同步读存储，VRF 按字节写使能和低位行 bank 仲裁。
 - C1 生成有动态索引宽度警告；C2 在不改变结构的前提下收敛索引宽度，并把翻译返回的寄存器更新拆成静态目的位置，减少多路选择器规模。后续 RTL 修改需要重新验证 C1。
+
+### C1 重跑与 C2 闭合
+
+- 实现与测试提交：`3a5202e`，已 push。Alan 分支与 HEAD 相符，工作区无已跟踪修改。
+- cwd：`/home/chen/FUN/flow-rvv-r02-20261007`。
+- 命令（激活 flow 后）：`bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/3a5202e-c1 && bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/3a5202e-c2`，退出码 **0**。
+- C1：三个 `emit-*.log` 生成通过，`3a5202e-c1/smoke.log` **3/3**。VRF 已收敛为每 bank 一个物理写口；翻译返回采用静态目的索引，不改变队列/判定/区间结构。当前生成没有原 C1 的动态索引宽度警告。
+- C2 日志根：`/home/chen/FUN/flow-r02-evidence/3a5202e-c2/`。
+- `frontend.log`：**5/5**，包含 kill 后迟到响应、编号不提前复用、判定/kill 同拍撤销、commit/kill 同拍保留最老项、最后一个 VIQ 位置、已提交且仍排队的 load/store 查询及提交当拍查询、跨页两个非连续 PA、所有 Serial 分类。
+- `integration.log`：定向指令/非对齐/跨页/掩码/尾部 undisturbed/LMUL/标量结果/三类重叠与不重叠对照，在握手种子 **0–7** 下全部通过；最终内存与全部 32 个 VRF 寄存器的 store 转储逐字节匹配实际 Spike 结果。每组读取 92 个 AXI beat。
+- 驱动器独立检查 AR/AW 的 PA、burst 长度和 4 KiB 边界；按已提交访存跟踪 R/B 生命周期，显式断言三类重叠排序；每拍查询尚未完成的已提交访存，包括提交当拍；WSTRB 与每个被写行的作废覆盖均检查。
+- `R02_WAR_BYPASS`：每组均出现多个 load 并存，且都有年轻 AR 在老 load 的 VRF 写回因 WAR 受阻时发出。峰值并存 **8–15 条 load**，每组 **1–4 次** AR 在 WAR 等待期间 fire；不以结果一致替代该机制证据。
+- `plugin-test.log`：**15 条**点积指令的独立字节算术检查通过；它从 Spike 的执行前后快照检查 SS/SU 符号解释和模 2^32 累加，不使用 DUT 运算逻辑。
+- 本段证明独立协处理器的 R02 子集，不包含 Breeze 集成、FP、串行执行、FPGA 或 Linux 运行证据。
+
+### 工具与参考语义
+
+- Chisel **7.0.0**、Scala **2.13.16**、sbt **1.9.7**，使用原 `design/build.sbt`，未修改共享构建配置。
+- Alan Verilator **5.028**，OpenJDK **11.0.32.1**；版本文件见 C1 日志根。
+- Spike **1.1.1-dev**，源码 `76ce016b6765d66c93522b0ea9a16a44841cb331`；源码状态、插件哈希见 `reference/`。使用安装的独立 Spike 程序，不改其工作区。
+- Spike 二进制 SHA256：`c0a8eb834cc94e92afb372f29bd7d2a87215c5fb6ee0dc19ed84792e64222c2a`。
+- ISA 选择 `rv64gcv_zicclsm_zvl512b`：Zvl 指定实际 VLEN；Zicclsm 与本任务允许非对齐的快路径相符。每个参考程序都由 Spike 实际执行，记录 CSR 与标量操作数，最终内存来自其执行结果。
+- Zvqdotq 固定提交：[`813cba14c9f0a731b4904925851a2820a6320b5b`](https://github.com/riscv/riscv-dot-product/tree/813cba14c9f0a731b4904925851a2820a6320b5b)。`vqdot.vx` 的固定匹配值 `0xb0006057`，`vqdotsu.vx` 为 `0xa8006057`，两者匹配掩码 `0xfc00707f`；vd/vs2/rs1/vm 按标准 OP-V 字段填入。
+- 采用正文的四个 int8 乘积加 vd、32 位回绕语义；官方 Sail 示例最后引用了未定义的 `product`，插件采用正文定义的结果并独立检查。结构无需改变。
+- 发起时分配 64 位单调年龄号；判定/commit 不依赖核心流水级数。单 AXI ID 对应多 outstanding，按 burst FIFO 归还；没有多 ID 乱序返回实现或证据。
+- ALU/乘加按行推进、按整个寄存器完成释放读写掩码；可在最后一行 fire 当拍接纳下一条同单元指令。VRF 六个读口中四个执行读口按需求/年龄分配，store/跨 lane 各自独立。
+- 访存区间存储在判定得到 PA 后有效，提交当拍旁路到查询，释放与 VRF 写回分离。翻译请求编号独立于被 kill 的描述符，迟到响应仍接收并丢弃。
+- 当前定向程序使用 tu/mu，对尾部与屏蔽前值逐字节检查；不把不同 agnostic 取值判为错误。VL=0 不翻译/不访存，`vmv.x.s` 按 ISA 仍读取元素 0。
+
+### 修复与诊断记录
+
+以下均保留原日志，没有放宽合同、删除用例、修改预期值或增加测试特判：
+
+| 提交/尝试 | 分类与结果 | 处理 |
+| --- | --- | --- |
+| 第一次 Alan clone/fetch | 基础设施：TLS 中断、直连超时；C2 未运行 | 建独立 clone，再用本任务临时 SSH 转发从 GitHub fetch；其他任务工作区不变 |
+| `3ff6d1c-c2` | 测试基础设施：插件 const API 编译失败 | 按安装的 Spike API 修正对象限定 |
+| `31026c3-c2` | 测试基础设施：C++20 与 Spike include 路径冲突 | 使用 C++17，保留头文件警告，不改变语义 |
+| `eb98880-c2` | 测试基础设施：安装版本没有 --varch | 改用 ISA Zvl，并检查记录的实际 VLEN |
+| `e586032-c2` | 测试基础设施：RVC 使 checkpoint PC 为半字对齐，按 uint32 数据读取下一指令触发未对齐异常 | 按四个字节取原始指令；加 trap 诊断出口，避免死循环 |
+| `a9a2c8f-c2` | 测试程序语义：非法 SEW/分数 LMUL 置 vill | mf8 用 e8、mf4 用 e16，保留全部 LMUL；点积 SEW=32 限定 LMUL≥mf2；加 vill 检查 |
+| `23c9585-c2` | 测试基础设施：辅助驱动器未继承 PeekPokeAPI | 补 API mixin，不改刺激或比较 |
+| RTL 源码修正 | 单 bank 多个条件写调用可能妨碍单写口推断；空操作完成可能与 store 完成争用更新口 | 显式单 bank 仲裁后只调用一次写口；互斥完成上报。属于既定结构的实现修正 |
+
+与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
