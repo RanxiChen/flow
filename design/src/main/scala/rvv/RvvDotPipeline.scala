@@ -62,26 +62,26 @@ class RvvDotPipeline(p: RvvParams) extends Module {
     val element = (row*p.rowBytes.U+b.U) >> d.decoded.sew
     element < d.issue.vl && element >= d.issue.vstart && (!d.decoded.masked || (io.mask >> element)(0))
   }).asUInt
-  val valid = Seq.iterate(io.readValid,9)(v => RegNext(v,false.B))
-  val tokens = Seq.iterate(launch,9)(t => RegNext(t))
+  val valid = Seq.iterate(io.readValid,8)(v => RegNext(v,false.B))
+  val tokens = Seq.iterate(launch,8)(t => RegNext(t))
   // BRAM array -> read output register -> bank mux -> A/B registers.
   val weights = RegNext(io.readData(0))
   val rawAccumulator = Seq.iterate(io.readData(1),5)(x => RegNext(x))
-  val scalar = tokens(3).desc.issue.rs1
+  val scalar = tokens(2).desc.issue.rs1
   // A/B are the explicit operand registers above; M and P below are inferred
   // into DSP48 where legal. All stages advance independently every edge.
   val products = (0 until p.dlen/32).map { e =>
     (0 until 4).map { j =>
       val a = weights(32*e+8*j+7,32*e+8*j).asSInt
-      val b = RegNext(Mux(tokens(3).desc.decoded.op === RvvOp.dotsu.U,
-        Cat(0.U(1.W),tokens(3).desc.issue.rs1(8*j+7,8*j)).asSInt,
-        Cat(tokens(3).desc.issue.rs1(8*j+7),tokens(3).desc.issue.rs1(8*j+7,8*j)).asSInt))
+      val b = RegNext(Mux(tokens(2).desc.decoded.op === RvvOp.dotsu.U,
+        Cat(0.U(1.W),tokens(2).desc.issue.rs1(8*j+7,8*j)).asSInt,
+        Cat(tokens(2).desc.issue.rs1(8*j+7),tokens(2).desc.issue.rs1(8*j+7,8*j)).asSInt))
       RegNext(a*b)
     }
   }
   val pProducts = products.map(xs => xs.map(x => RegNext(x)))
   val sums = pProducts.map(xs => RegNext((xs(0)+&xs(1))+&(xs(2)+&xs(3))))
-  val t = tokens(7)
+  val t = tokens(6)
   val address = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   val cacheDepth = p.rows
   val cacheValid = RegInit(VecInit(Seq.fill(cacheDepth)(false.B)))
@@ -93,7 +93,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
     RvvAge.older(cacheAges(cacheIndex),t.desc.age)
   // Also forward within a single instruction only for an identical row (rows
   // are issued once); equality never substitutes another instruction's value.
-  when(valid(7) && t.bypassExpected) { assert(forwarded,"in-unit accumulator bypass unavailable") }
+  when(valid(6) && t.bypassExpected) { assert(forwarded,"in-unit accumulator bypass unavailable") }
   val acc = Mux(forwarded,cacheData.read(cacheIndex),rawAccumulator(4))
   val values = (0 until p.dlen/32).map(e => (sums(e).pad(32).asUInt+acc(32*e+31,32*e))(31,0))
   val result = Cat(values.reverse)
@@ -105,14 +105,14 @@ class RvvDotPipeline(p: RvvParams) extends Module {
         cacheValid(k) := false.B
       }
     }
-    when(valid(7) && cacheIndex === k.U) {
+    when(valid(6) && cacheIndex === k.U) {
       cacheValid(k) := true.B; cacheTags(k) := address; cacheAges(k) := t.desc.age
     }
   }
-  when(valid(7)) { cacheData.write(cacheIndex,merged) }
+  when(valid(6)) { cacheData.write(cacheIndex,merged) }
   val accumulated = RegNext(result)
-  out.io.enq.valid := valid(8); out.io.enq.bits.token := tokens(8); out.io.enq.bits.data := accumulated
-  when(valid(8)) { assert(out.io.enq.ready,"dot output credit lost") }
+  out.io.enq.valid := valid(7); out.io.enq.bits.token := tokens(7); out.io.enq.bits.data := accumulated
+  when(valid(7)) { assert(out.io.enq.ready,"dot output credit lost") }
   io.write.valid := out.io.deq.valid
   io.write.bits.row := out.io.deq.bits.token.desc.decoded.vd*p.rowsPerReg.U+out.io.deq.bits.token.row
   io.write.bits.data := out.io.deq.bits.data; io.write.bits.enables := out.io.deq.bits.token.enables

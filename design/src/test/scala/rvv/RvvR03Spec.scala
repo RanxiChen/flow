@@ -42,10 +42,10 @@ class RvvR03Spec extends AnyFreeSpec with ChiselSim {
         d.clock.step(1); d.io.write(0).valid.poke(false.B); d.clock.step(1)
       }
       write(0x1234)
-      d.io.readRows(0).poke(4.U); d.io.readValid(0).poke(true.B); d.clock.step(3)
+      d.io.readRows(0).poke(4.U); d.io.readValid(0).poke(true.B); d.clock.step(2)
       d.io.readData(0).expect(0x1234.U); d.io.readValid(0).poke(false.B)
       write(0x5678); d.io.readData(0).expect(0x1234.U) // held value is not consumed
-      d.io.readValid(0).poke(true.B); d.clock.step(3); d.io.readData(0).expect(0x5678.U)
+      d.io.readValid(0).poke(true.B); d.clock.step(2); d.io.readData(0).expect(0x5678.U)
     }
   }
   "modular ages preserve RAW WAR WAW across wrap and bound the live age window" in {
