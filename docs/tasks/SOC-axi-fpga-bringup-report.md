@@ -74,3 +74,13 @@ multicore_sim.py 改为与 FPGA 相同的生产 CPU/路由，SDRAMPHYModel DDR4�
 - 保留 memory/interrupt/LiteUART 等其他 suite，完整 pytest 门槛继续执行。
 
 3b580a3 完整 LiteX pytest：42/44，exit=1，/home/cloud_chen/evidence/soc-3b580a3/pytest.log。两个问题：DECERR 测试在最后 W 之后才拉低 BREADY，B 已被消费（修驱动提前背压）；router 的动态左移触发仓库 Migen 位宽合同（改用显式 Cat/Array 打包 span，只支持合法 size<=3）。所有原期望、断言、watchdog 保留。
+
+## 后续验证准备
+
+- 97ef8ce：cloud_chen 完整 pytest 44/44，exit 0，/home/cloud_chen/evidence/soc-97ef8ce/pytest.log。
+- 3b580a3：直接门槛 46/46、exit 0；集群门槛 12/20、exit 1（L1DL2SystemSpec 12/12，ClusterIsaSpec 8 个失败均为新工作区缺 ISA ELF）。分别见 /home/cloud_chen/evidence/soc-3b580a3/direct.log、cluster.log；原失败保存。
+- 97ef8ce：tools/build_riscv_tests.sh 构建 111 个 ELF，3 个 Zacas NOT_BUILT（现有合同支持，未改列表），exit 0；build-isa.log。
+- 97ef8ce：三种生产/调试生成成功，exit 0，generate.log；被测 design 源码与 3b580a3 相同。生成包 axi-rtl.tgz SHA256=0d98db37903e5c0f5bb628f1079c11a35e90081eb81e287187632e11135bd7fa，拷贝到 Alan 独立工作区；仅重定位 filelist 的根路径，SV 不改。
+- BIOS 预构建首轮 picolibc 发布 wheel 的 newlib/libc 布局不符合 LiteX minimal libc；prepare-single.log exit 1，保留。对齐 Alan 的 pythondata-software-picolibc 源提交 6a13ccce7c575b32c102dd9dc52178505b81fe39 到本任务依赖目录；prepare-single-v2.log exit 0。BIOS ROM 17.86 KiB、SRAM 0.37 KiB，尚非仿真证据。
+- 冒烟驱动明确启用 Verilator --assert，用 evidence 私有 shim 引入仓库现有 sim/verilator/cvfpu.vlt，未改任何 RTL assertion；成功必须有真实 UART BIOS 横幅、Memtest OK、litex>，再检查退出尾部无错误。
+- 全量 sbt test 已启动；开始 SHA 为 3b580a3，期间只更新了非 design 的 Python/文档，设计/测试源不变。待结束再重跑有 ELF 的集群门槛。

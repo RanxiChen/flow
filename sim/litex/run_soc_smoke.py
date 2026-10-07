@@ -6,6 +6,8 @@ import os
 import re
 import selectors
 import signal
+import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -22,9 +24,22 @@ def main():
     evidence.mkdir(parents=True, exist_ok=True)
     command = [sys.executable, '-u', str(root / 'sim/litex/multicore_sim.py'),
         '--profile', args.profile, '--output-dir', str(evidence / 'build'), '--build', '--non-interactive']
+    # Keep the vendor assertion checks enabled explicitly. A private shim
+    # supplies the repository's existing FPnew file-scoped compatibility rule.
+    real_verilator = shutil.which('verilator')
+    if real_verilator is None:
+        raise RuntimeError('Verilator is required')
+    shim_dir = evidence / 'tools'
+    shim_dir.mkdir(exist_ok=True)
+    shim = shim_dir / 'verilator'
+    shim.write_text('#!/bin/sh\nexec ' + shlex.quote(real_verilator) +
+        ' --assert ' + shlex.quote(str(root / 'sim/verilator/cvfpu.vlt')) + ' "$@"\n')
+    shim.chmod(0o755)
+    child_env = dict(os.environ)
+    child_env['PATH'] = str(shim_dir) + os.pathsep + child_env.get('PATH', '')
     start = time.monotonic()
     child = subprocess.Popen(command, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                             start_new_session=True)
+                             start_new_session=True, env=child_env)
     selector = selectors.DefaultSelector()
     selector.register(child.stdout, selectors.EVENT_READ)
     captured = ''
@@ -68,7 +83,7 @@ def main():
         passed, outcome = False, 'FAIL'
     metadata = {'profile': args.profile, 'sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
         'cwd': str(root), 'command': command, 'elapsed_seconds': time.monotonic() - start,
-        'wall_limit_seconds': 1800, 'memtest_bytes': 65536, 'result': outcome,
+        'wall_limit_seconds': 1800, 'verilator_real': real_verilator, 'assertions_enabled': True, 'memtest_bytes': 65536, 'result': outcome,
         'child_exit': child.returncode, 'runner_exit': 0 if passed else 1}
     (evidence / 'result.json').write_text(json.dumps(metadata, indent=2) + '\n')
     print(json.dumps(metadata, indent=2), flush=True)
