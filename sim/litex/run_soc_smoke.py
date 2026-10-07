@@ -20,6 +20,7 @@ def main():
     p.add_argument('--evidence-dir', required=True)
     args = p.parse_args()
     root = Path(__file__).resolve().parents[2]
+    start_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     evidence = Path(args.evidence_dir).resolve()
     evidence.mkdir(parents=True, exist_ok=True)
     command = [sys.executable, '-u', str(root / 'sim/litex/multicore_sim.py'),
@@ -82,7 +83,7 @@ def main():
         captured += tail.decode('utf-8', errors='replace')
     if re.search(r'%Error|Assertion failed|assertion failed|Memory initialization failed|Memtest KO', captured):
         passed, outcome = False, 'FAIL'
-    metadata = {'profile': args.profile, 'sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
+    metadata = {'profile': args.profile, 'sha': start_sha,
         'cwd': str(root), 'command': command, 'elapsed_seconds': time.monotonic() - start,
         'wall_limit_seconds': 1800, 'verilator_real': real_verilator, 'assertions_enabled': True, 'memtest_bytes': 65536, 'result': outcome,
         'child_exit': child.returncode, 'runner_exit': 0 if passed else 1}

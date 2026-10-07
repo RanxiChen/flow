@@ -99,7 +99,7 @@ def main():
     builder = Builder(soc, output_dir=args.output_dir, integrated_rom_auto_size=False,
                       bios_console='lite')
     builder.build(run=args.build, sim_config=config, interactive=not args.non_interactive,
-                  trace=False)
+                  trace=False, opt_level='O3')
 
 
 if __name__ == '__main__':
