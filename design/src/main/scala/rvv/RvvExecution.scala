@@ -187,6 +187,7 @@ class RvvCrossLaneSequencer(p: RvvParams) extends Module {
   val readReturned = RegNext(RegNext(io.readValid,false.B),false.B)
   io.in.ready := !active && !held
   when(io.in.fire) { d := io.in.bits; active := true.B }
+  io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U
   io.row := d.decoded.vs2 * p.rowsPerReg.U
   io.hazard.valid := active; io.hazard.slot := d.slot
   io.hazard.reads := (1.U(32.W) << d.decoded.vs2)(31,0); io.hazard.writes := 0.U
