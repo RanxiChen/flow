@@ -1,6 +1,6 @@
-# MEM 单核测试：执行、测试修复与失败归因
+# MEM 单核测试：RTL/测试修复与回归证据
 
-日期：2026-10-06。首轮按用户“先跑一遍、判断语义/RTL/测试错误”完成编译修复、完整单测和冷 load 波形复现。第二轮按“先修测试”修复驱动与最终检查，详见末节。两轮均未修改生产 RTL、规格、黄金期望、RTL 断言、随机规模或 watchdog；端到端前置门槛仍未满足。
+日期：2026-10-06 至 2026-10-07。最新代码 `4f81993` 在 Alan 上模块 88/88、真实单核 L1D + L2 系统 10/10，两个命令均 exit=0。已修复 L1D 写掩码、L2 单 set 地址、shared Store 等 MSHR 的 probe 死锁，并修正行为 L2 的 probe/Get 接受顺序。首轮编译、第二轮测试修复及第三轮中间失败均保留，按各自 SHA 分开记录。
 
 ## 版本、环境与命令
 
@@ -140,3 +140,88 @@ sbt "testOnly flow.memsys.MemAgentsSpec flow.memsys.L1DCacheSpec flow.memsys.L2H
 四路 L2 seed=42 的中间模型死锁已消失；默认 seed=31/32、四路 smoke 及新增最终 DMA 收尾均通过。L2 仍仅 stress seed=41 在 cycle=13 返回错行，与首轮 R2 相同。L1D 仍仅 MMIO 通过；冷 load 的 cycle=141 实际/期望值、stress seed=22 的 cycle=128 错误及 seed=11/12/13、两路 seed=21 的 tag 断言均与首轮一致，21 个失败用例保留。真实 grant/probe 同拍、升级 WAIT 等后续场景仍会被早期 RTL 故障挡住，独立驱动回归通过不等于这些真实缓存机制已通过。
 
 本轮完成的是测试设施修复与 Alan 模块复测。已知 RTL R1/R2 留待下一步，不能把当前 22 项失败说成已通过，也不能据此证明真实单核端到端功能。
+
+## 第三轮：RTL 修复与单核回归
+
+首批 RTL 提交 `74704f3f4bf0420e1166fef3e81c7dae268d7559`；模型修复版本 `7dfa75c4eca1bd68cd82780508cc8eb84659e835`。系统随后暴露的 R3 定向复现提交为 `ed0179fff74e80631248fbf6e9cd478d59850388`；最终 RTL/测试代码提交为 `4f81993eb3464add7968a4bf37b642317d7d0290`，均在本地提交/push 后由 Alan 从 GitHub fetch。Alan cwd 为 `/home/chen/FUN/flow/design`，`flow` 环境、sbt 1.9.7、Java 11.0.32.1、Chisel 7.0.0、firtool 1.128.0、Verilator 5.028。保持 `L1DCoreIO`、后端、MMU、黄金期望、RTL 断言、既有随机规模及 watchdog 不变；L1D §5.3 增补 R3 的资源等待实现说明。
+
+### RTL 修复与需求映射
+
+| 问题 | 根因与修复 | 规格 / 验证 |
+| --- | --- | --- |
+| R1：tag 的 way mask、PS 的 byte mask 丢失 | 原实现把未掩码初始化/refill 与掩码更新写成不同端口；该工具配置的生成 SV 合并后没有写 mask。改为每块 SRAM 一个显式 masked write：初始化 tag 时全 way 开启，普通 tag 更新 one-hot；refill 时全字节开启，PS 使用原 mask。没有增加流水级或读改写路径 | L1D §2、§6.2、§13.1；冷 load、所有尺寸/偏移/符号/FLW、部分字节 store、victim/probe、随机及非默认几何回归 |
+| R2：单 set L2 行地址多拼一位 | 新增 `CoherenceParams.lineOf(tag,set)`：单 set 返回 tag，其余配置拼接 tag/set。所有 probe（request/victim）、内存读、victim 写回共三处统一调用；寄存器占位宽度保持 | coherence/L2 §0.2、§5.2、§7；seed 41 单 set stress 的读、probe、驱逐与写回，默认及四路回归 |
+
+`74704f3` 的生成证据已保存于 Alan `/home/chen/FUN/flow-runs/20261006-mem-rtl-fix-74704f3/masked-store-primary-sources/`。`tags_128x88.sv` 新增 `W0_mask`，扁平化后每个 22 bit way 对应重复的 mask 位；`data_512x64.sv` 保留 8 bit `W0_mask`，每字节写使能为 `W0_en && W0_mask[i]`。`L1DCache.sv` 中 tag mask 来自 way one-hot/初始化全开，data mask 来自 refill `0xff`/`ps.mask`。这些是该版本、配置和工具的生成证据，不据此断言所有 Chisel/CIRCT 版本都有同一 bug。
+
+### 中间回归与新增测试错误 C2
+
+`74704f3` 的冷 load、部分字节 store、L2 单 set stress 各 1/1，三个命令均 exit=0；完整模块回归为 82/85、exit=1：L1D 19/22，L2 12/12，驱动 9/9，骨架 37/37，权限 5/5。系统按门槛未运行。证据根为上节 `20261006-mem-rtl-fix-74704f3/`，分别保留 `01-cold`、`02-byte-store`、`03-l2-stress`、`04-unit` 的 `.command/.log/.exit` 与 XML 报告。
+
+剩余三项均是行为 L2 报“Put for a line the L1D does not hold”：seed 12、cycle 7944、行 `0x4000102`；seed 13、cycle 6479、行 `0x4000201`；stress seed 22、cycle 2347、行 `0x4000081`。
+
+重放 seed 12 原始 `execution-script.txt` 后确认不是 CPU 重查快照丢失：cycle 7578 接受同行 sharer Inv；7581 CPU 分配该行 GetM 升级；行为 L2 在 Inv 未完成时仍接受 GetM，基于旧 `held=S` 安排 AckE。7587 probe 置 I；7588 安装 E，同时 InvAck 又把模型中的新授权删除；7595 正常 store 将行写脏，后续 cycle 7944 的合法 victim Put 因模型已删除持有记录而报错。
+
+这违反 coherence/L2 §5.3 的保护与串行接受、§1.4 的链路依赖纪律：真实 L2 在 probe 槽保护 set 时不接受该 set 的新 REQ，SNP 与答复独立前进。模型修复为在同行 probe 排队、已发送或待 Ack 时压住 REQ ready，Ack 后再按当前目录接受 Get；不修改 Ack 检查或持有记录删除规则。显式 `upgradeRace` 的“GetM 已接受后再发 sharer Inv”场景继续保留并通过。
+
+新增两个回归：wire-only peer 在 SNP 反压及等待 InvAck 时保持 GetM，检查 REQ 未提前接受、SNP 能独立完成、Ack 后获得 DataE；真实 L1D 的 shared load → Inv/store 竞争 → 同行重新获取 → 脏 Put 驱逐 → 读回，逐 load 与最终内存均保持黄金比较。没有降低原有检查强度或改变期望值。
+
+诊断副本为同证据根的 `seed12-replay/`，仅在归档生成 SV 中增加逐拍打印，未修改 Alan tracked 源码；最终记录为 `seed12-history.log`，`seed12-history.exit=0`。早期诊断的环境变量缺失、局部信号引用构建失败及对应日志也保留，不计入功能回归通过数。原始 Scala 失败与诊断 replay 分别保留：replay 不执行 Scala 黄金检查，其 exit=0 仅表示原始输入执行完成。
+
+### 修复 R1/R2/C2 后的回归（7dfa75c）
+
+证据根：Alan `/home/chen/FUN/flow-runs/20261007-mem-rtl-fix-7dfa75c/`。独立新回归 `01-agent-regression`、`02-cache-regression` 各 1/1、exit=0。
+
+```sh
+sbt 'testOnly flow.memsys.MemAgentsSpec -- -z "earlier sharer Inv"'
+sbt 'testOnly flow.memsys.L1DCacheSpec -- -z "store racing an earlier sharer Inv"'
+sbt "testOnly flow.memsys.MemAgentsSpec flow.memsys.L1DCacheSpec flow.memsys.L2HomeSpec flow.memsys.MemSkeletonElabSpec flow.memsys.L1DPermissionsSpec"
+sbt "testOnly flow.memsys.L1DL2SystemSpec"
+```
+
+| spec | 通过 / 总数 | 命令退出码 | 证据 |
+| --- | --- | --- | --- |
+| MemAgentsSpec | 10 / 10 | 同批 03-unit = 0 | `03-unit.log/.exit`、`03-unit-reports/` |
+| L1DCacheSpec | 23 / 23 | 同批 03-unit = 0 | 同上 |
+| L2HomeSpec | 12 / 12 | 同批 03-unit = 0 | 同上 |
+| MemSkeletonElabSpec | 37 / 37 | 同批 03-unit = 0 | 同上 |
+| L1DPermissionsSpec | 5 / 5 | 同批 03-unit = 0 | 同上 |
+| L1DL2SystemSpec | 9 / 10 | 04-system = 1 | `04-system.log/.exit`、`04-system-reports/` |
+
+模块组合共 87/87、exit=0，0 aborted/canceled/ignored/pending。所有原有用例保留；新回归将驱动 9 项增至 10 项，L1D 22 项增至 23 项。系统在模块全部通过后运行。
+
+### R3：shared Store 等 MSHR 时，年轻 S1 Store 阻止 probe
+
+真实系统仅 seed 51 失败：cycle 7910 连续 4000 拍无进展；其余五个 directed、seed 52 及 stress/两路 L1D/四路 L2 smoke 全通过。`seed51-replay.log` 保存原始输入在归档生成 SV 中的逐拍诊断，`seed51-replay.exit=0` 仅为诊断执行状态。
+
+cycle 3904，旧 `Load(0x8000500c)` 分配 MSHR；3905 起 MSHR 在 SEND，Get 行 `0x4000280` 被 L2 反压。3909 起 S2 `Store(0x80001017)` 命中 S、需要 GetM 升级却无空闲 MSHR；S1 保持年轻 `Store(0x80007004)`。pending probe 行 `0x4000580` 与这两个 Store 不同行，但与 S1 同 VIPT set。原 `needsRecheck` 条件只覆盖 `!hit && MSHR 满`，漏掉命中 S 的升级等待；故 `cpuRetry=0`、内部流水空、`wholeBusy=0`。S1 的保守 set 检查不允许 probe 开始，形成 Get 等 L2 probe、probe 等年轻 S1 Store、年轻 Store 等旧 MSHR 的闭环。直到 cycle 7909 状态仍完全相同。
+
+`4f81993` 在原条件中补 `!hit || upgrade`。命中 S 的 Store 等 MSHR 时也寄存 `needsRecheck`；下一拍已有 CPU 请求保持，允许 probe 独立进入完成流水。probe 结束、旧 miss 释放 MSHR 后重查当前 tag/state，再完成 Store，保持副作用边界与黄金顺序。只扩展现有标记的置位条件，没有新增队列、流水级、接口或 kill/replay 契约。
+
+定向最小复现：先填充 S 行 `0x80001200` 和 E 行 `0x80002200`；保持旧 `Load(0x80003200)` 的 Get 反压，再排入 Store 到 S 行及同 set 的年轻 Store，随后向 E 行发 Inv。必须在旧 Get 尚未接受时完成 InvAck，再释放 Get 并检查旧 late、Store 完成顺序、load 与最终内存。旧 RTL `ed0179f` 在 cycle 4169 触发原 4000 拍 watchdog，0/1、exit=1；证据根 Alan `/home/chen/FUN/flow-runs/20261007-mem-deadlock-ed0179f/`。不减少随机规模，也不把反压超时当作期望通过。
+
+最终 `4f81993` 证据根为 Alan `/home/chen/FUN/flow-runs/20261007-mem-rtl-fix-4f81993/`，先定向复测，再完整模块门槛，全部通过后才重跑系统：
+
+```sh
+sbt 'testOnly flow.memsys.L1DCacheSpec -- -z "shared store waiting"'
+sbt "testOnly flow.memsys.MemAgentsSpec flow.memsys.L1DCacheSpec flow.memsys.L2HomeSpec flow.memsys.MemSkeletonElabSpec flow.memsys.L1DPermissionsSpec"
+sbt "testOnly flow.memsys.L1DL2SystemSpec"
+```
+
+最终结果：
+
+| 阶段 / spec | 通过 / 总数 | 命令退出码 | 证据 |
+| --- | --- | --- | --- |
+| 定向死锁回归 | 1 / 1 | 01-deadlock = 0 | `01-deadlock.log/.exit`、`01-deadlock-reports/` |
+| MemAgentsSpec | 10 / 10 | 同批 02-unit = 0 | `02-unit.log/.exit`、`02-unit-reports/` |
+| L1DCacheSpec | 24 / 24 | 同批 02-unit = 0 | 同上 |
+| L2HomeSpec | 12 / 12 | 同批 02-unit = 0 | 同上 |
+| MemSkeletonElabSpec | 37 / 37 | 同批 02-unit = 0 | 同上 |
+| L1DPermissionsSpec | 5 / 5 | 同批 02-unit = 0 | 同上 |
+| L1DL2SystemSpec | 10 / 10 | 03-system = 0 | `03-system.log/.exit`、`03-system-reports/` |
+
+模块共 88/88、系统 10/10，均 0 aborted/canceled/ignored/pending。死锁定向用例已包含于 24 项 L1D 测试，不重复计作独立覆盖项。系统保留五个 directed、seed 51/52 各 2000 CPU 操作、stress/两路 L1D/四路 L2 seed 61/62/63 各 1000 CPU 操作及原有 L1I/DMA 并发、反压、逐 load 黄金比较和所有写过行的最终 DMA 读回。原来 seed 51 的死锁消失，系统全部通过。
+
+运行前后 Alan 均为精确 `4f81993eb3464add7968a4bf37b642317d7d0290`、tracked 工作区干净；结束后无本轮 sbt/仿真进程。证据根的 `run.sh`、`*.command`、`source-sha*.txt`、`cwd.txt`、`status-*.txt`、工具版本与 XML 报告记录执行身份。最终 `deadlock-primary-sources/` 和 `system-seed51-primary-sources/` 归档匹配生成 RTL；系统种子的原始输入另存 `system-seed51-execution-script.txt`。报告后续文档提交不改生产 RTL 或测试代码。
+
+本轮闭合的是已有普通 Load/Store 单核模块与 L1D/L2 系统仿真门槛。LR/SC、AMO、aq/rl 尚未实现；多核/SWMR/litmus、形式化、综合/时序、FPGA 与软件运行未运行。
