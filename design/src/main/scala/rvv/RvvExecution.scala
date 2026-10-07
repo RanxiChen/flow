@@ -46,9 +46,9 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   // reuse one 64-bit multiplier across its elements, then perform one bank write.
   val slow = if(multiply) d.decoded.sew === 3.U else false.B
   val slowLanes = Seq.tabulate(3,p.dlen/64) { (port,lane) =>
-    val localEnable = RegNext(RegNext(io.readValid,false.B),false.B)
-    dontTouch(localEnable)
-    RegEnable(io.readData(port)(64*lane+63,64*lane),localEnable)
+    val localEnable = Module(new RvvLocalEnable)
+    localEnable.io.clock := clock; localEnable.io.valid := RegNext(io.readValid,false.B)
+    RegEnable(io.readData(port)(64*lane+63,64*lane),localEnable.io.enable)
   }
   val slowInputs = VecInit(slowLanes.map(xs => Cat(xs.reverse)))
   val slowValues = Reg(Vec(p.dlen/64,UInt(64.W)))
@@ -132,9 +132,9 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   val calculate = ((if(multiply) maccReturned else returned) && !slow) || (active && noRead && !computed)
   val calculated = RegNext(resultData)
   val resultLanes = (0 until p.dlen/64).map { lane =>
-    val localEnable = RegNext(calculate,false.B)
-    dontTouch(localEnable)
-    RegEnable(calculated(64*lane+63,64*lane),localEnable)
+    val localEnable = Module(new RvvLocalEnable)
+    localEnable.io.clock := clock; localEnable.io.valid := calculate
+    RegEnable(calculated(64*lane+63,64*lane),localEnable.io.enable)
   }
   val calculatedValid = RegNext(calculate,false.B)
   when(calculatedValid) { computed := true.B }
@@ -241,4 +241,20 @@ class RvvIntegerPorts(p: RvvParams) extends Bundle {
   val readyEvent = Valid(new RvvRegisterEvent)
   val candidateEvent = Valid(new RvvRegisterEvent)
   val blocking = Output(UInt(5.W))
+}
+
+/** Physical local enable copies must survive Vivado register merging. Each
+  * output serves one 64-bit slice; this is a data enable, never a clock. */
+class RvvLocalEnable extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val clock = Input(Clock()); val valid = Input(Bool()); val enable = Output(Bool())
+  })
+  setInline("RvvLocalEnable.sv","""module RvvLocalEnable(
+    |  input wire clock, input wire valid, output wire enable
+    |);
+    |  (* DONT_TOUCH = "yes" *) reg enable_q;
+    |  always @(posedge clock) enable_q <= valid;
+    |  assign enable = enable_q;
+    |endmodule
+    |""".stripMargin)
 }
