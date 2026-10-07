@@ -6,7 +6,7 @@
 
 实现修订（2026-10-06，普通 Load/Store 第一批）：CPU S1/S2 在后端 `s2Hold` 期间保持；另设两级内部完成流水共享 S0 与阵列端口，服务 probe、install、写回读、MSHR replay、PTW 和 CPU 重查。否则年轻 S2 等 MSHR 时会阻止同一 MSHR 经 S0 安装/回放。内部 S2 优先使用判定与写端口，CPU 本地冲突时保持；普通 CPU hit 的 S0/S1/S2 拍关系不变。资源、翻译和快照等待均由保持的 CPU 请求拥有，内部结果不占用后端 WB 请求槽。
 
-本批仅实现普通 Load/Store、PTW、probe、FENCE 和阻塞 MMIO 的代码路径；第 8 节 LR/SC、AMO、aq/rl 仍待后续实现，不得把本文的目标行为当成已经实现或通过仿真的功能。
+实现修订（2026-10-07，单核原子访存）：第 8 节 LR/SC、AMO、aq/rl 已补入 L1D。LR/AMO miss 保持 CPU S2 到内部回放，LR 以 `resp` 完成；AMO 在回放或命中拍把 RMW 数据交给 PS，次拍写入时返回旧值。AMO/rl 在 S0 以 `ready` 等待老请求排空，AMO/aq 在接受后关年轻入口；未增加 CPU 接口或流水级。实际仿真版本、覆盖与边界见 [`tasks/MEM-single-core-atomics-report.md`](tasks/MEM-single-core-atomics-report.md)，规格目标不自动等于验证通过。
 
 ## 0. 范围与参数
 
