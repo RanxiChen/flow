@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `3644575`；日志 `3644575-c1` |
 | C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `4c1fc28`；`final-c3/c2-check/` |
-| C3 | 修正后 1000 种子重跑中 | `4c1fc28`；`final-c3/`；参考 1000 组完成 |
+| C3 | 通过：种子 0–999，1000/1000 | `4c1fc28`；`final-c3/`，退出码 0 |
 | P1–P5 | 未运行 | 待 C3；保持任务书原测量口径与阈值 |
 | S1 | 未运行 | 待性能段；XCKU040 OOC 100 MHz |
 
@@ -109,3 +109,13 @@
 - C2 命令：`bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/final-c3/c2-check`（C3 入口先执行），退出码 **0**。`frontend.log` **6/6**，`vrf.log` **1/1**，`integration.log` **8/8**、全部匹配 Spike，WAR 越位/多 load 机制检查通过。C3 继续运行。
 
 与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
+
+### C3 闭合
+
+- 验证 SHA：`4c1fc2803678146fcd15c6a82c00f8af8d084516`，已 push；Alan cwd 同前，工作区无已跟踪修改。
+- 命令：`R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/final-c3`；退出码 **0**，`exit-code.txt` 记录。
+- `random.log`：种子 **0–999，1000/1000**，每组 64 条随机向量指令，另有 32 次初始化 load 与 32 次最终 VRF store 转储。随机 LMUL、VL、ALU 掩码、寄存器角色、重叠访存地址、提交延迟、翻译响应及 AXI 反压，并随机 kill/重新发起。所有最终内存与 VRF 转储逐字节匹配 Spike；所有挂载/排序/信用/作废断言保持启用。
+- 原 seed 7 缺陷通过；新增区间复位回归与 VRF 字节使能回归属于 C2 前置 gate，均通过。
+- `spike-random.log` 记录参考复用来源；生成器/插件/链接脚本/构建脚本 Git diff、Spike 源码身份和干净状态、二进制 SHA256 均核对。没有复用任何旧版 DUT 通过结论。
+- `plugin-test.log`：独立检查 **10,675 条**点积通过。单个仿真实例，`nice -n 10`，没有形式化执行。
+- 后续 P/S 只新增测试与综合脚本；如 RTL 不变，保留 C1–C3 精确 SHA 的既有证据，不把文档或测试入口的新 SHA 自动写成旧验证 SHA。
