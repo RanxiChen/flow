@@ -61,14 +61,14 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   val t = tokens(3)
   val cacheValid = RegInit(VecInit(Seq.fill(p.rows)(false.B)))
   val cacheAges = Reg(Vec(p.rows,UInt(p.ageBits.W)))
-  val cacheData = Reg(Vec(p.rows,UInt(p.dlen.W)))
+  val cacheData = Mem(p.rows,UInt(p.dlen.W))
   val addrA = (Mux(t.desc.decoded.op === RvvOp.move.U,t.desc.decoded.vs1,t.desc.decoded.vs2)*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   val addrB = (t.desc.decoded.vs1*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   val addrD = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   def operand(at: UInt,port: Int): UInt = {
     val hit = cacheValid(at) && RvvAge.older(cacheAges(at),t.desc.age)
     when(valid(3) && t.expected(port)) { assert(hit,"in-unit ALU bypass unavailable") }
-    Mux(hit,cacheData(at),operands(port))
+    Mux(hit,cacheData.read(at),operands(port))
   }
   val aInput = operand(addrA,0); val bInput = operand(addrB,1)
   val scalarInput = t.desc.issue.rs1; val sewInput = t.desc.decoded.sew
@@ -78,18 +78,15 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   // Byte-preserved cached values are needed only for source forwarding. For
   // disabled destination bytes use its previous cache/VRF value only when it is
   // already present; uncached partial destinations invalidate the bypass.
-  val full = t.enables.andR
+  val oldKnown = cacheValid(addrD) && RvvAge.older(cacheAges(addrD),t.desc.age)
+  val old = Mux(oldKnown,cacheData.read(addrD),operands(2))
+  val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),old(8*b+7,8*b)))).asUInt
+  when(valid(3)) { cacheData.write(addrD,merged) }
   for(k <- 0 until p.rows) {
     for(s <- snoop) {
       when(s.valid && s.bits.row === k.U && cacheValid(k) && RvvAge.older(cacheAges(k),s.bits.age)) { cacheValid(k) := false.B }
     }
-    when(valid(3) && addrD === k.U) {
-      val oldKnown = cacheValid(k) && RvvAge.older(cacheAges(k),t.desc.age)
-      val old = Mux(oldKnown,cacheData(k),operands(2))
-      cacheValid(k) := true.B
-      cacheAges(k) := t.desc.age
-      cacheData(k) := VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),old(8*b+7,8*b)))).asUInt
-    }
+    when(valid(3) && addrD === k.U) { cacheValid(k) := true.B; cacheAges(k) := t.desc.age }
   }
   out.io.enq.valid := valid(4); out.io.enq.bits.token := tokens(4); out.io.enq.bits.data := computed
   when(valid(4)) { assert(out.io.enq.ready,"ALU output credit lost") }

@@ -86,14 +86,14 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   val cacheValid = RegInit(VecInit(Seq.fill(cacheDepth)(false.B)))
   val cacheTags = Reg(Vec(cacheDepth,UInt(p.rowBits.W)))
   val cacheAges = Reg(Vec(cacheDepth,UInt(p.ageBits.W)))
-  val cacheData = Reg(Vec(cacheDepth,UInt(p.dlen.W)))
+  val cacheData = Mem(cacheDepth,UInt(p.dlen.W))
   val cacheIndex = address(log2Ceil(cacheDepth)-1,0)
   val forwarded = cacheValid(cacheIndex) && cacheTags(cacheIndex) === address &&
     RvvAge.older(cacheAges(cacheIndex),t.desc.age)
   // Also forward within a single instruction only for an identical row (rows
   // are issued once); equality never substitutes another instruction's value.
   when(valid(6) && t.bypassExpected) { assert(forwarded,"in-unit accumulator bypass unavailable") }
-  val acc = Mux(forwarded,cacheData(cacheIndex),rawAccumulator(4))
+  val acc = Mux(forwarded,cacheData.read(cacheIndex),rawAccumulator(4))
   val values = (0 until p.dlen/32).map(e => (sums(e).pad(32).asUInt+acc(32*e+31,32*e))(31,0))
   val result = Cat(values.reverse)
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),acc(8*b+7,8*b)))).asUInt
@@ -104,9 +104,10 @@ class RvvDotPipeline(p: RvvParams) extends Module {
       }
     }
     when(valid(6) && cacheIndex === k.U) {
-      cacheValid(k) := true.B; cacheTags(k) := address; cacheAges(k) := t.desc.age; cacheData(k) := merged
+      cacheValid(k) := true.B; cacheTags(k) := address; cacheAges(k) := t.desc.age
     }
   }
+  when(valid(6)) { cacheData.write(cacheIndex,merged) }
   val accumulated = RegNext(result)
   out.io.enq.valid := valid(7); out.io.enq.bits.token := tokens(7); out.io.enq.bits.data := accumulated
   when(valid(7)) { assert(out.io.enq.ready,"dot output credit lost") }

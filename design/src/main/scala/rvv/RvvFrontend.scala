@@ -23,13 +23,13 @@ class RvvFrontend(p: RvvParams) extends Module {
     val released = Flipped(Valid(UInt(64.W)))
     val empty = Output(Bool()); val serialCount = Output(UInt(64.W))
   })
-  val pending = Reg(Vec(p.viqDepth,new RvvDescriptor(p)))
-  val prepared = RegInit(VecInit(Seq.fill(p.viqDepth)(false.B)))
-  val sent = RegInit(VecInit(Seq.fill(p.viqDepth)(false.B)))
-  val serial = RegInit(VecInit(Seq.fill(p.viqDepth)(false.B)))
-  val stage = RegInit(VecInit(Seq.fill(p.viqDepth)(0.U(2.W))))
-  val waiting = RegInit(VecInit(Seq.fill(p.viqDepth)(false.B)))
-  val count = RegInit(0.U(log2Ceil(p.viqDepth+1).W))
+  val pending = Reg(Vec(p.pendingDepth,new RvvDescriptor(p)))
+  val prepared = RegInit(VecInit(Seq.fill(p.pendingDepth)(false.B)))
+  val sent = RegInit(VecInit(Seq.fill(p.pendingDepth)(false.B)))
+  val serial = RegInit(VecInit(Seq.fill(p.pendingDepth)(false.B)))
+  val stage = RegInit(VecInit(Seq.fill(p.pendingDepth)(0.U(2.W))))
+  val waiting = RegInit(VecInit(Seq.fill(p.pendingDepth)(false.B)))
+  val count = RegInit(0.U(log2Ceil(p.pendingDepth+1).W))
   val nextAge = RegInit(0.U(p.ageBits.W)); io.nextAge := nextAge
   val viq = Module(new RvvLutramQueue(p))
   io.dispatch <> viq.io.deq
@@ -49,14 +49,14 @@ class RvvFrontend(p: RvvParams) extends Module {
   val intervalValid = RegInit(VecInit(Seq.fill(intervalDepth)(false.B)))
   val intervalFree = PriorityEncoder(~intervalValid.asUInt)
   val localAgeAllowed = Wire(Bool())
-  io.issue.ready := occupied < p.viqDepth.U && !io.kill && localAgeAllowed && io.externalAgeAllowed &&
+  io.issue.ready := occupied < p.viqDepth.U && count < p.pendingDepth.U && !io.kill && localAgeAllowed && io.externalAgeAllowed &&
     (!decoded.memory || decoded.bytes === 0.U || !intervalValid.asUInt.andR)
   io.empty := count === 0.U && viq.io.count === 0.U && requests.io.count === 0.U
   val serialCount = RegInit(0.U(64.W)); io.serialCount := serialCount
 
   // The first not-yet-delivered verdict is authoritative; later translation
   // preparation may proceed while the core delays committing an older item.
-  val judgementMask = VecInit((0 until p.viqDepth).map(j => j.U < count && !sent(j)))
+  val judgementMask = VecInit((0 until p.pendingDepth).map(j => j.U < count && !sent(j)))
   val judgementIndex = PriorityEncoder(judgementMask.asUInt)
   io.verdict.valid := judgementMask.asUInt.orR && prepared(judgementIndex) && !io.kill
   io.verdict.bits := 0.U.asTypeOf(new RvvVerdict(p))
@@ -71,18 +71,18 @@ class RvvFrontend(p: RvvParams) extends Module {
   assert(occupied <= p.viqDepth.U,"reservation overflow")
   assert(!io.serialGo,"R02 serial execution is not implemented")
 
-  for(j <- 0 until p.viqDepth-1) {
+  for(j <- 0 until p.pendingDepth-1) {
     when(io.commit) {
       pending(j) := pending(j+1); prepared(j) := prepared(j+1); sent(j) := sent(j+1)
       serial(j) := serial(j+1); stage(j) := stage(j+1); waiting(j) := waiting(j+1)
     }
   }
   when(io.commit) {
-    prepared(p.viqDepth-1) := false.B; sent(p.viqDepth-1) := false.B
-    waiting(p.viqDepth-1) := false.B
+    prepared(p.pendingDepth-1) := false.B; sent(p.pendingDepth-1) := false.B
+    waiting(p.pendingDepth-1) := false.B
   }
   val finalCount = count - io.commit.asUInt
-  val insertionIndex = finalCount(log2Ceil(p.viqDepth)-1,0)
+  val insertionIndex = finalCount(log2Ceil(p.pendingDepth)-1,0)
   when(io.commit || io.issue.fire) { count := finalCount + io.issue.fire.asUInt }
   when(io.verdict.fire) {
     val dst = judgementIndex - io.commit.asUInt
@@ -94,13 +94,13 @@ class RvvFrontend(p: RvvParams) extends Module {
   val tagAge = Reg(Vec(p.translationIds,UInt(p.ageBits.W)))
   val tagPage = Reg(Vec(p.translationIds,Bool()))
   def ageFits(age: UInt): Bool = (nextAge-age) < p.ageLimit.U
-  localAgeAllowed := (0 until p.viqDepth).map(j => j.U >= count || ageFits(pending(j).age)).reduce(_ && _) &&
+  localAgeAllowed := (0 until p.pendingDepth).map(j => j.U >= count || ageFits(pending(j).age)).reduce(_ && _) &&
     (!viq.io.deq.valid || ageFits(viq.io.deq.bits.age)) &&
     (!requests.io.deq.valid || ageFits(requests.io.deq.bits.age)) &&
     (0 until intervalDepth).map(j => !intervalValid(j) || ageFits(intervals(j).age)).reduce(_ && _) &&
     (0 until p.translationIds).map(j => !tagLive(j) || ageFits(tagAge(j))).reduce(_ && _)
   val freeTag = PriorityEncoder(~tagLive.asUInt)
-  val prepMask = VecInit((0 until p.viqDepth).map(j => j.U < count && !prepared(j) && !waiting(j)))
+  val prepMask = VecInit((0 until p.pendingDepth).map(j => j.U < count && !prepared(j) && !waiting(j)))
   val prepIndex = PriorityEncoder(prepMask.asUInt)
   val candidate = pending(prepIndex)
   val dstPrep = prepIndex - io.commit.asUInt
@@ -127,7 +127,7 @@ class RvvFrontend(p: RvvParams) extends Module {
     when(!io.translated.bits.exception && !io.translated.bits.device) {
       assert((io.translated.bits.pa >> p.paBits) === 0.U,"PA exceeds the configured platform width")
     }
-    val responseMatches = VecInit((0 until p.viqDepth).map(j => j.U < count && pending(j).age === tagAge(t)))
+    val responseMatches = VecInit((0 until p.pendingDepth).map(j => j.U < count && pending(j).age === tagAge(t)))
     val responseIndex = PriorityEncoder(responseMatches.asUInt)
     val responding = pending(responseIndex)
     val off = responding.issue.rs1(11,0)
@@ -144,7 +144,7 @@ class RvvFrontend(p: RvvParams) extends Module {
       }.elsewhen(tagPage(t) || second === 0.U) { prepared(dst) := true.B }
         .otherwise { stage(dst) := 1.U }
     }
-    for(j <- 0 until p.viqDepth) {
+    for(j <- 0 until p.pendingDepth) {
       when(j.U < count && pending(j).age === tagAge(t) && !io.kill) {
         assert(!(io.commit && j.U === 0.U))
         if(j==0) { update(0) }

@@ -18,6 +18,7 @@ case class RvvParams(vlen: Int = 512, dlen: Int = 512, lanes: Int = 8,
   require(axiIds == 1, "R02 uses one ID, with multiple ordered outstanding bursts")
   require(burstBeats > 0 && burstBeats <= 256 && translationIds >= 2)
   require(paBits >= 32 && paBits <= 64)
+  val pendingDepth = math.min(8,viqDepth)
   val ageBits = log2Ceil(2*(viqDepth+scoreboardDepth+memoryInflight+translationIds+unitDepths.sum+5))
   val ageLimit = (BigInt(1) << (ageBits-1))-1
   val rowBytes = dlen / 8
