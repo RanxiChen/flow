@@ -16,7 +16,7 @@ class SnapshotBuilder(Builder):
         # before opt_design or place_design. Copy the hook into this build's snapshot.
         hook = Path(self.output_dir).resolve() / "source-snapshot" / "soc2-bram-gate.tcl"
         shutil.copy2(Path(__file__).with_name("soc2-bram-gate.tcl"), hook)
-        self.soc.platform.toolchain.pre_synthesis_commands.add(
+        self.soc.platform.toolchain.pre_synthesis_commands.append(
             'set_msg_config -id {{Synth 8-4767}} -limit 100000')
         self.soc.platform.toolchain.pre_optimize_commands.add(f'source {hook}')
         return super().build(*args, **kwargs)
