@@ -489,6 +489,21 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     runOps(CoreOp.sc(a, 1, success = false), CoreOp.load(a), CoreOp.load(b))
   }
 
+  "an AMO upgrade waiting for GetM lets the required sharer Inv finish first" in withL1D() { e =>
+    import e._
+    val a = ram(0x2200)
+    l2.sharedLines += line(a)
+    runOps(CoreOp.load(a))
+    l2.upgradeRace += line(a)
+    runOps(CoreOp.amo(a, 1, BreezeAmoFunc.Add))
+    l2.gets.last._2 mustBe "GetM"
+    l2.gets.last._1 must be < l2.acks.last._1
+    l2.acks.last._1 must be < l2.grants.last._1
+    core.last.respCycle must be > l2.grants.last._1
+    l2.acks.last._4 mustBe false
+    runOps(CoreOp.load(a))
+  }
+
   "atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge" in withL1D() { e =>
     import e._
     val a = ram(0x1f00)

@@ -472,9 +472,12 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     (amoRmw && line(cpu2.paddr) === probeLine)
   // Registered wait reasons avoid feeding S2's arbitration result back into
   // its own ready decision. A newly blocked store is parked on the next edge.
-  val cpuAlreadyWaiting = cpuRetry || wholeBusy || internal1.valid || internal2.valid
+  // An LR/AMO waiting for its grant has no local write in flight. In
+  // particular, a sharer Inv during GetM upgrade must be able to produce
+  // the Ack that the grant depends on. Miss/PS/RMW holds still apply above.
+  val cpuAlreadyWaiting = cpuRetry || atomicWait || wholeBusy || internal1.valid || internal2.valid
   probe.io.startOk := (!cpu1StoreProbe || cpuAlreadyWaiting) &&
-    (!cpu2StoreProbe || cpuRetry) && !psSameProbe
+    (!cpu2StoreProbe || cpuRetry || atomicWait) && !psSameProbe
   probe.io.initDone := initDone
 
   val amoStarts = s2.valid && isAmo && outcome === L1S2Outcome.ToAmo &&
