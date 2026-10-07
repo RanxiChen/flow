@@ -139,4 +139,29 @@ class RvvFrontendSpec extends AnyFreeSpec with ChiselSim {
       issue(d,BigInt("5e05c257",16),vl=1); verdict(d,0)
     }
   }
+  "stale invalid ages after reset cannot clear a simultaneous interval allocation" in {
+    simulate(new RvvFrontend(p)) { d =>
+      initialize(d)
+      issue(d,vl=1); issue(d,vl=1) // leave age 1 in the second interval payload
+      initialize(d) // validity resets, payload intentionally does not
+      d.io.dispatch.ready.poke(true.B)
+      def commit(): Unit = {
+        verdict(d,0); d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B)
+        d.clock.step(1); d.io.commit.poke(false.B); d.io.verdict.ready.poke(false.B)
+        d.clock.step(1)
+      }
+      issue(d,BigInt("5e05c257",16),vl=1); commit() // age 0 has no interval
+      issue(d,vl=1); val old=request(d); response(d,old,BigInt("90000ff0",16)); commit()
+      d.io.released.valid.poke(true.B); d.io.released.bits.poke(1.U)
+      issue(d,vl=1) // allocates age 2 in the invalid entry whose stale age is 1
+      d.io.released.valid.poke(false.B)
+      val fresh=request(d); response(d,fresh,BigInt("94000ff0",16)); verdict(d,0)
+      d.io.scalarQuery.valid.poke(true.B); d.io.scalarQuery.pa.poke("h94000ff0".U)
+      d.io.scalarQuery.bytes.poke(4.U); d.io.scalarQuery.write.poke(true.B)
+      d.io.scalarConflict.expect(false.B)
+      d.io.verdict.ready.poke(true.B); d.io.commit.poke(true.B)
+      d.io.scalarConflict.expect(true.B); d.clock.step(1)
+      d.io.commit.poke(false.B); d.io.scalarConflict.expect(true.B)
+    }
+  }
 }

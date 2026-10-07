@@ -99,5 +99,7 @@
 - 修改后重跑 C1、C2、C3。1000 组参考可复用，但脚本必须核对参考生成器、插件、链接脚本、Spike 源码/二进制身份完全相同；DUT 的 1000 组全部重新执行并绑定新 SHA。参考复用不复用旧 DUT 通过结论。
 - `c2e436f` 已 push；命令 `bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/c2e436f-c1` 退出码 **0**，三组 emit 日志生成通过，`smoke.log` **3/3**。
 - 同 SHA 的 C2 命令：`bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/c2e436f-c3/c2-check`（由 C3 入口先执行），退出码 **0**，前端 **5/5**、定向 **8/8**，慢路径乘加结果严格匹配 Spike，WAR 越位检查全部通过。日志 `c2-check/frontend.log`、`c2-check/integration.log`。C3 随机重验正在进行。
+- `c2e436f-c3` 再次在 seed 7 失败（退出码 1）。`9053b17` 增加临时生命周期 printf，诊断运行在 `fb-debug/`，退出码 1。确认 RTL 错误：区间 payload 不复位，重复复位后无效项可能残留与本轮有效项相同的 age；释放比较没有 valid 门控，同拍分配新项时被旧 payload 的匹配覆盖。例如 age 162 分配到 slot 21 后，旧残留 age 131 的释放把它清空，随后 age 164 重用 slot 21；缺失的是尚未发 AW 的已提交 store。不是查询模型问题。
+- 修正 commit/release 对区间的更新均以当前 valid 为前提；保留 payload 不复位的正常实现，移除临时 printf。新增复位后残留 age + 同拍释放/分配的定向回归，仍检查提交当拍与提交后查询命中。冻结区间表结构不变，重新执行 C1–C3。
 
 与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
