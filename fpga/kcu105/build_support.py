@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import hashlib
 import json
+import re
 
 from litex.soc.integration.builder import Builder
 
@@ -10,7 +11,26 @@ from litex.soc.integration.builder import Builder
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
         self.freeze_sources()
+        self.check_l2_sources()
+        # Execute the mapping gate immediately after synthesis reports/checkpoint,
+        # before opt_design or place_design. Copy the hook into this build's snapshot.
+        hook = Path(self.output_dir).resolve() / "source-snapshot" / "soc2-bram-gate.tcl"
+        shutil.copy2(Path(__file__).with_name("soc2-bram-gate.tcl"), hook)
+        self.soc.platform.toolchain.pre_synthesis_commands.add(
+            'set_msg_config -id {{Synth 8-4767}} -limit 100000')
+        self.soc.platform.toolchain.pre_optimize_commands.add(f'source {hook}')
         return super().build(*args, **kwargs)
+
+    def check_l2_sources(self):
+        l2_sources = [Path(s[0]) for s in self.soc.platform.sources
+                      if Path(s[0]).name == "L2Home.sv"]
+        if not l2_sources:
+            raise RuntimeError("D5: generated L2Home.sv is missing")
+        for source in l2_sources:
+            text = source.read_text()
+            for name in ("data", "meta", "plruArr"):
+                if not re.search(r'\bSdpSram(?:_\d+)?\s+' + name + r'\s*\(', text):
+                    raise RuntimeError(f"D5: {source}: {name} is not a SdpSram instance")
 
     def freeze_sources(self):
         # Vivado consumes immutable copies, not a later sbt elaboration or
