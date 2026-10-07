@@ -84,6 +84,10 @@ def directed():
     # the existing random core/translation/AXI handshake model.
     for _ in range(8):
         p.emit(vector(0,6,4,5,0),2,0,16,label='slow-war-gap-add')
+    # R04 prefetch runs ahead of dispatch; retain the original eight gaps
+    # and add ordinary ALU work so independent ARs sample the bound WAR window.
+    for _ in range(40):
+        p.emit(vector(0,6,4,5,0),2,0,16,label='r04-slow-war-gap-add')
     for reg in (24,0,24):
         p.emit(memory(reg,2),2,3,128,base=BASE+0xa000,label='slow-reader-independent-load')
     for overlap in (True,False):

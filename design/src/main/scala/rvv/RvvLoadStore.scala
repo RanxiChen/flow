@@ -26,6 +26,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val war = Output(UInt(64.W)); val overlap = Output(UInt(64.W)); val credit = Output(UInt(64.W)); val axiStall = Output(UInt(64.W))
     val invalidations = Output(UInt(64.W))
   })
+  val requestDesc = Reg(new RvvDescriptor(p))
   val desc = Reg(Vec(p.memoryInflight,new RvvDescriptor(p)))
   val bound = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
   val live = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
@@ -46,20 +47,21 @@ class RvvLoadStore(p: RvvParams) extends Module {
   when(io.in.fire) {
     assert(PopCount(binding) === 1.U,"prefetch binding must be unique across age wrap")
     bound(bindingIndex) := true.B; desc(bindingIndex).slot := io.in.bits.slot
+    when(bindingIndex === current) { requestDesc.slot := io.in.bits.slot }
   }
   io.ageAllowed := (0 until p.memoryInflight).map(k => !live(k) || (io.nextAge-desc(k).age) < p.ageLimit.U).reduce(_ && _)
   io.prefetch.ready := !io.prefetch.bits.decoded.memory || (!generating && !live.asUInt.andR)
   io.prefetchEvent.valid := io.prefetch.fire && io.prefetch.bits.decoded.memory && !io.prefetch.bits.decoded.store
   io.prefetchEvent.bits := io.prefetch.bits.age
   when(io.prefetch.fire && io.prefetch.bits.decoded.memory) {
-    current := free; desc(free) := io.prefetch.bits; live(free) := true.B; bound(free) := false.B
+    current := free; desc(free) := io.prefetch.bits; requestDesc := io.prefetch.bits; live(free) := true.B; bound(free) := false.B
     intervalLive(free) := io.prefetch.bits.decoded.bytes =/= 0.U
     requestDone(free) := false.B; responses(free) := 0.U; dataDone(free) := false.B
     generating := true.B; position := 0.U; firstRequest := true.B; scalarVisible := false.B
     invalidatePosition := 0.U
     invalidateDone := !io.prefetch.bits.decoded.store || io.prefetch.bits.decoded.bytes === 0.U
   }
-  val d = desc(current)
+  val d = requestDesc
   val noAccess = d.issue.vl === 0.U || d.issue.vstart >= d.issue.vl
   val segment = position >= d.length(0)
   val segmentOffset = Mux(segment,position-d.length(0),position)
