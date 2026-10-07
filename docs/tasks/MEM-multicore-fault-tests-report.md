@@ -1,6 +1,6 @@
 # MEM 多核 fault 测试报告
 
-日期：2026-10-07。起点为 `52cd8f0acb0da58f5957732996f396a830a9cc8f`，按任务书的模块 → 单核系统 → 旧多核 → fault 顺序在 Alan 执行。最终代码 `b2393c97ec8c1ea1eb21ab45df47ea99b80ff5cd` 上四条命令分别通过 111/111、12/12、21/21、20/20，exit 均为 0，无失败或跳过。首轮随机失败为测试生成器的 LR/SC 回调归属错误；修复后原 18 项及新增两项最小复现全部通过。没有生产 RTL 修复。
+日期：2026-10-07。起点为 `52cd8f0acb0da58f5957732996f396a830a9cc8f`，按任务书的模块 → 单核系统 → 旧多核 → fault 顺序在 Alan 执行。fault 阶段代码 `b2393c97ec8c1ea1eb21ab45df47ea99b80ff5cd` 上四条命令分别通过 111/111、12/12、21/21、20/20，exit 均为 0，无失败或跳过。首轮随机失败为测试生成器的 LR/SC 回调归属错误；修复后原 18 项及新增两项最小复现全部通过。没有生产 RTL 修复。
 
 ## 环境与版本
 
@@ -26,7 +26,7 @@ sbt "testOnly flow.memsys.L1DL2MultiCoreFaultSpec"
 
 `52cd8f0` 的前三条门槛为 111/111、12/12、21/21，exit 均为 0，证据分别为 `01b-baseline-modules/`、`02-baseline-system/`、`03-baseline-multicore/`。首轮 fault 为 12/18，6 个随机失败、无跳过，exit=1（`04-fault-initial/`）。
 
-以下全部绑定同一最终代码 SHA `b2393c97ec8c1ea1eb21ab45df47ea99b80ff5cd`，计数来自对应 XML；各命令 elapsed 为 `start/end` 墙钟差（含 sbt 启动，不含归档），完整汇总保存在证据根 `summary.json`。
+以下为 fault 阶段完整门槛，绑定同一代码 SHA `b2393c97ec8c1ea1eb21ab45df47ea99b80ff5cd`，计数来自对应 XML；各命令 elapsed 为 `start/end` 墙钟差（含 sbt 启动，不含归档），完整汇总保存在证据根 `summary.json`。
 
 | 命令 / spec | 通过 / 总数 | exit | 证据子目录 / 命令耗时 |
 | --- | --- | --- | --- |
@@ -40,7 +40,7 @@ sbt "testOnly flow.memsys.L1DL2MultiCoreFaultSpec"
 | 第 3 条：L1DL2MultiCoreSpec | 21/21 | 0 | `10-feeder-fixed-multicore/`，380 s |
 | 第 4 条：L1DL2MultiCoreFaultSpec | 20/20 | 0 | `11-fault-feeder-fixed/`，355 s |
 
-四条最终命令合计 878 s（14 分 38 秒）。fault suite 自报测试耗时 5 分 51 秒。报告提交只补文档，不改变上述被测生产 RTL 或测试代码。
+四条 fault 阶段命令合计 878 s（14 分 38 秒）。fault suite 自报测试耗时 5 分 51 秒。报告提交只补文档，不改变上述被测生产 RTL 或测试代码。
 
 ## 失败归因与测试修复
 
@@ -96,6 +96,24 @@ TLB 等待的 X/Y 三变体均通过；fault 变体的 info 为 Y fired=1410、X
 | 四核 stress / 91 | 310 | 89 / 921 | 7419 / 750 | 5580 / 1785 / 6680 |
 
 `load` 含 oracle 判定的 LR 和 PTW 额外读者，不能与 CPU 请求数直接等同；`lr` 为完成的正常 LR，kill LR 另计。refill error 操作数为 `refillError` 标记的完成 Load/Store，error grant 还含 AMO/LR 的异常 refill 与 PTW 错误读，两者不是同一统计口径。每项都完成监视器 idle、error grant 仅落在 poisoned 行、fault 区无 REQ/AXI 读，以及 Owned/Free 精确、Racy/Counter oracle 的全量 DMA 读回检查。
+
+## 与 litmus 修复合并后的最终回归
+
+完成后续 litmus 任务后，在最终代码 `e232d2f9d8cccdff6098ca0a8a159eedbf7e82ee` 上依次完整重跑以下四条门槛，均无失败、跳过或 suite 中止；四条命令合计 1036 s。fault 的定向和六组随机统计与上表相同，原 18 项和新增 2 项均保留，watchdog、oracle、异常检查、种子及规模不变。
+
+| 命令 / spec | 通过 / 总数 | exit | 证据子目录 / 命令耗时 |
+| --- | --- | --- | --- |
+| 第 1 条：BreezeCoreConfigSpec | 8/8 | 0 | `16-final-modules/`，整条 103 s |
+| L1DCacheSpec | 39/39 | 0 | 同上 |
+| L1DPermissionsSpec | 5/5 | 0 | 同上 |
+| L2HomeSpec | 12/12 | 0 | 同上 |
+| MemAgentsSpec | 10/10 | 0 | 同上 |
+| MemSkeletonElabSpec | 37/37 | 0 | 同上 |
+| 第 2 条：L1DL2SystemSpec | 12/12 | 0 | `17-final-system/`，整条 76 s |
+| 第 3 条：L1DL2MultiCoreSpec | 21/21 | 0 | `18-final-multicore/`，整条 468 s |
+| 第 4 条：L1DL2MultiCoreFaultSpec | 20/20 | 0 | `19-final-fault/`，整条 389 s |
+
+同 SHA 的完整 litmus 随后为 14/14、exit=0，详见 [litmus 报告](MEM-litmus-tests-report.md)。最终提交只补两份报告，被测生产与测试源码保持一致，`design` Git tree 均为 `b052df3986e179650a5869c587810f5d20e0018a`；证据根 `final-doc-commit`、`final-doc-design-tree` 记录最终 push 后的核对。证据仍在本报告同一 evidence root，最终结果不依赖旧阶段的通过计数。
 
 ## 验证边界
 
