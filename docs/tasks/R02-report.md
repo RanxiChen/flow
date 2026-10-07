@@ -152,3 +152,5 @@
 - 顶层 `RvvCoprocessor`，默认参数，器件 `xcku040-ffva1156-2-e`；`rvv/r02/clock.xdc` 仅创建 `clock` 端口的 **10 ns** 时钟；综合模式 `out_of_context`，`general.maxThreads=4`、`nice -n 10`。输出 `reports/utilization.rpt`、`utilization-hierarchical.rpt`、`timing-summary.rpt`、`worst-paths.rpt` 和综合 DCP。
 - C1 `3644575`、C2/C3 `4c1fc28`、P `d904bd1`、S1 `38b59e7` 的 RVV RTL 源目录 Git tree 均为 `11ec229342a11bd671bda28f89056210204bb285`；`git diff --exit-code 3644575 38b59e7 -- design/src/main/scala/rvv` 退出码 **0**。后续只有测试、被动 CSV、报告和综合脚本变更。
 - 相对第 0 步父提交的范围核对：仅设计文档发生 baseline 文件修改（第 0 步授权）；其余均为 R02 允许目录的新文件。共享构建、Breeze 与其他任务工作区未修改。R01 没有继续。
+- S1 初步 RAM 映射暴露物理实现遗漏：`s1-default/vivado.stdout` 的 preliminary distributed RAM 表没有 VRF，六读口的单个 Chisel Mem 被展开为寄存器。返回缓冲已映射 7 RAMB36 + 1 RAMB18，但该表不是最终资源证据。为符合设计 3.6 的“六份读副本 + LUTRAM”，改成每个 bank 显式六份单读单写 Mem，并对存储器添加 `ram_style=distributed`。仲裁后同一逻辑写口广播到副本，字节使能、v0 shadow、读延迟和外部合同不变。
+- 这是对既定物理结构的实现修正；不推翻设计，不改合同、不修改共享文件。保存第一次 S1 预映射日志，停止本任务旧综合，随后重新执行 C1→C2→C3→P→S1；前面的通过结果保留其旧 SHA，不代替修正版验证。

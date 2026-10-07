@@ -2,6 +2,7 @@ package flow.rvv
 
 import chisel3._
 import chisel3.util._
+import chisel3.experimental.annotate
 
 /** Byte-enable memory-order rows. Asynchronous read ports infer replicated
   * distributed RAM; each low-address bank has exactly one accepted writer. */
@@ -18,11 +19,17 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   shadowBytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
   shadow := shadowBytes.asUInt
   val bankBits = log2Ceil(p.writeBanks)
-  val banks = Seq.fill(p.writeBanks)(Mem(p.rows/p.writeBanks,Vec(p.rowBytes,UInt(8.W))))
+  // A single six-read Mem can fall back to flip-flops in Vivado. Construct the
+  // documented read replicas explicitly: each copy has one read and one write.
+  val banks = Seq.tabulate(p.writeBanks,p.execReadPorts+2) { (_,_) =>
+    val m=Mem(p.rows/p.writeBanks,Vec(p.rowBytes,UInt(8.W)))
+    annotate(m)(Seq(firrtl.AttributeAnnotation(m.toNamed,"ram_style = \"distributed\"")))
+    m
+  }
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
   def index(row: UInt): UInt = row >> bankBits
   for(r <- 0 until p.execReadPorts+2) {
-    io.readData(r) := VecInit(banks.map(m => m(index(io.readRows(r))).asUInt))(bank(io.readRows(r)))
+    io.readData(r) := VecInit(banks.map(copies => copies(r)(index(io.readRows(r))).asUInt))(bank(io.readRows(r)))
   }
   io.write.foreach(_.ready := false.B)
   for(b <- 0 until p.writeBanks) {
@@ -40,7 +47,7 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
     // Exactly one physical memory write port per bank, after arbitration.
     when(bankValid) {
       val x=bankWrite
-      banks(b).write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools)
+      banks(b).foreach(_.write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools))
       when(x.row < p.rowsPerReg.U) {
         for(j <- 0 until p.rowBytes) {
           when(x.enables(j)) { shadowBytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
