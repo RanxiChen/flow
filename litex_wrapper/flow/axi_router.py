@@ -117,17 +117,6 @@ class BreezeAxiRouter(Module):
             If(master.b.ready, NextState("IDLE")))
 
 
-def attach_cluster_axi(soc):
-    """Called after add_sdram; its direct AXI bus is the router's DRAM exit.
-
-    Declare the router before add_sdram and expose only router.dram through
-    cpu.memory_buses. LiteX then installs its own AXI width/native converter.
-    """
-    cpu = soc.cpu
-    soc.submodules.memory_low_bridge = axi.AXI2Wishbone(cpu.axi_router.low, cpu.low_wishbone)
-    # mmio's AXI-Lite bridge is automatically installed by SoCBusHandler.
-
-
 def check_soc_regions(soc, root=None):
     regions = platform_regions(root)
     for soc_name, pma_name in (("rom", "linux_boot_rom" if soc.cpu.privilege_profile == "linux" else "boot_rom"),

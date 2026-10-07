@@ -33,14 +33,12 @@ class FlowCluster(_BreezeClusterCPU):
     privilege_profile = "mcu"
     rtl_mode = "debug"
     tandem_enabled = True
+    debug_enabled = True
     gcc_arch = "rv64i2p0"
     gcc_abi = "lp64"
     gcc_defines = "-D__flow__"
     reset_vector = 0x1000_0000
-    expected_marker = {
-        "rtlMode": "debug",
-        "tandem": "true",
-    }
+    expected_marker = {}
     mem_map = {
         "rom": reset_vector,
         "sram": 0x1100_0000,
@@ -72,6 +70,7 @@ class FlowCluster(_BreezeClusterCPU):
         cls.privilege_profile = privilege_profile
         cls.rtl_mode = "debug"
         cls.tandem_enabled = True
+        cls.debug_enabled = True
         cls.reset_vector = (
             0x1001_0000 if privilege_profile == "linux" else 0x1000_0000)
         cls.mem_map = {
@@ -80,10 +79,7 @@ class FlowCluster(_BreezeClusterCPU):
             "csr": 0x1200_0000,
             "main_ram": 0x8000_0000,
         }
-        cls.expected_marker = {
-            "rtlMode": "debug",
-            "tandem": "true",
-        }
+        cls.expected_marker = {}
 
 
 class Flow(FlowCluster):

@@ -136,7 +136,6 @@ class BreezeAxiRouterTest(unittest.TestCase):
                     yield
                     yield m.r.ready.eq(1)
                     yield
-                    yield
                     yield m.r.ready.eq(0)
                     yield
                 yield
@@ -148,6 +147,7 @@ class BreezeAxiRouterTest(unittest.TestCase):
                     self.assertEqual((yield m.w.ready), 1)
                     self.assertEqual((yield d.dram.w.valid), 0)
                     self.assertEqual((yield d.low.w.valid), 0)
+                    yield m.w.valid.eq(0)
                     yield
                 yield m.w.valid.eq(0)
                 yield m.b.ready.eq(0)

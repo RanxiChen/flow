@@ -43,3 +43,32 @@ BreezeHangMonitor 只接收观察输入，没有总线控制输出。debug=true 
 hangReasons 粘滞位：bit0 无退休；bit1..10 mem/mmio 的 AR,R,AW,W,B valid&&!ready；bit11..14 mem read/write、mmio read/write 响应超时。mem read 依 cfg.mem.l2Slots 逐项保存请求年龄，完成最老读不会清掉后续请求的年龄；各写从首个 AW 或 W 接受开始计时，适配现有 L2MemEngine/MMIO arbiter 的单写在途合同。
 
 新增 BreezeHangMonitorSpec：无退休阈值边界与粘滞、10 通道分别停顿、4 类响应分别超时、最老读完成保留下一读年龄、正常流量与短停顿无误报。ILA/LED 将在包装步骤连接。
+
+| c3370bd | cloud_chen / /home/cloud_chen/work/flow-soc-20261007/design | sbt "testOnly flow.memsys.BreezeHangMonitorSpec flow.memsys.ClusterAxiElabSpec flow.memsys.MemoryBridgeSpec flow.memsys.MemSkeletonElabSpec" | 46/46，0 | /home/cloud_chen/evidence/soc-c3370bd/direct.log |
+
+## 3. AXI 路由
+
+BreezeAxiRouter 为 Migen RTL：读/写独立，各全局仅一个 burst 在途。新 AR 必须等待前一 RLAST 被接受，新 AW 必须等待前一 B 被接受；因此包括跨 ID 和跨两个出口的返回严格按接受顺序。W 在 AW 之前背压，AW 锁定目标后所有 W 跟随该目标；R/B 的 id/data/resp/last 透明返回，不能吞错误。四个出口在途探针为 1 bit 计数（0/1）。
+
+地址窗口从 PMA JSON 读取。用 33 bit 末地址检查整个 INCR burst，同一窗口才放行；非法/跨区域/物理地址溢出返回每拍 R DECERR 或收齐 AW.len+1 个 W 后 B DECERR，保留 ID 和背压。ROM 只读属性也参与检查。main_ram burst 保持原 len/size/burst。
+
+aa21693 首轮路由门槛：3/4，exit=1，/home/cloud_chen/evidence/soc-aa21693/router.log。根因为 DECERR 测试驱动 RREADY 保持两拍造成重复消费；修驱动为单拍握手脉冲，原期望与断言保留；失败日志保留。
+
+云端 LiteX 深层导入缺少 litex.build（共享包是无 .git 的拷贝）。不修改共享工具：复制至 /home/cloud_chen/work/flow-soc-deps-20261007/litex，补入 Alan 对应 litex.build；显式覆写本任务 PYTHONPATH。深层 AXI/SoCCore/SDRAMPHYModel 导入通过。
+
+## 4. LiteX 包装
+
+core.py 的 memory_bus 为 AXI4（64 data / 32 addr / marker ID width），仅连接 CPU 内的路由器；memory_buses 只放路由器 DRAM 出口，LiteX add_sdram 自动接自带 AXI 位宽转换与 AXI2Native。periph_buses 是路由器低带宽 AXI 出口和 AXI-Lite MMIO，LiteX 自带 AXI2Wishbone/AXILite2Wishbone。删除 CPU DMA/FASE 产品类与旧 Wishbone 端口，保持 reset 0x10010000、SRAM/CSR/CLINT/PLIC 地址与 Linux 中断连接。L2 bytes 从 marker 读，不再沿用旧 wrapper 的过期几何。
+
+marker 的 bus/profile/preset/privilege/tandem/debug/platformSha256/nCores 逐项严格校验，另检查生成的 ID/slot/几何字段。debug 单核额外连完整退休、L1D/L2 事件、Chisel 留存状态和挂死原因。ILA 深度 4096，输入流水 2，探针映射在构建开始前写入，与本次 .ltx 对应。LED0 接 hang。
+
+KCU105 入口移除 --with-fase/SD/DMA/PCIe/--load，只保留 single/small 产品、debug、100 MHz 和输出/构建开关。不自动在 Alan 运行 sbt，预先使用主机配置选定机器生成的 RTL。
+
+multicore_sim.py 改为与 FPGA 相同的生产 CPU/路由，SDRAMPHYModel DDR4，JSON 精确 ROM/SRAM/main_ram，标准 BIOS 与 64 KiB data/address memtest。保留现有 crt0 次级 hart 停驻。旧 MCU/Linux 的 payload/trace CLI 被新冒烟入口替代，本轮不运行历史 Linux。
+
+包装测试重写逐项：
+
+- test_breeze_cpu_wrapper.py 七个旧 Wishbone/过期几何/legacy fixture 用例替换为五个 AXI product、debug 隔离与完整退休字段、每一冻结 marker 拒绝、端口方向/ID、固定 map 用例。原 reset/ISA/ABI/PLIC/单核中断属性仍检查。
+- test_breeze_ila.py 保留非法 hart/tandem 拒绝；旧 Wishbone/DCACHE trace 用例改为完整 AXI/事件/挂死/Chisel 留存字段的被动探针连接和 JSON 位宽/深度检查。
+- test_clint_verilog_contract.py / test_plic_verilog_contract.py 的旧 MCU/Linux 条件选择 source-string 检查改为新冒烟对独立 RTL、hart 数、mtime/meip 接线检查；其余 RTL/地址/定向用例检查保留。
+- 保留 memory/interrupt/LiteUART 等其他 suite，完整 pytest 门槛继续执行。

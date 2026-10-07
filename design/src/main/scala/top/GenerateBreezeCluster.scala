@@ -67,5 +67,5 @@ object GenerateBreezeCluster extends App {
     private val platformHash = java.security.MessageDigest.getInstance("SHA-256")
         .digest(platformBytes).map(b => f"${b & 0xff}%02x").mkString
     os.write.over(targetDir / "cluster-profile.txt",
-        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
+        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
 }

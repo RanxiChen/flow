@@ -4,14 +4,14 @@ import json
 
 from migen import Cat, ClockSignal, Constant, If, Instance, Module, ResetSignal, Signal
 
-from .core import DCACHE_TRACE_LAYOUT, RETIRE_LAYOUT
+from .core import L1D_EVENT_NAMES, RETIRE_LAYOUT
 
 
 class BreezeDebugILA(Module):
     depth = 4096
     input_pipe_stages = 2
 
-    def __init__(self, cpu, platform, clock_hz=50_000_000, extra_sources=(),
+    def __init__(self, cpu, platform, clock_hz=100_000_000, extra_sources=(),
                  storage_qualifier=False, depth=4096):
         self.depth = depth
         self.storage_qualifier = storage_qualifier
@@ -20,38 +20,27 @@ class BreezeDebugILA(Module):
             raise ValueError("Breeze ILA requires a single hart with live Tandem outputs")
 
         retire = cpu.retires[0]
-        last_pc = Signal(64)
-        last_inst = Signal(32)
-        seen_retire = Signal()
-        idle_cycles = Signal(16)
-        self.sync += If(retire.valid,
-            last_pc.eq(retire.pc),
-            last_inst.eq(retire.inst),
-            seen_retire.eq(1),
-            idle_cycles.eq(0),
-        ).Elif(idle_cycles != 0xffff,
-            idle_cycles.eq(idle_cycles + 1),
-        )
-
         sources = [("reset", ResetSignal("sys"))]
-        sources += [("retire_" + name, getattr(retire, name))
-                    for name, _ in RETIRE_LAYOUT]
-        sources += [
-            ("last_retire_pc", last_pc),
-            ("last_retire_inst", last_inst),
-            ("seen_retire", seen_retire),
-            ("no_retire_cycles", idle_cycles),
-            ("hart_fatal", cpu.hart_fatal),
-            ("hart_estop", cpu.hart_estop),
-            ("mtime_low", cpu.time[:32]),
-        ]
-        sources += [("dcache_" + name, getattr(cpu.dcache_traces[0], name))
-                    for name, _ in DCACHE_TRACE_LAYOUT]
+        sources += [("retire_" + name, getattr(retire, name)) for name, _ in RETIRE_LAYOUT]
+        sources += [(name, getattr(cpu.debug, rtl)) for name, rtl in (
+            ("last_retire_pc", "lastRetirePc"), ("last_retire_inst", "lastRetireInst"),
+            ("seen_retire", "seenRetire"), ("no_retire_cycles", "noRetireCycles"),
+            ("hang", "hang"), ("hang_reasons", "hangReasons"))]
+        sources += [("hart_fatal", cpu.hart_fatal), ("hart_estop", cpu.hart_estop),
+                    ("mtime_low", cpu.time[:32])]
+        sources += [("l1d_" + name, getattr(cpu.l1d_events, name)) for name in L1D_EVENT_NAMES]
+        sources += [("l2_" + name, signal) for name, signal in cpu.l2_events]
         for prefix, bus in (("memory", cpu.memory_bus), ("mmio", cpu.mmio_bus)):
-            # Both Breeze Wishbone masters use 64-bit word addressing.
-            sources.append((prefix + "_address", Cat(Constant(0, 3), bus.adr)))
-            sources += [(prefix + "_" + name, getattr(bus, name))
-                        for name in ("cyc", "stb", "ack", "we", "err", "sel", "dat_w", "dat_r")]
+            for channel in ("ar", "aw", "w", "r", "b"):
+                endpoint = getattr(bus, channel)
+                fields = ["valid", "ready"]
+                fields += {"ar": ["addr"], "aw": ["addr"], "w": ["data", "strb"],
+                           "r": ["data", "resp"], "b": ["resp"]}[channel]
+                if prefix == "memory":
+                    fields += {"ar": ["id", "len"], "aw": ["id", "len"],
+                               "w": ["last"], "r": ["id", "last"], "b": ["id"]}[channel]
+                sources += [(f"{prefix}_{channel}_{field}", getattr(endpoint, field)) for field in fields]
+        sources += cpu.axi_router.sources
 
         sources += list(extra_sources)
         self.probes = []

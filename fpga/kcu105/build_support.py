@@ -1,57 +1,14 @@
-"""Freeze gateware inputs and apply the reviewed official SD driver patch."""
+"""Freeze the exact RTL inputs consumed by Vivado."""
 from pathlib import Path
 import shutil
 import hashlib
 import json
-import subprocess
 
 from litex.soc.integration.builder import Builder
 
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
-        if hasattr(self.soc, "pcie"):
-            gateware = Path(self.gateware_dir)
-            gateware.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(Path(__file__).with_name("pcie_ip.tcl"), gateware / "flow_pcie_ip.tcl")
-            self.soc.platform.toolchain.pre_synthesis_commands.append("source flow_pcie_ip.tcl")
-            shutil.copy2(Path(__file__).with_name("pcie_reset_timing.tcl"), gateware / "flow_pcie_reset_timing.tcl")
-            self.soc.platform.toolchain.pre_optimize_commands.append("source flow_pcie_reset_timing.tcl")
-        if hasattr(self.soc, "fase_jtag"):
-            gateware = Path(self.gateware_dir)
-            gateware.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(Path(__file__).with_name("fase_timing.tcl"), gateware / "flow_fase_timing.tcl")
-            self.soc.platform.toolchain.pre_optimize_commands.append("source flow_fase_timing.tcl")
-            self.soc.platform.toolchain.additional_commands += [
-                "report_cdc -details -file fase-cdc.rpt",
-                "report_bus_skew -file fase-bus-skew.rpt",
-            ]
-        if not hasattr(self.soc, "sdcard"):
-            self.freeze_sources()
-            return super().build(*args, **kwargs)
-        gateware = Path(self.gateware_dir)
-        gateware.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(Path(__file__).with_name("sd_timing.tcl"), gateware / "flow_sd_timing.tcl")
-        self.soc.platform.toolchain.pre_optimize_commands.append("source flow_sd_timing.tcl")
-        self.soc.platform.toolchain.additional_commands.append("flow_report_sd_timing")
-        # Patch a build-local official package; never dirty the installed LiteX.
-        patch_dir = Path(__file__).resolve().parent / "patches"
-        lock = json.loads((patch_dir / "litex-sdcard.json").read_text())
-        packages = []
-        for name, source in self.software_packages:
-            if name == "liblitesdcard":
-                source = Path(source)
-                digest = hashlib.sha256((source / "sdcard.c").read_bytes()).hexdigest()
-                if digest != lock["sdcard_sha256"]:
-                    raise RuntimeError("LiteX SD driver changed: review the Flow patch before building")
-                dest = Path(self.output_dir) / "software-source" / name
-                shutil.copytree(source, dest, dirs_exist_ok=True)
-                subprocess.run(["patch", "--batch", "--fuzz=0", "-p1", "-i",
-                                str(patch_dir / "litex-sdcard.patch")], cwd=dest, check=True)
-                source = str(dest)
-                (dest.parent / "sdcard-upstream.json").write_text(json.dumps(lock, indent=2) + "\n")
-            packages.append((name, source))
-        self.software_packages = packages
         self.freeze_sources()
         return super().build(*args, **kwargs)
 

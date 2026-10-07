@@ -17,9 +17,9 @@ class FlowPlicVerilogContractTest(unittest.TestCase):
     def test_linux_profile_selects_verilog_plic_and_keeps_legacy_source(self):
         sim = read_text("sim/litex/multicore_sim.py")
         wrapper = read_text("litex_wrapper/flow/plic_verilog.py")
-        self.assertIn('if privilege_profile == "linux":', sim)
+        self.assertIn("num_harts=self.cpu.num_harts, num_sources=31", sim)
         self.assertIn("BreezePlicVerilog", sim)
-        self.assertIn("BreezePlic(", sim)
+        self.assertIn("self.cpu.meip.eq(self.plic.meip)", sim)
         self.assertIn('Instance(\n            "FlowPlic"', wrapper)
         self.assertTrue(os.path.isfile(os.path.join(
             FLOW_ROOT, "litex_wrapper", "flow", "plic.py")))
