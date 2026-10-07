@@ -214,6 +214,33 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     finish()
   }
 
+  for (op <- Seq(SnpOp.Inv, SnpOp.Down))
+    s"a FENCE waiting for an older miss lets $op pass its held younger store" in withL1D() { e =>
+      import e._
+      val b = ram(0x1240); val m = ram(0x3280)
+      runOps(CoreOp.store(b, 0x1234))
+      val n = core.history.size
+      l2.reqReadyProb = 0
+      core.enqueue(CoreOp.store(m, 0x5678), CoreOp.fence, CoreOp.store(b, 0x9abc))
+      bench.runUntil(core.history.size >= n + 3 && core.history(n).kind == "Mshr")
+      bench.steps(3)
+      l2.probe(op, line(b))
+      // The younger Store is held behind FENCE, so it cannot mutate this
+      // line. The probe must complete before the older miss is released.
+      bench.runUntil(l2.acks.nonEmpty)
+      l2.acks.head._3 mustBe line(b)
+      l2.acks.head._4 mustBe true
+      l2.backing.read(b, 8) mustBe BigInt(0x1234)
+      l2.getsOf(line(m)) mustBe empty
+      core.history(n + 1).respCycle mustBe -1L
+      core.history(n + 2).respCycle mustBe -1L
+      l2.reqReadyProb = 1
+      bench.quiesce()
+      core.history(n + 2).respCycle must be > core.history(n + 1).respCycle
+      runOps(CoreOp.load(b), CoreOp.load(m))
+      finish()
+    }
+
   "killed stores never write, and a load miss killed at WB sends no GetS" in withL1D() { e =>
     import e._
     val k = ram(0x600); val n = ram(0x640)
