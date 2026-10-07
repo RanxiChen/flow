@@ -158,8 +158,17 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
     simulate(new L1DL2MultiHarness(g, Some((FaultBase, FaultBytes)))) { d =>
       init(d)
       val env = new Env(d, g, seed)
-      body(env)
-      env.finish()
+      try {
+        body(env)
+        env.finish()
+      } catch {
+        case t: Throwable =>
+          info(s"failure at cycle ${env.bench.cycle}, effective RNG seed $seed\n${env.monitor.describe}")
+          env.cores.zipWithIndex.foreach { case (c, hart) =>
+            info(s"core $hart recent transactions: ${c.history.takeRight(12).mkString("; ")}")
+          }
+          throw t
+      }
     }
 
   // ===========================================================================
@@ -488,6 +497,40 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
   // ===========================================================================
   // 5. Random
   // ===========================================================================
+
+  for (trap <- Seq(false, true))
+    s"a faulting LR before a fed LR SC pair cannot consume that pair's callback (trap $trap)" in
+      withFault(seed = 43) { e =>
+        import e._
+        val w = ram(0x8200)
+        oracle.classify(w, Counter)
+        cores(0).killOnExc = trap
+        val ops = mutable.Queue(
+          (exc(CoreOp.lr(fault(0x100)), 13), Option.empty[BigInt]),
+          (CoreOp.lr(w), Some(BigInt(3))))
+        feeders(0).next = () => ops.dequeue()
+        feeders(0).remaining = 2
+        bench.quiesce()
+        val faultLr = txns(0, fault(0x100), L1DOp.LR).head
+        faultLr.done mustBe true
+        faultLr.kind mustBe "Exc"
+        val pairLr = txns(0, w, L1DOp.LR).head
+        val pairSc = txns(0, w, L1DOp.SC)
+        pairSc.size mustBe 1
+        pairSc.head.done mustBe true
+        if (trap) {
+          pairLr.killed mustBe true
+          feeders(0).killedLr mustBe 1
+          pairSc.head.value mustBe 1
+          oracle.counterTotal(w) mustBe 0
+        } else {
+          pairLr.done mustBe true
+          feeders(0).successes mustBe 1
+          pairSc.head.value mustBe 0
+          oracle.counterTotal(w) mustBe 3
+        }
+        txns(0, fault(0x100), L1DOp.SC) mustBe empty
+      }
 
   /** L1DL2MultiCoreSpec.randomTraffic plus s1/s2 kills (also of SCs),
     * trap pulses, page faults (backend trap model), refill errors on lines
