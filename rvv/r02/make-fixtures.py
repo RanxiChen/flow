@@ -74,6 +74,12 @@ def directed():
         p.emit(vector(44,16,8,11,6),2,3,128,scalar=0x817f00ff,label='long-war-reader')
     p.emit(memory(8,2),2,3,128,base=BASE+0x8000,label='held-war-load')
     p.emit(memory(24,2),2,3,128,base=BASE+0xa000,label='load-behind-held-war')
+    # Preserve the original eight dot-reader case. Add a width-independent
+    # WAR window: SEW64 vmacc's documented iterative path keeps sources live
+    # while two ordinary younger loads request their data through the small IQs.
+    p.emit(vector(45,16,8,24,2),3,3,64,label='slow-war-reader')
+    p.emit(memory(8,2),2,3,128,base=BASE+0x8000,label='slow-reader-held-load')
+    p.emit(memory(24,2),2,3,128,base=BASE+0xa000,label='slow-reader-independent-load')
     for overlap in (True,False):
         b = BASE+0xb003
         other = b if overlap else BASE+0xc001

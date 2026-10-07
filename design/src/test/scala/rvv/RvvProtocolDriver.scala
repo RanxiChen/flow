@@ -80,6 +80,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private val liveLoads=mutable.Set.empty[Long]
   private var peakLiveLoads=0
   private var requestsDuringWar=0
+  private var slowWarRequests=0
   private val invalidated=mutable.Set.empty[BigInt]
   private val touchedLines=mutable.Set.empty[BigInt]
   private def bool(x: Bool): Boolean=x.peek().litToBoolean
@@ -206,7 +207,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         val address=uint(dut.io.axi.ar.bits.addr); val beats=uint(dut.io.axi.ar.bits.len).toInt+1
         assert((address&4095)+beats*p.memBytes<=4096,s"AR crosses a page at $cycle")
         val (label,index)=acceptRequest(address,beats,false)
-        if(bool(dut.io.loadWriteWar)) requestsDuringWar+=1
+        if(bool(dut.io.loadWriteWar)) {
+          requestsDuringWar+=1
+          if(label=="slow-reader-independent-load") slowWarRequests+=1
+        }
         if(label.startsWith("gemv-load-") && !randomize) {
           val index=fixture.records.indexWhere(_.label==label)
           if(!kernelRequests.contains(index)) kernelRequests(index)=cycle
@@ -296,6 +300,10 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       assert(peakLiveLoads>=2,s"multiple-load lifetime never overlapped seed=$seed")
       assert(requestsDuringWar>0,s"no younger AR was issued while an older load writeback waited for WAR seed=$seed")
       println(s"R02_WAR_BYPASS seed=$seed peakLiveLoads=$peakLiveLoads requestsDuringWar=$requestsDuringWar")
+    }
+    if(fixture.records.exists(_.label=="slow-reader-independent-load")) {
+      assert(slowWarRequests>0,s"added slow-reader WAR window never overlapped an independent AR seed=$seed")
+      println(s"R03_SLOW_WAR seed=$seed requests=$slowWarRequests")
     }
     dut.io.counters.readBytes.expect((readBeats*p.memBytes).U)
     val remaining=uint(dut.io.counters.bufferedBytes)

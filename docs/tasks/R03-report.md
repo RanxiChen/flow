@@ -34,3 +34,9 @@ C1/C2/C3、P1–P5、S1、S2：未运行。面积、时序、功能和带宽尚�
 命令：激活 flow 后 `bash rvv/r03/run-stage.sh /home/chen/FUN/flow-r03-evidence/a2`，C1/C2/S1 依次运行，各阶段单独记录退出码。当前未运行。R03 C2 包装脚本完整运行 R02 原套件，再运行新增套件，不筛除原用例。
 
 A1 命令：`bash rvv/r02/run-c1.sh .../a1/c1 && bash rvv/r02/run-c2.sh .../a1/c2 && bash rvv/r03/run-s1.sh .../a1/s1`。C1、C2 均完成，原日志目录同前；综合未完成。默认策略基线使用 `/home/chen/FUN/flow-r02-evidence/vrf-inline-s1/rtl`（生成提交0255e8a，其 RVV RTL 与79f6c5a的差异为空），日志 `baseline-default/`；直接 nice 运行 R03 synthesis Tcl，不重新生成或修改基线。
+
+### A2 首轮 C2 的覆盖刺激诊断
+
+`9d99190`：C1 3/3，前端6/6、VRF1/1通过；定向种子0–2通过，种子3在最终Spike状态检查之后报“no younger AR was issued while an older load writeback waited for WAR”。分类：原八条 dot 读者的覆盖窗口依赖旧队列深度，缩至乘加队列2项后不保证随机握手都重叠；不是Spike结果失配。保留失败日志 `a2/c2/integration.log`，不改变任何原指令、种子、断言或阈值。新增三条普通已支持指令（SEW64 vmacc迭代读者、覆盖源的load、独立load）形成更长窗口，并单独要求新窗口的AR/WAR同时出现。RTL不识别程序标签。修订后完整C1/C2重新运行，综合仍验证该段相同RTL。
+
+综合与仿真并行时，本任务综合进程树固定在CPU0–3，仿真固定在CPU4–7；合计只使用8/20核，所有硬件工具继续nice。S1候选保留生成SHA、固定RTL及Tcl/XDC哈希；后续pull不改变已提交综合的输入。
