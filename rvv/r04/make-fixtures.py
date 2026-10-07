@@ -25,6 +25,15 @@ def prefetch():
         # Advance the age through wrap with ordinary committed memory traffic.
         p.emit(r.memory(12,2),2,2,64,base=r.BASE+0x9000,label='r04-wrap-load')
         p.emit(r.vector(44,16,12,11,6),2,2,64,scalar=i,label='r04-wrap-dot')
+    # Bypass tags can outlive the modular active window. An external write must
+    # invalidate even when its age is over half a sequence space away.
+    p.emit(r.vector(44,16,12,11,6),2,2,64,scalar=1,label='r04-cache-old')
+    for i in range(130):
+        p.emit(r.vector(0,6,4,5,0),2,0,16,label='r04-cache-age-gap')
+    p.emit(r.memory(16,2),2,2,64,base=r.BASE+0xb000,label='r04-cache-external-write')
+    for i in range(100):
+        p.emit(r.vector(0,6,4,5,0),2,0,16,label='r04-cache-age-gap')
+    p.emit(r.vector(44,16,12,11,6),2,2,64,scalar=2,label='r04-cache-after-wrap')
     return p
 
 def random(seed):

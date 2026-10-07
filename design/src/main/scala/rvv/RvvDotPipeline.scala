@@ -99,7 +99,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),acc(8*b+7,8*b)))).asUInt
   for(k <- 0 until cacheDepth) {
     for(s <- snoop) {
-      when(s.valid && cacheValid(k) && cacheTags(k) === s.bits.row && RvvAge.older(cacheAges(k),s.bits.age)) {
+      when(s.valid && cacheValid(k) && cacheTags(k) === s.bits.row) {
         cacheValid(k) := false.B
       }
     }

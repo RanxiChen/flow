@@ -84,7 +84,7 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   when(valid(3)) { cacheData.write(addrD,merged) }
   for(k <- 0 until p.rows) {
     for(s <- snoop) {
-      when(s.valid && s.bits.row === k.U && cacheValid(k) && RvvAge.older(cacheAges(k),s.bits.age)) { cacheValid(k) := false.B }
+      when(s.valid && s.bits.row === k.U && cacheValid(k) ) { cacheValid(k) := false.B }
     }
     when(valid(3) && addrD === k.U) { cacheValid(k) := true.B; cacheAges(k) := t.desc.age }
   }
