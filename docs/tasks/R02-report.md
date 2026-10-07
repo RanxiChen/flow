@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | C1 | 通过：三组 RTL 生成、Verilator 编译与空闲复位冒烟 3/3 | `9052c21`；日志 `vrf-inline-c1` |
 | C2 | 通过：前端 6/6、VRF 1/1、Spike 定向/冒险 8/8 | `9052c21`；`vrf-inline-c3/c2-check/` |
-| C3 | 通过：种子 0–999，1000/1000 | `4c1fc28`；`final-c3/`，退出码 0 |
+| C3 | 通过：种子 0–999，1000/1000 | `9052c21`；`vrf-inline-c3/`，退出码 0 |
 | P1 | 通过：100% 峰值 | `d904bd1`；`gemv-performance/` |
 | P2 | 通过：97.07% 峰值 | 同上；40 拍、16 KiB |
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
@@ -28,7 +28,7 @@
 
 ## 实现决定与文档处理
 
-当前 `9052c21` 物理 RAM 修正版：C1/C2 已重验通过，C3 正在重验。上表其余 C/P 数值暂保留旧 SHA，修正版通过后更新，不把旧证据当作新版结论。
+当前 `9052c21` 物理 RAM 修正版：C1/C2/C3 已重验通过，P/S 待重跑。上表 P 数值暂保留旧 SHA，修正版测量后更新，不把旧证据当作新版结论。
 
 - 区间在 Ok 时登记；提交当拍旁路查询；仅匹配已提交项，load 在全部 R 接收后释放、store 在全部 B 后释放。
 - kill 撤销被作废项判定；同拍 commit 保留最老项；已握手翻译编号保留到响应被接收并丢弃，禁止提前复用。
@@ -164,3 +164,5 @@
 - 六个异步读副本及 distributed 属性已存在于生成的 `RvvRegisterFile.sv` / `RvvVrfBank.sv`，最终是否推断 LUTRAM 由重跑 S1 的工具报告确认。
 - 后接 `R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3`，依次重跑 C2 与全部 1000 种子 C3。
 - 同 SHA 的 C2：入口 `bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/vrf-inline-c3/c2-check`，退出码 **0**；`frontend.log` **6/6**、`vrf.log` **1/1**、`integration.log` **8/8**，全部 Spike 比对及 WAR/多 load 检查通过。C3 已进入随机执行。
+- C3 同一入口最终退出码 **0**，`vrf-inline-c3/exit-code.txt` 和 `random.log`：种子 **0–999，1000/1000**；`plugin-test.log` 独立点积 **10,675 条**通过。所有 DUT 程序重新执行，未沿用旧通过结论。
+- 该版本 RTL 源目录 tree：`47360ce04085f324694c4fb0a53b160dc0d412dc`。先前 tree `11ec229...` 只用于初轮历史证据；之后 P/S 必须绑定本轮源目录。
