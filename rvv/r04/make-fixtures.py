@@ -19,6 +19,8 @@ def prefetch():
         p.emit(r.vector(44,16,8,11,6),2,2,64,scalar=0x817f00ff+i,label='r04-queued-dot')
     p.emit(r.memory(8,2),2,2,64,base=r.BASE+0x8000,label='r04-prefetch-war')
     p.emit(r.memory(12,2),2,2,64,base=r.BASE+0x9000,label='r04-prefetch-full')
+    p.emit(r.memory(12,2),2,2,64,base=r.BASE+0xa001,label='r04-zero-start-load')
+    p.lines[-2:-2] = ['li t0, 64', 'csrw vstart, t0']
     p.emit(r.memory(12,2,True),2,2,64,base=r.BASE+0xa001,label='r04-store-barrier')
     p.emit(r.memory(8,2),2,2,64,base=r.BASE+0xa001,label='r04-overlap-after-store')
     for i in range(272):

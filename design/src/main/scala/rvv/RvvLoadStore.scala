@@ -98,6 +98,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val writeBeat = RegInit(0.U(9.W)); val gathered = RegInit(false.B)
   val gatheredData = RegInit(0.U(p.memoryBits.W)); val gatherRow = Reg(UInt(p.rowBits.W))
   val gathering = RegInit(false.B); val storePending = RegInit(false.B)
+  val storeReturned = RegNext(RegNext(io.storeReadValid,false.B),false.B)
 
   io.axi.ar.valid := canRequest && !d.decoded.store && creditOk && bursts.io.enq.ready
   io.axi.ar.bits := 0.U.asTypeOf(new RvvAxiAddress(p))
@@ -184,7 +185,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val zeroIndex = PriorityEncoder(zeroMask.asUInt)
   val retiringStore = io.released.valid && desc(releaseIndex).decoded.store &&
     desc(releaseIndex).issue.vl =/= 0.U && desc(releaseIndex).issue.vstart < desc(releaseIndex).issue.vl
-  when(zeroMask.asUInt.orR && !gathering && !retiringStore) {
+  when(zeroMask.asUInt.orR && !(gathering && storePending && storeReturned && !io.blocked(0)) && !retiringStore) {
     io.progress(0).valid := true.B; io.progress(0).bits.slot := desc(zeroIndex).slot
     io.progress(0).bits.finished := true.B; dataDone(zeroIndex) := true.B; live(zeroIndex) := false.B
   }
@@ -200,7 +201,6 @@ class RvvLoadStore(p: RvvParams) extends Module {
   when(writeBurst && !gathered && !gathering) {
     gatherRow := firstRow; gatheredData := 0.U; gathering := true.B
   }
-  val storeReturned = RegNext(RegNext(io.storeReadValid,false.B),false.B)
   val storeReg = wd.decoded.vd + (gatherRow >> log2Ceil(p.rowsPerReg))
   io.storeRow := wd.decoded.vd*p.rowsPerReg.U+gatherRow
   io.hazard(0).valid := gathering
