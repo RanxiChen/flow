@@ -28,7 +28,11 @@ case class CoreOp(
     device: Boolean = false,
     refillError: Boolean = false,
     s1Kill: Boolean = false,
-    s2KillAtResp: Boolean = false) {
+    s2KillAtResp: Boolean = false,
+    amoFunc: BreezeAmoFunc.Type = BreezeAmoFunc.Swap,
+    aq: Boolean = false,
+    rl: Boolean = false,
+    scExpected: Option[Int] = None) {
   override def toString: String =
     s"${op.litValue.toInt match { case 0 => "Load"; case 1 => "Store"; case 5 => "Fence"; case x => s"op$x" }}" +
       s"(${hex(addr)}, size $size${if (op.litValue == 1) ", data " + hex(data) else ""})"
@@ -39,6 +43,11 @@ object CoreOp {
     CoreOp(L1DOp.Load, a, size, signed, rd = rd)
   def store(a: BigInt, data: BigInt, size: Int = 3): CoreOp = CoreOp(L1DOp.Store, a, size, data = data)
   def fence: CoreOp = CoreOp(L1DOp.Fence, 0)
+  def lr(a: BigInt, size: Int = 3): CoreOp = CoreOp(L1DOp.LR, a, size, signed = true)
+  def sc(a: BigInt, data: BigInt, success: Boolean, size: Int = 3): CoreOp =
+    CoreOp(L1DOp.SC, a, size, data = data, scExpected = Some(if (success) 0 else 1))
+  def amo(a: BigInt, data: BigInt, func: BreezeAmoFunc.Type, size: Int = 3): CoreOp =
+    CoreOp(L1DOp.AMO, a, size, data = data, amoFunc = func)
 }
 
 class CoreTxn(val id: Int, val op: CoreOp, val fired: Long) {
@@ -69,6 +78,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   var lateReadyProb = 1.0
   var holdCycles = 0L
   var mmioBusyCycles = 0L
+  var trapClear = false
   private var nextId = 0
   private var presenting: Option[CoreOp] = None
   private var lateReady = true
@@ -90,10 +100,11 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       b.op.poke(o.op); b.vaddr.poke(o.addr.U(64.W)); b.size.poke(o.size.U)
       b.signed.poke(o.signed.B); b.wdata.poke((o.data & mask(64)).U(64.W))
       b.rd.isFp.poke(false.B); b.rd.idx.poke(o.rd.U); b.isFlw.poke(o.isFlw.B)
-      b.aq.poke(false.B); b.rl.poke(false.B); b.amoFunc.poke(BreezeAmoFunc.Swap)
+      b.aq.poke(o.aq.B); b.rl.poke(o.rl.B); b.amoFunc.poke(o.amoFunc)
     }
     core.s1Kill.poke(false.B)
     core.s2Kill.poke(false.B)
+    core.trapClearRsv.poke(trapClear.B)
   }
 
   override def decide(): Unit = {
@@ -171,6 +182,22 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
             t.expected = exp
             awaitingLate.enqueue(t)
           }
+        } else if (enumIs(t.op.op, L1DOp.LR) || enumIs(t.op.op, L1DOp.AMO)) {
+          check(kind == "Done", s"$t: atomic must wait for Done, not $kind")
+          val old = golden.read(t.op.addr, 1 << t.op.size)
+          val exp = formatLoad(old, t.op.size, signed = true, flw = false)
+          t.value = data
+          check(data == exp, s"$t: atomic old ${hex(data)}, expected ${hex(exp)}")
+          if (enumIs(t.op.op, L1DOp.AMO))
+            golden.write(t.op.addr, 1 << t.op.size, atomicResult(old, t.op.data, t.op.size, t.op.amoFunc), now)
+          t.done = true
+        } else if (enumIs(t.op.op, L1DOp.SC)) {
+          check(kind == "Done", s"$t: SC must complete as Done")
+          val exp = t.op.scExpected.getOrElse(throw new IllegalArgumentException("SC needs an independent expected status"))
+          t.value = data
+          check(data == exp, s"$t: SC returned $data, expected $exp")
+          if (exp == 0) golden.write(t.op.addr, 1 << t.op.size, t.op.data & mask(8 << t.op.size), now)
+          t.done = true
         } else if (enumIs(t.op.op, L1DOp.Store)) {
           if (t.op.device) check(kind == "Done", s"$t: device store must complete as Done")
           else if (!t.op.refillError) golden.write(t.op.addr, 1 << t.op.size, t.op.data & mask(8 << t.op.size), now)
@@ -180,6 +207,24 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
           t.done = true
         }
     }
+  }
+
+  /** Architectural integer reference, independent of the Chisel AMO ALU. */
+  def atomicResult(old: BigInt, rhs: BigInt, size: Int, func: BreezeAmoFunc.Type): BigInt = {
+    val width = 8 << size
+    val a = old & mask(width); val b = rhs & mask(width)
+    def signed(x: BigInt): BigInt = if (x.testBit(width - 1)) x - (BigInt(1) << width) else x
+    val result = if (enumIs(func, BreezeAmoFunc.Swap)) b
+      else if (enumIs(func, BreezeAmoFunc.Add)) a + b
+      else if (enumIs(func, BreezeAmoFunc.Xor)) a ^ b
+      else if (enumIs(func, BreezeAmoFunc.Or)) a | b
+      else if (enumIs(func, BreezeAmoFunc.And)) a & b
+      else if (enumIs(func, BreezeAmoFunc.Min)) { if (signed(a) < signed(b)) a else b }
+      else if (enumIs(func, BreezeAmoFunc.Max)) { if (signed(a) > signed(b)) a else b }
+      else if (enumIs(func, BreezeAmoFunc.MinU)) a min b
+      else if (enumIs(func, BreezeAmoFunc.MaxU)) a max b
+      else throw new IllegalArgumentException(s"unsupported AMO $func")
+    result & mask(width)
   }
 
   def expectedLoad(o: CoreOp): BigInt = {

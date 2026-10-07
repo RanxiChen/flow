@@ -14,7 +14,7 @@ import MemTestKit._
 /** L1D + behavioral L2 + identity dTLB (l1d-rtl-spec 13.2). Every load is
   * checked against a golden memory at its response or late data. `finish`
   * invalidates every L1D line and compares the written-back memory with it.
-  * LR/SC, AMO and aq/rl are not implemented yet and are not exercised.
+  * Atomic results and final dirty writebacks use the same independent golden.
   */
 class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
   class Env(val d: L1DTestHarness, val g: BreezeMemGeometry, seed: Int) {
@@ -384,6 +384,135 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     fence.kind mustBe "Done"
     fence.respCycle must be > l2.grants.last._1
     finish()
+  }
+
+  "LR gets exclusive permission, SC succeeds once and a failed SC never misses" in withL1D() { e =>
+    import e._
+    val a = ram(0x1800); val b = ram(0x1840)
+    preload(a, 8, BigInt("8000000180000002", 16))
+    runOps(CoreOp.lr(a, 2), CoreOp.sc(a + 4, 0x12345678, success = true, size = 2),
+      CoreOp.sc(a, 0x9999, success = false), CoreOp.sc(b, 0x9999, success = false), CoreOp.load(a))
+    core.history.take(4).foreach(_.kind mustBe "Done")
+    l2.gets.map(_._2) mustBe Seq("GetM")
+    core.history.head.value mustBe BigInt("ffffffff80000002", 16)
+    l2.getsOf(line(b)) mustBe empty
+    // Other memory traffic does not clear reservation; the set is not full.
+    runOps(CoreOp.lr(a), CoreOp.load(b), CoreOp.store(b + 8, 0x77), CoreOp.sc(a, 0x33, success = true))
+  }
+
+  "LR upgrades S with GetM and AckE before creating its reservation" in withL1D() { e =>
+    import e._
+    val a = ram(0x1900)
+    l2.sharedLines += line(a)
+    runOps(CoreOp.load(a), CoreOp.lr(a), CoreOp.sc(a, 0x1234, success = true))
+    l2.getsOf(line(a)) mustBe Seq("GetS", "GetM")
+    l2.grantsOf(line(a)) mustBe Seq("DataS", "AckE")
+  }
+
+  "a pending probe permits SC within the LR window and sees the successful write" in withL1D() { e =>
+    import e._
+    val a = ram(0x1a00)
+    runOps(CoreOp.lr(a))
+    l2.probe(SnpOp.Inv, line(a))
+    bench.steps(5)
+    l2.acks mustBe empty
+    runOps(CoreOp.sc(a, 0x5151, success = true))
+    l2.acks.last._4 mustBe true
+    l2.backing.read(a, 8) mustBe BigInt(0x5151)
+    runOps(CoreOp.sc(a, 0x6262, success = false))
+  }
+
+  "probe timeout, trap and eviction clear reservations, but timer expiry alone does not" in withL1D() { e =>
+    import e._
+    val a = ram(0x1b00)
+    runOps(CoreOp.lr(a)); bench.steps(90)
+    runOps(CoreOp.sc(a, 0x11, success = true))
+    runOps(CoreOp.lr(a))
+    l2.probe(SnpOp.Down, line(a)); bench.quiesce()
+    runOps(CoreOp.sc(a, 0x22, success = false))
+    runOps(CoreOp.lr(a))
+    core.trapClear = true; bench.steps(1); core.trapClear = false
+    runOps(CoreOp.sc(a, 0x33, success = false))
+    runOps(CoreOp.lr(a))
+    runOps((1 to 2 * g.l1dWays).map(k => CoreOp.load(a + k * stride)): _*)
+    runOps(CoreOp.sc(a, 0x44, success = false))
+  }
+
+  "all nine AMOs return the old operand and preserve the other word half" in withL1D(seed = 71) { e =>
+    import e._
+    val a = ram(0x1c00)
+    val funcs = Seq(BreezeAmoFunc.Swap, BreezeAmoFunc.Add, BreezeAmoFunc.Xor, BreezeAmoFunc.Or,
+      BreezeAmoFunc.And, BreezeAmoFunc.Min, BreezeAmoFunc.Max, BreezeAmoFunc.MinU, BreezeAmoFunc.MaxU)
+    for (size <- Seq(2, 3); off <- (if (size == 2) Seq(0, 4) else Seq(0)); f <- funcs;
+         (old, rhs) <- Seq((BigInt("8000000180000001", 16), BigInt(7)),
+           (BigInt(7), BigInt("ffffffffffffffff", 16)), (mask(64), BigInt(1)))) {
+      runOps(CoreOp.store(a, old), CoreOp.amo(a + off, rhs, f, size), CoreOp.load(a))
+    }
+    core.history.filter(t => enumIs(t.op.op, L1DOp.AMO)).foreach(_.kind mustBe "Done")
+  }
+
+  "AMO cold misses, shared upgrades and grant probes use GetM and protected RMW" in withL1D() { e =>
+    import e._
+    val a = ram(0x1d00); val b = ram(0x1d40); val c = ram(0x1d80)
+    l2.probeAfterGrant(line(a)) = SnpOp.Inv
+    runOps(CoreOp.amo(a + 4, 1, BreezeAmoFunc.Add, 2), CoreOp.load(a + 4, 2, signed = true))
+    l2.acks.head._4 mustBe true
+    l2.acks.head._1 must be > core.history.head.respCycle
+    l2.sharedLines += line(b)
+    runOps(CoreOp.load(b), CoreOp.amo(b, 0x77, BreezeAmoFunc.Swap))
+    l2.grantsOf(line(b)) mustBe Seq("DataS", "AckE")
+    l2.sharedLines += line(c)
+    runOps(CoreOp.load(c)); l2.upgradeRace += line(c)
+    runOps(CoreOp.amo(c, 3, BreezeAmoFunc.Add), CoreOp.load(c))
+    l2.grantsOf(line(c)) mustBe Seq("DataS", "DataE")
+  }
+
+  "atomic permissions and refill errors trap before writes or failed-SC status" in withL1D() { e =>
+    import e._
+    for (a <- Seq(Device, Rom, Hole)) {
+      runOps(CoreOp.lr(a).copy(expectExc = Some(5)),
+        CoreOp.sc(a, 1, success = false).copy(expectExc = Some(7)),
+        CoreOp.amo(a, 1, BreezeAmoFunc.Add).copy(expectExc = Some(7)))
+    }
+    val a = ram(0x1e00); val b = ram(0x1e40)
+    runOps(CoreOp.lr(a + 1).copy(expectExc = Some(4)),
+      CoreOp.sc(a + 1, 1, success = false).copy(expectExc = Some(6)),
+      CoreOp.amo(a + 1, 1, BreezeAmoFunc.Add).copy(expectExc = Some(6)))
+    tlb.pageFault = true
+    runOps(CoreOp.lr(a).copy(expectExc = Some(13)),
+      CoreOp.sc(a, 1, success = false).copy(expectExc = Some(15)),
+      CoreOp.amo(a, 1, BreezeAmoFunc.Add).copy(expectExc = Some(15)))
+    tlb.pageFault = false
+    l2.gets mustBe empty; device.log mustBe empty
+    l2.errorLines += line(a); l2.errorLines += line(b)
+    runOps(CoreOp.lr(a).copy(expectExc = Some(5)), CoreOp.amo(b, 1, BreezeAmoFunc.Add).copy(expectExc = Some(7)))
+    runOps(CoreOp.sc(a, 1, success = false), CoreOp.load(a), CoreOp.load(b))
+  }
+
+  "atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge" in withL1D() { e =>
+    import e._
+    val a = ram(0x1f00)
+    runOps(CoreOp.lr(a).copy(s1Kill = true), CoreOp.sc(a, 1, success = false))
+    runOps(CoreOp.lr(a).copy(s2KillAtResp = true), CoreOp.sc(a, 2, success = false))
+    runOps(CoreOp.lr(a), CoreOp.sc(a, 3, success = true).copy(s2KillAtResp = true), CoreOp.load(a))
+    runOps(CoreOp.amo(a, 4, BreezeAmoFunc.Add).copy(s1Kill = true), CoreOp.load(a))
+    runOps(CoreOp.amo(a, 5, BreezeAmoFunc.Add).copy(s2KillAtResp = true), CoreOp.load(a))
+    runOps(CoreOp.amo(a + stride, 6, BreezeAmoFunc.Swap).copy(s2KillAtResp = true), CoreOp.load(a + stride))
+  }
+
+  "aq blocks younger requests and rl or AMO admission waits for older misses to drain" in withL1D() { e =>
+    import e._
+    val a = ram(0x2000); val b = ram(0x2040); val c = ram(0x2080)
+    l2.minLatency = 25; l2.maxLatency = 25
+    runOps(CoreOp.load(a, rd = 2), CoreOp.lr(b).copy(aq = true, rl = true), CoreOp.load(c, rd = 3))
+    val t = core.history.toSeq
+    t(1).fired must be > t(0).lateCycle
+    t(2).fired must be > t(1).respCycle
+    val n = core.history.size
+    runOps(CoreOp.store(a + stride, 1), CoreOp.amo(b, 1, BreezeAmoFunc.Add), CoreOp.load(b))
+    val u = txns(n)
+    u(1).fired must be > l2.grants.find(_._3 == line(a + stride)).get._1
+    u(2).fired must be > u(1).respCycle
   }
 
   /** Random loads/stores over three sets, each with more tags than ways, with

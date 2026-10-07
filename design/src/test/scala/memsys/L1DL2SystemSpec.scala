@@ -137,6 +137,39 @@ class L1DL2SystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
     finish()
   }
 
+  "LR SC and AMO through real L2 return checked values and DMA observes all writes" in withSys() { e =>
+    import e._
+    val a = ram(0x600)
+    runOps(CoreOp.lr(a).copy(aq = true), CoreOp.sc(a, 0x1234, success = true).copy(rl = true),
+      CoreOp.sc(a, 0xdead, success = false), CoreOp.amo(a, 3, BreezeAmoFunc.Add),
+      CoreOp.amo(a + 4, BigInt("80000001", 16), BreezeAmoFunc.Swap, 2), CoreOp.load(a))
+    dma.pending += ClientReq.read(lineOf(a)); bench.quiesce()
+    dma.results.last._3 mustBe arch.line(lineOf(a))
+    // A DMA write obtains ownership through Inv, including a same-value write.
+    runOps(CoreOp.lr(a))
+    dma.pending += ClientReq.write(lineOf(a), BigInt(0xff), arch.read(a, 8))
+    bench.quiesce()
+    runOps(CoreOp.sc(a, 0xbeef, success = false), CoreOp.amo(a, 1, BreezeAmoFunc.Add), CoreOp.load(a))
+  }
+
+  "atomic random traffic with AXI backpressure retains the exact golden memory" in withSys(seed = 72) { e =>
+    import e._
+    val funcs = Seq(BreezeAmoFunc.Swap, BreezeAmoFunc.Add, BreezeAmoFunc.Xor, BreezeAmoFunc.Or,
+      BreezeAmoFunc.And, BreezeAmoFunc.Min, BreezeAmoFunc.Max, BreezeAmoFunc.MinU, BreezeAmoFunc.MaxU)
+    val lines = (0 until g.l1dWays + g.l2Ways + 2).map(k => ram(0x700 + k * stride))
+    mem.arReadyProb = 0.6; mem.awReadyProb = 0.7; mem.wReadyProb = 0.7; mem.rValidProb = 0.6
+    tlb.missProb = 0.03; tlb.busyProb = 0.05
+    for (_ <- 0 until 500) {
+      val size = if (rng.nextBoolean()) 2 else 3
+      val a = lines(rng.nextInt(lines.size)) + (rng.nextInt(LineBytes >> size) << size)
+      core.enqueue(if (rng.nextInt(3) == 0) CoreOp.load(a, size, signed = true)
+        else CoreOp.amo(a, BigInt(64, rng), funcs(rng.nextInt(funcs.size)), size)
+          .copy(aq = rng.nextBoolean(), rl = rng.nextBoolean(), rd = rng.nextInt(32)))
+    }
+    bench.runUntil(core.idle)
+    tlb.missProb = 0; tlb.busyProb = 0
+  }
+
   /** CPU traffic over lines that conflict in both L1D and L2, while L1I/DMA
     * traffic on other lines of the same L2 set forces L2 evictions (and so
     * Inv probes) of CPU lines. L1I also reads CPU lines unchecked, to force
