@@ -72,3 +72,5 @@ multicore_sim.py 改为与 FPGA 相同的生产 CPU/路由，SDRAMPHYModel DDR4�
 - test_breeze_ila.py 保留非法 hart/tandem 拒绝；旧 Wishbone/DCACHE trace 用例改为完整 AXI/事件/挂死/Chisel 留存字段的被动探针连接和 JSON 位宽/深度检查。
 - test_clint_verilog_contract.py / test_plic_verilog_contract.py 的旧 MCU/Linux 条件选择 source-string 检查改为新冒烟对独立 RTL、hart 数、mtime/meip 接线检查；其余 RTL/地址/定向用例检查保留。
 - 保留 memory/interrupt/LiteUART 等其他 suite，完整 pytest 门槛继续执行。
+
+3b580a3 完整 LiteX pytest：42/44，exit=1，/home/cloud_chen/evidence/soc-3b580a3/pytest.log。两个问题：DECERR 测试在最后 W 之后才拉低 BREADY，B 已被消费（修驱动提前背压）；router 的动态左移触发仓库 Migen 位宽合同（改用显式 Cat/Array 打包 span，只支持合法 size<=3）。所有原期望、断言、watchdog 保留。

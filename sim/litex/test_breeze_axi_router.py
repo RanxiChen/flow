@@ -139,6 +139,7 @@ class BreezeAxiRouterTest(unittest.TestCase):
                     yield m.r.ready.eq(0)
                     yield
                 yield
+                yield m.b.ready.eq(0)
                 yield from self.address(m.aw, address, 0)
                 for beat in range(4):
                     yield m.w.valid.eq(1)

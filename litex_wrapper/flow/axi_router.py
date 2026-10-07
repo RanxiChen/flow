@@ -7,7 +7,7 @@ backpressured until an AW chooses its destination. Responses are transparent.
 import json
 import os
 
-from migen import Constant, FSM, If, Module, NextState, NextValue, Signal
+from migen import Array, Cat, Constant, FSM, If, Module, NextState, NextValue, Signal
 from litex.soc.interconnect import axi, wishbone
 
 
@@ -38,7 +38,7 @@ class BreezeAxiRouter(Module):
             last_addr = Signal(master.address_width + 1)
             beats = Signal(9)
             span = Signal(17)
-            self.comb += [beats.eq(channel.len + 1), span.eq(beats << channel.size),
+            self.comb += [beats.eq(channel.len + 1), span.eq(Array([beats] + [Cat(Constant(0, n), beats) for n in (1, 2, 3)])[channel.size]),
                           last_addr.eq(channel.addr + span - 1)]
             def inside(region):
                 permitted = region["writable" if write else "readable"]
