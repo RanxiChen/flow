@@ -21,7 +21,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     val loadWriteWar = Output(Bool())
   })
   val macReady = IO(Output(Valid(new RvvRegisterEvent)))
-  val macBlocking = IO(Output(UInt(4.W)))
+  val macBlocking = IO(Output(UInt(5.W)))
+  val macCandidate = IO(Output(Valid(new RvvRegisterEvent)))
   val dispatchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
   val prefetchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
   val dispatchMacFull = IO(Output(Bool()))
@@ -58,6 +59,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   front.io.vectorQuery := mem.io.ordering; front.io.vectorQueryValid := mem.io.orderingValid
   mem.io.conflict := front.io.vectorConflict; front.io.released <> mem.io.released
   io.scalarResult <> cross.io.result
+  macCandidate := mac.io.candidateEvent
   macReady := mac.io.readyEvent; macBlocking := mac.io.blocking
   io.macRead <> mac.io.readEvent
   io.macComplete := RegNext(mac.io.complete)

@@ -27,6 +27,7 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
   io.age := d.age; io.writeAge := d.age; io.busy := active
   io.readProgress.valid := false.B; io.readProgress.bits := 0.U.asTypeOf(new RvvProgress(p))
   io.readyEvent.valid := false.B; io.readyEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
+  io.candidateEvent.valid := false.B; io.candidateEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
   io.blocking := 0.U; io.skipAccumulator := false.B; io.readEnables := 7.U
   io.hazard.aluBypass := false.B; io.hazard.maskRead := false.B
   io.hazard.dotBypass := false.B; io.hazard.accumulator := 0.U; io.hazard.observedSource := 0.U
@@ -229,5 +230,6 @@ class RvvIntegerPorts(p: RvvParams) extends Bundle {
   val otherRawBlocked = Input(Bool())
   val rawBlocked = Input(Bool()); val warBlocked = Input(Bool()); val wawBlocked = Input(Bool())
   val readyEvent = Valid(new RvvRegisterEvent)
-  val blocking = Output(UInt(4.W))
+  val candidateEvent = Valid(new RvvRegisterEvent)
+  val blocking = Output(UInt(5.W))
 }

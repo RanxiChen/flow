@@ -139,7 +139,9 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   io.readEvent.bits.age := d.age; io.readEvent.bits.register := source
   io.readyEvent.valid := active && !zero && room && io.grant && !io.otherRawBlocked && !io.warBlocked && !io.wawBlocked && (row % p.rowsPerReg.U) === 0.U
   io.readyEvent.bits := io.readEvent.bits
-  io.blocking := Cat(!room,!io.grant,io.warBlocked,io.wawBlocked)
+  io.candidateEvent.valid := active && !zero && (row % p.rowsPerReg.U) === 0.U
+  io.candidateEvent.bits := io.readEvent.bits
+  io.blocking := Cat(io.otherRawBlocked,!room,!io.grant,io.warBlocked,io.wawBlocked)
 }
 
 /** Dots pipeline across instruction boundaries; other operations keep the
@@ -184,6 +186,7 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
     io.busy := dot.io.busy || legacy.io.busy
     io.readEvent := Mux(useDot,dot.io.readEvent,legacy.io.readEvent)
     io.complete := Mux(useDot,dot.io.complete,legacy.io.complete)
+    io.candidateEvent := Mux(useDot,dot.io.candidateEvent,legacy.io.candidateEvent)
     io.readyEvent := Mux(useDot,dot.io.readyEvent,legacy.io.readyEvent)
     io.blocking := Mux(useDot,dot.io.blocking,legacy.io.blocking)
   }

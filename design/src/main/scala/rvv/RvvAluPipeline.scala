@@ -110,6 +110,7 @@ class RvvAluPipeline(p: RvvParams) extends Module {
   io.progress.bits.finished := Mux(io.write.fire,wt.last,zero)
   io.readEvent.valid := false.B; io.readEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
   io.complete.valid := io.progress.valid && io.progress.bits.finished; io.complete.bits := Mux(io.write.fire,wt.desc.age,d.age)
+  io.candidateEvent.valid := false.B; io.candidateEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent)
   io.readyEvent.valid := false.B; io.readyEvent.bits := 0.U.asTypeOf(new RvvRegisterEvent); io.blocking := 0.U
 }
 

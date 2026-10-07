@@ -73,6 +73,9 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
   private val macRegisterRead=mutable.Map.empty[(Long,Int),Long]
   private val macCompleted=mutable.Map.empty[Long,Long]
   private val kernelRequests=mutable.Map.empty[Int,Long]
+  private val blockRows=mutable.ArrayBuffer.empty[String]
+  private val loadReturned=mutable.Map.empty[Int,Long]
+  private val macLastRead=mutable.Map.empty[Int,Long]
   private val macEligible=mutable.Map.empty[(Long,Int),Long]
   private var highestDispatched = -1
   private var maxPrefetchDepth=0; private var peakBuffered=BigInt(0)
@@ -258,6 +261,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         dut.io.axi.r.ready.expect(true.B)
         val r=returning.get
         frames.find(_.index==r.index).get.readRemaining-=1
+        if(!loadReturned.contains(r.index)) loadReturned(r.index)=cycle
         readBeats+=1; if(firstRead<0) firstRead=cycle; lastRead=cycle
         if(r.label.startsWith("gemv-load-")) {
           kernelReadBeats+=1; if(kernelFirstRead<0) kernelFirstRead=cycle; kernelLastRead=cycle
@@ -276,8 +280,16 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
         highestDispatched=ageToRecord(logicalAge(uint(dut.dispatchEvent.bits)))
         prefetched.filterInPlace(_>highestDispatched)
       }
-      maxPrefetchDepth=math.max(maxPrefetchDepth,prefetched.size)
-      peakBuffered=peakBuffered.max(uint(dut.io.counters.bufferedBytes))
+      val isGemv=fixture.records.exists(_.label.startsWith("gemv-load-"))
+      if(!isGemv || (kernelFirstIssue>=0 && kernelLastB<0)) {
+        maxPrefetchDepth=math.max(maxPrefetchDepth,prefetched.size)
+        peakBuffered=peakBuffered.max(uint(dut.io.counters.bufferedBytes))
+      }
+      if(!randomize && bool(dut.macCandidate.valid)) {
+        val age=logicalAge(uint(dut.macCandidate.bits.age)); val reg=uint(dut.macCandidate.bits.register).toInt
+        val flags=uint(dut.macBlocking).toInt
+        blockRows += s"$cycle,$age,$reg,${(flags>>4)&1},${flags&1},${(flags>>1)&1},${(flags>>2)&1},${(flags>>3)&1},${bool(dut.macReady.valid)}"
+      }
       if(bool(dut.io.loadWriteWar) && prefetched.nonEmpty) prefetchWarCycles+=1
       if(bool(dut.macReady.valid)) {
         val key=(logicalAge(uint(dut.macReady.bits.age)),uint(dut.macReady.bits.register).toInt)
@@ -294,6 +306,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(bool(dut.io.macRead.valid)) {
         val key=(logicalAge(uint(dut.io.macRead.bits.age)),uint(dut.io.macRead.bits.register).toInt)
         if(!macRegisterRead.contains(key)) macRegisterRead(key)=cycle
+        macLastRead(ageToRecord(key._1))=cycle
         if(fixture.records(ageToRecord(key._1)).label.startsWith("p6-dot-")) {
           if(chainFirst<0) chainFirst=cycle
           chainLast=cycle
@@ -334,6 +347,12 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
     dut.io.counters.readBytes.expect((readBeats*p.memBytes).U)
     val remaining=uint(dut.io.counters.bufferedBytes)
     assert(remaining==0,s"unconsumed data at drain seed=$seed bytes=$remaining")
+    if(fixture.records.exists(_.label=="r04-prefetch-war") && readLatency==1) {
+      val young=fixture.records.indexWhere(_.label=="r04-prefetch-war")
+      val old=fixture.records.indices.filter(i => i<young && fixture.records(i).label=="r04-queued-dot").last
+      assert(loadReturned(young)<macLastRead(old),"prefetched WAR data must arrive while an older dot still reads its destination")
+      println(s"R04_WAR return=${loadReturned(young)} olderLastRead=${macLastRead(old)}")
+    }
     val loadIndices=fixture.records.indices.filter(i => fixture.records(i).label.startsWith("gemv-load-"))
     val links=if(randomize) Vector.empty else loadIndices.flatMap { index =>
       val reg=((fixture.records(index).word>>7)&31).toInt
@@ -365,6 +384,8 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       }
       Files.writeString(out.resolve(s"r04-links-lat$readLatency-buffer${p.returnBytes}.csv"),
         "loadRecord,register,producerDone,consumerExceptRAWReady,tReady,firstRead,linkDelay,oldDelay,eligibilityChecks\n"+newRows.mkString("\n")+"\n")
+      Files.writeString(out.resolve(s"r04-blocking-lat$readLatency-buffer${p.returnBytes}.csv"),
+        "cycle,consumerAge,register,otherRAW,WAW,WAR,readPort,outputCredit,eligibleExceptObservedRAW\n"+blockRows.mkString("\n")+"\n")
     }
     R02Measurement(cycle,readBeats,firstRead,lastRead,kernelFirstIssue,kernelLastB,kernelReadBeats,kernelFirstRead,kernelLastRead,remaining,invalidations,kernelRemaining,links,advances,r04Links,maxPrefetchDepth,peakBuffered,if(chainFirst>=0) chainLast-chainFirst+1 else 0,fullQueuePrefetch,prefetchWarCycles)
   }
