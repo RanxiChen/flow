@@ -1,0 +1,22 @@
+In file included from /home/cloud_chen/work/flow-rvv-r04-20261007/rvv/r02/spike-extension.cc:8:
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:69:30: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   69 |   const bool forced_virt : 1 {false};
+      |                              ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:70:23: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   70 |   const bool hlvx : 1 {false};
+      |                       ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:71:21: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   71 |   const bool lr : 1 {false};
+      |                     ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:72:28: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   72 |   const bool ss_access : 1 {false};
+      |                            ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:73:30: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   73 |   const bool clean_inval : 1 {false};
+      |                              ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:74:31: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   74 |   const bool access_fault : 1 {false};
+      |                               ^
+/home/cloud_chen/evidence/rvv-r04/spike-source/riscv/mmu.h:75:36: warning: default member initializers for bit-fields only available with ‘-std=c++20’ or ‘-std=gnu++20’ [-Wc++20-extensions]
+   75 |   const bool require_alignment : 1 {false};
+      |                                    ^

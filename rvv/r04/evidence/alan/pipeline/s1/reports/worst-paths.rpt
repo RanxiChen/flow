@@ -1,0 +1,973 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 18:11:23 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r04-evidence/pipeline/s1/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.986ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/bursts/ram_ext/Memory_reg_0_63_0_6/RAMA/I
+                            (rising edge-triggered cell RAMD64E clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.930ns  (logic 3.211ns (35.957%)  route 5.719ns (64.043%))
+  Logic Levels:           23  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=7)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.319     8.930    mem/bursts/ram_ext/Memory_reg_0_63_0_6/DIA
+                         RAMD64E                                      r  mem/bursts/ram_ext/Memory_reg_0_63_0_6/RAMA/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD64E (Setup_RAMD64E_CLK_I)
+                                                     -0.049     9.916    mem/bursts/ram_ext/Memory_reg_0_63_0_6/RAMA
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.930    
+  -------------------------------------------------------------------
+                         slack                                  0.986    
+
+Slack (MET) :             0.986ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/bursts/ram_ext/Memory_reg_128_191_0_6/RAMA/I
+                            (rising edge-triggered cell RAMD64E clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.930ns  (logic 3.211ns (35.957%)  route 5.719ns (64.043%))
+  Logic Levels:           23  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=7)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.319     8.930    mem/bursts/ram_ext/Memory_reg_128_191_0_6/DIA
+                         RAMD64E                                      r  mem/bursts/ram_ext/Memory_reg_128_191_0_6/RAMA/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD64E (Setup_RAMD64E_CLK_I)
+                                                     -0.049     9.916    mem/bursts/ram_ext/Memory_reg_128_191_0_6/RAMA
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.930    
+  -------------------------------------------------------------------
+                         slack                                  0.986    
+
+Slack (MET) :             0.986ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/bursts/ram_ext/Memory_reg_192_255_0_6/RAMA/I
+                            (rising edge-triggered cell RAMD64E clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.930ns  (logic 3.211ns (35.957%)  route 5.719ns (64.043%))
+  Logic Levels:           23  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=7)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.319     8.930    mem/bursts/ram_ext/Memory_reg_192_255_0_6/DIA
+                         RAMD64E                                      r  mem/bursts/ram_ext/Memory_reg_192_255_0_6/RAMA/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD64E (Setup_RAMD64E_CLK_I)
+                                                     -0.049     9.916    mem/bursts/ram_ext/Memory_reg_192_255_0_6/RAMA
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.930    
+  -------------------------------------------------------------------
+                         slack                                  0.986    
+
+Slack (MET) :             0.986ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/bursts/ram_ext/Memory_reg_64_127_0_6/RAMA/I
+                            (rising edge-triggered cell RAMD64E clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.930ns  (logic 3.211ns (35.957%)  route 5.719ns (64.043%))
+  Logic Levels:           23  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=7)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.319     8.930    mem/bursts/ram_ext/Memory_reg_64_127_0_6/DIA
+                         RAMD64E                                      r  mem/bursts/ram_ext/Memory_reg_64_127_0_6/RAMA/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD64E (Setup_RAMD64E_CLK_I)
+                                                     -0.049     9.916    mem/bursts/ram_ext/Memory_reg_64_127_0_6/RAMA
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.930    
+  -------------------------------------------------------------------
+                         slack                                  0.986    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/generating_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=2 LUT6=7)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 f  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 f  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 f  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT5 (Prop_LUT5_I1_O)        0.040     8.969 r  mem/bSlots/generating_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/bSlots_n_113
+                         FDRE                                         r  mem/generating_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/generating_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/requestDone_0_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=8)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     8.969 r  mem/bSlots/requestDone_0_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/requestDone_00
+                         FDRE                                         r  mem/requestDone_0_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/requestDone_0_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/requestDone_10_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=8)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     8.969 r  mem/bSlots/requestDone_10_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/requestDone_100
+                         FDRE                                         r  mem/requestDone_10_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/requestDone_10_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/requestDone_11_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=8)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     8.969 r  mem/bSlots/requestDone_11_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/requestDone_110
+                         FDRE                                         r  mem/requestDone_11_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/requestDone_11_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/requestDone_12_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=8)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     8.969 r  mem/bSlots/requestDone_12_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/requestDone_120
+                         FDRE                                         r  mem/requestDone_12_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/requestDone_12_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+Slack (MET) :             1.032ns  (required time - arrival time)
+  Source:                 mem/desc_15_length_0_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/requestDone_13_reg/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.992ns  (logic 3.251ns (36.154%)  route 5.741ns (63.846%))
+  Logic Levels:           24  (CARRY8=7 LUT2=1 LUT3=4 LUT4=3 LUT5=1 LUT6=8)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  mem/desc_15_length_0_reg[4]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  mem/desc_15_length_0_reg[4]/Q
+                         net (fo=1, unplaced)         0.324     0.439    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_76_12[4]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155/O
+                         net (fo=1, unplaced)         0.249     0.878    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_155_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     0.918 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94/O
+                         net (fo=1, unplaced)         0.251     1.169    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_94_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.301 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_47/O
+                         net (fo=12, unplaced)        0.287     1.588    mem/bursts_n_562
+                         LUT4 (Prop_LUT4_I2_O)        0.094     1.682 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_6/O
+                         net (fo=1, unplaced)         0.287     1.969    mem/io_axi_aw_bits_addr[32]_INST_0_i_6_n_0
+                         CARRY8 (Prop_CARRY8_DI[2]_CO[4])
+                                                      0.247     2.216 r  mem/io_axi_aw_bits_addr[32]_INST_0_i_3/CO[4]
+                         net (fo=63, unplaced)        0.296     2.512    mem/segment
+                         LUT3 (Prop_LUT3_I1_O)        0.095     2.607 r  mem/io_axi_aw_bits_addr[6]_INST_0_i_8/O
+                         net (fo=1, unplaced)         0.294     2.901    mem/_pa_T0[0]
+                         CARRY8 (Prop_CARRY8_DI[0]_O[5])
+                                                      0.320     3.221 r  mem/io_axi_aw_bits_addr[6]_INST_0/O[5]
+                         net (fo=14, unplaced)        0.304     3.525    mem/bursts/ram_ext/writeMeta_beats_reg[2][5]
+                         LUT6 (Prop_LUT6_I0_O)        0.190     3.715 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34/O
+                         net (fo=1, unplaced)         0.230     3.945    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_34_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.176     4.121 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6/O
+                         net (fo=4, unplaced)         0.262     4.383    mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.423 f  mem/bursts/ram_ext/io_axi_aw_bits_len[5]_INST_0_i_6/O
+                         net (fo=3, unplaced)         0.222     4.645    mem/bursts_n_561
+                         LUT4 (Prop_LUT4_I2_O)        0.138     4.783 r  mem/io_axi_aw_bits_len[0]_INST_0_i_9/O
+                         net (fo=1, unplaced)         0.294     5.077    mem/io_axi_aw_bits_len[0]_INST_0_i_9_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[3])
+                                                      0.216     5.293 r  mem/io_axi_aw_bits_len[0]_INST_0_i_2/CO[3]
+                         net (fo=13, unplaced)        0.195     5.488    mem/bursts/ram_ext/CO[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.040     5.528 r  mem/bursts/ram_ext/io_axi_aw_bits_len[0]_INST_0/O
+                         net (fo=48, unplaced)        0.318     5.846    mem/io_axi_aw_bits_addr[6]_INST_0_1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     5.886 r  mem/position[9]_i_11/O
+                         net (fo=7, unplaced)         0.274     6.160    mem/position[9]_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.200 r  mem/position[9]_i_12/O
+                         net (fo=2, unplaced)         0.249     6.449    mem/position[9]_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.489 r  mem/position[9]_i_8/O
+                         net (fo=5, unplaced)         0.267     6.756    mem/position[9]_i_8_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.043     6.799 r  mem/position[9]_i_19/O
+                         net (fo=1, unplaced)         0.000     6.799    mem/position[9]_i_19_n_0
+                         CARRY8 (Prop_CARRY8_S[5]_CO[6])
+                                                      0.208     7.007 r  mem/position_reg[9]_i_9/CO[6]
+                         net (fo=13, unplaced)        0.293     7.300    mem/_position_T2
+                         LUT4 (Prop_LUT4_I2_O)        0.040     7.340 r  mem/position[7]_i_9/O
+                         net (fo=1, unplaced)         0.000     7.340    mem/position[7]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.699 r  mem/position_reg[7]_i_1/CO[7]
+                         net (fo=1, unplaced)         0.000     7.699    mem/position_reg[7]_i_1_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[5])
+                                                      0.174     7.873 r  mem/position_reg[9]_i_2/O[5]
+                         net (fo=2, unplaced)         0.310     8.183    mem/bursts/ram_ext/writeMeta_finalInstruction_reg[5]
+                         LUT2 (Prop_LUT2_I1_O)        0.093     8.276 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4/O
+                         net (fo=1, unplaced)         0.194     8.470    mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_4_n_0
+                         CARRY8 (Prop_CARRY8_DI[6]_CO[6])
+                                                      0.141     8.611 r  mem/bursts/ram_ext/Memory_reg_0_63_0_6_i_1/CO[6]
+                         net (fo=38, unplaced)        0.318     8.929    mem/bSlots/W0_data[0]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     8.969 r  mem/bSlots/requestDone_13_i_1/O
+                         net (fo=1, unplaced)         0.023     8.992    mem/requestDone_130
+                         FDRE                                         r  mem/requestDone_13_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.059    10.024    mem/requestDone_13_reg
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                          -8.992    
+  -------------------------------------------------------------------
+                         slack                                  1.032    
+
+
+
+

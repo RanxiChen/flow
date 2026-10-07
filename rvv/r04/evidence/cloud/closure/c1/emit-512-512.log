@@ -1,0 +1,10 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-rvv-r04-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-rvv-r04-20261007/design/)
+[info] compiling 5 Scala sources to /home/cloud_chen/work/flow-rvv-r04-20261007/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] running flow.rvv.GenerateRvv 512-512 /home/cloud_chen/evidence/rvv-r04/closure/c1/rtl/512-512
+[success] Total time: 12 s, completed Oct 7, 2026, 6:53:12 PM

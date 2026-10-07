@@ -1,0 +1,1251 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 19:30:46 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r04-evidence/readcmd/s2/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.026ns  (required time - arrival time)
+  Source:                 mac/dot/d_slot_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.445ns  (logic 2.304ns (24.394%)  route 7.141ns (75.606%))
+  Logic Levels:           24  (LUT3=3 LUT4=2 LUT5=5 LUT6=12 MUXF7=1 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X23Y263        FDRE                         0.000     0.000 r  mac/dot/d_slot_reg[1]/C
+    SLICE_X23Y263        FDRE (Prop_DFF_SLICEM_C_Q)
+                                                      0.114     0.114 r  mac/dot/d_slot_reg[1]/Q
+                         net (fo=4, routed)           0.589     0.703    mac/dot/_dot_io_readProgress_bits_slot[1]
+    SLICE_X17Y254        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.138     0.841 r  mac/dot/io_counters_rawStall_2_x[63]_i_794/O
+                         net (fo=32, routed)          0.468     1.309    sb/_mac_io_hazard_slot[1]
+    SLICE_X14Y266        LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.188     1.497 f  sb/io_counters_rawStall_2_x[63]_i_830/O
+                         net (fo=1, routed)           0.000     1.497    sb/io_counters_rawStall_2_x[63]_i_830_n_0
+    SLICE_X14Y266        MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     1.555 f  sb/io_counters_rawStall_2_x_reg[63]_i_819/O
+                         net (fo=1, routed)           0.000     1.555    sb/io_counters_rawStall_2_x_reg[63]_i_819_n_0
+    SLICE_X14Y266        MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     1.615 f  sb/io_counters_rawStall_2_x_reg[63]_i_802/O
+                         net (fo=16, routed)          0.256     1.871    sb/io_counters_rawStall_2_x_reg[63]_i_802_n_0
+    SLICE_X16Y266        LUT6 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.173     2.044 r  sb/io_counters_warStall_2_x[63]_i_359/O
+                         net (fo=1, routed)           0.267     2.311    sb/io_counters_warStall_2_x[63]_i_359_n_0
+    SLICE_X15Y271        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.115     2.426 r  sb/io_counters_warStall_2_x[63]_i_358/O
+                         net (fo=1, routed)           0.062     2.488    sb/io_counters_warStall_2_x[63]_i_358_n_0
+    SLICE_X15Y271        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.559 r  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=1, routed)           0.209     2.768    sb/io_counters_warStall_2_x[63]_i_356_n_0
+    SLICE_X14Y271        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     2.809 r  sb/io_counters_warStall_2_x[63]_i_287/O
+                         net (fo=65, routed)          0.441     3.250    sb/p_313_in
+    SLICE_X11Y277        LUT5 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.136     3.386 r  sb/io_counters_rawStall_2_x[63]_i_722/O
+                         net (fo=1, routed)           0.075     3.461    sb/io_counters_rawStall_2_x[63]_i_722_n_0
+    SLICE_X11Y277        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.137     3.598 r  sb/io_counters_rawStall_2_x[63]_i_516/O
+                         net (fo=2, routed)           0.450     4.048    sb/io_counters_rawStall_2_x[63]_i_516_n_0
+    SLICE_X8Y274         LUT4 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.131     4.179 r  sb/io_counters_rawStall_2_x[63]_i_195/O
+                         net (fo=2, routed)           0.424     4.603    sb/io_counters_rawStall_2_x[63]_i_195_n_0
+    SLICE_X10Y268        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     4.643 r  sb/io_counters_rawStall_2_x[63]_i_38/O
+                         net (fo=1, routed)           0.298     4.941    sb/io_counters_rawStall_2_x[63]_i_38_n_0
+    SLICE_X11Y268        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     5.132 r  sb/io_counters_rawStall_2_x[63]_i_8/O
+                         net (fo=1, routed)           0.552     5.684    sb/io_counters_rawStall_2_x[63]_i_8_n_0
+    SLICE_X18Y258        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.071     5.755 r  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=65, routed)          0.073     5.828    sb/_sb_io_raw_3
+    SLICE_X18Y258        LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.133     5.961 r  sb/valid_1_i_2__0/O
+                         net (fo=3, routed)           0.593     6.554    mac/legacy/io_blocked00_out
+    SLICE_X19Y223        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     6.594 f  mac/legacy/pending_i_2/O
+                         net (fo=12, routed)          0.229     6.823    mac/dot/out/ram_ext/physicalWrite_3_row[4]_i_3
+    SLICE_X21Y222        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.040     6.863 r  mac/dot/out/ram_ext/sb_io_progress_1_valid_REG_i_18/O
+                         net (fo=20, routed)          0.149     7.012    mem/piece_reg[5]_3
+    SLICE_X21Y223        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     7.053 f  mem/sb_io_progress_1_valid_REG_i_5/O
+                         net (fo=4, routed)           0.342     7.395    mem/returnBuffer/ram_ext/piece_reg[5]_0
+    SLICE_X22Y221        LUT5 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.185     7.580 r  mem/returnBuffer/ram_ext/sb_io_progress_1_valid_REG_i_1/O
+                         net (fo=46, routed)          0.143     7.723    mem/returnBuffer/ram_ext/writeBound_reg
+    SLICE_X22Y222        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     7.764 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9/O
+                         net (fo=1, routed)           0.278     8.042    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9_n_0
+    SLICE_X21Y226        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     8.082 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3/O
+                         net (fo=1, routed)           0.200     8.282    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3_n_0
+    SLICE_X20Y227        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     8.322 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_2/O
+                         net (fo=46, routed)          0.154     8.476    mem/returnBuffer/ram_ext/returned_logical_reg[9]
+    SLICE_X20Y228        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     8.516 r  mem/returnBuffer/ram_ext/Memory_reg_1_i_1/O
+                         net (fo=162, routed)         0.323     8.839    mem/returnBuffer/ram_ext/returnedValid_reg
+    SLICE_X19Y227        LUT4 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     8.879 r  mem/returnBuffer/ram_ext/Memory_reg_0_i_6/O
+                         net (fo=8, routed)           0.566     9.445    mem/returnBuffer/ram_ext/Memory_reg_0_i_6_n_0
+    RAMB36_X1Y43         RAMB36E2                                     r  mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X1Y43         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[8])
+                                                     -0.494     9.471    mem/returnBuffer/ram_ext/Memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.471    
+                         arrival time                          -9.445    
+  -------------------------------------------------------------------
+                         slack                                  0.026    
+
+Slack (MET) :             0.033ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.883ns  (logic 2.527ns (25.569%)  route 7.356ns (74.431%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[6])
+                                                      0.268     8.403 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[6]
+                         net (fo=1, routed)           0.768     9.171    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_9
+    SLICE_X49Y198        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.211 r  alu/alu/cacheData_ext/computed[126]_i_2/O
+                         net (fo=1, routed)           0.069     9.280    alu/alu/cacheData_ext/computed[126]_i_2_n_0
+    SLICE_X49Y198        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.132     9.412 r  alu/alu/cacheData_ext/computed[126]_i_1/O
+                         net (fo=2, routed)           0.141     9.553    alu/alu/cacheData_ext/D[126]
+    SLICE_X49Y197        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.593 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_2/O
+                         net (fo=8, routed)           0.290     9.883    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIB0
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_B5LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.883    
+  -------------------------------------------------------------------
+                         slack                                  0.033    
+
+Slack (MET) :             0.034ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_444_445/RAMF_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.882ns  (logic 2.730ns (27.626%)  route 7.152ns (72.374%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.771     3.057    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X48Y176        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.071     3.128 r  alu/alu/cacheData_ext/computed[447]_i_8/O
+                         net (fo=144, routed)         0.636     3.764    alu/alu/cacheData_ext/computed[447]_i_8_n_0
+    SLICE_X39Y164        LUT6 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.071     3.835 r  alu/alu/cacheData_ext/computed[392]_i_9/O
+                         net (fo=2, routed)           0.327     4.162    alu/alu/cacheData_ext/p_0_in225_in[0]
+    SLICE_X36Y160        LUT4 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.040     4.202 r  alu/alu/cacheData_ext/computed[393]_i_9/O
+                         net (fo=2, routed)           0.244     4.446    alu/alu/cacheData_ext/computed[393]_i_9_n_0
+    SLICE_X36Y160        LUT5 (Prop_F6LUT_SLICEM_I4_O)
+                                                      0.137     4.583 r  alu/alu/cacheData_ext/computed[394]_i_10/O
+                         net (fo=2, routed)           0.176     4.759    alu/alu/cacheData_ext/computed[394]_i_10_n_0
+    SLICE_X35Y160        LUT5 (Prop_B6LUT_SLICEM_I4_O)
+                                                      0.136     4.895 r  alu/alu/cacheData_ext/computed[395]_i_9/O
+                         net (fo=2, routed)           0.146     5.041    alu/alu/cacheData_ext/computed[395]_i_9_n_0
+    SLICE_X35Y159        LUT5 (Prop_B6LUT_SLICEM_I4_O)
+                                                      0.074     5.115 r  alu/alu/cacheData_ext/computed[399]_i_16/O
+                         net (fo=2, routed)           0.156     5.271    alu/alu/cacheData_ext/computed[399]_i_16_n_0
+    SLICE_X35Y157        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.043     5.314 r  alu/alu/cacheData_ext/computed[399]_i_9/O
+                         net (fo=4, routed)           0.156     5.470    alu/alu/cacheData_ext/computed[399]_i_9_n_0
+    SLICE_X34Y157        LUT5 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     5.586 r  alu/alu/cacheData_ext/Memory_reg_0_31_396_397_i_5/O
+                         net (fo=6, routed)           0.346     5.932    alu/alu/cacheData_ext/Memory_reg_0_31_396_397_i_5_n_0
+    SLICE_X33Y155        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.132     6.064 r  alu/alu/cacheData_ext/computed[413]_i_19/O
+                         net (fo=1, routed)           0.146     6.210    alu/alu/cacheData_ext/_result_T_71997_in
+    SLICE_X33Y153        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     6.326 r  alu/alu/cacheData_ext/computed[413]_i_16/O
+                         net (fo=1, routed)           0.217     6.543    alu/alu/cacheData_ext/_result_T_71766_out
+    SLICE_X32Y151        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.132     6.675 r  alu/alu/cacheData_ext/computed[413]_i_13/O
+                         net (fo=4, routed)           0.073     6.748    alu/alu/cacheData_ext/computed[413]_i_13_n_0
+    SLICE_X32Y151        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     6.881 r  alu/alu/cacheData_ext/computed[413]_i_7/O
+                         net (fo=4, routed)           0.148     7.029    alu/alu/cacheData_ext/computed[413]_i_7_n_0
+    SLICE_X32Y150        LUT6 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.132     7.161 r  alu/alu/cacheData_ext/computed[424]_i_7/O
+                         net (fo=1, routed)           0.176     7.337    alu/alu/cacheData_ext/computed[424]_i_7_n_0
+    SLICE_X32Y148        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.040     7.377 r  alu/alu/cacheData_ext/computed[424]_i_3/O
+                         net (fo=9, routed)           0.307     7.684    alu/alu/cacheData_ext/computed[424]_i_3_n_0
+    SLICE_X29Y147        LUT5 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.040     7.724 r  alu/alu/cacheData_ext/computed[432]_i_4/O
+                         net (fo=9, routed)           0.077     7.801    alu/alu/cacheData_ext/computed[432]_i_4_n_0
+    SLICE_X29Y147        LUT6 (Prop_G6LUT_SLICEM_I5_O)
+                                                      0.133     7.934 r  alu/alu/cacheData_ext/computed[443]_i_25/O
+                         net (fo=2, routed)           0.207     8.141    alu/alu/cacheData_ext/computed[443]_i_25_n_0
+    SLICE_X28Y147        LUT6 (Prop_D6LUT_SLICEL_I3_O)
+                                                      0.041     8.182 r  alu/alu/cacheData_ext/computed[443]_i_21/O
+                         net (fo=1, routed)           0.381     8.563    alu/alu/cacheData_ext/computed[443]_i_21_n_0
+    SLICE_X27Y146        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[5])
+                                                      0.306     8.869 r  alu/alu/cacheData_ext/computed_reg[443]_i_4/O[5]
+                         net (fo=1, routed)           0.190     9.059    alu/alu/cacheData_ext/computed_reg[443]_i_4_n_10
+    SLICE_X27Y145        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.099 r  alu/alu/cacheData_ext/computed[445]_i_2/O
+                         net (fo=1, routed)           0.195     9.294    alu/alu/cacheData_ext/computed[445]_i_2_n_0
+    SLICE_X28Y145        LUT6 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.334 r  alu/alu/cacheData_ext/computed[445]_i_1/O
+                         net (fo=2, routed)           0.138     9.472    alu/alu/cacheData_ext/D[445]
+    SLICE_X28Y144        LUT5 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.041     9.513 r  alu/alu/cacheData_ext/Memory_reg_0_31_444_445_i_1/O
+                         net (fo=8, routed)           0.369     9.882    alu/alu/cacheData_ext/Memory_reg_0_31_444_445/DIF1
+    SLICE_X29Y143        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_444_445/RAMF_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X29Y143        RAMD32 (Setup_F6LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_444_445/RAMF_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.882    
+  -------------------------------------------------------------------
+                         slack                                  0.034    
+
+Slack (MET) :             0.035ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.881ns  (logic 2.527ns (25.574%)  route 7.354ns (74.426%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[6])
+                                                      0.268     8.403 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[6]
+                         net (fo=1, routed)           0.768     9.171    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_9
+    SLICE_X49Y198        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.211 r  alu/alu/cacheData_ext/computed[126]_i_2/O
+                         net (fo=1, routed)           0.069     9.280    alu/alu/cacheData_ext/computed[126]_i_2_n_0
+    SLICE_X49Y198        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.132     9.412 r  alu/alu/cacheData_ext/computed[126]_i_1/O
+                         net (fo=2, routed)           0.141     9.553    alu/alu/cacheData_ext/D[126]
+    SLICE_X49Y197        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.593 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_2/O
+                         net (fo=8, routed)           0.288     9.881    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIA0
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_A5LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.881    
+  -------------------------------------------------------------------
+                         slack                                  0.035    
+
+Slack (MET) :             0.036ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMC/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.880ns  (logic 2.527ns (25.577%)  route 7.353ns (74.423%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[6])
+                                                      0.268     8.403 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[6]
+                         net (fo=1, routed)           0.768     9.171    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_9
+    SLICE_X49Y198        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.211 r  alu/alu/cacheData_ext/computed[126]_i_2/O
+                         net (fo=1, routed)           0.069     9.280    alu/alu/cacheData_ext/computed[126]_i_2_n_0
+    SLICE_X49Y198        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.132     9.412 r  alu/alu/cacheData_ext/computed[126]_i_1/O
+                         net (fo=2, routed)           0.141     9.553    alu/alu/cacheData_ext/D[126]
+    SLICE_X49Y197        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.593 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_2/O
+                         net (fo=8, routed)           0.287     9.880    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIC0
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMC/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_C5LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMC
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.880    
+  -------------------------------------------------------------------
+                         slack                                  0.036    
+
+Slack (MET) :             0.039ns  (required time - arrival time)
+  Source:                 mac/dot/d_slot_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_loadRegisterComplete_bits_register_REG_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.986ns  (logic 2.716ns (27.198%)  route 7.270ns (72.802%))
+  Logic Levels:           28  (LUT3=2 LUT4=2 LUT5=5 LUT6=17 MUXF7=1 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X23Y263        FDRE                         0.000     0.000 r  mac/dot/d_slot_reg[1]/C
+    SLICE_X23Y263        FDRE (Prop_DFF_SLICEM_C_Q)
+                                                      0.114     0.114 r  mac/dot/d_slot_reg[1]/Q
+                         net (fo=4, routed)           0.589     0.703    mac/dot/_dot_io_readProgress_bits_slot[1]
+    SLICE_X17Y254        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.138     0.841 r  mac/dot/io_counters_rawStall_2_x[63]_i_794/O
+                         net (fo=32, routed)          0.468     1.309    sb/_mac_io_hazard_slot[1]
+    SLICE_X14Y266        LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.188     1.497 f  sb/io_counters_rawStall_2_x[63]_i_830/O
+                         net (fo=1, routed)           0.000     1.497    sb/io_counters_rawStall_2_x[63]_i_830_n_0
+    SLICE_X14Y266        MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     1.555 f  sb/io_counters_rawStall_2_x_reg[63]_i_819/O
+                         net (fo=1, routed)           0.000     1.555    sb/io_counters_rawStall_2_x_reg[63]_i_819_n_0
+    SLICE_X14Y266        MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     1.615 f  sb/io_counters_rawStall_2_x_reg[63]_i_802/O
+                         net (fo=16, routed)          0.256     1.871    sb/io_counters_rawStall_2_x_reg[63]_i_802_n_0
+    SLICE_X16Y266        LUT6 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.173     2.044 r  sb/io_counters_warStall_2_x[63]_i_359/O
+                         net (fo=1, routed)           0.267     2.311    sb/io_counters_warStall_2_x[63]_i_359_n_0
+    SLICE_X15Y271        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.115     2.426 r  sb/io_counters_warStall_2_x[63]_i_358/O
+                         net (fo=1, routed)           0.062     2.488    sb/io_counters_warStall_2_x[63]_i_358_n_0
+    SLICE_X15Y271        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.559 r  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=1, routed)           0.209     2.768    sb/io_counters_warStall_2_x[63]_i_356_n_0
+    SLICE_X14Y271        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     2.809 f  sb/io_counters_warStall_2_x[63]_i_287/O
+                         net (fo=65, routed)          0.441     3.250    sb/p_313_in
+    SLICE_X11Y277        LUT5 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.136     3.386 f  sb/io_counters_rawStall_2_x[63]_i_722/O
+                         net (fo=1, routed)           0.075     3.461    sb/io_counters_rawStall_2_x[63]_i_722_n_0
+    SLICE_X11Y277        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.137     3.598 f  sb/io_counters_rawStall_2_x[63]_i_516/O
+                         net (fo=2, routed)           0.450     4.048    sb/io_counters_rawStall_2_x[63]_i_516_n_0
+    SLICE_X8Y274         LUT4 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.131     4.179 f  sb/io_counters_rawStall_2_x[63]_i_195/O
+                         net (fo=2, routed)           0.424     4.603    sb/io_counters_rawStall_2_x[63]_i_195_n_0
+    SLICE_X10Y268        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     4.643 f  sb/io_counters_rawStall_2_x[63]_i_38/O
+                         net (fo=1, routed)           0.298     4.941    sb/io_counters_rawStall_2_x[63]_i_38_n_0
+    SLICE_X11Y268        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     5.132 f  sb/io_counters_rawStall_2_x[63]_i_8/O
+                         net (fo=1, routed)           0.552     5.684    sb/io_counters_rawStall_2_x[63]_i_8_n_0
+    SLICE_X18Y258        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.071     5.755 f  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=65, routed)          0.073     5.828    sb/_sb_io_raw_3
+    SLICE_X18Y258        LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.133     5.961 f  sb/valid_1_i_2__0/O
+                         net (fo=3, routed)           0.593     6.554    mac/legacy/io_blocked00_out
+    SLICE_X19Y223        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     6.594 r  mac/legacy/pending_i_2/O
+                         net (fo=12, routed)          0.229     6.823    mac/dot/out/ram_ext/physicalWrite_3_row[4]_i_3
+    SLICE_X21Y222        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.040     6.863 f  mac/dot/out/ram_ext/sb_io_progress_1_valid_REG_i_18/O
+                         net (fo=20, routed)          0.149     7.012    mem/piece_reg[5]_3
+    SLICE_X21Y223        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     7.053 r  mem/sb_io_progress_1_valid_REG_i_5/O
+                         net (fo=4, routed)           0.342     7.395    mem/returnBuffer/ram_ext/piece_reg[5]_0
+    SLICE_X22Y221        LUT5 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.185     7.580 f  mem/returnBuffer/ram_ext/sb_io_progress_1_valid_REG_i_1/O
+                         net (fo=46, routed)          0.143     7.723    mem/returnBuffer/ram_ext/writeBound_reg
+    SLICE_X22Y222        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     7.764 r  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9/O
+                         net (fo=1, routed)           0.278     8.042    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9_n_0
+    SLICE_X21Y226        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     8.082 r  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3/O
+                         net (fo=1, routed)           0.200     8.282    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3_n_0
+    SLICE_X20Y227        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     8.322 r  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_2/O
+                         net (fo=46, routed)          0.303     8.625    mem/reserved[7]_i_9_n_0
+    SLICE_X20Y231        LUT6 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     8.668 f  mem/sb_io_progress_1_REG_bits_writeDone[7]_i_1/O
+                         net (fo=5, routed)           0.169     8.837    mem/returned_finalInstruction_reg_0[7]
+    SLICE_X19Y231        LUT4 (Prop_B6LUT_SLICEL_I3_O)
+                                                      0.116     8.953 f  mem/io_loadRegisterComplete_bits_register_REG[2]_i_4/O
+                         net (fo=2, routed)           0.216     9.169    mem/io_loadRegisterComplete_bits_register_REG[2]_i_4_n_0
+    SLICE_X18Y233        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.042     9.211 f  mem/io_loadRegisterComplete_bits_register_REG[0]_i_4/O
+                         net (fo=3, routed)           0.173     9.384    mem/io_loadRegisterComplete_bits_register_REG[0]_i_4_n_0
+    SLICE_X18Y234        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     9.562 r  mem/io_loadRegisterComplete_bits_register_REG[1]_i_5/O
+                         net (fo=1, routed)           0.135     9.697    mem/io_loadRegisterComplete_bits_register_REG[1]_i_5_n_0
+    SLICE_X19Y234        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     9.767 r  mem/io_loadRegisterComplete_bits_register_REG[1]_i_2/O
+                         net (fo=1, routed)           0.149     9.916    mem/io_loadRegisterComplete_bits_register_REG[1]_i_2_n_0
+    SLICE_X20Y234        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.043     9.959 r  mem/io_loadRegisterComplete_bits_register_REG[1]_i_1/O
+                         net (fo=1, routed)           0.027     9.986    mem_n_5678
+    SLICE_X20Y234        FDRE                                         r  io_loadRegisterComplete_bits_register_REG_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X20Y234        FDRE (Setup_HFF_SLICEM_C_D)
+                                                      0.060    10.025    io_loadRegisterComplete_bits_register_REG_reg[1]
+  -------------------------------------------------------------------
+                         required time                         10.025    
+                         arrival time                          -9.986    
+  -------------------------------------------------------------------
+                         slack                                  0.039    
+
+Slack (MET) :             0.041ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMF/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.875ns  (logic 2.527ns (25.590%)  route 7.348ns (74.410%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[6])
+                                                      0.268     8.403 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[6]
+                         net (fo=1, routed)           0.768     9.171    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_9
+    SLICE_X49Y198        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.211 r  alu/alu/cacheData_ext/computed[126]_i_2/O
+                         net (fo=1, routed)           0.069     9.280    alu/alu/cacheData_ext/computed[126]_i_2_n_0
+    SLICE_X49Y198        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.132     9.412 r  alu/alu/cacheData_ext/computed[126]_i_1/O
+                         net (fo=2, routed)           0.141     9.553    alu/alu/cacheData_ext/D[126]
+    SLICE_X49Y197        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.593 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_2/O
+                         net (fo=8, routed)           0.282     9.875    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIF0
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMF/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_F5LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMF
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.875    
+  -------------------------------------------------------------------
+                         slack                                  0.041    
+
+Slack (MET) :             0.043ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMD/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.873ns  (logic 2.527ns (25.595%)  route 7.346ns (74.405%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[6])
+                                                      0.268     8.403 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[6]
+                         net (fo=1, routed)           0.768     9.171    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_9
+    SLICE_X49Y198        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     9.211 r  alu/alu/cacheData_ext/computed[126]_i_2/O
+                         net (fo=1, routed)           0.069     9.280    alu/alu/cacheData_ext/computed[126]_i_2_n_0
+    SLICE_X49Y198        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.132     9.412 r  alu/alu/cacheData_ext/computed[126]_i_1/O
+                         net (fo=2, routed)           0.141     9.553    alu/alu/cacheData_ext/D[126]
+    SLICE_X49Y197        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     9.593 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_2/O
+                         net (fo=8, routed)           0.280     9.873    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DID0
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMD/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_D5LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMD
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.873    
+  -------------------------------------------------------------------
+                         slack                                  0.043    
+
+Slack (MET) :             0.046ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.870ns  (logic 2.489ns (25.218%)  route 7.381ns (74.782%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[7])
+                                                      0.318     8.453 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[7]
+                         net (fo=1, routed)           0.251     8.704    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_8
+    SLICE_X47Y196        LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     8.745 r  alu/alu/cacheData_ext/computed[127]_i_2/O
+                         net (fo=1, routed)           0.531     9.276    alu/alu/cacheData_ext/computed[127]_i_2_n_0
+    SLICE_X49Y196        LUT6 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.040     9.316 r  alu/alu/cacheData_ext/computed[127]_i_1/O
+                         net (fo=2, routed)           0.161     9.477    alu/alu/cacheData_ext/D[127]
+    SLICE_X50Y196        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043     9.520 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_1/O
+                         net (fo=8, routed)           0.350     9.870    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIB1
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_B6LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.870    
+  -------------------------------------------------------------------
+                         slack                                  0.046    
+
+Slack (MET) :             0.047ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.869ns  (logic 2.489ns (25.220%)  route 7.380ns (74.780%))
+  Logic Levels:           27  (CARRY8=1 LUT3=1 LUT4=1 LUT5=10 LUT6=13 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X51Y184        FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C
+    SLICE_X51Y184        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/Q
+                         net (fo=7, routed)           0.340     0.454    alu/alu/cacheData_ext/Memory_reg_0_31_96_97_0
+    SLICE_X52Y187        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     0.645 r  alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3/O
+                         net (fo=136, routed)         0.473     1.118    alu/alu/cacheData_ext/Memory_reg_0_31_148_149_i_3_n_0
+    SLICE_X53Y191        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.213 r  alu/alu/cacheData_ext/computed_reg[511]_i_109/O
+                         net (fo=1, routed)           0.259     1.472    alu/alu/cacheData_ext/computed_reg[511]_i_109_n_0
+    SLICE_X53Y188        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.133     1.605 r  alu/alu/cacheData_ext/computed[511]_i_93/O
+                         net (fo=1, routed)           0.229     1.834    alu/alu/cacheData_ext/_GEN_9[2]
+    SLICE_X52Y191        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     1.874 r  alu/alu/cacheData_ext/computed[511]_i_77/O
+                         net (fo=1, routed)           0.150     2.024    alu/alu/cacheData_ext/computed[511]_i_77_n_0
+    SLICE_X50Y191        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072     2.096 r  alu/alu/cacheData_ext/computed[511]_i_47/O
+                         net (fo=1, routed)           0.119     2.215    alu/alu/cacheData_ext/computed[511]_i_47_n_0
+    SLICE_X50Y191        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.286 r  alu/alu/cacheData_ext/computed[511]_i_30/O
+                         net (fo=10, routed)          0.830     3.116    alu/alu/cacheData_ext/computed[511]_i_30_n_0
+    SLICE_X45Y186        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.043     3.159 r  alu/alu/cacheData_ext/computed[111]_i_7/O
+                         net (fo=124, routed)         0.327     3.486    alu/alu/cacheData_ext/computed[111]_i_7_n_0
+    SLICE_X45Y180        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.043     3.529 r  alu/alu/cacheData_ext/computed[64]_i_10/O
+                         net (fo=2, routed)           0.325     3.854    alu/alu/cacheData_ext/p_0_in117_in[0]
+    SLICE_X47Y181        LUT4 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     3.970 r  alu/alu/cacheData_ext/computed[65]_i_12/O
+                         net (fo=2, routed)           0.213     4.183    alu/alu/cacheData_ext/computed[65]_i_12_n_0
+    SLICE_X46Y182        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131     4.314 r  alu/alu/cacheData_ext/computed[66]_i_12/O
+                         net (fo=2, routed)           0.151     4.465    alu/alu/cacheData_ext/computed[66]_i_12_n_0
+    SLICE_X46Y180        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.581 r  alu/alu/cacheData_ext/computed[67]_i_12/O
+                         net (fo=2, routed)           0.147     4.728    alu/alu/cacheData_ext/computed[67]_i_12_n_0
+    SLICE_X46Y179        LUT5 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.115     4.843 r  alu/alu/cacheData_ext/computed[68]_i_10/O
+                         net (fo=2, routed)           0.200     5.043    alu/alu/cacheData_ext/computed[68]_i_10_n_0
+    SLICE_X45Y179        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.040     5.083 r  alu/alu/cacheData_ext/computed[70]_i_10/O
+                         net (fo=5, routed)           0.144     5.227    alu/alu/cacheData_ext/computed[70]_i_10_n_0
+    SLICE_X45Y180        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.071     5.298 r  alu/alu/cacheData_ext/computed[72]_i_11/O
+                         net (fo=2, routed)           0.214     5.512    alu/alu/cacheData_ext/computed[72]_i_11_n_0
+    SLICE_X44Y181        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     5.628 r  alu/alu/cacheData_ext/computed[88]_i_15/O
+                         net (fo=1, routed)           0.193     5.821    alu/alu/cacheData_ext/p_0_in119_out[8]
+    SLICE_X43Y181        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     5.937 r  alu/alu/cacheData_ext/computed[88]_i_11/O
+                         net (fo=1, routed)           0.163     6.100    alu/alu/cacheData_ext/_result_T_7176_out
+    SLICE_X42Y181        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.043     6.143 r  alu/alu/cacheData_ext/computed[88]_i_7/O
+                         net (fo=3, routed)           0.291     6.434    alu/alu/cacheData_ext/_result_T_71312_in
+    SLICE_X41Y184        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.040     6.474 r  alu/alu/cacheData_ext/computed[96]_i_7/O
+                         net (fo=3, routed)           0.209     6.683    alu/alu/cacheData_ext/_result_T_71015_in
+    SLICE_X41Y187        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     6.753 r  alu/alu/cacheData_ext/computed[104]_i_7/O
+                         net (fo=3, routed)           0.293     7.046    alu/alu/cacheData_ext/_result_T_7718_in
+    SLICE_X42Y190        LUT5 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.075     7.121 r  alu/alu/cacheData_ext/computed[114]_i_7/O
+                         net (fo=7, routed)           0.241     7.362    alu/alu/cacheData_ext/_result_T_7421_in
+    SLICE_X44Y190        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     7.403 r  alu/alu/cacheData_ext/computed[127]_i_30/O
+                         net (fo=1, routed)           0.144     7.547    alu/alu/cacheData_ext/_result_T_7323_out
+    SLICE_X44Y192        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.115     7.662 r  alu/alu/cacheData_ext/computed[127]_i_29/O
+                         net (fo=1, routed)           0.144     7.806    alu/alu/cacheData_ext/_result_T_7216_out
+    SLICE_X44Y194        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.040     7.846 r  alu/alu/cacheData_ext/computed[127]_i_21/O
+                         net (fo=1, routed)           0.289     8.135    alu/alu/cacheData_ext/computed[127]_i_21_n_0
+    SLICE_X46Y196        CARRY8 (Prop_CARRY8_SLICEL_S[0]_O[7])
+                                                      0.318     8.453 r  alu/alu/cacheData_ext/computed_reg[127]_i_6/O[7]
+                         net (fo=1, routed)           0.251     8.704    alu/alu/cacheData_ext/computed_reg[127]_i_6_n_8
+    SLICE_X47Y196        LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     8.745 r  alu/alu/cacheData_ext/computed[127]_i_2/O
+                         net (fo=1, routed)           0.531     9.276    alu/alu/cacheData_ext/computed[127]_i_2_n_0
+    SLICE_X49Y196        LUT6 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.040     9.316 r  alu/alu/cacheData_ext/computed[127]_i_1/O
+                         net (fo=2, routed)           0.161     9.477    alu/alu/cacheData_ext/D[127]
+    SLICE_X50Y196        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043     9.520 r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127_i_1/O
+                         net (fo=8, routed)           0.349     9.869    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/DIA1
+    SLICE_X50Y197        RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X50Y197        RAMD32 (Setup_A6LUT_SLICEM_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -9.869    
+  -------------------------------------------------------------------
+                         slack                                  0.047    
+
+
+
+

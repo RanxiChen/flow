@@ -1,0 +1,108 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Wed Oct  7 19:30:48 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_utilization -hierarchical -file /home/chen/FUN/flow-r04-evidence/physical/s2/reports/utilization-hierarchical.rpt
+| Design       : RvvCoprocessor
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Routed
+------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------+---------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+|            Instance           |           Module          | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
++-------------------------------+---------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+| RvvCoprocessor                |                     (top) |      58251 |      54486 |    3608 |  157 | 23943 |    199 |      1 |    0 |        154 |
+|   (RvvCoprocessor)            |                     (top) |       2208 |       2208 |       0 |    0 |  1327 |      0 |      0 |    0 |          0 |
+|   alu                         |       RvvIntegerSequencer |      11649 |       9156 |    2392 |  101 |  2796 |      0 |      0 |    0 |          0 |
+|     alu                       |            RvvAluPipeline |      11649 |       9156 |    2392 |  101 |  2796 |      0 |      0 |    0 |          0 |
+|       (alu)                   |            RvvAluPipeline |       1715 |       1614 |       0 |  101 |  2789 |      0 |      0 |    0 |          0 |
+|       cacheData_ext           |          cacheData_32x512 |       9500 |       7452 |    2048 |    0 |     0 |      0 |      0 |    0 |          0 |
+|       out                     |             Queue8_Result |        437 |         93 |     344 |    0 |     7 |      0 |      0 |    0 |          0 |
+|         (out)                 |             Queue8_Result |         18 |         18 |       0 |    0 |     7 |      0 |      0 |    0 |          0 |
+|         ram_ext               |                 ram_8x600 |        419 |         75 |     344 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   cross_0                     |     RvvCrossLaneSequencer |         62 |         62 |       0 |    0 |    93 |      0 |      0 |    0 |          0 |
+|   front                       |               RvvFrontend |       5834 |       5590 |     244 |    0 |  4170 |      0 |      0 |    0 |          0 |
+|     (front)                   |               RvvFrontend |       4192 |       4192 |       0 |    0 |  4138 |      0 |      0 |    0 |          0 |
+|     requests                  |            RvvLutramQueue |       1186 |       1070 |     116 |    0 |    16 |      0 |      0 |    0 |          0 |
+|       (requests)              |            RvvLutramQueue |         22 |         22 |       0 |    0 |    16 |      0 |      0 |    0 |          0 |
+|       ram                     |      RvvDistributedRam_30 |       1164 |       1048 |     116 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     viq                       |         RvvLutramQueue_29 |        458 |        330 |     128 |    0 |    16 |      0 |      0 |    0 |          0 |
+|       (viq)                   |         RvvLutramQueue_29 |         13 |         13 |       0 |    0 |    16 |      0 |      0 |    0 |          0 |
+|       ram                     |         RvvDistributedRam |        445 |        317 |     128 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   mac                         |     RvvIntegerSequencer_1 |      14525 |      13863 |     606 |   56 |  8548 |      0 |      0 |    0 |        154 |
+|     dot                       |            RvvDotPipeline |       7489 |       6827 |     606 |   56 |  2681 |      0 |      0 |    0 |         64 |
+|       (dot)                   |            RvvDotPipeline |       2929 |       2873 |       0 |   56 |  2663 |      0 |      0 |    0 |         64 |
+|       cacheData_ext           |        cacheData_32x512_0 |       1431 |       1169 |     262 |    0 |     0 |      0 |      0 |    0 |          0 |
+|       out                     |            Queue16_Result |       3129 |       2785 |     344 |    0 |    18 |      0 |      0 |    0 |          0 |
+|         (out)                 |            Queue16_Result |         14 |         14 |       0 |    0 |    18 |      0 |      0 |    0 |          0 |
+|         ram_ext               |                ram_16x600 |       3115 |       2771 |     344 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     legacy                    | RvvLegacyIntegerSequencer |       7036 |       7036 |       0 |    0 |  5867 |      0 |      0 |    0 |         90 |
+|       (legacy)                | RvvLegacyIntegerSequencer |       7036 |       7036 |       0 |    0 |  5865 |      0 |      0 |    0 |         90 |
+|       resultLanes_localEnable |            RvvLocalEnable |          1 |          1 |       0 |    0 |     1 |      0 |      0 |    0 |          0 |
+|       slowLanes_localEnable   |         RvvLocalEnable_28 |          0 |          0 |       0 |    0 |     1 |      0 |      0 |    0 |          0 |
+|   mem                         |              RvvLoadStore |       8844 |       8712 |     132 |    0 |  2362 |      7 |      1 |    0 |          0 |
+|     (mem)                     |              RvvLoadStore |       6086 |       6086 |       0 |    0 |  2319 |      0 |      0 |    0 |          0 |
+|     bSlots                    |             Queue16_UInt4 |         76 |         72 |       4 |    0 |     9 |      0 |      0 |    0 |          0 |
+|       (bSlots)                |             Queue16_UInt4 |         54 |         54 |       0 |    0 |     9 |      0 |      0 |    0 |          0 |
+|       ram_ext                 |                  ram_16x4 |         22 |         18 |       4 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     bursts                    |            Queue256_Burst |        978 |        850 |     128 |    0 |    17 |      0 |      0 |    0 |          0 |
+|       (bursts)                |            Queue256_Burst |        216 |        216 |       0 |    0 |    17 |      0 |      0 |    0 |          0 |
+|       ram_ext                 |                ram_256x26 |        764 |        636 |     128 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     returnBuffer              |       Queue256_ReturnBeat |       1724 |       1724 |       0 |    0 |    17 |      7 |      1 |    0 |          0 |
+|       (returnBuffer)          |       Queue256_ReturnBeat |         36 |         36 |       0 |    0 |    17 |      0 |      0 |    0 |          0 |
+|       ram_ext                 |               ram_256x529 |       1688 |       1688 |       0 |    0 |     0 |      7 |      1 |    0 |          0 |
+|   queues_0                    |      Queue4_RvvDescriptor |         66 |         58 |       8 |    0 |     5 |      0 |      0 |    0 |          0 |
+|     (queues_0)                |      Queue4_RvvDescriptor |          9 |          9 |       0 |    0 |     5 |      0 |      0 |    0 |          0 |
+|     ram_ext                   |                  ram_4x12 |         57 |         49 |       8 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   queues_1                    |      Queue2_RvvDescriptor |        109 |          5 |     104 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     (queues_1)                |      Queue2_RvvDescriptor |          4 |          4 |       0 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     ram_ext                   |              ram_2x308_27 |        105 |          1 |     104 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   queues_2                    |    Queue2_RvvDescriptor_0 |         99 |         11 |      88 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     (queues_2)                |    Queue2_RvvDescriptor_0 |          5 |          5 |       0 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     ram_ext                   |              ram_2x308_26 |         94 |          6 |      88 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   queues_3                    |    Queue2_RvvDescriptor_1 |          3 |          3 |       0 |    0 |     2 |      0 |      0 |    0 |          0 |
+|   queues_4                    |    Queue2_RvvDescriptor_2 |         39 |          5 |      34 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     (queues_4)                |    Queue2_RvvDescriptor_2 |          4 |          4 |       0 |    0 |     3 |      0 |      0 |    0 |          0 |
+|     ram_ext                   |                 ram_2x308 |         35 |          1 |      34 |    0 |     0 |      0 |      0 |    0 |          0 |
+|   sb                          |             RvvScoreboard |       6445 |       6445 |       0 |    0 |  1712 |      0 |      0 |    0 |          0 |
+|   vrf                         |           RvvRegisterFile |       9251 |       9251 |       0 |    0 |  2919 |    192 |      0 |    0 |          0 |
+|     (vrf)                     |           RvvRegisterFile |       6005 |       6005 |       0 |    0 |  2919 |      0 |      0 |    0 |          0 |
+|     banks_0_0                 |                RvvVrfBank |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_0_1                 |              RvvVrfBank_3 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_0_2                 |              RvvVrfBank_4 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_0_3                 |              RvvVrfBank_5 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_0_4                 |              RvvVrfBank_6 |          4 |          4 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_0_5                 |              RvvVrfBank_7 |          5 |          5 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_0                 |              RvvVrfBank_8 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_1                 |              RvvVrfBank_9 |          8 |          8 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_2                 |             RvvVrfBank_10 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_3                 |             RvvVrfBank_11 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_4                 |             RvvVrfBank_12 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_1_5                 |             RvvVrfBank_13 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_0                 |             RvvVrfBank_14 |          4 |          4 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_1                 |             RvvVrfBank_15 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_2                 |             RvvVrfBank_16 |          8 |          8 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_3                 |             RvvVrfBank_17 |          8 |          8 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_4                 |             RvvVrfBank_18 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_2_5                 |             RvvVrfBank_19 |          5 |          5 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_0                 |             RvvVrfBank_20 |          4 |          4 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_1                 |             RvvVrfBank_21 |          5 |          5 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_2                 |             RvvVrfBank_22 |          6 |          6 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_3                 |             RvvVrfBank_23 |        518 |        518 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_4                 |             RvvVrfBank_24 |       2052 |       2052 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
+|     banks_3_5                 |             RvvVrfBank_25 |        565 |        565 |       0 |    0 |     0 |      8 |      0 |    0 |          0 |
++-------------------------------+---------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+

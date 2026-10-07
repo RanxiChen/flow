@@ -1,0 +1,20 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-rvv-r04-final-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-rvv-r04-final-20261007/design/)
+[info] compiling 1 Scala source to /home/cloud_chen/work/flow-rvv-r04-final-20261007/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] RvvR04CapacitySpec:
+R04_CAPACITY viq=64 descriptors=32 peakFraction=0.7374485596707819 kernelCycles=1440 linkMax=1 advanceMin=53 prefetchDepth=28 peakBuffer=5632
+[info] - capacity viq=64 descriptors=32 measures latency40 without changing golden checks
+R04_CAPACITY viq=128 descriptors=64 peakFraction=0.8549618320610687 kernelCycles=1440 linkMax=1 advanceMin=53 prefetchDepth=57 peakBuffer=13056
+[info] - capacity viq=128 descriptors=64 measures latency40 without changing golden checks
+[info] Run completed in 1 minute, 2 seconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 2, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 67 s (01:07), completed Oct 7, 2026, 7:02:25 PM

@@ -1,0 +1,384 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 19:30:45 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing_summary -file /home/chen/FUN/flow-r04-evidence/readcmd/s2/reports/timing-summary.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (689)
+6. checking no_output_delay (2418)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (689)
+--------------------------------
+ There are 689 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (2418)
+----------------------------------
+ There are 2418 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.026        0.000                      0               113085        0.052        0.000                      0               113085        4.020        0.000                       0                 31857  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock      Waveform(ns)       Period(ns)      Frequency(MHz)
+-----      ------------       ----------      --------------
+rvv_clock  {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+rvv_clock           0.026        0.000                      0               113085        0.052        0.000                      0               113085        4.020        0.000                       0                 31857  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  rvv_clock
+  To Clock:  rvv_clock
+
+Setup :            0  Failing Endpoints,  Worst Slack        0.026ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.052ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.020ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.026ns  (required time - arrival time)
+  Source:                 mac/dot/d_slot_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.445ns  (logic 2.304ns (24.394%)  route 7.141ns (75.606%))
+  Logic Levels:           24  (LUT3=3 LUT4=2 LUT5=5 LUT6=12 MUXF7=1 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32671, unset)        0.000     0.000    mac/dot/clock
+    SLICE_X23Y263        FDRE                                         r  mac/dot/d_slot_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y263        FDRE (Prop_DFF_SLICEM_C_Q)
+                                                      0.114     0.114 r  mac/dot/d_slot_reg[1]/Q
+                         net (fo=4, routed)           0.589     0.703    mac/dot/_dot_io_readProgress_bits_slot[1]
+    SLICE_X17Y254        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.138     0.841 r  mac/dot/io_counters_rawStall_2_x[63]_i_794/O
+                         net (fo=32, routed)          0.468     1.309    sb/_mac_io_hazard_slot[1]
+    SLICE_X14Y266        LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.188     1.497 f  sb/io_counters_rawStall_2_x[63]_i_830/O
+                         net (fo=1, routed)           0.000     1.497    sb/io_counters_rawStall_2_x[63]_i_830_n_0
+    SLICE_X14Y266        MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     1.555 f  sb/io_counters_rawStall_2_x_reg[63]_i_819/O
+                         net (fo=1, routed)           0.000     1.555    sb/io_counters_rawStall_2_x_reg[63]_i_819_n_0
+    SLICE_X14Y266        MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     1.615 f  sb/io_counters_rawStall_2_x_reg[63]_i_802/O
+                         net (fo=16, routed)          0.256     1.871    sb/io_counters_rawStall_2_x_reg[63]_i_802_n_0
+    SLICE_X16Y266        LUT6 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.173     2.044 r  sb/io_counters_warStall_2_x[63]_i_359/O
+                         net (fo=1, routed)           0.267     2.311    sb/io_counters_warStall_2_x[63]_i_359_n_0
+    SLICE_X15Y271        LUT5 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.115     2.426 r  sb/io_counters_warStall_2_x[63]_i_358/O
+                         net (fo=1, routed)           0.062     2.488    sb/io_counters_warStall_2_x[63]_i_358_n_0
+    SLICE_X15Y271        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.071     2.559 r  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=1, routed)           0.209     2.768    sb/io_counters_warStall_2_x[63]_i_356_n_0
+    SLICE_X14Y271        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.041     2.809 r  sb/io_counters_warStall_2_x[63]_i_287/O
+                         net (fo=65, routed)          0.441     3.250    sb/p_313_in
+    SLICE_X11Y277        LUT5 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.136     3.386 r  sb/io_counters_rawStall_2_x[63]_i_722/O
+                         net (fo=1, routed)           0.075     3.461    sb/io_counters_rawStall_2_x[63]_i_722_n_0
+    SLICE_X11Y277        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.137     3.598 r  sb/io_counters_rawStall_2_x[63]_i_516/O
+                         net (fo=2, routed)           0.450     4.048    sb/io_counters_rawStall_2_x[63]_i_516_n_0
+    SLICE_X8Y274         LUT4 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.131     4.179 r  sb/io_counters_rawStall_2_x[63]_i_195/O
+                         net (fo=2, routed)           0.424     4.603    sb/io_counters_rawStall_2_x[63]_i_195_n_0
+    SLICE_X10Y268        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     4.643 r  sb/io_counters_rawStall_2_x[63]_i_38/O
+                         net (fo=1, routed)           0.298     4.941    sb/io_counters_rawStall_2_x[63]_i_38_n_0
+    SLICE_X11Y268        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     5.132 r  sb/io_counters_rawStall_2_x[63]_i_8/O
+                         net (fo=1, routed)           0.552     5.684    sb/io_counters_rawStall_2_x[63]_i_8_n_0
+    SLICE_X18Y258        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.071     5.755 r  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=65, routed)          0.073     5.828    sb/_sb_io_raw_3
+    SLICE_X18Y258        LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.133     5.961 r  sb/valid_1_i_2__0/O
+                         net (fo=3, routed)           0.593     6.554    mac/legacy/io_blocked00_out
+    SLICE_X19Y223        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     6.594 f  mac/legacy/pending_i_2/O
+                         net (fo=12, routed)          0.229     6.823    mac/dot/out/ram_ext/physicalWrite_3_row[4]_i_3
+    SLICE_X21Y222        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.040     6.863 r  mac/dot/out/ram_ext/sb_io_progress_1_valid_REG_i_18/O
+                         net (fo=20, routed)          0.149     7.012    mem/piece_reg[5]_3
+    SLICE_X21Y223        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     7.053 f  mem/sb_io_progress_1_valid_REG_i_5/O
+                         net (fo=4, routed)           0.342     7.395    mem/returnBuffer/ram_ext/piece_reg[5]_0
+    SLICE_X22Y221        LUT5 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.185     7.580 r  mem/returnBuffer/ram_ext/sb_io_progress_1_valid_REG_i_1/O
+                         net (fo=46, routed)          0.143     7.723    mem/returnBuffer/ram_ext/writeBound_reg
+    SLICE_X22Y222        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     7.764 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9/O
+                         net (fo=1, routed)           0.278     8.042    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_9_n_0
+    SLICE_X21Y226        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     8.082 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3/O
+                         net (fo=1, routed)           0.200     8.282    mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_3_n_0
+    SLICE_X20Y227        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     8.322 f  mem/returnBuffer/ram_ext/sb_io_progress_1_REG_bits_finished_i_2/O
+                         net (fo=46, routed)          0.154     8.476    mem/returnBuffer/ram_ext/returned_logical_reg[9]
+    SLICE_X20Y228        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     8.516 r  mem/returnBuffer/ram_ext/Memory_reg_1_i_1/O
+                         net (fo=162, routed)         0.323     8.839    mem/returnBuffer/ram_ext/returnedValid_reg
+    SLICE_X19Y227        LUT4 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     8.879 r  mem/returnBuffer/ram_ext/Memory_reg_0_i_6/O
+                         net (fo=8, routed)           0.566     9.445    mem/returnBuffer/ram_ext/Memory_reg_0_i_6_n_0
+    RAMB36_X1Y43         RAMB36E2                                     r  mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=32671, unset)        0.000    10.000    mem/returnBuffer/ram_ext/clock
+    RAMB36_X1Y43         RAMB36E2                                     r  mem/returnBuffer/ram_ext/Memory_reg_6/CLKARDCLK
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X1Y43         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[8])
+                                                     -0.494     9.471    mem/returnBuffer/ram_ext/Memory_reg_6
+  -------------------------------------------------------------------
+                         required time                          9.471    
+                         arrival time                          -9.445    
+  -------------------------------------------------------------------
+                         slack                                  0.026    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.052ns  (arrival time - required time)
+  Source:                 front/pending_7_issue_vtype_reg[5]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            front/pending_6_issue_vtype_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (rvv_clock rise@0.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        0.108ns  (logic 0.063ns (58.333%)  route 0.045ns (41.667%))
+  Logic Levels:           1  (LUT3=1)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32671, unset)        0.000     0.000    front/clock
+    SLICE_X67Y271        FDRE                                         r  front/pending_7_issue_vtype_reg[5]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X67Y271        FDRE (Prop_FFF2_SLICEM_C_Q)
+                                                      0.048     0.048 r  front/pending_7_issue_vtype_reg[5]/Q
+                         net (fo=1, routed)           0.031     0.079    front/requests/ram/pending_7_issue_vtype[5]
+    SLICE_X67Y271        LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.015     0.094 r  front/requests/ram/pending_6_issue_vtype[5]_i_1/O
+                         net (fo=1, routed)           0.014     0.108    front/requests_n_321
+    SLICE_X67Y271        FDRE                                         r  front/pending_6_issue_vtype_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32671, unset)        0.000     0.000    front/clock
+    SLICE_X67Y271        FDRE                                         r  front/pending_6_issue_vtype_reg[5]/C
+                         clock pessimism              0.000     0.000    
+    SLICE_X67Y271        FDRE (Hold_GFF_SLICEM_C_D)
+                                                      0.056     0.056    front/pending_6_issue_vtype_reg[5]
+  -------------------------------------------------------------------
+                         required time                         -0.056    
+                         arrival time                           0.108    
+  -------------------------------------------------------------------
+                         slack                                  0.052    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         rvv_clock
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clock }
+
+Check Type        Corner  Lib Pin             Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location      Pin
+Min Period        n/a     RAMB36E2/CLKARDCLK  n/a            1.961         10.000      8.039      RAMB36_X1Y45  mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+Low Pulse Width   Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020      RAMB36_X1Y45  mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+High Pulse Width  Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020      RAMB36_X1Y45  mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+
+
+

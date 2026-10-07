@@ -1,0 +1,20 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-rvv-r04-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-rvv-r04-20261007/design/)
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] RvvPerformanceSpec:
+R02_PERFORMANCE {"contract":"P1","readLatency":1,"returnBytes":16384,"readBytes":57344,"readWindowCycles":1266,"peakFraction":0.707740916271722,"kernelCycles":1401,"idealReadCycles":896,"kernelToIdealRatio":1.5636160714285714,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":21,"advanceMin":14,"advanceMax":119,"r04LinkMin":0,"r04LinkMax":1,"prefetchDepth":14,"peakBufferedBytes":4096}
+[info] - P1 measures the prescribed GEMV kernel against Spike
+R02_PERFORMANCE {"contract":"P2","readLatency":40,"returnBytes":16384,"readBytes":57344,"readWindowCycles":1305,"peakFraction":0.6865900383141762,"kernelCycles":1440,"idealReadCycles":896,"kernelToIdealRatio":1.6071428571428572,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":21,"advanceMin":53,"advanceMax":119,"r04LinkMin":0,"r04LinkMax":1,"prefetchDepth":14,"peakBufferedBytes":2048}
+[info] - P2 measures the prescribed GEMV kernel against Spike
+R02_PERFORMANCE {"contract":"P3","readLatency":40,"returnBytes":2560,"readBytes":57344,"readWindowCycles":1341,"peakFraction":0.668158090976883,"kernelCycles":1440,"idealReadCycles":896,"kernelToIdealRatio":1.6071428571428572,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":21,"advanceMin":53,"advanceMax":83,"r04LinkMin":0,"r04LinkMax":1,"prefetchDepth":8,"peakBufferedBytes":832}
+[info] - P3 measures the prescribed GEMV kernel against Spike
+[info] Run completed in 1 minute, 16 seconds.
+[info] Total number of tests run: 3
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 3, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 77 s (01:17), completed Oct 7, 2026, 7:11:09 PM

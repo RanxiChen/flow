@@ -1,0 +1,927 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 18:59:35 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r04-evidence/closure/s1/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMA_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIA1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMA_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMA_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMB_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIB1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMB_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMB_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMC_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIC1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMC_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMC_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMD_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DID1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMD_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMD_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAME_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIE1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAME_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAME_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMF_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIF1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMF_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMF_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMG_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIG1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMG_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMG_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.593ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMH_D1/I
+                            (rising edge-triggered cell RAMS32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.323ns  (logic 2.029ns (24.378%)  route 6.294ns (75.622%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT5=5 LUT6=15 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10/O
+                         net (fo=182, unplaced)       0.348     3.427    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_10_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.040     3.467 r  alu/alu/cacheData_ext/computed[9]_i_2/O
+                         net (fo=10, unplaced)        0.282     3.749    alu/alu/cacheData_ext/p_1_in100_in[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.040     3.789 r  alu/alu/cacheData_ext/computed[12]_i_11/O
+                         net (fo=4, unplaced)         0.262     4.051    alu/alu/cacheData_ext/computed[12]_i_11_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.040     4.091 f  alu/alu/cacheData_ext/computed[14]_i_12/O
+                         net (fo=4, unplaced)         0.262     4.353    alu/alu/cacheData_ext/computed[14]_i_12_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.040     4.393 r  alu/alu/cacheData_ext/computed[16]_i_22/O
+                         net (fo=3, unplaced)         0.255     4.648    alu/alu/cacheData_ext/computed[16]_i_22_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.688 r  alu/alu/cacheData_ext/computed[16]_i_13/O
+                         net (fo=2, unplaced)         0.251     4.939    alu/alu/cacheData_ext/computed[16]_i_13_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.071 r  alu/alu/cacheData_ext/computed[41]_i_17/O
+                         net (fo=1, unplaced)         0.216     5.287    alu/alu/cacheData_ext/computed[41]_i_17_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     5.358 r  alu/alu/cacheData_ext/computed[41]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.574    alu/alu/cacheData_ext/computed[41]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.645 r  alu/alu/cacheData_ext/computed[41]_i_5/O
+                         net (fo=5, unplaced)         0.234     5.879    alu/alu/cacheData_ext/computed[41]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.950 r  alu/alu/cacheData_ext/computed[55]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.230    alu/alu/cacheData_ext/computed[55]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.270 r  alu/alu/cacheData_ext/computed[63]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.519    alu/alu/cacheData_ext/computed[63]_i_23_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     6.559 r  alu/alu/cacheData_ext/computed[63]_i_22/O
+                         net (fo=1, unplaced)         0.249     6.808    alu/alu/cacheData_ext/computed[63]_i_22_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040     6.848 r  alu/alu/cacheData_ext/computed[63]_i_21/O
+                         net (fo=1, unplaced)         0.000     6.848    alu/alu/cacheData_ext/computed[63]_i_21_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.154 r  alu/alu/cacheData_ext/computed_reg[63]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.464    alu/alu/cacheData_ext/_result_T_7[61]
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.504 r  alu/alu/cacheData_ext/computed[61]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.753    alu/alu/cacheData_ext/computed[61]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.793 r  alu/alu/cacheData_ext/computed[61]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.042    alu/alu/cacheData_ext/D[61]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.082 r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61_i_1/O
+                         net (fo=8, unplaced)         0.241     8.323    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/DIH1
+                         RAMS32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMH_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMS32 (Setup_RAMS32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_60_61/RAMH_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.323    
+  -------------------------------------------------------------------
+                         slack                                  1.593    
+
+Slack (MET) :             1.621ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.295ns  (logic 2.060ns (24.834%)  route 6.235ns (75.166%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT4=1 LUT5=5 LUT6=14 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_222_223_i_11/O
+                         net (fo=97, unplaced)        0.301     3.380    alu/alu/cacheData_ext/Memory_reg_0_31_222_223_i_11_n_0
+                         LUT4 (Prop_LUT4_I1_O)        0.071     3.451 r  alu/alu/cacheData_ext/computed[210]_i_15/O
+                         net (fo=1, unplaced)         0.249     3.700    alu/alu/cacheData_ext/computed[210]_i_15_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     3.740 r  alu/alu/cacheData_ext/computed[210]_i_11/O
+                         net (fo=2, unplaced)         0.249     3.989    alu/alu/cacheData_ext/computed[210]_i_11_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.029 r  alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_10/O
+                         net (fo=4, unplaced)         0.262     4.291    alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_10_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.040     4.331 r  alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_5/O
+                         net (fo=6, unplaced)         0.238     4.569    alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_5_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.071     4.640 f  alu/alu/cacheData_ext/computed[217]_i_13/O
+                         net (fo=1, unplaced)         0.249     4.889    alu/alu/cacheData_ext/computed[217]_i_13_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.929 f  alu/alu/cacheData_ext/computed[217]_i_11/O
+                         net (fo=2, unplaced)         0.251     5.180    alu/alu/cacheData_ext/computed[217]_i_11_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.312 f  alu/alu/cacheData_ext/computed[236]_i_16/O
+                         net (fo=1, unplaced)         0.216     5.528    alu/alu/cacheData_ext/computed[236]_i_16_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.599 r  alu/alu/cacheData_ext/computed[236]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.815    alu/alu/cacheData_ext/computed[236]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.886 r  alu/alu/cacheData_ext/computed[236]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.166    alu/alu/cacheData_ext/computed[236]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040     6.206 r  alu/alu/cacheData_ext/Memory_reg_0_31_240_241_i_11/O
+                         net (fo=11, unplaced)        0.285     6.491    alu/alu/cacheData_ext/Memory_reg_0_31_240_241_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.531 r  alu/alu/cacheData_ext/computed[255]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.780    alu/alu/cacheData_ext/computed[255]_i_23_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.040     6.820 r  alu/alu/cacheData_ext/computed[255]_i_22/O
+                         net (fo=1, unplaced)         0.000     6.820    alu/alu/cacheData_ext/computed[255]_i_22_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.126 r  alu/alu/cacheData_ext/computed_reg[255]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.436    alu/alu/cacheData_ext/computed_reg[255]_i_6_n_10
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.476 r  alu/alu/cacheData_ext/computed[253]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.725    alu/alu/cacheData_ext/computed[253]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.765 r  alu/alu/cacheData_ext/computed[253]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.014    alu/alu/cacheData_ext/D[253]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253_i_1/O
+                         net (fo=8, unplaced)         0.241     8.295    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/DIA1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.295    
+  -------------------------------------------------------------------
+                         slack                                  1.621    
+
+Slack (MET) :             1.621ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMB_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        8.295ns  (logic 2.060ns (24.834%)  route 6.235ns (75.166%))
+  Logic Levels:           24  (CARRY8=1 LUT2=1 LUT3=1 LUT4=1 LUT5=5 LUT6=14 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+                         FDRE                         0.000     0.000 r  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_vs2_reg[1]__0/Q
+                         net (fo=1, unplaced)         0.324     0.439    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_76_0
+                         LUT6 (Prop_LUT6_I0_O)        0.190     0.629 f  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24/O
+                         net (fo=7, unplaced)         0.241     0.870    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_24_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.071     0.941 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75/O
+                         net (fo=2, unplaced)         0.249     1.190    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_75_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.040     1.230 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44/O
+                         net (fo=17, unplaced)        0.325     1.555    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_44_n_0
+                         MUXF7 (Prop_MUXF7_S_O)       0.103     1.658 f  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93/O
+                         net (fo=1, unplaced)         0.264     1.922    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_93_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     2.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62/O
+                         net (fo=2, unplaced)         0.249     2.303    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_62_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.040     2.343 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34/O
+                         net (fo=1, unplaced)         0.230     2.573    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_34_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.749 r  alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21/O
+                         net (fo=15, unplaced)        0.259     3.008    alu/alu/cacheData_ext/Memory_reg_0_31_36_37_i_21_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.071     3.079 r  alu/alu/cacheData_ext/Memory_reg_0_31_222_223_i_11/O
+                         net (fo=97, unplaced)        0.301     3.380    alu/alu/cacheData_ext/Memory_reg_0_31_222_223_i_11_n_0
+                         LUT4 (Prop_LUT4_I1_O)        0.071     3.451 r  alu/alu/cacheData_ext/computed[210]_i_15/O
+                         net (fo=1, unplaced)         0.249     3.700    alu/alu/cacheData_ext/computed[210]_i_15_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     3.740 r  alu/alu/cacheData_ext/computed[210]_i_11/O
+                         net (fo=2, unplaced)         0.249     3.989    alu/alu/cacheData_ext/computed[210]_i_11_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.040     4.029 r  alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_10/O
+                         net (fo=4, unplaced)         0.262     4.291    alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_10_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.040     4.331 r  alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_5/O
+                         net (fo=6, unplaced)         0.238     4.569    alu/alu/cacheData_ext/Memory_reg_0_31_212_213_i_5_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.071     4.640 f  alu/alu/cacheData_ext/computed[217]_i_13/O
+                         net (fo=1, unplaced)         0.249     4.889    alu/alu/cacheData_ext/computed[217]_i_13_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     4.929 f  alu/alu/cacheData_ext/computed[217]_i_11/O
+                         net (fo=2, unplaced)         0.251     5.180    alu/alu/cacheData_ext/computed[217]_i_11_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     5.312 f  alu/alu/cacheData_ext/computed[236]_i_16/O
+                         net (fo=1, unplaced)         0.216     5.528    alu/alu/cacheData_ext/computed[236]_i_16_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.599 r  alu/alu/cacheData_ext/computed[236]_i_11/O
+                         net (fo=1, unplaced)         0.216     5.815    alu/alu/cacheData_ext/computed[236]_i_11_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.071     5.886 r  alu/alu/cacheData_ext/computed[236]_i_5/O
+                         net (fo=9, unplaced)         0.280     6.166    alu/alu/cacheData_ext/computed[236]_i_5_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040     6.206 r  alu/alu/cacheData_ext/Memory_reg_0_31_240_241_i_11/O
+                         net (fo=11, unplaced)        0.285     6.491    alu/alu/cacheData_ext/Memory_reg_0_31_240_241_i_11_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.040     6.531 r  alu/alu/cacheData_ext/computed[255]_i_23/O
+                         net (fo=1, unplaced)         0.249     6.780    alu/alu/cacheData_ext/computed[255]_i_23_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.040     6.820 r  alu/alu/cacheData_ext/computed[255]_i_22/O
+                         net (fo=1, unplaced)         0.000     6.820    alu/alu/cacheData_ext/computed[255]_i_22_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     7.126 r  alu/alu/cacheData_ext/computed_reg[255]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     7.436    alu/alu/cacheData_ext/computed_reg[255]_i_6_n_10
+                         LUT6 (Prop_LUT6_I2_O)        0.040     7.476 r  alu/alu/cacheData_ext/computed[253]_i_2/O
+                         net (fo=1, unplaced)         0.249     7.725    alu/alu/cacheData_ext/computed[253]_i_2_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     7.765 r  alu/alu/cacheData_ext/computed[253]_i_1/O
+                         net (fo=2, unplaced)         0.249     8.014    alu/alu/cacheData_ext/D[253]
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.054 r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253_i_1/O
+                         net (fo=8, unplaced)         0.241     8.295    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/DIB1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMB_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMB_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                          -8.295    
+  -------------------------------------------------------------------
+                         slack                                  1.621    
+
+
+
+

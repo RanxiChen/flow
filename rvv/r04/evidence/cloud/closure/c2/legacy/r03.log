@@ -1,0 +1,17 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-rvv-r04-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-rvv-r04-20261007/design/)
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] RvvR03Spec:
+[info] - a full scoreboard stalls dispatch allocation until an instruction completes
+[info] - a disabled BRAM read cannot consume a simultaneous same-row write
+[info] - modular ages preserve RAW WAR WAW across wrap and bound the live age window
+[info] Run completed in 17 seconds, 108 milliseconds.
+[info] Total number of tests run: 3
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 3, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 18 s, completed Oct 7, 2026, 6:56:59 PM

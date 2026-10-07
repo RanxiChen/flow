@@ -1,0 +1,39 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-rvv-r04-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-rvv-r04-20261007/design/)
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4 -XX:ActiveProcessorCount=4 -Xmx6g
+[info] RvvIntegrationSpec:
+R02_WAR_BYPASS seed=0 peakLiveLoads=9 requestsDuringWar=7
+R03_SLOW_WAR seed=0 requests=6
+R02_C2 seed=0 cycles=1239 readBeats=124
+R02_WAR_BYPASS seed=1 peakLiveLoads=15 requestsDuringWar=8
+R03_SLOW_WAR seed=1 requests=6
+R02_C2 seed=1 cycles=1225 readBeats=124
+R02_WAR_BYPASS seed=2 peakLiveLoads=13 requestsDuringWar=7
+R03_SLOW_WAR seed=2 requests=5
+R02_C2 seed=2 cycles=1218 readBeats=124
+R02_WAR_BYPASS seed=3 peakLiveLoads=8 requestsDuringWar=7
+R03_SLOW_WAR seed=3 requests=6
+R02_C2 seed=3 cycles=1233 readBeats=124
+R02_WAR_BYPASS seed=4 peakLiveLoads=12 requestsDuringWar=5
+R03_SLOW_WAR seed=4 requests=5
+R02_C2 seed=4 cycles=1221 readBeats=124
+R02_WAR_BYPASS seed=5 peakLiveLoads=15 requestsDuringWar=7
+R03_SLOW_WAR seed=5 requests=6
+R02_C2 seed=5 cycles=1209 readBeats=124
+R02_WAR_BYPASS seed=6 peakLiveLoads=16 requestsDuringWar=6
+R03_SLOW_WAR seed=6 requests=6
+R02_C2 seed=6 cycles=1244 readBeats=124
+R02_WAR_BYPASS seed=7 peakLiveLoads=11 requestsDuringWar=7
+R03_SLOW_WAR seed=7 requests=6
+R02_C2 seed=7 cycles=1231 readBeats=124
+[info] - C2 directed instructions, memory overlap and hazards agree with executed Spike
+[info] Run completed in 30 seconds, 76 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 31 s, completed Oct 7, 2026, 7:17:09 PM

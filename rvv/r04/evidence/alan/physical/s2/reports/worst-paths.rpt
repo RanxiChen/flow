@@ -1,0 +1,996 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 19:30:56 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r04-evidence/physical/s2/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.221ns  (required time - arrival time)
+  Source:                 alu/alu/row_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_0/memory_reg_4/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.282ns  (logic 2.460ns (26.503%)  route 6.822ns (73.497%))
+  Logic Levels:           18  (CARRY8=2 LUT3=2 LUT5=2 LUT6=10 MUXF7=2)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X13Y208        FDRE                         0.000     0.000 r  alu/alu/row_reg[2]/C
+    SLICE_X13Y208        FDRE (Prop_EFF2_SLICEM_C_Q)
+                                                      0.116     0.116 r  alu/alu/row_reg[2]/Q
+                         net (fo=36, routed)          0.305     0.421    alu/alu/_GEN_5[8]
+    SLICE_X13Y208        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.190     0.611 r  alu/alu/tokens_2_enables_reg[32]_srl2_i_41/O
+                         net (fo=124, routed)         0.489     1.100    vrf/tokens_2_enables_reg[59]_srl2_i_36_0
+    SLICE_X13Y216        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.195 r  vrf/tokens_2_enables_reg[55]_srl2_i_76/O
+                         net (fo=4, routed)           0.452     1.647    vrf/tokens_2_enables_reg[55]_srl2_i_76_n_0
+    SLICE_X13Y211        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.136     1.783 r  vrf/tokens_2_enables_reg[31]_srl2_i_33/O
+                         net (fo=1, routed)           0.000     1.783    vrf/tokens_2_enables_reg[31]_srl2_i_33_n_0
+    SLICE_X13Y211        MUXF7 (Prop_F7MUX_AB_SLICEM_I0_O)
+                                                      0.068     1.851 r  vrf/tokens_2_enables_reg[31]_srl2_i_28/O
+                         net (fo=3, routed)           0.499     2.350    vrf/tokens_2_enables_reg[31]_srl2_i_28_n_0
+    SLICE_X13Y203        LUT6 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.178     2.528 r  vrf/tokens_2_enables_reg[25]_srl2_i_17/O
+                         net (fo=2, routed)           0.280     2.808    alu/alu/tokens_2_enables_reg[25]_srl2_i_1_1
+    SLICE_X10Y202        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.191     2.999 r  alu/alu/tokens_2_enables_reg[24]_srl2_i_2/O
+                         net (fo=2, routed)           0.351     3.350    alu/alu/p_0_in180_in
+    SLICE_X8Y204         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     3.390 r  alu/alu/macDataBase_r[0]_i_19/O
+                         net (fo=1, routed)           0.000     3.390    alu/alu/macDataBase_r[0]_i_19_n_0
+    SLICE_X8Y204         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     3.794 f  alu/alu/macDataBase_r_reg[0]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     3.821    alu/alu/macDataBase_r_reg[0]_i_4_n_0
+    SLICE_X8Y205         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114     3.935 f  alu/alu/macDataBase_r_reg[0]_i_3/CO[5]
+                         net (fo=35, routed)          0.671     4.606    alu/alu/needsOld
+    SLICE_X9Y193         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     4.736 f  alu/alu/io_counters_rawStall_1_x[63]_i_252/O
+                         net (fo=1, routed)           0.218     4.954    alu/alu/io_hazard_reads0[20]
+    SLICE_X10Y191        LUT5 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     4.994 f  alu/alu/io_counters_rawStall_1_x[63]_i_71/O
+                         net (fo=1, routed)           0.316     5.310    sb/io_check_2_reads[20]
+    SLICE_X12Y187        LUT6 (Prop_H6LUT_SLICEL_I2_O)
+                                                      0.132     5.442 f  sb/io_counters_rawStall_1_x[63]_i_14/O
+                         net (fo=1, routed)           0.140     5.582    sb/io_counters_rawStall_1_x[63]_i_14_n_0
+    SLICE_X11Y187        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     5.700 f  sb/io_counters_rawStall_1_x[63]_i_4/O
+                         net (fo=1, routed)           0.229     5.929    sb/io_counters_rawStall_1_x[63]_i_4_n_0
+    SLICE_X12Y188        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.131     6.060 f  sb/io_counters_rawStall_1_x[63]_i_1/O
+                         net (fo=65, routed)          0.474     6.534    sb/_sb_io_raw_2
+    SLICE_X18Y200        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     6.605 f  sb/row[5]_i_6/O
+                         net (fo=1, routed)           0.217     6.822    alu/alu/io_blocked0
+    SLICE_X20Y202        LUT5 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.071     6.893 r  alu/alu/row[5]_i_2__1/O
+                         net (fo=22, routed)          0.392     7.285    mac/dot/_alu_io_readProgress_valid
+    SLICE_X25Y204        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.115     7.400 r  mac/dot/selectedBank_r[1]_i_1/O
+                         net (fo=6, routed)           0.254     7.654    mac/dot/reserved_reg[3]_0
+    SLICE_X26Y206        LUT3 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.120     7.774 r  mac/dot/memory_reg_0_i_1__2/O
+                         net (fo=8, routed)           1.508     9.282    vrf/banks_3_0/readEnable039_out
+    RAMB36_X4Y56         RAMB36E2                                     r  vrf/banks_3_0/memory_reg_4/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X4Y56         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_0/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.282    
+  -------------------------------------------------------------------
+                         slack                                  0.221    
+
+Slack (MET) :             0.225ns  (required time - arrival time)
+  Source:                 alu/alu/row_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_1/memory_reg_4/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.278ns  (logic 2.491ns (26.848%)  route 6.787ns (73.152%))
+  Logic Levels:           19  (CARRY8=2 LUT3=3 LUT5=3 LUT6=9 MUXF7=2)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X13Y208        FDRE                         0.000     0.000 r  alu/alu/row_reg[2]/C
+    SLICE_X13Y208        FDRE (Prop_EFF2_SLICEM_C_Q)
+                                                      0.116     0.116 r  alu/alu/row_reg[2]/Q
+                         net (fo=36, routed)          0.305     0.421    alu/alu/_GEN_5[8]
+    SLICE_X13Y208        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.190     0.611 r  alu/alu/tokens_2_enables_reg[32]_srl2_i_41/O
+                         net (fo=124, routed)         0.489     1.100    vrf/tokens_2_enables_reg[59]_srl2_i_36_0
+    SLICE_X13Y216        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.195 r  vrf/tokens_2_enables_reg[55]_srl2_i_76/O
+                         net (fo=4, routed)           0.452     1.647    vrf/tokens_2_enables_reg[55]_srl2_i_76_n_0
+    SLICE_X13Y211        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.136     1.783 r  vrf/tokens_2_enables_reg[31]_srl2_i_33/O
+                         net (fo=1, routed)           0.000     1.783    vrf/tokens_2_enables_reg[31]_srl2_i_33_n_0
+    SLICE_X13Y211        MUXF7 (Prop_F7MUX_AB_SLICEM_I0_O)
+                                                      0.068     1.851 r  vrf/tokens_2_enables_reg[31]_srl2_i_28/O
+                         net (fo=3, routed)           0.499     2.350    vrf/tokens_2_enables_reg[31]_srl2_i_28_n_0
+    SLICE_X13Y203        LUT6 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.178     2.528 r  vrf/tokens_2_enables_reg[25]_srl2_i_17/O
+                         net (fo=2, routed)           0.280     2.808    alu/alu/tokens_2_enables_reg[25]_srl2_i_1_1
+    SLICE_X10Y202        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.191     2.999 r  alu/alu/tokens_2_enables_reg[24]_srl2_i_2/O
+                         net (fo=2, routed)           0.351     3.350    alu/alu/p_0_in180_in
+    SLICE_X8Y204         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     3.390 r  alu/alu/macDataBase_r[0]_i_19/O
+                         net (fo=1, routed)           0.000     3.390    alu/alu/macDataBase_r[0]_i_19_n_0
+    SLICE_X8Y204         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     3.794 f  alu/alu/macDataBase_r_reg[0]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     3.821    alu/alu/macDataBase_r_reg[0]_i_4_n_0
+    SLICE_X8Y205         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114     3.935 f  alu/alu/macDataBase_r_reg[0]_i_3/CO[5]
+                         net (fo=35, routed)          0.671     4.606    alu/alu/needsOld
+    SLICE_X9Y193         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     4.736 f  alu/alu/io_counters_rawStall_1_x[63]_i_252/O
+                         net (fo=1, routed)           0.218     4.954    alu/alu/io_hazard_reads0[20]
+    SLICE_X10Y191        LUT5 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     4.994 f  alu/alu/io_counters_rawStall_1_x[63]_i_71/O
+                         net (fo=1, routed)           0.316     5.310    sb/io_check_2_reads[20]
+    SLICE_X12Y187        LUT6 (Prop_H6LUT_SLICEL_I2_O)
+                                                      0.132     5.442 f  sb/io_counters_rawStall_1_x[63]_i_14/O
+                         net (fo=1, routed)           0.140     5.582    sb/io_counters_rawStall_1_x[63]_i_14_n_0
+    SLICE_X11Y187        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     5.700 f  sb/io_counters_rawStall_1_x[63]_i_4/O
+                         net (fo=1, routed)           0.229     5.929    sb/io_counters_rawStall_1_x[63]_i_4_n_0
+    SLICE_X12Y188        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.131     6.060 f  sb/io_counters_rawStall_1_x[63]_i_1/O
+                         net (fo=65, routed)          0.474     6.534    sb/_sb_io_raw_2
+    SLICE_X18Y200        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     6.605 f  sb/row[5]_i_6/O
+                         net (fo=1, routed)           0.217     6.822    alu/alu/io_blocked0
+    SLICE_X20Y202        LUT5 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.071     6.893 r  alu/alu/row[5]_i_2__1/O
+                         net (fo=22, routed)          0.160     7.053    alu/alu/reserved_reg[3]_0
+    SLICE_X21Y202        LUT3 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.041     7.094 r  alu/alu/selectedBank_r_1[1]_i_3/O
+                         net (fo=1, routed)           0.193     7.287    alu/alu/selectedBank_r_1[1]_i_3_n_0
+    SLICE_X22Y202        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.071     7.358 r  alu/alu/selectedBank_r_1[1]_i_1/O
+                         net (fo=6, routed)           0.160     7.518    mac/legacy/memory_reg_0_8
+    SLICE_X22Y203        LUT3 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.154     7.672 r  mac/legacy/memory_reg_0_i_1__4/O
+                         net (fo=8, routed)           1.606     9.278    vrf/banks_1_1/readEnable035_out
+    RAMB36_X3Y57         RAMB36E2                                     r  vrf/banks_1_1/memory_reg_4/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X3Y57         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_1_1/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.278    
+  -------------------------------------------------------------------
+                         slack                                  0.225    
+
+Slack (MET) :             0.292ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_0/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.211ns  (logic 2.064ns (22.408%)  route 7.147ns (77.592%))
+  Logic Levels:           19  (LUT2=1 LUT3=3 LUT4=2 LUT5=2 LUT6=8 MUXF7=2 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X25Y170        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[3]/C
+    SLICE_X25Y170        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  mac/dot/reserved_reg[3]/Q
+                         net (fo=16, routed)          0.185     0.299    mac/dot/reserved__0[3]
+    SLICE_X26Y170        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     0.477 r  mac/dot/macReady_valid_INST_0_i_1/O
+                         net (fo=101, routed)         0.168     0.645    mac/dot/reserved_reg[1]_12
+    SLICE_X26Y168        LUT3 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     0.688 r  mac/dot/io_counters_rawStall_2_x[63]_i_1023/O
+                         net (fo=32, routed)          0.352     1.040    sb/_mac_io_hazard_slot[1]
+    SLICE_X25Y166        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.173     1.213 f  sb/io_counters_rawStall_2_x[63]_i_1060/O
+                         net (fo=1, routed)           0.000     1.213    sb/io_counters_rawStall_2_x[63]_i_1060_n_0
+    SLICE_X25Y166        MUXF7 (Prop_F7MUX_AB_SLICEL_I0_O)
+                                                      0.058     1.271 f  sb/io_counters_rawStall_2_x_reg[63]_i_1045/O
+                         net (fo=1, routed)           0.000     1.271    sb/io_counters_rawStall_2_x_reg[63]_i_1045_n_0
+    SLICE_X25Y166        MUXF8 (Prop_F8MUX_BOT_SLICEL_I1_O)
+                                                      0.059     1.330 f  sb/io_counters_rawStall_2_x_reg[63]_i_1033/O
+                         net (fo=16, routed)          0.449     1.779    sb/io_counters_rawStall_2_x_reg[63]_i_1033_n_0
+    SLICE_X29Y165        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     1.970 r  sb/io_counters_rawStall_2_x[63]_i_1022/O
+                         net (fo=1, routed)           0.067     2.037    sb/io_counters_rawStall_2_x[63]_i_1022_n_0
+    SLICE_X29Y165        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     2.153 r  sb/io_counters_rawStall_2_x[63]_i_943/O
+                         net (fo=1, routed)           0.146     2.299    sb/io_counters_rawStall_2_x[63]_i_943_n_0
+    SLICE_X29Y163        LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.075     2.374 r  sb/io_counters_rawStall_2_x[63]_i_679/O
+                         net (fo=33, routed)          0.440     2.814    sb/io_counters_rawStall_2_x[63]_i_679_n_0
+    SLICE_X27Y157        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.070     2.884 f  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=33, routed)          0.498     3.382    mac/dot/p_311_in
+    SLICE_X22Y175        LUT4 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.130     3.512 f  mac/dot/selectedBank_r_1[1]_i_363/O
+                         net (fo=32, routed)          0.601     4.113    sb/io_dotWriteRows_311
+    SLICE_X13Y176        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.040     4.153 f  sb/selectedBank_r_1[1]_i_358/O
+                         net (fo=1, routed)           0.444     4.597    sb/selectedBank_r_1[1]_i_358_n_0
+    SLICE_X11Y182        LUT4 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.072     4.669 f  sb/selectedBank_r_1[1]_i_225/O
+                         net (fo=1, routed)           0.229     4.898    sb/selectedBank_r_1[1]_i_225_n_0
+    SLICE_X11Y182        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.016 f  sb/selectedBank_r_1[1]_i_65/O
+                         net (fo=1, routed)           0.276     5.292    sb/_sb_io_dotWriteRows_3[7]
+    SLICE_X14Y183        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.116     5.408 f  sb/selectedBank_r_1[1]_i_25/O
+                         net (fo=1, routed)           0.000     5.408    sb/selectedBank_r_1[1]_i_25_n_0
+    SLICE_X14Y183        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.475 f  sb/selectedBank_r_1_reg[1]_i_14/O
+                         net (fo=1, routed)           0.343     5.818    sb/selectedBank_r_1_reg[1]_i_14_n_0
+    SLICE_X17Y185        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.132     5.950 r  sb/selectedBank_r_1[1]_i_7/O
+                         net (fo=1, routed)           0.161     6.111    sb/mac/_dot_io_readEnables[1]
+    SLICE_X18Y185        LUT2 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     6.153 r  sb/selectedBank_r_1[1]_i_4/O
+                         net (fo=3, routed)           0.622     6.775    alu/alu/_mac_io_readEnables[0]
+    SLICE_X30Y190        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     6.890 r  alu/alu/selectedBank_r_3[1]_i_1/O
+                         net (fo=6, routed)           0.073     6.963    alu/alu/d_decoded_sew_reg[1]_0
+    SLICE_X30Y190        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.155     7.118 r  alu/alu/memory_reg_0_i_1__12/O
+                         net (fo=8, routed)           2.093     9.211    vrf/banks_1_3/readEnable019_out
+    RAMB36_X7Y43         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_0/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X7Y43         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_1_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.211    
+  -------------------------------------------------------------------
+                         slack                                  0.292    
+
+Slack (MET) :             0.302ns  (required time - arrival time)
+  Source:                 alu/alu/row_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_2/memory_reg_4/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.201ns  (logic 2.421ns (26.312%)  route 6.780ns (73.688%))
+  Logic Levels:           19  (CARRY8=2 LUT2=1 LUT3=2 LUT5=2 LUT6=10 MUXF7=2)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X13Y208        FDRE                         0.000     0.000 r  alu/alu/row_reg[2]/C
+    SLICE_X13Y208        FDRE (Prop_EFF2_SLICEM_C_Q)
+                                                      0.116     0.116 r  alu/alu/row_reg[2]/Q
+                         net (fo=36, routed)          0.305     0.421    alu/alu/_GEN_5[8]
+    SLICE_X13Y208        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.190     0.611 r  alu/alu/tokens_2_enables_reg[32]_srl2_i_41/O
+                         net (fo=124, routed)         0.489     1.100    vrf/tokens_2_enables_reg[59]_srl2_i_36_0
+    SLICE_X13Y216        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.195 r  vrf/tokens_2_enables_reg[55]_srl2_i_76/O
+                         net (fo=4, routed)           0.452     1.647    vrf/tokens_2_enables_reg[55]_srl2_i_76_n_0
+    SLICE_X13Y211        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.136     1.783 r  vrf/tokens_2_enables_reg[31]_srl2_i_33/O
+                         net (fo=1, routed)           0.000     1.783    vrf/tokens_2_enables_reg[31]_srl2_i_33_n_0
+    SLICE_X13Y211        MUXF7 (Prop_F7MUX_AB_SLICEM_I0_O)
+                                                      0.068     1.851 r  vrf/tokens_2_enables_reg[31]_srl2_i_28/O
+                         net (fo=3, routed)           0.499     2.350    vrf/tokens_2_enables_reg[31]_srl2_i_28_n_0
+    SLICE_X13Y203        LUT6 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.178     2.528 r  vrf/tokens_2_enables_reg[25]_srl2_i_17/O
+                         net (fo=2, routed)           0.280     2.808    alu/alu/tokens_2_enables_reg[25]_srl2_i_1_1
+    SLICE_X10Y202        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.191     2.999 r  alu/alu/tokens_2_enables_reg[24]_srl2_i_2/O
+                         net (fo=2, routed)           0.351     3.350    alu/alu/p_0_in180_in
+    SLICE_X8Y204         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     3.390 r  alu/alu/macDataBase_r[0]_i_19/O
+                         net (fo=1, routed)           0.000     3.390    alu/alu/macDataBase_r[0]_i_19_n_0
+    SLICE_X8Y204         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     3.794 f  alu/alu/macDataBase_r_reg[0]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     3.821    alu/alu/macDataBase_r_reg[0]_i_4_n_0
+    SLICE_X8Y205         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114     3.935 f  alu/alu/macDataBase_r_reg[0]_i_3/CO[5]
+                         net (fo=35, routed)          0.671     4.606    alu/alu/needsOld
+    SLICE_X9Y193         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     4.736 f  alu/alu/io_counters_rawStall_1_x[63]_i_252/O
+                         net (fo=1, routed)           0.218     4.954    alu/alu/io_hazard_reads0[20]
+    SLICE_X10Y191        LUT5 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     4.994 f  alu/alu/io_counters_rawStall_1_x[63]_i_71/O
+                         net (fo=1, routed)           0.316     5.310    sb/io_check_2_reads[20]
+    SLICE_X12Y187        LUT6 (Prop_H6LUT_SLICEL_I2_O)
+                                                      0.132     5.442 f  sb/io_counters_rawStall_1_x[63]_i_14/O
+                         net (fo=1, routed)           0.140     5.582    sb/io_counters_rawStall_1_x[63]_i_14_n_0
+    SLICE_X11Y187        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     5.700 f  sb/io_counters_rawStall_1_x[63]_i_4/O
+                         net (fo=1, routed)           0.229     5.929    sb/io_counters_rawStall_1_x[63]_i_4_n_0
+    SLICE_X12Y188        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.131     6.060 f  sb/io_counters_rawStall_1_x[63]_i_1/O
+                         net (fo=65, routed)          0.474     6.534    sb/_sb_io_raw_2
+    SLICE_X18Y200        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     6.605 f  sb/row[5]_i_6/O
+                         net (fo=1, routed)           0.217     6.822    alu/alu/io_blocked0
+    SLICE_X20Y202        LUT5 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.071     6.893 r  alu/alu/row[5]_i_2__1/O
+                         net (fo=22, routed)          0.338     7.231    alu/alu/reserved_reg[3]_0
+    SLICE_X22Y203        LUT2 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040     7.271 r  alu/alu/selectedBank_r_2[1]_i_7/O
+                         net (fo=1, routed)           0.313     7.584    mac/dot/selectedBank_r_2_reg[1]_0
+    SLICE_X21Y201        LUT6 (Prop_A6LUT_SLICEL_I5_O)
+                                                      0.040     7.624 r  mac/dot/selectedBank_r_2[1]_i_1/O
+                         net (fo=6, routed)           0.272     7.896    mac/dot/selectedBank_r_2[1]_i_7
+    SLICE_X21Y208        LUT3 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.012 r  mac/dot/memory_reg_0_i_1__8/O
+                         net (fo=8, routed)           1.189     9.201    vrf/banks_1_2/readEnable027_out
+    RAMB36_X4Y48         RAMB36E2                                     r  vrf/banks_1_2/memory_reg_4/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X4Y48         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_1_2/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.201    
+  -------------------------------------------------------------------
+                         slack                                  0.302    
+
+Slack (MET) :             0.310ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_3/memory_reg_0/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.193ns  (logic 2.086ns (22.691%)  route 7.107ns (77.309%))
+  Logic Levels:           19  (LUT2=1 LUT3=3 LUT4=2 LUT5=2 LUT6=8 MUXF7=2 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X25Y170        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[3]/C
+    SLICE_X25Y170        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  mac/dot/reserved_reg[3]/Q
+                         net (fo=16, routed)          0.185     0.299    mac/dot/reserved__0[3]
+    SLICE_X26Y170        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     0.477 r  mac/dot/macReady_valid_INST_0_i_1/O
+                         net (fo=101, routed)         0.168     0.645    mac/dot/reserved_reg[1]_12
+    SLICE_X26Y168        LUT3 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     0.688 r  mac/dot/io_counters_rawStall_2_x[63]_i_1023/O
+                         net (fo=32, routed)          0.352     1.040    sb/_mac_io_hazard_slot[1]
+    SLICE_X25Y166        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.173     1.213 f  sb/io_counters_rawStall_2_x[63]_i_1060/O
+                         net (fo=1, routed)           0.000     1.213    sb/io_counters_rawStall_2_x[63]_i_1060_n_0
+    SLICE_X25Y166        MUXF7 (Prop_F7MUX_AB_SLICEL_I0_O)
+                                                      0.058     1.271 f  sb/io_counters_rawStall_2_x_reg[63]_i_1045/O
+                         net (fo=1, routed)           0.000     1.271    sb/io_counters_rawStall_2_x_reg[63]_i_1045_n_0
+    SLICE_X25Y166        MUXF8 (Prop_F8MUX_BOT_SLICEL_I1_O)
+                                                      0.059     1.330 f  sb/io_counters_rawStall_2_x_reg[63]_i_1033/O
+                         net (fo=16, routed)          0.449     1.779    sb/io_counters_rawStall_2_x_reg[63]_i_1033_n_0
+    SLICE_X29Y165        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     1.970 r  sb/io_counters_rawStall_2_x[63]_i_1022/O
+                         net (fo=1, routed)           0.067     2.037    sb/io_counters_rawStall_2_x[63]_i_1022_n_0
+    SLICE_X29Y165        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     2.153 r  sb/io_counters_rawStall_2_x[63]_i_943/O
+                         net (fo=1, routed)           0.146     2.299    sb/io_counters_rawStall_2_x[63]_i_943_n_0
+    SLICE_X29Y163        LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.075     2.374 r  sb/io_counters_rawStall_2_x[63]_i_679/O
+                         net (fo=33, routed)          0.440     2.814    sb/io_counters_rawStall_2_x[63]_i_679_n_0
+    SLICE_X27Y157        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.070     2.884 f  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=33, routed)          0.498     3.382    mac/dot/p_311_in
+    SLICE_X22Y175        LUT4 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.130     3.512 f  mac/dot/selectedBank_r_1[1]_i_363/O
+                         net (fo=32, routed)          0.601     4.113    sb/io_dotWriteRows_311
+    SLICE_X13Y176        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.040     4.153 f  sb/selectedBank_r_1[1]_i_358/O
+                         net (fo=1, routed)           0.444     4.597    sb/selectedBank_r_1[1]_i_358_n_0
+    SLICE_X11Y182        LUT4 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.072     4.669 f  sb/selectedBank_r_1[1]_i_225/O
+                         net (fo=1, routed)           0.229     4.898    sb/selectedBank_r_1[1]_i_225_n_0
+    SLICE_X11Y182        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.016 f  sb/selectedBank_r_1[1]_i_65/O
+                         net (fo=1, routed)           0.276     5.292    sb/_sb_io_dotWriteRows_3[7]
+    SLICE_X14Y183        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.116     5.408 f  sb/selectedBank_r_1[1]_i_25/O
+                         net (fo=1, routed)           0.000     5.408    sb/selectedBank_r_1[1]_i_25_n_0
+    SLICE_X14Y183        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.475 f  sb/selectedBank_r_1_reg[1]_i_14/O
+                         net (fo=1, routed)           0.343     5.818    sb/selectedBank_r_1_reg[1]_i_14_n_0
+    SLICE_X17Y185        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.132     5.950 r  sb/selectedBank_r_1[1]_i_7/O
+                         net (fo=1, routed)           0.161     6.111    sb/mac/_dot_io_readEnables[1]
+    SLICE_X18Y185        LUT2 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     6.153 r  sb/selectedBank_r_1[1]_i_4/O
+                         net (fo=3, routed)           0.622     6.775    alu/alu/_mac_io_readEnables[0]
+    SLICE_X30Y190        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     6.890 r  alu/alu/selectedBank_r_3[1]_i_1/O
+                         net (fo=6, routed)           0.227     7.117    alu/alu/d_decoded_sew_reg[1]_0
+    SLICE_X30Y190        LUT3 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.177     7.294 r  alu/alu/memory_reg_0_i_1__14/O
+                         net (fo=8, routed)           1.899     9.193    vrf/banks_3_3/readEnable015_out
+    RAMB36_X6Y46         RAMB36E2                                     r  vrf/banks_3_3/memory_reg_0/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y46         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.193    
+  -------------------------------------------------------------------
+                         slack                                  0.310    
+
+Slack (MET) :             0.323ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_3/memory_reg_2/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.180ns  (logic 2.086ns (22.723%)  route 7.094ns (77.277%))
+  Logic Levels:           19  (LUT2=1 LUT3=3 LUT4=2 LUT5=2 LUT6=8 MUXF7=2 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X25Y170        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[3]/C
+    SLICE_X25Y170        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  mac/dot/reserved_reg[3]/Q
+                         net (fo=16, routed)          0.185     0.299    mac/dot/reserved__0[3]
+    SLICE_X26Y170        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     0.477 r  mac/dot/macReady_valid_INST_0_i_1/O
+                         net (fo=101, routed)         0.168     0.645    mac/dot/reserved_reg[1]_12
+    SLICE_X26Y168        LUT3 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     0.688 r  mac/dot/io_counters_rawStall_2_x[63]_i_1023/O
+                         net (fo=32, routed)          0.352     1.040    sb/_mac_io_hazard_slot[1]
+    SLICE_X25Y166        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.173     1.213 f  sb/io_counters_rawStall_2_x[63]_i_1060/O
+                         net (fo=1, routed)           0.000     1.213    sb/io_counters_rawStall_2_x[63]_i_1060_n_0
+    SLICE_X25Y166        MUXF7 (Prop_F7MUX_AB_SLICEL_I0_O)
+                                                      0.058     1.271 f  sb/io_counters_rawStall_2_x_reg[63]_i_1045/O
+                         net (fo=1, routed)           0.000     1.271    sb/io_counters_rawStall_2_x_reg[63]_i_1045_n_0
+    SLICE_X25Y166        MUXF8 (Prop_F8MUX_BOT_SLICEL_I1_O)
+                                                      0.059     1.330 f  sb/io_counters_rawStall_2_x_reg[63]_i_1033/O
+                         net (fo=16, routed)          0.449     1.779    sb/io_counters_rawStall_2_x_reg[63]_i_1033_n_0
+    SLICE_X29Y165        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     1.970 r  sb/io_counters_rawStall_2_x[63]_i_1022/O
+                         net (fo=1, routed)           0.067     2.037    sb/io_counters_rawStall_2_x[63]_i_1022_n_0
+    SLICE_X29Y165        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     2.153 r  sb/io_counters_rawStall_2_x[63]_i_943/O
+                         net (fo=1, routed)           0.146     2.299    sb/io_counters_rawStall_2_x[63]_i_943_n_0
+    SLICE_X29Y163        LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.075     2.374 r  sb/io_counters_rawStall_2_x[63]_i_679/O
+                         net (fo=33, routed)          0.440     2.814    sb/io_counters_rawStall_2_x[63]_i_679_n_0
+    SLICE_X27Y157        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.070     2.884 f  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=33, routed)          0.498     3.382    mac/dot/p_311_in
+    SLICE_X22Y175        LUT4 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.130     3.512 f  mac/dot/selectedBank_r_1[1]_i_363/O
+                         net (fo=32, routed)          0.601     4.113    sb/io_dotWriteRows_311
+    SLICE_X13Y176        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.040     4.153 f  sb/selectedBank_r_1[1]_i_358/O
+                         net (fo=1, routed)           0.444     4.597    sb/selectedBank_r_1[1]_i_358_n_0
+    SLICE_X11Y182        LUT4 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.072     4.669 f  sb/selectedBank_r_1[1]_i_225/O
+                         net (fo=1, routed)           0.229     4.898    sb/selectedBank_r_1[1]_i_225_n_0
+    SLICE_X11Y182        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.016 f  sb/selectedBank_r_1[1]_i_65/O
+                         net (fo=1, routed)           0.276     5.292    sb/_sb_io_dotWriteRows_3[7]
+    SLICE_X14Y183        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.116     5.408 f  sb/selectedBank_r_1[1]_i_25/O
+                         net (fo=1, routed)           0.000     5.408    sb/selectedBank_r_1[1]_i_25_n_0
+    SLICE_X14Y183        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.475 f  sb/selectedBank_r_1_reg[1]_i_14/O
+                         net (fo=1, routed)           0.343     5.818    sb/selectedBank_r_1_reg[1]_i_14_n_0
+    SLICE_X17Y185        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.132     5.950 r  sb/selectedBank_r_1[1]_i_7/O
+                         net (fo=1, routed)           0.161     6.111    sb/mac/_dot_io_readEnables[1]
+    SLICE_X18Y185        LUT2 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     6.153 r  sb/selectedBank_r_1[1]_i_4/O
+                         net (fo=3, routed)           0.622     6.775    alu/alu/_mac_io_readEnables[0]
+    SLICE_X30Y190        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     6.890 r  alu/alu/selectedBank_r_3[1]_i_1/O
+                         net (fo=6, routed)           0.227     7.117    alu/alu/d_decoded_sew_reg[1]_0
+    SLICE_X30Y190        LUT3 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.177     7.294 r  alu/alu/memory_reg_0_i_1__14/O
+                         net (fo=8, routed)           1.886     9.180    vrf/banks_3_3/readEnable015_out
+    RAMB36_X7Y41         RAMB36E2                                     r  vrf/banks_3_3/memory_reg_2/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X7Y41         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_3/memory_reg_2
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.180    
+  -------------------------------------------------------------------
+                         slack                                  0.323    
+
+Slack (MET) :             0.326ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_7/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.177ns  (logic 2.064ns (22.491%)  route 7.113ns (77.509%))
+  Logic Levels:           19  (LUT2=1 LUT3=3 LUT4=2 LUT5=2 LUT6=8 MUXF7=2 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X25Y170        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[3]/C
+    SLICE_X25Y170        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  mac/dot/reserved_reg[3]/Q
+                         net (fo=16, routed)          0.185     0.299    mac/dot/reserved__0[3]
+    SLICE_X26Y170        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     0.477 r  mac/dot/macReady_valid_INST_0_i_1/O
+                         net (fo=101, routed)         0.168     0.645    mac/dot/reserved_reg[1]_12
+    SLICE_X26Y168        LUT3 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     0.688 r  mac/dot/io_counters_rawStall_2_x[63]_i_1023/O
+                         net (fo=32, routed)          0.352     1.040    sb/_mac_io_hazard_slot[1]
+    SLICE_X25Y166        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.173     1.213 f  sb/io_counters_rawStall_2_x[63]_i_1060/O
+                         net (fo=1, routed)           0.000     1.213    sb/io_counters_rawStall_2_x[63]_i_1060_n_0
+    SLICE_X25Y166        MUXF7 (Prop_F7MUX_AB_SLICEL_I0_O)
+                                                      0.058     1.271 f  sb/io_counters_rawStall_2_x_reg[63]_i_1045/O
+                         net (fo=1, routed)           0.000     1.271    sb/io_counters_rawStall_2_x_reg[63]_i_1045_n_0
+    SLICE_X25Y166        MUXF8 (Prop_F8MUX_BOT_SLICEL_I1_O)
+                                                      0.059     1.330 f  sb/io_counters_rawStall_2_x_reg[63]_i_1033/O
+                         net (fo=16, routed)          0.449     1.779    sb/io_counters_rawStall_2_x_reg[63]_i_1033_n_0
+    SLICE_X29Y165        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     1.970 r  sb/io_counters_rawStall_2_x[63]_i_1022/O
+                         net (fo=1, routed)           0.067     2.037    sb/io_counters_rawStall_2_x[63]_i_1022_n_0
+    SLICE_X29Y165        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     2.153 r  sb/io_counters_rawStall_2_x[63]_i_943/O
+                         net (fo=1, routed)           0.146     2.299    sb/io_counters_rawStall_2_x[63]_i_943_n_0
+    SLICE_X29Y163        LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.075     2.374 r  sb/io_counters_rawStall_2_x[63]_i_679/O
+                         net (fo=33, routed)          0.440     2.814    sb/io_counters_rawStall_2_x[63]_i_679_n_0
+    SLICE_X27Y157        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.070     2.884 f  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=33, routed)          0.498     3.382    mac/dot/p_311_in
+    SLICE_X22Y175        LUT4 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.130     3.512 f  mac/dot/selectedBank_r_1[1]_i_363/O
+                         net (fo=32, routed)          0.601     4.113    sb/io_dotWriteRows_311
+    SLICE_X13Y176        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.040     4.153 f  sb/selectedBank_r_1[1]_i_358/O
+                         net (fo=1, routed)           0.444     4.597    sb/selectedBank_r_1[1]_i_358_n_0
+    SLICE_X11Y182        LUT4 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.072     4.669 f  sb/selectedBank_r_1[1]_i_225/O
+                         net (fo=1, routed)           0.229     4.898    sb/selectedBank_r_1[1]_i_225_n_0
+    SLICE_X11Y182        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.016 f  sb/selectedBank_r_1[1]_i_65/O
+                         net (fo=1, routed)           0.276     5.292    sb/_sb_io_dotWriteRows_3[7]
+    SLICE_X14Y183        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.116     5.408 f  sb/selectedBank_r_1[1]_i_25/O
+                         net (fo=1, routed)           0.000     5.408    sb/selectedBank_r_1[1]_i_25_n_0
+    SLICE_X14Y183        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.475 f  sb/selectedBank_r_1_reg[1]_i_14/O
+                         net (fo=1, routed)           0.343     5.818    sb/selectedBank_r_1_reg[1]_i_14_n_0
+    SLICE_X17Y185        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.132     5.950 r  sb/selectedBank_r_1[1]_i_7/O
+                         net (fo=1, routed)           0.161     6.111    sb/mac/_dot_io_readEnables[1]
+    SLICE_X18Y185        LUT2 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     6.153 r  sb/selectedBank_r_1[1]_i_4/O
+                         net (fo=3, routed)           0.622     6.775    alu/alu/_mac_io_readEnables[0]
+    SLICE_X30Y190        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     6.890 r  alu/alu/selectedBank_r_3[1]_i_1/O
+                         net (fo=6, routed)           0.073     6.963    alu/alu/d_decoded_sew_reg[1]_0
+    SLICE_X30Y190        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.155     7.118 r  alu/alu/memory_reg_0_i_1__12/O
+                         net (fo=8, routed)           2.059     9.177    vrf/banks_1_3/readEnable019_out
+    RAMB36_X7Y39         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_7/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X7Y39         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_1_3/memory_reg_7
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.177    
+  -------------------------------------------------------------------
+                         slack                                  0.326    
+
+Slack (MET) :             0.335ns  (required time - arrival time)
+  Source:                 alu/alu/row_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_1/memory_reg_4/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.168ns  (logic 2.408ns (26.265%)  route 6.760ns (73.735%))
+  Logic Levels:           19  (CARRY8=2 LUT3=3 LUT5=3 LUT6=9 MUXF7=2)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X13Y208        FDRE                         0.000     0.000 r  alu/alu/row_reg[2]/C
+    SLICE_X13Y208        FDRE (Prop_EFF2_SLICEM_C_Q)
+                                                      0.116     0.116 r  alu/alu/row_reg[2]/Q
+                         net (fo=36, routed)          0.305     0.421    alu/alu/_GEN_5[8]
+    SLICE_X13Y208        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.190     0.611 r  alu/alu/tokens_2_enables_reg[32]_srl2_i_41/O
+                         net (fo=124, routed)         0.489     1.100    vrf/tokens_2_enables_reg[59]_srl2_i_36_0
+    SLICE_X13Y216        MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095     1.195 r  vrf/tokens_2_enables_reg[55]_srl2_i_76/O
+                         net (fo=4, routed)           0.452     1.647    vrf/tokens_2_enables_reg[55]_srl2_i_76_n_0
+    SLICE_X13Y211        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.136     1.783 r  vrf/tokens_2_enables_reg[31]_srl2_i_33/O
+                         net (fo=1, routed)           0.000     1.783    vrf/tokens_2_enables_reg[31]_srl2_i_33_n_0
+    SLICE_X13Y211        MUXF7 (Prop_F7MUX_AB_SLICEM_I0_O)
+                                                      0.068     1.851 r  vrf/tokens_2_enables_reg[31]_srl2_i_28/O
+                         net (fo=3, routed)           0.499     2.350    vrf/tokens_2_enables_reg[31]_srl2_i_28_n_0
+    SLICE_X13Y203        LUT6 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.178     2.528 r  vrf/tokens_2_enables_reg[25]_srl2_i_17/O
+                         net (fo=2, routed)           0.280     2.808    alu/alu/tokens_2_enables_reg[25]_srl2_i_1_1
+    SLICE_X10Y202        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.191     2.999 r  alu/alu/tokens_2_enables_reg[24]_srl2_i_2/O
+                         net (fo=2, routed)           0.351     3.350    alu/alu/p_0_in180_in
+    SLICE_X8Y204         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     3.390 r  alu/alu/macDataBase_r[0]_i_19/O
+                         net (fo=1, routed)           0.000     3.390    alu/alu/macDataBase_r[0]_i_19_n_0
+    SLICE_X8Y204         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     3.794 f  alu/alu/macDataBase_r_reg[0]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     3.821    alu/alu/macDataBase_r_reg[0]_i_4_n_0
+    SLICE_X8Y205         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114     3.935 f  alu/alu/macDataBase_r_reg[0]_i_3/CO[5]
+                         net (fo=35, routed)          0.671     4.606    alu/alu/needsOld
+    SLICE_X9Y193         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     4.736 f  alu/alu/io_counters_rawStall_1_x[63]_i_252/O
+                         net (fo=1, routed)           0.218     4.954    alu/alu/io_hazard_reads0[20]
+    SLICE_X10Y191        LUT5 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     4.994 f  alu/alu/io_counters_rawStall_1_x[63]_i_71/O
+                         net (fo=1, routed)           0.316     5.310    sb/io_check_2_reads[20]
+    SLICE_X12Y187        LUT6 (Prop_H6LUT_SLICEL_I2_O)
+                                                      0.132     5.442 f  sb/io_counters_rawStall_1_x[63]_i_14/O
+                         net (fo=1, routed)           0.140     5.582    sb/io_counters_rawStall_1_x[63]_i_14_n_0
+    SLICE_X11Y187        LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     5.700 f  sb/io_counters_rawStall_1_x[63]_i_4/O
+                         net (fo=1, routed)           0.229     5.929    sb/io_counters_rawStall_1_x[63]_i_4_n_0
+    SLICE_X12Y188        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.131     6.060 f  sb/io_counters_rawStall_1_x[63]_i_1/O
+                         net (fo=65, routed)          0.474     6.534    sb/_sb_io_raw_2
+    SLICE_X18Y200        LUT3 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     6.605 f  sb/row[5]_i_6/O
+                         net (fo=1, routed)           0.217     6.822    alu/alu/io_blocked0
+    SLICE_X20Y202        LUT5 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.071     6.893 r  alu/alu/row[5]_i_2__1/O
+                         net (fo=22, routed)          0.160     7.053    alu/alu/reserved_reg[3]_0
+    SLICE_X21Y202        LUT3 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.041     7.094 r  alu/alu/selectedBank_r_1[1]_i_3/O
+                         net (fo=1, routed)           0.193     7.287    alu/alu/selectedBank_r_1[1]_i_3_n_0
+    SLICE_X22Y202        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.071     7.358 r  alu/alu/selectedBank_r_1[1]_i_1/O
+                         net (fo=6, routed)           0.405     7.763    mac/legacy/memory_reg_0_8
+    SLICE_X22Y214        LUT3 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.071     7.834 r  mac/legacy/memory_reg_0_i_1__6/O
+                         net (fo=8, routed)           1.334     9.168    vrf/banks_3_1/readEnable031_out
+    RAMB36_X3Y56         RAMB36E2                                     r  vrf/banks_3_1/memory_reg_4/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X3Y56         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_1/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.168    
+  -------------------------------------------------------------------
+                         slack                                  0.335    
+
+Slack (MET) :             0.348ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_1_3/memory_reg_1/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.155ns  (logic 2.064ns (22.545%)  route 7.091ns (77.455%))
+  Logic Levels:           19  (LUT2=1 LUT3=3 LUT4=2 LUT5=2 LUT6=8 MUXF7=2 MUXF8=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X25Y170        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[3]/C
+    SLICE_X25Y170        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  mac/dot/reserved_reg[3]/Q
+                         net (fo=16, routed)          0.185     0.299    mac/dot/reserved__0[3]
+    SLICE_X26Y170        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.178     0.477 r  mac/dot/macReady_valid_INST_0_i_1/O
+                         net (fo=101, routed)         0.168     0.645    mac/dot/reserved_reg[1]_12
+    SLICE_X26Y168        LUT3 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.043     0.688 r  mac/dot/io_counters_rawStall_2_x[63]_i_1023/O
+                         net (fo=32, routed)          0.352     1.040    sb/_mac_io_hazard_slot[1]
+    SLICE_X25Y166        LUT6 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.173     1.213 f  sb/io_counters_rawStall_2_x[63]_i_1060/O
+                         net (fo=1, routed)           0.000     1.213    sb/io_counters_rawStall_2_x[63]_i_1060_n_0
+    SLICE_X25Y166        MUXF7 (Prop_F7MUX_AB_SLICEL_I0_O)
+                                                      0.058     1.271 f  sb/io_counters_rawStall_2_x_reg[63]_i_1045/O
+                         net (fo=1, routed)           0.000     1.271    sb/io_counters_rawStall_2_x_reg[63]_i_1045_n_0
+    SLICE_X25Y166        MUXF8 (Prop_F8MUX_BOT_SLICEL_I1_O)
+                                                      0.059     1.330 f  sb/io_counters_rawStall_2_x_reg[63]_i_1033/O
+                         net (fo=16, routed)          0.449     1.779    sb/io_counters_rawStall_2_x_reg[63]_i_1033_n_0
+    SLICE_X29Y165        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     1.970 r  sb/io_counters_rawStall_2_x[63]_i_1022/O
+                         net (fo=1, routed)           0.067     2.037    sb/io_counters_rawStall_2_x[63]_i_1022_n_0
+    SLICE_X29Y165        LUT5 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.116     2.153 r  sb/io_counters_rawStall_2_x[63]_i_943/O
+                         net (fo=1, routed)           0.146     2.299    sb/io_counters_rawStall_2_x[63]_i_943_n_0
+    SLICE_X29Y163        LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.075     2.374 r  sb/io_counters_rawStall_2_x[63]_i_679/O
+                         net (fo=33, routed)          0.440     2.814    sb/io_counters_rawStall_2_x[63]_i_679_n_0
+    SLICE_X27Y157        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.070     2.884 f  sb/io_counters_warStall_2_x[63]_i_356/O
+                         net (fo=33, routed)          0.498     3.382    mac/dot/p_311_in
+    SLICE_X22Y175        LUT4 (Prop_C6LUT_SLICEL_I2_O)
+                                                      0.130     3.512 f  mac/dot/selectedBank_r_1[1]_i_363/O
+                         net (fo=32, routed)          0.601     4.113    sb/io_dotWriteRows_311
+    SLICE_X13Y176        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.040     4.153 f  sb/selectedBank_r_1[1]_i_358/O
+                         net (fo=1, routed)           0.444     4.597    sb/selectedBank_r_1[1]_i_358_n_0
+    SLICE_X11Y182        LUT4 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.072     4.669 f  sb/selectedBank_r_1[1]_i_225/O
+                         net (fo=1, routed)           0.229     4.898    sb/selectedBank_r_1[1]_i_225_n_0
+    SLICE_X11Y182        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.016 f  sb/selectedBank_r_1[1]_i_65/O
+                         net (fo=1, routed)           0.276     5.292    sb/_sb_io_dotWriteRows_3[7]
+    SLICE_X14Y183        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.116     5.408 f  sb/selectedBank_r_1[1]_i_25/O
+                         net (fo=1, routed)           0.000     5.408    sb/selectedBank_r_1[1]_i_25_n_0
+    SLICE_X14Y183        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.475 f  sb/selectedBank_r_1_reg[1]_i_14/O
+                         net (fo=1, routed)           0.343     5.818    sb/selectedBank_r_1_reg[1]_i_14_n_0
+    SLICE_X17Y185        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.132     5.950 r  sb/selectedBank_r_1[1]_i_7/O
+                         net (fo=1, routed)           0.161     6.111    sb/mac/_dot_io_readEnables[1]
+    SLICE_X18Y185        LUT2 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     6.153 r  sb/selectedBank_r_1[1]_i_4/O
+                         net (fo=3, routed)           0.622     6.775    alu/alu/_mac_io_readEnables[0]
+    SLICE_X30Y190        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     6.890 r  alu/alu/selectedBank_r_3[1]_i_1/O
+                         net (fo=6, routed)           0.073     6.963    alu/alu/d_decoded_sew_reg[1]_0
+    SLICE_X30Y190        LUT3 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.155     7.118 r  alu/alu/memory_reg_0_i_1__12/O
+                         net (fo=8, routed)           2.037     9.155    vrf/banks_1_3/readEnable019_out
+    RAMB36_X6Y45         RAMB36E2                                     r  vrf/banks_1_3/memory_reg_1/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y45         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_1_3/memory_reg_1
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.155    
+  -------------------------------------------------------------------
+                         slack                                  0.348    
+
+Slack (MET) :             0.357ns  (required time - arrival time)
+  Source:                 mem/desc_7_slot_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_4/memory_reg_4/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.146ns  (logic 1.494ns (16.335%)  route 7.652ns (83.665%))
+  Logic Levels:           13  (LUT3=1 LUT4=1 LUT5=1 LUT6=6 MUXF7=2 MUXF8=2)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X30Y160        FDRE                         0.000     0.000 r  mem/desc_7_slot_reg[2]/C
+    SLICE_X30Y160        FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/desc_7_slot_reg[2]/Q
+                         net (fo=5, routed)           0.328     0.445    mem/desc_7_slot[2]
+    SLICE_X31Y161        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.185     0.630 r  mem/valid_0_i_117/O
+                         net (fo=1, routed)           0.000     0.630    mem/valid_0_i_117_n_0
+    SLICE_X31Y161        MUXF7 (Prop_F7MUX_CD_SLICEL_I1_O)
+                                                      0.058     0.688 r  mem/valid_0_reg_i_61/O
+                         net (fo=1, routed)           0.000     0.688    mem/valid_0_reg_i_61_n_0
+    SLICE_X31Y161        MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     0.748 r  mem/valid_0_reg_i_29/O
+                         net (fo=17, routed)          0.865     1.613    sb/_mem_io_hazard_0_slot[2]
+    SLICE_X25Y168        MUXF7 (Prop_F7MUX_CD_SLICEL_S_O)
+                                                      0.071     1.684 f  sb/io_counters_rawStall_0_x_reg[63]_i_395/O
+                         net (fo=1, routed)           0.000     1.684    sb/io_counters_rawStall_0_x_reg[63]_i_395_n_0
+    SLICE_X25Y168        MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     1.744 f  sb/io_counters_rawStall_0_x_reg[63]_i_370/O
+                         net (fo=16, routed)          0.616     2.360    sb/io_counters_rawStall_0_x_reg[63]_i_370_n_0
+    SLICE_X30Y163        LUT3 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.138     2.498 r  sb/io_counters_rawStall_0_x[63]_i_374/O
+                         net (fo=1, routed)           0.639     3.137    sb/io_counters_rawStall_0_x[63]_i_374_n_0
+    SLICE_X18Y169        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.040     3.177 f  sb/io_counters_rawStall_0_x[63]_i_282/O
+                         net (fo=32, routed)          0.363     3.540    sb/io_raw_07278_out
+    SLICE_X18Y174        LUT4 (Prop_B6LUT_SLICEM_I3_O)
+                                                      0.074     3.614 f  sb/io_counters_rawStall_0_x[63]_i_314/O
+                         net (fo=1, routed)           0.143     3.757    sb/io_counters_rawStall_0_x[63]_i_314_n_0
+    SLICE_X18Y175        LUT5 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.133     3.890 f  sb/io_counters_rawStall_0_x[63]_i_148/O
+                         net (fo=1, routed)           0.490     4.380    sb/io_counters_rawStall_0_x[63]_i_148_n_0
+    SLICE_X26Y178        LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.137     4.517 f  sb/io_counters_rawStall_0_x[63]_i_33/O
+                         net (fo=1, routed)           0.312     4.829    sb/io_raw_01[11]
+    SLICE_X26Y178        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.176     5.005 f  sb/io_counters_rawStall_0_x[63]_i_7/O
+                         net (fo=1, routed)           0.296     5.301    sb/io_counters_rawStall_0_x[63]_i_7_n_0
+    SLICE_X27Y182        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.172     5.473 f  sb/io_counters_rawStall_0_x[63]_i_1/O
+                         net (fo=72, routed)          0.376     5.849    mem/_sb_io_raw_0
+    SLICE_X29Y183        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.073     5.922 r  mem/memory_reg_0_i_1__19/O
+                         net (fo=8, routed)           3.224     9.146    vrf/banks_3_4/readEnable07_out
+    RAMB36_X8Y53         RAMB36E2                                     r  vrf/banks_3_4/memory_reg_4/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X8Y53         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_4/memory_reg_4
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.146    
+  -------------------------------------------------------------------
+                         slack                                  0.357    
+
+
+
+

@@ -1,0 +1,1056 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 18:27:50 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file /home/chen/FUN/flow-r04-evidence/pipeline/s2/reports/worst-paths.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -0.266ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_3/memory_reg_0/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.769ns  (logic 1.874ns (19.183%)  route 7.895ns (80.817%))
+  Logic Levels:           17  (LUT3=3 LUT5=3 LUT6=10 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X20Y275        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[1]/C
+    SLICE_X20Y275        FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mac/dot/reserved_reg[1]/Q
+                         net (fo=6, routed)           0.181     0.298    mac/dot/reserved__0[1]
+    SLICE_X20Y277        LUT6 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     0.490 r  mac/dot/io_macRead_valid_INST_0_i_2/O
+                         net (fo=919, routed)         0.328     0.818    mac/dot/reserved_reg[1]_0
+    SLICE_X20Y277        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     0.935 f  mac/dot/io_counters_rawStall_2_x[63]_i_1120/O
+                         net (fo=1, routed)           0.339     1.274    mac/dot/io_counters_rawStall_2_x[63]_i_1120_n_0
+    SLICE_X21Y278        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     1.404 f  mac/dot/io_counters_rawStall_2_x[63]_i_1099/O
+                         net (fo=1, routed)           0.000     1.404    mac/dot/io_counters_rawStall_2_x[63]_i_1099_n_0
+    SLICE_X21Y278        MUXF7 (Prop_F7MUX_CD_SLICEL_I1_O)
+                                                      0.067     1.471 f  mac/dot/io_counters_rawStall_2_x_reg[63]_i_1089/O
+                         net (fo=16, routed)          0.462     1.933    mac/dot/sb/_GEN[1]
+    SLICE_X23Y277        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.115     2.048 r  mac/dot/io_counters_rawStall_2_x[63]_i_1068/O
+                         net (fo=1, routed)           0.150     2.198    sb/physicalValid_1_i_177_0
+    SLICE_X23Y278        LUT5 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.176     2.374 r  sb/io_counters_rawStall_2_x[63]_i_1019/O
+                         net (fo=2, routed)           0.252     2.626    sb/io_counters_rawStall_2_x[63]_i_1019_n_0
+    SLICE_X23Y284        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.040     2.666 r  sb/io_counters_rawStall_2_x[63]_i_678/O
+                         net (fo=34, routed)          0.405     3.071    sb/io_counters_rawStall_2_x[63]_i_678_n_0
+    SLICE_X24Y279        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     3.111 f  sb/io_counters_rawStall_2_x[63]_i_625/O
+                         net (fo=1, routed)           0.271     3.382    sb/io_counters_rawStall_2_x[63]_i_625_n_0
+    SLICE_X23Y280        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.137     3.519 f  sb/io_counters_rawStall_2_x[63]_i_178/O
+                         net (fo=2, routed)           0.384     3.903    sb/io_counters_rawStall_2_x[63]_i_178_n_0
+    SLICE_X18Y280        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.192     4.095 f  sb/io_counters_rawStall_2_x[63]_i_33/O
+                         net (fo=2, routed)           0.496     4.591    sb/oldWrites_3[9]
+    SLICE_X21Y274        LUT6 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.115     4.706 f  sb/io_counters_rawStall_2_x[63]_i_7/O
+                         net (fo=1, routed)           0.377     5.083    sb/io_counters_rawStall_2_x[63]_i_7_n_0
+    SLICE_X22Y271        LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.070     5.153 f  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=68, routed)          0.505     5.658    sb/_sb_io_raw_3
+    SLICE_X26Y255        LUT5 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     5.773 r  sb/io_macRead_valid_INST_0_i_4/O
+                         net (fo=1, routed)           0.595     6.368    mac/legacy/operandRow_reg[0]_0
+    SLICE_X30Y223        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     6.408 r  mac/legacy/io_macRead_valid_INST_0_i_3/O
+                         net (fo=22, routed)          0.142     6.550    mac/dot/_legacy_io_readEvent_valid
+    SLICE_X31Y223        LUT3 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     6.590 r  mac/dot/io_macRead_valid_INST_0/O
+                         net (fo=20, routed)          0.170     6.760    mac/dot/reserved_reg[1]_33
+    SLICE_X32Y222        LUT3 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.040     6.800 r  mac/dot/memory_reg_0_i_5__1/O
+                         net (fo=4, routed)           0.305     7.105    mac/dot/memory_reg_0_i_5__1_n_0
+    SLICE_X33Y216        LUT6 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.131     7.236 r  mac/dot/memory_reg_0_i_1__14/O
+                         net (fo=8, routed)           2.533     9.769    vrf/banks_3_3/readEnable015_out
+    RAMB36_X6Y20         RAMB36E2                                     r  vrf/banks_3_3/memory_reg_0/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_3/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.769    
+  -------------------------------------------------------------------
+                         slack                                 -0.266    
+
+Slack (VIOLATED) :        -0.262ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_3_3/memory_reg_1/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.765ns  (logic 1.874ns (19.191%)  route 7.891ns (80.809%))
+  Logic Levels:           17  (LUT3=3 LUT5=3 LUT6=10 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X20Y275        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[1]/C
+    SLICE_X20Y275        FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mac/dot/reserved_reg[1]/Q
+                         net (fo=6, routed)           0.181     0.298    mac/dot/reserved__0[1]
+    SLICE_X20Y277        LUT6 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     0.490 r  mac/dot/io_macRead_valid_INST_0_i_2/O
+                         net (fo=919, routed)         0.328     0.818    mac/dot/reserved_reg[1]_0
+    SLICE_X20Y277        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     0.935 f  mac/dot/io_counters_rawStall_2_x[63]_i_1120/O
+                         net (fo=1, routed)           0.339     1.274    mac/dot/io_counters_rawStall_2_x[63]_i_1120_n_0
+    SLICE_X21Y278        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     1.404 f  mac/dot/io_counters_rawStall_2_x[63]_i_1099/O
+                         net (fo=1, routed)           0.000     1.404    mac/dot/io_counters_rawStall_2_x[63]_i_1099_n_0
+    SLICE_X21Y278        MUXF7 (Prop_F7MUX_CD_SLICEL_I1_O)
+                                                      0.067     1.471 f  mac/dot/io_counters_rawStall_2_x_reg[63]_i_1089/O
+                         net (fo=16, routed)          0.462     1.933    mac/dot/sb/_GEN[1]
+    SLICE_X23Y277        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.115     2.048 r  mac/dot/io_counters_rawStall_2_x[63]_i_1068/O
+                         net (fo=1, routed)           0.150     2.198    sb/physicalValid_1_i_177_0
+    SLICE_X23Y278        LUT5 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.176     2.374 r  sb/io_counters_rawStall_2_x[63]_i_1019/O
+                         net (fo=2, routed)           0.252     2.626    sb/io_counters_rawStall_2_x[63]_i_1019_n_0
+    SLICE_X23Y284        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.040     2.666 r  sb/io_counters_rawStall_2_x[63]_i_678/O
+                         net (fo=34, routed)          0.405     3.071    sb/io_counters_rawStall_2_x[63]_i_678_n_0
+    SLICE_X24Y279        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     3.111 f  sb/io_counters_rawStall_2_x[63]_i_625/O
+                         net (fo=1, routed)           0.271     3.382    sb/io_counters_rawStall_2_x[63]_i_625_n_0
+    SLICE_X23Y280        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.137     3.519 f  sb/io_counters_rawStall_2_x[63]_i_178/O
+                         net (fo=2, routed)           0.384     3.903    sb/io_counters_rawStall_2_x[63]_i_178_n_0
+    SLICE_X18Y280        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.192     4.095 f  sb/io_counters_rawStall_2_x[63]_i_33/O
+                         net (fo=2, routed)           0.496     4.591    sb/oldWrites_3[9]
+    SLICE_X21Y274        LUT6 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.115     4.706 f  sb/io_counters_rawStall_2_x[63]_i_7/O
+                         net (fo=1, routed)           0.377     5.083    sb/io_counters_rawStall_2_x[63]_i_7_n_0
+    SLICE_X22Y271        LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.070     5.153 f  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=68, routed)          0.505     5.658    sb/_sb_io_raw_3
+    SLICE_X26Y255        LUT5 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     5.773 r  sb/io_macRead_valid_INST_0_i_4/O
+                         net (fo=1, routed)           0.595     6.368    mac/legacy/operandRow_reg[0]_0
+    SLICE_X30Y223        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     6.408 r  mac/legacy/io_macRead_valid_INST_0_i_3/O
+                         net (fo=22, routed)          0.142     6.550    mac/dot/_legacy_io_readEvent_valid
+    SLICE_X31Y223        LUT3 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     6.590 r  mac/dot/io_macRead_valid_INST_0/O
+                         net (fo=20, routed)          0.170     6.760    mac/dot/reserved_reg[1]_33
+    SLICE_X32Y222        LUT3 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.040     6.800 r  mac/dot/memory_reg_0_i_5__1/O
+                         net (fo=4, routed)           0.305     7.105    mac/dot/memory_reg_0_i_5__1_n_0
+    SLICE_X33Y216        LUT6 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.131     7.236 r  mac/dot/memory_reg_0_i_1__14/O
+                         net (fo=8, routed)           2.529     9.765    vrf/banks_3_3/readEnable015_out
+    RAMB36_X7Y25         RAMB36E2                                     r  vrf/banks_3_3/memory_reg_1/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X7Y25         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_3_3/memory_reg_1
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.765    
+  -------------------------------------------------------------------
+                         slack                                 -0.262    
+
+Slack (VIOLATED) :        -0.243ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_26_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.267ns  (logic 2.945ns (28.684%)  route 7.322ns (71.316%))
+  Logic Levels:           22  (CARRY8=7 LUT2=1 LUT3=1 LUT4=4 LUT6=8 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 r  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 r  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 r  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 r  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 f  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 r  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 r  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 r  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 r  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 f  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.218     8.421    mem/bSlots/position_reg[0]
+    SLICE_X49Y228        LUT4 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     8.462 r  mem/bSlots/responses_4[7]_i_6/O
+                         net (fo=128, routed)         0.737     9.199    mem/bSlots/io_axi_aw_ready_0
+    SLICE_X46Y228        LUT3 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.071     9.270 r  mem/bSlots/responses_26[7]_i_9/O
+                         net (fo=1, routed)           0.470     9.740    mem/bursts/responses_26_reg[7]_0[0]
+    SLICE_X46Y235        CARRY8 (Prop_CARRY8_SLICEL_DI[0]_CO[7])
+                                                      0.364    10.104 r  mem/bursts/responses_26_reg[7]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    10.131    mem/bursts/responses_26_reg[7]_i_1_n_0
+    SLICE_X46Y236        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099    10.230 r  mem/bursts/responses_26_reg[8]_i_3/O[0]
+                         net (fo=1, routed)           0.037    10.267    mem/bursts_n_362
+    SLICE_X46Y236        FDRE                                         r  mem/responses_26_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X46Y236        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059    10.024    mem/responses_26_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.267    
+  -------------------------------------------------------------------
+                         slack                                 -0.243    
+
+Slack (VIOLATED) :        -0.234ns  (required time - arrival time)
+  Source:                 mac/dot/reserved_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            vrf/banks_0_2/memory_reg_0/ENARDEN
+                            (rising edge-triggered cell RAMB36E2 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        9.737ns  (logic 1.783ns (18.312%)  route 7.954ns (81.688%))
+  Logic Levels:           17  (LUT3=2 LUT5=4 LUT6=10 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X20Y275        FDRE                         0.000     0.000 r  mac/dot/reserved_reg[1]/C
+    SLICE_X20Y275        FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mac/dot/reserved_reg[1]/Q
+                         net (fo=6, routed)           0.181     0.298    mac/dot/reserved__0[1]
+    SLICE_X20Y277        LUT6 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     0.490 r  mac/dot/io_macRead_valid_INST_0_i_2/O
+                         net (fo=919, routed)         0.328     0.818    mac/dot/reserved_reg[1]_0
+    SLICE_X20Y277        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     0.935 f  mac/dot/io_counters_rawStall_2_x[63]_i_1120/O
+                         net (fo=1, routed)           0.339     1.274    mac/dot/io_counters_rawStall_2_x[63]_i_1120_n_0
+    SLICE_X21Y278        LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     1.404 f  mac/dot/io_counters_rawStall_2_x[63]_i_1099/O
+                         net (fo=1, routed)           0.000     1.404    mac/dot/io_counters_rawStall_2_x[63]_i_1099_n_0
+    SLICE_X21Y278        MUXF7 (Prop_F7MUX_CD_SLICEL_I1_O)
+                                                      0.067     1.471 f  mac/dot/io_counters_rawStall_2_x_reg[63]_i_1089/O
+                         net (fo=16, routed)          0.462     1.933    mac/dot/sb/_GEN[1]
+    SLICE_X23Y277        LUT6 (Prop_A6LUT_SLICEM_I5_O)
+                                                      0.115     2.048 r  mac/dot/io_counters_rawStall_2_x[63]_i_1068/O
+                         net (fo=1, routed)           0.150     2.198    sb/physicalValid_1_i_177_0
+    SLICE_X23Y278        LUT5 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.176     2.374 r  sb/io_counters_rawStall_2_x[63]_i_1019/O
+                         net (fo=2, routed)           0.252     2.626    sb/io_counters_rawStall_2_x[63]_i_1019_n_0
+    SLICE_X23Y284        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.040     2.666 r  sb/io_counters_rawStall_2_x[63]_i_678/O
+                         net (fo=34, routed)          0.405     3.071    sb/io_counters_rawStall_2_x[63]_i_678_n_0
+    SLICE_X24Y279        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040     3.111 f  sb/io_counters_rawStall_2_x[63]_i_625/O
+                         net (fo=1, routed)           0.271     3.382    sb/io_counters_rawStall_2_x[63]_i_625_n_0
+    SLICE_X23Y280        LUT6 (Prop_H6LUT_SLICEM_I5_O)
+                                                      0.137     3.519 f  sb/io_counters_rawStall_2_x[63]_i_178/O
+                         net (fo=2, routed)           0.384     3.903    sb/io_counters_rawStall_2_x[63]_i_178_n_0
+    SLICE_X18Y280        LUT6 (Prop_F6LUT_SLICEM_I5_O)
+                                                      0.192     4.095 f  sb/io_counters_rawStall_2_x[63]_i_33/O
+                         net (fo=2, routed)           0.496     4.591    sb/oldWrites_3[9]
+    SLICE_X21Y274        LUT6 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.115     4.706 f  sb/io_counters_rawStall_2_x[63]_i_7/O
+                         net (fo=1, routed)           0.377     5.083    sb/io_counters_rawStall_2_x[63]_i_7_n_0
+    SLICE_X22Y271        LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.070     5.153 f  sb/io_counters_rawStall_2_x[63]_i_1/O
+                         net (fo=68, routed)          0.505     5.658    sb/_sb_io_raw_3
+    SLICE_X26Y255        LUT5 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.115     5.773 r  sb/io_macRead_valid_INST_0_i_4/O
+                         net (fo=1, routed)           0.595     6.368    mac/legacy/operandRow_reg[0]_0
+    SLICE_X30Y223        LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     6.408 r  mac/legacy/io_macRead_valid_INST_0_i_3/O
+                         net (fo=22, routed)          0.142     6.550    mac/dot/_legacy_io_readEvent_valid
+    SLICE_X31Y223        LUT3 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     6.590 r  mac/dot/io_macRead_valid_INST_0/O
+                         net (fo=20, routed)          0.520     7.110    alu/legacy/io_macRead_valid
+    SLICE_X35Y214        LUT5 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.150 r  alu/legacy/selectedBank_r_2[1]_i_1/O
+                         net (fo=6, routed)           0.438     7.588    mac/legacy/memory_reg_0_4
+    SLICE_X36Y194        LUT6 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.040     7.628 r  mac/legacy/memory_reg_0_i_1__20/O
+                         net (fo=8, routed)           2.109     9.737    vrf/banks_0_2/readEnable029_out
+    RAMB36_X6Y19         RAMB36E2                                     r  vrf/banks_0_2/memory_reg_0/ENARDEN
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    RAMB36_X6Y19         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ENARDEN)
+                                                     -0.462     9.503    vrf/banks_0_2/memory_reg_0
+  -------------------------------------------------------------------
+                         required time                          9.503    
+                         arrival time                          -9.737    
+  -------------------------------------------------------------------
+                         slack                                 -0.234    
+
+Slack (VIOLATED) :        -0.199ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_27_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.223ns  (logic 2.967ns (29.023%)  route 7.256ns (70.977%))
+  Logic Levels:           22  (CARRY8=7 LUT2=1 LUT3=1 LUT4=4 LUT6=8 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 r  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 r  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 r  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 r  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 f  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 r  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 r  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 r  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 r  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 f  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.218     8.421    mem/bSlots/position_reg[0]
+    SLICE_X49Y228        LUT4 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     8.462 r  mem/bSlots/responses_4[7]_i_6/O
+                         net (fo=128, routed)         0.826     9.288    mem/bSlots/io_axi_aw_ready_0
+    SLICE_X44Y229        LUT3 (Prop_A5LUT_SLICEL_I1_O)
+                                                      0.093     9.381 r  mem/bSlots/responses_27[7]_i_9/O
+                         net (fo=1, routed)           0.315     9.696    mem/bursts/responses_27_reg[7]_0[0]
+    SLICE_X43Y235        CARRY8 (Prop_CARRY8_SLICEM_DI[0]_CO[7])
+                                                      0.364    10.060 r  mem/bursts/responses_27_reg[7]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    10.087    mem/bursts/responses_27_reg[7]_i_1_n_0
+    SLICE_X43Y236        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099    10.186 r  mem/bursts/responses_27_reg[8]_i_3/O[0]
+                         net (fo=1, routed)           0.037    10.223    mem/bursts_n_371
+    SLICE_X43Y236        FDRE                                         r  mem/responses_27_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X43Y236        FDRE (Setup_AFF_SLICEM_C_D)
+                                                      0.059    10.024    mem/responses_27_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.223    
+  -------------------------------------------------------------------
+                         slack                                 -0.199    
+
+Slack (VIOLATED) :        -0.190ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_16_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.214ns  (logic 2.893ns (28.324%)  route 7.321ns (71.676%))
+  Logic Levels:           22  (CARRY8=7 LUT2=2 LUT4=4 LUT6=8 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 f  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 f  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 f  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 f  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 r  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 f  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 f  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 f  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 f  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 r  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.200     8.403    mem/bursts/do_enq
+    SLICE_X51Y226        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.040     8.443 f  mem/bursts/responses_4[7]_i_8/O
+                         net (fo=93, routed)          0.879     9.322    mem/bSlots/ram_ext/responses_1_reg[7]
+    SLICE_X45Y225        LUT4 (Prop_B6LUT_SLICEM_I1_O)
+                                                      0.042     9.364 r  mem/bSlots/ram_ext/responses_16[7]_i_7/O
+                         net (fo=1, routed)           0.345     9.709    mem/bursts/responses_16_reg[7]_0[2]
+    SLICE_X45Y229        CARRY8 (Prop_CARRY8_SLICEM_DI[2]_CO[7])
+                                                      0.342    10.051 r  mem/bursts/responses_16_reg[7]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    10.078    mem/bursts/responses_16_reg[7]_i_1_n_0
+    SLICE_X45Y230        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099    10.177 r  mem/bursts/responses_16_reg[8]_i_3/O[0]
+                         net (fo=1, routed)           0.037    10.214    mem/bursts_n_272
+    SLICE_X45Y230        FDRE                                         r  mem/responses_16_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X45Y230        FDRE (Setup_AFF_SLICEM_C_D)
+                                                      0.059    10.024    mem/responses_16_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.214    
+  -------------------------------------------------------------------
+                         slack                                 -0.190    
+
+Slack (VIOLATED) :        -0.185ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_28_reg[8]/R
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.066ns  (logic 2.617ns (25.998%)  route 7.449ns (74.002%))
+  Logic Levels:           20  (CARRY8=5 LUT2=1 LUT4=3 LUT6=10 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 r  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 r  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 r  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 r  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 f  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 r  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 r  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 r  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 r  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 f  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.327     8.530    mem/bSlots/ram_ext/responses_24_reg[0]
+    SLICE_X49Y229        LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.132     8.662 f  mem/bSlots/ram_ext/responses_28[8]_i_5/O
+                         net (fo=2, routed)           0.861     9.523    mem/bSlots/ram_ext/reserved_reg[8]_0
+    SLICE_X42Y230        LUT6 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.115     9.638 r  mem/bSlots/ram_ext/responses_28[8]_i_1/O
+                         net (fo=9, routed)           0.428    10.066    mem/bSlots_n_61
+    SLICE_X42Y233        FDRE                                         r  mem/responses_28_reg[8]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X42Y233        FDRE (Setup_AFF_SLICEM_C_R)
+                                                     -0.084     9.881    mem/responses_28_reg[8]
+  -------------------------------------------------------------------
+                         required time                          9.881    
+                         arrival time                         -10.066    
+  -------------------------------------------------------------------
+                         slack                                 -0.185    
+
+Slack (VIOLATED) :        -0.183ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_25_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.207ns  (logic 3.055ns (29.930%)  route 7.152ns (70.070%))
+  Logic Levels:           22  (CARRY8=7 LUT2=2 LUT3=1 LUT4=3 LUT6=8 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 f  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 f  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 f  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 f  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 r  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 f  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 f  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 f  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 f  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 r  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.251     8.454    mem/bursts/do_enq
+    SLICE_X51Y225        LUT2 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.116     8.570 r  mem/bursts/responses_29[8]_i_7/O
+                         net (fo=43, routed)          1.004     9.574    mem/bursts/responses_29[8]_i_7_n_0
+    SLICE_X44Y235        LUT3 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.133     9.707 r  mem/bursts/responses_25[7]_i_6/O
+                         net (fo=1, routed)           0.000     9.707    mem/bursts/responses_25[7]_i_6_n_0
+    SLICE_X44Y235        CARRY8 (Prop_CARRY8_SLICEL_DI[3]_CO[7])
+                                                      0.337    10.044 r  mem/bursts/responses_25_reg[7]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    10.071    mem/bursts/responses_25_reg[7]_i_1_n_0
+    SLICE_X44Y236        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099    10.170 r  mem/bursts/responses_25_reg[8]_i_3/O[0]
+                         net (fo=1, routed)           0.037    10.207    mem/bursts_n_353
+    SLICE_X44Y236        FDRE                                         r  mem/responses_25_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X44Y236        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059    10.024    mem/responses_25_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.207    
+  -------------------------------------------------------------------
+                         slack                                 -0.183    
+
+Slack (VIOLATED) :        -0.179ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_24_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.203ns  (logic 2.969ns (29.099%)  route 7.234ns (70.901%))
+  Logic Levels:           22  (CARRY8=7 LUT2=2 LUT4=3 LUT6=9 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 f  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 f  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 f  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 f  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 r  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 f  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 f  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 f  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 f  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 r  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.251     8.454    mem/bursts/do_enq
+    SLICE_X51Y225        LUT2 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.116     8.570 r  mem/bursts/responses_29[8]_i_7/O
+                         net (fo=43, routed)          1.086     9.656    mem/bursts/responses_29[8]_i_7_n_0
+    SLICE_X40Y234        LUT6 (Prop_C6LUT_SLICEM_I5_O)
+                                                      0.040     9.696 r  mem/bursts/responses_24[7]_i_15/O
+                         net (fo=1, routed)           0.000     9.696    mem/bursts/responses_24[7]_i_15_n_0
+    SLICE_X40Y234        CARRY8 (Prop_CARRY8_SLICEM_S[2]_CO[7])
+                                                      0.344    10.040 r  mem/bursts/responses_24_reg[7]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    10.067    mem/bursts/responses_24_reg[7]_i_1_n_0
+    SLICE_X40Y235        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099    10.166 r  mem/bursts/responses_24_reg[8]_i_3/O[0]
+                         net (fo=1, routed)           0.037    10.203    mem/bursts_n_344
+    SLICE_X40Y235        FDRE                                         r  mem/responses_24_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X40Y235        FDRE (Setup_AFF_SLICEM_C_D)
+                                                      0.059    10.024    mem/responses_24_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.203    
+  -------------------------------------------------------------------
+                         slack                                 -0.179    
+
+Slack (VIOLATED) :        -0.161ns  (required time - arrival time)
+  Source:                 mem/current_reg[0]_rep__4/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/responses_10_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.185ns  (logic 2.914ns (28.611%)  route 7.271ns (71.389%))
+  Logic Levels:           22  (CARRY8=7 LUT2=1 LUT3=1 LUT4=4 LUT6=8 MUXF7=1)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                         propagated clock network latency
+                                                      0.000     0.000    
+    SLICE_X78Y205        FDRE                         0.000     0.000 r  mem/current_reg[0]_rep__4/C
+    SLICE_X78Y205        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  mem/current_reg[0]_rep__4/Q
+                         net (fo=104, routed)         0.641     0.758    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_113_1
+    SLICE_X73Y209        LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116     0.874 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179/O
+                         net (fo=1, routed)           0.000     0.874    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_179_n_0
+    SLICE_X73Y209        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     0.941 f  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106/O
+                         net (fo=1, routed)           0.527     1.468    mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_106_n_0
+    SLICE_X67Y213        LUT6 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.191     1.659 r  mem/bursts/ram_ext/io_invalidate_bits[32]_INST_0_i_50/O
+                         net (fo=12, routed)          0.362     2.021    mem/bursts_n_605
+    SLICE_X68Y205        LUT2 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116     2.137 r  mem/io_axi_aw_valid_INST_0_i_9607/O
+                         net (fo=1, routed)           0.000     2.137    mem/io_axi_aw_valid_INST_0_i_9607_n_0
+    SLICE_X68Y205        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.343     2.480 r  mem/io_axi_aw_valid_INST_0_i_6550/CO[7]
+                         net (fo=1, routed)           0.027     2.507    mem/io_axi_aw_valid_INST_0_i_6550_n_0
+    SLICE_X68Y206        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     2.526 r  mem/io_axi_aw_valid_INST_0_i_6549/CO[7]
+                         net (fo=1, routed)           0.027     2.553    mem/io_axi_aw_valid_INST_0_i_6549_n_0
+    SLICE_X68Y207        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     2.739 r  mem/io_axi_aw_valid_INST_0_i_2785/O[7]
+                         net (fo=128, routed)         1.222     3.961    front/_vectorHits_T_1486[23]
+    SLICE_X57Y159        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.154     4.115 r  front/io_axi_aw_valid_INST_0_i_2496/O
+                         net (fo=1, routed)           0.000     4.115    front/io_axi_aw_valid_INST_0_i_2496_n_0
+    SLICE_X57Y159        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     4.452 r  front/io_axi_aw_valid_INST_0_i_751/CO[7]
+                         net (fo=1, routed)           0.027     4.479    front/io_axi_aw_valid_INST_0_i_751_n_0
+    SLICE_X57Y160        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[1])
+                                                      0.055     4.534 r  front/io_axi_aw_valid_INST_0_i_265/CO[1]
+                         net (fo=1, routed)           0.372     4.906    mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_36_2[0]
+    SLICE_X57Y169        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.072     4.978 f  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_101/O
+                         net (fo=1, routed)           0.501     5.479    front/io_axi_aw_valid_INST_0_i_13_0
+    SLICE_X61Y182        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.072     5.551 f  front/io_axi_aw_valid_INST_0_i_36/O
+                         net (fo=1, routed)           0.397     5.948    front/io_axi_aw_valid_INST_0_i_36_n_0
+    SLICE_X63Y199        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.988 r  front/io_axi_aw_valid_INST_0_i_13/O
+                         net (fo=1, routed)           0.292     6.280    front/io_axi_aw_valid_INST_0_i_13_n_0
+    SLICE_X63Y204        LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.454 r  front/io_axi_aw_valid_INST_0_i_6/O
+                         net (fo=1, routed)           0.652     7.106    front/io_axi_aw_valid_INST_0_i_6_n_0
+    SLICE_X56Y219        LUT6 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.115     7.221 r  front/io_axi_aw_valid_INST_0_i_3/O
+                         net (fo=2, routed)           0.153     7.374    mem/bursts/ram_ext/_front_io_vectorConflict
+    SLICE_X56Y221        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     7.414 r  mem/bursts/ram_ext/io_axi_aw_valid_INST_0_i_1/O
+                         net (fo=3, routed)           0.417     7.831    mem/bursts/ram_ext/generating_reg
+    SLICE_X51Y224        LUT4 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.040     7.871 r  mem/bursts/ram_ext/io_axi_ar_valid_INST_0_i_5/O
+                         net (fo=2, routed)           0.216     8.087    mem/bursts/ram_ext/maybe_full_reg
+    SLICE_X49Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     8.203 f  mem/bursts/ram_ext/enq_ptr_value[7]_i_3/O
+                         net (fo=128, routed)         0.218     8.421    mem/bSlots/position_reg[0]
+    SLICE_X49Y228        LUT4 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.041     8.462 r  mem/bSlots/responses_4[7]_i_6/O
+                         net (fo=128, routed)         0.758     9.220    mem/bSlots/io_axi_aw_ready_0
+    SLICE_X47Y228        LUT3 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.040     9.260 r  mem/bSlots/responses_10[7]_i_14/O
+                         net (fo=1, routed)           0.398     9.658    mem/bursts/responses_10_reg[7]_0[0]
+    SLICE_X47Y238        CARRY8 (Prop_CARRY8_SLICEL_DI[0]_CO[7])
+                                                      0.364    10.022 r  mem/bursts/responses_10_reg[7]_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.049    mem/bursts/responses_10_reg[7]_i_3_n_0
+    SLICE_X47Y239        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099    10.148 r  mem/bursts/responses_10_reg[8]_i_1/O[0]
+                         net (fo=1, routed)           0.037    10.185    mem/bursts_n_226
+    SLICE_X47Y239        FDRE                                         r  mem/responses_10_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                         propagated clock network latency
+                                                      0.000    10.000    
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+    SLICE_X47Y239        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059    10.024    mem/responses_10_reg[8]
+  -------------------------------------------------------------------
+                         required time                         10.024    
+                         arrival time                         -10.185    
+  -------------------------------------------------------------------
+                         slack                                 -0.161    
+
+
+
+

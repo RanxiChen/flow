@@ -1,0 +1,390 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Wed Oct  7 18:50:12 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing_summary -file /home/chen/FUN/flow-r04-evidence/age/s1/reports/timing-summary.rpt
+| Design            : RvvCoprocessor
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (689)
+6. checking no_output_delay (2418)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (689)
+--------------------------------
+ There are 689 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (2418)
+----------------------------------
+ There are 2418 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+     -0.444     -146.934                    512               110572        0.068        0.000                      0               110572        4.020        0.000                       0                 31202  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock      Waveform(ns)       Period(ns)      Frequency(MHz)
+-----      ------------       ----------      --------------
+rvv_clock  {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+rvv_clock          -0.444     -146.934                    512               110572        0.068        0.000                      0               110572        4.020        0.000                       0                 31202  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  rvv_clock
+  To Clock:  rvv_clock
+
+Setup :          512  Failing Endpoints,  Worst Slack       -0.444ns,  Total Violation     -146.934ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.068ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.020ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (VIOLATED) :        -0.444ns  (required time - arrival time)
+  Source:                 alu/alu/tokens_3_desc_decoded_op_reg[3]__0/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1/I
+                            (rising edge-triggered cell RAMD32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (rvv_clock rise@10.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        10.360ns  (logic 4.737ns (45.724%)  route 5.623ns (54.276%))
+  Logic Levels:           34  (CARRY8=15 LUT3=1 LUT4=4 LUT5=1 LUT6=13)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32001, unset)        0.000     0.000    alu/alu/clock
+                         FDRE                                         r  alu/alu/tokens_3_desc_decoded_op_reg[3]__0/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     0.115 f  alu/alu/tokens_3_desc_decoded_op_reg[3]__0/Q
+                         net (fo=12, unplaced)        0.297     0.412    alu/alu/cacheData_ext/tokens_3_desc_decoded_op[3]
+                         LUT4 (Prop_LUT4_I0_O)        0.132     0.544 r  alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_26/O
+                         net (fo=13, unplaced)        0.288     0.832    alu/alu/cacheData_ext/Memory_reg_0_31_0_1_i_26_n_0
+                         LUT4 (Prop_LUT4_I2_O)        0.040     0.872 f  alu/alu/cacheData_ext/computed[511]_i_180/O
+                         net (fo=109, unplaced)       0.337     1.209    alu/alu/cacheData_ext/computed[511]_i_180_n_0
+                         LUT4 (Prop_LUT4_I2_O)        0.040     1.249 f  alu/alu/cacheData_ext/computed[511]_i_290/O
+                         net (fo=1, unplaced)         0.251     1.500    alu/alu/cacheData_ext/computed[511]_i_290_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.132     1.632 f  alu/alu/cacheData_ext/computed[511]_i_219/O
+                         net (fo=1, unplaced)         0.230     1.862    alu/alu/cacheData_ext/computed[511]_i_219_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.176     2.038 f  alu/alu/cacheData_ext/computed[511]_i_142/O
+                         net (fo=1, unplaced)         0.249     2.287    alu/alu/cacheData_ext/computed[511]_i_142_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     2.327 r  alu/alu/cacheData_ext/computed[511]_i_65/O
+                         net (fo=1, unplaced)         0.249     2.576    alu/alu/cacheData_ext/computed[511]_i_65_n_0
+                         LUT6 (Prop_LUT6_I2_O)        0.040     2.616 r  alu/alu/cacheData_ext/computed[511]_i_21/O
+                         net (fo=25, unplaced)        0.303     2.919    alu/alu/cacheData_ext/computed[511]_i_21_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040     2.959 r  alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_40/O
+                         net (fo=91, unplaced)        0.333     3.292    alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_40_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.095     3.387 r  alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_50/O
+                         net (fo=1, unplaced)         0.294     3.681    alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_50_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[7])
+                                                      0.355     4.036 r  alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_23/CO[7]
+                         net (fo=1, unplaced)         0.000     4.036    alu/alu/cacheData_ext/Memory_reg_0_31_192_193_i_23_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     4.132 r  alu/alu/cacheData_ext/Memory_reg_0_31_200_201_i_43/CO[0]
+                         net (fo=1, unplaced)         0.249     4.381    alu/alu/cacheData_ext/_result_sums_sum_T_74[8]
+                         LUT6 (Prop_LUT6_I3_O)        0.040     4.421 r  alu/alu/cacheData_ext/Memory_reg_0_31_200_201_i_41/O
+                         net (fo=1, unplaced)         0.000     4.421    alu/alu/cacheData_ext/Memory_reg_0_31_200_201_i_41_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     4.780 r  alu/alu/cacheData_ext/Memory_reg_0_31_200_201_i_15/CO[7]
+                         net (fo=1, unplaced)         0.000     4.780    alu/alu/cacheData_ext/Memory_reg_0_31_200_201_i_15_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     4.876 r  alu/alu/cacheData_ext/computed_reg[211]_i_24/CO[0]
+                         net (fo=1, unplaced)         0.249     5.125    alu/alu/cacheData_ext/_result_sums_sum_T_77[8]
+                         LUT6 (Prop_LUT6_I5_O)        0.040     5.165 r  alu/alu/cacheData_ext/computed[211]_i_23/O
+                         net (fo=1, unplaced)         0.000     5.165    alu/alu/cacheData_ext/computed[211]_i_23_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     5.524 r  alu/alu/cacheData_ext/computed_reg[211]_i_6/CO[7]
+                         net (fo=1, unplaced)         0.000     5.524    alu/alu/cacheData_ext/computed_reg[211]_i_6_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     5.620 r  alu/alu/cacheData_ext/Memory_reg_0_31_216_217_i_36/CO[0]
+                         net (fo=1, unplaced)         0.249     5.869    alu/alu/cacheData_ext/_result_sums_sum_T_80[8]
+                         LUT6 (Prop_LUT6_I3_O)        0.040     5.909 r  alu/alu/cacheData_ext/Memory_reg_0_31_216_217_i_34/O
+                         net (fo=1, unplaced)         0.000     5.909    alu/alu/cacheData_ext/Memory_reg_0_31_216_217_i_34_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     6.268 r  alu/alu/cacheData_ext/Memory_reg_0_31_216_217_i_12/CO[7]
+                         net (fo=1, unplaced)         0.000     6.268    alu/alu/cacheData_ext/Memory_reg_0_31_216_217_i_12_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     6.364 r  alu/alu/cacheData_ext/computed_reg[224]_i_23/CO[0]
+                         net (fo=1, unplaced)         0.249     6.613    alu/alu/cacheData_ext/_result_sums_sum_T_83[8]
+                         LUT6 (Prop_LUT6_I5_O)        0.040     6.653 r  alu/alu/cacheData_ext/computed[224]_i_22/O
+                         net (fo=1, unplaced)         0.000     6.653    alu/alu/cacheData_ext/computed[224]_i_22_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.012 r  alu/alu/cacheData_ext/computed_reg[224]_i_5/CO[7]
+                         net (fo=1, unplaced)         0.000     7.012    alu/alu/cacheData_ext/computed_reg[224]_i_5_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     7.108 r  alu/alu/cacheData_ext/computed_reg[239]_i_29/CO[0]
+                         net (fo=1, unplaced)         0.249     7.357    alu/alu/cacheData_ext/_result_sums_sum_T_86[8]
+                         LUT6 (Prop_LUT6_I3_O)        0.040     7.397 r  alu/alu/cacheData_ext/computed[239]_i_27/O
+                         net (fo=1, unplaced)         0.000     7.397    alu/alu/cacheData_ext/computed[239]_i_27_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     7.756 r  alu/alu/cacheData_ext/computed_reg[239]_i_7/CO[7]
+                         net (fo=1, unplaced)         0.000     7.756    alu/alu/cacheData_ext/computed_reg[239]_i_7_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     7.852 r  alu/alu/cacheData_ext/computed_reg[247]_i_32/CO[0]
+                         net (fo=1, unplaced)         0.249     8.101    alu/alu/cacheData_ext/_result_sums_sum_T_89[8]
+                         LUT6 (Prop_LUT6_I5_O)        0.040     8.141 r  alu/alu/cacheData_ext/computed[247]_i_26/O
+                         net (fo=1, unplaced)         0.000     8.141    alu/alu/cacheData_ext/computed[247]_i_26_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.359     8.500 r  alu/alu/cacheData_ext/computed_reg[247]_i_9/CO[7]
+                         net (fo=1, unplaced)         0.000     8.500    alu/alu/cacheData_ext/computed_reg[247]_i_9_n_0
+                         CARRY8 (Prop_CARRY8_CI_CO[0])
+                                                      0.096     8.596 r  alu/alu/cacheData_ext/computed_reg[255]_i_29/CO[0]
+                         net (fo=1, unplaced)         0.249     8.845    alu/alu/cacheData_ext/_result_sums_sum_T_92[8]
+                         LUT6 (Prop_LUT6_I3_O)        0.040     8.885 r  alu/alu/cacheData_ext/computed[255]_i_23/O
+                         net (fo=1, unplaced)         0.000     8.885    alu/alu/cacheData_ext/computed[255]_i_23_n_0
+                         CARRY8 (Prop_CARRY8_S[0]_O[5])
+                                                      0.306     9.191 r  alu/alu/cacheData_ext/computed_reg[255]_i_6/O[5]
+                         net (fo=1, unplaced)         0.310     9.501    alu/alu/cacheData_ext/computed_reg[255]_i_6_n_10
+                         LUT4 (Prop_LUT4_I1_O)        0.040     9.541 r  alu/alu/cacheData_ext/computed[253]_i_5/O
+                         net (fo=1, unplaced)         0.249     9.790    alu/alu/cacheData_ext/computed[253]_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.830 r  alu/alu/cacheData_ext/computed[253]_i_1/O
+                         net (fo=2, unplaced)         0.249    10.079    alu/alu/cacheData_ext/D[253]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    10.119 r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253_i_1/O
+                         net (fo=8, unplaced)         0.241    10.360    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/DIA1
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1/I
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=32001, unset)        0.000    10.000    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/WCLK
+                         RAMD32                                       r  alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1/CLK
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         RAMD32 (Setup_RAMD32_CLK_I)
+                                                     -0.049     9.916    alu/alu/cacheData_ext/Memory_reg_0_31_252_253/RAMA_D1
+  -------------------------------------------------------------------
+                         required time                          9.916    
+                         arrival time                         -10.360    
+  -------------------------------------------------------------------
+                         slack                                 -0.444    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.068ns  (arrival time - required time)
+  Source:                 mem/bSlots/enq_ptr_value_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem/bSlots/ram_ext/Memory_reg_0_15_0_3/RAMD/ADR1
+                            (rising edge-triggered cell RAMS32 clocked by rvv_clock  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             rvv_clock
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (rvv_clock rise@0.000ns - rvv_clock rise@0.000ns)
+  Data Path Delay:        0.143ns  (logic 0.049ns (34.331%)  route 0.094ns (65.669%))
+  Logic Levels:           0  
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32001, unset)        0.000     0.000    mem/bSlots/clock
+                         FDRE                                         r  mem/bSlots/enq_ptr_value_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.049     0.049 r  mem/bSlots/enq_ptr_value_reg[1]/Q
+                         net (fo=12, unplaced)        0.094     0.143    mem/bSlots/ram_ext/Memory_reg_0_15_0_3/ADDRD1
+                         RAMS32                                       r  mem/bSlots/ram_ext/Memory_reg_0_15_0_3/RAMD/ADR1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock rvv_clock rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=32001, unset)        0.000     0.000    mem/bSlots/ram_ext/Memory_reg_0_15_0_3/WCLK
+                         RAMS32                                       r  mem/bSlots/ram_ext/Memory_reg_0_15_0_3/RAMD/CLK
+                         clock pessimism              0.000     0.000    
+                         RAMS32 (Hold_RAMS32_CLK_ADR1)
+                                                      0.075     0.075    mem/bSlots/ram_ext/Memory_reg_0_15_0_3/RAMD
+  -------------------------------------------------------------------
+                         required time                         -0.075    
+                         arrival time                           0.143    
+  -------------------------------------------------------------------
+                         slack                                  0.068    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         rvv_clock
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clock }
+
+Check Type        Corner  Lib Pin             Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     RAMB36E2/CLKARDCLK  n/a            1.961         10.000      8.039                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+Low Pulse Width   Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+High Pulse Width  Slow    RAMB36E2/CLKARDCLK  n/a            0.980         5.000       4.020                mem/returnBuffer/ram_ext/Memory_reg_0/CLKARDCLK
+
+
+
