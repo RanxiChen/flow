@@ -14,6 +14,8 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     val hazard = Output(new RvvHazard(p)); val blocked = Input(Bool())
     val progress = Valid(new RvvProgress(p)); val write = Decoupled(new RvvWrite(p))
     val age = Output(UInt(64.W)); val busy = Output(Bool())
+    val readEvent = Valid(new RvvRegisterEvent)
+    val complete = Valid(UInt(64.W))
   })
   val active = RegInit(false.B); val d = Reg(new RvvDescriptor(p))
   val row = RegInit(0.U(log2Ceil(p.rows+1).W))
@@ -22,8 +24,6 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   val subrow = if(p.rowsPerReg == 1) 0.U else row(log2Ceil(p.rowsPerReg)-1,0)
   def address(base: UInt): UInt = ((base + registerOffset)*p.rowsPerReg.U+subrow)(p.rowBits-1,0)
   def bit(base: UInt): UInt = (1.U(32.W) << (base+registerOffset))(31,0)
-  io.in.ready := !active
-  when(io.in.fire) { d := io.in.bits; active := true.B; row := 0.U }
   io.age := d.age; io.busy := active
   io.readRows(0) := address(d.decoded.vs2)
   io.readRows(1) := address(if(multiply) d.decoded.vd else d.decoded.vs1)
@@ -88,6 +88,12 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   io.progress.bits.writeDone := Mux(regLast,bit(d.decoded.vd),0.U)
   io.progress.bits.finished := zero || last
   when(io.progress.valid) { when(zero || last) { active := false.B }.otherwise { row := row + 1.U } }
+  io.in.ready := !active || (io.progress.valid && io.progress.bits.finished)
+  when(io.in.fire) { d := io.in.bits; active := true.B; row := 0.U }
+  io.readEvent.valid := io.write.fire && subrow === 0.U
+  io.readEvent.bits.age := d.age; io.readEvent.bits.register := d.decoded.vs2+registerOffset
+  io.complete.valid := io.progress.valid && io.progress.bits.finished
+  io.complete.bits := d.age
 }
 
 class RvvCrossLaneSequencer(p: RvvParams) extends Module {

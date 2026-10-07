@@ -15,6 +15,9 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     val conflictQuery = Input(new RvvConflict); val conflict = Output(Bool())
     val invalidate = Decoupled(UInt(64.W)); val scalarWritesVisible = Input(Bool())
     val axi = new RvvAxi(p); val counters = Output(new RvvCounters)
+    // Passive measurement events; they do not control the mounted core model.
+    val loadRegisterComplete = Valid(new RvvRegisterEvent)
+    val macRead = Valid(new RvvRegisterEvent); val macComplete = Valid(UInt(64.W))
   })
   val front = Module(new RvvFrontend(p))
   front.io.issue <> io.issue; io.verdict <> front.io.verdict
@@ -41,6 +44,10 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   front.io.vectorQuery := mem.io.ordering; front.io.vectorQueryValid := mem.io.orderingValid
   mem.io.conflict := front.io.vectorConflict; front.io.released <> mem.io.released
   io.scalarResult <> cross.io.result
+  io.macRead <> mac.io.readEvent; io.macComplete <> mac.io.complete
+  io.loadRegisterComplete.valid := mem.io.progress(1).valid && mem.io.progress(1).bits.writeDone.orR
+  io.loadRegisterComplete.bits.age := mem.io.writeAge
+  io.loadRegisterComplete.bits.register := PriorityEncoder(mem.io.progress(1).bits.writeDone)
   val vrf = Module(new RvvRegisterFile(p))
   alu.io.mask := vrf.io.mask; mac.io.mask := vrf.io.mask
   // Allocate the shared execution read ports by age when demand exceeds supply.
@@ -53,7 +60,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     when(alu.io.grant && j.U < alu.io.readDemand) {
       vrf.io.readRows(j) := alu.io.readRows(j); alu.io.readData(j) := vrf.io.readData(j)
     }
-    val index = Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)+j.U
+    val index = (Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)+&j.U).pad(log2Ceil(p.execReadPorts+2))
     when(mac.io.grant && j.U < mac.io.readDemand) {
       vrf.io.readRows(index) := mac.io.readRows(j); mac.io.readData(j) := vrf.io.readData(index)
     }

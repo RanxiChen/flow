@@ -177,3 +177,4 @@ class RvvCounters extends Bundle {
   val busy = Vec(5,UInt(64.W)); val rawStall = Vec(5,UInt(64.W))
   val warStall = Vec(5,UInt(64.W)); val wawStall = Vec(5,UInt(64.W))
 }
+class RvvRegisterEvent extends Bundle { val age = UInt(64.W); val register = UInt(5.W) }

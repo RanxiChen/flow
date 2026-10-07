@@ -34,7 +34,7 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
         when(x.row < p.rowsPerReg.U) {
           val bytes = Wire(Vec(p.regBytes,UInt(8.W))); bytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
           for(j <- 0 until p.rowBytes) {
-            when(x.enables(j)) { bytes(x.row*p.rowBytes.U+j.U) := x.data(8*j+7,8*j) }
+            when(x.enables(j)) { bytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
           }
           shadow := bytes.asUInt
         }
