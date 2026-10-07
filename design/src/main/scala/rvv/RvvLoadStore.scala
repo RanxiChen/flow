@@ -157,7 +157,8 @@ class RvvLoadStore(p: RvvParams) extends Module {
   io.released.bits := desc(releaseIndex).age
   when(io.released.valid) {
     intervalLive(releaseIndex) := false.B
-    when(dataDone(releaseIndex) || (desc(releaseIndex).decoded.store && bound(releaseIndex))) { live(releaseIndex) := false.B }
+    when(dataDone(releaseIndex) || (desc(releaseIndex).decoded.store && bound(releaseIndex) &&
+      desc(releaseIndex).issue.vl =/= 0.U && desc(releaseIndex).issue.vstart < desc(releaseIndex).issue.vl)) { live(releaseIndex) := false.B }
   }
   for(k <- 0 until p.memoryInflight) {
     when(live(k) && dataDone(k) && !intervalLive(k)) { live(k) := false.B }
@@ -180,14 +181,14 @@ class RvvLoadStore(p: RvvParams) extends Module {
   io.progress.foreach { x => x.valid := false.B; x.bits := 0.U.asTypeOf(new RvvProgress(p)) }
   io.hazard.foreach(_ := 0.U.asTypeOf(new RvvHazard(p)))
   when(generating && noAccess) { generating := false.B; requestDone(current) := true.B }
-  val zeroMask = VecInit((0 until p.memoryInflight).map(k => live(k) && bound(k) && requestDone(k) &&
+  val zeroMask = VecInit((0 until p.memoryInflight).map(k => live(k) && bound(k) && requestDone(k) && !dataDone(k) &&
     (desc(k).issue.vl === 0.U || desc(k).issue.vstart >= desc(k).issue.vl)))
   val zeroIndex = PriorityEncoder(zeroMask.asUInt)
   val retiringStore = io.released.valid && desc(releaseIndex).decoded.store &&
     desc(releaseIndex).issue.vl =/= 0.U && desc(releaseIndex).issue.vstart < desc(releaseIndex).issue.vl
   when(zeroMask.asUInt.orR && !(gathering && storePending && storeReturned && !io.blocked(0)) && !retiringStore) {
     io.progress(0).valid := true.B; io.progress(0).bits.slot := desc(zeroIndex).slot
-    io.progress(0).bits.finished := true.B; dataDone(zeroIndex) := true.B; live(zeroIndex) := false.B
+    io.progress(0).bits.finished := true.B; dataDone(zeroIndex) := true.B
   }
   // Store gathering uses only its dedicated read port, one memory-order row at
   // a time. It holds a complete W beat stable through arbitrary W backpressure.
