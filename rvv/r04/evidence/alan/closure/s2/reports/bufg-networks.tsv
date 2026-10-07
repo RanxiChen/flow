@@ -1,0 +1,2 @@
+cell	type	input_net	driver
+mac/legacy/returned_REG_1_reg_bufg_place	BUFGCE	mac/legacy/returned_REG_1_bufg_place	mac/legacy/returned_REG_1_reg/Q

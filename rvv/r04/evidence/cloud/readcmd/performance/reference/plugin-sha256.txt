@@ -1,0 +1,1 @@
+7108479f2a83369edd5efc722be189120c3614af6386efe2ff606f69e239bc90  /home/cloud_chen/evidence/rvv-r04/readcmd/performance/reference/r02_dot.so

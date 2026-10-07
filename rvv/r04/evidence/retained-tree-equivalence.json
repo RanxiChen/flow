@@ -1,0 +1,8 @@
+{
+  "validated_source": "5e40737ff65def14294a274ad60f5f3f20923488",
+  "validated_tree": "083bce64a7b2de915a28bb3a5293daff6fe45670",
+  "retained_commit": "59a38cc08f4b5d0b56855b8378201583e0ab72c7",
+  "retained_tree": "083bce64a7b2de915a28bb3a5293daff6fe45670",
+  "equivalence_command": "git diff --exit-code 5e40737 59a38cc -- design/src/main/scala/rvv design/src/test/scala/rvv rvv/r02 rvv/r03 rvv/r04",
+  "exit_code": 0
+}

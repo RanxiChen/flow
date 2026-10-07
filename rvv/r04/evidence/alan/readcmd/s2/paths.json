@@ -1,0 +1,92 @@
+[
+  {
+    "source": "mac/dot/d_slot_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]",
+    "levels": 24,
+    "slack": 0.026,
+    "data": 9.445,
+    "logic": 2.304,
+    "route": 7.141
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB/I",
+    "levels": 27,
+    "slack": 0.033,
+    "data": 9.883,
+    "logic": 2.527,
+    "route": 7.356
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_444_445/RAMF_D1/I",
+    "levels": 27,
+    "slack": 0.034,
+    "data": 9.882,
+    "logic": 2.73,
+    "route": 7.152
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA/I",
+    "levels": 27,
+    "slack": 0.035,
+    "data": 9.881,
+    "logic": 2.527,
+    "route": 7.354
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMC/I",
+    "levels": 27,
+    "slack": 0.036,
+    "data": 9.88,
+    "logic": 2.527,
+    "route": 7.353
+  },
+  {
+    "source": "mac/dot/d_slot_reg[1]/C",
+    "destination": "io_loadRegisterComplete_bits_register_REG_reg[1]/D",
+    "levels": 28,
+    "slack": 0.039,
+    "data": 9.986,
+    "logic": 2.716,
+    "route": 7.27
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMF/I",
+    "levels": 27,
+    "slack": 0.041,
+    "data": 9.875,
+    "logic": 2.527,
+    "route": 7.348
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMD/I",
+    "levels": 27,
+    "slack": 0.043,
+    "data": 9.873,
+    "logic": 2.527,
+    "route": 7.346
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMB_D1/I",
+    "levels": 27,
+    "slack": 0.046,
+    "data": 9.87,
+    "logic": 2.489,
+    "route": 7.381
+  },
+  {
+    "source": "alu/alu/tokens_3_desc_decoded_vs1_reg[2]_srl3_srlopt/C",
+    "destination": "alu/alu/cacheData_ext/Memory_reg_0_31_126_127/RAMA_D1/I",
+    "levels": 27,
+    "slack": 0.047,
+    "data": 9.869,
+    "logic": 2.489,
+    "route": 7.38
+  }
+]

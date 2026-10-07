@@ -1,0 +1,92 @@
+[
+  {
+    "source": "alu/alu/row_reg[2]/C",
+    "destination": "vrf/banks_3_0/memory_reg_4/ENARDEN",
+    "levels": 18,
+    "slack": 0.221,
+    "data": 9.282,
+    "logic": 2.46,
+    "route": 6.822
+  },
+  {
+    "source": "alu/alu/row_reg[2]/C",
+    "destination": "vrf/banks_1_1/memory_reg_4/ENARDEN",
+    "levels": 19,
+    "slack": 0.225,
+    "data": 9.278,
+    "logic": 2.491,
+    "route": 6.787
+  },
+  {
+    "source": "mac/dot/reserved_reg[3]/C",
+    "destination": "vrf/banks_1_3/memory_reg_0/ENARDEN",
+    "levels": 19,
+    "slack": 0.292,
+    "data": 9.211,
+    "logic": 2.064,
+    "route": 7.147
+  },
+  {
+    "source": "alu/alu/row_reg[2]/C",
+    "destination": "vrf/banks_1_2/memory_reg_4/ENARDEN",
+    "levels": 19,
+    "slack": 0.302,
+    "data": 9.201,
+    "logic": 2.421,
+    "route": 6.78
+  },
+  {
+    "source": "mac/dot/reserved_reg[3]/C",
+    "destination": "vrf/banks_3_3/memory_reg_0/ENARDEN",
+    "levels": 19,
+    "slack": 0.31,
+    "data": 9.193,
+    "logic": 2.086,
+    "route": 7.107
+  },
+  {
+    "source": "mac/dot/reserved_reg[3]/C",
+    "destination": "vrf/banks_3_3/memory_reg_2/ENARDEN",
+    "levels": 19,
+    "slack": 0.323,
+    "data": 9.18,
+    "logic": 2.086,
+    "route": 7.094
+  },
+  {
+    "source": "mac/dot/reserved_reg[3]/C",
+    "destination": "vrf/banks_1_3/memory_reg_7/ENARDEN",
+    "levels": 19,
+    "slack": 0.326,
+    "data": 9.177,
+    "logic": 2.064,
+    "route": 7.113
+  },
+  {
+    "source": "alu/alu/row_reg[2]/C",
+    "destination": "vrf/banks_3_1/memory_reg_4/ENARDEN",
+    "levels": 19,
+    "slack": 0.335,
+    "data": 9.168,
+    "logic": 2.408,
+    "route": 6.76
+  },
+  {
+    "source": "mac/dot/reserved_reg[3]/C",
+    "destination": "vrf/banks_1_3/memory_reg_1/ENARDEN",
+    "levels": 19,
+    "slack": 0.348,
+    "data": 9.155,
+    "logic": 2.064,
+    "route": 7.091
+  },
+  {
+    "source": "mem/desc_7_slot_reg[2]/C",
+    "destination": "vrf/banks_3_4/memory_reg_4/ENARDEN",
+    "levels": 13,
+    "slack": 0.357,
+    "data": 9.146,
+    "logic": 1.494,
+    "route": 7.652
+  }
+]

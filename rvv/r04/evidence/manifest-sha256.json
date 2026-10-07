@@ -1,0 +1,1677 @@
+[
+  {
+    "path": "README.md",
+    "size": 1803,
+    "sha256": "20d07c8fd9315f259f757da1a82e1d641df0c636f9ffa2cf618e6dfbdab89dd9"
+  },
+  {
+    "path": "alan/age/s1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/age/s1/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/age/s1/reports/dsp-pipeline.tsv",
+    "size": 5118,
+    "sha256": "2c433d66b3c3376558da4cd0d0a2f648511f5d5fd1dc82439a71797a9aefaee2"
+  },
+  {
+    "path": "alan/age/s1/reports/timing-summary.rpt",
+    "size": 25151,
+    "sha256": "744bd4492198015521fee349582686e34b64c1b3e79e0dee887a671f166324dd"
+  },
+  {
+    "path": "alan/age/s1/reports/utilization-hierarchical.rpt",
+    "size": 12435,
+    "sha256": "9be0c48d2b9f6a64dea4c498e1814c57a397169059c2d6312bf9f7ff4655a34b"
+  },
+  {
+    "path": "alan/age/s1/reports/worst-paths.rpt",
+    "size": 122367,
+    "sha256": "ac7def00030957d9aa7551bf880a5f52b270af455c3fe0c05762f078ad708fb1"
+  },
+  {
+    "path": "alan/age/s1/resources.json",
+    "size": 11959,
+    "sha256": "796037904baad51bb1fcab32d729c1ebec77c0a761c95e3e9c4a85270e198d83"
+  },
+  {
+    "path": "alan/age/s1/sha.txt",
+    "size": 41,
+    "sha256": "cc7914421df4f3be4050ec1f75a7c143e4657035c1e912d75200d22869bf9e01"
+  },
+  {
+    "path": "alan/age/s2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/age/s2/paths.json",
+    "size": 2437,
+    "sha256": "8fde4d9d3f853c9e09c7e9563a8f3050bb18be568b2ced3284e45ea4994b86f4"
+  },
+  {
+    "path": "alan/age/s2/reports/bufg-networks.tsv",
+    "size": 144,
+    "sha256": "4f5c784ad81c1c59cf2e79d49a312f29c21b4090e8c9bf9a4b4a6c26697f6da5"
+  },
+  {
+    "path": "alan/age/s2/reports/dsp-pipeline.tsv",
+    "size": 5118,
+    "sha256": "2c433d66b3c3376558da4cd0d0a2f648511f5d5fd1dc82439a71797a9aefaee2"
+  },
+  {
+    "path": "alan/age/s2/reports/route-status.rpt",
+    "size": 714,
+    "sha256": "b53b8eff695194126321a10ff387bbd09dd251835ad44a03129d58b85fef70d5"
+  },
+  {
+    "path": "alan/age/s2/reports/timing-summary.rpt",
+    "size": 26332,
+    "sha256": "48a3713a89598728e8eb643efdd20216e37c0ab9cfb96ebbeafc5cfd306c235e"
+  },
+  {
+    "path": "alan/age/s2/reports/utilization-hierarchical.rpt",
+    "size": 12549,
+    "sha256": "498bc85b11d5d3224e3d231612145a150cc2ab73bd82f5f258d60ba53e8a1f50"
+  },
+  {
+    "path": "alan/age/s2/reports/worst-paths.rpt",
+    "size": 134175,
+    "sha256": "9863cbdb7ddcb930cb07bf4ff9448ecd44537a5ad381eecc4eb68959be069fa2"
+  },
+  {
+    "path": "alan/age/s2/resources.json",
+    "size": 11956,
+    "sha256": "c1b3552d2897ac53632ddfd7f47e918be3051920f0625c014e0d04e25ab8e1f6"
+  },
+  {
+    "path": "alan/age/s2/sha.txt",
+    "size": 41,
+    "sha256": "cc7914421df4f3be4050ec1f75a7c143e4657035c1e912d75200d22869bf9e01"
+  },
+  {
+    "path": "alan/closure/s1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/closure/s1/input-check.txt",
+    "size": 869,
+    "sha256": "310fb81f39a72c047ddd43dda3f8b2f18a7e62570e4a00d2ca44927857bdacbe"
+  },
+  {
+    "path": "alan/closure/s1/input-sha256.txt",
+    "size": 2977,
+    "sha256": "277a327a12eece13494a3f1600ad570478faad8faf01377cca834e31bda953a2"
+  },
+  {
+    "path": "alan/closure/s1/paths.json",
+    "size": 2445,
+    "sha256": "e3b93aed5209e1ca6f4a0d85df8111ded4940ef70cd08a5885fc1b09cc9ebec5"
+  },
+  {
+    "path": "alan/closure/s1/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/closure/s1/reports/dsp-pipeline.tsv",
+    "size": 5118,
+    "sha256": "47ee9993b3a4dec78c8d2f85250fe853c50872165f6f1d3d9e633815d15393ec"
+  },
+  {
+    "path": "alan/closure/s1/reports/timing-summary.rpt",
+    "size": 21826,
+    "sha256": "40cfa9b03c8388d5e2695798255f3df1bb24008b7f455d0d400bc2e77f0aae68"
+  },
+  {
+    "path": "alan/closure/s1/reports/utilization-hierarchical.rpt",
+    "size": 12447,
+    "sha256": "11816c4770dd32727822b91471dd98e08f22a65172dde1adc6ef9d13acc8766a"
+  },
+  {
+    "path": "alan/closure/s1/reports/worst-paths.rpt",
+    "size": 89143,
+    "sha256": "020b2c770092540787bd083e8c87f74b8ccd73d2a6ea55d74123b2e9e7aa033f"
+  },
+  {
+    "path": "alan/closure/s1/resources.json",
+    "size": 11957,
+    "sha256": "ae44d3f528e4803ed177ace138329fca17aa80af498115a6b5719a5dc3c0c594"
+  },
+  {
+    "path": "alan/closure/s1/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "alan/closure/s2/cwd.txt",
+    "size": 44,
+    "sha256": "f7417ba695a7370a98d0d3f15aea68c7c29fa21c40efbc7e480dd65186c7e09e"
+  },
+  {
+    "path": "alan/closure/s2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/closure/s2/host.txt",
+    "size": 25,
+    "sha256": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da"
+  },
+  {
+    "path": "alan/closure/s2/input-sha256.txt",
+    "size": 178,
+    "sha256": "ca46c63c8175464036bc50009b8fe1b695a117868c1ea1f3bd27012fa997c16e"
+  },
+  {
+    "path": "alan/closure/s2/reports/bufg-networks.tsv",
+    "size": 144,
+    "sha256": "4f5c784ad81c1c59cf2e79d49a312f29c21b4090e8c9bf9a4b4a6c26697f6da5"
+  },
+  {
+    "path": "alan/closure/s2/reports/dsp-pipeline.tsv",
+    "size": 5118,
+    "sha256": "47ee9993b3a4dec78c8d2f85250fe853c50872165f6f1d3d9e633815d15393ec"
+  },
+  {
+    "path": "alan/closure/s2/reports/route-status.rpt",
+    "size": 714,
+    "sha256": "1841824f467cda3f8ad288d1d36b9ad99ea23bda9d4049ce939c03e3583ad8ae"
+  },
+  {
+    "path": "alan/closure/s2/reports/timing-summary.rpt",
+    "size": 20216,
+    "sha256": "ab51059cb511d803d1a44cb2f22bba1da5fafffec50b135833977f9d87ec2f6a"
+  },
+  {
+    "path": "alan/closure/s2/reports/utilization-hierarchical.rpt",
+    "size": 12561,
+    "sha256": "a6c6572e877f752f8a932f8412a2ab87e380272bf7bb2a05710b60152a671b1b"
+  },
+  {
+    "path": "alan/closure/s2/reports/worst-paths.rpt",
+    "size": 85565,
+    "sha256": "8ffc299778d972e7c3c50bda3101571c1519f040671fd6aab3cefc9a7c77e45e"
+  },
+  {
+    "path": "alan/closure/s2/resources.json",
+    "size": 11958,
+    "sha256": "03c31e0e75e4a77f1b944cdf4f44cc890285646d836f597bd41a2dc3538d70dc"
+  },
+  {
+    "path": "alan/closure/s2/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "alan/physical/s1/cwd.txt",
+    "size": 45,
+    "sha256": "fba52199ea81b84dae9bdcf5b27c93e45b2555515276884706241f5b9054ce53"
+  },
+  {
+    "path": "alan/physical/s1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/physical/s1/host.txt",
+    "size": 25,
+    "sha256": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da"
+  },
+  {
+    "path": "alan/physical/s1/input-check.txt",
+    "size": 895,
+    "sha256": "59093747547a286b21057451b4bfbed0af2c0736cd4c1a3271179ab85c573cb4"
+  },
+  {
+    "path": "alan/physical/s1/input-sha256.txt",
+    "size": 3065,
+    "sha256": "d5d9dbe8bb96ea1e190760adbd16f4b034fc8fa473ae31bc9161319ddfb5d3b8"
+  },
+  {
+    "path": "alan/physical/s1/paths.json",
+    "size": 2235,
+    "sha256": "b32972f03b1d4094b73fbce15e587c0fed76d6b2dd2c77e2137b63fff494bac6"
+  },
+  {
+    "path": "alan/physical/s1/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/physical/s1/reports/dsp-pipeline.tsv",
+    "size": 5121,
+    "sha256": "22c3caeb2015f4c85454a174110300f4f039627230aee39171e7c0cb4e59833e"
+  },
+  {
+    "path": "alan/physical/s1/reports/timing-summary.rpt",
+    "size": 20837,
+    "sha256": "8117f3e487600d6a7087593b449de45e159a06dd61558a6185bc629b038a75a9"
+  },
+  {
+    "path": "alan/physical/s1/reports/utilization-hierarchical.rpt",
+    "size": 13632,
+    "sha256": "3c9427c76fab056b202166a0261e12b46adb9a81e1a1960ef71bf1527b6da590"
+  },
+  {
+    "path": "alan/physical/s1/reports/worst-paths.rpt",
+    "size": 79234,
+    "sha256": "ec0edb8e3851e3b4d9bfed537c11e338cfc2b17f35bf0e7aefe1166cdfbf9391"
+  },
+  {
+    "path": "alan/physical/s1/resources.json",
+    "size": 12538,
+    "sha256": "e14a8ffa8563230a8f96aa4108de9aaa38973edc9b96f82959cba39dadb172f2"
+  },
+  {
+    "path": "alan/physical/s1/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "alan/physical/s2/cwd.txt",
+    "size": 45,
+    "sha256": "88f7b13d1131f519ffc5903609cf63cba0d14cf285a0756a1c9e043f14835d7c"
+  },
+  {
+    "path": "alan/physical/s2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/physical/s2/host.txt",
+    "size": 25,
+    "sha256": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da"
+  },
+  {
+    "path": "alan/physical/s2/input-sha256.txt",
+    "size": 178,
+    "sha256": "38e638a898de3aab424d78ad25f414b826ea253b551b0dde7941314331209e70"
+  },
+  {
+    "path": "alan/physical/s2/paths.json",
+    "size": 2027,
+    "sha256": "d9ea9ea236a00d970d84e86cfcdee1ce917ff70066bd91b7c4b9e4c631095806"
+  },
+  {
+    "path": "alan/physical/s2/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/physical/s2/reports/dsp-pipeline.tsv",
+    "size": 5121,
+    "sha256": "22c3caeb2015f4c85454a174110300f4f039627230aee39171e7c0cb4e59833e"
+  },
+  {
+    "path": "alan/physical/s2/reports/route-status.rpt",
+    "size": 714,
+    "sha256": "84a4d525147c21d06b927bf89bf00a3bc882b473669915081204bd9aee28326f"
+  },
+  {
+    "path": "alan/physical/s2/reports/timing-summary.rpt",
+    "size": 20909,
+    "sha256": "39982f8cba45a3e4e23dd00bcd639c92ad43b5ee2296e86f86e532d0c4ea8da6"
+  },
+  {
+    "path": "alan/physical/s2/reports/utilization-hierarchical.rpt",
+    "size": 13746,
+    "sha256": "d15a4f0059b5601dad57abc312adc151f21bafc1f5d705f0570648dc199b06b9"
+  },
+  {
+    "path": "alan/physical/s2/reports/worst-paths.rpt",
+    "size": 80316,
+    "sha256": "5d640b5275ec7994a81f76e74481c14c380972a7ae8f9aeabc074df29dad4dba"
+  },
+  {
+    "path": "alan/physical/s2/resources.json",
+    "size": 12538,
+    "sha256": "e0d443703d2451d8a2be18fab5ddff8807f32eef48d8309d11dfb6aec8973eb2"
+  },
+  {
+    "path": "alan/physical/s2/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "alan/pipeline/s1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/pipeline/s1/reports/timing-summary.rpt",
+    "size": 21477,
+    "sha256": "d8b994961ceec2f77926814aaa4df78ef1f982b365ab75e08f83c0338d036fc2"
+  },
+  {
+    "path": "alan/pipeline/s1/reports/utilization-hierarchical.rpt",
+    "size": 11748,
+    "sha256": "07e336ad0cd960c2258196867f3d60c19c1f57da995e864369d455604a677a2c"
+  },
+  {
+    "path": "alan/pipeline/s1/reports/worst-paths.rpt",
+    "size": 85882,
+    "sha256": "4d5c9f67c88a8366bece06fe5c3cb83fe83dd0414d53ed0d7221e7417edb6cb3"
+  },
+  {
+    "path": "alan/pipeline/s1/resources.json",
+    "size": 11586,
+    "sha256": "9ce91d17ac78b916f3c8f161ca01de2cae97d23f88eb7af86731681ebe1b6fed"
+  },
+  {
+    "path": "alan/pipeline/s1/sha.txt",
+    "size": 41,
+    "sha256": "ff8464daabb1222e271804affcb4199cbc425e1cc7c531c29b12f211ce5cb561"
+  },
+  {
+    "path": "alan/pipeline/s2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/pipeline/s2/reports/bufg-networks.tsv",
+    "size": 144,
+    "sha256": "4f5c784ad81c1c59cf2e79d49a312f29c21b4090e8c9bf9a4b4a6c26697f6da5"
+  },
+  {
+    "path": "alan/pipeline/s2/reports/route-status.rpt",
+    "size": 714,
+    "sha256": "b73f84000a9294123bfaa25380002d997fde83b479b07902bb84f4e48611157c"
+  },
+  {
+    "path": "alan/pipeline/s2/reports/timing-summary.rpt",
+    "size": 20846,
+    "sha256": "eeec8c2135994e5c478d4063caefe5cef7fa764ff03154b6fa1e2c4b923c6fca"
+  },
+  {
+    "path": "alan/pipeline/s2/reports/utilization-hierarchical.rpt",
+    "size": 11862,
+    "sha256": "560be936acfeca6f10917f0df8c00cfe28b7e95bad9eba736bd54b4b941cdf0f"
+  },
+  {
+    "path": "alan/pipeline/s2/reports/worst-paths.rpt",
+    "size": 87575,
+    "sha256": "7e5057dccee37d09a5cd0dd0bc0a11611653ff9c8f7269b35be703923743ddfa"
+  },
+  {
+    "path": "alan/pipeline/s2/resources.json",
+    "size": 11583,
+    "sha256": "d41bc28f01f83a7e398d53371ce0e95a46d923b8fa4096aa68a92bf3ecc53123"
+  },
+  {
+    "path": "alan/pipeline/s2/sha.txt",
+    "size": 41,
+    "sha256": "ff8464daabb1222e271804affcb4199cbc425e1cc7c531c29b12f211ce5cb561"
+  },
+  {
+    "path": "alan/readcmd/s1/cwd.txt",
+    "size": 44,
+    "sha256": "d4ca173b4dcfcdf7049fbc763e1835cf3a6976410a96f3682e3484cec0e699ee"
+  },
+  {
+    "path": "alan/readcmd/s1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/readcmd/s1/host.txt",
+    "size": 25,
+    "sha256": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da"
+  },
+  {
+    "path": "alan/readcmd/s1/input-check.txt",
+    "size": 895,
+    "sha256": "59093747547a286b21057451b4bfbed0af2c0736cd4c1a3271179ab85c573cb4"
+  },
+  {
+    "path": "alan/readcmd/s1/input-sha256.txt",
+    "size": 3065,
+    "sha256": "4923d926f042cde4661b05588fa9bd9c09cc6dc8007093ce67c71b9b93e58c8b"
+  },
+  {
+    "path": "alan/readcmd/s1/paths.json",
+    "size": 2463,
+    "sha256": "f96fc9ffccbbf8606827d0c279ea0b834d9273fab623cac9361bedbf8fbe8ea2"
+  },
+  {
+    "path": "alan/readcmd/s1/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/readcmd/s1/reports/dsp-pipeline.tsv",
+    "size": 5121,
+    "sha256": "22c3caeb2015f4c85454a174110300f4f039627230aee39171e7c0cb4e59833e"
+  },
+  {
+    "path": "alan/readcmd/s1/reports/timing-summary.rpt",
+    "size": 22822,
+    "sha256": "80a2ee3dee34f1f34d2ce476ed0f561024dce281101dacd4be4563677b1c09f7"
+  },
+  {
+    "path": "alan/readcmd/s1/reports/utilization-hierarchical.rpt",
+    "size": 13629,
+    "sha256": "360bc07f3a7fa13770b521da39175b43a2a241306a7153e1c7d34041d75930b2"
+  },
+  {
+    "path": "alan/readcmd/s1/reports/worst-paths.rpt",
+    "size": 98803,
+    "sha256": "e63428c0138b2dbac9f69137a28c023295a2dd0e61b5cf91f6a16173bae54082"
+  },
+  {
+    "path": "alan/readcmd/s1/resources.json",
+    "size": 12543,
+    "sha256": "7701271008aba1f33806324176893a5848524805fcab68a4b7bb20c461965a17"
+  },
+  {
+    "path": "alan/readcmd/s1/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "alan/readcmd/s2/cwd.txt",
+    "size": 44,
+    "sha256": "9ac908f4a3515818fbe23f59a72e341c113ddba7585a834a96c1f1ed8052febd"
+  },
+  {
+    "path": "alan/readcmd/s2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "alan/readcmd/s2/host.txt",
+    "size": 25,
+    "sha256": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da"
+  },
+  {
+    "path": "alan/readcmd/s2/input-sha256.txt",
+    "size": 178,
+    "sha256": "7b32e1f91e403982dcc611f75ff7815ae79bde361d200dceca1bac1a58ea7312"
+  },
+  {
+    "path": "alan/readcmd/s2/paths.json",
+    "size": 2463,
+    "sha256": "3cce50ff897ac69437428334bf68d91131a589f4af6b38f647ab7af7a458a135"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/bufg-networks.tsv",
+    "size": 27,
+    "sha256": "58d72b4c8e43307f601c1f71a48241d1f953b04e8c60fa9a98a448f1853fc618"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/dsp-pipeline.tsv",
+    "size": 5121,
+    "sha256": "22c3caeb2015f4c85454a174110300f4f039627230aee39171e7c0cb4e59833e"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/route-status.rpt",
+    "size": 714,
+    "sha256": "763366c327bdfb870176454426851ded64e268c5071931f9e940e0b95368f93b"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/timing-summary.rpt",
+    "size": 23166,
+    "sha256": "1c5dfcfd50ec5e15be361215711d421cd9084503e42039da2b76cb6acc9834d6"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/utilization-hierarchical.rpt",
+    "size": 13743,
+    "sha256": "b05aa9bca2b0da1b6aeef4c49c791f90c6e3be041c0f20929679281b5f85e63e"
+  },
+  {
+    "path": "alan/readcmd/s2/reports/worst-paths.rpt",
+    "size": 109135,
+    "sha256": "ef2e7fd83a9a9f0c687db9d54af2799229dc4917f1204cce2dbb6c6447550057"
+  },
+  {
+    "path": "alan/readcmd/s2/resources.json",
+    "size": 12540,
+    "sha256": "7b4ee6565e4087c95f3be805b87b1374caf48f61fb8eb21f90264917bc0825d9"
+  },
+  {
+    "path": "alan/readcmd/s2/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/closure/c1/branch.txt",
+    "size": 18,
+    "sha256": "149d8ec6ac26823ca379db7478bfa44e9786d4ca64508dfb5d45052609049446"
+  },
+  {
+    "path": "cloud/closure/c1/emit-256-256.log",
+    "size": 859,
+    "sha256": "0e5931801435d2cebf525dade7f5b826249e5c671cd6a733db6769a61d3f390c"
+  },
+  {
+    "path": "cloud/closure/c1/emit-512-256.log",
+    "size": 859,
+    "sha256": "1041b313c2451703294993272e8d4f77bce868d4ef18a93a03d0e597022ce01b"
+  },
+  {
+    "path": "cloud/closure/c1/emit-512-512.log",
+    "size": 999,
+    "sha256": "ea67f8dc3bb7bd5043661c771d1d22a74825e1932ce27918e2bf8639f5fcc867"
+  },
+  {
+    "path": "cloud/closure/c1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/closure/c1/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/closure/c1/java-version.txt",
+    "size": 365,
+    "sha256": "78919f0355898b205442f9885cb473b436defb572b912b23ad52c2113210b188"
+  },
+  {
+    "path": "cloud/closure/c1/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "cloud/closure/c1/smoke.log",
+    "size": 1529,
+    "sha256": "5c65b3dfc7d6e248b0f7311e70e87cfb7e0205e8153d21e6d82a2219d78b521b"
+  },
+  {
+    "path": "cloud/closure/c1/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c1/verilator-version.txt",
+    "size": 38,
+    "sha256": "f65388ee388c80a7f798f93e5af558c21b4b69a141d712fbb1ef2f8a03ca75a7"
+  },
+  {
+    "path": "cloud/closure/c2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/closure/c2/fixtures.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c2/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/frontend.log",
+    "size": 1903,
+    "sha256": "92b32df623de83e1de158b3da4959d81762a1c75f43d101ce7089ab2ecf00060"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/integration.log",
+    "size": 2327,
+    "sha256": "83b7a0c83d22e3957fa8aee007dbc7307b6d43167dda7565d59b7d7f9a5da3f3"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/plugin-test.log",
+    "size": 32,
+    "sha256": "1a4c03b894be9a8de67b1e87916e6e04b58d18c9f5464bc8932edc78cd825b5f"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/r03.log",
+    "size": 1438,
+    "sha256": "c59972b5e6523e9f413c40d821df58f4b5bccca08571a9364dd6d961ebdecfff"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/reference/plugin-sha256.txt",
+    "size": 139,
+    "sha256": "e16d4bf459f6557219b8ce03f5fd377896632d382716cecb21e5e7fa9d28c0b2"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/spike-directed.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c2/legacy/vrf.log",
+    "size": 1291,
+    "sha256": "77d036c588469209fc3609fc4b53a9faa4af45c66c33b409cff63e7eba691ad7"
+  },
+  {
+    "path": "cloud/closure/c2/r04.log",
+    "size": 1666,
+    "sha256": "4f78e523a5b63946640985c0b790241862d5e5d19f9a1af2b071070778eac0fb"
+  },
+  {
+    "path": "cloud/closure/c2/reference/plugin-sha256.txt",
+    "size": 132,
+    "sha256": "a42f9df5ed6eb3099841250fbbd91307cef3ceb8e1906a6e2e3ad90cad6cbeb5"
+  },
+  {
+    "path": "cloud/closure/c2/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/closure/c2/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/closure/c2/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c2/reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/closure/c2/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "cloud/closure/c3/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/closure/c3/fixtures-path.txt",
+    "size": 52,
+    "sha256": "d1e91695ae48af78197e777b6c1d63c7ccf680aabd4571838cc5ced36a5ee024"
+  },
+  {
+    "path": "cloud/closure/c3/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/closure/c3/oracle-base-equivalence.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c3/oracle-random-equivalence.txt",
+    "size": 124,
+    "sha256": "f9308fd8c7c7694ce80d9b1ba73559aaec6403c44879cae387cce43e0a43d3a4"
+  },
+  {
+    "path": "cloud/closure/c3/oracle-source-sha.txt",
+    "size": 41,
+    "sha256": "634ca9169ed4da76e433b0f16a8b12c46b5795b1526e65dab29e2bc1a7bd332a"
+  },
+  {
+    "path": "cloud/closure/c3/plugin-test.log",
+    "size": 35,
+    "sha256": "52ca0a0a2610436385d7d27c87052b1bb79ce469e760838a21875a5c0ee09173"
+  },
+  {
+    "path": "cloud/closure/c3/random.log",
+    "size": 28500,
+    "sha256": "6a33d9a1cf90e58a414265dfe8f34128bf1f5da2b4c707948b1621a73c93069c"
+  },
+  {
+    "path": "cloud/closure/c3/reference/plugin-sha256.txt",
+    "size": 130,
+    "sha256": "5dccf586ecff4fde48069d752cd2c346cecf9a6782acc861f8c9ce29f33d29b0"
+  },
+  {
+    "path": "cloud/closure/c3/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/closure/c3/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/closure/c3/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/c3/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "cloud/closure/capacity/capacity.log",
+    "size": 1828,
+    "sha256": "1ec7f0a3bb7e90c6e28de28d5dbb277f5937103e226597ee236bace9ba856fa6"
+  },
+  {
+    "path": "cloud/closure/capacity/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/closure/capacity/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/closure/capacity/sha.txt",
+    "size": 41,
+    "sha256": "8307eb49fac639484bc62354d9112b052f7197e7f7c8c7236bcbe1dad874f7dc"
+  },
+  {
+    "path": "cloud/closure/performance/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/closure/performance/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/closure/performance/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/closure/performance/performance.log",
+    "size": 2619,
+    "sha256": "6e2e220d557c11cd0c1798b2a94dd68c06e1f6aadb2fe3c349bd9d425bb9be21"
+  },
+  {
+    "path": "cloud/closure/performance/plugin-test.log",
+    "size": 33,
+    "sha256": "45ece2962bb92811a110d8d086d6ac63277f99e547efc0107408555429eebe3c"
+  },
+  {
+    "path": "cloud/closure/performance/reference/plugin-sha256.txt",
+    "size": 141,
+    "sha256": "9241fff3ac3a04efc7049e7f5943e11ab2edebcb6486f8d98ca0ec08302d740a"
+  },
+  {
+    "path": "cloud/closure/performance/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/closure/performance/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/closure/performance/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/closure/performance/results/P1-pairs.json",
+    "size": 1491,
+    "sha256": "0107d4f764f1024532dbb7c40b06ee81318b3d3c1e3a788fa078a1f9c43f5721"
+  },
+  {
+    "path": "cloud/closure/performance/results/P1.json",
+    "size": 395,
+    "sha256": "5810d3f161552a8ca3e76718d7673b887122f3524a37d9b93a3c3d0b8f207714"
+  },
+  {
+    "path": "cloud/closure/performance/results/P2-pairs.json",
+    "size": 1499,
+    "sha256": "0dc2f277c50aad63893fba269744d7a1f3ea084afb73bcf78979c162daa073e2"
+  },
+  {
+    "path": "cloud/closure/performance/results/P2.json",
+    "size": 397,
+    "sha256": "b70ebce6a559160c0eb0de2dccf8df49c541450c4f2e66ef1e98aeb53fa2544a"
+  },
+  {
+    "path": "cloud/closure/performance/results/P3-pairs.json",
+    "size": 1299,
+    "sha256": "05a68f0cfeb0d5fcdd8151c31df0a5972514c364080fcbe5794abdc1ff1ba071"
+  },
+  {
+    "path": "cloud/closure/performance/results/P3.json",
+    "size": 392,
+    "sha256": "66bebfa9ed77987a1c35ded3167813cf8b3c15f183a24c962ebe8e4de0e44a2b"
+  },
+  {
+    "path": "cloud/closure/performance/results/links-lat1-buffer16384.csv",
+    "size": 4776,
+    "sha256": "ee436bb47bd135740f9419ef590f948c277ccc3d0eb319d62ab30f2a8d043c68"
+  },
+  {
+    "path": "cloud/closure/performance/results/links-lat40-buffer16384.csv",
+    "size": 4854,
+    "sha256": "d1f68d233c6b322b845762d539b55bde7936c50051881f2976a59017b3f9e919"
+  },
+  {
+    "path": "cloud/closure/performance/results/links-lat40-buffer2560.csv",
+    "size": 4858,
+    "sha256": "0cab11e8bdde6f6ddf62cc132ed03563994c6400566e671f99bc74e9f5d0d7cd"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-blocking-lat1-buffer16384.csv",
+    "size": 35425,
+    "sha256": "aee3070310f57df0cd68d92401392013beb3dd4568c6e41aa851d2596024235e"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-blocking-lat40-buffer16384.csv",
+    "size": 36472,
+    "sha256": "55346bd730828b2e3b655d7f56e6a2b90fd26e8a3268a5536fd2af666446cd6b"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-blocking-lat40-buffer2560.csv",
+    "size": 36472,
+    "sha256": "55346bd730828b2e3b655d7f56e6a2b90fd26e8a3268a5536fd2af666446cd6b"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-links-lat1-buffer16384.csv",
+    "size": 16869,
+    "sha256": "359916710b9c405c67a85c1ee835c692b08c0f90c6d1463542b1fc7da949f4b5"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-links-lat40-buffer16384.csv",
+    "size": 16948,
+    "sha256": "d682671a4423e7c0f71a84291fc96b411c76325409f4ced88ad2e0ad3ee1e947"
+  },
+  {
+    "path": "cloud/closure/performance/results/r04-links-lat40-buffer2560.csv",
+    "size": 16948,
+    "sha256": "d682671a4423e7c0f71a84291fc96b411c76325409f4ced88ad2e0ad3ee1e947"
+  },
+  {
+    "path": "cloud/closure/performance/sha.txt",
+    "size": 41,
+    "sha256": "2e76d21c5e357f1395dce8efd430118ae8a5fad2b5f011827cffad0e56ece116"
+  },
+  {
+    "path": "cloud/closure/performance/spike-gemv.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c1/branch.txt",
+    "size": 18,
+    "sha256": "149d8ec6ac26823ca379db7478bfa44e9786d4ca64508dfb5d45052609049446"
+  },
+  {
+    "path": "cloud/physical/c1/emit-256-256.log",
+    "size": 860,
+    "sha256": "66b5524966313e8557bfd1aa7a40f905c79af4325e889ae3e3109f057273daf6"
+  },
+  {
+    "path": "cloud/physical/c1/emit-512-256.log",
+    "size": 860,
+    "sha256": "e1dd78304a63c9eb3e720f0a503d6c25c0ef4294a16019d4462548ff0aa4cd0d"
+  },
+  {
+    "path": "cloud/physical/c1/emit-512-512.log",
+    "size": 999,
+    "sha256": "c97dbe90497205fac333c214aece6517958a46ee02538d5de9e24569485e9606"
+  },
+  {
+    "path": "cloud/physical/c1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/physical/c1/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/physical/c1/java-version.txt",
+    "size": 365,
+    "sha256": "78919f0355898b205442f9885cb473b436defb572b912b23ad52c2113210b188"
+  },
+  {
+    "path": "cloud/physical/c1/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "cloud/physical/c1/smoke.log",
+    "size": 1529,
+    "sha256": "28bcd13a60a923fe83ee725ba74fc6193412e6703db8d208956ad02d0f775c99"
+  },
+  {
+    "path": "cloud/physical/c1/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c1/verilator-version.txt",
+    "size": 38,
+    "sha256": "f65388ee388c80a7f798f93e5af558c21b4b69a141d712fbb1ef2f8a03ca75a7"
+  },
+  {
+    "path": "cloud/physical/c2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/physical/c2/fixtures.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c2/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/frontend.log",
+    "size": 1904,
+    "sha256": "aa4b84a3f425eb9695d71aa3a11f8ac83ff9107881d06f55bfcd58e885dec0f4"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/integration.log",
+    "size": 2327,
+    "sha256": "59c55d7c95f3a732d83f8b161f9045618869a1bd2583e2e1e827d1182af29f8d"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/plugin-test.log",
+    "size": 32,
+    "sha256": "1a4c03b894be9a8de67b1e87916e6e04b58d18c9f5464bc8932edc78cd825b5f"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/r03.log",
+    "size": 1438,
+    "sha256": "5d139e2d00fc44a9730f5bb7f87febbd5920c86e945e54bb4ae6d52f7cae370c"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/reference/plugin-sha256.txt",
+    "size": 140,
+    "sha256": "a283ba6926eab74c2b94ae4f25ee7b136eec109bcb5bc224fe5b1e1b4019afad"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/spike-directed.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c2/legacy/vrf.log",
+    "size": 1291,
+    "sha256": "f268da28c42da1ea95fc95ba50e8e9df7404dc43a71a53884db498e4b310d32e"
+  },
+  {
+    "path": "cloud/physical/c2/r04.log",
+    "size": 1666,
+    "sha256": "15d64fd4ee0494b372fa41c240fe3343e91c751b89e8a8a0f8407550180ae343"
+  },
+  {
+    "path": "cloud/physical/c2/reference/plugin-sha256.txt",
+    "size": 133,
+    "sha256": "3d2d383ee542312030331cf17b58598c252d2ac2ffbc7c440f20e476d6146e06"
+  },
+  {
+    "path": "cloud/physical/c2/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/physical/c2/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/physical/c2/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c2/reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/physical/c2/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "cloud/physical/c3/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/physical/c3/fixtures-path.txt",
+    "size": 52,
+    "sha256": "d1e91695ae48af78197e777b6c1d63c7ccf680aabd4571838cc5ced36a5ee024"
+  },
+  {
+    "path": "cloud/physical/c3/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/physical/c3/oracle-base-equivalence.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c3/oracle-random-equivalence.txt",
+    "size": 124,
+    "sha256": "f9308fd8c7c7694ce80d9b1ba73559aaec6403c44879cae387cce43e0a43d3a4"
+  },
+  {
+    "path": "cloud/physical/c3/oracle-source-sha.txt",
+    "size": 41,
+    "sha256": "634ca9169ed4da76e433b0f16a8b12c46b5795b1526e65dab29e2bc1a7bd332a"
+  },
+  {
+    "path": "cloud/physical/c3/plugin-test.log",
+    "size": 35,
+    "sha256": "52ca0a0a2610436385d7d27c87052b1bb79ce469e760838a21875a5c0ee09173"
+  },
+  {
+    "path": "cloud/physical/c3/random.log",
+    "size": 28350,
+    "sha256": "37c50c503201ce0f09dd7ba4e4b293ff83fceb491387b1540dc5871feaec74b0"
+  },
+  {
+    "path": "cloud/physical/c3/reference/plugin-sha256.txt",
+    "size": 130,
+    "sha256": "5dccf586ecff4fde48069d752cd2c346cecf9a6782acc861f8c9ce29f33d29b0"
+  },
+  {
+    "path": "cloud/physical/c3/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/physical/c3/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/physical/c3/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/c3/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "cloud/physical/performance/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/physical/performance/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/physical/performance/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/physical/performance/performance.log",
+    "size": 2619,
+    "sha256": "5c523967dd4856578425a3bdfa3526c935e28d34a1049d65fd6e6b057b0cdc6a"
+  },
+  {
+    "path": "cloud/physical/performance/plugin-test.log",
+    "size": 33,
+    "sha256": "45ece2962bb92811a110d8d086d6ac63277f99e547efc0107408555429eebe3c"
+  },
+  {
+    "path": "cloud/physical/performance/reference/plugin-sha256.txt",
+    "size": 142,
+    "sha256": "e8493d42d23c05a92c74a1c7a24f90fa8f8ee283550877d9569de93ad5445ab6"
+  },
+  {
+    "path": "cloud/physical/performance/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/physical/performance/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/physical/performance/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/physical/performance/results/P1-pairs.json",
+    "size": 1491,
+    "sha256": "0107d4f764f1024532dbb7c40b06ee81318b3d3c1e3a788fa078a1f9c43f5721"
+  },
+  {
+    "path": "cloud/physical/performance/results/P1.json",
+    "size": 395,
+    "sha256": "5810d3f161552a8ca3e76718d7673b887122f3524a37d9b93a3c3d0b8f207714"
+  },
+  {
+    "path": "cloud/physical/performance/results/P2-pairs.json",
+    "size": 1499,
+    "sha256": "0dc2f277c50aad63893fba269744d7a1f3ea084afb73bcf78979c162daa073e2"
+  },
+  {
+    "path": "cloud/physical/performance/results/P2.json",
+    "size": 397,
+    "sha256": "b70ebce6a559160c0eb0de2dccf8df49c541450c4f2e66ef1e98aeb53fa2544a"
+  },
+  {
+    "path": "cloud/physical/performance/results/P3-pairs.json",
+    "size": 1299,
+    "sha256": "05a68f0cfeb0d5fcdd8151c31df0a5972514c364080fcbe5794abdc1ff1ba071"
+  },
+  {
+    "path": "cloud/physical/performance/results/P3.json",
+    "size": 392,
+    "sha256": "66bebfa9ed77987a1c35ded3167813cf8b3c15f183a24c962ebe8e4de0e44a2b"
+  },
+  {
+    "path": "cloud/physical/performance/results/links-lat1-buffer16384.csv",
+    "size": 4776,
+    "sha256": "ee436bb47bd135740f9419ef590f948c277ccc3d0eb319d62ab30f2a8d043c68"
+  },
+  {
+    "path": "cloud/physical/performance/results/links-lat40-buffer16384.csv",
+    "size": 4854,
+    "sha256": "d1f68d233c6b322b845762d539b55bde7936c50051881f2976a59017b3f9e919"
+  },
+  {
+    "path": "cloud/physical/performance/results/links-lat40-buffer2560.csv",
+    "size": 4858,
+    "sha256": "0cab11e8bdde6f6ddf62cc132ed03563994c6400566e671f99bc74e9f5d0d7cd"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-blocking-lat1-buffer16384.csv",
+    "size": 35425,
+    "sha256": "aee3070310f57df0cd68d92401392013beb3dd4568c6e41aa851d2596024235e"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-blocking-lat40-buffer16384.csv",
+    "size": 36472,
+    "sha256": "55346bd730828b2e3b655d7f56e6a2b90fd26e8a3268a5536fd2af666446cd6b"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-blocking-lat40-buffer2560.csv",
+    "size": 36472,
+    "sha256": "55346bd730828b2e3b655d7f56e6a2b90fd26e8a3268a5536fd2af666446cd6b"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-links-lat1-buffer16384.csv",
+    "size": 16869,
+    "sha256": "359916710b9c405c67a85c1ee835c692b08c0f90c6d1463542b1fc7da949f4b5"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-links-lat40-buffer16384.csv",
+    "size": 16948,
+    "sha256": "d682671a4423e7c0f71a84291fc96b411c76325409f4ced88ad2e0ad3ee1e947"
+  },
+  {
+    "path": "cloud/physical/performance/results/r04-links-lat40-buffer2560.csv",
+    "size": 16948,
+    "sha256": "d682671a4423e7c0f71a84291fc96b411c76325409f4ced88ad2e0ad3ee1e947"
+  },
+  {
+    "path": "cloud/physical/performance/sha.txt",
+    "size": 41,
+    "sha256": "0fd6ba783b35ab94431bbf367a4645d13c001151658c90101dcdd03c22c47ae5"
+  },
+  {
+    "path": "cloud/physical/performance/spike-gemv.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c1/branch.txt",
+    "size": 18,
+    "sha256": "149d8ec6ac26823ca379db7478bfa44e9786d4ca64508dfb5d45052609049446"
+  },
+  {
+    "path": "cloud/readcmd/c1/emit-256-256.log",
+    "size": 859,
+    "sha256": "f4578c9fe9902452a4fa99fc5023f8e50cb28e6bbd5466d5a50c3ea82ff87b39"
+  },
+  {
+    "path": "cloud/readcmd/c1/emit-512-256.log",
+    "size": 859,
+    "sha256": "7c738f7b522cd23720e625655f4f16f09a67a9b5fa53c733c01db68842f4a2d4"
+  },
+  {
+    "path": "cloud/readcmd/c1/emit-512-512.log",
+    "size": 999,
+    "sha256": "a273c03c1b52288908479df39d68a4926a1d58183a90eb89f73834033c5817cd"
+  },
+  {
+    "path": "cloud/readcmd/c1/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/readcmd/c1/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/readcmd/c1/java-version.txt",
+    "size": 365,
+    "sha256": "78919f0355898b205442f9885cb473b436defb572b912b23ad52c2113210b188"
+  },
+  {
+    "path": "cloud/readcmd/c1/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/readcmd/c1/smoke.log",
+    "size": 1530,
+    "sha256": "10a8a002b5186d26e2dfd99d0b25e25050cff037af1776b54fa271c149026cef"
+  },
+  {
+    "path": "cloud/readcmd/c1/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c1/verilator-version.txt",
+    "size": 38,
+    "sha256": "f65388ee388c80a7f798f93e5af558c21b4b69a141d712fbb1ef2f8a03ca75a7"
+  },
+  {
+    "path": "cloud/readcmd/c2/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/readcmd/c2/fixtures.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c2/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/frontend.log",
+    "size": 1904,
+    "sha256": "760ff2ea24773d9e4a099841dfe4ffbe07c4fdce69291d284781aa2cfbd6c8ac"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/integration.log",
+    "size": 2326,
+    "sha256": "c1a0a5530bdb6258f9544a43601d7a657b3a5fbb182b755fb75a2a1a74319e37"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/plugin-test.log",
+    "size": 32,
+    "sha256": "1a4c03b894be9a8de67b1e87916e6e04b58d18c9f5464bc8932edc78cd825b5f"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/r03.log",
+    "size": 1438,
+    "sha256": "8e6d5eb806ac48f07f14a272c6524f4566fa1bce09bb640e59977e823ba53404"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/reference/plugin-sha256.txt",
+    "size": 139,
+    "sha256": "71f35e76b7cf767f7a14a45e0f348cfa67b14a26e72c3f3d4bcdf804329893f4"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/spike-directed.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c2/legacy/vrf.log",
+    "size": 1291,
+    "sha256": "779306739a0c779658e587322220e70e2adf41b849b57864c497fb7256f9e23c"
+  },
+  {
+    "path": "cloud/readcmd/c2/r04.log",
+    "size": 1666,
+    "sha256": "90f083fa4ee22c33feb92359e673cf097d87a3760118b4abe44f25578931e56f"
+  },
+  {
+    "path": "cloud/readcmd/c2/reference/plugin-sha256.txt",
+    "size": 132,
+    "sha256": "fb89d5a6bb0c50653554e5686050d9784d8a2d9293eb260648564a2970201e93"
+  },
+  {
+    "path": "cloud/readcmd/c2/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/readcmd/c2/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/readcmd/c2/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c2/reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/readcmd/c2/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/readcmd/c3/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/readcmd/c3/fixtures-path.txt",
+    "size": 52,
+    "sha256": "d1e91695ae48af78197e777b6c1d63c7ccf680aabd4571838cc5ced36a5ee024"
+  },
+  {
+    "path": "cloud/readcmd/c3/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/readcmd/c3/oracle-base-equivalence.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c3/oracle-random-equivalence.txt",
+    "size": 124,
+    "sha256": "f9308fd8c7c7694ce80d9b1ba73559aaec6403c44879cae387cce43e0a43d3a4"
+  },
+  {
+    "path": "cloud/readcmd/c3/oracle-source-sha.txt",
+    "size": 41,
+    "sha256": "634ca9169ed4da76e433b0f16a8b12c46b5795b1526e65dab29e2bc1a7bd332a"
+  },
+  {
+    "path": "cloud/readcmd/c3/plugin-test.log",
+    "size": 35,
+    "sha256": "52ca0a0a2610436385d7d27c87052b1bb79ce469e760838a21875a5c0ee09173"
+  },
+  {
+    "path": "cloud/readcmd/c3/random.log",
+    "size": 28619,
+    "sha256": "746fb1982e1483d2bfdde1ecf2e5137f582d1786f59a856694a10647e646cef1"
+  },
+  {
+    "path": "cloud/readcmd/c3/reference/plugin-sha256.txt",
+    "size": 130,
+    "sha256": "5dccf586ecff4fde48069d752cd2c346cecf9a6782acc861f8c9ce29f33d29b0"
+  },
+  {
+    "path": "cloud/readcmd/c3/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/readcmd/c3/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/readcmd/c3/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/c3/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/readcmd/performance/build-reference.log",
+    "size": 2055,
+    "sha256": "a5bfe93e36f44b5e7f19d99d1f5c654bdd6d4cfc4b81482d16bbdc11ed94a3f6"
+  },
+  {
+    "path": "cloud/readcmd/performance/exit-code.txt",
+    "size": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "path": "cloud/readcmd/performance/host.txt",
+    "size": 24,
+    "sha256": "d614df00857a391216b8c28e7874d30be9d040fe03b177817d53c04fa4b95b06"
+  },
+  {
+    "path": "cloud/readcmd/performance/performance.log",
+    "size": 2619,
+    "sha256": "068b31ee84c42eb98a5f49bb261a61bfb712bcb9eb3c746ff85c3c937b7450c4"
+  },
+  {
+    "path": "cloud/readcmd/performance/plugin-test.log",
+    "size": 33,
+    "sha256": "45ece2962bb92811a110d8d086d6ac63277f99e547efc0107408555429eebe3c"
+  },
+  {
+    "path": "cloud/readcmd/performance/reference/plugin-sha256.txt",
+    "size": 141,
+    "sha256": "2040a42636507287fc5d1abc060033bc8b18ecd05817b9278b9b002b7f222956"
+  },
+  {
+    "path": "cloud/readcmd/performance/reference/spike-binary-sha256.txt",
+    "size": 118,
+    "sha256": "74a46d22075dcf7b387999929c22fadfa64dd85d27c3e4b841d2fa2fe18fadc5"
+  },
+  {
+    "path": "cloud/readcmd/performance/reference/spike-sha.txt",
+    "size": 41,
+    "sha256": "ef643e0b3a41f6a6e0e94888cb27275fa10b5ed97f2ea90bbe377a62d3bcc2d6"
+  },
+  {
+    "path": "cloud/readcmd/performance/reference/spike-status.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P1-pairs.json",
+    "size": 1491,
+    "sha256": "8d0620016021e68188c9835e5b6fd962a231c22a9f78f5ddd8cbd61754a9a708"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P1.json",
+    "size": 395,
+    "sha256": "f1cd195b743c7114a657b2a942be17c3f0b86209dc076107486d3cd37b57e0e7"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P2-pairs.json",
+    "size": 1507,
+    "sha256": "7a522c554da785c8d8aceff4041c9b5995f480decbe647aae3208fac2a951b56"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P2.json",
+    "size": 397,
+    "sha256": "609b11220b5e0ab4a83f04a5116b0f079266ffcb7130a599ef67418d7e5a20b5"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P3-pairs.json",
+    "size": 1299,
+    "sha256": "23cbb128620c89de05dab172d2afe2a1412f80d7fd17d1a31228d03cfc5828ae"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/P3.json",
+    "size": 392,
+    "sha256": "4b66ac650c2f3be08cdfce65e9e78e414044abb1e5aa59088d5063fb6218f592"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/links-lat1-buffer16384.csv",
+    "size": 4804,
+    "sha256": "fb254420fbd4fa5e7af77b01dff2cb14ed9f93a29cb943d934cbe9b5405d342e"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/links-lat40-buffer16384.csv",
+    "size": 4881,
+    "sha256": "da30fcd2b9710998f325a2ac9f0e45a0347a50a8889ebc64814de250a6f05db6"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/links-lat40-buffer2560.csv",
+    "size": 4887,
+    "sha256": "853552f946424f0ceda1ff84a6950cc02e29e7cfb81c8b3153fb0d2c4ec14b89"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-blocking-lat1-buffer16384.csv",
+    "size": 36903,
+    "sha256": "34f6f959c84824917a53e1a4353867b461340701a558a8c7aa8d33a0a840ad67"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-blocking-lat40-buffer16384.csv",
+    "size": 37925,
+    "sha256": "65051e9205102f9482f051ae15289d57acee29029b46ed35bf24958615eb05cf"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-blocking-lat40-buffer2560.csv",
+    "size": 37925,
+    "sha256": "65051e9205102f9482f051ae15289d57acee29029b46ed35bf24958615eb05cf"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-links-lat1-buffer16384.csv",
+    "size": 16901,
+    "sha256": "06d574205a14a3413af95425999b3a6fe81715208d37d28ac270ec437899f33c"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-links-lat40-buffer16384.csv",
+    "size": 16977,
+    "sha256": "6890d258377271ffed3e483511ef94465166780f273180767b40388d68f71dde"
+  },
+  {
+    "path": "cloud/readcmd/performance/results/r04-links-lat40-buffer2560.csv",
+    "size": 16977,
+    "sha256": "6890d258377271ffed3e483511ef94465166780f273180767b40388d68f71dde"
+  },
+  {
+    "path": "cloud/readcmd/performance/sha.txt",
+    "size": 41,
+    "sha256": "1644057b1fc54260287b992456f142ba7bb3f08a51da942682af233d4474cee2"
+  },
+  {
+    "path": "cloud/readcmd/performance/spike-gemv.log",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "retained-source-equivalence.txt",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "retained-tree-equivalence.json",
+    "size": 423,
+    "sha256": "4d7520a53b9888205d5ea359e7bbdfcda4d6c403f195b99eb3cc6440093aea6d"
+  },
+  {
+    "path": "simulation-host-snapshot-20261007.txt",
+    "size": 3579,
+    "sha256": "e17ddb823a49da3c94c5dcc65fda2bd092a23a2edd1aa0e41db5be54bb78ee70"
+  },
+  {
+    "path": "stage-index.json",
+    "size": 4279,
+    "sha256": "11638ac5e52f2794548646a54ba549808573b190d284b862fa271e4a5feac609"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_0/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_1/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_2/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_5/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_6/ADDRARDADDR[8]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_7/ADDRARDADDR[7]",
+    "levels": 22,
+    "slack": 1.447,
+    "data": 8.024,
+    "logic": 1.803,
+    "route": 6.221
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_0/ADDRARDADDR[12]",
+    "levels": 22,
+    "slack": 1.477,
+    "data": 8.019,
+    "logic": 1.803,
+    "route": 6.216
+  },
+  {
+    "source": "mac/dot/reserved_reg[1]/C",
+    "destination": "mem/returnBuffer/ram_ext/Memory_reg_1/ADDRARDADDR[12]",
+    "levels": 22,
+    "slack": 1.477,
+    "data": 8.019,
+    "logic": 1.803,
+    "route": 6.216
+  }
+]

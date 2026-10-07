@@ -1,0 +1,143 @@
+{
+  "simulation_host_rule": "Read live shared configuration for every launch; snapshot is historical only.",
+  "stages": [
+    {
+      "stage": "cloud/closure/c1",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": "cloud/closure/c1/host.txt"
+    },
+    {
+      "stage": "cloud/closure/c2",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": "cloud/closure/c2/host.txt"
+    },
+    {
+      "stage": "cloud/closure/c3",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": "cloud/closure/c3/host.txt"
+    },
+    {
+      "stage": "cloud/closure/capacity",
+      "source_sha": "72978739308416a6f9049b267fdb9d68cb0aa170",
+      "exit_code": 0,
+      "host_record": "cloud/closure/capacity/host.txt"
+    },
+    {
+      "stage": "cloud/closure/performance",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": "cloud/closure/performance/host.txt"
+    },
+    {
+      "stage": "cloud/physical/c1",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "cloud/physical/c1/host.txt"
+    },
+    {
+      "stage": "cloud/physical/c2",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "cloud/physical/c2/host.txt"
+    },
+    {
+      "stage": "cloud/physical/c3",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "cloud/physical/c3/host.txt"
+    },
+    {
+      "stage": "cloud/physical/performance",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "cloud/physical/performance/host.txt"
+    },
+    {
+      "stage": "cloud/readcmd/c1",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "cloud/readcmd/c1/host.txt"
+    },
+    {
+      "stage": "cloud/readcmd/c2",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "cloud/readcmd/c2/host.txt"
+    },
+    {
+      "stage": "cloud/readcmd/c3",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "cloud/readcmd/c3/host.txt"
+    },
+    {
+      "stage": "cloud/readcmd/performance",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "cloud/readcmd/performance/host.txt"
+    },
+    {
+      "stage": "alan/age/s1",
+      "source_sha": "13c2fc07d4a06661cd9f786bc591ee0adaeb227d",
+      "exit_code": 0,
+      "host_record": null
+    },
+    {
+      "stage": "alan/age/s2",
+      "source_sha": "13c2fc07d4a06661cd9f786bc591ee0adaeb227d",
+      "exit_code": 0,
+      "host_record": null
+    },
+    {
+      "stage": "alan/closure/s1",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": null
+    },
+    {
+      "stage": "alan/closure/s2",
+      "source_sha": "1ca8487ab66e7a640d6ff609e602395fce86bb50",
+      "exit_code": 0,
+      "host_record": "alan/closure/s2/host.txt"
+    },
+    {
+      "stage": "alan/physical/s1",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "alan/physical/s1/host.txt"
+    },
+    {
+      "stage": "alan/physical/s2",
+      "source_sha": "5e40737ff65def14294a274ad60f5f3f20923488",
+      "exit_code": 0,
+      "host_record": "alan/physical/s2/host.txt"
+    },
+    {
+      "stage": "alan/pipeline/s1",
+      "source_sha": "733aa3a516f5a3c6b05798990dac91d74fa0f6fc",
+      "exit_code": 0,
+      "host_record": null
+    },
+    {
+      "stage": "alan/pipeline/s2",
+      "source_sha": "733aa3a516f5a3c6b05798990dac91d74fa0f6fc",
+      "exit_code": 0,
+      "host_record": null
+    },
+    {
+      "stage": "alan/readcmd/s1",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "alan/readcmd/s1/host.txt"
+    },
+    {
+      "stage": "alan/readcmd/s2",
+      "source_sha": "b8634cd645d944f9905696b0bd5be8336d8bb29b",
+      "exit_code": 0,
+      "host_record": "alan/readcmd/s2/host.txt"
+    }
+  ]
+}
