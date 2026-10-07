@@ -342,8 +342,10 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   io.core.s2Hold := cpuHold
   // Resource waits must requery SRAM when they resume; do not reuse a tag
   // snapshot acquired before the older refill/probe/writeback completed.
+  // A hit in S still needs the MSHR for GetM. Mark that wait as well, so a
+  // held younger S1 Store cannot prevent the probe that frees L2's set.
   when(cpu2.valid && cpu2.req.core.op =/= L1DOp.Fence && !fromInternal && outcome === L1S2Outcome.Hold &&
-    (sameMshr || sameWb || (!hit && !miss.io.status.canAllocate))) { cpu2.needsRecheck := true.B }
+    (sameMshr || sameWb || ((!hit || upgrade) && !miss.io.status.canAllocate))) { cpu2.needsRecheck := true.B }
 
   val rawLoad = Mux(!fromInternal && mmio.io.done.valid, mmio.io.done.bits.rdata, hitWord)
   val loadData = formatLoad(rawLoad, s2.paddr, s2.req.core.size, s2.req.core.signed, s2.req.core.isFlw)

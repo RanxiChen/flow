@@ -177,6 +177,8 @@ S1/S2 请求寄存 `idx`。下列事件发生在其阵列读之后、S2 判定�
 
 PS 写 data 不触发（由第 4 节保证）。PS 的 E→M tag 写触发同 set 快照失效，防止后续 victim 查询把刚写脏的 E 行误当成 clean。发生在 S2 判定同拍的 tag/refill 修改同样阻止使用旧快照。
 
+实现修订（2026-10-07）：CPU S2 的资源等待设置 `needsRecheck`，包括同 MSHR/写回行、miss 等 MSHR 空闲，以及命中 S 的 Store 升级等 MSHR 空闲。后一种虽然 hit，仍依赖 GetM，不能漏作等待项。标记后年轻 S1 Store 已随 CPU 流水保持，不再阻止 probe 的有限拍本地前进；probe 完成、旧 miss 释放资源后重查当前 tag/state，再决定 hit、升级或重新获取。S2 暂停期间不提交 store，不增加额外请求、缓存或流水级。
+
 有意偏离 [`l1d-spec-inputs.md`](l1d-spec-inputs.md) 第 14 节的“同 set 同 way”：miss 请求没有命中路可比，而 refill 恰好装入它要的行时它应由 miss 变为 hit，按 way 比较需为 miss 另加规则。按 set 比较对命中与缺失都不漏；代价是同 set 无关请求偶尔多一次重查（约 3 拍），refill 与 probe 低频，可忽略。
 
 ### 5.4 Load 格式化
