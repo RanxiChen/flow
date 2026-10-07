@@ -129,8 +129,16 @@ class RvvLegacyIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module 
       RvvOp.add.U -> Cat(sums.reverse), RvvOp.sub.U -> Cat(sums.reverse),
       RvvOp.and.U -> (a & b), RvvOp.shift.U -> shifted))
   }
-  val registeredResult = Reg(UInt(p.dlen.W))
-  when(((if(multiply) maccReturned else returned) && !slow) || (active && noRead && !computed)) { registeredResult := resultData; computed := true.B }
+  val calculate = ((if(multiply) maccReturned else returned) && !slow) || (active && noRead && !computed)
+  val calculated = RegNext(resultData)
+  val resultLanes = (0 until p.dlen/64).map { lane =>
+    val localEnable = RegNext(calculate,false.B)
+    dontTouch(localEnable)
+    RegEnable(calculated(64*lane+63,64*lane),localEnable)
+  }
+  val calculatedValid = RegNext(calculate,false.B)
+  when(calculatedValid) { computed := true.B }
+  val registeredResult = Cat(resultLanes.reverse)
   io.write.bits.row := address(d.decoded.vd,resultRow)
   io.write.bits.data := registeredResult
   when(slow) { io.write.bits.data := slowValues.asUInt }

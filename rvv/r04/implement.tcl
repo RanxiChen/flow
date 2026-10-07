@@ -25,3 +25,10 @@ foreach cell [get_cells -hierarchical -filter {REF_NAME =~ BUFG*}] {
   puts $fh "$cell\t[get_property REF_NAME $cell]\t$nets\t$drivers"
 }
 close $fh
+
+set df [open $report_dir/dsp-pipeline.tsv w]
+puts $df "cell\tAREG\tBREG\tMREG\tPREG"
+foreach c [get_cells -hierarchical -filter {REF_NAME =~ DSP48*}] {
+  puts $df "$c\t[get_property AREG $c]\t[get_property BREG $c]\t[get_property MREG $c]\t[get_property PREG $c]"
+}
+close $df

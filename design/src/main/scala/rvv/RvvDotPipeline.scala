@@ -9,7 +9,7 @@ import chisel3.util._
   * storage. Ordinary VRF writes invalidate a matching older cached value. */
 class RvvDotPipeline(p: RvvParams) extends Module {
   val io = IO(new RvvIntegerPorts(p))
-  val snoop = IO(Input(Vec(2,Valid(new Bundle {
+  val snoop = IO(Input(Vec(3,Valid(new Bundle {
     val row = UInt(p.rowBits.W); val age = UInt(p.ageBits.W)
   }))))
   val active = RegInit(false.B)
@@ -78,8 +78,8 @@ class RvvDotPipeline(p: RvvParams) extends Module {
       RegNext(a*b)
     }
   }
-  val pairs = products.map(xs => Seq(RegNext(xs(0)+&xs(1)),RegNext(xs(2)+&xs(3))))
-  val sums = pairs.map(xs => RegNext(xs(0)+&xs(1)))
+  val pProducts = products.map(xs => xs.map(x => RegNext(x)))
+  val sums = pProducts.map(xs => RegNext((xs(0)+&xs(1))+&(xs(2)+&xs(3))))
   val t = tokens(6)
   val address = (t.desc.decoded.vd*p.rowsPerReg.U+t.row)(p.rowBits-1,0)
   val cacheDepth = p.rows
@@ -156,7 +156,10 @@ class RvvIntegerSequencer(p: RvvParams,multiply: Boolean) extends Module {
   }
   else {
     val legacy = Module(new RvvLegacyIntegerSequencer(p,true))
-    val dot = Module(new RvvDotPipeline(p)); dot.snoop := snoop
+    val dot = Module(new RvvDotPipeline(p))
+    for(j <- 0 until 2) { dot.snoop(j) := snoop(j) }
+    dot.snoop(2).valid := legacy.io.write.fire
+    dot.snoop(2).bits.row := legacy.io.write.bits.row; dot.snoop(2).bits.age := legacy.io.writeAge
     val isDot = io.in.bits.decoded.op === RvvOp.dot.U || io.in.bits.decoded.op === RvvOp.dotsu.U
     legacy.io.in.valid := io.in.valid && !isDot && !dot.io.busy
     dot.io.in.valid := io.in.valid && isDot && !legacy.io.busy
