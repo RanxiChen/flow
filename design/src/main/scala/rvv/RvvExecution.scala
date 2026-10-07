@@ -26,9 +26,13 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   val operandData = Mux(operandsHeld,heldOperands,io.readData)
   when(pending && !operandsHeld) { heldOperands := io.readData; operandsHeld := true.B }
   val operandRow = Reg(UInt(log2Ceil(p.rows+1).W))
-  val bytePosition = operandRow * p.rowBytes.U
-  val registerOffset = operandRow >> log2Ceil(p.rowsPerReg)
-  val subrow = if(p.rowsPerReg == 1) 0.U else operandRow(log2Ceil(p.rowsPerReg)-1,0)
+  // Scalar moves need no BRAM operand and can write directly from the
+  // registered descriptor. Vector reads retain the synchronous operand stage.
+  val noRead = if(multiply) false.B else d.decoded.op === RvvOp.move.U && d.decoded.scalarOperand
+  val resultRow = Mux(noRead,row,operandRow)
+  val bytePosition = resultRow * p.rowBytes.U
+  val registerOffset = resultRow >> log2Ceil(p.rowsPerReg)
+  val subrow = if(p.rowsPerReg == 1) 0.U else resultRow(log2Ceil(p.rowsPerReg)-1,0)
   def address(base: UInt, at: UInt = operandRow): UInt = (base*p.rowsPerReg.U+at)(p.rowBits-1,0)
   def bit(base: UInt, at: UInt = operandRow): UInt = (1.U(32.W) << (base+(at >> log2Ceil(p.rowsPerReg))))(31,0)
   io.age := d.age; io.busy := active
@@ -41,7 +45,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     when(d.decoded.op === RvvOp.move.U) { io.readRows(0) := address(d.decoded.vs1,row); io.readDemand := Mux(d.decoded.scalarOperand,0.U,1.U) }
   }
   val rowsTotal = (d.decoded.bytes + (p.rowBytes-1).U) >> log2Ceil(p.rowBytes)
-  val last = operandRow + 1.U >= rowsTotal
+  val last = resultRow + 1.U >= rowsTotal
   val regLast = subrow === (p.rowsPerReg-1).U || last
   // SEW=64 multiplication is the documented slow path: capture one DLEN row,
   // reuse one 64-bit multiplier across its elements, then perform one bank write.
@@ -73,7 +77,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
   io.hazard.valid := active; io.hazard.slot := d.slot
   io.hazard.reads := Mux(readAll,0.U,readsAt(row)) | Mux(d.decoded.masked,1.U,0.U)
   when(slow && (slowActive || slowDone)) { io.hazard.reads := Mux(d.decoded.masked,1.U,0.U) }
-  io.hazard.writes := bit(d.decoded.vd,Mux(pending,operandRow,row))
+  io.hazard.writes := bit(d.decoded.vd,Mux(noRead,row,Mux(pending,operandRow,row)))
 
   val resultData = if(multiply) {
   val candidates = (0 until 4).map { sew =>
@@ -136,7 +140,7 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
       RvvOp.add.U -> Cat(sums.reverse), RvvOp.sub.U -> Cat(sums.reverse),
       RvvOp.and.U -> (a & b), RvvOp.shift.U -> shifted))
   }
-  io.write.bits.row := address(d.decoded.vd)
+  io.write.bits.row := address(d.decoded.vd,resultRow)
   io.write.bits.data := resultData
   when(slow) { io.write.bits.data := slowValues.asUInt }
   io.write.bits.enables := VecInit((0 until p.rowBytes).map { b =>
@@ -144,17 +148,18 @@ class RvvIntegerSequencer(p: RvvParams, multiply: Boolean) extends Module {
     element < d.issue.vl && element >= d.issue.vstart &&
       (!d.decoded.masked || (io.mask >> element)(0))
   }).asUInt
-  io.write.valid := pending && !zero && (!slow || slowDone) && !io.blocked
-  io.readValid := active && !zero && !readAll && !slowActive && !slowDone &&
+  io.write.valid := (pending || (active && noRead)) && !zero && (!slow || slowDone) && !io.blocked
+  io.readValid := active && !noRead && !zero && !readAll && !slowActive && !slowDone &&
     (!pending || io.write.fire) && io.grant && !io.blocked
   when(io.readValid) {
     pending := true.B; operandsHeld := false.B; operandRow := row; row := row+1.U
     when(row+1.U >= rowsTotal) { readAll := true.B }
   }.elsewhen(io.write.fire) { pending := false.B }
+  when(io.write.fire && noRead) { row := row+1.U }
   io.progress.valid := (io.write.fire || (active && zero))
   io.progress.bits.slot := d.slot
   io.progress.bits.readDone := Mux(regLast,readMask & Mux(d.decoded.masked,"hfffffffe".U,"hffffffff".U),0.U)
-  io.progress.bits.writeDone := Mux(regLast,bit(d.decoded.vd),0.U)
+  io.progress.bits.writeDone := Mux(regLast,bit(d.decoded.vd,resultRow),0.U)
   io.progress.bits.finished := zero || last
   when(captureSlow) {
     io.progress.valid := true.B

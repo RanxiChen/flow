@@ -131,11 +131,11 @@ class RvvScoreboard(p: RvvParams, clients: Int = 4) extends Module {
     io.war(c) := q.valid && (q.writes & oldReads).orR
     io.waw(c) := q.valid && (q.writes & oldWrites).orR
   }
-  // Retire masks only from registered progress; no BRAM/data-to-control path.
+  // Sources are registered descriptors/return metadata and handshake events.
+  // Mask and age registers are the sole state used for hazard decisions;
+  // avoid adding a second retirement edge after the architectural write.
   val updates = (0 until clients).map { c =>
-    val u = Wire(Valid(new RvvProgress(p)))
-    u.valid := RegNext(io.progress(c).valid,false.B)
-    u.bits := RegEnable(io.progress(c).bits,io.progress(c).valid)
+    val u = io.progress(c)
     when(u.valid) { assert(valid(u.bits.slot),"progress for a non-live instruction") }
     u
   }
