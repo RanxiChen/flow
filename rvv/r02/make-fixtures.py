@@ -79,7 +79,13 @@ def directed():
     # while two ordinary younger loads request their data through the small IQs.
     p.emit(vector(45,16,8,24,2),3,3,64,label='slow-war-reader')
     p.emit(memory(8,2),2,3,128,base=BASE+0x8000,label='slow-reader-held-load')
-    p.emit(memory(24,2),2,3,128,base=BASE+0xa000,label='slow-reader-independent-load')
+    # Let the held load's first return reach the VRF WAR boundary before the
+    # independent requests. These ordinary unrelated ALU instructions preserve
+    # the existing random core/translation/AXI handshake model.
+    for _ in range(8):
+        p.emit(vector(0,6,4,5,0),2,0,16,label='slow-war-gap-add')
+    for reg in (24,0,24):
+        p.emit(memory(reg,2),2,3,128,base=BASE+0xa000,label='slow-reader-independent-load')
     for overlap in (True,False):
         b = BASE+0xb003
         other = b if overlap else BASE+0xc001

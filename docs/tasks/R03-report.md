@@ -21,6 +21,7 @@
 | 阶段 | 提交 | 部件前后 LUT/FF/BRAM | 总 LUT / WNS | 验证与日志 |
 | --- | --- | --- | --- | --- |
 | R02 历史 | 79f6c5a | VRF 44.5k LUT；前端39.7k；记分板26.2k；VLSU52.9k；ALU18.6k；乘加23.9k | 206k / -2.117 ns（RuntimeOptimized） | R02-report |
+| R02 默认策略重跑 | 源码0255e8a，与79f6c5a的RVV RTL一致 | VRF 42358 LUT / 512 FF / 0 BRAM；前端42321；记分板25387；VLSU49130；ALU18811；乘加16787 | 196270 / -1.412 ns | Alan默认综合退出0；`baseline-default/` |
 | A1 | 0cf6c3e | 综合运行中 | 综合运行中 | C1 3/3；C2 前端6/6、VRF1/1、Spike种子0–7通过；`a1/` |
 
 ## 最终验收
@@ -40,3 +41,7 @@ A1 命令：`bash rvv/r02/run-c1.sh .../a1/c1 && bash rvv/r02/run-c2.sh .../a1/c
 `9d99190`：C1 3/3，前端6/6、VRF1/1通过；定向种子0–2通过，种子3在最终Spike状态检查之后报“no younger AR was issued while an older load writeback waited for WAR”。分类：原八条 dot 读者的覆盖窗口依赖旧队列深度，缩至乘加队列2项后不保证随机握手都重叠；不是Spike结果失配。保留失败日志 `a2/c2/integration.log`，不改变任何原指令、种子、断言或阈值。新增三条普通已支持指令（SEW64 vmacc迭代读者、覆盖源的load、独立load）形成更长窗口，并单独要求新窗口的AR/WAR同时出现。RTL不识别程序标签。修订后完整C1/C2重新运行，综合仍验证该段相同RTL。
 
 综合与仿真并行时，本任务综合进程树固定在CPU0–3，仿真固定在CPU4–7；合计只使用8/20核，所有硬件工具继续nice。S1候选保留生成SHA、固定RTL及Tcl/XDC哈希；后续pull不改变已提交综合的输入。
+
+默认策略基线（Vivado2022.2）：总量196270 LUT，LUTRAM25364，FF55542，DSP154，RAMB36=7、RAMB18=1，WNS -1.412 ns。与RuntimeOptimized的206029 LUT / -2.117 ns分开记录；后续变更面积账优先用默认策略相邻候选比较。原始报告已下载至 `rvv/r03/evidence/baseline-default/`（不含DCP；DCP留在Alan）。
+
+`6ffadb6`追加慢读者后，原覆盖断言已在种子0–2通过；新增窗口专属断言在种子2未触发（最终Spike状态仍一致），说明独立AR仍可能早于被阻塞数据返回。保留 `a2-fixed/`。继续只增加普通刺激：在独立load前加8条无寄存器重叠的vadd，再加2条独立load，保留已加用例与全部断言；给返回进入WAR边界留出时间，并覆盖连续独立请求。没有修改随机握手模型或RTL。
