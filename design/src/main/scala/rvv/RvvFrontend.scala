@@ -61,6 +61,9 @@ class RvvFrontend(p: RvvParams) extends Module {
     assert(count =/= 0.U && viq.io.enq.ready,"commit lacks its reserved VIQ slot")
     assert(prepared(0) && !serial(0) && (sent(0) || (io.verdict.fire && judgementIndex === 0.U)),
       "commit requires the oldest item to have received Ok")
+    when(pending(0).decoded.memory && pending(0).decoded.bytes =/= 0.U) {
+      printf(p"R02_INTERVAL_COMMIT age=${pending(0).age} pa=${pending(0).pa(0)} length=${pending(0).length(0)}\n")
+    }
   }
   assert(occupied <= p.viqDepth.U,"reservation overflow")
   assert(!io.serialGo,"R02 serial execution is not implemented")
@@ -154,6 +157,7 @@ class RvvFrontend(p: RvvParams) extends Module {
     waiting(insertionIndex) := false.B; stage(insertionIndex) := 0.U; nextAge := nextAge + 1.U
     assert(decoded.supported,"R02 received an unimplemented instruction")
     when(decoded.memory && decoded.bytes =/= 0.U) {
+      printf(p"R02_INTERVAL_ALLOC age=${nextAge} index=${intervalFree} bytes=${decoded.bytes}\n")
       intervalValid(intervalFree) := true.B
       intervals(intervalFree) := 0.U.asTypeOf(new Interval)
       intervals(intervalFree).age := nextAge; intervals(intervalFree).store := decoded.store
@@ -162,8 +166,14 @@ class RvvFrontend(p: RvvParams) extends Module {
   for(k <- 0 until intervalDepth) {
     val commitNow = io.commit && count =/= 0.U && intervals(k).age === pending(0).age
     when(commitNow) { intervals(k).committed := true.B }
-    when(io.kill && !intervals(k).committed && !commitNow) { intervalValid(k) := false.B }
-    when(io.released.valid && intervals(k).age === io.released.bits) { intervalValid(k) := false.B }
+    when(io.kill && !intervals(k).committed && !commitNow) {
+      when(intervalValid(k)) { printf(p"R02_INTERVAL_KILL age=${intervals(k).age} index=${k.U}\n") }
+      intervalValid(k) := false.B
+    }
+    when(io.released.valid && intervals(k).age === io.released.bits) {
+      when(intervalValid(k)) { printf(p"R02_INTERVAL_RELEASE age=${intervals(k).age} index=${k.U}\n") }
+      intervalValid(k) := false.B
+    }
   }
   def overlap(a: UInt, al: UInt, b: UInt, bl: UInt): Bool =
     al =/= 0.U && bl =/= 0.U && a < b +& bl && b < a +& al
