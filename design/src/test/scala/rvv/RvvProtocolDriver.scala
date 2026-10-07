@@ -314,7 +314,7 @@ class RvvProtocolDriver(dut: RvvCoprocessor, p: RvvParams, fixture: R02Fixture,
       if(kill) { pending.clear(); cursor=committed }
       dut.clock.step(1); cycle+=1
     }
-    assert(cycle<maxCycles,s"timeout seed=$seed cycle=$cycle committed=$committed cursor=$cursor pending=${pending.size}")
+    assert(cycle<maxCycles,s"timeout seed=$seed cycle=$cycle committed=$committed cursor=$cursor pending=${pending.size} drainState=0x${uint(dut.drainState).toString(16)}")
     assert(translations.isEmpty && reads.isEmpty && writes.isEmpty && responses.isEmpty && scalar.isEmpty && committedMemory.isEmpty && requestInstruction.isEmpty,
       s"drained without completing protocol obligations seed=$seed")
     for(b <- fixture.expected.indices) {

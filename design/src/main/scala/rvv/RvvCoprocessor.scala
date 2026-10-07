@@ -25,6 +25,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   val dispatchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
   val prefetchEvent = IO(Output(Valid(UInt(p.ageBits.W))))
   val dispatchMacFull = IO(Output(Bool()))
+  val drainState = IO(Output(UInt(32.W)))
   val front = Module(new RvvFrontend(p))
   front.io.issue <> io.issue; io.verdict <> front.io.verdict
   front.io.commit := io.commit; front.io.kill := io.killUncommitted; front.io.serialGo := io.serialGo
@@ -121,6 +122,8 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   cross.io.blocked := sb.io.raw(4) || sb.io.war(4) || sb.io.waw(4)
   io.drained := front.io.empty && queues.map(_.io.count === 0.U).reduce(_ && _) &&
     sb.io.empty && !mem.io.busy && !alu.io.busy && !mac.io.busy && !fp.io.busy && !cross.io.busy
+  drainState := Cat(queues.map(_.io.count.pad(6)).reverse)
+  drainState := Cat(front.io.empty,sb.io.empty,mem.io.busy,alu.io.busy,mac.io.busy,cross.io.busy,queues.map(_.io.count.pad(5)).reverse.reduce(Cat(_,_)))
   io.vxsat := false.B; io.fflags := 0.U
   io.counters := 0.U.asTypeOf(new RvvCounters)
   io.counters.readBytes := mem.io.readBytes; io.counters.writeBytes := mem.io.writeBytes
