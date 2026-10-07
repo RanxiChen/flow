@@ -5,7 +5,7 @@ file mkdir $report_dir
 set_param general.maxThreads 4
 read_verilog -sv [glob $source_dir/*.sv]
 read_xdc [file join [file dirname [info script]] clock.xdc]
-synth_design -top RvvCoprocessor -part xcku040-ffva1156-2-e -mode out_of_context
+synth_design -top RvvCoprocessor -part xcku040-ffva1156-2-e -mode out_of_context -directive RuntimeOptimized
 report_utilization -hierarchical -file $report_dir/utilization-hierarchical.rpt
 report_utilization -file $report_dir/utilization.rpt
 report_timing_summary -file $report_dir/timing-summary.rpt
