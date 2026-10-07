@@ -3,10 +3,11 @@ package flow.rvv
 import chisel3._
 import chisel3.util._
 
-/** Byte-enable memory-order rows. Asynchronous read ports infer replicated
-  * distributed RAM; each low-address bank has exactly one accepted writer. */
+/** Byte-enable memory-order rows. Synchronous read ports infer replicated
+  * block RAM; each low-address bank has exactly one accepted writer. */
 class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   val io = IO(new Bundle {
+    val readValid = Input(Vec(p.execReadPorts+2,Bool()))
     val readRows = Input(Vec(p.execReadPorts+2,UInt(p.rowBits.W)))
     val readData = Output(Vec(p.execReadPorts+2,UInt(p.dlen.W)))
     val write = Vec(writers,Flipped(Decoupled(new RvvWrite(p))))
@@ -26,8 +27,12 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
   def index(row: UInt): UInt = row >> bankBits
   for(r <- 0 until p.execReadPorts+2) {
-    banks.foreach(copies => copies(r).io.readAddress := index(io.readRows(r)))
-    io.readData(r) := VecInit(banks.map(copies => copies(r).io.readData))(bank(io.readRows(r)))
+    for(b <- 0 until p.writeBanks) {
+      banks(b)(r).io.readAddress := index(io.readRows(r))
+      banks(b)(r).io.readEnable := io.readValid(r) && bank(io.readRows(r)) === b.U
+    }
+    val selectedBank = RegEnable(bank(io.readRows(r)),io.readValid(r))
+    io.readData(r) := VecInit(banks.map(copies => copies(r).io.readData))(selectedBank)
   }
   io.write.foreach(_.ready := false.B)
   for(b <- 0 until p.writeBanks) {
@@ -48,6 +53,10 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
       copy.io.writeAddress := index(bankWrite.row)
       copy.io.writeData := bankWrite.data; copy.io.writeEnables := bankWrite.enables
     }
+    for(r <- 0 until p.execReadPorts+2) {
+      assert(!(bankValid && io.readValid(r) && io.readRows(r) === bankWrite.row),
+        "BRAM same-row read/write must never be consumed")
+    }
     when(bankValid) {
       val x=bankWrite
       when(x.row < p.rowsPerReg.U) {
@@ -63,15 +72,14 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   }
 }
 
-/** Technology-neutral 1R/1W asynchronous byte-write RAM template. The Vivado
-  * attribute selects the frozen LUTRAM implementation; Verilator executes the
-  * same uninitialized-memory and edge-write semantics as the Chisel Mem. */
+/** 1W1R synchronous READ_FIRST byte-write BRAM. No reset on the array or
+  * output. Hazard gating prohibits consuming same-address read/write data. */
 class RvvVrfBank(rows: Int,dataBits: Int) extends BlackBox(Map(
   "ROWS" -> rows,"DATA_BITS" -> dataBits,"ADDR_BITS" -> math.max(1,log2Ceil(rows)))) with HasBlackBoxInline {
   private val addrBits=math.max(1,log2Ceil(rows))
   val io=IO(new Bundle {
     val clock=Input(Clock())
-    val readAddress=Input(UInt(addrBits.W)); val readData=Output(UInt(dataBits.W))
+    val readEnable=Input(Bool()); val readAddress=Input(UInt(addrBits.W)); val readData=Output(UInt(dataBits.W))
     val writeValid=Input(Bool()); val writeAddress=Input(UInt(addrBits.W))
     val writeData=Input(UInt(dataBits.W)); val writeEnables=Input(UInt((dataBits/8).W))
   })
@@ -79,6 +87,7 @@ class RvvVrfBank(rows: Int,dataBits: Int) extends BlackBox(Map(
     |  parameter int ROWS=8, DATA_BITS=512, ADDR_BITS=3
     |)(
     |  input logic clock,
+    |  input logic readEnable,
     |  input logic [ADDR_BITS-1:0] readAddress,
     |  output logic [DATA_BITS-1:0] readData,
     |  input logic writeValid,
@@ -86,9 +95,9 @@ class RvvVrfBank(rows: Int,dataBits: Int) extends BlackBox(Map(
     |  input logic [DATA_BITS-1:0] writeData,
     |  input logic [DATA_BITS/8-1:0] writeEnables
     |);
-    |  (* ram_style = "distributed" *) logic [DATA_BITS-1:0] memory [0:ROWS-1];
-    |  assign readData=memory[readAddress];
+    |  (* ram_style = "block" *) logic [DATA_BITS-1:0] memory [0:ROWS-1];
     |  always @(posedge clock) begin
+    |    if(readEnable) readData <= memory[readAddress];
     |    for(integer b=0;b<DATA_BITS/8;b=b+1)
     |      if(writeValid && writeEnables[b]) memory[writeAddress][8*b +: 8] <= writeData[8*b +: 8];
     |  end

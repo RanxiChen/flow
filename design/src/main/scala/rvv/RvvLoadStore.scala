@@ -13,7 +13,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val ordering = Output(new RvvDescriptor(p)); val orderingValid = Output(Bool()); val conflict = Input(Bool())
     val released = Valid(UInt(64.W))
     val invalidate = Decoupled(UInt(64.W))
-    val storeRow = Output(UInt(p.rowBits.W)); val storeData = Input(UInt(p.dlen.W))
+    val storeReadValid = Output(Bool()); val storeRow = Output(UInt(p.rowBits.W)); val storeData = Input(UInt(p.dlen.W))
     val write = Decoupled(new RvvWrite(p)); val writeAge = Output(UInt(64.W))
     val hazard = Output(Vec(2,new RvvHazard(p))); val blocked = Input(Vec(2,Bool()))
     val progress = Vec(2,Valid(new RvvProgress(p)))
@@ -79,7 +79,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val writeBurst = RegInit(false.B); val writeMeta = Reg(new Burst)
   val writeBeat = RegInit(0.U(9.W)); val gathered = RegInit(false.B)
   val gatheredData = RegInit(0.U(p.memoryBits.W)); val gatherRow = Reg(UInt(p.rowBits.W))
-  val gathering = RegInit(false.B)
+  val gathering = RegInit(false.B); val storePending = RegInit(false.B)
 
   io.axi.ar.valid := canRequest && !d.decoded.store && creditOk && bursts.io.enq.ready
   io.axi.ar.bits := 0.U.asTypeOf(new RvvAxiAddress(p))
@@ -193,7 +193,10 @@ class RvvLoadStore(p: RvvParams) extends Module {
       gatheredBytes(b) := (io.storeData >> (offset.asUInt(log2Ceil(p.rowBytes)-1,0) << 3))(7,0)
     }
   }
-  when(gathering && !io.blocked(0)) {
+  io.storeReadValid := gathering && !storePending && !io.blocked(0)
+  when(io.storeReadValid) { storePending := true.B }
+  when(gathering && storePending && !io.blocked(0)) {
+    storePending := false.B
     gatheredData := gatheredBytes.asUInt
     when(gatherRow === lastRow) { gathering := false.B; gathered := true.B }
       .otherwise { gatherRow := gatherRow+1.U }

@@ -55,17 +55,24 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
   val bothFit = alu.io.readDemand +& mac.io.readDemand <= p.execReadPorts.U
   alu.io.grant := !mac.io.busy || bothFit || alu.io.age < mac.io.age
   mac.io.grant := !alu.io.busy || bothFit || mac.io.age < alu.io.age
+  vrf.io.readValid.foreach(_ := false.B)
   vrf.io.readRows.foreach(_ := 0.U)
   alu.io.readData.foreach(_ := 0.U); mac.io.readData.foreach(_ := 0.U)
+  val macBase = Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)
+  val macDataBase = RegEnable(macBase,mac.io.readValid)
   for(j <- 0 until 3) {
+    alu.io.readData(j) := vrf.io.readData(j)
+    mac.io.readData(j) := vrf.io.readData((macDataBase+&j.U)(log2Ceil(p.execReadPorts+2)-1,0))
     when(alu.io.grant && j.U < alu.io.readDemand) {
-      vrf.io.readRows(j) := alu.io.readRows(j); alu.io.readData(j) := vrf.io.readData(j)
+      vrf.io.readRows(j) := alu.io.readRows(j); vrf.io.readValid(j) := alu.io.readValid
     }
-    val index = (Mux(alu.io.busy && alu.io.grant,alu.io.readDemand,0.U)+&j.U).pad(log2Ceil(p.execReadPorts+2))
+    val index = (macBase+&j.U).pad(log2Ceil(p.execReadPorts+2))
     when(mac.io.grant && j.U < mac.io.readDemand) {
-      vrf.io.readRows(index) := mac.io.readRows(j); mac.io.readData(j) := vrf.io.readData(index)
+      vrf.io.readRows(index) := mac.io.readRows(j); vrf.io.readValid(index) := mac.io.readValid
     }
   }
+  vrf.io.readValid(p.execReadPorts) := mem.io.storeReadValid
+  vrf.io.readValid(p.execReadPorts+1) := cross.io.readValid
   vrf.io.readRows(p.execReadPorts) := mem.io.storeRow; mem.io.storeData := vrf.io.readData(p.execReadPorts)
   vrf.io.readRows(p.execReadPorts+1) := cross.io.row; cross.io.data := vrf.io.readData(p.execReadPorts+1)
   vrf.io.write(0) <> mem.io.write; vrf.io.age(0) := mem.io.writeAge
