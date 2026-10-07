@@ -94,3 +94,9 @@ A3/A6功能通过提交 `7e0d29b`：C1 3/3，前端8/8、VRF1/1、定向Spike种
 新增未跟踪AGENTS.md要求运行前重读共享仿真主机配置，已读取并校验cloud_chen（SSH/环境/Verilator/资源正常）及Alan。用户本任务明确指定Alan独立工作区，因此本任务继续在Alan执行，Vivado也在Alan；每次启动重新读取共享配置。Alan当前余21GiB，内存充足。
 
 VRF v0影子静态索引优化未采用：默认rowsPerReg=1时原索引已可静态化，无可信默认收益；VRF层级中的大量组合逻辑来自跨层级吸收的store字节对齐，下一项统一旋转器实际优化后综合确认。
+
+共享ALU提交25712b9：三个配置RTL生成通过，C1 Verilator3/3；C2前端8/8、VRF1/1、Spike定向种子0–7通过，新增机制3/3通过。S1固定同SHA的C1输出，默认策略综合运行中。
+
+## 后续面积优化：VLSU共享字节旋转器
+
+load、store各只保留一套宽旋转器（双拼接后按字节右移），每个输出字节固定切片、独立生成有效使能。原逐字节动态选择跨层级放大，特别store选择逻辑被Vivado吸收到VRF读副本。保留非对齐/page分割/不同DLEN与mem宽度的原使能和信用合同。store响应slot FIFO从返回beat数缩到memoryInflight指令数；AW仅在有响应slot时发出，不改变B归还和释放规则。C1/C2/S1待运行。

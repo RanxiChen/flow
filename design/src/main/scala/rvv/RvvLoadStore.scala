@@ -71,7 +71,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   }
   val bursts = Module(new Queue(new Burst,p.returnBeats))
   val returnBuffer = Module(new Queue(new ReturnBeat,p.returnBeats,useSyncReadMem=true))
-  val bSlots = Module(new Queue(UInt(p.memorySlotBits.W),p.returnBeats))
+  val bSlots = Module(new Queue(UInt(p.memorySlotBits.W),p.memoryInflight))
   val reserved = RegInit(0.U(log2Ceil(p.returnBeats+1).W))
   when(generating && io.scalarWritesVisible) { scalarVisible := true.B }
   val canRequest = generating && !noAccess && !io.conflict && (!firstRequest || scalarVisible || io.scalarWritesVisible)
@@ -185,12 +185,18 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val offset = wLogical+b.S
     offset >= 0.S && offset < wd.decoded.bytes.zext
   }).asUInt
+  def rotateBytesRight(data: UInt, bytes: Int, amount: UInt): UInt = {
+    val double = Cat(data,data)
+    (double >> (amount << 3))(bytes*8-1,0)
+  }
+  val storeRotation = (wLogical.asUInt-gatherRow*p.rowBytes.U)(log2Ceil(p.rowBytes)-1,0)
+  val storeRotated = rotateBytesRight(io.storeData,p.rowBytes,storeRotation)
   val gatheredBytes = Wire(Vec(p.memBytes,UInt(8.W)))
   gatheredBytes := gatheredData.asTypeOf(Vec(p.memBytes,UInt(8.W)))
   for(b <- 0 until p.memBytes) {
     val offset = wLogical+b.S
     when(wStrb(b) && (offset.asUInt >> log2Ceil(p.rowBytes)) === gatherRow) {
-      gatheredBytes(b) := (io.storeData >> (offset.asUInt(log2Ceil(p.rowBytes)-1,0) << 3))(7,0)
+      gatheredBytes(b) := storeRotated(8*(b%p.rowBytes)+7,8*(b%p.rowBytes))
     }
   }
   io.storeReadValid := gathering && !storePending && !io.blocked(0)
@@ -249,11 +255,13 @@ class RvvLoadStore(p: RvvParams) extends Module {
   io.hazard(1).valid := returnedValid
   io.hazard(1).slot := ld.slot; io.hazard(1).writes := (1.U(32.W) << targetReg)(31,0)
   val outputData = Wire(Vec(p.rowBytes,UInt(8.W))); val outputMask = Wire(Vec(p.rowBytes,Bool()))
+  val loadRotation = (targetRow*p.rowBytes.U-returned.logical.asUInt)(log2Ceil(p.memBytes)-1,0)
+  val loadRotated = rotateBytesRight(returned.data,p.memBytes,loadRotation)
   for(b <- 0 until p.rowBytes) {
     val logicalByte = targetRow*p.rowBytes.U+b.U
     val sourceByte = logicalByte.zext-returned.logical
     outputMask(b) := logicalByte < ld.decoded.bytes && sourceByte >= 0.S && sourceByte < p.memBytes.S
-    outputData(b) := (returned.data >> (sourceByte.asUInt(log2Ceil(p.memBytes)-1,0) << 3))(7,0)
+    outputData(b) := loadRotated(8*(b%p.memBytes)+7,8*(b%p.memBytes))
   }
   io.write.valid := returnedValid && !io.blocked(1)
   io.write.bits.row := ld.decoded.vd*p.rowsPerReg.U+targetRow
