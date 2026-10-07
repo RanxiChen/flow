@@ -1,5 +1,7 @@
 # MEM：多核 L1D + L2 测试（交给 codex 跑和修）
 
+执行状态（2026-10-07）：已完成。Alan `8fcf486` 模块/配置 111/111、真实单核系统 12/12、多核 21/21，三条门槛命令均 exit=0。已修复 FENCE/probe 等待环并补强默认两核的 L2 写回刺激；完整版本、失败现场、随机统计与覆盖边界见 [`MEM-multicore-tests-report.md`](MEM-multicore-tests-report.md)。以下保留初始任务约定。
+
 起点：单核原子门槛 `2ac677c` 之后、包含本任务测试文件的提交。测试由 Claude 编写，本地未编译、未运行（`agent.md`：sbt 只在 Alan 执行）。先读 [`v1-mem-plan.md`](../v1-mem-plan.md) 第 5–6 步与 [`MEM-single-core-tests.md`](MEM-single-core-tests.md) 的规则。多核一致性 RTL（L2 目录 sharers、多目标 probe、跨核 Down/Inv）此前只经 elaborate，本任务第一次在仿真中运行，预期会出现真实 RTL 问题。
 
 ## 1. 文件（`design/src/test/scala/memsys/`）
