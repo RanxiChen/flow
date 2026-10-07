@@ -6,7 +6,7 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 /** AXI SoC generator; optional debug is passive and enables retirement traces. */
 object GenerateBreezeCluster extends App {
     require(args.length >= 3 && args.length <= 5,
-        "usage: GenerateBreezeCluster <single|small> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug]")
+        "未支持的参数数量（DMA/FASE 未支持）；usage: GenerateBreezeCluster <single|small> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug]")
     require(Set("single", "small").contains(args(0)), "未支持的 SoC profile")
     require(args.drop(3).forall(Set("tandem", "fpga-debug")), "未支持：DMA/FASE 或未知选项")
     require(args.drop(3).distinct.length == args.drop(3).length, "duplicate optional feature")
