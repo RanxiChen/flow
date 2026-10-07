@@ -405,3 +405,51 @@ NOT_BUILT 的 6 项是同三个 Zacas 程序在 single 和 single-backpressure �
 当前不能给出 ClusterProgramSpec 或全量 sbt test 的通过数：两者均**未运行**。19 个自写 ELF 构建成功仅是构建证据，不是整机执行证据。没有进行综合、时序、FPGA、Linux 或性能验证。
 
 继续前先明确 R1 的冻结排空/拍级契约，再本地修改 RTL 和对应 spec/最小定向回归，提交并通过 GitHub 同步到预检后的仿真机器；修复版本重新通过两条门槛、完整 ClusterIsaSpec 后再运行 ClusterProgramSpec，最后全量 sbt test。R2 不得无依据地改为允许失败。全量中与本任务无关的既有失败仍应照实报告，不扩大修复范围。
+
+## 第二轮
+
+任务：`CLUSTER-sfence-idle-fix.md`。首轮内容原样保留；本节记录新裁定后的独立执行，不能与首轮 SHA 混计。
+
+### 版本、裁定与环境
+
+- 本轮起点/被测 SHA：`cc60ebf659625ccc874a1eea8e33e866981fb1e3`，本地提交通过 GitHub 同步到 cloud_chen。
+- 本轮预检实际主机：`cloud_chen@47.111.104.2:22`；免密 SSH、Flow 环境、GitHub loopback 反向代理、29 GiB 可用内存、141 GiB 可用磁盘通过检查，无其他仿真任务。
+- cwd：`/home/cloud_chen/work/flow-cluster-20261007/design`；本轮证据根：`/home/cloud_chen/evidence/cluster-round2-20261007-cc60ebf/`，首轮归档保留。
+- R1 裁定：MMU idle 包含 I/D 查询 S1；T20 不变，按新 idle 计算首次 SFENCE 允许拍。已有 TLB 排空断言保留；新增 T18 检查两侧 S1、kill 当拍与下一拍 idle。
+- R2 裁定：M 态 tselect/tdata1/tdata2 读零、写忽略，tdata1.type=0 表示无 trigger；breakpoint 仍必须 tohost=1，不加入 expectedUnsupported。
+- 冻结 spec/hash 的修订来自起点提交；本轮本地和远端冻结检查均为 OK (7 files)、exit 0。后续不得自行修改冻结文件。
+- RISC-V GCC 13.2.0、Verilator 5.028、Java 11.0.32.1；工具版本/子模块身份保存于 `environment.txt`。重新执行子模块更新与 riscv-tests 构建，111 ELF 构建成功，三个 Zacas ELF 列于 `NOT_BUILT.txt`；`make -C tests/cluster` exit 0。
+
+### 第二轮命令状态
+
+| 顺序 | 命令 | 通过/总数 | exit | 日志 |
+| --- | --- | --- | --- | --- |
+| 1 | `sbt "testOnly flow.mmu.sv39.Sv39MmuSpec flow.core.CSRFileSpec flow.core.RegFileSpec flow.backend.BackendContractSpec"` | 64/64（4 suites） | 0 | `01-direct.log` |
+| 2 | 原六 suite 模块/配置门槛 | 111/111 | 0 | `02-unit.log` |
+| 3 | `sbt "testOnly flow.memsys.L1DL2SystemSpec"` | 12/12 | 0 | `03-system.log` |
+| 4 | `sbt "testOnly flow.cluster.ClusterIsaSpec"` | 8/8 | 0 | `04-isa.log` |
+| 5 | `sbt "testOnly flow.cluster.ClusterProgramSpec"` | 已加入服务器后台队列 | 待定 | `05-program.log` |
+| 6 | `sbt test` | 等待自写程序结束，后台自动启动 | 待定 | `06-full.log` |
+
+直接门槛、模块/配置、单核系统与 ISA 门槛均已通过；自写程序与全量回归的结果待服务器后台队列结束后填入，不提前声称通过。
+
+### R1/R2 四个失败转为 PASS
+
+同一 `cc60ebf`、cloud_chen 的完整 ClusterIsaSpec 8/8、exit 0：
+
+| 程序 | 结果 | cycles | tohost |
+| --- | --- | --- | --- |
+| rv64mi-p-illegal | PASS | 4701 | 0x1 |
+| rv64si-p-dirty | PASS | 2892 | 0x1 |
+| rv64si-p-icache-alias | PASS | 3187 | 0x1 |
+| rv64mi-p-breakpoint | PASS | 1934 | 0x1 |
+
+本轮执行全部 238 次已构建程序：235 次普通 PASS、3 次 ma_data 达到既定 unsupported 结束值 0x539，0 次非预期失败。三个 Zacas ELF 在 single 与 single-backpressure 中共 6 次 NOT_BUILT，列表/检查/看门狗未改变；首轮通过项没有回退。`04-isa-artifacts.tar.gz` 保存本轮 single-isa-0、dual-isa-0，首轮的重启目录不混入本轮证据。
+
+### 离线后台队列
+
+用户要求离线约一小时期间服务器自行执行。2026-10-07 在 ISA exit 0 后，用 `nohup` 启动证据根中的 `queued-run.sh`，脱离 SSH；先首次运行 ClusterProgramSpec，再首次运行全量 sbt test。程序功能失败仍保存结果并继续收集任务要求的全量回归；脚本不改代码、不修改 expectedUnsupported 或任何检查。
+
+每阶段之前核对 HEAD=`cc60ebf659625ccc874a1eea8e33e866981fb1e3`、tracked 工作区干净、冻结检查通过；身份/冻结文件变化时停止。两个阶段由 `run-stage.sh` 保存 SHA、cwd、命令、开始/结束时间、exit、日志和 XML。自写程序生成物在全量复用目录前归档为 `05-program-artifacts.tar.gz`。后台状态见 `background.status`，PID 见 `background.pid`，队列日志为 `background.log`；完成后记录 `queue-program.exit`、`queue-full.exit`。
+
+主机配置已在排队前重新读取并验证 cloud_chen；队列使用这次已确认的主机和环境，不启动 Alan 或本地仿真。待回来后依据日志诊断新问题、按原任务规则本地修复；后台不会自动放宽测试或修改冻结契约。
