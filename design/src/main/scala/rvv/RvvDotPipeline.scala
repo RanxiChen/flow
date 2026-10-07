@@ -92,7 +92,7 @@ class RvvDotPipeline(p: RvvParams) extends Module {
   // are issued once); equality never substitutes another instruction's value.
   when(valid(6) && t.bypassExpected) { assert(forwarded,"in-unit accumulator bypass unavailable") }
   val acc = Mux(forwarded,cacheData(cacheIndex),rawAccumulator(4))
-  val values = (0 until p.dlen/32).map(e => (sums(e).asUInt+acc(32*e+31,32*e))(31,0))
+  val values = (0 until p.dlen/32).map(e => (sums(e).pad(32).asUInt+acc(32*e+31,32*e))(31,0))
   val result = Cat(values.reverse)
   val merged = VecInit((0 until p.rowBytes).map(b => Mux(t.enables(b),result(8*b+7,8*b),acc(8*b+7,8*b)))).asUInt
   for(k <- 0 until cacheDepth) {
