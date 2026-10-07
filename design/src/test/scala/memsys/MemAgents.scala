@@ -338,6 +338,12 @@ class BehavioralL2(coh: L1DCoherenceIO, val backing: GoldenMem, rng: Random) ext
     snpQ.headOption.foreach { s =>
       coh.snp.bits.op.poke(s.op); coh.snp.bits.owner.poke(s.owner.B); coh.snp.bits.addr.poke(s.line.U)
     }
+    // A real L2 protects the probed set until its answers are consumed.
+    // In particular, do not grant AckE from S while an earlier Inv is still
+    // removing that copy. SNP/answers continue independently of stalled REQ.
+    val reqLine = coh.req.bits.addr.peek().litValue
+    if (snpOut.exists(_.line == reqLine) || snpQ.exists(_.line == reqLine)) reqReady = false
+    coh.req.ready.poke(reqReady.B)
   }
 
   def sample(): Unit = {

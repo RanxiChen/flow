@@ -89,6 +89,37 @@ class MemAgentsSpec extends AnyFreeSpec with Matchers with ChiselSim {
     model.probes.size mustBe 1
   }
 
+  "behavioral L2 waits for an earlier sharer Inv before accepting a same-line GetM" in
+    simulate(new MemAgentTestHarness) { d =>
+      init(d)
+      val l = lineOf(MainRam + 0x240)
+      val model = new BehavioralL2(d.io.coh, new GoldenMem(2), new Random(2))
+      val bench = new Bench(d.clock, Seq(model))
+      val h = d.io.cohPeer
+      model.held(l) = 'S'
+      model.probe(SnpOp.Inv, l)
+      h.req.valid.poke(true.B); h.req.bits.op.poke(ReqOp.GetM); h.req.bits.addr.poke(l.U)
+      h.snp.ready.poke(false.B)
+      bench.steps(4)
+      model.gets mustBe empty
+      d.io.coh.req.ready.peek().litToBoolean mustBe false
+      d.io.coh.snp.valid.peek().litToBoolean mustBe true
+      h.snp.ready.poke(true.B); bench.step()
+      model.probes.size mustBe 1
+      bench.steps(4)
+      model.gets mustBe empty
+      h.rspUp.valid.poke(true.B); h.rspUp.bits.op.poke(RspUpOp.InvAck)
+      h.rspUp.bits.addr.poke(l.U); h.rspUp.bits.hasData.poke(false.B); h.rspUp.bits.data.poke(0.U)
+      bench.step()
+      val ackCycle = model.acks.head._1
+      model.gets mustBe empty
+      h.rspUp.valid.poke(false.B); bench.step()
+      model.gets.head._1 must be > ackCycle
+      h.req.valid.poke(false.B); bench.quiesce()
+      model.grantsOf(l) mustBe Seq("DataE")
+      model.held(l) mustBe 'E'
+    }
+
   "quiesce waits for store miss replay and PS drain after the Mshr response" in simulate(new MemAgentTestHarness) { d =>
     init(d)
     val arch = new GoldenMem(3)

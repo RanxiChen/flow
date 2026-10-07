@@ -124,6 +124,22 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     finish()
   }
 
+  "a store racing an earlier sharer Inv reacquires the line before later dirty eviction" in withL1D() { e =>
+    import e._
+    val a = ram(0x440)
+    l2.sharedLines += line(a)
+    runOps(CoreOp.load(a))
+    l2.probe(SnpOp.Inv, line(a))
+    runOps(CoreOp.store(a + 8, BigInt("0123456789abcdef", 16)), CoreOp.load(a + 8))
+    l2.grantsOf(line(a)) mustBe Seq("DataS", "DataE")
+    l2.gets.filter(_._3 == line(a)).last._1 must be > l2.acks.head._1
+    // Force this single-set L1D line out through Put, then read it back.
+    runOps((1 to 2 * g.l1dWays).map(k => CoreOp.load(a + k * stride)): _*)
+    l2.puts.exists(x => x._2 == line(a) && x._3) mustBe true
+    runOps(CoreOp.load(a + 8))
+    finish()
+  }
+
   "victims fill invalid ways first, only dirty victims carry data, and evicted data returns" in withL1D() { e =>
     import e._
     val ways = g.l1dWays
