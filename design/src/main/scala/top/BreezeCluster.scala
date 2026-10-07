@@ -100,14 +100,15 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false)
     l2.io.l1i(h) <> l1i.io.coh
     l2.io.l1d(h) <> l1d.io.coh
     mmio.io.clients(h) <> l1d.io.mmio
-    backend.io.hpmEvents := frontend.io.hpm
-    backend.io.hpmEvents.dcacheAccess := l1d.io.events.load_access || l1d.io.events.store_access
-    backend.io.hpmEvents.dcacheMiss := l1d.io.events.load_miss || l1d.io.events.store_miss
-    backend.io.hpmEvents.dcacheUncached := l1d.io.events.mmio_read || l1d.io.events.mmio_write
+    val hpmEvents = Wire(chiselTypeOf(frontend.io.hpm))
+    hpmEvents := frontend.io.hpm
+    hpmEvents.dcacheAccess := l1d.io.events.load_access || l1d.io.events.store_access
+    hpmEvents.dcacheMiss := l1d.io.events.load_miss || l1d.io.events.store_miss
+    hpmEvents.dcacheUncached := l1d.io.events.mmio_read || l1d.io.events.mmio_write
+    backend.io.hpmEvents := RegNext(hpmEvents, 0.U.asTypeOf(hpmEvents))
     io.l1dEvents(h) := l1d.io.events
     io.hartFatal(h) := backend.io.hartFatal
     io.hartEStop(h) := backend.io.estop
     io.retire(h) := backend.io.tandem.getOrElse(0.U.asTypeOf(new TracePayload(64)))
   }
 }
-

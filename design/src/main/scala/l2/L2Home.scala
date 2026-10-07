@@ -6,6 +6,7 @@ import flow.bus.{Axi4MasterIO, Axi4Params}
 import flow.coherence._
 import flow.config.BreezeMemGeometry
 import flow.mmu.sv39.TreePlru
+import flow.util.SdpSram
 
 /** Shared L2 / Home. All array updates pass through the main pipeline;
   * slow transactions retain set ownership in slots until their response.
@@ -29,9 +30,10 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   // ===========================================================================
   // Arrays (§2.1)
   // ===========================================================================
-  val meta = SyncReadMem(p.l2Sets, Vec(p.l2Ways, new L2MetaEntry(p)))
-  val plruArr = SyncReadMem(p.l2Sets, UInt(p.plruBits.W))
-  val data = SyncReadMem(p.l2Sets * p.l2Ways, Vec(p.lineBytes, UInt(8.W)))
+  private val metaType = Vec(p.l2Ways, new L2MetaEntry(p))
+  val meta = Module(new SdpSram(p.l2Sets, metaType.getWidth, metaType.getWidth))
+  val plruArr = Module(new SdpSram(p.l2Sets, p.plruBits, p.plruBits))
+  val data = Module(new SdpSram(p.l2Sets * p.l2Ways, p.lineBits, 8))
   val initSet = RegInit(0.U((p.setBits + 1).W))
   val initDone = initSet === p.l2Sets.U
 
@@ -171,8 +173,12 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   s0Entry.set := Mux(s0Entry.kind === L2Kind.SlotTask, slots.io.taskReq(taskIdx).bits.set, p.setOf(s0Entry.req.addr))
   s0Entry.tag := Mux(s0Entry.kind === L2Kind.SlotTask, slots.io.taskReq(taskIdx).bits.tag, p.tagOf(s0Entry.req.addr))
 
-  val metaRead = meta.read(s0Entry.set, s0Valid)
-  val plruRead = plruArr.read(s0Entry.set, s0Valid)
+  meta.io.ren := s0Valid
+  meta.io.raddr := s0Entry.set
+  val metaRead = meta.io.rdata.asTypeOf(metaType)
+  plruArr.io.ren := s0Valid
+  plruArr.io.raddr := s0Entry.set
+  val plruRead = plruArr.io.rdata
 
   // The pipeline never stalls: every stage completes in one cycle (§4).
   s1.valid := s0Valid
@@ -227,7 +233,9 @@ class L2Home(g: BreezeMemGeometry) extends Module {
 
   // Data read way: hit way for requests and Put; slot-recorded way for tasks.
   val s1Way = Mux(s1.e.kind === L2Kind.SlotTask, s1.e.taskData.way, hitWay)
-  val dataRead = data.read(s1.e.set ## s1Way, s1.valid)
+  data.io.ren := s1.valid
+  data.io.raddr := s1.e.set ## s1Way
+  val dataRead = data.io.rdata.asTypeOf(Vec(p.lineBytes, UInt(8.W)))
 
   s2.valid := s1.valid
   s2.e := s1.e
@@ -512,20 +520,24 @@ class L2Home(g: BreezeMemGeometry) extends Module {
   when(slots.io.released) { slotWait.foreach(_ := false.B) }
 
   // Array writes
+  val metaWrRow = Wire(Vec(p.l2Ways, new L2MetaEntry(p)))
+  metaWrRow := s2.meta
+  metaWrRow(metaWrWay) := metaWrVal
+  meta.io.wen := !initDone || metaWrEn
+  meta.io.waddr := Mux(initDone, s2.e.set, initSet)
+  meta.io.wdata := Mux(initDone, metaWrRow.asUInt, 0.U)
+  meta.io.wmask := 1.U
+  plruArr.io.wen := !initDone || plruWrEn
+  plruArr.io.waddr := Mux(initDone, s2.e.set, initSet)
+  plruArr.io.wdata := Mux(initDone, TreePlru.touch(s2.plru, plruWrWay, p.l2Ways), 0.U)
+  plruArr.io.wmask := 1.U
+  data.io.wen := dataWrEn
+  data.io.waddr := s2.e.set ## s2.way
+  data.io.wdata := dataWrVal.asUInt
+  data.io.wmask := dataWrMask.asUInt
   when(!initDone) {
-    meta.write(initSet, 0.U.asTypeOf(Vec(p.l2Ways, new L2MetaEntry(p))))
-    plruArr.write(initSet, 0.U)
     initSet := initSet + 1.U
-  }.otherwise {
-    when(metaWrEn) {
-      val v = Wire(Vec(p.l2Ways, new L2MetaEntry(p)))
-      v := s2.meta
-      v(metaWrWay) := metaWrVal
-      meta.write(s2.e.set, v, UIntToOH(metaWrWay, p.l2Ways).asBools)
-    }
-    when(plruWrEn) { plruArr.write(s2.e.set, TreePlru.touch(s2.plru, plruWrWay, p.l2Ways)) }
   }
-  when(dataWrEn) { data.write(s2.e.set ## s2.way, dataWrVal, dataWrMask) }
 
   // ===========================================================================
   // Events (§11)
