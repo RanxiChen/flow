@@ -44,7 +44,8 @@ def main():
                 break
             # Success is based only on actual firmware UART output. Require
             # the console after memtest, so later initialization errors survive.
-            if 'Memtest OK' in captured and 'litex>' in captured and 'Breeze' in captured:
+            if ('Memtest OK' in captured and 'litex>' in captured and
+                    'BIOS built on ' in captured and 'Build your hardware, easily!' in captured):
                 passed = True
                 outcome = 'PASS'
                 break
