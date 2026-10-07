@@ -104,5 +104,6 @@
 - 参数实现检查另发现 DLEN<VLEN 时，同拍写两个 v0 子行会因两次整份 shadow 赋值丢失前一 bank 的更新。改成各 bank 合并字节更新后一次写入 v0 shadow，VRF bank 写口仍不变；新增双子行影子、字节使能及同 bank 年龄仲裁测试。属于参数化实现修正，加入 C2 gate 后统一重验。
 - `ab1ae1d` 的中间验证 `fix-valid-c1` 因合并影子修正而主动停止，保留部分日志，不算通过；只停止本任务脚本及其子进程。
 - `3644575` 已 push。cwd 同前；命令 `bash rvv/r02/run-c1.sh /home/chen/FUN/flow-r02-evidence/3644575-c1`，退出码 **0**；三个 emit 日志和 `smoke.log` **3/3**。后接 `R02_REUSE_REFERENCE=/home/chen/FUN/flow-r02-evidence/36ca203-c3 bash rvv/r02/run-c3.sh /home/chen/FUN/flow-r02-evidence/3644575-c3`，先执行 C2，仍在运行。
+- `3644575-c3` 退出码 **1**：C2 前端 **6/6**，新增区间回归通过；VRF 双子行与仲裁检查通过，但最终 row 4 比较失败。分类为测试初始化遗漏：该行只写过低字节，却把其余从未初始化字节预期为 0。先整行初始化为 0x33，再只改低字节，并逐位比较“0x33 保留 + 0x77 低字节”；增加有效的保留字节检查，不改变 RTL、不屏蔽比较。C3 尚未启动。
 
 与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
