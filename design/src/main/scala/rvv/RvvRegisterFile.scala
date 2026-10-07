@@ -14,6 +14,9 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
     val mask = Output(UInt(p.vlen.W))
   })
   val shadow = RegInit(0.U(p.vlen.W)); io.mask := shadow
+  val shadowBytes = Wire(Vec(p.regBytes,UInt(8.W)))
+  shadowBytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
+  shadow := shadowBytes.asUInt
   val bankBits = log2Ceil(p.writeBanks)
   val banks = Seq.fill(p.writeBanks)(Mem(p.rows/p.writeBanks,Vec(p.rowBytes,UInt(8.W))))
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
@@ -39,11 +42,9 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
       val x=bankWrite
       banks(b).write(index(x.row),x.data.asTypeOf(Vec(p.rowBytes,UInt(8.W))),x.enables.asBools)
       when(x.row < p.rowsPerReg.U) {
-        val bytes=Wire(Vec(p.regBytes,UInt(8.W))); bytes := shadow.asTypeOf(Vec(p.regBytes,UInt(8.W)))
         for(j <- 0 until p.rowBytes) {
-          when(x.enables(j)) { bytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
+          when(x.enables(j)) { shadowBytes((x.row*p.rowBytes.U+j.U)(log2Ceil(p.regBytes)-1,0)) := x.data(8*j+7,8*j) }
         }
-        shadow := bytes.asUInt
       }
     }
   }

@@ -16,4 +16,5 @@ export MAKEFLAGS=-j4
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:ActiveProcessorCount=4 -Xmx6g"
 cd design
 nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvFrontendSpec' > "$R02_EVIDENCE/frontend.log" 2>&1
+nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvRegisterFileSpec' > "$R02_EVIDENCE/vrf.log" 2>&1
 nice -n 10 /home/chen/.local/share/coursier/bin/sbt 'testOnly flow.rvv.RvvIntegrationSpec -- -z C2' > "$R02_EVIDENCE/integration.log" 2>&1

@@ -101,5 +101,6 @@
 - 同 SHA 的 C2 命令：`bash rvv/r02/run-c2.sh /home/chen/FUN/flow-r02-evidence/c2e436f-c3/c2-check`（由 C3 入口先执行），退出码 **0**，前端 **5/5**、定向 **8/8**，慢路径乘加结果严格匹配 Spike，WAR 越位检查全部通过。日志 `c2-check/frontend.log`、`c2-check/integration.log`。C3 随机重验正在进行。
 - `c2e436f-c3` 再次在 seed 7 失败（退出码 1）。`9053b17` 增加临时生命周期 printf，诊断运行在 `fb-debug/`，退出码 1。确认 RTL 错误：区间 payload 不复位，重复复位后无效项可能残留与本轮有效项相同的 age；释放比较没有 valid 门控，同拍分配新项时被旧 payload 的匹配覆盖。例如 age 162 分配到 slot 21 后，旧残留 age 131 的释放把它清空，随后 age 164 重用 slot 21；缺失的是尚未发 AW 的已提交 store。不是查询模型问题。
 - 修正 commit/release 对区间的更新均以当前 valid 为前提；保留 payload 不复位的正常实现，移除临时 printf。新增复位后残留 age + 同拍释放/分配的定向回归，仍检查提交当拍与提交后查询命中。冻结区间表结构不变，重新执行 C1–C3。
+- 参数实现检查另发现 DLEN<VLEN 时，同拍写两个 v0 子行会因两次整份 shadow 赋值丢失前一 bank 的更新。改成各 bank 合并字节更新后一次写入 v0 shadow，VRF bank 写口仍不变；新增双子行影子、字节使能及同 bank 年龄仲裁测试。属于参数化实现修正，加入 C2 gate 后统一重验。
 
 与冻结设计结构不一致：**无**。C3、P1–P5、S1 继续按原合同执行。
