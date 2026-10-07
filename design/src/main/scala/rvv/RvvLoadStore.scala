@@ -30,6 +30,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val responses = RegInit(VecInit(Seq.fill(p.memoryInflight)(0.U(log2Ceil(p.returnBeats+1).W))))
   val current = Reg(UInt(p.memorySlotBits.W)); val generating = RegInit(false.B)
   val position = RegInit(0.U(p.lengthBits.W)); val firstRequest = RegInit(true.B)
+  val scalarVisible = RegInit(false.B)
   val invalidatePosition = RegInit(0.U(p.lengthBits.W)); val invalidateDone = RegInit(true.B)
   val free = PriorityEncoder(~live.asUInt)
   io.in.ready := !generating && !live.asUInt.andR
@@ -38,6 +39,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     requestDone(free) := false.B; responses(free) := 0.U
     dataDone(free) := false.B
     generating := true.B; position := 0.U; firstRequest := true.B
+    scalarVisible := false.B
     invalidatePosition := 0.U; invalidateDone := !io.in.bits.decoded.store || io.in.bits.decoded.bytes === 0.U
   }
   val d = desc(current)
@@ -70,7 +72,8 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val returnBuffer = Module(new Queue(new ReturnBeat,p.returnBeats,useSyncReadMem=true))
   val bSlots = Module(new Queue(UInt(p.memorySlotBits.W),p.returnBeats))
   val reserved = RegInit(0.U(log2Ceil(p.returnBeats+1).W))
-  val canRequest = generating && !noAccess && !io.conflict && (!firstRequest || io.scalarWritesVisible)
+  when(generating && io.scalarWritesVisible) { scalarVisible := true.B }
+  val canRequest = generating && !noAccess && !io.conflict && (!firstRequest || scalarVisible || io.scalarWritesVisible)
   val creditOk = reserved +& beats <= p.returnBeats.U
   val writeBurst = RegInit(false.B); val writeMeta = Reg(new Burst)
   val writeBeat = RegInit(0.U(9.W)); val gathered = RegInit(false.B)

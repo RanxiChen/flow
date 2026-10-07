@@ -76,6 +76,7 @@ class RvvFrontend(p: RvvParams) extends Module {
     waiting(p.viqDepth-1) := false.B
   }
   val finalCount = count - io.commit.asUInt
+  val insertionIndex = finalCount(log2Ceil(p.viqDepth)-1,0)
   when(io.commit || io.issue.fire) { count := finalCount + io.issue.fire.asUInt }
   when(io.verdict.fire) {
     val dst = judgementIndex - io.commit.asUInt
@@ -111,29 +112,34 @@ class RvvFrontend(p: RvvParams) extends Module {
     val t = io.translated.bits.id
     assert(t < p.translationIds.U && tagLive(t),"translation response without a live request")
     tagLive(t) := false.B
+    val responseMatches = VecInit((0 until p.viqDepth).map(j => j.U < count && pending(j).age === tagAge(t)))
+    val responseIndex = PriorityEncoder(responseMatches.asUInt)
+    val responding = pending(responseIndex)
+    val off = responding.issue.rs1(11,0)
+    val first = Mux(responding.decoded.bytes < (4096.U-off),responding.decoded.bytes,4096.U-off)
+    val second = responding.decoded.bytes-first
+    val pa = Mux(tagPage(t),io.translated.bits.pa & "hfffffffffffff000".U,
+      (io.translated.bits.pa & "hfffffffffffff000".U) | off)
+    def update(dst: Int): Unit = {
+      waiting(dst) := false.B
+      pending(dst).pa(tagPage(t)) := pa
+      pending(dst).length(0) := first; pending(dst).length(1) := second
+      when(io.translated.bits.exception || io.translated.bits.device) {
+        serial(dst) := true.B; prepared(dst) := true.B
+      }.elsewhen(tagPage(t) || second === 0.U) { prepared(dst) := true.B }
+        .otherwise { stage(dst) := 1.U }
+    }
     for(j <- 0 until p.viqDepth) {
       when(j.U < count && pending(j).age === tagAge(t) && !io.kill) {
-        val dst = j.U - io.commit.asUInt
         assert(!(io.commit && j.U === 0.U))
-        waiting(dst) := false.B
-        val off = pending(j).issue.rs1(11,0)
-        val first = Mux(pending(j).decoded.bytes < (4096.U-off),pending(j).decoded.bytes,4096.U-off)
-        val second = pending(j).decoded.bytes - first
-        val pa = Mux(tagPage(t),io.translated.bits.pa & "hfffffffffffff000".U,
-          (io.translated.bits.pa & "hfffffffffffff000".U) | off)
-        pending(dst).pa(tagPage(t)) := pa
-        pending(dst).length(0) := first
-        pending(dst).length(1) := second
-        when(io.translated.bits.exception || io.translated.bits.device) {
-          serial(dst) := true.B; prepared(dst) := true.B
-        }.elsewhen(tagPage(t) || second === 0.U) { prepared(dst) := true.B }
-          .otherwise { stage(dst) := 1.U }
-        for(k <- 0 until intervalDepth) {
-          when(intervalValid(k) && intervals(k).age === tagAge(t)) {
-            intervals(k).pa(tagPage(t)) := pa
-            intervals(k).length(0) := first; intervals(k).length(1) := second
-          }
-        }
+        if(j==0) { update(0) }
+        else { when(io.commit) { update(j-1) }.otherwise { update(j) } }
+      }
+    }
+    for(k <- 0 until intervalDepth) {
+      when(responseMatches.asUInt.orR && !io.kill && intervalValid(k) && intervals(k).age === tagAge(t)) {
+        intervals(k).pa(tagPage(t)) := pa
+        intervals(k).length(0) := first; intervals(k).length(1) := second
       }
     }
   }
@@ -141,11 +147,11 @@ class RvvFrontend(p: RvvParams) extends Module {
   // no matching live age and is drained without affecting the new stream.
   when(io.kill) { count := 0.U; prepared.foreach(_ := false.B); sent.foreach(_ := false.B); waiting.foreach(_ := false.B) }
   when(io.issue.fire) {
-    pending(finalCount) := 0.U.asTypeOf(new RvvDescriptor(p))
-    pending(finalCount).issue := io.issue.bits; pending(finalCount).decoded := decoded
-    pending(finalCount).age := nextAge
-    prepared(finalCount) := false.B; sent(finalCount) := false.B; serial(finalCount) := false.B
-    waiting(finalCount) := false.B; stage(finalCount) := 0.U; nextAge := nextAge + 1.U
+    pending(insertionIndex) := 0.U.asTypeOf(new RvvDescriptor(p))
+    pending(insertionIndex).issue := io.issue.bits; pending(insertionIndex).decoded := decoded
+    pending(insertionIndex).age := nextAge
+    prepared(insertionIndex) := false.B; sent(insertionIndex) := false.B; serial(insertionIndex) := false.B
+    waiting(insertionIndex) := false.B; stage(insertionIndex) := 0.U; nextAge := nextAge + 1.U
     assert(decoded.supported,"R02 received an unimplemented instruction")
     when(decoded.memory && decoded.bytes =/= 0.U) {
       intervalValid(intervalFree) := true.B
