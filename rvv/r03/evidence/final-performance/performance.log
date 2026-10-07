@@ -1,0 +1,21 @@
+Picked up JAVA_TOOL_OPTIONS:  -XX:ActiveProcessorCount=4 -Xmx6g
+Picked up JAVA_TOOL_OPTIONS:  -XX:ActiveProcessorCount=4 -Xmx6g
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-rvv-r03-20261007/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-rvv-r03-20261007/design/)
+Picked up JAVA_TOOL_OPTIONS:  -XX:ActiveProcessorCount=4 -Xmx6g
+[info] RvvPerformanceSpec:
+R02_PERFORMANCE {"contract":"P1","readLatency":1,"returnBytes":16384,"readBytes":57344,"readWindowCycles":1192,"peakFraction":0.7516778523489933,"kernelCycles":1230,"idealReadCycles":896,"kernelToIdealRatio":1.3727678571428572,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":11,"advanceMin":5,"advanceMax":14}
+[info] - P1 measures the prescribed GEMV kernel against Spike
+R02_PERFORMANCE {"contract":"P2","readLatency":40,"returnBytes":16384,"readBytes":57344,"readWindowCycles":2878,"peakFraction":0.3113273106323836,"kernelCycles":2947,"idealReadCycles":896,"kernelToIdealRatio":3.2890625,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":3,"advanceMin":9,"advanceMax":48}
+[info] - P2 measures the prescribed GEMV kernel against Spike
+R02_PERFORMANCE {"contract":"P3","readLatency":40,"returnBytes":2560,"readBytes":57344,"readWindowCycles":2878,"peakFraction":0.3113273106323836,"kernelCycles":2947,"idealReadCycles":896,"kernelToIdealRatio":3.2890625,"bufferedBytesAtKernelB":0,"bufferedBytesAtDrain":0,"linkMin":1,"linkMax":3,"advanceMin":9,"advanceMax":48}
+[info] - P3 measures the prescribed GEMV kernel against Spike
+[info] Run completed in 56 seconds, 690 milliseconds.
+[info] Total number of tests run: 3
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 3, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 58 s, completed Oct 7, 2026, 5:07:38 PM

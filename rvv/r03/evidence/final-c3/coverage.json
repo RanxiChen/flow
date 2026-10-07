@@ -1,0 +1,7 @@
+{
+  "seedCount": 1000,
+  "firstSeed": 0,
+  "lastSeed": 999,
+  "contiguousUniqueSeeds": true,
+  "exitCode": 0
+}
