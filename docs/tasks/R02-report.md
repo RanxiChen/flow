@@ -24,7 +24,7 @@
 | P3 | 已测量：89.07% 峰值 | 同上；40 拍、2,560 B |
 | P4 | 未达标：最大 4 拍（合同 ≤2） | 全部 224 对；`b47d529` 时间线复核 |
 | P5 | 通过：P1 提前 3–70 拍，P2 提前 42–70 拍 | 同上；全部 223 对均提前 |
-| S1 | 未运行 | 待性能段；XCKU040 OOC 100 MHz |
+| S1 | 运行中：Vivado 时序优化 | `38b59e7`；`s1-default/`；XCKU040 OOC 100 MHz |
 
 ## 实现决定与文档处理
 
@@ -144,3 +144,11 @@
 - 原因由时间线与顺序 sequencer 对应：load record 54 在第 **120** 拍完成首寄存器，前一 MAC 在 **122** 拍完成，依赖 MAC 在 **123** 拍开始读，差 **3** 拍；record 70 的首寄存器完成 **149**、前一 MAC 完成 **150**、依赖 MAC 读 **153**，块边界的累加器 reset RAW 依赖使差值达到 **4**。当前允许 load 提前写完一部分寄存器，而顺序 MAC sequencer 正在消费前一条指令，其余元素组与块边界依赖计入 P4 的整体间隔。
 - 不通过推迟 producer 写回、忽略排队配对或改口径来取得 ≤2；按任务 0.3 报告未达标并继续 S1。若后续要满足所有配对，需研究真实操作数预取/流水与块边界调度，不能把当前结果写成已达标。
 - 可审阅原始文件已保存到 [`rvv/r02/evidence/gemv-d904bd1/`](../../rvv/r02/evidence/gemv-d904bd1/) 与 [`p4-b47d529/links-lat1-buffer16384.csv`](../../rvv/r02/evidence/p4-b47d529/links-lat1-buffer16384.csv)。P1/P2 原 JSON 分别判断 95%/90%，全部配对文件明确 `P4Pass=false`；没有放宽验收。
+
+### S1 启动与源版本
+
+- 综合 SHA：`38b59e7482d0be4bafe1e0846073035222ac3032`，已 push；Alan cwd `/home/chen/FUN/flow-rvv-r02-20261007`，分支正确，工作区无已跟踪修改。
+- 命令：激活 flow 后 `bash rvv/r02/run-s1.sh /home/chen/FUN/flow-r02-evidence/s1-default`；生成默认 RTL 的 `emit.log` 退出码 **0**。Vivado **2022.2** 的综合仍在运行，资源/WNS 尚未产生，不作 S1 通过结论。
+- 顶层 `RvvCoprocessor`，默认参数，器件 `xcku040-ffva1156-2-e`；`rvv/r02/clock.xdc` 仅创建 `clock` 端口的 **10 ns** 时钟；综合模式 `out_of_context`，`general.maxThreads=4`、`nice -n 10`。输出 `reports/utilization.rpt`、`utilization-hierarchical.rpt`、`timing-summary.rpt`、`worst-paths.rpt` 和综合 DCP。
+- C1 `3644575`、C2/C3 `4c1fc28`、P `d904bd1`、S1 `38b59e7` 的 RVV RTL 源目录 Git tree 均为 `11ec229342a11bd671bda28f89056210204bb285`；`git diff --exit-code 3644575 38b59e7 -- design/src/main/scala/rvv` 退出码 **0**。后续只有测试、被动 CSV、报告和综合脚本变更。
+- 相对第 0 步父提交的范围核对：仅设计文档发生 baseline 文件修改（第 0 步授权）；其余均为 R02 允许目录的新文件。共享构建、Breeze 与其他任务工作区未修改。R01 没有继续。
