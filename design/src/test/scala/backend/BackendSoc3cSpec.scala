@@ -14,7 +14,7 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
     }
   "D1 held EX branch survives its early redirect and advances correct-path instructions once" in { check { m =>
     m.holdUntil = 10; m.misses += BigInt(0)
-    m.issue(ld(1, 0)); val branch = m.issue(BigInt(0x463))
+    m.issue(ld(1, 0)); m.issue(nop); val branch = m.issue(BigInt(0x463))
     val wrong = branch + 4; val correct = branch + 8
     m.step(Some(wrong -> addi(9, 0, 99))) mustBe false
     m.all("redirect").size mustBe 1
@@ -35,9 +35,9 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
   }}
   "D1 older WB fault overrides an early EX redirect without committing the branch" in { check { m =>
     m.holdUntil = 10; m.faults += BigInt(0)
-    m.issue(ld(1, 0)); val branch = m.issue(BigInt(0x463))
+    m.issue(ld(1, 0)); m.issue(nop); val branch = m.issue(BigInt(0x463))
     for (_ <- 0 until 18) m.step()
-    m.all("redirect") mustBe Seq(2, 10)
+    m.all("redirect") mustBe Seq(3, 10)
     m.events.filter(_.kind == "redirect").map(_.data).toSeq mustBe Seq(branch + 8, BigInt(0))
     m.events.filter(e => e.kind == "commit" && e.pc == branch) mustBe empty
     m.all("btb") mustBe empty
@@ -47,7 +47,7 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
     m.enableFp()
     m.holdUntil = m.cycle + 12
     val release = m.holdUntil
-    m.issue(ld(1, 0)); val fpPc = m.issue(fp(2))
+    m.issue(ld(1, 0)); m.issue(nop); val fpPc = m.issue(fp(2))
     for (_ <- 0 until 30) m.step()
     m.events.filter(e => e.kind == "fpIn" && e.pc == fpPc).size mustBe 1
     m.at("fpIn", fpPc) must be < release
