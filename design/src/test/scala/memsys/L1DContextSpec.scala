@@ -85,13 +85,19 @@ class L1DContextSpec extends L1DPermissionsSpec {
         csrw(d, CSRMAP.pmpcfg0, 0x1f)
         csrw(d, CSRMAP.mstatus, (BigInt(1)<<17)) // MPRV, MPP=U
         changed match {
-          case "cfg" => csrw(d, CSRMAP.pmpcfg0, if (denied) 0x18 else 0x1f)
-          case "addr" => csrw(d, CSRMAP.pmpaddr0, if (denied) 0 else BigInt("1fffffff",16))
+          case "cfg" =>
+            csrw(d, CSRMAP.pmpcfg0, if (denied) 0x1f else 0x18)
+            csrw(d, CSRMAP.pmpcfg0, if (denied) 0x18 else 0x1f)
+          case "addr" =>
+            csrw(d, CSRMAP.pmpaddr0, if (denied) BigInt("1fffffff",16) else 0)
+            csrw(d, CSRMAP.pmpaddr0, if (denied) 0 else BigInt("1fffffff",16))
           case "mprv" =>
             csrw(d, CSRMAP.pmpcfg0, 0)
+            csrw(d, CSRMAP.mstatus, if (denied) BigInt(0) else BigInt(1)<<17)
             csrw(d, CSRMAP.mstatus, if (denied) BigInt(1)<<17 else BigInt(0))
           case "mpp" =>
             csrw(d, CSRMAP.pmpcfg0, 0)
+            csrw(d, CSRMAP.mstatus, (BigInt(1)<<17) | (if (denied) BigInt(3)<<11 else BigInt(0)))
             csrw(d, CSRMAP.mstatus, (BigInt(1)<<17) | (if (denied) BigInt(0) else BigInt(3)<<11))
         }
         launch(d, op); decide(d, denied, op != L1DOp.Load, op == L1DOp.AMO)
