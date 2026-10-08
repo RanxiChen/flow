@@ -143,6 +143,7 @@ class BreezeFrontendSoc3cSpec extends AnyFreeSpec with Matchers with ChiselSim {
         val m = new Driver(d); m.init()
         m.until(d.io.missReq.req.peek().litToBoolean)
         d.io.missReq.paddr.expect((boot & ~BigInt(31)).U)
+        m.tick() // accept the one-shot request before scheduling its response.
         val target = boot + 0x200
         redirect(d.io.slow, valid = true, target = target, flush = true, cache = true)
         d.io.out.ready.poke(false.B) // WB kill and the following ID gap.
