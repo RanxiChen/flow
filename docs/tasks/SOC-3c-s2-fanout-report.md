@@ -1,6 +1,6 @@
 # SOC-3c：S2 fanout 执行报告
 
-状态（2026-10-08）：**按任务 §6 D3 停止**。§0 已完成，C1–C4 已在同一轮实现并通过 Scala 编译；两条未修改的现有训练测试动态失败，均依赖被 D3 删除的消费拍保持/取消语义。未修改这些测试，未启动 Vivado，未产生本任务 bitstream。§7 的并行 Cluster OOC / 整 SoC tiny 流程已采用，但其余停止条件仍生效。
+状态（2026-10-08）：**§8/§9 已授权恢复，功能门槛补跑中**。S09/S13 与新增同拍 kill 反向用例在 `ae435f1` 上通过 3/3；D1/D2/CSR 补跑仍在进行。补充真实 skid + backend 的 D1 集成用例，并修正新增 D1 陷入目标误写为 0 的刺激预期（Linux CSRFile 的 mtvec 复位值为 0x200）。尚未启动本轮 Vivado，尚无单核/四核 routed 100 MHz 或 bitstream/上板证据。以下 §0–§8 保留之前停止时的历史记录；最新推进记录见 §9。
 
 ## 0. SOC-3b 提交与本轮版本
 
@@ -155,3 +155,24 @@ sbt "testOnly flow.backend.BackendContractSpec -- -z S09_BTB_training_waits_for_
 SOC-3b 验证快照 `21e3b18` 的 Cluster OOC post-synth WNS −4.244 ns、最差 42 级仅作为任务起点。缺少 SOC-3c 同配置网表结果，不能计算改善量。未改变 100 MHz、AreaOptimized_high、maxThreads4，没有 false path/multicycle/keep/retiming 等规避措施。
 
 后续在本报告 §1 裁定后，仍须先完成并修复功能门禁，再依据实时 host 配置生成准确版本 RTL；Alan 独立工作区并行运行 Cluster OOC 与 SoC tiny，各 timeout 1h，超时不自行重试。以 SoC tiny routed WNS ≥0 和 bitstream 作为镜像门槛，并保留所有原有结构/拍数/协议停止条件。worst-20 分组分析可按 §7 后置，原始查询报告必须保存。
+
+## 9. §8/§9 恢复执行
+
+目标为单核与四核各自达到 100 MHz routed setup/hold 时序并生成 FPGA 镜像，按实测资源决定是否缩减容量/深度。保持已定微架构、冻结拍数和协议；本次用户授权自行同步滞后规格与测试。原 §1 的训练停止条件已由任务 §8 覆盖。
+
+### 9.1 测试同步与独立依据
+
+| 用例 / 检查 | 旧 → 新 | 依据 |
+| --- | --- | --- |
+| S09，BTB/PHT/GHR 消费拍 | 8/2/2 → 3/3/3，各一次 | 分支在 EX 拍 2 决策，共同训练寄存级在拍 3 消费 |
+| S09，保持交集 | 消费拍与 hold 无交集 → 消费拍减 1 与 hold 无交集，三类分别检查 | S09 约束决策拍；消费拍无当拍 S2 门控 |
+| S09，训练内容 | 增加 target=branch+8、PHT idx=5/taken=1、GHR taken=1 | 来自 beq x0,x0,+8 的编码、刺激 PHT 索引，未读取 RTL 计算期望 |
+| S13，已决策训练 | BTB 为空 → BTB/PHT/GHR 于拍 3 各一次 | 拍 2 决策早于拍 8 的较老 WB fault，D3 不追溯取消 |
+| S13，架构副作用 | 保留拍 8 redirect、gprBusy=0，增加分支不退休、无非 x0 GPR 写回 | 预测训练不等同架构提交，fault 仍清除年轻指令 |
+| S13，反向边界 | 新增 WB fault 与 held EX 的潜在释放拍重合：无 EX 推进、无任何训练 | 检查决策拍的 !wbKill；保持真实反例刺激而非取消消费包 |
+| D1 新增慢路覆盖用例，陷入目标 | 0 → 0x200 | `design/src/main/scala/core/RegFile.scala:241`，mtvec 的 Linux 复位值；该刺激未写 mtvec |
+| D1 真实组合 | 新增生产 `BreezeFrontendBoundary` + backend，load 在 S2 保持时纠错路径两项进 skid，释放后按序执行 | 使用真实 2 项 skid；独立 memory 刺激在拍 10 给 Mshr、拍 30 给 late 数据，检查错路无 EX/退休/写回与正确结果 |
+
+`ae435f1df56cb0f26fa9a98ea9457b247e1f5612`：训练三个用例通过 3/3；同批 D1/D2/CSR 仍在运行，已观察到 D1 陷入目标上述预期失败，保留原日志，不将批次算作通过。实际 cloud cwd 复用任务隔离目录 `/home/cloud_chen/work/flow-soc3c-2dea0b7/design`，目录名不是 SHA，HEAD 由 runner 显式校验；证据根 `/home/cloud_chen/evidence/soc3c-ae435f1/focused-authorization`。
+
+实时预检：cloud 连接/环境可用，Verilator 5.028、可用内存约 28 GiB、磁盘约 40 GiB；Alan 约 113 GiB 磁盘与 47 GiB 可用内存，另有 CISLC-O3 Vivado 作业正在执行，未终止或迁移该任务。Vivado 仍只在 Alan 执行。
