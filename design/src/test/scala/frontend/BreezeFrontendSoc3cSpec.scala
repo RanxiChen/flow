@@ -98,6 +98,67 @@ class BreezeFrontendSoc3cSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.in.ready.expect(true.B); d.io.out.valid.expect(true.B); d.io.out.bits.pc.expect(0x500.U)
     }
   }
+  "C2c skid preserves ordering through bypass, pointer wrap, full backpressure and overlapping flushes" in {
+    simulate(new BreezeFrontendBoundary(4)) { d =>
+      redirect(d.io.fast); redirect(d.io.slow)
+      d.io.in.valid.poke(false.B); d.io.out.ready.poke(false.B)
+      val b = d.io.in.bits
+      b.pc.poke(0.U); b.inst.poke(0x13.U); b.rawInst.poke(0x13.U); b.instLen.poke(4.U)
+      b.isCompressed.poke(false.B); b.illegalCompressed.poke(false.B)
+      b.instructionAccessFault.poke(false.B); b.instructionPageFault.poke(false.B)
+      b.instructionFaultSecondParcel.poke(false.B)
+      b.pred.predType.poke(FrontendPredType.NONE); b.pred.predTaken.poke(false.B)
+      b.pred.predPc.poke(0.U); b.pred.phtIdx.poke(0.U)
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      val expected = scala.collection.mutable.Queue.empty[BigInt]
+      val random = new scala.util.Random(0xc2c)
+      var pending = Option.empty[BigInt]
+      var nextPc = BigInt(0x800)
+      var delayedSlowFlush = false
+      var fullBlocked = 0
+      var bypassed = 0
+      var simultaneous = 0
+      for (cycle <- 0 until 400) {
+        if (cycle < 384 && pending.isEmpty && random.nextInt(4) != 0) {
+          pending = Some(nextPc); nextPc += 4
+        }
+        val ready = cycle >= 384 || random.nextBoolean()
+        val fastFlush = cycle < 384 && random.nextInt(17) == 0
+        val slowFlush = cycle < 384 && random.nextInt(19) == 0
+        redirect(d.io.fast, valid = fastFlush, target = 0x1000, flush = fastFlush)
+        redirect(d.io.slow, valid = slowFlush, target = 0x2000, flush = slowFlush)
+        d.io.in.valid.poke(pending.nonEmpty.B)
+        b.pc.poke(pending.getOrElse(BigInt(0)).U)
+        d.io.out.ready.poke(ready.B)
+        val inputReady = expected.size < 2
+        val output = expected.headOption.orElse(pending)
+        d.io.in.ready.expect(inputReady.B)
+        d.io.out.valid.expect(output.nonEmpty.B)
+        output.foreach(pc => d.io.out.bits.pc.expect(pc.U))
+        val enqueue = inputReady && pending.nonEmpty
+        val dequeue = ready && output.nonEmpty
+        val bypass = expected.isEmpty && dequeue
+        if (!inputReady && pending.nonEmpty) fullBlocked += 1
+        if (bypass) bypassed += 1
+        if (enqueue && dequeue && expected.nonEmpty) simultaneous += 1
+        val clear = fastFlush || slowFlush || delayedSlowFlush
+        if (clear) expected.clear()
+        else {
+          if (dequeue && expected.nonEmpty) expected.dequeue()
+          if (enqueue && !bypass) expected.enqueue(pending.get)
+        }
+        if (enqueue || clear) pending = None
+        delayedSlowFlush = slowFlush
+        d.clock.step()
+      }
+      expected mustBe empty
+      pending mustBe empty
+      fullBlocked must be > 0
+      bypassed must be > 0
+      simultaneous must be > 0
+      d.io.in.valid.poke(false.B); d.io.out.valid.expect(false.B)
+    }
+  }
   private class Driver(val d: Soc3cFrontendFixture) {
     var tlbReply: Option[BigInt] = None
     val fetched = scala.collection.mutable.ArrayBuffer.empty[(BigInt, BigInt)]
