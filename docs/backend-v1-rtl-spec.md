@@ -47,7 +47,8 @@
 - GPR/FPR 各一个写口；W2 普通写无条件优先，同 bank 的后台来源未获写口则保持，不同 bank 可并行；WB 普通指令只提交并捕获 W2，不因写口保持。x0 不物理写，f0 可写。[backend-timing-contract.md§4]
 - 后端自身停顿只在 ID 或 EX；EX 不 fire 时 MEM 插气泡，老 MEM/WB 继续。MEM/WB 只因 L1D s2Hold 或 WB 串行指令且其后全是气泡而保持；保持时退休、CSR/PC 更新、训练及年轻发射不得重复，后台完成继续。[V1-BE-B01-ruling§1]
 - 每 bank 一个 2-bit 饱和计数和在途保护标记：lateReg/DIV/MUL/FPU 有 valid 而该 bank 无后台 grant 时 +1（饱和 3），否则清零；计数为 3 且标记为 0 时 ID 停发一拍并置标记，该 bank 获 grant 清标记，ID 只读寄存器。T21 的 L1D late 首次 valid/fire 为 c，冲突 c+1…c+7，ID 气泡 c+4，lateReg grant/物理写回 c+8，共 7 次冲突。原始 late 的接收/背压不直接计数。[backend-timing-contract.md§1/T21及§4]
-- EX 解析的 BTB 请求沿用一个寄存边界；MEM/WB 保持时该请求保持、前端不消费，解除后只发一次；更老 WB kill 丢弃待发训练。PHT/GHR 仅在 EX 真推进时更新。[backend-rtl-spec.md§5/A08及§6][自定]
+- SOC-3c §6 D3：BTB/PHT/GHR 统一在 EX 真推进且 !wbKill 的决策拍产生并寄存，下一拍无条件送前端，消费拍不与 wbKill/downHold/exAdvance 门控、不再取消。决策拍之后更老 WB 陷入可能留下年轻分支训练，接受其预测质量影响；架构提交/取消不变。
+- SOC-3c §6 D1：EX 快路只依赖 EX 寄存信息、寄存旁路值及 exRedirectSent，held EX 可纠错一次且保留本条；只取消 ID/skid 错路项。mem.predictionMiss/JALR BTB valid 使用本条已发 redirect。WB 慢路在前端边界寄存一拍后改 PC/清 translator/realigner/I-cache，后端事件仍在 WB；WB kill 后一拍禁止 ID 离开。两项 skid 空时直通，向前端的 ready 只取寄存占用。
 - 无 WB 保持时，EX 单元 not-ready 只保持 EX/ID；MEM 消费后插气泡，MEM/WB 前进；ID RAW/WAW 不全局保持。[backend-rtl-spec.md§5.1]
 - 后台写不再次 retire；独立普通提交与不同 rd 后台写同拍要分别输出事件。HPM11/12 可同拍记 MUL/DIV 来源停顿；13 每拍计数有后台 valid 而无后台 grant 的 bank 数（0/1/2），不代表 WB 停顿。[backend-timing-contract.md§4][V1-BE-B01-ruling§1]
 - hartFatal 后取消未提交单元项与 CPU 访存，不发 trap/redirect；已提交 W2 无条件完成，已提交后台项继续消费，保留原防止未提交 FP 返回阻塞已提交项的规则。[backend-timing-contract.md§4]
@@ -66,11 +67,12 @@
 ## 5. FPU
 
 - `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线；CVFPU 算术、PipeRegs、UnitTypes 和 PipeConfig 不改。[tasks/V1-BE-backend-spec-and-rtl.md§2.1及3.6]
-- EX 将三个操作数、EX 确定的 rm/op/格式、目的送到原始 CVFPU input；接收同拍写 metadata 表，allocate 前进，无输入寄存级；表满/killDrain 或 CVFPU 不 ready 时 EX 等待。[backend-timing-contract.md§1/T14][自定]
+- EX 将三个操作数、EX 确定的 rm/op/格式、目的送到原始 CVFPU input；接收同拍写 metadata 表，allocate 前进，无输入寄存级。SOC-3c C1：exFpIssued 保证 held EX 只接收一次；req.valid 不含 downHold/wbKill/allowEx，仅受本条已发及寄存 fatal/stopped 限制，resourceWait 的 FP 项仅在尚未发射时等待 ready；表满/killDrain 或 CVFPU 不 ready 时 EX 等待。[backend-timing-contract.md§1/T14]
 - commitCursor 从最老方向组合找 valid&&!committed 项；WB commit 只授权这一项并前进；WB kill 清所有未提交 valid，刚 commit 的项保留，committed 项不动。[tasks/V1-BE-backend-spec-and-rtl.md§2.1][backend-rtl-spec.md§4.2][自定]
 - `out_tag` 组合读表，valid&&committed 的输出直接参加后台仲裁；result fire 与 CVFPU out fire 同拍、无数据寄存级。[backend-timing-contract.md§1/T15]
 - valid&&!committed 的早完成输出 ready=0，等 WB；valid=0 的作废返回直接 ready=1 丢弃，不写 RF/flags；不得用 flush_i 清 CVFPU，因为那会取消已提交项。[backend-pipeline-design.md§4及7][v1-integration-notes.md§3]
 - kill 后设置 killDrain，待 CVFPU busy=0 才重新允许分配 tag；已提交输出照常参与仲裁，作废输出照常丢弃，防止无世代 tag 的迟到 ABA 误认。[V1-BE-B01-ruling§3/ND01]
+- SOC-3c §6 D2/S13/S05：canAllocate 不含 killUncommitted；FP fire/kill 同拍时新项显式 valid=0，allocate 前进且无 commit 时 commitCursor 跳过该 tag。作废返回 ready=1 丢弃，不写 RF/flags、不获提交；killDrain 期间禁止 tag 复用。L1D/MUL/DIV 请求仍在 WB kill 拍禁止，其余 speculative-write 等安全检查保留。
 - fflags 只在真实已提交 FP 完成的 fire 拍按位或累积；CSR 等空保证读取最终值，FP flags 不随退休提前更新。[backend-pipeline-design.md§6–7][backend-timing-contract.md§1/T17及§2/P07]
 - CVFPU 各单元保存未消费结果，但跨单元仲裁的 tag/data/status 在反压时可以变化；仅在 fire 拍取样。S07 对 MDU/late 的字段稳定断言保留，FPU 的检查使用 tag 台账验证不丢/不重复/不写 killed 项，不要求原始组合 mux 不变。[v1-integration-notes.md§3/CVFPU]
 - FMV.X/FMV.F 本地搬运不分配 CVFPU tag；在 WB 提交、下一拍按普通目的 bank 走 W2，保留 NaN-boxing/word 扩展。FPR 依赖须由 WB 冒险或完整旁路保证，不能让 EX 使用旧锁存值；FP→x0 如需 flags 则仍执行 FP 运算，只抑制 x0 物理写和 busy。[backend-timing-contract.md§4]
@@ -97,7 +99,7 @@
 ## 8. 断言和测试
 
 - S01–S03/S08/S10/S14：两 bank 目的唯一、busy 生命周期、只屏蔽实际 grant、CSR 用原始 busy；覆盖四来源与 f0/跨 bank。S04/S05：最老 commit、commit-before-kill、killed 永不写、committed 存活。[backend-rtl-spec.md§10.1][tasks/V1-BE-backend-spec-and-rtl.md§2.3]
-- S06/S07：grant独热、bank单写、DIV/MUL/late反压字段保持；FPU 使用上文 tag/fire 合同。S09/S13：保持时控制与普通副作用禁止、WB 年龄取消、EX redirect不清老FU。[backend-rtl-spec.md§10.1][v1-integration-notes.md§3]
+- S06/S07：grant独热、bank单写、DIV/MUL/late反压字段保持；FPU 使用上文 tag/fire 合同。SOC-3c §6 S09：WB 保持时禁止慢路改向、退休、CSR 及产生训练，允许 exRedirectSent 保证的一次 EX 快路纠错；前端消费已寄存训练不受限。S13/S05：FP 可同拍 fire/kill 入表即作废，其他年轻单元请求禁止；EX redirect 不清老 FU。其余 S09 安全检查不变。[backend-rtl-spec.md§10.1]
 - S11/S12：MUL四级对齐/全级保持，DIV占用/快路径/释放后一拍接受。S15：新 L1D 不用旧 dmem capture；按 accepted/resp/late 台账检查一次完成、kill例外、flags不丢。S16：MUL/DIV来源事件与每 bank 写口冲突精确一致。[backend-rtl-spec.md§10.1][l1d-rtl-spec.md§1.1][tasks/V1-BE-backend-spec-and-rtl.md§2.3]
 - T01–T22、P01–P10 实例化真实后端，按更新合同精确测量；T02b 作废。T12/T21/T22 分别测 late.fire 和物理写回；T13 对齐 lateReg 等四个写口来源，现有 returnDelay 26→25，N…N+3 写回期望不变；P06 ② 空拍={g−1}；其余无冲突刺激改为 W2 无同 bank 普通写，保留期望值。[backend-timing-contract.md§0–2]
 - 后端接行为 L1D 模型，遵守原始无 ready 的 resp，不增加模型专用 hold；随机延迟、s2Hold/late消费背压、异常/kill、固定种子；回放 S2 直接驱动 late，反压时进入 MSHR LATE 保存数据，S2 照常前进；resp 不依赖 late.ready；LATE 占用 MSHR 但不阻止 probe。[V1-BE-B01-ruling§1][tasks/V1-BE-backend-spec-and-rtl.md§2.3及3.1]

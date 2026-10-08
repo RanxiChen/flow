@@ -220,3 +220,5 @@ Mshr→busy 不在全局 worst-20 且查询最差为正；TLB→S1 不是全局�
 **用户超时更新**：用户要求在不打断现有 Vivado 的情况下把上限从 30 分钟延至 1 小时。检查时本次 Vivado 已自然完成，因此没有向进程发信号、没有暂停/重启。任务文件和后续独立 runner 改为 `timeout 1h`，本次实际 `command.json/result.json` 保留 `30m`，不改写历史。后续 runner 要求新目录并拒绝覆盖已有执行证据。
 
 本轮已完成最小功能子集与生成验证；实际发现的下一项工作是上述 S2/推进/预测纠正控制链的时序优化。**尚未通过 Cluster WNS≥0，未启动整 SoC 布局布线，没有 bitstream、routed 或板上程序结果。** 没有为了快速上板放宽冻结拍数、golden、断言、约束或频率。
+
+SOC-3c §0 已将 SOC-3b 实现、测试、同步规格及 `records/soc3b-*` 单独提交：**`7116e32e98de19db2d0b7ea3676cecb3f76b2534`**（`feat(soc3b): split WB physical writes and capture late results`）。该提交不含 SOC-2/V1-MEM 报告、AGENTS、skills、cross-project 或图件等无关改动；`21e3b18` 仍为 §9 原始验证快照标识，不能改写为本提交的重新验证。

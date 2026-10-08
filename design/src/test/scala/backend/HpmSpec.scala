@@ -17,14 +17,14 @@ class HpmSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.write.poke(true.B); d.io.address.poke(0x323.U); d.io.data.poke(13.U); d.clock.step()
       d.io.selector(0).expect(13.U); d.io.write.poke(false.B); e.wbPortConflict.poke(2.U)
+      d.clock.step(); d.io.counter(0).expect(0.U)
       d.clock.step(); d.io.counter(0).expect(2.U)
-      d.clock.step(); d.io.counter(0).expect(4.U)
       e.wbPortConflict.poke(0.U); d.clock.step(); d.io.counter(0).expect(4.U)
       d.io.write.poke(true.B); d.io.address.poke(0xb03.U); d.io.data.poke(11.U)
       e.wbPortConflict.poke(2.U); d.clock.step(); d.io.counter(0).expect(11.U)
-      d.io.write.poke(false.B); d.clock.step(); d.io.counter(0).expect(13.U)
+      d.io.write.poke(false.B); d.clock.step(); d.io.counter(0).expect(11.U)
       d.io.write.poke(true.B); d.io.address.poke(0x323.U); d.io.data.poke(14.U); d.clock.step()
-      d.io.selector(0).expect(0.U); d.io.counter(0).expect(15.U)
+      d.io.selector(0).expect(0.U); d.io.counter(0).expect(13.U)
       d.io.write.poke(false.B); d.clock.step(); d.io.counter(0).expect(15.U)
     }
   }

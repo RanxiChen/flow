@@ -50,7 +50,7 @@ class FpUnit(val depth: Int = 32) extends Module {
   impl.io.clk_i := clock
   impl.io.reset_i := reset.asBool
   impl.io.flush_i := false.B
-  val canAllocate = !entries(allocate).valid && !killDrain && !io.killUncommitted
+  val canAllocate = !entries(allocate).valid && !killDrain
   impl.io.in_valid_i := io.req.valid && canAllocate
   io.req.ready := impl.io.in_ready_o && canAllocate
   impl.io.tag_i := allocate
@@ -88,7 +88,9 @@ class FpUnit(val depth: Int = 32) extends Module {
   io.committedFlagsOnly := entries.map(e => e.valid && e.committed && !e.isFp && e.rd === 0.U).reduce(_ || _)
 
   when(io.req.fire) {
-    entries(allocate).valid := true.B
+    // The pre-edge entry is empty, so the kill loop below cannot see a new
+    // request. Explicitly tombstone a fire/kill allocation at this edge.
+    entries(allocate).valid := !io.killUncommitted
     entries(allocate).committed := false.B
     entries(allocate).rd := io.req.bits.rd.idx
     entries(allocate).isFp := io.req.bits.rd.isFp
@@ -107,12 +109,17 @@ class FpUnit(val depth: Int = 32) extends Module {
         entries(i).valid := false.B
       }
     }
-    commitCursor := Mux(io.commit, oldest + 1.U, allocate)
+    commitCursor := Mux(io.commit, oldest + 1.U, allocate + io.req.fire.asUInt)
     killDrain := true.B
   }
+  val killedFire = RegNext(io.req.fire && io.killUncommitted, false.B)
+  val killedTag = RegEnable(allocate, io.req.fire && io.killUncommitted)
   when(!reset.asBool) {
     assert(!io.commit || candidates.asUInt.orR, "[S04] FPU commit without live uncommitted item")
-    assert(!(io.req.fire && io.killUncommitted), "[S05] kill did not suppress FP request")
+    when(killedFire) {
+      assert(!entries(killedTag).valid && killDrain, "[S05] killed FP allocation survived or reused its tag")
+    }
+    assert(!killDrain || !io.req.fire, "[S05] FP tag reused before killed returns drained")
     assert(!io.result.fire || (returned.valid && returned.committed), "[S05/S08] speculative FP write")
     assert(io.req.fire === (impl.io.in_valid_i && impl.io.in_ready_o), "[T14] input handshake changed")
     assert(io.result.fire === (impl.io.out_valid_o && impl.io.out_ready_i && returned.valid),

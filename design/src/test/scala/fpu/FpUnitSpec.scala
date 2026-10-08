@@ -209,4 +209,37 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       writes mustBe 1; d.io.committedFlagsOnly.expect(false.B); d.io.busy.expect(false.B)
     }
   }
+  "SOC3c D2 same-edge FP fire/kill drains its tag before forty consecutive new requests" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      d.io.req.bits.rd.idx.poke(31.U)
+      d.io.req.valid.poke(true.B); d.io.killUncommitted.poke(true.B)
+      d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B)
+      d.clock.step()
+      d.io.killUncommitted.poke(false.B)
+      d.draining.expect(true.B)
+      var drainCycles = 0
+      while (d.draining.peek().litToBoolean && drainCycles < 100) {
+        d.io.req.ready.expect(false.B)
+        d.io.result.valid.expect(false.B)
+        d.clock.step(); drainCycles += 1
+      }
+      d.draining.expect(false.B)
+      val returned = scala.collection.mutable.ArrayBuffer.empty[Int]
+      for (cycle <- 0 until 60) {
+        d.io.req.valid.poke((cycle < 40).B)
+        d.io.req.bits.rd.idx.poke((cycle % 30 + 1).U)
+        d.io.commit.poke((cycle >= 2 && cycle < 42).B)
+        if (cycle < 40) { d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B) }
+        if (d.io.result.valid.peek().litToBoolean) {
+          d.io.result.bits.data.expect(BigInt("4000000000000000", 16).U)
+          d.io.result.bits.flags.expect(0.U)
+          returned += d.io.result.bits.rd.idx.peek().litValue.toInt
+        }
+        d.clock.step()
+      }
+      returned.toSeq mustBe (0 until 40).map(_ % 30 + 1)
+      d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
+    }
+  }
 }

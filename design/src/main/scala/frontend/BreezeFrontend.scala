@@ -186,6 +186,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s0_defaultNextPc = Wire(UInt(cfg.VLEN.W))
     val redirectValid = Wire(Bool())
     val redirectTarget = Wire(UInt(cfg.VLEN.W))
+    val cancelFetch = Wire(Bool())
     val s0_fallThroughSel = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
     val s2_respValid = Wire(Bool())
@@ -203,6 +204,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     s0_defaultNextPc := Mux(cfg.enableCompressed.B && s2_respValid,
         s2_pcReg + fetchRespInstLen, s1_pcReg + 4.U)
     redirectValid := io.beRedirect.valid || s3_fastRedirectValid
+    cancelFetch := redirectValid || io.beRedirect.flush
     redirectTarget := Mux(io.beRedirect.valid, io.beRedirect.target, s3_fastRedirectTarget)
     s0_fallThroughSel := !redirectValid
     s0_nextPc := Mux(
@@ -266,7 +268,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     if (cfg.enableCompressed) {
         val r = realigner.get
         val d = decompressor.get
-        r.io.redirect := redirectValid
+        r.io.redirect := cancelFetch
         r.io.req.valid := s1_validReg && fetchAllowed && io.fetchBuffer.canAccept3 && !s2_validReg
         r.io.req.bits.pc := s1_pcReg
         if (cfg.enableMmu) {
@@ -277,7 +279,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             t.io.cacheRsp <> icache.io.drsp
             io.translateReq <> t.io.translateReq
             t.io.translateRsp <> io.translateRsp
-            t.io.kill := redirectValid
+            t.io.kill := cancelFetch
         } else {
             icache.io.dreq.valid := r.io.wordReq.valid
             icache.io.dreq.bits.vaddr := r.io.wordReq.bits.vaddr
@@ -285,7 +287,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             r.io.wordReq.ready := icache.io.dreq.ready
             r.io.wordRsp <> icache.io.drsp
         }
-        r.io.resp.ready := s2_validReg && !redirectValid
+        r.io.resp.ready := s2_validReg && !cancelFetch
         d.io.in := r.io.resp.bits.rawInst(15, 0)
 
         s1_fire := r.io.req.fire
@@ -311,7 +313,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             t.io.cacheRsp <> icache.io.drsp
             io.translateReq <> t.io.translateReq
             t.io.translateRsp <> io.translateRsp
-            t.io.kill := redirectValid
+            t.io.kill := cancelFetch
             s1_fire := t.io.inReq.fire
             fetchRespValid := t.io.inRsp.valid
             fetchRespPc := t.io.inRsp.bits.vaddr
@@ -381,7 +383,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // the current s2 context; a late wrong-path refill is simply discarded.
     s2_respValid := s2_validReg && fetchRespValid && (fetchRespPc === s2_pcReg)
 
-    when(reset.asBool || redirectValid) {
+    when(reset.asBool || cancelFetch) {
         s2_validReg := false.B
         s2_pcReg := 0.U
         if (isGShare) {
@@ -418,7 +420,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     s3_validReg := false.B
     s3_accessFaultReg := false.B
     s3_pageFaultReg := false.B
-    when(!reset.asBool && !redirectValid && s2_respValid) {
+    when(!reset.asBool && !cancelFetch && s2_respValid) {
         s3_validReg := true.B
         s3_pcReg := s2_pcReg
         s3_instReg := fetchRespInst
@@ -436,7 +438,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             s3_predTypeReg.get := s2_predTypeReg.get
             s3_phtIdxReg.get := s2_phtIdxReg.get
         }
-    }.elsewhen(reset.asBool || redirectValid) {
+    }.elsewhen(reset.asBool || cancelFetch) {
         if (isGShare) {
             s3_ghrSnapshotReg.get := 0.U
             s3_predTakenReg.get := false.B

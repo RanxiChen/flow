@@ -213,7 +213,8 @@ downHold    = wbPortStall || estopWait
 | 类别 | 事件 | 发起条件 |
 | --- | --- | --- |
 | 自带单次状态的请求 | dmem 请求 `memReqIssued`、FENCE.I flush 请求 `io.dcacheFlushReq`、FPU 请求 | **原条件不变**，不加 downHold、不加本级 enable。重复发起由 `memWaitingRespReg`/`fenceiFlushIssuedReg`/`fpWaitingRespReg` 防止；MEM 不能推进时到达的响应按 5.2 处理（dmem 捕获、FPU 反压）。CORE-001 的请求拍 hold 保留 |
-| 无单次状态的控制事件 | EX 分支/JAL/JALR 重定向（`redirectDirectionMismatch/TargetMismatch`）、EX SFENCE.VMA、MEM FENCE.I 重定向 `fenceiFlush`、BTB/预测训练（含 `memBtbUpdate`） | `原条件 && !downHold`。原条件里已有的 `!pipelineHold` 保留 |
+| EX 分支/JAL/JALR 快路纠错（SOC-3c §6 D1） | EX 寄存操作数与预测比较，exRedirectSent 每个 EX 占用期最多一次；只清年轻 ID/skid，不取消 held EX 本条 | 不依赖 exAdvance/downHold/wbKill/resourceWait；WB 慢路在下一拍覆盖 |
+| 其他控制及训练决策 | EX SFENCE.VMA、MEM FENCE.I 重定向及训练决策；v1 WB 慢路见 SOC-3c | 训练只在 EX 真推进且 !wbKill 时产生；BTB/PHT/GHR 决策统一寄存，下一拍无条件送前端，不在消费拍门控或取消 |
 | MDU 发射 | EX `req.valid` | 按 4.1：`原合法条件 && !pipelineHold && !downHold`；`pipelineHold` 已不含 MUL/DIV 项 |
 
 downHold 不依赖 EX/MEM 的任何信号（wbPortStall 只取决于 WB 项和后台仲裁；普通 WB 优先级最低，后台 grant 不依赖它），故上表不形成组合环。WB 发起的 kill 不受此门控（WB 让拍时 WB 本身不提交，也就不发 kill）。实现中若综合或 Verilator 报告新的组合环（如 UNOPTFLAT），按停止条件处理，不自行改方程。
@@ -361,11 +362,11 @@ T01 的取值正确性证据：完整 `sbt test` 回归（含 9.2 迁移后的 M
 | S06 | 后台grant独热、后台与普通GPR写互斥；可有多源valid |
 | S07 | 每源valid&&!ready保持rd/data/valid；result.valid必有committed&&done |
 | S08 | write、clearMask、RF穿透、晚写事件一致，一项一次写，后台write不再retire |
-| S09 | WB port stall及ESTOP等空时四级及侧带保持、无普通退休/副作用；EX/MEM控制事件只在!downHold拍发起，自带单次状态的请求不重复（A08/B01） |
+| S09 | WB 保持期间不发 WB 慢路改向、不退休、不执行 CSR commit/trap/xRET、不产生训练决策；允许 EX 快路纠错每个 EX 占用期最多一次，检查 !(branchRedirect && exRedirectSent)，不杀 held EX 本条；已寄存训练包下一拍无条件消费。其余 held metadata、SFENCE 一次性及 held WB 不退休检查保持（SOC-3c §6 D1/D3） |
 | S10 | 同rd setMask/clearMask不能同拍非零；不同rd同时更新全部生效；reset清所有 |
 | S11 | MUL四级数据/op/rd/valid对齐，data enable按第7节；P4有效未离开时四级都不推进、P4内容不变 |
 | S12 | DIV occupied期间ready=0，不能同拍释放再接收；fast接收后1拍done、commit前不valid |
-| S13 | WB老redirect抑制年轻副作用；EX/MEM redirect（含FENCE.I）不发killUncommitted、不杀老未提交MDU；killUncommitted等于6.3公式 |
+| S13 | WB 老 redirect 禁止年轻 L1D/MUL/DIV 请求；FP 请求允许与 WB kill 同拍 fire，但新在途项入表即作废、无 RF/flags/commit 副作用且 killDrain 防止 tag 过早复用。EX 快路不发 killUncommitted、不杀老未提交 MDU；FpUnit 对应 S05 按此检查，其余安全断言保持（SOC-3c §6 D2） |
 | S14 | CSR离开ID满足csrDrainOk（A07），ESTOP在WB退休前busy空；FASE empty含busy空；中断/WFI不要求busy空 |
 | S15 | dmem capture一项不溢出/不重复消费；FPU outReady只在可消费拍；flags侧带不丢 |
 | S16 | HPM11/12双来源可同拍计，各源含级间与记分板；13等于WB让拍 |
@@ -403,7 +404,7 @@ R第3节“同一rd不同拍置位与清除”按R/Q02的明确表达解释为 *
 
 CSR在ID等csrDrainOk（A07）时，只要ID有效、不离开并确因相应来源busy未清或EX/MEM/WB中该来源的已发射MDU造成等待，该来源事件也成立（属于记分板冒险）；每个事件一拍一个Bool，不按匹配rs数量累加。ESTOP在WB等空造成的整体保持本身不新增ID来源事件，仍只按ID自身的记分板/级间依赖条件判断。
 
-现有ID0–10在 `design/src/main/scala/core/common.scala:337-349`；事件Bundle `design/src/main/scala/interface/interface.scala:340-351`。新合法上界13、非法14及以上映射NONE，软件全值先校验不截断（原行为 `design/src/main/scala/core/BreezePerformanceCounters.scala:49-64`）；selector宽 `log2Ceil(14)=4`，原 `log2Ceil(11)` 也4，需更新上界/表/三字段但不能误称物理位宽增大。保持counter+pending可见值、软件写优先、旧selector/inhibit同拍采样（`design/src/main/scala/core/BreezePerformanceCounters.scala:65-80`），8项数量不变。
+现有ID0–10在 `design/src/main/scala/core/common.scala:337-349`；事件Bundle `design/src/main/scala/interface/interface.scala:340-351`。新合法上界13、非法14及以上映射NONE，软件全值先校验不截断；selector宽 `log2Ceil(14)=4`，原 `log2Ceil(11)` 也4，不能误称物理位宽增大。SOC-3c §6 D4：HPM3+ 原始事件向量先寄存一拍，再选择及计数；同时寄存发生拍的旧 selector/inhibit，CSR 可见增量晚一拍（HPM13 单拍增量可为 2）。保留 counter+pending 可见值及软件写优先；软件写 counter 丢弃此前尚未可见及写入同拍的事件，之后事件正常计入；mcycle/minstret 不变，8 项数量不变。独立参考模型按一拍延迟平移，检查点及非法 selector/inhibit/覆盖/复位/随机刺激均保留。
 
 ## 12. 审阅后问题
 

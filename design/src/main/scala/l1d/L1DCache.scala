@@ -253,6 +253,17 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     slot.pmaRsrvOk := pma.rsrvOk
     slot.highAddress := (address >> p.paddrBits).orR
   }
+  // These are the values the miss/writeback address registers will hold at
+  // the S1->S2 edge. A simultaneous S2 allocation forwards into the compare
+  // bits, rather than putting victim/address selection in the next S2 cone.
+  val nextMshrLine = Mux(miss.io.alloc.valid, miss.io.alloc.bits.lineAddr, miss.io.status.mshrLineAddr)
+  val wbAllocates = miss.io.alloc.valid && miss.io.alloc.bits.victimValid
+  val nextWbLine = Mux(wbAllocates, miss.io.alloc.bits.victimLineAddr, miss.io.status.wbLineAddr)
+  def captureLineMatches(slot: L1S2, address: UInt): Unit = {
+    slot.sameMshrLine := line(address) === nextMshrLine
+    slot.sameWbLine := line(address) === nextWbLine
+    slot.sameMshrSet := idx(address) === idx(nextMshrLine ## 0.U(p.offBits.W))
+  }
 
   when(cpu1Advance) {
     cpu1.valid := cpuFire
@@ -264,6 +275,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     cpu2.req := cpu1.req
     cpu2.physicalAddress := cpuPhysical
     capturePermission(cpu2, cpuPhysical, cpuPmpAllowed, cpuPma)
+    captureLineMatches(cpu2, cpuPhysical(p.paddrBits - 1, 0))
     cpu2.paddr := Mux(cpu1.req.hasPaddr, cpu1.req.paddr, cpuTlb.paddr(p.paddrBits - 1, 0))
     cpu2.pageFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.pageFault
     cpu2.accessFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.accessFault
@@ -283,6 +295,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     internal2.req := internal1.req
     internal2.physicalAddress := internalPhysical
     capturePermission(internal2, internalPhysical, internalPmpAllowed, internalPma)
+    captureLineMatches(internal2, internalPhysical(p.paddrBits - 1, 0))
     internal2.paddr := Mux(internal1.req.hasPaddr, internal1.req.paddr, internalTlb.paddr(p.paddrBits - 1, 0))
     internal2.pageFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.pageFault
     internal2.accessFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.accessFault
@@ -297,6 +310,18 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   }
   when(cpu2.valid && contextChanged && !cpuAdvance) {
     cpu2.needsRecheck := true.B
+  }
+  // A held slot's address is fixed, but internal completion work may allocate
+  // new ownership. Refresh only the match bits at that register mutation.
+  when(cpuHold && miss.io.alloc.valid) {
+    cpu2.sameMshrLine := line(cpu2.paddr) === miss.io.alloc.bits.lineAddr
+    cpu2.sameMshrSet := cpu2.req.idx === idx(miss.io.alloc.bits.lineAddr ## 0.U(p.offBits.W))
+    when(wbAllocates) { cpu2.sameWbLine := line(cpu2.paddr) === miss.io.alloc.bits.victimLineAddr }
+  }
+  when(internalHold && miss.io.alloc.valid) {
+    internal2.sameMshrLine := line(internal2.paddr) === miss.io.alloc.bits.lineAddr
+    internal2.sameMshrSet := internal2.req.idx === idx(miss.io.alloc.bits.lineAddr ## 0.U(p.offBits.W))
+    when(wbAllocates) { internal2.sameWbLine := line(internal2.paddr) === miss.io.alloc.bits.victimLineAddr }
   }
   val recheckReturns = internal2.valid && internal2.req.src === L1Src.Recheck && internalAdvance
   when(recheckReturns && cpu2.valid && !io.core.s2Kill) {
@@ -321,19 +346,21 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val normalInternal = fromInternal && !replay && !ptw && !rechecking
   val hitVec = VecInit((0 until p.ways).map(w => s2.tagVec(w).state =/= L1State.I &&
     s2.tagVec(w).tag === tag(s2.paddr) && !(miss.io.status.wayLocked &&
-      miss.io.status.mshrWay === w.U && idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)) === s2.req.idx &&
+      miss.io.status.mshrWay === w.U && s2.sameMshrSet &&
       !(s2.req.src === L1Src.Probe && upgrading && miss.io.status.mshrState === MshrState.Wait &&
         !probe.io.pending.owner))))
   val hit = hitVec.asUInt.orR
   val hitWay = OHToUInt(hitVec)
-  val hitState = s2.tagVec(hitWay).state
-  val writable = hitState === L1State.E || hitState === L1State.M
+  val hitState = Mux1H(hitVec, s2.tagVec.map(_.state.asUInt)).asTypeOf(L1State())
+  val writable = (0 until p.ways).map(w => hitVec(w) &&
+    (s2.tagVec(w).state === L1State.E || s2.tagVec(w).state === L1State.M)).reduce(_ || _)
+  val sharedHit = (0 until p.ways).map(w => hitVec(w) && s2.tagVec(w).state === L1State.S).reduce(_ || _)
   localAmo := amoRmw || (!fromInternal && cpu2.valid && cpu2.req.core.op === L1DOp.AMO &&
     hit && writable && !atomicWait && !cpuRetry)
   val hitWord = s2.dataVec(hitWay)
   val isStore = !ptw && storeLike(s2.req.core.op)
-  val sameMshr = miss.io.status.mshrValid && miss.io.status.mshrLineAddr === line(s2.paddr)
-  val sameWb = miss.io.status.wbValid && miss.io.status.wbLineAddr === line(s2.paddr)
+  val sameMshr = miss.io.status.mshrValid && s2.sameMshrLine
+  val sameWb = miss.io.status.wbValid && s2.sameWbLine
   val invalidWays = VecInit((0 until p.ways).map(w => s2.tagVec(w).state === L1State.I &&
     !(miss.io.status.wayLocked && miss.io.status.mshrWay === w.U &&
       idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)) === s2.req.idx)))
@@ -344,7 +371,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val isAmo = !ptw && s2.req.core.op === L1DOp.AMO
   val blockingAtomic = isLr || isAmo
   val scSuccess = rsvValid && rsvLine === line(s2.paddr)
-  val upgrade = hit && hitState === L1State.S && (isStore || isLr)
+  val upgrade = sharedHit && (isStore || isLr)
   val allocWay = Mux(upgrade, hitWay, victimWay)
   val victimEntry = if (p.ways == 1) s2.tagVec(0) else s2.tagVec(allocWay)
   val victimValid = !upgrade && victimEntry.state =/= L1State.I
@@ -363,9 +390,14 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val externalMutation = installing || probe.io.tagUpdate.valid || (psCompletes && ps.setDirty)
   val externalSet = Mux(installing, idx(miss.io.status.mshrLineAddr ## 0.U(p.offBits.W)),
     Mux(probe.io.tagUpdate.valid, idx(probe.io.pending.addr ## 0.U(p.offBits.W)), ps.idx))
-  val canAllocate = miss.io.status.canAllocate && !ptwOutstanding && !tagBusy && !probe.io.s0Req.valid &&
-    (!victimValid || !miss.io.status.wbValid)
-  val ptwCanAllocate = miss.io.status.canAllocate && !tagBusy && (!victimValid || !miss.io.status.wbValid)
+  // With an idle MSHR no way is locked. Allocation needs a writeback slot
+  // iff all ways are valid and the request cannot upgrade its shared hit.
+  // This Boolean capacity decision never selects victim/allocWay/tag data.
+  val hasInvalidWay = s2.tagVec.map(_.state === L1State.I).reduce(_ || _)
+  val ownershipUpgrade = sharedHit && (isStore || isLr)
+  val wbCapacity = !miss.io.status.wbValid || hasInvalidWay || ownershipUpgrade
+  val canAllocate = miss.io.status.canAllocate && !ptwOutstanding && !tagBusy && !probe.io.s0Req.valid && wbCapacity
+  val ptwCanAllocate = miss.io.status.canAllocate && !tagBusy && wbCapacity
 
   val atomicDenied = !ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !s2.pmaRsrvOk ||
     s2.req.core.op === L1DOp.AMO && !s2.pmaAmoOk)
@@ -458,7 +490,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // A hit in S still needs the MSHR for GetM. Mark that wait as well, so a
   // held younger S1 Store cannot prevent the probe that frees L2's set.
   when(cpu2.valid && !atomicWait && !amoRmw && cpu2.req.core.op =/= L1DOp.Fence && !fromInternal && outcome === L1S2Outcome.Hold &&
-    (sameMshr || sameWb || ((!hit || upgrade) && !miss.io.status.canAllocate))) { cpu2.needsRecheck := true.B }
+    (sameMshr || sameWb || ((!hit || ownershipUpgrade) && !miss.io.status.canAllocate))) { cpu2.needsRecheck := true.B }
 
   val rawLoad = Mux(!fromInternal && mmio.io.done.valid, mmio.io.done.bits.rdata, hitWord)
   val loadData = formatLoad(rawLoad, s2.paddr, s2.req.core.size, s2.req.core.signed, s2.req.core.isFlw)

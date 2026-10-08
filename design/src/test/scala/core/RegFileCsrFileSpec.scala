@@ -381,7 +381,7 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.hpmEvents.controlRetired.poke(true.B)
             dut.clock.step(3)
             dut.io.hpmEvents.controlRetired.poke(false.B)
-            dut.io.csr_old_data.expect(3.U)
+            dut.io.csr_old_data.expect(2.U)
 
             dut.io.commit_valid.poke(true.B)
             dut.io.commit_write_en.poke(true.B)

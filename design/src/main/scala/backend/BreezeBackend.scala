@@ -71,6 +71,8 @@ class BreezeBackend(
     val frontendPhtUpdate = Output(new BreezePHTUpdateReq(cfg.ghrLength.max(1)))
     val frontendGhrUpdate = Output(new BreezeGHRUpdateReq)
     val frontendRedirect = Output(new FrontendRedirectIO(64))
+    val frontendFastRedirect = Output(new FrontendRedirectIO(64))
+    val frontendSlowRedirect = Output(new FrontendRedirectIO(64))
     val mmuContext = Output(new BreezeMmuContext(64))
     val sfence = Output(new BreezeSfenceReq(64))
     val reservationKill = Output(Bool())
@@ -100,6 +102,8 @@ class BreezeBackend(
   val ex = RegInit(0.U.asTypeOf(new BreezeBackendIDEXE(64, cfg.ghrLength)))
   val exFp = RegInit(0.U.asTypeOf(new BreezeFpCtrl))
   val exFpr = RegInit(VecInit(Seq.fill(3)(0.U(64.W))))
+  val exFpIssued = RegInit(false.B)
+  val exRedirectSent = RegInit(false.B)
   val mem = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val wb = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val sleeping = RegInit(false.B)
@@ -321,7 +325,7 @@ class BreezeBackend(
   divUnit.io.req.bits.isWord := wordDiv
   divUnit.io.req.bits.fastValid := byZero || overflow
   divUnit.io.req.bits.fastData := Mux(wordDiv, Cat(Fill(32, fast(31)), fast(31,0)), fast)
-  fpUnit.io.req.valid := exFpLong && allowEx
+  fpUnit.io.req.valid := exFpLong && !exFpIssued && !writeback.io.hartFatal && !stopped
   val fpIn = fpUnit.io.req.bits
   val fp1 = Mux(exFp.usesGpr1, exR1, exFprRead(0))
   fpIn.operandA := Mux(exFp.operation === BreezeFpOp.ADD.U, 0.U, fp1)
@@ -336,7 +340,7 @@ class BreezeBackend(
   fpIn.rd.idx := ex.rd_addr
   fpIn.rd.isFp := exBank
   val resourceWait = (exMem && !io.l1d.req.ready) || (exMul && !mulUnit.io.req.ready) ||
-    (exDiv && !divUnit.io.req.ready) || (exFpLong && !fpUnit.io.req.ready)
+    (exDiv && !divUnit.io.req.ready) || (exFpLong && !exFpIssued && !fpUnit.io.req.ready)
   exAdvance := allowEx && !resourceWait
   mulUnit.io.commit := wbCommit && wb.mul
   divUnit.io.commit := wbCommit && wb.div
@@ -344,8 +348,16 @@ class BreezeBackend(
   mulUnit.io.killUncommitted := wbKill || io.hartFatal
   divUnit.io.killUncommitted := wbKill || io.hartFatal
   fpUnit.io.killUncommitted := wbKill || io.hartFatal
-  branchRedirect := exLegal && exAdvance &&
+  branchRedirect := exLegal && !exRedirectSent &&
     ((taken =/= ex.pred.predTaken) || (taken && ex.pred.predTaken && jau.io.jmp_addr =/= ex.pred.predPc))
+  val redirected = exRedirectSent || branchRedirect
+  when(reset.asBool || wbKill || io.hartFatal || exAdvance) {
+    exFpIssued := false.B
+    exRedirectSent := false.B
+  }.otherwise {
+    when(fpUnit.io.req.fire) { exFpIssued := true.B }
+    when(branchRedirect) { exRedirectSent := true.B }
+  }
 
   // CSR evaluates in MEM, commits in WB. Existing conservative CSR state hazards remain.
   csrFile.io.csr_addr := mem.csrAddr
@@ -388,28 +400,41 @@ class BreezeBackend(
   io.frontendRedirect.cacheFlush := wbCommit && wb.fencei
   io.frontendRedirect.target := Mux(csrFile.io.trap.valid, csrFile.io.trap_target,
     Mux(xret, csrFile.io.xret_target, Mux(wbKill, wb.nextPc, exNext)))
-  io.frontendPhtUpdate := 0.U.asTypeOf(io.frontendPhtUpdate)
-  io.frontendGhrUpdate := 0.U.asTypeOf(io.frontendGhrUpdate)
+  // Keep the legacy backend events at WB for the frozen observation contract.
+  // The cluster's frontend boundary consumes these two functional routes.
+  io.frontendFastRedirect := 0.U.asTypeOf(io.frontendFastRedirect)
+  io.frontendFastRedirect.valid := branchRedirect
+  io.frontendFastRedirect.flush := branchRedirect
+  io.frontendFastRedirect.target := exNext
+  io.frontendSlowRedirect := io.frontendRedirect
+  io.frontendSlowRedirect.valid := wbKill
+  io.frontendSlowRedirect.flush := wbKill ||
+    (wb.valid && wb.sfence && !RegNext(wb.valid && wb.sfence, false.B))
   val btb = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(64)))
-  when(!downHold || wbKill) { btb := 0.U.asTypeOf(btb) }
+  val pht = RegInit(0.U.asTypeOf(io.frontendPhtUpdate))
+  val ghr = RegInit(0.U.asTypeOf(io.frontendGhrUpdate))
+  btb := 0.U.asTypeOf(btb)
+  pht := 0.U.asTypeOf(pht)
+  ghr := 0.U.asTypeOf(ghr)
   val train = exLegal && exAdvance && !wbKill && (ex.ctrl.bru_inst || ex.ctrl.redir_inst)
   if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
     when(train) {
       btb.valid := ex.pred.predType === FrontendPredType.BR || ex.pred.predType === FrontendPredType.JAL ||
-        (ex.pred.predType === FrontendPredType.JALR && branchRedirect)
+        (ex.pred.predType === FrontendPredType.JALR && redirected)
       btb.pc := ex.pc
       btb.target := jau.io.jmp_addr
       btb.predType := ex.pred.predType
       btb.taken := taken
     }
-    io.frontendPhtUpdate.valid := train && ex.pred.predType === FrontendPredType.BR
-    io.frontendPhtUpdate.idx := ex.pred.phtIdx
-    io.frontendPhtUpdate.taken := taken
-    io.frontendGhrUpdate.valid := io.frontendPhtUpdate.valid
-    io.frontendGhrUpdate.taken := taken
+    pht.valid := train && ex.pred.predType === FrontendPredType.BR
+    pht.idx := ex.pred.phtIdx
+    pht.taken := taken
+    ghr.valid := train && ex.pred.predType === FrontendPredType.BR
+    ghr.taken := taken
   }
   io.frontendBtbUpdate := btb
-  io.frontendBtbUpdate.valid := btb.valid && !wbKill && !downHold && !io.hartFatal
+  io.frontendPhtUpdate := pht
+  io.frontendGhrUpdate := ghr
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
     (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
@@ -428,11 +453,12 @@ class BreezeBackend(
     (wb.valid, wb.writes, wb.rd.isFp, wb.rd.idx, wb.csrCmd =/= CSR_CMD.NOP.U || wb.rd.isFp)).map {
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
-  io.fetchBuffer.ready := exAdvance && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
+  val slowRedirectGap = RegNext(wbKill, false.B)
+  io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
     !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
-  when(reset.asBool || wbKill || branchRedirect || io.hartFatal) { ex.valid := false.B }
+  when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) {
       ex.valid := idLeave
       when(idLeave) {
@@ -512,7 +538,7 @@ class BreezeBackend(
       mem.csrSource := Mux(ex.ctrl.csr_cmd(2), Cat(0.U(59.W), ex.rs1_addr), exR1)
       mem.rs1 := ex.rs1_addr
       mem.rs2 := ex.rs2_addr
-      mem.predictionMiss := branchRedirect
+      mem.predictionMiss := redirected
       wb := mem
       when(mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) {
         wb.data := csrFile.io.csr_old_data
@@ -635,10 +661,10 @@ class BreezeBackend(
     assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
     assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")
     assert(!serialWait || (!ex.valid && !mem.valid), "[stall direction] serial wait with younger pipeline entries")
-    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire), "[S13] younger request survived WB kill")
+    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire), "[S13] younger request survived WB kill")
+    assert(!(branchRedirect && exRedirectSent), "[S09] EX redirected twice in one occupancy")
     when(downHold && wb.valid) {
-      assert(!(io.frontendBtbUpdate.valid || io.frontendPhtUpdate.valid || io.frontendGhrUpdate.valid ||
-        io.frontendRedirect.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
+      assert(!(train || io.frontendSlowRedirect.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
         csrFile.io.mret_commit || csrFile.io.sret_commit), "[S09] control side effect while WB held")
       // S09 explicitly permits requests with their own one-shot state (A08/B01).
       // SFENCE must request while WB waits, then wait for the subsequent idle.

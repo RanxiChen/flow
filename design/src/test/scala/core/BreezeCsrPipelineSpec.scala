@@ -46,13 +46,14 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.hpmEvents.memStallCycle, dut.io.hpmEvents.loadUseStall,
     dut.io.hpmEvents.mulSourceStall, dut.io.hpmEvents.divSourceStall)
 
-  "pipelined HPM matches an immediate-count model at every CSR-visible cycle" in {
+  "pipelined HPM matches an occurrence-time one-cycle-delayed model at every CSR-visible cycle" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       idle(dut)
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.reset.poke(false.B)
       val counts = Array.fill(8)(BigInt(0))
+      val delayedIncrements = Array.fill(8)(BigInt(0))
       val selectors = Array.fill(8)(0)
       var inhibit = BigInt(0)
       var cycle = BigInt(0)
@@ -78,8 +79,9 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         read(CSRMAP.coreinst, coreinst)
         read(CSRMAP.mcountinhibit, inhibit)
       }
-      // The reference has no pending state: it counts each event immediately
-      // using the pre-edge configuration and explicit-write priority.
+      // Independent model: attribute each stimulus using pre-edge software
+      // configuration, publish its increment one edge later, and discard
+      // delayed/current events when software overwrites that counter.
       def tick(events: Int = 0, write: Option[(Int, BigInt)] = None,
                retire: Boolean = false, trap: Boolean = false,
                valid: Boolean = true, writeEnable: Boolean = true, conflict: Int = 0): Unit = {
@@ -100,7 +102,8 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
           val increment = if (selectors(i) == 13) conflict
             else if (selectors(i) != 0 && (events & (1 << (selectors(i) - 1))) != 0) 1 else 0
           counts(i) = written(CSRMAP.mhpmcounter3 + i).getOrElse(
-            (counts(i) + (if (!inhibit.testBit(i + 3)) increment else 0)) & mask)
+            (counts(i) + delayedIncrements(i)) & mask)
+          delayedIncrements(i) = if (written(CSRMAP.mhpmcounter3 + i).nonEmpty || inhibit.testBit(i + 3)) 0 else increment
         }
         cycle = written(CSRMAP.mcycle).getOrElse((cycle + (if (!inhibit.testBit(0)) 1 else 0)) & mask)
         instret = written(CSRMAP.minstret).getOrElse(
@@ -158,7 +161,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.reset.poke(false.B)
-      counts.indices.foreach(i => { counts(i) = 0; selectors(i) = 0 })
+      counts.indices.foreach(i => { counts(i) = 0; selectors(i) = 0; delayedIncrements(i) = 0 })
       inhibit = 0; cycle = 0; instret = 0; coreinst = 0
       check()
     }

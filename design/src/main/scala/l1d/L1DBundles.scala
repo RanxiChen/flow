@@ -109,6 +109,11 @@ class L1S2(p: L1DParams) extends Bundle {
   val snapInvalid = Bool()
   val translationMiss = Bool()
   val needsRecheck = Bool()
+  // S1 comparisons, with forwarding from an allocation at the capture edge.
+  // Existing S2 fields keep their original protocol/permission meanings.
+  val sameMshrLine = Bool()
+  val sameWbLine = Bool()
+  val sameMshrSet = Bool()
 }
 
 /** pending-store (§3, PS). */
