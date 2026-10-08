@@ -1,0 +1,1 @@
+sbt "testOnly flow.backend.BackendSoc3cSpec flow.frontend.BreezeFrontendSoc3cSpec flow.fpu.FpUnitSpec flow.backend.HpmSpec flow.core.BreezeCsrPipelineSpec flow.core.RegFileCsrFileSpec flow.memsys.L1DCacheSpec flow.memsys.L1DPermissionsSpec flow.memsys.L1DContextSpec flow.backend.WritebackSpec flow.core.BreezePrivilegeSpec"

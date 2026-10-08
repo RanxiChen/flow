@@ -1,0 +1,15 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-soc3c-0d4cb26/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-soc3c-0d4cb26/design/)
+[info] compiling 99 Scala sources to /home/cloud_chen/work/flow-soc3c-0d4cb26/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 78 Scala sources to /home/cloud_chen/work/flow-soc3c-0d4cb26/design/target/scala-2.13/test-classes ...
+[warn] /home/cloud_chen/work/flow-soc3c-0d4cb26/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+[success] Total time: 28 s, completed Oct 8, 2026, 7:09:46 PM

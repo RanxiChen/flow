@@ -1,0 +1,8 @@
+{
+  "source_sha": "435e877d6746acff7c56d92671fff9b05558a11e",
+  "host": "local chen",
+  "cwd": "/home/chen/leisure/flow",
+  "command": "python3 tools/frozen_check.py",
+  "exit_code": 0,
+  "elapsed_seconds": 0.027919136999116745
+}

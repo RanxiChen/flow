@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuite hostname="iZbp16rhtg91v96m32vggjZ" name="flow.core.BreezePrivilegeSpec" tests="20" errors="0" failures="0" skipped="0" time="60.584" timestamp="2026-10-08T19:20:59">
+          <properties>
+      <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/><property name="java.specification.version" value="11"/><property name="sun.cpu.isalist" value=""/><property name="sun.jnu.encoding" value="UTF-8"/><property name="sun.arch.data.model" value="64"/><property name="java.vendor.url" value="https://ubuntu.com/"/><property name="sun.boot.library.path" value="/usr/lib/jvm/java-11-openjdk-amd64/lib"/><property name="sun.java.command" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt-launch.jar testOnly flow.backend.BackendSoc3cSpec flow.frontend.BreezeFrontendSoc3cSpec flow.fpu.FpUnitSpec flow.backend.HpmSpec flow.core.BreezeCsrPipelineSpec flow.core.RegFileCsrFileSpec flow.memsys.L1DCacheSpec flow.memsys.L1DPermissionsSpec flow.memsys.L1DContextSpec flow.backend.WritebackSpec flow.core.BreezePrivilegeSpec"/><property name="jdk.debug" value="release"/><property name="java.specification.vendor" value="Oracle Corporation"/><property name="java.version.date" value="2026-08-18"/><property name="java.home" value="/usr/lib/jvm/java-11-openjdk-amd64"/><property name="file.separator" value="/"/><property name="java.vm.compressedOopsMode" value="Zero based"/><property name="line.separator" value="
+"/><property name="java.specification.name" value="Java Platform API Specification"/><property name="java.vm.specification.vendor" value="Oracle Corporation"/><property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/><property name="java.runtime.version" value="11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu"/><property name="user.name" value="cloud_chen"/><property name="log4j.ignoreTCL" value="true"/><property name="file.encoding" value="UTF-8"/><property name="jnidispatch.path" value="/home/cloud_chen/.cache/JNA/temp/jna16724772651088227718.tmp"/><property name="jna.loaded" value="true"/><property name="java.io.tmpdir" value="/tmp"/><property name="java.version" value="11.0.32.1"/><property name="java.vm.specification.name" value="Java Virtual Machine Specification"/><property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/><property name="sun.os.patch.level" value="unknown"/><property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/><property name="java.vendor" value="Ubuntu"/><property name="java.specification.maintenance.version" value="3"/><property name="scala.ext.dirs" value="/home/cloud_chen/.sbt/1.0/java9-rt-ext-ubuntu_11_0_32_1"/><property name="sun.io.unicode.encoding" value="UnicodeLittle"/><property name="http.proxyHost" value="127.0.0.1"/><property name="java.class.path" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt-launch.jar"/><property name="https.proxyPort" value="18897"/><property name="java.vm.vendor" value="Ubuntu"/><property name="jline.shutdownhook" value="false"/><property name="user.timezone" value="Asia/Shanghai"/><property name="os.name" value="Linux"/><property name="java.vm.specification.version" value="11"/><property name="sun.java.launcher" value="SUN_STANDARD"/><property name="sun.cpu.endian" value="little"/><property name="user.home" value="/home/cloud_chen"/><property name="user.language" value="en"/><property name="sbt.script" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt"/><property name="sbt.ipcsocket.tmpdir" value="/run/user/1000/.sbtb311cafb/ipcsocket"/><property name="swoval.tmpdir" value="/run/user/1000/.sbtb311cafb/swoval"/><property name="https.proxyHost" value="127.0.0.1"/><property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/><property name="jline.esc.timeout" value="0"/><property name="path.separator" value=":"/><property name="os.version" value="6.8.0-139-generic"/><property name="jna.nosys" value="true"/><property name="java.runtime.name" value="OpenJDK Runtime Environment"/><property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/><property name="jna.platform.library.path" value="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/usr/lib64:/lib64:/usr/lib:/lib:/lib32:/usr/lib/x86_64-linux-gnu/libfakeroot"/><property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-lts"/><property name="user.dir" value="/home/cloud_chen/work/flow-soc3c-0d4cb26/design"/><property name="os.arch" value="amd64"/><property name="java.vm.info" value="mixed mode, sharing"/><property name="java.vm.version" value="11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu"/><property name="java.class.version" value="55.0"/><property name="http.proxyPort" value="18897"/>
+    </properties>
+          <testcase classname="flow.core.BreezePrivilegeSpec" name="SOC3 C1-B: permission events coincide with new CSR and privilege state for exactly one cycle" time="3.192">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="keep the MCU profile machine-only and reject supervisor CSRs" time="2.934">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="reject every unimplemented MCU CSR instead of silently reading zero" time="3.006">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="check OpenSBI extension probes and reject every unimplemented Linux CSR" time="3.251">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="enter S and U with MRET/SRET and route delegated exceptions to S" time="3.155">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="preserve a high Sv39 user address across sepc and SRET" time="3.154">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="take a delegated supervisor software interrupt with vectored stvec" time="3.15">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="wake WFI from a locally enabled interrupt independently of global MIE" time="3.169">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="enforce TSR TW TVM and keep simulation CSRs machine-only" time="3.157">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="decode WFI and SFENCE.VMA as privilege-checked system operations" time="2.072">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="decode EBREAK as a breakpoint exception instead of an illegal instruction" time="2.077">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="expose eight writable PMP entries and eight read-zero slots to firmware probes" time="3.174">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="implement PMP CSRs and Sstc time/stimecmp pending state" time="3.162">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="trap entry dominates a simultaneous return request" time="3.143">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="forward the OpenSBI software timer interrupt and clear it on rearming" time="3.141">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="preserve hidden interrupt bits and prioritize M destinations over S" time="3.134">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="exclude the external SEIP wire from CSRRS and CSRRC writeback" time="3.125">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="allow M stimecmp access and require both STCE and TM for S" time="3.133">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="preserve satp on unsupported modes and clear MPRV on SRET" time="3.129">
+                      
+                    </testcase><testcase classname="flow.core.BreezePrivilegeSpec" name="delegate user breakpoints to the supervisor handler" time="3.126">
+                      
+                    </testcase>
+          <system-out><![CDATA[]]></system-out>
+          <system-err><![CDATA[]]></system-err>
+        </testsuite>

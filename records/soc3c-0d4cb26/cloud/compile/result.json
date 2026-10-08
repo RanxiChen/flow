@@ -1,0 +1,12 @@
+{
+  "source_sha": "0d4cb261fddee341d095d649fd3531f237b6f170",
+  "host": "iZbp16rhtg91v96m32vggjZ",
+  "ssh_target": "cloud_chen@47.96.71.231",
+  "cwd": "/home/cloud_chen/work/flow-soc3c-0d4cb26/design",
+  "command": "sbt \"Test / compile\"",
+  "started_utc": "2026-10-08T11:09:14.886735+00:00",
+  "cvfpu_sha": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+  "exit_code": 0,
+  "elapsed_seconds": 31.807021827000426,
+  "ended_utc": "2026-10-08T11:09:46.694743+00:00"
+}

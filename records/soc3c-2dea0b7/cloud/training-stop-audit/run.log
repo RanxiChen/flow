@@ -1,0 +1,40 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-soc3c-2dea0b7/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-soc3c-2dea0b7/design/)
+[info] compiling 99 Scala sources to /home/cloud_chen/work/flow-soc3c-2dea0b7/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 78 Scala sources to /home/cloud_chen/work/flow-soc3c-2dea0b7/design/target/scala-2.13/test-classes ...
+[warn] /home/cloud_chen/work/flow-soc3c-2dea0b7/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+[info] BackendContractSpec:
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00000463
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         8 kind=commit pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         9 kind=commit pc=0x0000000000000404 inst=0x00000463
+[CYCLE] c=         9 kind=gpr rd= 1 data=0x0000000000001234
+[info] - S09_BTB_training_waits_for_held_WB_once *** FAILED ***
+[info]   List(3) was not equal to List(8) (BackendContractSpec.scala:472)
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00000463
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[info] - S13_WB_fault_discards_younger_pending_BTB_training *** FAILED ***
+[info]   List(3) was not empty (BackendContractSpec.scala:479)
+[info] Run completed in 43 seconds, 205 milliseconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 0, failed 2, canceled 0, ignored 0, pending 0
+[info] *** 2 TESTS FAILED ***
+[error] Failed tests:
+[error] 	flow.backend.BackendContractSpec
+[error] (Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 76 s (01:16), completed Oct 8, 2026, 7:18:21 PM

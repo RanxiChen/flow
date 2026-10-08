@@ -1,0 +1,12 @@
+{
+  "source_sha": "435e877d6746acff7c56d92671fff9b05558a11e",
+  "host": "iZbp16rhtg91v96m32vggjZ",
+  "ssh_target": "cloud_chen@47.96.71.231",
+  "cwd": "/home/cloud_chen/work/flow-soc3c-0d4cb26/design",
+  "command": "sbt \"testOnly flow.backend.BackendSoc3cSpec flow.frontend.BreezeFrontendSoc3cSpec flow.fpu.FpUnitSpec flow.backend.HpmSpec flow.core.BreezeCsrPipelineSpec flow.core.RegFileCsrFileSpec flow.memsys.L1DCacheSpec flow.memsys.L1DPermissionsSpec flow.memsys.L1DContextSpec flow.backend.WritebackSpec flow.core.BreezePrivilegeSpec\"",
+  "started_utc": "2026-10-08T11:10:55.617226+00:00",
+  "cvfpu_sha": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+  "exit_code": 1,
+  "elapsed_seconds": 604.9476999620019,
+  "ended_utc": "2026-10-08T11:21:00.565914+00:00"
+}

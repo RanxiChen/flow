@@ -1,0 +1,12 @@
+{
+  "source_sha": "2dea0b7689d270a14cd59cfff4a99cc66fa98ec2",
+  "host": "iZbp16rhtg91v96m32vggjZ",
+  "ssh_target": "cloud_chen@47.96.71.231",
+  "cwd": "/home/cloud_chen/work/flow-soc3c-2dea0b7/design",
+  "command": "sbt \"testOnly flow.backend.BackendContractSpec -- -z S09_BTB_training_waits_for_held_WB_once -z S13_WB_fault_discards_younger_pending_BTB_training\"",
+  "started_utc": "2026-10-08T11:17:01.896464+00:00",
+  "cvfpu_sha": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+  "exit_code": 1,
+  "elapsed_seconds": 80.383268657999,
+  "ended_utc": "2026-10-08T11:18:22.280767+00:00"
+}

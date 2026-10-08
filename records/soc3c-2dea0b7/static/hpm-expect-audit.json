@@ -1,0 +1,8 @@
+{
+  "source_sha": "2dea0b7689d270a14cd59cfff4a99cc66fa98ec2",
+  "seed": "0x435352",
+  "ticks": 577,
+  "changed_expect_instances": 2866,
+  "hpm_expect_instances_including_initial_and_reset": 9264,
+  "input": "unchanged Scala test stimuli only; no RTL outputs"
+}

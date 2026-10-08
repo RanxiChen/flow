@@ -1,0 +1,12 @@
+{
+  "tested_sha": "2dea0b7689d270a14cd59cfff4a99cc66fa98ec2",
+  "rtl_commit": "0d4cb261fddee341d095d649fd3531f237b6f170",
+  "diff_after_rtl_commit": [
+    "design/src/test/scala/backend/BackendSoc3cSpec.scala",
+    "design/src/test/scala/frontend/BreezeFrontendSoc3cSpec.scala"
+  ],
+  "frozen_command": "python3 tools/frozen_check.py",
+  "frozen_exit": 0,
+  "frozen_cwd": "/home/chen/leisure/flow",
+  "d3_stop": "2 existing BackendContractSpec consumption-time training expectations failed; no tests modified"
+}

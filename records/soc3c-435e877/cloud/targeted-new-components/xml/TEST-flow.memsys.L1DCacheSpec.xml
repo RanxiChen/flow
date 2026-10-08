@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuite hostname="iZbp16rhtg91v96m32vggjZ" name="flow.memsys.L1DCacheSpec" tests="39" errors="0" failures="0" skipped="0" time="360.238" timestamp="2026-10-08T19:17:46">
+          <properties>
+      <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/><property name="java.specification.version" value="11"/><property name="sun.cpu.isalist" value=""/><property name="sun.jnu.encoding" value="UTF-8"/><property name="sun.arch.data.model" value="64"/><property name="java.vendor.url" value="https://ubuntu.com/"/><property name="sun.boot.library.path" value="/usr/lib/jvm/java-11-openjdk-amd64/lib"/><property name="sun.java.command" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt-launch.jar testOnly flow.backend.BackendSoc3cSpec flow.frontend.BreezeFrontendSoc3cSpec flow.fpu.FpUnitSpec flow.backend.HpmSpec flow.core.BreezeCsrPipelineSpec flow.core.RegFileCsrFileSpec flow.memsys.L1DCacheSpec flow.memsys.L1DPermissionsSpec flow.memsys.L1DContextSpec flow.backend.WritebackSpec flow.core.BreezePrivilegeSpec"/><property name="jdk.debug" value="release"/><property name="java.specification.vendor" value="Oracle Corporation"/><property name="java.version.date" value="2026-08-18"/><property name="java.home" value="/usr/lib/jvm/java-11-openjdk-amd64"/><property name="file.separator" value="/"/><property name="java.vm.compressedOopsMode" value="Zero based"/><property name="line.separator" value="
+"/><property name="java.specification.name" value="Java Platform API Specification"/><property name="java.vm.specification.vendor" value="Oracle Corporation"/><property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/><property name="java.runtime.version" value="11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu"/><property name="user.name" value="cloud_chen"/><property name="log4j.ignoreTCL" value="true"/><property name="file.encoding" value="UTF-8"/><property name="jnidispatch.path" value="/home/cloud_chen/.cache/JNA/temp/jna16724772651088227718.tmp"/><property name="jna.loaded" value="true"/><property name="java.io.tmpdir" value="/tmp"/><property name="java.version" value="11.0.32.1"/><property name="java.vm.specification.name" value="Java Virtual Machine Specification"/><property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/><property name="sun.os.patch.level" value="unknown"/><property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/><property name="java.vendor" value="Ubuntu"/><property name="java.specification.maintenance.version" value="3"/><property name="scala.ext.dirs" value="/home/cloud_chen/.sbt/1.0/java9-rt-ext-ubuntu_11_0_32_1"/><property name="sun.io.unicode.encoding" value="UnicodeLittle"/><property name="http.proxyHost" value="127.0.0.1"/><property name="java.class.path" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt-launch.jar"/><property name="https.proxyPort" value="18897"/><property name="java.vm.vendor" value="Ubuntu"/><property name="jline.shutdownhook" value="false"/><property name="user.timezone" value="Asia/Shanghai"/><property name="os.name" value="Linux"/><property name="java.vm.specification.version" value="11"/><property name="sun.java.launcher" value="SUN_STANDARD"/><property name="sun.cpu.endian" value="little"/><property name="user.home" value="/home/cloud_chen"/><property name="user.language" value="en"/><property name="sbt.script" value="/home/cloud_chen/tools/sbt-1.11.2/bin/sbt"/><property name="sbt.ipcsocket.tmpdir" value="/run/user/1000/.sbtb311cafb/ipcsocket"/><property name="swoval.tmpdir" value="/run/user/1000/.sbtb311cafb/swoval"/><property name="https.proxyHost" value="127.0.0.1"/><property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/><property name="jline.esc.timeout" value="0"/><property name="path.separator" value=":"/><property name="os.version" value="6.8.0-139-generic"/><property name="jna.nosys" value="true"/><property name="java.runtime.name" value="OpenJDK Runtime Environment"/><property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/><property name="jna.platform.library.path" value="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/usr/lib64:/lib64:/usr/lib:/lib:/lib32:/usr/lib/x86_64-linux-gnu/libfakeroot"/><property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-lts"/><property name="user.dir" value="/home/cloud_chen/work/flow-soc3c-0d4cb26/design"/><property name="os.arch" value="amd64"/><property name="java.vm.info" value="mixed mode, sharing"/><property name="java.vm.version" value="11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu"/><property name="java.class.version" value="55.0"/><property name="http.proxyPort" value="18897"/>
+    </properties>
+          <testcase classname="flow.memsys.L1DCacheSpec" name="load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW" time="8.826">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="store hits on E merge bytes in place and an Inv probe returns the dirty line" time="8.628">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="store miss sends GetM, replays through the pending store, and later loads see it" time="8.584">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="store to a shared line upgrades with GetM and AckE and keeps the rest of the line" time="8.595">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a store racing an earlier sharer Inv reacquires the line before later dirty eviction" time="8.671">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="victims fill invalid ways first, only dirty victims carry data, and evicted data returns" time="8.663">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a hit completes under a miss, and back-to-back store/load pairs see program order" time="8.595">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a second miss waits for the single MSHR and a same-line access waits for the refill" time="8.629">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a shared store waiting for the MSHR lets a probe pass a younger same-set store" time="8.626">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a FENCE waiting for an older miss lets SnpOp(0=Inv) pass its held younger store" time="8.63">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a FENCE waiting for an older miss lets SnpOp(1=Down) pass its held younger store" time="8.66">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="killed stores never write, and a load miss killed at WB sends no GetS" time="8.628">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="Inv and Down answer with data only from M and leave the right local state" time="8.587">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a probe that arrives with the grant waits for the replay and answers with its result" time="8.616">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a sharer Inv during an upgrade drops S at once and the later DataE carries another core's write" time="8.652">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a refill error is reported on late data or drops the store, and leaves the line invalid" time="8.841">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="device accesses use blocking AXI-Lite with formatted data, byte strobes and error responses" time="8.853">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="misaligned, unmapped, read-only and page-faulting accesses raise the right cause without traffic" time="8.841">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="TLB misses and a busy dTLB delay requests, which still complete in program order" time="8.844">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU" time="8.922">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="FENCE completes only after an outstanding store miss has drained" time="8.817">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="LR gets exclusive permission, SC succeeds once and a failed SC never misses" time="8.801">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="LR upgrades S with GetM and AckE before creating its reservation" time="8.728">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="a pending probe permits SC within the LR window and sees the successful write" time="8.603">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="probe timeout, trap and eviction clear reservations, but timer expiry alone does not" time="8.673">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="all nine AMOs return the old operand and preserve the other word half" time="8.782">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="AMO cold misses, shared upgrades and grant probes use GetM and protected RMW" time="8.584">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="atomic permissions and refill errors trap before writes or failed-SC status" time="8.607">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="an AMO upgrade waiting for GetM lets the required sharer Inv finish first" time="8.533">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge" time="8.644">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="aq blocks younger requests and rl or AMO admission waits for older misses to drain" time="8.638">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="atomic random traffic with probes and backpressure matches golden memory with seed 73" time="9.612">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="atomic random traffic with probes and backpressure matches golden memory with seed 74" time="9.848">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="atomic random traffic with probes and backpressure matches golden memory with seed 75" time="9.787">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="random traffic with backpressure, probes and TLB misses matches the golden memory with seed 11" time="12.672">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="random traffic with backpressure, probes and TLB misses matches the golden memory with seed 12" time="12.8">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="random traffic with backpressure, probes and TLB misses matches the golden memory with seed 13" time="12.703">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="non-default geometry smoke: random traffic on a two-way L1D" time="11.622">
+                      
+                    </testcase><testcase classname="flow.memsys.L1DCacheSpec" name="non-default geometry smoke: random traffic on the two-set direct-mapped stress L1D" time="11.893">
+                      
+                    </testcase>
+          <system-out><![CDATA[]]></system-out>
+          <system-err><![CDATA[]]></system-err>
+        </testsuite>

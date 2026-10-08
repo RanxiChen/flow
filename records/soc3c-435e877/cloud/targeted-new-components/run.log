@@ -1,0 +1,497 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading project definition from /home/cloud_chen/work/flow-soc3c-0d4cb26/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/cloud_chen/work/flow-soc3c-0d4cb26/design/)
+[info] compiling 1 Scala source to /home/cloud_chen/work/flow-soc3c-0d4cb26/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=18897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=18897 -XX:ActiveProcessorCount=4
+[info] BackendSoc3cSpec:
+[info] flow.backend.BackendSoc3cSpec *** ABORTED ***
+[info]   java.lang.ExceptionInInitializerError:
+[info]   at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[info]   at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[info]   at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[info]   at chisel3.Module$.do_apply(Module.scala:32)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[info]   at chisel3.package$.withName(package.scala:493)
+[info]   at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[info]   at flow.backend.BreezeBackend.$anonfun$fpUnit$2(BreezeBackend.scala:98)
+[info]   at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[info]   ...
+[info]   Cause: java.lang.IllegalArgumentException: requirement failed: CVFPU include directory is missing: /home/cloud_chen/work/flow-soc3c-0d4cb26/third_party/cvfpu/src/common_cells/include
+[info]   at scala.Predef$.require(Predef.scala:337)
+[info]   at flow.fpu.BreezeFpSources$.<clinit>(BreezeFp.scala:285)
+[info]   at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[info]   at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[info]   at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[info]   at chisel3.Module$.do_apply(Module.scala:32)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[info]   at chisel3.package$.withName(package.scala:493)
+[info]   at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[info]   ...
+[error] Uncaught exception when running flow.backend.BackendSoc3cSpec: java.lang.ExceptionInInitializerError
+[error] sbt.ForkMain$ForkError: java.lang.ExceptionInInitializerError: null
+[error] 	at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[error] 	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$.do_apply(Module.scala:32)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[error] 	at flow.backend.BreezeBackend.$anonfun$fpUnit$2(BreezeBackend.scala:98)
+[error] 	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$.do_apply(Module.scala:32)
+[error] 	at flow.backend.BreezeBackend.$anonfun$fpUnit$1(BreezeBackend.scala:98)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at flow.backend.BreezeBackend.<init>(BreezeBackend.scala:98)
+[error] 	at flow.backend.BackendSoc3cSpec.$anonfun$check$1(BackendSoc3cSpec.scala:12)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.$anonfun$generateWorkspaceSources$1(package.scala:183)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$2(Elaborate.scala:60)
+[error] 	at chisel3.internal.Builder$.$anonfun$buildImpl$1(Builder.scala:1052)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.internal.Builder$.buildImpl(Builder.scala:1040)
+[error] 	at chisel3.internal.Builder$.$anonfun$build$1(Builder.scala:1032)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:136)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$1(Elaborate.scala:60)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:294)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:79)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:38)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:28)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$5(DependencyManager.scala:279)
+[error] 	at firrtl.Utils$.time(Utils.scala:54)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$3(DependencyManager.scala:279)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.DependencyManager.transform(DependencyManager.scala:269)
+[error] 	at firrtl.options.DependencyManager.transform$(DependencyManager.scala:255)
+[error] 	at firrtl.options.PhaseManager.transform(DependencyManager.scala:442)
+[error] 	at circt.stage.ChiselStage.run(ChiselStage.scala:47)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage.$anonfun$transform$3(Stage.scala:46)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.Stage.$anonfun$transform$2(Stage.scala:46)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:128)
+[error] 	at firrtl.options.Stage.transform(Stage.scala:46)
+[error] 	at firrtl.options.Stage.execute(Stage.scala:57)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.generateWorkspaceSources(package.scala:195)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.elaborateGeneratedModule(package.scala:136)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw(SimulatorAPI.scala:56)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw$(SimulatorAPI.scala:34)
+[error] 	at flow.backend.BackendSoc3cSpec.simulateRaw(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate(SimulatorAPI.scala:101)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate$(SimulatorAPI.scala:81)
+[error] 	at flow.backend.BackendSoc3cSpec.simulate(BackendSoc3cSpec.scala:9)
+[error] 	at flow.backend.BackendSoc3cSpec.check(BackendSoc3cSpec.scala:12)
+[error] 	at flow.backend.BackendSoc3cSpec.$anonfun$new$1(BackendSoc3cSpec.scala:15)
+[error] 	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf(OutcomeOf.scala:85)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf$(OutcomeOf.scala:83)
+[error] 	at org.scalatest.OutcomeOf$.outcomeOf(OutcomeOf.scala:104)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:22)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:20)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike$$anon$1.apply(AnyFreeSpecLike.scala:437)
+[error] 	at org.scalatest.TestSuite.withFixture(TestSuite.scala:196)
+[error] 	at org.scalatest.TestSuite.withFixture$(TestSuite.scala:195)
+[error] 	at flow.backend.BackendSoc3cSpec.chisel3$testing$scalatest$HasConfigMap$$super$withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.$anonfun$withFixture$1(HasConfigMap.scala:37)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture(HasConfigMap.scala:37)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture$(HasConfigMap.scala:35)
+[error] 	at flow.backend.BackendSoc3cSpec.chisel3$testing$scalatest$TestingDirectory$$super$withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.$anonfun$withFixture$1(WithTestingDirectory.scala:47)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture(WithTestingDirectory.scala:47)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture$(WithTestingDirectory.scala:45)
+[error] 	at flow.backend.BackendSoc3cSpec.withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.invokeWithFixture$1(AnyFreeSpecLike.scala:435)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTest$1(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.SuperEngine.runTestImpl(Engine.scala:306)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest$(AnyFreeSpecLike.scala:429)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTest(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTests$1(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.SuperEngine.$anonfun$runTestsInBranch$1(Engine.scala:413)
+[error] 	at scala.collection.immutable.List.foreach(List.scala:334)
+[error] 	at org.scalatest.SuperEngine.traverseSubNodes$1(Engine.scala:401)
+[error] 	at org.scalatest.SuperEngine.runTestsInBranch(Engine.scala:396)
+[error] 	at org.scalatest.SuperEngine.runTestsImpl(Engine.scala:475)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests$(AnyFreeSpecLike.scala:505)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTests(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.Suite.run(Suite.scala:1114)
+[error] 	at org.scalatest.Suite.run$(Suite.scala:1096)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.org$scalatest$freespec$AnyFreeSpecLike$$super$run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$run$1(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.SuperEngine.runImpl(Engine.scala:535)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run$(AnyFreeSpecLike.scala:549)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.tools.Framework.org$scalatest$tools$Framework$$runSuite(Framework.scala:321)
+[error] 	at org.scalatest.tools.Framework$ScalaTestTask.execute(Framework.scala:517)
+[error] 	at sbt.ForkMain$Run.lambda$runTest$1(ForkMain.java:414)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:829)
+[error] Caused by: sbt.ForkMain$ForkError: java.lang.IllegalArgumentException: requirement failed: CVFPU include directory is missing: /home/cloud_chen/work/flow-soc3c-0d4cb26/third_party/cvfpu/src/common_cells/include
+[error] 	at scala.Predef$.require(Predef.scala:337)
+[error] 	at flow.fpu.BreezeFpSources$.<clinit>(BreezeFp.scala:285)
+[error] 	at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[error] 	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$.do_apply(Module.scala:32)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[error] 	at flow.backend.BreezeBackend.$anonfun$fpUnit$2(BreezeBackend.scala:98)
+[error] 	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$.do_apply(Module.scala:32)
+[error] 	at flow.backend.BreezeBackend.$anonfun$fpUnit$1(BreezeBackend.scala:98)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at flow.backend.BreezeBackend.<init>(BreezeBackend.scala:98)
+[error] 	at flow.backend.BackendSoc3cSpec.$anonfun$check$1(BackendSoc3cSpec.scala:12)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.$anonfun$generateWorkspaceSources$1(package.scala:183)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$2(Elaborate.scala:60)
+[error] 	at chisel3.internal.Builder$.$anonfun$buildImpl$1(Builder.scala:1052)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.internal.Builder$.buildImpl(Builder.scala:1040)
+[error] 	at chisel3.internal.Builder$.$anonfun$build$1(Builder.scala:1032)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:136)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$1(Elaborate.scala:60)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:294)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:79)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:38)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:28)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$5(DependencyManager.scala:279)
+[error] 	at firrtl.Utils$.time(Utils.scala:54)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$3(DependencyManager.scala:279)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.DependencyManager.transform(DependencyManager.scala:269)
+[error] 	at firrtl.options.DependencyManager.transform$(DependencyManager.scala:255)
+[error] 	at firrtl.options.PhaseManager.transform(DependencyManager.scala:442)
+[error] 	at circt.stage.ChiselStage.run(ChiselStage.scala:47)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage.$anonfun$transform$3(Stage.scala:46)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.Stage.$anonfun$transform$2(Stage.scala:46)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:128)
+[error] 	at firrtl.options.Stage.transform(Stage.scala:46)
+[error] 	at firrtl.options.Stage.execute(Stage.scala:57)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.generateWorkspaceSources(package.scala:195)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.elaborateGeneratedModule(package.scala:136)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw(SimulatorAPI.scala:56)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw$(SimulatorAPI.scala:34)
+[error] 	at flow.backend.BackendSoc3cSpec.simulateRaw(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate(SimulatorAPI.scala:101)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate$(SimulatorAPI.scala:81)
+[error] 	at flow.backend.BackendSoc3cSpec.simulate(BackendSoc3cSpec.scala:9)
+[error] 	at flow.backend.BackendSoc3cSpec.check(BackendSoc3cSpec.scala:12)
+[error] 	at flow.backend.BackendSoc3cSpec.$anonfun$new$1(BackendSoc3cSpec.scala:15)
+[error] 	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf(OutcomeOf.scala:85)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf$(OutcomeOf.scala:83)
+[error] 	at org.scalatest.OutcomeOf$.outcomeOf(OutcomeOf.scala:104)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:22)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:20)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike$$anon$1.apply(AnyFreeSpecLike.scala:437)
+[error] 	at org.scalatest.TestSuite.withFixture(TestSuite.scala:196)
+[error] 	at org.scalatest.TestSuite.withFixture$(TestSuite.scala:195)
+[error] 	at flow.backend.BackendSoc3cSpec.chisel3$testing$scalatest$HasConfigMap$$super$withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.$anonfun$withFixture$1(HasConfigMap.scala:37)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture(HasConfigMap.scala:37)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture$(HasConfigMap.scala:35)
+[error] 	at flow.backend.BackendSoc3cSpec.chisel3$testing$scalatest$TestingDirectory$$super$withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.$anonfun$withFixture$1(WithTestingDirectory.scala:47)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture(WithTestingDirectory.scala:47)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture$(WithTestingDirectory.scala:45)
+[error] 	at flow.backend.BackendSoc3cSpec.withFixture(BackendSoc3cSpec.scala:9)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.invokeWithFixture$1(AnyFreeSpecLike.scala:435)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTest$1(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.SuperEngine.runTestImpl(Engine.scala:306)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest$(AnyFreeSpecLike.scala:429)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTest(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTests$1(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.SuperEngine.$anonfun$runTestsInBranch$1(Engine.scala:413)
+[error] 	at scala.collection.immutable.List.foreach(List.scala:334)
+[error] 	at org.scalatest.SuperEngine.traverseSubNodes$1(Engine.scala:401)
+[error] 	at org.scalatest.SuperEngine.runTestsInBranch(Engine.scala:396)
+[error] 	at org.scalatest.SuperEngine.runTestsImpl(Engine.scala:475)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests$(AnyFreeSpecLike.scala:505)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTests(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.Suite.run(Suite.scala:1114)
+[error] 	at org.scalatest.Suite.run$(Suite.scala:1096)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.org$scalatest$freespec$AnyFreeSpecLike$$super$run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$run$1(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.SuperEngine.runImpl(Engine.scala:535)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run$(AnyFreeSpecLike.scala:549)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.tools.Framework.org$scalatest$tools$Framework$$runSuite(Framework.scala:321)
+[error] 	at org.scalatest.tools.Framework$ScalaTestTask.execute(Framework.scala:517)
+[error] 	at sbt.ForkMain$Run.lambda$runTest$1(ForkMain.java:414)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:829)
+[info] BreezeFrontendSoc3cSpec:
+[info] - C2c two skid slots retain corrected fetches during ID hold and discard both kill edges
+[info] - C2b FENCEI discards an outstanding old refill at offset 0 around delayed flush
+[info] - C2b FENCEI discards an outstanding old refill at offset 1 around delayed flush
+[info] - C2b FENCEI discards an outstanding old refill at offset 3 around delayed flush
+[info] - C2b SFENCE discards a gap translation response and fetches with fresh translation
+[info] - C2 slow redirect overrides a fast redirect at its next-cycle application
+[info] FpUnitSpec:
+[info] flow.fpu.FpUnitSpec *** ABORTED ***
+[info]   java.lang.NoClassDefFoundError: Could not initialize class flow.fpu.BreezeFpSources$
+[info]   at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[info]   at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[info]   at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[info]   at chisel3.Module$.do_apply(Module.scala:32)
+[info]   at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[info]   at chisel3.package$.withName(package.scala:493)
+[info]   at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[info]   at flow.fpu.FpProbe.<init>(FpUnitSpec.scala:7)
+[info]   at flow.fpu.FpUnitSpec.$anonfun$new$5(FpUnitSpec.scala:55)
+[info]   ...
+[error] Uncaught exception when running flow.fpu.FpUnitSpec: java.lang.NoClassDefFoundError: Could not initialize class flow.fpu.BreezeFpSources$
+[error] sbt.ForkMain$ForkError: java.lang.NoClassDefFoundError: Could not initialize class flow.fpu.BreezeFpSources$
+[error] 	at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:43)
+[error] 	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+[error] 	at chisel3.Module$.do_apply(Module.scala:32)
+[error] 	at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:43)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at flow.fpu.FpUnit.<init>(FpUnit.scala:43)
+[error] 	at flow.fpu.FpProbe.<init>(FpUnitSpec.scala:7)
+[error] 	at flow.fpu.FpUnitSpec.$anonfun$new$5(FpUnitSpec.scala:55)
+[error] 	at chisel3.package$.withName(package.scala:493)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.$anonfun$generateWorkspaceSources$1(package.scala:183)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$2(Elaborate.scala:60)
+[error] 	at chisel3.internal.Builder$.$anonfun$buildImpl$1(Builder.scala:1052)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.internal.Builder$.buildImpl(Builder.scala:1040)
+[error] 	at chisel3.internal.Builder$.$anonfun$build$1(Builder.scala:1032)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:136)
+[error] 	at chisel3.stage.phases.Elaborate.$anonfun$transform$1(Elaborate.scala:60)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:294)
+[error] 	at scala.collection.immutable.List.flatMap(List.scala:79)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:38)
+[error] 	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:28)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$5(DependencyManager.scala:279)
+[error] 	at firrtl.Utils$.time(Utils.scala:54)
+[error] 	at firrtl.options.DependencyManager.$anonfun$transform$3(DependencyManager.scala:279)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.DependencyManager.transform(DependencyManager.scala:269)
+[error] 	at firrtl.options.DependencyManager.transform$(DependencyManager.scala:255)
+[error] 	at firrtl.options.PhaseManager.transform(DependencyManager.scala:442)
+[error] 	at circt.stage.ChiselStage.run(ChiselStage.scala:47)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+[error] 	at firrtl.options.Stage.$anonfun$transform$3(Stage.scala:46)
+[error] 	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+[error] 	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+[error] 	at scala.collection.immutable.List.foldLeft(List.scala:79)
+[error] 	at firrtl.options.Stage.$anonfun$transform$2(Stage.scala:46)
+[error] 	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at logger.Logger$.makeScope(Logger.scala:149)
+[error] 	at logger.Logger$.makeScope(Logger.scala:128)
+[error] 	at firrtl.options.Stage.transform(Stage.scala:46)
+[error] 	at firrtl.options.Stage.execute(Stage.scala:57)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.generateWorkspaceSources(package.scala:195)
+[error] 	at chisel3.simulator.package$ChiselWorkspace.elaborateGeneratedModule(package.scala:136)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw(SimulatorAPI.scala:56)
+[error] 	at chisel3.simulator.SimulatorAPI.simulateRaw$(SimulatorAPI.scala:34)
+[error] 	at flow.fpu.FpUnitSpec.simulateRaw(FpUnitSpec.scala:19)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate(SimulatorAPI.scala:101)
+[error] 	at chisel3.simulator.SimulatorAPI.simulate$(SimulatorAPI.scala:81)
+[error] 	at flow.fpu.FpUnitSpec.simulate(FpUnitSpec.scala:19)
+[error] 	at flow.fpu.FpUnitSpec.$anonfun$new$4(FpUnitSpec.scala:55)
+[error] 	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf(OutcomeOf.scala:85)
+[error] 	at org.scalatest.OutcomeOf.outcomeOf$(OutcomeOf.scala:83)
+[error] 	at org.scalatest.OutcomeOf$.outcomeOf(OutcomeOf.scala:104)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:22)
+[error] 	at org.scalatest.Transformer.apply(Transformer.scala:20)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike$$anon$1.apply(AnyFreeSpecLike.scala:437)
+[error] 	at org.scalatest.TestSuite.withFixture(TestSuite.scala:196)
+[error] 	at org.scalatest.TestSuite.withFixture$(TestSuite.scala:195)
+[error] 	at flow.fpu.FpUnitSpec.chisel3$testing$scalatest$HasConfigMap$$super$withFixture(FpUnitSpec.scala:19)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.$anonfun$withFixture$1(HasConfigMap.scala:37)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture(HasConfigMap.scala:37)
+[error] 	at chisel3.testing.scalatest.HasConfigMap.withFixture$(HasConfigMap.scala:35)
+[error] 	at flow.fpu.FpUnitSpec.chisel3$testing$scalatest$TestingDirectory$$super$withFixture(FpUnitSpec.scala:19)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.$anonfun$withFixture$1(WithTestingDirectory.scala:47)
+[error] 	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture(WithTestingDirectory.scala:47)
+[error] 	at chisel3.testing.scalatest.TestingDirectory.withFixture$(WithTestingDirectory.scala:45)
+[error] 	at flow.fpu.FpUnitSpec.withFixture(FpUnitSpec.scala:19)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.invokeWithFixture$1(AnyFreeSpecLike.scala:435)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTest$1(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.SuperEngine.runTestImpl(Engine.scala:306)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest(AnyFreeSpecLike.scala:447)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTest$(AnyFreeSpecLike.scala:429)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTest(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$runTests$1(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.SuperEngine.$anonfun$runTestsInBranch$1(Engine.scala:413)
+[error] 	at scala.collection.immutable.List.foreach(List.scala:334)
+[error] 	at org.scalatest.SuperEngine.traverseSubNodes$1(Engine.scala:401)
+[error] 	at org.scalatest.SuperEngine.runTestsInBranch(Engine.scala:396)
+[error] 	at org.scalatest.SuperEngine.runTestsImpl(Engine.scala:475)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests(AnyFreeSpecLike.scala:506)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.runTests$(AnyFreeSpecLike.scala:505)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.runTests(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.Suite.run(Suite.scala:1114)
+[error] 	at org.scalatest.Suite.run$(Suite.scala:1096)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.org$scalatest$freespec$AnyFreeSpecLike$$super$run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.$anonfun$run$1(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.SuperEngine.runImpl(Engine.scala:535)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run(AnyFreeSpecLike.scala:550)
+[error] 	at org.scalatest.freespec.AnyFreeSpecLike.run$(AnyFreeSpecLike.scala:549)
+[error] 	at org.scalatest.freespec.AnyFreeSpec.run(AnyFreeSpec.scala:1740)
+[error] 	at org.scalatest.tools.Framework.org$scalatest$tools$Framework$$runSuite(Framework.scala:321)
+[error] 	at org.scalatest.tools.Framework$ScalaTestTask.execute(Framework.scala:517)
+[error] 	at sbt.ForkMain$Run.lambda$runTest$1(ForkMain.java:414)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:829)
+[info] HpmSpec:
+[info] - S16_HPM13_bank_count_write_priority_and_selector_bound
+[info] BreezeCsrPipelineSpec:
+[info] - pipelined HPM matches an occurrence-time one-cycle-delayed model at every CSR-visible cycle
+[info] - parallel CSR banks select distinct full-width values and preserve read-modify-write
+[info] L1DCacheSpec:
+[info] - load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW
+[info] - store hits on E merge bytes in place and an Inv probe returns the dirty line
+[info] - store miss sends GetM, replays through the pending store, and later loads see it
+[info] - store to a shared line upgrades with GetM and AckE and keeps the rest of the line
+[info] - a store racing an earlier sharer Inv reacquires the line before later dirty eviction
+[info] - victims fill invalid ways first, only dirty victims carry data, and evicted data returns
+[info] - a hit completes under a miss, and back-to-back store/load pairs see program order
+[info] - a second miss waits for the single MSHR and a same-line access waits for the refill
+[info] - a shared store waiting for the MSHR lets a probe pass a younger same-set store
+[info] - a FENCE waiting for an older miss lets SnpOp(0=Inv) pass its held younger store
+[info] - a FENCE waiting for an older miss lets SnpOp(1=Down) pass its held younger store
+[info] - killed stores never write, and a load miss killed at WB sends no GetS
+[info] - Inv and Down answer with data only from M and leave the right local state
+[info] - a probe that arrives with the grant waits for the replay and answers with its result
+[info] - a sharer Inv during an upgrade drops S at once and the later DataE carries another core's write
+[info] - a refill error is reported on late data or drops the store, and leaves the line invalid
+[info] - device accesses use blocking AXI-Lite with formatted data, byte strobes and error responses
+[info] - misaligned, unmapped, read-only and page-faulting accesses raise the right cause without traffic
+[info] - TLB misses and a busy dTLB delay requests, which still complete in program order
+[info] - PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU
+[info] - FENCE completes only after an outstanding store miss has drained
+[info] - LR gets exclusive permission, SC succeeds once and a failed SC never misses
+[info] - LR upgrades S with GetM and AckE before creating its reservation
+[info] - a pending probe permits SC within the LR window and sees the successful write
+[info] - probe timeout, trap and eviction clear reservations, but timer expiry alone does not
+[info] - all nine AMOs return the old operand and preserve the other word half
+[info] - AMO cold misses, shared upgrades and grant probes use GetM and protected RMW
+[info] - atomic permissions and refill errors trap before writes or failed-SC status
+[info] - an AMO upgrade waiting for GetM lets the required sharer Inv finish first
+[info] - atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge
+[info] - aq blocks younger requests and rl or AMO admission waits for older misses to drain
+[info] - atomic random traffic with probes and backpressure matches golden memory with seed 73
+[info] - atomic random traffic with probes and backpressure matches golden memory with seed 74
+[info] - atomic random traffic with probes and backpressure matches golden memory with seed 75
+[info] - random traffic with backpressure, probes and TLB misses matches the golden memory with seed 11
+[info] - random traffic with backpressure, probes and TLB misses matches the golden memory with seed 12
+[info] - random traffic with backpressure, probes and TLB misses matches the golden memory with seed 13
+[info] - non-default geometry smoke: random traffic on a two-way L1D
+[info] - non-default geometry smoke: random traffic on the two-set direct-mapped stress L1D
+[info] L1DPermissionsSpec:
+[info] - 64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM
+[info] - WB fault cancellation and reservation clearing cannot combinationally suppress their fault
+[info] - MPRV selects MPP for PMP instead of bypassing protection as M-mode
+[info] - ROM LR, SC and AMO use atomic PMA and the appropriate fault class
+[info] - 56-bit PTW address above 4 GiB and a device PTE read return accessFault without memory traffic
+[info] L1DContextSpec:
+[info] - 64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM
+[info] - WB fault cancellation and reservation clearing cannot combinationally suppress their fault
+[info] - MPRV selects MPP for PMP instead of bypassing protection as M-mode
+[info] - ROM LR, SC and AMO use atomic PMA and the appropriate fault class
+[info] - 56-bit PTW address above 4 GiB and a device PTE read return accessFault without memory traffic
+[info] - SOC3: CSRW pmpcfg0/pmpaddr0/MPRV/MPP immediately followed by load/store/AMO, both directions
+[info] - SOC3 C1-B: CPU S1 capture at the CSR update edge rechecks before any side effect
+[info] - SOC3: a multi-cycle S2 Hold invalidates permission snapshots on both context transitions
+[info] - SOC3: PTW denial and a permission-context change with a PTW item in S2 retain one response
+[info] WritebackSpec:
+[info] - T12_component_T13_component_S06: fixed priority, four consecutive writes, WB priority without pipeline hold
+[info] - S01_S06_S08: f0 late occupies FPR port, independent GPR write and fatal error
+[info] - SOC3b_lateReg_backpressure_and_same_edge_replace_use_old_payload
+[info] BreezePrivilegeSpec:
+[info] - SOC3 C1-B: permission events coincide with new CSR and privilege state for exactly one cycle
+[info] - keep the MCU profile machine-only and reject supervisor CSRs
+[info] - reject every unimplemented MCU CSR instead of silently reading zero
+[info] - check OpenSBI extension probes and reject every unimplemented Linux CSR
+[info] - enter S and U with MRET/SRET and route delegated exceptions to S
+[info] - preserve a high Sv39 user address across sepc and SRET
+[info] - take a delegated supervisor software interrupt with vectored stvec
+[info] - wake WFI from a locally enabled interrupt independently of global MIE
+[info] - enforce TSR TW TVM and keep simulation CSRs machine-only
+[info] - decode WFI and SFENCE.VMA as privilege-checked system operations
+[info] - decode EBREAK as a breakpoint exception instead of an illegal instruction
+[info] - expose eight writable PMP entries and eight read-zero slots to firmware probes
+[info] - implement PMP CSRs and Sstc time/stimecmp pending state
+[info] - trap entry dominates a simultaneous return request
+[info] - forward the OpenSBI software timer interrupt and clear it on rearming
+[info] - preserve hidden interrupt bits and prioritize M destinations over S
+[info] - exclude the external SEIP wire from CSRRS and CSRRC writeback
+[info] - allow M stimecmp access and require both STCE and TM for S
+[info] - preserve satp on unsupported modes and clear MPRV on SRET
+[info] - delegate user breakpoints to the supervisor handler
+[info] Run completed in 9 minutes, 58 seconds.
+[info] Total number of tests run: 85
+[info] Suites: completed 8, aborted 2
+[info] Tests: succeeded 85, failed 0, canceled 0, ignored 0, pending 0
+[info] *** 2 SUITES ABORTED ***
+[error] Error during tests:
+[error] 	flow.fpu.FpUnitSpec
+[error] 	flow.backend.BackendSoc3cSpec
+[error] (Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 602 s (10:02), completed Oct 8, 2026, 7:21:00 PM

@@ -1,0 +1,15 @@
+Read-only verification after tests, cloud_chen@47.96.71.231:
+host iZbp16rhtg91v96m32vggjZ
+Java 11.0.32.1
+Verilator 5.028
+CIRCT firtool 1.128.0, cached executable /home/cloud_chen/.cache/llvm-firtool/1.128.0/bin/firtool
+sbt 1.9.7 (see run.log; installed launcher 1.11.2)
+Disk /home/cloud_chen/work: 42G available
+Memory: 29Gi available, no swap
+Source SHA 2dea0b7689d270a14cd59cfff4a99cc66fa98ec2
+CVFPU gitlink 1b220f3bc89df99e246b72e3574a3a533cf87653
+common_cells gitlink 6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea
+fpu_div_sqrt_mvp gitlink 86e1f558b3c95e91577c41b2fc452c86b04e85ac
+Submodules checked out using local URL overrides in the setup command;
+git submodule status may display '-' because those overrides were command-local.
+tb/flexfloat remains uninitialized; absent from the ChiselSim CVFPU source manifest.
