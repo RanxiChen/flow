@@ -130,3 +130,25 @@ HPM3+ 的原始事件向量先寄存一拍再进选择与计数；`mcycle`/`mins
 6. 时序达标后，worst-20 分组和结构查询只需保存原始报告，不必在出镜像前写完分析。
 
 bitstream 出来后在报告里写明路径、SHA、routed WNS/WHS，立即告知用户。
+
+## 8. 补充裁定（2026-10-08，回应报告 §1 训练测试停止）
+
+两条失败是 D3 已批准语义的**预期结果**，不是 RTL 逻辑错误：S09 原期望 BTB=8 编码的正是 D3 删除的消费拍 `!downHold` 门控；S13 原期望 BTB 为空编码的正是 D3 明文接受的「推进到 MEM 后被更老 WB 陷入杀掉仍训练」。授权同步，之后同类训练消费拍差异不再停止。
+
+- `S09_BTB_training_waits_for_held_WB_once`（可改名为 `S09_training_decided_outside_held_WB_once`）：
+  - BTB、PHT、GHR 各恰好一次，且三者消费拍相同（同一寄存训练包，期望拍 3）；训练内容（BTB target、PHT idx/taken、GHR taken）照常检查。
+  - `m.all("btb").intersect(m.all("hold")) mustBe empty` 改为**决策拍**检查：`m.all("btb").map(_-1).intersect(m.all("hold")) mustBe empty`（PHT/GHR 同理）。RTL 中 `train` 与 held WB 互斥的断言保留不动。
+- `S13_WB_fault_discards_younger_pending_BTB_training`（改名为 `S13_training_decided_before_older_WB_fault_still_consumed`）：
+  - BTB/PHT/GHR 各恰好一次于拍 3；`redirect.last mustBe 8`、`gprBusy=0` 保留；补充：分支不退休、x0 以外无该分支的架构写回。
+  - 另加一条反向用例：WB kill **与 EX 推进同拍**时不产生训练（覆盖决策拍 `!wbKill`）。
+- 两条在报告中按 §4 HPM 表格式逐条列出旧→新及推导。
+
+继续执行：补跑 BackendSoc3cSpec（D1）、FpUnitSpec（D2）——上次是依赖缺失 abort；`RegFileCsrFileSpec` 改为实际 suite `flow.core.CSRFileSpec`；然后按 §4/§7 剩余门槛推进到 Alan 并行 OOC + SoC tiny。
+
+## 9. 用户执行范围更新（2026-10-08）
+
+目标扩展为单核与四核在 KCU105 上达到 100 MHz、生成 bitstream 并推进上板。允许根据实际板载资源缩减容量/深度等设计参数；需要分别记录配置、功能证据和 routed setup/hold 时序，不能用单核结果代替四核结果。
+
+已定微架构不变。因规格或测试没有同步既定裁定而产生的冲突，codex 可自行同步并记录独立推导与旧→新检查；不再因同类文档滞后重复请求授权。真实功能失败仍须定位根因，不能削弱 golden、断言或覆盖。涉及改变已定微架构的冲突仍需报告具体决策。100 MHz 不降频，不添加时序例外以掩盖失败。
+
+本节覆盖早期仅 tiny、推迟四核以及“不烧板”的范围限制；其它冻结行为与验证证据要求保持。

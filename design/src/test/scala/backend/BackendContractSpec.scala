@@ -465,19 +465,46 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     }
   }
 
-  "S09_BTB_training_waits_for_held_WB_once" in { check() { m =>
+  "S09_training_decided_outside_held_WB_once" in { check() { m =>
     m.holdUntil=8
-    m.issue(ld(1,0)); m.issue(BigInt(0x463)) // beq x0,x0,+8
+    m.predictionIndex=5
+    m.issue(ld(1,0)); val branch=m.issue(BigInt(0x463)) // beq x0,x0,+8
     for(_ <- 0 until 12) m.step()
-    m.all("btb") mustBe Seq(8); m.all("pht") mustBe Seq(2); m.all("ghr") mustBe Seq(2)
-    m.all("btb").intersect(m.all("hold")) mustBe empty
+    m.all("btb") mustBe Seq(3); m.all("pht") mustBe Seq(3); m.all("ghr") mustBe Seq(3)
+    for(kind <- Seq("btb", "pht", "ghr")) {
+      m.all(kind).map(_-1).intersect(m.all("hold")) mustBe empty
+    }
+    m.events.find(_.kind=="btb").get.data mustBe branch+8
+    m.events.find(_.kind=="pht").get.rd mustBe 5
+    m.events.find(_.kind=="pht").get.data mustBe 1
+    m.events.find(_.kind=="ghr").get.data mustBe 1
   }}
-  "S13_WB_fault_discards_younger_pending_BTB_training" in { check() { m =>
+  "S13_training_decided_before_older_WB_fault_still_consumed" in { check() { m =>
     m.holdUntil=8; m.faults += BigInt(0)
-    m.issue(ld(1,0)); m.issue(BigInt(0x463))
+    m.issue(ld(1,0)); val branch=m.issue(BigInt(0x463))
     for(_ <- 0 until 12) m.step()
-    m.all("btb") mustBe empty
+    m.all("btb") mustBe Seq(3); m.all("pht") mustBe Seq(3); m.all("ghr") mustBe Seq(3)
     m.all("redirect").last mustBe 8
+    m.events.filter(e => e.kind=="commit" && e.pc==branch) mustBe empty
+    m.events.filter(e => e.kind=="gpr" && e.rd!=0) mustBe empty
+    m.d.io.observe.gprBusy.expect(0.U)
+  }}
+
+  "S13_WB_kill_at_EX_release_produces_no_training" in { check() { m =>
+    m.holdUntil=8; m.faults += BigInt(0)
+    m.issue(ld(1,0)); m.issue(nop); val branch=m.issue(BigInt(0x463))
+    while(m.cycle<8) m.step()
+    // The branch is still in EX when the older WB fault releases S2.
+    // This is the potential decision edge: kill must suppress its advance.
+    m.d.io.debug.get.idExeValid.expect(true.B)
+    m.d.io.debug.get.idExePc.expect(branch.U)
+    m.step()
+    for(_ <- 0 until 12) m.step()
+    m.all("redirect").last mustBe 8
+    m.all("ex").filter(_>=8) mustBe empty
+    for(kind <- Seq("btb", "pht", "ghr")) m.all(kind) mustBe empty
+    m.events.filter(e => e.kind=="commit" && e.pc==branch) mustBe empty
+    m.events.filter(e => e.kind=="gpr" && e.rd!=0) mustBe empty
     m.d.io.observe.gprBusy.expect(0.U)
   }}
 
