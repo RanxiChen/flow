@@ -709,8 +709,15 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   when(lrCompletes) { assert(hit && writable, "LR reservation without exclusive ownership") }
   when(atomicReplayResp) { assert(cpu2.valid, "atomic replay without held CPU owner") }
   when(internal2.valid) {
-    assert(!undecided || (outcome === L1S2Outcome.ToAmo && psRoom),
+    // A context refresh already owns this slot; it is not a wait for miss
+    // capacity. Permit only that precise local Recheck, with no side effect.
+    val reservedRefresh = internalRefresh && outcome === L1S2Outcome.Recheck &&
+      internalHold && !internalAdvance && !allocates && !io.ptw.resp.valid
+    assert(!undecided || (outcome === L1S2Outcome.ToAmo && psRoom) || reservedRefresh,
       "internal result has no reserved completion capacity")
+    when(internalRefresh) {
+      assert(reservedRefresh, "permission refresh lost its slot or produced a side effect")
+    }
   }
   when(amoRmw) { assert(psCompletes, "AMO RMW protection exceeded two local beats") }
   when(cpu1.valid && !cpu1Advance) { assert(cpuHold, "CPU S1 held without s2Hold") }
