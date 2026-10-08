@@ -41,7 +41,7 @@ class MulUnit extends Module {
   val correctionA = Mux(a2(64), ~(b2(63, 0).pad(130) << 64)(129, 0), 0.U(130.W))
   val correctionB = Mux(b2(64), ~(a2(63, 0).pad(130) << 64)(129, 0), 0.U(130.W))
   val correctionCarry = a2(64).asUInt +& b2(64).asUInt
-  val correctionTop = (a2(64) && b2(64)).asUInt.pad(130) << 128
+  val correctionTop = Cat(0.U(1.W), a2(64) && b2(64), 0.U(128.W))
   val rows = tiles.map { case (tile, shift) => (tile.io.p.pad(130) << shift)(129, 0) } ++
     Seq(correctionA, correctionB, correctionCarry.pad(130), correctionTop(129, 0))
   // Carry-save compression: no serial chain of wide carry-propagating adds.
