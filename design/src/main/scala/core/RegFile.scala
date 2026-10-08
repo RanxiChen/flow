@@ -810,6 +810,18 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.mmu_context.adue := menvcfg(61)
     io.mmu_context.pmpcfg := visiblePmpCfg
     io.mmu_context.pmpaddr := visiblePmpAddr
+    // One event register, aligned with the newly committed CSR/privilege state.
+    // Conservatively invalidate even an unchanged or locked PMP write; no
+    // comparison of the wide PMP context is on the cache's S2 control path.
+    val permissionWrite = io.commit_valid && io.commit_write_en && !io.trap.valid &&
+        (io.commit_addr === CSRMAP.mstatus.U ||
+         io.commit_addr === CSRMAP.pmpcfg0.U || io.commit_addr === CSRMAP.pmpcfg2.U ||
+         (io.commit_addr >= CSRMAP.pmpaddr0.U &&
+          io.commit_addr < (CSRMAP.pmpaddr0 + BreezePmpConfig.CsrEntries).U))
+    val permissionUpdate = permissionWrite || io.trap.valid || io.mret_commit ||
+        (io.sret_commit && enableSupervisorUser.B) ||
+        (if (useFASE) io.faseEnter.get else false.B)
+    io.mmu_context.permissionEvent := RegNext(permissionUpdate, false.B)
     io.frm := frm
     io.fp_enabled := mstatus_FS =/= 0.U
     // M-targeted interrupts precede S-targeted interrupts. Within each

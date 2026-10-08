@@ -311,6 +311,9 @@ class BreezeMmuContext(val XLEN: Int = 64) extends Bundle {
     val adue = Bool()
     val pmpcfg = Vec(BreezePmpConfig.CsrEntries, UInt(8.W))
     val pmpaddr = Vec(BreezePmpConfig.CsrEntries, UInt(54.W))
+    // Registered by CSRFile at the same edge as the permission-state update.
+    // Consumers must not register this pulse again.
+    val permissionEvent = Bool()
 }
 
 class BreezeSfenceReq(val XLEN: Int = 64) extends Bundle {

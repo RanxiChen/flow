@@ -99,7 +99,6 @@ class L1S2(p: L1DParams) extends Bundle {
   val pmaAmoOk = Bool()
   val pmaRsrvOk = Bool()
   val highAddress = Bool()
-  val permissionStale = Bool()
   val valid = Bool()
   val req = new L1PipeReq(p)
   val paddr = UInt(p.paddrBits.W)

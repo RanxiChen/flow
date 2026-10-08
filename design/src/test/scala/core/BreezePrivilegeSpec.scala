@@ -81,6 +81,47 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.sret_commit.poke(false.B)
   }
 
+  "SOC3 C1-B: permission events coincide with new CSR and privilege state for exactly one cycle" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
+      reset(dut)
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      for (address <- Seq(CSRMAP.pmpcfg0, CSRMAP.pmpcfg2) ++
+           (0 until 16).map(CSRMAP.pmpaddr0 + _)) {
+        commit(dut, address, 0)
+        dut.io.mmu_context.permissionEvent.expect(true.B)
+        dut.clock.step()
+        dut.io.mmu_context.permissionEvent.expect(false.B)
+      }
+      commit(dut, CSRMAP.mscratch, 123)
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      commit(dut, CSRMAP.mstatus, (BigInt(1)<<17) | (BigInt(PRIV_MODE.S)<<11))
+      dut.io.mmu_context.permissionEvent.expect(true.B)
+      dut.io.mmu_context.mprv.expect(true.B)
+      dut.io.mmu_context.mpp.expect(PRIV_MODE.S.U)
+      dut.clock.step()
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      mret(dut)
+      dut.io.mmu_context.permissionEvent.expect(true.B)
+      dut.io.mmu_context.privilege.expect(PRIV_MODE.S.U)
+      dut.io.mmu_context.mprv.expect(false.B)
+      dut.clock.step()
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      sret(dut)
+      dut.io.mmu_context.permissionEvent.expect(true.B)
+      dut.io.mmu_context.privilege.expect(PRIV_MODE.U.U)
+      dut.clock.step()
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      dut.io.trap.valid.poke(true.B)
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+      dut.clock.step()
+      dut.io.trap.valid.poke(false.B)
+      dut.io.mmu_context.permissionEvent.expect(true.B)
+      dut.io.mmu_context.privilege.expect(PRIV_MODE.M.U)
+      dut.clock.step()
+      dut.io.mmu_context.permissionEvent.expect(false.B)
+    }
+  }
+
   "keep the MCU profile machine-only and reject supervisor CSRs" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Mcu)) { dut =>
       reset(dut)

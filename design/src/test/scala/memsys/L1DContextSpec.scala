@@ -104,6 +104,19 @@ class L1DContextSpec extends L1DPermissionsSpec {
       }
     }
   }
+  "SOC3 C1-B: CPU S1 capture at the CSR update edge rechecks before any side effect" in {
+    simulate(new L1DCsrContextHarness) { d =>
+      start(d)
+      csrw(d, CSRMAP.pmpaddr0, BigInt("1fffffff",16))
+      csrw(d, CSRMAP.pmpcfg0, 0x1f)
+      csrw(d, CSRMAP.mstatus, BigInt(1)<<17)
+      launch(d, L1DOp.Load)
+      // This edge both captures the old S1 permission bit into S2 and
+      // commits the denying CSR state. The registered event is visible now.
+      csrw(d, CSRMAP.pmpcfg0, 0x18)
+      decide(d, denied=true, store=false)
+    }
+  }
   "SOC3: a multi-cycle S2 Hold invalidates permission snapshots on both context transitions" in {
     simulate(new L1DCsrContextHarness) { d =>
       start(d)

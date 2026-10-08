@@ -42,15 +42,12 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val cpu2 = RegInit(0.U.asTypeOf(new L1S2(p)))
   val internal1 = RegInit(0.U.asTypeOf(new L1S1(p)))
   val internal2 = RegInit(0.U.asTypeOf(new L1S2(p)))
-  // CSR serialization covers backend CPU traffic, but the independent PTW
-  // lane can still contain a request. Detect all permission-relevant changes.
-  val permissionContext = Cat(io.core.csr.pmpcfg.asUInt, io.core.csr.pmpaddr.asUInt,
-    io.core.csr.privilege, io.core.csr.mprv, io.core.csr.mpp)
-  val previousPermissionContext = RegNext(permissionContext)
-  val contextChanged = !reset.asBool && permissionContext =/= previousPermissionContext
+  // CSRFile registers this one-bit event together with its new state. C1-B
+  // also covers a held CPU item or one captured at that same update edge.
+  val contextChanged = io.core.csr.permissionEvent
   val internalRefresh = internal2.valid && contextChanged &&
     (internal2.req.src === L1Src.Ptw || internal2.req.src === L1Src.Recheck)
-  val cpuPermissionStale = cpu2.permissionStale || contextChanged
+  val cpuPermissionStale = cpu2.needsRecheck || contextChanged
   val ps = RegInit(0.U.asTypeOf(new L1PendingStore(p)))
   val rsvValid = RegInit(false.B)
   val rsvLine = Reg(UInt(p.lineAddrBits.W))
@@ -255,7 +252,6 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     slot.pmaAmoOk := pma.amoOk
     slot.pmaRsrvOk := pma.rsrvOk
     slot.highAddress := (address >> p.paddrBits).orR
-    slot.permissionStale := false.B
   }
 
   when(cpu1Advance) {
@@ -273,7 +269,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     cpu2.accessFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.accessFault
     cpu2.translationMiss := !cpu1.req.hasPaddr && (!cpuTlbValid || cpuTlb.miss)
     cpu2.snapInvalid := cpu1.snapInvalid
-    cpu2.needsRecheck := false.B
+    cpu2.needsRecheck := contextChanged
     cpu2.tagVec := cpuTags
     cpu2.dataVec := cpuData
   }
@@ -300,7 +296,6 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     capturePermission(internal2, internal2.physicalAddress, internalPmpAllowed, internalPma)
   }
   when(cpu2.valid && contextChanged && !cpuAdvance) {
-    cpu2.permissionStale := true.B
     cpu2.needsRecheck := true.B
   }
   val recheckReturns = internal2.valid && internal2.req.src === L1Src.Recheck && internalAdvance
@@ -381,8 +376,11 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     !s2.pmpAllowed || atomicDenied || (ptw && s2.pmaDevice) ||
     (s2.pmaDevice && !ptw && s2.req.core.op =/= L1DOp.Load && s2.req.core.op =/= L1DOp.Store)
   val outcome = WireDefault(L1S2Outcome.None)
-  when(s2.valid && !internalRefresh) {
-    when(normalInternal || rechecking) { outcome := L1S2Outcome.Internal }
+  when(s2.valid) {
+    // Only this PTW/Recheck slot waits for its lane-local refresh. Other
+    // sources retain the original S2 decision tree and replay semantics.
+    when(internalRefresh) { outcome := L1S2Outcome.Recheck }
+      .elsewhen(normalInternal || rechecking) { outcome := L1S2Outcome.Internal }
       .elsewhen(replay) {
         // Replay has already passed all access checks before commitment.
         when(blockingAtomic && atomicWait && s2.req.replayError) { outcome := L1S2Outcome.Exc }

@@ -58,6 +58,7 @@ class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.core.csr.satp.poke(0.U); d.io.core.csr.privilege.poke(3.U)
     d.io.core.csr.mprv.poke(false.B); d.io.core.csr.mpp.poke(0.U)
     d.io.core.csr.sum.poke(false.B); d.io.core.csr.mxr.poke(false.B); d.io.core.csr.adue.poke(false.B)
+    d.io.core.csr.permissionEvent.poke(false.B)
     for(i <- 0 until 16) { d.io.core.csr.pmpcfg(i).poke(0.U); d.io.core.csr.pmpaddr(i).poke(0.U) }
     if(pmp) { d.io.core.csr.pmpcfg(0).poke(0x1f.U); d.io.core.csr.pmpaddr(0).poke(0x1fffffff.U) }
     d.io.ptw.req.valid.poke(false.B); d.io.ptw.req.bits.paddr.poke(0.U)
