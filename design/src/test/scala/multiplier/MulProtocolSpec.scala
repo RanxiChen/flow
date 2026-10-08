@@ -78,6 +78,34 @@ class MulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
     }
   }
+  "SOC3: corner values and ready deassertion at E+1/E+2/E+3 preserve exact completion" in {
+    simulate(new MulUnit) { d =>
+      val values = Seq(BigInt(0), BigInt(1), mask, (BigInt(1)<<63), (BigInt(1)<<63)-1)
+      def signed(x: BigInt): BigInt = if (x.testBit(63)) x-(BigInt(1)<<64) else x
+      for (op <- Seq(MUL_OP.MUL, MUL_OP.MULH, MUL_OP.MULHSU, MUL_OP.MULHU, MUL_OP.MULW);
+           au <- values; bu <- values; blockedAt <- 1 to 3) {
+        init(d); d.io.result.ready.poke(true.B)
+        val a = if (op == MUL_OP.MULHU) au else signed(au)
+        val b = if (op == MUL_OP.MULHU || op == MUL_OP.MULHSU) bu else signed(bu)
+        val full = a*b
+        val expected = (if (op == MUL_OP.MULW) {
+          val low = full & ((BigInt(1)<<32)-1)
+          if (low.testBit(31)) low-(BigInt(1)<<32) else low
+        } else if (op == MUL_OP.MUL) full else full>>64) & mask
+        send(d, 5, a, b, op)
+        for (stage <- 1 to 3) {
+          d.io.commit.poke((stage == 2).B)
+          if (stage == blockedAt) d.io.result.ready.poke(false.B)
+          d.io.result.valid.expect(false.B); d.clock.step()
+        }
+        d.io.commit.poke(false.B)
+        d.io.result.valid.expect(true.B); d.io.result.bits.data.expect(expected.U)
+        d.clock.step(3)
+        d.io.result.valid.expect(true.B); d.io.result.bits.data.expect(expected.U)
+        d.io.result.ready.poke(true.B); d.clock.step(); d.io.result.valid.expect(false.B)
+      }
+    }
+  }
   "T15: four-cycle latency and one accepted request per cycle with in-order commits" in {
     simulate(new MulUnit) { d =>
       init(d); d.io.result.ready.poke(true.B)
@@ -100,7 +128,7 @@ class MulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
 /** Align the unmodified three-cycle SignedMul65x65 reference with new P4. */
 class MulProductProbe extends MulUnit {
   val fullProduct = IO(Output(UInt(130.W)))
-  fullProduct := product(3).asUInt
+  fullProduct := product.asUInt
 }
 
 class MulEquivalenceHarness extends Module {

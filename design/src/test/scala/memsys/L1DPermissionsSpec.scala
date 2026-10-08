@@ -45,7 +45,7 @@ class L1DPermissionHarness(killOnFault: Boolean = false) extends Module {
 }
 
 class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
-  private def init(d: L1DPermissionHarness, pmp: Boolean = true): Unit = {
+  protected def init(d: L1DPermissionHarness, pmp: Boolean = true): Unit = {
     d.io.core.req.valid.poke(false.B)
     d.io.core.req.bits.op.poke(L1DOp.Load); d.io.core.req.bits.vaddr.poke(0.U)
     d.io.core.req.bits.size.poke(3.U); d.io.core.req.bits.signed.poke(false.B)
@@ -63,7 +63,7 @@ class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.ptw.req.valid.poke(false.B); d.io.ptw.req.bits.paddr.poke(0.U)
     d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B); d.clock.step(132)
   }
-  private def fault(d: L1DPermissionHarness, addr: BigInt, op: L1DOp.Type, cause: Int): Unit = {
+  protected def fault(d: L1DPermissionHarness, addr: BigInt, op: L1DOp.Type, cause: Int): Unit = {
     d.io.core.req.bits.vaddr.poke(addr.U); d.io.core.req.bits.op.poke(op)
     d.io.core.req.valid.poke(true.B); d.io.core.req.ready.expect(true.B); d.clock.step()
     d.io.core.req.valid.poke(false.B)

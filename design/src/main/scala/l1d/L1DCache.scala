@@ -37,13 +37,20 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val miss = Module(new L1DMiss(p))
   val probe = Module(new L1DProbe(p))
   val mmio = Module(new L1DMmio(p))
-  val pma = Module(new flow.platform.PMAChecker)
-  val pmp = Module(new flow.mmu.BreezePmpChecker(64))
 
   val cpu1 = RegInit(0.U.asTypeOf(new L1S1(p)))
   val cpu2 = RegInit(0.U.asTypeOf(new L1S2(p)))
   val internal1 = RegInit(0.U.asTypeOf(new L1S1(p)))
   val internal2 = RegInit(0.U.asTypeOf(new L1S2(p)))
+  // CSR serialization covers backend CPU traffic, but the independent PTW
+  // lane can still contain a request. Detect all permission-relevant changes.
+  val permissionContext = Cat(io.core.csr.pmpcfg.asUInt, io.core.csr.pmpaddr.asUInt,
+    io.core.csr.privilege, io.core.csr.mprv, io.core.csr.mpp)
+  val previousPermissionContext = RegNext(permissionContext)
+  val contextChanged = !reset.asBool && permissionContext =/= previousPermissionContext
+  val internalRefresh = internal2.valid && contextChanged &&
+    (internal2.req.src === L1Src.Ptw || internal2.req.src === L1Src.Recheck)
+  val cpuPermissionStale = cpu2.permissionStale || contextChanged
   val ps = RegInit(0.U.asTypeOf(new L1PendingStore(p)))
   val rsvValid = RegInit(false.B)
   val rsvLine = Reg(UInt(p.lineAddrBits.W))
@@ -73,7 +80,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // lane. CPU S1 retains Y, including a dropped TLB response after X misses.
   // Neither X nor Y reserves an MSHR or a way before translation completes.
   val cpuRetry = cpu2.valid && cpu2.req.core.op =/= L1DOp.Fence &&
-    (cpu2.translationMiss || cpu2.snapInvalid || cpu2.needsRecheck)
+    (cpu2.translationMiss || cpu2.snapInvalid || cpu2.needsRecheck || cpuPermissionStale)
   val resourcesClear = !miss.io.status.mshrValid && !miss.io.status.wbValid
   val retryReady = cpuRetry && !atomicWait && !amoRmw && !recheckIssued && resourcesClear && !probe.io.pending.valid && !cpuKill
 
@@ -217,6 +224,40 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val internalTlb = Mux(internalFresh, io.tlb.resp.bits, internalTlbHeld)
   val internalTlbValid = Mux(internalFresh, io.tlb.resp.valid, internalTlbValidHeld)
 
+  val cpuPhysical = Mux(cpu1.req.hasPaddr, cpu1.req.physicalAddress, cpuTlb.paddr)
+  val internalPhysical = Mux(internal1.req.hasPaddr, internal1.req.physicalAddress, internalTlb.paddr)
+  // Each lane has its own checker, before its S1->S2 register boundary.
+  // A changed-context internal item retains its slot for one refresh edge;
+  // this lane's checker is reused, without selecting between CPU/internal S2.
+  def permissionCheck(address: UInt, req: L1PipeReq): (Bool, flow.platform.PMAResult) = {
+    val isPtw = req.src === L1Src.Ptw || (req.src === L1Src.Replay && req.replayPtw)
+    val isWrite = !isPtw && storeLike(req.core.op)
+    val pma = Module(new flow.platform.PMAChecker)
+    val pmp = Module(new flow.mmu.BreezePmpChecker(64))
+    pma.io.query.addr := address
+    pma.io.query.sizeLog2 := Mux(isPtw, 3.U, req.core.size)
+    pma.io.query.accessType := Mux(isWrite, flow.platform.PMAAccessType.Store, flow.platform.PMAAccessType.Load)
+    pmp.io.addr := address
+    pmp.io.sizeLog2 := Mux(isPtw, 3.U, req.core.size)
+    pmp.io.access := Mux(isWrite, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
+    pmp.io.privilege := Mux(isPtw, 1.U, Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
+    pmp.io.context := io.core.csr
+    (pmp.io.allowed, pma.io.result)
+  }
+  val (cpuPmpAllowed, cpuPma) = permissionCheck(cpuPhysical, cpu1.req)
+  val internalCheckAddress = Mux(internalRefresh, internal2.physicalAddress, internalPhysical)
+  val internalCheckReq = Mux(internalRefresh, internal2.req, internal1.req)
+  val (internalPmpAllowed, internalPma) = permissionCheck(internalCheckAddress, internalCheckReq)
+  def capturePermission(slot: L1S2, address: UInt, allowed: Bool, pma: flow.platform.PMAResult): Unit = {
+    slot.pmpAllowed := allowed
+    slot.pmaAllowed := pma.allowed
+    slot.pmaDevice := pma.device
+    slot.pmaAmoOk := pma.amoOk
+    slot.pmaRsrvOk := pma.rsrvOk
+    slot.highAddress := (address >> p.paddrBits).orR
+    slot.permissionStale := false.B
+  }
+
   when(cpu1Advance) {
     cpu1.valid := cpuFire
     cpu1.req := s0Req
@@ -225,7 +266,8 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   when(cpuAdvance) {
     cpu2.valid := cpu1.valid && !cpuKill
     cpu2.req := cpu1.req
-    cpu2.physicalAddress := Mux(cpu1.req.hasPaddr, cpu1.req.physicalAddress, cpuTlb.paddr)
+    cpu2.physicalAddress := cpuPhysical
+    capturePermission(cpu2, cpuPhysical, cpuPmpAllowed, cpuPma)
     cpu2.paddr := Mux(cpu1.req.hasPaddr, cpu1.req.paddr, cpuTlb.paddr(p.paddrBits - 1, 0))
     cpu2.pageFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.pageFault
     cpu2.accessFault := !cpu1.req.hasPaddr && cpuTlbValid && cpuTlb.accessFault
@@ -243,7 +285,8 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   when(internalAdvance) {
     internal2.valid := internal1.valid
     internal2.req := internal1.req
-    internal2.physicalAddress := Mux(internal1.req.hasPaddr, internal1.req.physicalAddress, internalTlb.paddr)
+    internal2.physicalAddress := internalPhysical
+    capturePermission(internal2, internalPhysical, internalPmpAllowed, internalPma)
     internal2.paddr := Mux(internal1.req.hasPaddr, internal1.req.paddr, internalTlb.paddr(p.paddrBits - 1, 0))
     internal2.pageFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.pageFault
     internal2.accessFault := !internal1.req.hasPaddr && internalTlbValid && internalTlb.accessFault
@@ -252,6 +295,13 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     internal2.needsRecheck := false.B
     internal2.tagVec := internalTags
     internal2.dataVec := internalData
+  }
+  when(internalRefresh) {
+    capturePermission(internal2, internal2.physicalAddress, internalPmpAllowed, internalPma)
+  }
+  when(cpu2.valid && contextChanged && !cpuAdvance) {
+    cpu2.permissionStale := true.B
+    cpu2.needsRecheck := true.B
   }
   val recheckReturns = internal2.valid && internal2.req.src === L1Src.Recheck && internalAdvance
   when(recheckReturns && cpu2.valid && !io.core.s2Kill) {
@@ -322,24 +372,16 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     (!victimValid || !miss.io.status.wbValid)
   val ptwCanAllocate = miss.io.status.canAllocate && !tagBusy && (!victimValid || !miss.io.status.wbValid)
 
-  pma.io.query.addr := s2.physicalAddress
-  pma.io.query.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
-  pma.io.query.accessType := Mux(isStore, flow.platform.PMAAccessType.Store, flow.platform.PMAAccessType.Load)
-  pmp.io.addr := s2.physicalAddress
-  pmp.io.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
-  pmp.io.access := Mux(isStore, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
-  pmp.io.privilege := Mux(ptw, 1.U, Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
-  pmp.io.context := io.core.csr
-  val atomicDenied = !ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !pma.io.result.rsrvOk ||
-    s2.req.core.op === L1DOp.AMO && !pma.io.result.amoOk)
-  val highAddress = (s2.physicalAddress >> p.paddrBits).orR
+  val atomicDenied = !ptw && ((s2.req.core.op === L1DOp.LR || s2.req.core.op === L1DOp.SC) && !s2.pmaRsrvOk ||
+    s2.req.core.op === L1DOp.AMO && !s2.pmaAmoOk)
+  val highAddress = s2.highAddress
   val alignmentMask = (1.U(9.W) << Mux(ptw, 3.U, s2.req.core.size)) - 1.U
   val misaligned = (s2.req.core.vaddr(2, 0) & alignmentMask(2, 0)).orR && !ptw
-  val permissionFault = s2.pageFault || s2.accessFault || highAddress || !pma.io.result.allowed ||
-    !pmp.io.allowed || atomicDenied || (ptw && pma.io.result.device) ||
-    (pma.io.result.device && !ptw && s2.req.core.op =/= L1DOp.Load && s2.req.core.op =/= L1DOp.Store)
+  val permissionFault = s2.pageFault || s2.accessFault || highAddress || !s2.pmaAllowed ||
+    !s2.pmpAllowed || atomicDenied || (ptw && s2.pmaDevice) ||
+    (s2.pmaDevice && !ptw && s2.req.core.op =/= L1DOp.Load && s2.req.core.op =/= L1DOp.Store)
   val outcome = WireDefault(L1S2Outcome.None)
-  when(s2.valid) {
+  when(s2.valid && !internalRefresh) {
     when(normalInternal || rechecking) { outcome := L1S2Outcome.Internal }
       .elsewhen(replay) {
         // Replay has already passed all access checks before commitment.
@@ -354,9 +396,10 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
       .elsewhen(s2.req.core.op === L1DOp.Fence && !ptw) {
         outcome := Mux(io.core.drained, L1S2Outcome.Done, L1S2Outcome.Hold)
       }.elsewhen(s2.translationMiss || s2.snapInvalid || s2.needsRecheck ||
+        (!fromInternal && cpuPermissionStale) ||
         (!fromInternal && externalMutation && s2.req.idx === externalSet)) { outcome := L1S2Outcome.Recheck
       }.elsewhen(misaligned || permissionFault) { outcome := L1S2Outcome.Exc }
-      .elsewhen(pma.io.result.device) {
+      .elsewhen(s2.pmaDevice) {
         outcome := Mux(mmio.io.done.valid, Mux(mmio.io.done.bits.error, L1S2Outcome.Exc, L1S2Outcome.Done), L1S2Outcome.ToMmio)
       }.elsewhen(isSc) {
         // Permissions precede reservation failure; SC never allocates MSHR.
@@ -375,13 +418,40 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
           Mux(canAllocate, L1S2Outcome.Mshr, L1S2Outcome.Hold))
       }.otherwise { outcome := L1S2Outcome.Hold }
   }
+  // Assertion-only consumers disappear when synthesis removes assertions.
+  // Name the instances so the routed netlist can prove their absence.
+  val shadowPmp = Module(new flow.mmu.BreezePmpChecker(64))
+  val shadowPma = Module(new flow.platform.PMAChecker)
+  shadowPmp.io.addr := s2.physicalAddress
+  shadowPmp.io.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
+  shadowPmp.io.access := Mux(isStore, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
+  shadowPmp.io.privilege := Mux(ptw, 1.U, Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
+  shadowPmp.io.context := io.core.csr
+  shadowPma.io.query.addr := s2.physicalAddress
+  shadowPma.io.query.sizeLog2 := Mux(ptw, 3.U, s2.req.core.size)
+  shadowPma.io.query.accessType := Mux(isStore, flow.platform.PMAAccessType.Store, flow.platform.PMAAccessType.Load)
+  // Replay is checked at commitment. Stale snapshots are not used: CPU
+  // reissues through Recheck, internal PTW/Recheck holds for a refresh edge.
+  val permissionUsed = s2.valid && !replay && !normalInternal && !rechecking &&
+    !internalRefresh && !(!fromInternal && cpuPermissionStale) &&
+    !s2.translationMiss && !s2.needsRecheck && !s2.snapInvalid &&
+    !atomicWait && !amoRmw && s2.req.core.op =/= L1DOp.Fence
+  when(permissionUsed) {
+    assert(s2.pmpAllowed === shadowPmp.io.allowed &&
+      s2.pmaAllowed === shadowPma.io.result.allowed &&
+      s2.pmaDevice === shadowPma.io.result.device &&
+      s2.pmaAmoOk === shadowPma.io.result.amoOk &&
+      s2.pmaRsrvOk === shadowPma.io.result.rsrvOk &&
+      s2.highAddress === (s2.physicalAddress >> p.paddrBits).orR,
+      "[SOC3 M1] S2 permission snapshot differs from current context")
+  }
   val undecided = outcome === L1S2Outcome.Hold || outcome === L1S2Outcome.Recheck ||
     outcome === L1S2Outcome.ToMmio || outcome === L1S2Outcome.ToAmo ||
     (blockingAtomic && outcome === L1S2Outcome.Mshr)
   // Admission reserves the single internal result's capacity. In particular,
   // PTW is accepted only with free miss resources, and replay waits for PS.
   // An internal wait here would prevent that same lane finishing the miss.
-  internalHold := false.B
+  internalHold := internalRefresh
   val atomicReplayResp = replay && atomicWait && (isLr || s2.req.replayError)
   cpuHold := cpu2.valid && !atomicReplayResp && (internal2.valid || undecided)
   io.core.s2Hold := cpuHold
@@ -488,7 +558,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
 
   val amoStarts = s2.valid && isAmo && outcome === L1S2Outcome.ToAmo &&
     (!replay || atomicWait) && !s2.req.replayError && !io.core.s2Kill
-  val stores = s2.valid && !ptw && !pma.io.result.device && !(replay && s2.req.replayError) &&
+  val stores = s2.valid && !ptw && !s2.pmaDevice && !(replay && s2.req.replayError) &&
     ((s2.req.core.op === L1DOp.Store && outcome === L1S2Outcome.Done && (replay || !io.core.s2Kill)) ||
       (isSc && scSuccess && outcome === L1S2Outcome.Done && !io.core.s2Kill) || amoStarts)
   when(psCompletes) { ps.valid := false.B; psAtomic := false.B }
