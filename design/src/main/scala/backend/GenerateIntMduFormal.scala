@@ -27,10 +27,12 @@ class FormalMulProbe extends MulUnit {
   state.stageValid := valid.asUInt
   state.stageCommitted := committed.asUInt
   state.stageRd := rd
-  state.stageProduct := VecInit(product.map(_.asUInt))
+  // Verification-only mathematical view of the new operand/M/P stages.
+  // These multipliers belong only to this probe, never to production RTL.
+  state.stageProduct := VecInit((0 until 3).map(i =>
+    (operandA(i).asSInt * operandB(i).asSInt).asUInt) :+ product.asUInt)
   state.stageOp := op
-  // Same combinational arithmetic node as the production P1 input. The
-  // protocol ledger treats its value as a payload, not a math reference.
+  // Independent mathematical payload for the protocol ledger.
   state.incomingProduct := (io.req.bits.a * io.req.bits.b).asUInt
 }
 
