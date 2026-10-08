@@ -15,11 +15,11 @@ class L1DCsrContextHarness extends L1DPermissionHarness {
     val address = UInt(12.W)
     val data = UInt(64.W)
   })))
-  val release = IO(Input(Bool()))
+  val grantRelease = IO(Input(Bool()))
   val pending = RegInit(false.B)
   val responseId = Reg(UInt(1.W))
   when(cache.io.coh.req.fire) { pending := true.B; responseId := cache.io.coh.req.bits.id }
-  cache.io.coh.rspDown.valid := pending && release
+  cache.io.coh.rspDown.valid := pending && grantRelease
   cache.io.coh.rspDown.bits := 0.U.asTypeOf(cache.io.coh.rspDown.bits)
   cache.io.coh.rspDown.bits.op := RspDownOp.DataE
   cache.io.coh.rspDown.bits.id := responseId
@@ -50,7 +50,7 @@ class L1DContextSpec extends L1DPermissionsSpec {
   private val address = BigInt("80000000",16)
   private def start(d: L1DCsrContextHarness): Unit = {
     d.write.valid.poke(false.B); d.write.bits.address.poke(0x340.U); d.write.bits.data.poke(0.U)
-    d.release.poke(false.B)
+    d.grantRelease.poke(false.B)
     init(d, false)
   }
   private def csrw(d: L1DCsrContextHarness, addr: Int, value: BigInt): Unit = {
@@ -64,7 +64,7 @@ class L1DContextSpec extends L1DPermissionsSpec {
   }
   private def decide(d: L1DCsrContextHarness, denied: Boolean, store: Boolean, atomic: Boolean = false): Unit = {
     var seen = false
-    if (atomic && !denied) d.release.poke(true.B)
+    if (atomic && !denied) d.grantRelease.poke(true.B)
     for (_ <- 0 until 24) {
       if (d.io.core.resp.valid.peek().litToBoolean) {
         seen mustBe false; seen = true
@@ -120,7 +120,7 @@ class L1DContextSpec extends L1DPermissionsSpec {
       csrw(d, CSRMAP.pmpcfg0, 0x1f); d.clock.step(4)
       d.io.core.s2Hold.expect(true.B); d.io.core.resp.valid.expect(false.B)
       csrw(d, CSRMAP.pmpcfg0, 0x18)
-      d.release.poke(true.B) // finish only the already committed first miss
+      d.grantRelease.poke(true.B) // finish only the already committed first miss
       var faultSeen = false
       for (_ <- 0 until 40) {
         if (d.io.core.resp.valid.peek().litToBoolean) {
