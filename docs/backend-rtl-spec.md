@@ -1,5 +1,7 @@
 # Breeze 后端 RTL spec：T01 冻结稿
 
+> 2026-10-08 SOC-3b 适用说明：本文保留旧 T01/B01/集成基线。普通 WB 当拍写口、late.fire 等同 RF 写回、6 次冲突、S2 load bypass、fatal 接收当拍生效等旧后端条款，已由用户最新裁定覆盖。当前后端实现以 [`backend-timing-contract.md`](backend-timing-contract.md) §4、[`backend-v1-rtl-spec.md`](backend-v1-rtl-spec.md) 和 [`SOC-3b 任务`](tasks/SOC-3b-wb-split.md) 为准；未覆盖的协议/安全规则沿用。W2 无条件完成、不碰 busy，后台来源为 lateReg/DIV/MUL/FPU；FENCE.I/SFENCE 不额外等待 W2/lateReg。硬件执行主机以每次重读的共享 simulation-host.md 为准，不能沿用本文历史 Alan-only 规则。
+
 状态：**冻结稿，待用户宣布冻结**。依据为 [后端设计](backend-pipeline-design.md)（D）、[T01 任务书](tasks/T01-backend-scoreboard-mdu.md)（T）和 [阶段一审阅决定](tasks/T01-review.md)（R）；R 第 2 节（Q01–Q18）与第 4 节（A01–A08）的决定已全部写入规则。阶段二实现中发现本稿未覆盖或与源码冲突的行为，必须停下提问，不得自行补方案。
 
 ## 0. 范围、版本与拍的定义

@@ -13,9 +13,15 @@ class RegisterWrite extends Bundle {
   val idx = UInt(5.W)
   val data = UInt(64.W)
 }
+class OrdinaryResult extends Bundle {
+  val rd = new L1DDestination
+  val data = UInt(64.W)
+}
 
-/** One background grant, L1D > DIV > MUL > FPU. No result storage.
-  * Ordinary WB writes win their bank. Fairness bubbles originate only in ID.
+/** WB captures W2; L1D late captures a single lateReg without RF fall-through.
+  * W2 wins its bank, then one background grant: lateReg > DIV > MUL > FPU.
+  * Already committed writes survive all pipeline holds/kills and hartFatal.
+  * Fairness bubbles originate only in ID.
   */
 class Writeback extends Module {
   val io = IO(new Bundle {
@@ -24,6 +30,7 @@ class Writeback extends Module {
     val mul = Flipped(Decoupled(new IntMduResult))
     val fp = Flipped(Decoupled(new FpResult))
     val ordinary = Flipped(Valid(new FpResult))
+    val w2 = Output(Valid(new OrdinaryResult))
     val gprWrite = Valid(new RegisterWrite)
     val fprWrite = Valid(new RegisterWrite)
     val clear = Valid(new L1DDestination)
@@ -34,17 +41,31 @@ class Writeback extends Module {
     val starvation = Output(Vec(2, UInt(2.W)))
     val bubbleInFlight = Output(Vec(2, Bool()))
     val hartFatal = Output(Bool())
+    val lateWriteError = Output(Bool())
   })
-  val valids = VecInit(Seq(io.late.valid, io.div.valid, io.mul.valid, io.fp.valid))
-  val banks = VecInit(Seq(io.late.bits.rd.isFp, false.B, false.B, io.fp.bits.rd.isFp))
-  val ordinaryWrite = io.ordinary.valid && (io.ordinary.bits.rd.isFp || io.ordinary.bits.rd.idx =/= 0.U)
-  val needsPort = VecInit(Seq(!io.late.bits.error && (io.late.bits.rd.isFp || io.late.bits.rd.idx =/= 0.U),
+  val w2 = RegInit(0.U.asTypeOf(Valid(new OrdinaryResult)))
+  val lateReg = RegInit(0.U.asTypeOf(Valid(new L1DLate)))
+  // Consume W2 every cycle, even when the following WB is held or killed.
+  // The caller supplies only new, non-exceptional ordinary WB commits.
+  w2.valid := io.ordinary.valid && (io.ordinary.bits.rd.isFp || io.ordinary.bits.rd.idx =/= 0.U)
+  when(io.ordinary.valid) {
+    w2.bits.rd := io.ordinary.bits.rd
+    w2.bits.data := io.ordinary.bits.data
+  }
+  io.w2 := w2
+  val valids = VecInit(Seq(lateReg.valid, io.div.valid, io.mul.valid, io.fp.valid))
+  val banks = VecInit(Seq(lateReg.bits.rd.isFp, false.B, false.B, io.fp.bits.rd.isFp))
+  val ordinaryWrite = w2.valid
+  val needsPort = VecInit(Seq(!lateReg.bits.error && (lateReg.bits.rd.isFp || lateReg.bits.rd.idx =/= 0.U),
     io.div.bits.rd =/= 0.U, io.mul.bits.rd =/= 0.U, io.fp.bits.rd.isFp || io.fp.bits.rd.idx =/= 0.U))
   val eligible = VecInit((0 until 4).map(i => valids(i) &&
-    !(needsPort(i) && ordinaryWrite && banks(i) === io.ordinary.bits.rd.isFp)))
+    !(needsPort(i) && ordinaryWrite && banks(i) === w2.bits.rd.isFp)))
   val selected = PriorityEncoderOH(eligible.asUInt)
   io.grant := selected
-  io.late.ready := selected(0)
+  val lateRegGrant = selected(0)
+  io.late.ready := !lateReg.valid || lateRegGrant
+  lateReg.valid := (lateReg.valid && !lateRegGrant) || io.late.fire
+  when(io.late.fire) { lateReg.bits := io.late.bits }
   io.div.ready := selected(1)
   io.mul.ready := selected(2)
   io.fp.ready := selected(3)
@@ -62,27 +83,27 @@ class Writeback extends Module {
     when(protect(bank)) { inFlight(bank) := true.B }
     when(granted) { inFlight(bank) := false.B }
   }
-  // ID reads registers only: neither grant nor WB ordinaryWrite reaches this decision.
+  // ID reads only the registered starvation/protection state.
   io.idStarve := protect.asUInt.orR
   io.conflict := PopCount(conflicts)
   io.starvation := starvation
   io.bubbleInFlight := inFlight
   val rd = Wire(new L1DDestination)
-  rd.isFp := (selected(0) && io.late.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
-  rd.idx := Mux1H(selected, Seq(io.late.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
-  val data = Mux1H(selected, Seq(io.late.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
-  val error = io.late.valid && io.late.bits.error
+  rd.isFp := (selected(0) && lateReg.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
+  rd.idx := Mux1H(selected, Seq(lateReg.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
+  val data = Mux1H(selected, Seq(lateReg.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
+  val error = lateReg.valid && lateReg.bits.error
   val fatal = RegInit(false.B)
   when(error) { fatal := true.B }
   io.hartFatal := fatal || error
-  val bgWrite = selected.orR && !error && (rd.isFp || rd.idx =/= 0.U)
-  val normal = ordinaryWrite && !io.hartFatal
+  io.lateWriteError := lateRegGrant && lateReg.bits.error
+  val bgWrite = selected.orR && !io.lateWriteError && (rd.isFp || rd.idx =/= 0.U)
   def write(fp: Boolean): Unit = {
     val out = if (fp) io.fprWrite else io.gprWrite
     val background = bgWrite && rd.isFp === fp.B
-    out.valid := background || (normal && io.ordinary.bits.rd.isFp === fp.B)
-    out.bits.idx := Mux(background, rd.idx, io.ordinary.bits.rd.idx)
-    out.bits.data := Mux(background, data, io.ordinary.bits.data)
+    out.valid := background || (ordinaryWrite && w2.bits.rd.isFp === fp.B)
+    out.bits.idx := Mux(background, rd.idx, w2.bits.rd.idx)
+    out.bits.data := Mux(background, data, w2.bits.data)
   }
   write(false); write(true)
   io.clear.valid := selected.orR && (rd.isFp || rd.idx =/= 0.U)
@@ -92,11 +113,22 @@ class Writeback extends Module {
   val pastActive = RegNext(!reset.asBool, false.B)
   val wasLateBlocked = RegNext(io.late.valid && !io.late.ready, false.B)
   val heldLate = RegNext(io.late.bits.asUInt)
+  val wasLateRegBlocked = RegNext(lateReg.valid && !lateRegGrant, false.B)
+  val heldLateReg = RegNext(lateReg.bits.asUInt)
   when(pastActive && !reset.asBool && wasLateBlocked) {
     assert(io.late.valid && io.late.bits.asUInt === heldLate, "[S07] stalled late result changed")
   }
+  when(pastActive && !reset.asBool && wasLateRegBlocked) {
+    assert(lateReg.valid && lateReg.bits.asUInt === heldLateReg, "[S07] stalled lateReg changed")
+  }
   when(!reset.asBool) {
     assert(PopCount(selected) <= 1.U, "[S06] background grants not one-hot")
+    assert(!lateRegGrant || lateReg.valid, "[S08] lateReg completion without a buffered item")
+    when(w2.valid) {
+      val out = Mux(w2.bits.rd.isFp, io.fprWrite, io.gprWrite)
+      assert(out.valid && out.bits.idx === w2.bits.rd.idx && out.bits.data === w2.bits.data,
+        "[W2] committed ordinary write did not complete")
+    }
     assert(!io.gprWrite.valid || io.gprWrite.bits.idx =/= 0.U, "[S01] physical x0 write")
     assert(io.clear.valid === (selected.orR && (rd.isFp || rd.idx =/= 0.U)),
       "[S08] clear must equal actual completion, including fatal late")

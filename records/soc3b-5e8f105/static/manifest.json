@@ -1,0 +1,21 @@
+{
+  "sha": "5e8f10506f388b7640c1807db8b34ca40e7b4fd5",
+  "branch": "feat/pcie-fase-20260920",
+  "host": "chen",
+  "cwd": "/home/chen/leisure/flow",
+  "started_utc": "2026-10-08T09:16:00.305184+00:00",
+  "command": "python3 tools/frozen_check.py",
+  "exit": 0,
+  "elapsed_seconds": 0.03725309699802892,
+  "scope": "static frozen-file digest check only; no hardware execution",
+  "files_sha256": {
+    "docs/tasks/SOC-3b-wb-split.md": "48a36532eda89411c38465838beba73820f87a601b27a4191f7bb18bf50c6fc7",
+    "docs/backend-timing-contract.md": "96a76b5c8218ca815d4068e3f38fb6ed0629e2f18f37a1dd2f5d509f19ce146a",
+    "tools/frozen.json": "539c479c1613555d3ab044212d85e0dde50fdd3b471b7fa4b5448a81a5107612",
+    "design/src/main/scala/backend/BreezeBackend.scala": "17cb9079fd2bbcb67ea5c0fd84dbf1b9080e9d75259deec7cab2e0ae9b0c199a",
+    "design/src/main/scala/backend/Writeback.scala": "3d06c1f592bc3c888fb16b8739b61a57525d9a8cc9a0720c59d9718117a8c7fb",
+    "design/src/main/scala/backend/Scoreboard.scala": "9a5d18966c1ccab810a343955b2e256201222bf505ca14d9ea91be9642d8eccb",
+    "design/src/test/scala/backend/BackendContractSpec.scala": "be869bd4809aa6a3394ed4ac2b4b8de19ece02e25750eb231d50a56b12306ccb"
+  },
+  "initial_worktree_status": " M docs/tasks/SOC-2-bram-report.md\n M docs/tasks/V1-MEM-interfaces-report.md\n?? .agents/\n?? AGENTS.md\n?? docs/cross-project/\n?? docs/figures/breeze-system.drawio\n?? docs/figures/breeze-system.svg\n?? docs/figures/dcache-load-store/\n?? docs/hardware-skill-context.md\n?? docs/hardware-skills-lock.json\n?? docs/hardware-skills.md\n?? docs/plans/2026-10-04-breeze-spike-cycle-model-mmu-ddr.md\n?? records/\n"
+}

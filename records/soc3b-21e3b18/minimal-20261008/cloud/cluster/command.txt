@@ -1,0 +1,1 @@
+make -C ../tests/cluster build/lrsc_amo_single.elf build/trap_misc.elf build/mmio_console.elf && sbt "testOnly flow.cluster.ClusterWbSplitSmokeSpec"

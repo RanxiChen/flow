@@ -1,0 +1,45 @@
+{
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "local_branch": "feat/pcie-fase-20260920",
+  "local_head": "5e8f10506f388b7640c1807db8b34ca40e7b4fd5",
+  "cwd": "/home/chen/leisure/flow",
+  "timestamp_utc": "2026-10-08T10:16:57.400711+00:00",
+  "commands": [
+    {
+      "command": "python3 tools/frozen_check.py",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "file_identities": [
+    {
+      "path": "design/src/main/scala/backend/BreezeBackend.scala",
+      "sha256": "563303c4e2c3f14cdebe6af3b7e9842903245c9a1f614193b80bebfb1068141f",
+      "matches_source_sha": true
+    },
+    {
+      "path": "design/src/main/scala/backend/Writeback.scala",
+      "sha256": "19b5cf9454ef36e2e461f63da7a2788582bbf2d1be9642dd205f2b0d77615cac",
+      "matches_source_sha": true
+    },
+    {
+      "path": "design/src/test/scala/backend/WritebackSpec.scala",
+      "sha256": "b957937f5eb8c9305442aa974334fdf84133cdb42b667d7fb0724179fa5e0355",
+      "matches_source_sha": true
+    },
+    {
+      "path": "design/src/test/scala/backend/BackendContractSpec.scala",
+      "sha256": "0f9f0671a406b649b824caf39923b273fefd0d93a4f2a0977206fd83b66ef9c1",
+      "matches_source_sha": true
+    },
+    {
+      "path": "design/src/test/scala/cluster/ClusterWbSplitSmokeSpec.scala",
+      "sha256": "0970f443d25fd464537c7e7d9db233171836d47bf38c4fd3034e4eb84c0ef58d",
+      "matches_source_sha": true
+    }
+  ],
+  "elapsed_seconds": 0.07323497999823303
+}

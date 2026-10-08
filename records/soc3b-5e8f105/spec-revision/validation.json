@@ -1,0 +1,30 @@
+{
+  "scope": "documentation-only working-tree snapshot; no RTL or hardware validation",
+  "base_sha": "5e8f10506f388b7640c1807db8b34ca40e7b4fd5",
+  "host": "chen",
+  "cwd": "/home/chen/leisure/flow",
+  "checked_utc": "2026-10-08T09:48:53.989793+00:00",
+  "relative_links_checked": 35,
+  "table_columns": "OK",
+  "unchanged_contract_rows": 26,
+  "contract_rows_total": 32,
+  "no_RTL_test_changes": true,
+  "diff_check": "OK",
+  "frozen_check": {
+    "command": "python3 tools/frozen_check.py",
+    "exit": 0,
+    "elapsed_seconds": 0.04055994599912083,
+    "files": 8
+  },
+  "files_sha256": {
+    "docs/backend-timing-contract.md": "7ac6c80e4b02da120a94e2e2b81a58c4126fcf30ca2fce46d0992be44583ca55",
+    "docs/backend-v1-rtl-spec.md": "78133f17381ba465c2531e0d03ac6479fef90ea881776f6cd7de53fb735d24fb",
+    "docs/tasks/SOC-3b-wb-split.md": "08998311dbfc2edf0244dd154f81742223ae9e9680979aeaf0ad2e5be5901c26",
+    "docs/backend-pipeline-design.md": "4944c778b5d66a0fe6533509006c9a8032126547ba09913808e9642407c17e95",
+    "docs/backend-rtl-spec.md": "0da83f15b4c882f16162eb5d8302ac19549f0cdeddd0d38b70ca03854219d6d1",
+    "docs/tasks/V1-BE-B01-ruling.md": "bc1656c86eb4b73e594ef9bf70a1eedf415ce5dad1baf69775fff113ef3837a1",
+    "docs/v1-integration-notes.md": "bb1aa063eb02de6063fa932bfdf2704101336448356be6b24d0a5b8205b74c13",
+    "docs/tasks/SOC-3b-wb-split-report.md": "7cd542db8b0bbaea36de5cc1f7c3ec5566bbd4c2312f2daf9e95b5c2ba86165e",
+    "tools/frozen.json": "94d7e3377442eebbe39846c21cc90d0709b9957c78f3e5f12e28ca956b01b9e6"
+  }
+}

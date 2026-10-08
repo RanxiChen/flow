@@ -1,0 +1,262 @@
+{
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "result": {
+    "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+    "host": "Alan",
+    "hostname": "chen-System-Product-Name",
+    "cwd": "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=15s",
+      "30m",
+      "nice",
+      "-n",
+      "10",
+      "/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado",
+      "-mode",
+      "batch",
+      "-source",
+      "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/synth.tcl",
+      "-log",
+      "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/vivado.log",
+      "-journal",
+      "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/vivado.jou"
+    ],
+    "started_utc": "2026-10-08T10:18:07.236395+00:00",
+    "source_manifest_sha256": "f661eea3bf05b82db044d04ffc7d3e3c0a1ad238a71d74d2d5f6556655ff162a",
+    "configuration": "hangThresholdCycles=10000000\nbus=axi\nprofile=single\npreset=gshare\nprivilege=linux\ntandem=false\ndebug=false\nplatformSha256=acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68\nnCores=1\nlineBytes=32\nl1Sets=128\nl1dWays=4\nl1iWays=4\nl2Ways=8\nl2BytesPerCore=65536\nl2Slots=2\nidBits=1\n",
+    "exit_code": 0,
+    "elapsed_seconds": 697.7559945590037,
+    "ended_utc": "2026-10-08T10:29:44.993229+00:00"
+  },
+  "wns_ns": -4.244,
+  "tns_ns": -60742.875,
+  "failing_endpoints": 30021,
+  "total_endpoints": 97533,
+  "whs_ns": 0.083,
+  "hold_failing_endpoints": 0,
+  "worst_delay_ns": 14.162,
+  "worst_logic_ns": 2.367,
+  "worst_estimated_route_ns": 11.795,
+  "worst_logic_levels": 42,
+  "worst_family": "L1D internal S2 -> miss allocation/response/hold -> backend/CVFPU input-ready/EX advance -> frontend redirect -> realigner fault capture CE",
+  "old_1b17595_wns_ns": -6.696,
+  "wns_improvement_ns": 2.452,
+  "old_worst_logic_levels": 52,
+  "tlb_to_s1_permission_worst_slack_ns": 0.809,
+  "tlb_to_s1_logic_levels": 30,
+  "mshr_to_busy_worst_slack_ns": 1.544,
+  "stop_rules": {
+    "Mshr_busy_negative_in_worst20": false,
+    "TLB_S1_in_global_worst20": false
+  },
+  "structural_queries": [
+    {
+      "class": "forbidden-writeport",
+      "objects": "0",
+      "paths": "0",
+      "worst_slack": "NA",
+      "logic_levels": "NA",
+      "status": "optimized_or_unmapped_use_RTL_fanin"
+    },
+    {
+      "class": "forbidden-result-ready",
+      "objects": "0",
+      "paths": "0",
+      "worst_slack": "NA",
+      "logic_levels": "NA",
+      "status": "optimized_or_unmapped_use_RTL_fanin"
+    },
+    {
+      "class": "forbidden-actual-clear",
+      "objects": "0",
+      "paths": "0",
+      "worst_slack": "NA",
+      "logic_levels": "NA",
+      "status": "optimized_or_unmapped_use_RTL_fanin"
+    },
+    {
+      "class": "forbidden-RAW-WAW",
+      "objects": "0",
+      "paths": "0",
+      "worst_slack": "NA",
+      "logic_levels": "NA",
+      "status": "optimized_or_unmapped_use_RTL_fanin"
+    },
+    {
+      "class": "allowed-W2-input",
+      "objects": "71",
+      "paths": "20",
+      "worst_slack": "2.085",
+      "logic_levels": "23",
+      "status": "allowed_endpoint_review"
+    },
+    {
+      "class": "allowed-HPM-input",
+      "objects": "8",
+      "paths": "8",
+      "worst_slack": "-3.644",
+      "logic_levels": "43",
+      "status": "allowed_endpoint_review"
+    },
+    {
+      "class": "allowed-hold-cancel",
+      "objects": "3",
+      "paths": "3",
+      "worst_slack": "-2.330",
+      "logic_levels": "38",
+      "status": "allowed_endpoint_review"
+    },
+    {
+      "class": "allowed-Mshr-busy",
+      "objects": "63",
+      "paths": "20",
+      "worst_slack": "1.544",
+      "logic_levels": "26",
+      "status": "allowed_endpoint_review"
+    },
+    {
+      "class": "EX-data-with-hold-review",
+      "objects": "320",
+      "paths": "20",
+      "worst_slack": "-2.821",
+      "logic_levels": "38",
+      "status": "allowed_endpoint_review"
+    }
+  ],
+  "worst20": [
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[0]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[10]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[11]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[12]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[13]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[14]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[15]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[16]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[17]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[18]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[19]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[1]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[20]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[21]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[22]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[23]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[24]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[25]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[26]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    },
+    {
+      "startpoint": "l1d/internal2_req_idx_reg[2]/C",
+      "endpoint": "frontend/realigner/faultVaddrReg_reg[27]/CE",
+      "slack": "-4.244",
+      "logic_levels": "42"
+    }
+  ],
+  "resource_counts": {
+    "LUT": 48348,
+    "FF": 41421,
+    "RAMB36E2": 39,
+    "RAMB18E2": 9,
+    "DSP48E2": 23
+  },
+  "routed": false,
+  "whole_soc_built": false,
+  "board_programmed": false,
+  "next_ooc_timeout_seconds": 3600,
+  "actual_completed_run_timeout_seconds": 1800
+}

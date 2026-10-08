@@ -1,0 +1,11 @@
+{
+  "base_sha": "5e8f10506f388b7640c1807db8b34ca40e7b4fd5",
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "source_tree": "8d15ab15ee1ef6cf746c5945628c41a77b7c378b",
+  "snapshot_ref": "refs/heads/codex-validation/soc3b-20261008T100601Z",
+  "branch": "codex-validation/soc3b-20261008T100601Z",
+  "local_cwd": "/home/chen/leisure/flow",
+  "transfer": "/tmp/soc3b-20261008T100601Z",
+  "submodules": " 1b220f3bc89df99e246b72e3574a3a533cf87653 third_party/cvfpu (v0.6.6-90-g1b220f3)\n bcffa2b3188b040c611f90dc0b6e422f54775a09 third_party/riscv-tests (heads/master)\n",
+  "created_utc": "20261008T100601Z"
+}

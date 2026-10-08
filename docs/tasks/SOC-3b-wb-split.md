@@ -8,17 +8,17 @@
 
 报告第 1、2 条建议（L1D 控制并行化、记分板读口局部化）只能削减级数，消不掉「S2 结果决定本拍 WB 是否占写口 → 长延迟来源 ready → 同拍清记分板 → 同拍发射」的结构。用户 2026-10-08 裁定：**接受 load-use 多 1 拍**，在 WB 与寄存器堆写之间切一拍。
 
-本任务由 codex 实现、跑和修。下文是冻结裁定，冲突时停止该项并报告。
+本任务由 codex 实现、跑和修。2026-10-08 用户已完成后续多轮裁定，现稿同步最新规则；本轮先更新规格，不启动 RTL 或硬件验证。冻结规则冲突时停止该项并报告。
 
 ## 1. 裁定
 
-冻结合同已改：[`backend-timing-contract.md`](../backend-timing-contract.md) 的 T02、T11、T12/T21/T22（※b）、§3 例外与 §4 `load-use`/`W2`/`lateReg`/结构门槛，`tools/frozen.json` 已重新记录。以合同原文为准，下面只是摘要。
+冻结合同及 backend-v1-rtl-spec.md 已按 2026-10-08 最新裁定同步；以 [`backend-timing-contract.md`](../backend-timing-contract.md) 的明确拍号和 §4 为准，tools/frozen.json 同步已有冻结项。以下为摘要，不再使用旧「整体 +1」限制。
 
-- **W2**：WB 的 commit、陷入、CSR 生效、L1D `resp` 与 WB 同拍等全部不变。WB 普通 GPR/FPR 写（数据、rd、堆选择、写使能）在 WB 末寄存，下一拍 W2 写寄存器堆、清记分板、参与写口仲裁，并写穿透到 ID。W2→EX 加一路旁路，ALU 相关（T01/T03 等）不增加气泡。W2 是否占口只由寄存器决定。
-- **lateReg**：`l1d.late` fire 当拍寄存进单项 `lateReg`，`l1d.late.ready` 只是寄存器的函数（基线 `!lateReg.valid`）。仲裁顺序仍是普通写优先，长延迟侧 L1D(lateReg) > DIV > MUL > FPU。饥饿保护计数与阈值、`wb_port_conflict` 定义不变。
-- **拍数**：T02 `gprWrite(x1)=E+3`、`ex(add)=E+4`；T11 `gprWrite=R+8`；T04/T05/P02/T13/P10 等其余行不变（MUL 仍 E+4 写回，除非与 W2 同拍冲突，冲突规则同前）。T12/T21/T22 由 codex 按新结构推导，只允许整体平移，其它差异停下报告。`loadUseBypass`/T02b 作废，参数可删，在报告中说明。
-- **ID 冒险检测**：WB 中已提交、尚未到 W2 的 load/写 GPR 指令，以及 W2 本身，都要被 ID 看到（停顿或旁路），不得读到旧值。实现方式由 codex 定。
-- **CSR/WB 串行指令、陷入、FASE 接管、FENCE.I/SFENCE 的 drained 条件**：凡依赖「寄存器堆已写」或「记分板已空」的判定，都要把 W2 与 `lateReg` 计入（例如 `busy==0` 的含义扩成也包括 W2/lateReg 无在途写）。逐条列在报告里。
+- **W2 无条件完成**：普通 GPR/FPR 在无异常 WB 提交拍末寄存 bank/rd/data/valid，下一拍优先写 RF 并穿透 ID。W2 已提交，不受 fatal/stop/kill/redirect/hold 屏蔽，不置/清 busy、不再次 retire；每拍消费一次，WB 无新普通提交则下一拍 valid 清零，复位清 valid。写口资格仅由寄存器决定。
+- **lateReg**：单项接收 late 的 bank/rd/data/error，ready=!lateReg.valid||lateRegGrant；空槽不直接穿透 RF，同拍出入时写回/clear/error 来自旧项，拍末捕获新项。W2 普通写优先，后台 lateReg>DIV>MUL>FPU，全局至多一个后台 grant。冲突/饥饿计数只看这四个结果来源，原始 L1D late 接收或背压不计数；busy 由这四个实际完成清除，W2 不碰 busy。
+- **拍数**：T02 普通写 E+3、依赖 EX E+4；T11 late.fire=R+7、物理写 R+8。T12 late.fire=N、迟到写 N+2、普通写 N+1、冲突 1；T21 late.fire=c、迟到写 c+8、唯一 ID 气泡 c+4、冲突 7；T22 late.fire=N、迟到写 N+3、B/C 写 N+1/N+2、冲突 2。提交/resp 拍不变。T13 对齐 lateReg/DIV/MUL/FPU 在 N valid（returnDelay 26→25），N…N+3 写回期望不变；P06 ② 提交空拍={g−1}，g 取 x1/x2 实际后台写回且 g−1 在首末 ALU commit 之间，①③不变。T04/T05/P02/T15–T17/P09/P10 等其余期望不变，默认无冲突前提改为 W2 无同 bank 普通写。loadUseBypass/T02b 作废，参数可删或无功能兼容保留，报告说明。
+- **ID/EX**：WB 中有寄存器结果的访存（load、FLW/FLD、LR/SC/AMO、MMIO）仅按寄存 valid/类别/writes/bank/rd 判断 RAW/WAW，不用 resp.kind/!wbDone 解除。ID 不单独比较 W2；W2 写穿透拍可离开。保留 MEM/WB→EX，增加 W2→EX，MEM>WB>W2>捕获值；WB 只对非访存普通结果开放，不用 wbOrdinary/wbCommit/wbDone 判断；held EX 持续捕获旁路值，FPR 普通依赖也须保护。
+- **串行与 fatal**：FENCE.I/SFENCE 不增加 W2/lateReg 条件，T18–T20 仍按 l1d.drained/原 mmu.idle；ESTOP 的 busy 已覆盖 lateReg，T17 用 raw busy，P09 中断/WFI 不等后台 busy，FASE 仍不支持 useFASE=true。错误 late 在 N 接收，fatal 在 N+1 lateReg 可见拍生效，可在 N 多提交一条；hartFatal 仅取 fatal 寄存器或 lateReg.valid&&error，不屏蔽已提交 W2。trace 在 WB 记架构提交，observe 测物理写；lateWriteError 对齐 lateReg 完成。
 - **允许一起做**（codex 决定，不必须）：SOC-3 报告建议 1、2（L1D 控制并行化、记分板读口局部 `busy(rd) && !clear(rd)`），前提是不改拍数与协议。
 - **不做**：不改 L1D 对外协议与 S0/S1/S2 拍数，不改 MulUnit，不加 false path/multicycle，不改综合策略，不开 retiming，不降频。TLB→S1 若进入最差路径族，停下报告。
 
@@ -28,16 +28,18 @@
 
 ## 3. 门槛（按顺序）
 
+**2026-10-08 后续执行范围更新**：用户明确要求尽快推进 FPGA，从现有测试选最小关键子集，仅补本次改动的关键缺口，广泛程序与组合场景留到 FPGA。下列第 2 项的完整定向集合本轮不执行，改用报告 [§9](SOC-3b-wb-split-report.md#9-最小上板前验证2026-10-08本轮) 记录的最小集合；未运行的完整集合继续标记未验证。冻结行为、拍号、golden/断言以及第 3–5 项的结构、时序和停止条件保持。本轮最小功能集合通过后直接推进 RTL 生成及 Cluster OOC，不以完整回归作为这一阶段的前置条件。
+
 1. `python3 tools/frozen_check.py` → OK (8 files)。
-2. 定向（cloud_chen）：后端时序合同 spec 全部行（含改后的 T02/T11/T12/T21/T22）、MDU 四个 spec、L1D 三个 spec（同 SOC-3 §3.1）、BreezePrivilege、`ClusterIsaSpec`。改了拍数，ISA 级必须跑。除合同 ※b 允许的推导值和 T02/T11 之外，任何测试期望或断言都不得改。
+2. 定向（按当前主机配置）：后端时序合同 spec 全部行（含改后 T02/T11/T12/T13/T21/T22、P06）、MDU 四个 spec、L1D 三个 spec（同 SOC-3 §3.1）、BreezePrivilege、ClusterIsaSpec。只按本轮明确裁定更新期望/刺激：T13 和其它无冲突前提允许调整回填/nop 对齐，原写回期望不变；fatal 的行为变化及 W2/lateReg 安全检查按合同添加。其余期望/断言不得修改或放宽，不删除其它测试。
 3. tiny RTL 生成：`GenerateBreezeCluster single gshare linux`。
-4. **Cluster OOC**（Alan，参数同 SOC-3：100 MHz、AreaOptimized_high、maxThreads4、`timeout 30m`、worst-20），另外加跑：
-   - 合同 §4 结构门槛的 `report_timing -from` 查询，结果单独存档；
+4. **Cluster OOC**（Alan，参数同 SOC-3：100 MHz、AreaOptimized_high、maxThreads4、`timeout 1h`、worst-20；2026-10-08 用户将后续上限从 30 分钟改为 1 小时），另外加跑：
+   - 合同 §4 结构门槛取证：禁止 S2 决定写口授权、结果出口 ready、实际 clear、操作数 RAW/WAW 或 EX 旁路选择。可定位终点用 report_timing，中间点可用 -through；网名优化掉允许 RTL fan-in 分析替代该中间查询，记录映射，不加 keep、不改策略。允许的保持/精确取消、Mshr→busy、S2→W2/HPM 输入分别报告最差级数/slack；Mshr→busy 进入全局 worst-20 且 slack<0 时停下，不挪 T10。
    - TLB→S1 permission 单独 worst-20（同 SOC-3）。
-   - 综合超过 30 分钟就停，记录停在哪个阶段，然后报告，不再自行重试。
+   - 综合超过 1 小时就停，记录停在哪个阶段，然后报告，不再自行重试。本轮首次 OOC 在用户调整时已正常结束（11 分 38 秒），其实际命令仍记录原 `timeout 30m`，不改写历史执行证据。
 5. Cluster post-synth WNS ≥ 0 → 跑整 SoC tiny 布局布线（保留 timeout），WNS ≥ 0 → SOC-3 §3.2 验收段。
    Cluster WNS < 0 → 按 SOC-3 M3 的范围继续修，修完重跑 4；需要再改拍数或协议的，停下报告。
 
 ## 4. 报告
 
-写入 `docs/tasks/SOC-3b-wb-split-report.md`：W2/lateReg 的实现位置；T12/T21/T22 的推导；ID 冒险检测与串行/drained 条件改了哪些（逐条）；门槛表（SHA、主机、cwd、命令、通过数/总数、exit、用时）；Cluster OOC 的阶段时间、WNS/TNS/失败端点、worst-20（起点、终点、slack、级数、logic/route）、结构门槛查询结果、与 SOC-3 `1b17595` 的对比；有 routed 结果的话报告 routed 结果。
+写入 docs/tasks/SOC-3b-wb-split-report.md：W2/lateReg 实现位置；T12/T21/T22 与 P06/T13 推导；ID/EX 寄存资格、普通写不碰 busy、fatal N+1、串行/drained 条件保留哪些（逐条）；门槛表（SHA、主机、cwd、命令、通过数/总数、exit、用时）；Cluster OOC 阶段时间、WNS/TNS/失败端点、worst-20、结构查询/RTL fan-in 证据、允许路径报告，与 SOC-3 1b17595 的对比；有 routed 结果才报告 routed。

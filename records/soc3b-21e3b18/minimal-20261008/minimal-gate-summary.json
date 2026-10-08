@@ -1,0 +1,109 @@
+[
+  {
+    "stage": "component",
+    "result": {
+      "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "ssh_target": "cloud_chen@47.96.71.231",
+      "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+      "command": "sbt build \"testOnly flow.backend.WritebackSpec\"",
+      "started_utc": "2026-10-08T10:07:20.757715+00:00",
+      "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+      "exit_code": 0,
+      "elapsed_seconds": 41.422951090000424,
+      "ended_utc": "2026-10-08T10:08:02.181682+00:00"
+    },
+    "test_totals": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "selected_tests": [
+      "T12_component_T13_component_S06: fixed priority, four consecutive writes, WB priority without pipeline hold",
+      "S01_S06_S08: f0 late occupies FPR port, independent GPR write and fatal error",
+      "SOC3b_lateReg_backpressure_and_same_edge_replace_use_old_payload"
+    ]
+  },
+  {
+    "stage": "backend",
+    "result": {
+      "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "ssh_target": "cloud_chen@47.96.71.231",
+      "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+      "command": "sbt \"testOnly flow.backend.BackendContractSpec -- -t T01_ALU_EX_bypass -t T02_load_use_default -t T11_refill_R_plus_7_dependency -t T13_four_sources_fixed_priority -t T21_ID_single_bubble_bounds_starvation -t T22_B01_miss_ADD_hit_response_alignment -t P06_three_background_sources_and_twenty_ALUs -t S01_S08_f0_and_cross_bank_RAW_WAW -t S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV -t SOC3b_held_EX_captures_MEM_WB_W2_and_youngest_value -t T20_SFENCE_two_idle_phases -t P10_exception_kills_young_MUL_retains_DIV\"",
+      "started_utc": "2026-10-08T10:09:12.571747+00:00",
+      "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+      "exit_code": 0,
+      "elapsed_seconds": 254.20882911900117,
+      "ended_utc": "2026-10-08T10:13:26.781648+00:00"
+    },
+    "test_totals": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "selected_tests": [
+      "T01_ALU_EX_bypass",
+      "T02_load_use_default",
+      "T11_refill_R_plus_7_dependency",
+      "T13_four_sources_fixed_priority",
+      "T20_SFENCE_two_idle_phases",
+      "T21_ID_single_bubble_bounds_starvation",
+      "T22_B01_miss_ADD_hit_response_alignment",
+      "P06_three_background_sources_and_twenty_ALUs",
+      "P10_exception_kills_young_MUL_retains_DIV",
+      "S01_S08_f0_and_cross_bank_RAW_WAW",
+      "S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV",
+      "SOC3b_held_EX_captures_MEM_WB_W2_and_youngest_value"
+    ]
+  },
+  {
+    "stage": "cluster",
+    "result": {
+      "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "ssh_target": "cloud_chen@47.96.71.231",
+      "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+      "command": "make -C ../tests/cluster build/lrsc_amo_single.elf build/trap_misc.elf build/mmio_console.elf && sbt \"testOnly flow.cluster.ClusterWbSplitSmokeSpec\"",
+      "started_utc": "2026-10-08T10:14:50.934808+00:00",
+      "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+      "exit_code": 0,
+      "elapsed_seconds": 45.426504434999515,
+      "ended_utc": "2026-10-08T10:15:36.362242+00:00"
+    },
+    "test_totals": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "selected_tests": [
+      "SOC3b single-core atomic, trap and MMIO programs"
+    ]
+  },
+  {
+    "stage": "generate",
+    "result": {
+      "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "ssh_target": "cloud_chen@47.96.71.231",
+      "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+      "command": "sbt \"runMain flow.top.GenerateBreezeCluster single gshare linux\"",
+      "started_utc": "2026-10-08T10:16:13.013838+00:00",
+      "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+      "exit_code": 0,
+      "elapsed_seconds": 6.575289776003046,
+      "ended_utc": "2026-10-08T10:16:19.590172+00:00"
+    },
+    "test_totals": {
+      "tests": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "selected_tests": []
+  }
+]

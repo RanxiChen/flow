@@ -1,0 +1,49 @@
+{
+  "timestamp_utc": "2026-10-08T09:57:16.382729+00:00",
+  "baseline_head": "5e8f10506f388b7640c1807db8b34ca40e7b4fd5",
+  "branch": "feat/pcie-fase-20260920",
+  "cwd": "/home/chen/leisure/flow",
+  "static_host": "chen",
+  "source_version": "uncommitted working-tree snapshot; baseline HEAD does not include this implementation",
+  "scope": "RTL editing and static review only; no compilation, RTL generation, simulation, test changes or Vivado",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tools/frozen_check.py"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.029579,
+      "log": "frozen-check.log"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "design/src/main/scala/backend/BreezeBackend.scala",
+        "design/src/main/scala/backend/Writeback.scala"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.00343,
+      "log": "rtl-diff-check.log"
+    }
+  ],
+  "files_sha256": {
+    "design/src/main/scala/backend/BreezeBackend.scala": "563303c4e2c3f14cdebe6af3b7e9842903245c9a1f614193b80bebfb1068141f",
+    "design/src/main/scala/backend/Writeback.scala": "19b5cf9454ef36e2e461f63da7a2788582bbf2d1be9642dd205f2b0d77615cac",
+    "docs/backend-pipeline-design.md": "4944c778b5d66a0fe6533509006c9a8032126547ba09913808e9642407c17e95",
+    "docs/backend-rtl-spec.md": "0da83f15b4c882f16162eb5d8302ac19549f0cdeddd0d38b70ca03854219d6d1",
+    "docs/backend-timing-contract.md": "7ac6c80e4b02da120a94e2e2b81a58c4126fcf30ca2fce46d0992be44583ca55",
+    "docs/breeze-mmu-rtl-spec.md": "51eb1372dddce8d715ad30850b3e6db73142fa726592912678542a4a58a3922a",
+    "docs/cluster-soc-rtl-spec.md": "23927779bcb793a1ab20e3c8f2a6d77bd4cfcf9d724a03cab698ddf3bd5877dc",
+    "docs/dcache-pipeline-design.md": "1e98b5a10336e9324d363e1105ddd371938750a4699f35039924c0e5647a2444",
+    "docs/tasks/V1-BE-B01-ruling.md": "bc1656c86eb4b73e594ef9bf70a1eedf415ce5dad1baf69775fff113ef3837a1",
+    "docs/v1-integration-notes.md": "bb1aa063eb02de6063fa932bfdf2704101336448356be6b24d0a5b8205b74c13",
+    "tools/frozen.json": "94d7e3377442eebbe39846c21cc90d0709b9957c78f3e5f12e28ca956b01b9e6",
+    "docs/tasks/SOC-3b-wb-split.md": "08998311dbfc2edf0244dd154f81742223ae9e9680979aeaf0ad2e5be5901c26",
+    "docs/tasks/SOC-3b-wb-split-report.md": "71344b6b3cb6db4236cf32d708d265a8b9d11b8a631352b2a95d47929524b501"
+  },
+  "rtl_patch_sha256": "74e8924809d240a91a6c0e5b4088f75232749de0ffc416af6fe796ea26c40c6a"
+}

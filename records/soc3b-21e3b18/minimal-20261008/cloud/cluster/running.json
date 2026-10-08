@@ -1,0 +1,9 @@
+{
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "host": "iZbp16rhtg91v96m32vggjZ",
+  "ssh_target": "cloud_chen@47.96.71.231",
+  "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+  "command": "make -C ../tests/cluster build/lrsc_amo_single.elf build/trap_misc.elf build/mmio_console.elf && sbt \"testOnly flow.cluster.ClusterWbSplitSmokeSpec\"",
+  "started_utc": "2026-10-08T10:14:50.934808+00:00",
+  "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653"
+}

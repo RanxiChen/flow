@@ -1,5 +1,7 @@
 # Breeze v1 集成备忘：现有代码事实与集成决定
 
+> 2026-10-08 SOC-3b 适用说明：本文保留旧 T01/B01/集成基线。普通 WB 当拍写口、late.fire 等同 RF 写回、6 次冲突、S2 load bypass、fatal 接收当拍生效等旧后端条款，已由用户最新裁定覆盖。当前后端实现以 [`backend-timing-contract.md`](backend-timing-contract.md) §4、[`backend-v1-rtl-spec.md`](backend-v1-rtl-spec.md) 和 [`SOC-3b 任务`](tasks/SOC-3b-wb-split.md) 为准；未覆盖的协议/安全规则沿用。W2 无条件完成、不碰 busy，后台来源为 lateReg/DIV/MUL/FPU；FENCE.I/SFENCE 不额外等待 W2/lateReg。硬件执行主机以每次重读的共享 simulation-host.md 为准，不能沿用本文历史 Alan-only 规则。
+
 2026-10-06 由三路只读代码梳理得出（HEAD `9f0b23b`），供各 RTL spec 引用。“决定”一栏是 v1 的处理方式，写 spec 时以此为准。路径相对 `design/src/main/scala/`。
 
 ## 1. 现有结构（将被覆盖）
@@ -43,7 +45,7 @@
 | Ziccrse / Ziccamoa | 设计按两者实现（无新指令，只是主存属性承诺）。设备树 `riscv,isa` 加 `_ziccrse_ziccamoa` 的时间点：4 核 LR/SC 争用压力测试（含 watchdog）与 main_ram/sram 全部 AMO 测试通过之后。 |
 | FENCE.I | 不再需要 D$ 写回：L1I 经 L2 一致性 Read 取最新数据（L2 对 owner 发 Down）。后端在 WB 等 L1D 的 MSHR 与 pending-store 为空后清 L1I 并重定向；删除 `dcacheFlushReq/Done`。 |
 | FENCE | 作为 L1D 请求，MSHR 与 pending-store 为空时完成。 |
-| SFENCE.VMA | 改在 WB 执行的串行指令，按 C4：更老指令全部完成、前端已被 kill → 等 L1D MSHR/pending-store 空 → 等 MMU idle → 一拍 sfence → 等 idle → 重定向到下一条。 |
+| SFENCE.VMA | 改在 WB 执行的串行指令，按 C4：更老指令按序提交、前端已被 kill（已提交后台结果可继续） → 等 L1D MSHR/pending-store 空 → 等 MMU idle → 一拍 sfence → 等 idle → 重定向到下一条。 |
 | 物理地址 | 缓存与协议内部 32 bit；MMU 输出 56 bit，超出部分由 PMA 拒绝。 |
 | CVFPU | 输出被反压时各级保持、不丢结果；`tag` 贯穿所有单元（含 THMULTI DIVSQRT）；乱序跨单元返回；`flush_i` 清全部在途；`in_ready_o` 组合依赖 `in_valid_i`、`op_i/dst_fmt_i` 和 `out_ready_i`；`result_o` 在 `out_valid&&!out_ready` 时可能变化（只在 fire 时采样）。 |
 | FASE | 本轮不适配新内存系统：`useFASE` 路径保留编译所需的接口但 v1 新核心不支持 `useFASE=true`（生成时 require 为 false）；FASE 适配以后单独做。 |

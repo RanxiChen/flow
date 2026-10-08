@@ -1,0 +1,9 @@
+{
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "host": "iZbp16rhtg91v96m32vggjZ",
+  "ssh_target": "cloud_chen@47.96.71.231",
+  "cwd": "/home/cloud_chen/work/flow-soc3b-21e3b18/design",
+  "command": "sbt \"testOnly flow.backend.BackendContractSpec -- -t T01_ALU_EX_bypass -t T02_load_use_default -t T11_refill_R_plus_7_dependency -t T13_four_sources_fixed_priority -t T21_ID_single_bubble_bounds_starvation -t T22_B01_miss_ADD_hit_response_alignment -t P06_three_background_sources_and_twenty_ALUs -t S01_S08_f0_and_cross_bank_RAW_WAW -t S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV -t SOC3b_held_EX_captures_MEM_WB_W2_and_youngest_value -t T20_SFENCE_two_idle_phases -t P10_exception_kills_young_MUL_retains_DIV\"",
+  "started_utc": "2026-10-08T10:09:12.571747+00:00",
+  "submodule_cvfpu": "1b220f3bc89df99e246b72e3574a3a533cf87653"
+}

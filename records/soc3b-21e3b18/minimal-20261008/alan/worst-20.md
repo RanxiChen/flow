@@ -1,0 +1,26 @@
+# SOC-3b 21e3b18 post-synth worst-20
+
+BreezeCluster OOC; 100 MHz; synthesized, unplaced estimated route.
+
+| Start | End | Slack (ns) | Logic levels |
+| --- | --- | ---: | ---: |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[0]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[10]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[11]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[12]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[13]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[14]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[15]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[16]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[17]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[18]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[19]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[1]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[20]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[21]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[22]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[23]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[24]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[25]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[26]/CE` | -4.244 | 42 |
+| `l1d/internal2_req_idx_reg[2]/C` | `frontend/realigner/faultVaddrReg_reg[27]/CE` | -4.244 | 42 |

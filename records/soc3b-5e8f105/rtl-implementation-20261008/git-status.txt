@@ -1,0 +1,24 @@
+ M design/src/main/scala/backend/BreezeBackend.scala
+ M design/src/main/scala/backend/Writeback.scala
+ M docs/backend-pipeline-design.md
+ M docs/backend-rtl-spec.md
+ M docs/backend-timing-contract.md
+ M docs/backend-v1-rtl-spec.md
+ M docs/tasks/SOC-2-bram-report.md
+ M docs/tasks/SOC-3b-wb-split.md
+ M docs/tasks/V1-BE-B01-ruling.md
+ M docs/tasks/V1-MEM-interfaces-report.md
+ M docs/v1-integration-notes.md
+ M tools/frozen.json
+?? .agents/
+?? AGENTS.md
+?? docs/cross-project/
+?? docs/figures/breeze-system.drawio
+?? docs/figures/breeze-system.svg
+?? docs/figures/dcache-load-store/
+?? docs/hardware-skill-context.md
+?? docs/hardware-skills-lock.json
+?? docs/hardware-skills.md
+?? docs/plans/2026-10-04-breeze-spike-cycle-model-mmu-ddr.md
+?? docs/tasks/SOC-3b-wb-split-report.md
+?? records/

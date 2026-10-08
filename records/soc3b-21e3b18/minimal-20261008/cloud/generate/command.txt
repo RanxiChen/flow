@@ -1,0 +1,1 @@
+sbt "runMain flow.top.GenerateBreezeCluster single gshare linux"

@@ -48,7 +48,7 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val predictionMiss = Bool()
 }
 
-/** Four-stage v1 backend. EX request acceptance, WB authorization, direct late writes. */
+/** Four-stage v1 backend. EX accepts, WB commits, W2/lateReg write the RFs. */
 class BreezeBackend(
     val cfg: BackendConfig = BackendConfig(), val enabledebug: Boolean = false,
     val hartId: Int = 0, val useFASE: Boolean = false
@@ -105,7 +105,6 @@ class BreezeBackend(
   val sleeping = RegInit(false.B)
   val stopped = RegInit(false.B)
   val sfenceSent = RegInit(false.B)
-  val deferredLoad = RegInit(false.B)
   val nextPc = RegInit(0.U(64.W))
   val wbKill = Wire(Bool())
   val exAdvance = Wire(Bool())
@@ -181,8 +180,8 @@ class BreezeBackend(
   writeback.io.mul <> mulUnit.io.result
   writeback.io.fp <> fpUnit.io.result
   io.hartFatal := writeback.io.hartFatal
-  regFile.io.rs1_addr := Mux(deferredLoad, ex.rs1_addr, rs1)
-  regFile.io.rs2_addr := Mux(deferredLoad, ex.rs2_addr, rs2)
+  regFile.io.rs1_addr := rs1
+  regFile.io.rs2_addr := rs2
   regFile.io.rd_en := writeback.io.gprWrite.valid
   regFile.io.rd_addr := writeback.io.gprWrite.bits.idx
   regFile.io.rd_data := writeback.io.gprWrite.bits.data
@@ -211,8 +210,9 @@ class BreezeBackend(
   val exBank = exFp.valid && exFp.writesFpr
   val exWrites = Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
   for ((stage, index) <- Seq(mem -> 1, wb -> 2)) {
-    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem) &&
-      (index != 2).B || ((index == 2).B && wb.valid && (wb.mul || wb.div || wb.fp || (wb.mem && !wbDone)))
+    // A WB memory destination remains protected through its whole S2 cycle,
+    // independently of Done/Mshr/Exc. Next cycle W2 writes or busy takes over.
+    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem)
     scoreboard.io.pipe(index).bits.rd := stage.rd
     scoreboard.io.pipe(index).bits.source := Mux(stage.mem, LongSource.L1D.U,
       Mux(stage.div, LongSource.DIV.U, Mux(stage.mul, LongSource.MUL.U, LongSource.FPU.U)))
@@ -224,37 +224,22 @@ class BreezeBackend(
   scoreboard.io.pipe(0).bits.rd.isFp := exBank
   scoreboard.io.pipe(0).bits.source := Mux(exMem, LongSource.L1D.U,
     Mux(exDiv, LongSource.DIV.U, Mux(exMul, LongSource.MUL.U, LongSource.FPU.U)))
-  // Optional hit bypass relaxes only the MEM Load RAW check. WAW still waits.
-  if (cfg.loadUseBypass) {
-    val waw = idWrites && idBank === mem.rd.isFp && rd === mem.rd.idx
-    when(mem.valid && mem.mem && mem.load && !mem.rd.isFp && !waw && !idCsr) {
-      scoreboard.io.pipe(1).valid := false.B
-    }
+  // loadUseBypass remains a configuration compatibility field, with no effect.
+  // WB bypass eligibility uses registered metadata only, never S2/commit/done.
+  // A memory result becomes available through W2, not the WB response bus.
+  def exRead(addr: UInt, saved: UInt, fp: Boolean = false): UInt = {
+    def matches(dest: L1DDestination): Bool =
+      dest.isFp === fp.B && (fp.B || dest.idx =/= 0.U) && addr === dest.idx
+    val fromW2 = writeback.io.w2.valid && matches(writeback.io.w2.bits.rd)
+    val fromWb = wb.valid && wb.writes && !wb.mem && !wb.mul && !wb.div && !wb.fp && matches(wb.rd)
+    val fromMem = mem.valid && mem.writes && !mem.mem && !mem.mul && !mem.div && !mem.fp &&
+      mem.csrCmd === CSR_CMD.NOP.U && matches(mem.rd)
+    Mux(fromMem, mem.data, Mux(fromWb, wb.data, Mux(fromW2, writeback.io.w2.bits.data, saved)))
   }
-
-  def exRead(addr: UInt, saved: UInt): UInt = {
-    val fromWb = wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U && addr === wb.rd.idx
-    val fromMem = mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U &&
-      !mem.mem && !mem.mul && !mem.div && !mem.fp && mem.csrCmd === CSR_CMD.NOP.U && addr === mem.rd.idx
-    Mux(fromMem, mem.data, Mux(fromWb, wbData, saved))
-  }
-  val exGpr1Used = Mux(exFp.valid, exFp.usesGpr1,
-    ex.ctrl.sel_alu1 === SEL_ALU1.RS1.U || ex.ctrl.bru_inst ||
-      ex.ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ex.ctrl.is_sfence_vma)
-  val exGpr2Used = !exFp.valid && (ex.ctrl.sel_alu2 === SEL_ALU2.RS2.U || ex.ctrl.bru_inst ||
-    ex.ctrl.mem_op === BreezeMemOp.Store || ex.ctrl.mem_op === BreezeMemOp.Sc || ex.ctrl.mem_op === BreezeMemOp.Amo)
-  val bypassMissWait = cfg.loadUseBypass.B && ex.valid && wbMiss && wb.load && !wb.rd.isFp && wb.rd.idx =/= 0.U &&
-    ((exGpr1Used && ex.rs1_addr === wb.rd.idx) || (exGpr2Used && ex.rs2_addr === wb.rd.idx))
-  val deferredBusy = (exGpr1Used && scoreboard.io.gprBusy(ex.rs1_addr)) ||
-    (exGpr2Used && scoreboard.io.gprBusy(ex.rs2_addr))
-  val deferredWait = bypassMissWait || (deferredLoad && deferredBusy)
-  // A bypass-enabled dependent of a miss stays in EX. Reuse the two RF read
-  // ports while ID is closed; capture write-through into existing EX operands.
-  // No background-result-to-EX mux or extra result storage is added.
-  val exR1 = Mux(deferredLoad, regFile.io.rs1_data, exRead(ex.rs1_addr, ex.rs1_data))
-  val exR2 = Mux(deferredLoad, regFile.io.rs2_data, exRead(ex.rs2_addr, ex.rs2_data))
-  when(bypassMissWait) { deferredLoad := true.B }
-  when(deferredLoad && !deferredBusy || wbKill) { deferredLoad := false.B }
+  val exR1 = exRead(ex.rs1_addr, ex.rs1_data)
+  val exR2 = exRead(ex.rs2_addr, ex.rs2_data)
+  val exFprRead = VecInit(Seq(exRead(ex.rs1_addr, exFpr(0), fp = true),
+    exRead(ex.rs2_addr, exFpr(1), fp = true), exRead(ex.inst(31,27), exFpr(2), fp = true)))
   alu.io.alu_op := ex.ctrl.alu_op
   alu.io.is_w := ex.ctrl.is_w
   alu.io.alu_in1 := MuxLookup(ex.ctrl.sel_alu1, 0.U)(Seq(
@@ -279,7 +264,7 @@ class BreezeBackend(
   val atomicAddress = ex.ctrl.mem_op === BreezeMemOp.Lr || ex.ctrl.mem_op === BreezeMemOp.Sc ||
     ex.ctrl.mem_op === BreezeMemOp.Amo
   val address = exR1 + Mux(atomicAddress, 0.U, Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm))
-  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped && !deferredWait
+  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped
   io.l1d.req.valid := exMem && allowEx
   val req = io.l1d.req.bits
   req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
@@ -293,7 +278,7 @@ class BreezeBackend(
   req.amoFunc := ex.ctrl.amo_func
   req.aq := ex.ctrl.amo_aq
   req.rl := ex.ctrl.amo_rl
-  req.wdata := Mux(exFp.isStore, exFpr(1), exR2)
+  req.wdata := Mux(exFp.isStore, exFprRead(1), exR2)
   req.rd.idx := ex.rd_addr
   req.rd.isFp := exBank
   req.isFlw := exFp.isLoad && !exFp.isDouble
@@ -338,10 +323,10 @@ class BreezeBackend(
   divUnit.io.req.bits.fastData := Mux(wordDiv, Cat(Fill(32, fast(31)), fast(31,0)), fast)
   fpUnit.io.req.valid := exFpLong && allowEx
   val fpIn = fpUnit.io.req.bits
-  val fp1 = Mux(exFp.usesGpr1, exR1, exFpr(0))
+  val fp1 = Mux(exFp.usesGpr1, exR1, exFprRead(0))
   fpIn.operandA := Mux(exFp.operation === BreezeFpOp.ADD.U, 0.U, fp1)
-  fpIn.operandB := Mux(exFp.operation === BreezeFpOp.ADD.U, fp1, exFpr(1))
-  fpIn.operandC := Mux(exFp.operation === BreezeFpOp.ADD.U, exFpr(1), exFpr(2))
+  fpIn.operandB := Mux(exFp.operation === BreezeFpOp.ADD.U, fp1, exFprRead(1))
+  fpIn.operandC := Mux(exFp.operation === BreezeFpOp.ADD.U, exFprRead(1), exFprRead(2))
   fpIn.rm := Mux(exFp.usesArchitecturalRm && exFp.rm === 7.U, csrFile.io.frm, exFp.rm)
   fpIn.operation := exFp.operation
   fpIn.opMod := exFp.opMod
@@ -436,16 +421,18 @@ class BreezeBackend(
     (mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U, mem.rd.idx),
     (wb.valid && wb.writes && !wb.rd.isFp && wb.rd.idx =/= 0.U, wb.rd.idx)
   ).map { case (v,r) => v && ((oldCsrUsesRs1 && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
-  // Ordinary CSR/local-FP destinations are not EX bypassable; wait for WB write-through.
+  // Conservative CSR/local-FP protection continues through WB; W2 RF
+  // write-through then lets ID capture the new value without a W2 hazard check.
   val ordinaryHazard = Seq((ex.valid, exWrites, exBank, ex.rd_addr, ex.ctrl.sel_wb === SEL_WB.CSR.U || exFp.valid),
-    (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp)).map {
+    (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp),
+    (wb.valid, wb.writes, wb.rd.isFp, wb.rd.idx, wb.csrCmd =/= CSR_CMD.NOP.U || wb.rd.isFp)).map {
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
   io.fetchBuffer.ready := exAdvance && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !serialInFlight && !deferredLoad && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
-  when(reset.asBool || wbKill || branchRedirect) { ex.valid := false.B }
+  when(reset.asBool || wbKill || branchRedirect || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) {
       ex.valid := idLeave
       when(idLeave) {
@@ -482,8 +469,9 @@ class BreezeBackend(
     }.otherwise {
       ex.rs1_data := exR1
       ex.rs2_data := exR2
+      exFpr := exFprRead
     }
-  when(reset.asBool || wbKill) { mem.valid := false.B; wb.valid := false.B }
+  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; wb.valid := false.B }
     .elsewhen(!downHold) {
       // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
       mem := 0.U.asTypeOf(mem)
@@ -497,7 +485,7 @@ class BreezeBackend(
       mem.rd.isFp := exBank
       mem.writes := exWrites
       val local = Mux(exFp.localOp === BreezeFpLocalOp.FMV_X.U,
-        Mux(exFp.isDouble, exFpr(0), Cat(Fill(32, exFpr(0)(31)), exFpr(0)(31,0))),
+        Mux(exFp.isDouble, exFprRead(0), Cat(Fill(32, exFprRead(0)(31)), exFprRead(0)(31,0))),
         Mux(exFp.isDouble, exR1, Cat("hffffffff".U(32.W), exR1(31,0))))
       mem.data := Mux(exFp.localOp =/= BreezeFpLocalOp.NONE.U, local, alu.io.alu_out)
       mem.address := Mux(ex.ctrl.is_sfence_vma, exR1, address)
@@ -565,7 +553,7 @@ class BreezeBackend(
   io.observe.gprBusy := scoreboard.io.gprBusy
   io.observe.fprBusy := scoreboard.io.fprBusy
   io.observe.memHold := downHold
-  io.observe.exHold := downHold || resourceWait || deferredWait
+  io.observe.exHold := downHold || resourceWait
   io.observe.grant := writeback.io.grant
   io.observe.fpIn := fpUnit.io.req.fire
   io.observe.fpOut := fpUnit.io.result.fire
@@ -587,7 +575,7 @@ class BreezeBackend(
     t.lateWriteIsFp := writeback.io.clear.bits.isFp
     t.lateWriteRd := writeback.io.clear.bits.idx
     t.lateWriteData := Mux(writeback.io.clear.bits.isFp, writeback.io.fprWrite.bits.data, writeback.io.gprWrite.bits.data)
-    t.lateWriteError := io.l1d.late.fire && io.l1d.late.bits.error
+    t.lateWriteError := writeback.io.lateWriteError
     t.memEn := wb.mem && wb.inst(6,0) =/= OPCODE.MISC_MEM; t.memAddr := wb.address
     t.memAlignedAddr := wb.address & "hfffffffffffffff8".U
     t.memIsWrite := wb.mem && (wb.inst(6,0) === OPCODE.STORE || wb.inst(6,0) === OPCODE.STORE_FP ||
@@ -631,7 +619,7 @@ class BreezeBackend(
     }
   }
   val pastDownHold = RegNext(downHold, false.B)
-  val pastKill = RegNext(wbKill, false.B)
+  val pastKill = RegNext(wbKill || io.hartFatal, false.B)
   val pastActive = RegNext(!reset.asBool, false.B)
   val heldMem = RegNext(mem.asUInt)
   val heldWb = RegNext(wb.asUInt)
@@ -639,6 +627,10 @@ class BreezeBackend(
     assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
   }
   when(!reset.asBool) {
+    when(io.hartFatal) {
+      assert(!(idLeave || wbCommit || io.l1d.req.fire || mulUnit.io.req.fire ||
+        divUnit.io.req.fire || fpUnit.io.req.fire), "[fatal] new issue or ordinary retirement")
+    }
     assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[S15] L1D resp is not aligned to WB")
     assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
     assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")

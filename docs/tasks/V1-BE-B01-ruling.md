@@ -1,5 +1,7 @@
 # V1-BE B01 裁定及 ND01/ND02
 
+> 2026-10-08 SOC-3b 适用说明：本文保留旧 T01/B01/集成基线。普通 WB 当拍写口、late.fire 等同 RF 写回、6 次冲突、S2 load bypass、fatal 接收当拍生效等旧后端条款，已由用户最新裁定覆盖。当前后端实现以 [`backend-timing-contract.md`](../backend-timing-contract.md) §4、[`backend-v1-rtl-spec.md`](../backend-v1-rtl-spec.md) 和 [`SOC-3b 任务`](../tasks/SOC-3b-wb-split.md) 为准；未覆盖的协议/安全规则沿用。W2 无条件完成、不碰 busy，后台来源为 lateReg/DIV/MUL/FPU；FENCE.I/SFENCE 不额外等待 W2/lateReg。硬件执行主机以每次重读的共享 simulation-host.md 为准，不能沿用本文历史 Alan-only 规则。
+
 状态：Claude 裁定，用户 2026-10-06 批准。冻结文件已按本裁定修订并重新登记哈希（`tools/frozen.json`）。codex 从本提交起继续 [`V1-BE-backend-spec-and-rtl.md`](V1-BE-backend-spec-and-rtl.md)，任务书其余规则不变。
 
 ## 1. B01 结论

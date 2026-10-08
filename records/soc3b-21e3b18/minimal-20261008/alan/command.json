@@ -1,0 +1,27 @@
+{
+  "source_sha": "21e3b187f0eea5d4739929a92b2f71e46761f719",
+  "host": "Alan",
+  "hostname": "chen-System-Product-Name",
+  "cwd": "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc",
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=15s",
+    "30m",
+    "nice",
+    "-n",
+    "10",
+    "/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado",
+    "-mode",
+    "batch",
+    "-source",
+    "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/synth.tcl",
+    "-log",
+    "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/vivado.log",
+    "-journal",
+    "/home/chen/FUN/flow-runs/soc3b-21e3b18/cluster-ooc/vivado.jou"
+  ],
+  "started_utc": "2026-10-08T10:18:07.236395+00:00",
+  "source_manifest_sha256": "f661eea3bf05b82db044d04ffc7d3e3c0a1ad238a71d74d2d5f6556655ff162a",
+  "configuration": "hangThresholdCycles=10000000\nbus=axi\nprofile=single\npreset=gshare\nprivilege=linux\ntandem=false\ndebug=false\nplatformSha256=acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68\nnCores=1\nlineBytes=32\nl1Sets=128\nl1dWays=4\nl1iWays=4\nl2Ways=8\nl2BytesPerCore=65536\nl2Slots=2\nidBits=1\n"
+}

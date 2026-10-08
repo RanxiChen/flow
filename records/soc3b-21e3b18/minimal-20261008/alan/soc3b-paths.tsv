@@ -1,0 +1,10 @@
+class	objects	paths	worst_slack	logic_levels	status
+forbidden-writeport	0	0	NA	NA	optimized_or_unmapped_use_RTL_fanin
+forbidden-result-ready	0	0	NA	NA	optimized_or_unmapped_use_RTL_fanin
+forbidden-actual-clear	0	0	NA	NA	optimized_or_unmapped_use_RTL_fanin
+forbidden-RAW-WAW	0	0	NA	NA	optimized_or_unmapped_use_RTL_fanin
+allowed-W2-input	71	20	2.085	23	allowed_endpoint_review
+allowed-HPM-input	8	8	-3.644	43	allowed_endpoint_review
+allowed-hold-cancel	3	3	-2.330	38	allowed_endpoint_review
+allowed-Mshr-busy	63	20	1.544	26	allowed_endpoint_review
+EX-data-with-hold-review	320	20	-2.821	38	allowed_endpoint_review

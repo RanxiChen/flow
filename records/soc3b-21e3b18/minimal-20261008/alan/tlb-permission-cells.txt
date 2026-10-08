@@ -1,0 +1,6 @@
+start_count=3501 endpoint_count=5
+l1d/cpu2_pmaAllowed_reg
+l1d/cpu2_pmaAmoOk_reg
+l1d/cpu2_pmpAllowed_reg
+l1d/cpu2_pmaDevice_reg
+l1d/cpu2_highAddress_reg

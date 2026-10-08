@@ -1,0 +1,610 @@
+diff --git a/design/src/main/scala/backend/BreezeBackend.scala b/design/src/main/scala/backend/BreezeBackend.scala
+index 4e3ab82..565da0f 100644
+--- a/design/src/main/scala/backend/BreezeBackend.scala
++++ b/design/src/main/scala/backend/BreezeBackend.scala
+@@ -48,7 +48,7 @@ class Stage(val cfg: BackendConfig) extends Bundle {
+   val predictionMiss = Bool()
+ }
+ 
+-/** Four-stage v1 backend. EX request acceptance, WB authorization, direct late writes. */
++/** Four-stage v1 backend. EX accepts, WB commits, W2/lateReg write the RFs. */
+ class BreezeBackend(
+     val cfg: BackendConfig = BackendConfig(), val enabledebug: Boolean = false,
+     val hartId: Int = 0, val useFASE: Boolean = false
+@@ -105,7 +105,6 @@ class BreezeBackend(
+   val sleeping = RegInit(false.B)
+   val stopped = RegInit(false.B)
+   val sfenceSent = RegInit(false.B)
+-  val deferredLoad = RegInit(false.B)
+   val nextPc = RegInit(0.U(64.W))
+   val wbKill = Wire(Bool())
+   val exAdvance = Wire(Bool())
+@@ -181,8 +180,8 @@ class BreezeBackend(
+   writeback.io.mul <> mulUnit.io.result
+   writeback.io.fp <> fpUnit.io.result
+   io.hartFatal := writeback.io.hartFatal
+-  regFile.io.rs1_addr := Mux(deferredLoad, ex.rs1_addr, rs1)
+-  regFile.io.rs2_addr := Mux(deferredLoad, ex.rs2_addr, rs2)
++  regFile.io.rs1_addr := rs1
++  regFile.io.rs2_addr := rs2
+   regFile.io.rd_en := writeback.io.gprWrite.valid
+   regFile.io.rd_addr := writeback.io.gprWrite.bits.idx
+   regFile.io.rd_data := writeback.io.gprWrite.bits.data
+@@ -211,8 +210,9 @@ class BreezeBackend(
+   val exBank = exFp.valid && exFp.writesFpr
+   val exWrites = Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
+   for ((stage, index) <- Seq(mem -> 1, wb -> 2)) {
+-    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem) &&
+-      (index != 2).B || ((index == 2).B && wb.valid && (wb.mul || wb.div || wb.fp || (wb.mem && !wbDone)))
++    // A WB memory destination remains protected through its whole S2 cycle,
++    // independently of Done/Mshr/Exc. Next cycle W2 writes or busy takes over.
++    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem)
+     scoreboard.io.pipe(index).bits.rd := stage.rd
+     scoreboard.io.pipe(index).bits.source := Mux(stage.mem, LongSource.L1D.U,
+       Mux(stage.div, LongSource.DIV.U, Mux(stage.mul, LongSource.MUL.U, LongSource.FPU.U)))
+@@ -224,37 +224,22 @@ class BreezeBackend(
+   scoreboard.io.pipe(0).bits.rd.isFp := exBank
+   scoreboard.io.pipe(0).bits.source := Mux(exMem, LongSource.L1D.U,
+     Mux(exDiv, LongSource.DIV.U, Mux(exMul, LongSource.MUL.U, LongSource.FPU.U)))
+-  // Optional hit bypass relaxes only the MEM Load RAW check. WAW still waits.
+-  if (cfg.loadUseBypass) {
+-    val waw = idWrites && idBank === mem.rd.isFp && rd === mem.rd.idx
+-    when(mem.valid && mem.mem && mem.load && !mem.rd.isFp && !waw && !idCsr) {
+-      scoreboard.io.pipe(1).valid := false.B
+-    }
+-  }
+-
+-  def exRead(addr: UInt, saved: UInt): UInt = {
+-    val fromWb = wbOrdinary && !wb.rd.isFp && wb.rd.idx =/= 0.U && addr === wb.rd.idx
+-    val fromMem = mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U &&
+-      !mem.mem && !mem.mul && !mem.div && !mem.fp && mem.csrCmd === CSR_CMD.NOP.U && addr === mem.rd.idx
+-    Mux(fromMem, mem.data, Mux(fromWb, wbData, saved))
++  // loadUseBypass remains a configuration compatibility field, with no effect.
++  // WB bypass eligibility uses registered metadata only, never S2/commit/done.
++  // A memory result becomes available through W2, not the WB response bus.
++  def exRead(addr: UInt, saved: UInt, fp: Boolean = false): UInt = {
++    def matches(dest: L1DDestination): Bool =
++      dest.isFp === fp.B && (fp.B || dest.idx =/= 0.U) && addr === dest.idx
++    val fromW2 = writeback.io.w2.valid && matches(writeback.io.w2.bits.rd)
++    val fromWb = wb.valid && wb.writes && !wb.mem && !wb.mul && !wb.div && !wb.fp && matches(wb.rd)
++    val fromMem = mem.valid && mem.writes && !mem.mem && !mem.mul && !mem.div && !mem.fp &&
++      mem.csrCmd === CSR_CMD.NOP.U && matches(mem.rd)
++    Mux(fromMem, mem.data, Mux(fromWb, wb.data, Mux(fromW2, writeback.io.w2.bits.data, saved)))
+   }
+-  val exGpr1Used = Mux(exFp.valid, exFp.usesGpr1,
+-    ex.ctrl.sel_alu1 === SEL_ALU1.RS1.U || ex.ctrl.bru_inst ||
+-      ex.ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ex.ctrl.is_sfence_vma)
+-  val exGpr2Used = !exFp.valid && (ex.ctrl.sel_alu2 === SEL_ALU2.RS2.U || ex.ctrl.bru_inst ||
+-    ex.ctrl.mem_op === BreezeMemOp.Store || ex.ctrl.mem_op === BreezeMemOp.Sc || ex.ctrl.mem_op === BreezeMemOp.Amo)
+-  val bypassMissWait = cfg.loadUseBypass.B && ex.valid && wbMiss && wb.load && !wb.rd.isFp && wb.rd.idx =/= 0.U &&
+-    ((exGpr1Used && ex.rs1_addr === wb.rd.idx) || (exGpr2Used && ex.rs2_addr === wb.rd.idx))
+-  val deferredBusy = (exGpr1Used && scoreboard.io.gprBusy(ex.rs1_addr)) ||
+-    (exGpr2Used && scoreboard.io.gprBusy(ex.rs2_addr))
+-  val deferredWait = bypassMissWait || (deferredLoad && deferredBusy)
+-  // A bypass-enabled dependent of a miss stays in EX. Reuse the two RF read
+-  // ports while ID is closed; capture write-through into existing EX operands.
+-  // No background-result-to-EX mux or extra result storage is added.
+-  val exR1 = Mux(deferredLoad, regFile.io.rs1_data, exRead(ex.rs1_addr, ex.rs1_data))
+-  val exR2 = Mux(deferredLoad, regFile.io.rs2_data, exRead(ex.rs2_addr, ex.rs2_data))
+-  when(bypassMissWait) { deferredLoad := true.B }
+-  when(deferredLoad && !deferredBusy || wbKill) { deferredLoad := false.B }
++  val exR1 = exRead(ex.rs1_addr, ex.rs1_data)
++  val exR2 = exRead(ex.rs2_addr, ex.rs2_data)
++  val exFprRead = VecInit(Seq(exRead(ex.rs1_addr, exFpr(0), fp = true),
++    exRead(ex.rs2_addr, exFpr(1), fp = true), exRead(ex.inst(31,27), exFpr(2), fp = true)))
+   alu.io.alu_op := ex.ctrl.alu_op
+   alu.io.is_w := ex.ctrl.is_w
+   alu.io.alu_in1 := MuxLookup(ex.ctrl.sel_alu1, 0.U)(Seq(
+@@ -279,7 +264,7 @@ class BreezeBackend(
+   val atomicAddress = ex.ctrl.mem_op === BreezeMemOp.Lr || ex.ctrl.mem_op === BreezeMemOp.Sc ||
+     ex.ctrl.mem_op === BreezeMemOp.Amo
+   val address = exR1 + Mux(atomicAddress, 0.U, Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm))
+-  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped && !deferredWait
++  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped
+   io.l1d.req.valid := exMem && allowEx
+   val req = io.l1d.req.bits
+   req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
+@@ -293,7 +278,7 @@ class BreezeBackend(
+   req.amoFunc := ex.ctrl.amo_func
+   req.aq := ex.ctrl.amo_aq
+   req.rl := ex.ctrl.amo_rl
+-  req.wdata := Mux(exFp.isStore, exFpr(1), exR2)
++  req.wdata := Mux(exFp.isStore, exFprRead(1), exR2)
+   req.rd.idx := ex.rd_addr
+   req.rd.isFp := exBank
+   req.isFlw := exFp.isLoad && !exFp.isDouble
+@@ -338,10 +323,10 @@ class BreezeBackend(
+   divUnit.io.req.bits.fastData := Mux(wordDiv, Cat(Fill(32, fast(31)), fast(31,0)), fast)
+   fpUnit.io.req.valid := exFpLong && allowEx
+   val fpIn = fpUnit.io.req.bits
+-  val fp1 = Mux(exFp.usesGpr1, exR1, exFpr(0))
++  val fp1 = Mux(exFp.usesGpr1, exR1, exFprRead(0))
+   fpIn.operandA := Mux(exFp.operation === BreezeFpOp.ADD.U, 0.U, fp1)
+-  fpIn.operandB := Mux(exFp.operation === BreezeFpOp.ADD.U, fp1, exFpr(1))
+-  fpIn.operandC := Mux(exFp.operation === BreezeFpOp.ADD.U, exFpr(1), exFpr(2))
++  fpIn.operandB := Mux(exFp.operation === BreezeFpOp.ADD.U, fp1, exFprRead(1))
++  fpIn.operandC := Mux(exFp.operation === BreezeFpOp.ADD.U, exFprRead(1), exFprRead(2))
+   fpIn.rm := Mux(exFp.usesArchitecturalRm && exFp.rm === 7.U, csrFile.io.frm, exFp.rm)
+   fpIn.operation := exFp.operation
+   fpIn.opMod := exFp.opMod
+@@ -436,16 +421,18 @@ class BreezeBackend(
+     (mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U, mem.rd.idx),
+     (wb.valid && wb.writes && !wb.rd.isFp && wb.rd.idx =/= 0.U, wb.rd.idx)
+   ).map { case (v,r) => v && ((oldCsrUsesRs1 && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
+-  // Ordinary CSR/local-FP destinations are not EX bypassable; wait for WB write-through.
++  // Conservative CSR/local-FP protection continues through WB; W2 RF
++  // write-through then lets ID capture the new value without a W2 hazard check.
+   val ordinaryHazard = Seq((ex.valid, exWrites, exBank, ex.rd_addr, ex.ctrl.sel_wb === SEL_WB.CSR.U || exFp.valid),
+-    (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp)).map {
++    (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp),
++    (wb.valid, wb.writes, wb.rd.isFp, wb.rd.idx, wb.csrCmd =/= CSR_CMD.NOP.U || wb.rd.isFp)).map {
+       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
+   }.reduce(_ || _)
+   io.fetchBuffer.ready := exAdvance && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
+-    !ordinaryHazard && !serialInFlight && !deferredLoad && !writeback.io.idStarve && !branchRedirect && !wbKill &&
++    !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
+   idLeave := io.fetchBuffer.fire
+-  when(reset.asBool || wbKill || branchRedirect) { ex.valid := false.B }
++  when(reset.asBool || wbKill || branchRedirect || io.hartFatal) { ex.valid := false.B }
+     .elsewhen(exAdvance) {
+       ex.valid := idLeave
+       when(idLeave) {
+@@ -482,8 +469,9 @@ class BreezeBackend(
+     }.otherwise {
+       ex.rs1_data := exR1
+       ex.rs2_data := exR2
++      exFpr := exFprRead
+     }
+-  when(reset.asBool || wbKill) { mem.valid := false.B; wb.valid := false.B }
++  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; wb.valid := false.B }
+     .elsewhen(!downHold) {
+       // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
+       mem := 0.U.asTypeOf(mem)
+@@ -497,7 +485,7 @@ class BreezeBackend(
+       mem.rd.isFp := exBank
+       mem.writes := exWrites
+       val local = Mux(exFp.localOp === BreezeFpLocalOp.FMV_X.U,
+-        Mux(exFp.isDouble, exFpr(0), Cat(Fill(32, exFpr(0)(31)), exFpr(0)(31,0))),
++        Mux(exFp.isDouble, exFprRead(0), Cat(Fill(32, exFprRead(0)(31)), exFprRead(0)(31,0))),
+         Mux(exFp.isDouble, exR1, Cat("hffffffff".U(32.W), exR1(31,0))))
+       mem.data := Mux(exFp.localOp =/= BreezeFpLocalOp.NONE.U, local, alu.io.alu_out)
+       mem.address := Mux(ex.ctrl.is_sfence_vma, exR1, address)
+@@ -565,7 +553,7 @@ class BreezeBackend(
+   io.observe.gprBusy := scoreboard.io.gprBusy
+   io.observe.fprBusy := scoreboard.io.fprBusy
+   io.observe.memHold := downHold
+-  io.observe.exHold := downHold || resourceWait || deferredWait
++  io.observe.exHold := downHold || resourceWait
+   io.observe.grant := writeback.io.grant
+   io.observe.fpIn := fpUnit.io.req.fire
+   io.observe.fpOut := fpUnit.io.result.fire
+@@ -587,7 +575,7 @@ class BreezeBackend(
+     t.lateWriteIsFp := writeback.io.clear.bits.isFp
+     t.lateWriteRd := writeback.io.clear.bits.idx
+     t.lateWriteData := Mux(writeback.io.clear.bits.isFp, writeback.io.fprWrite.bits.data, writeback.io.gprWrite.bits.data)
+-    t.lateWriteError := io.l1d.late.fire && io.l1d.late.bits.error
++    t.lateWriteError := writeback.io.lateWriteError
+     t.memEn := wb.mem && wb.inst(6,0) =/= OPCODE.MISC_MEM; t.memAddr := wb.address
+     t.memAlignedAddr := wb.address & "hfffffffffffffff8".U
+     t.memIsWrite := wb.mem && (wb.inst(6,0) === OPCODE.STORE || wb.inst(6,0) === OPCODE.STORE_FP ||
+@@ -631,7 +619,7 @@ class BreezeBackend(
+     }
+   }
+   val pastDownHold = RegNext(downHold, false.B)
+-  val pastKill = RegNext(wbKill, false.B)
++  val pastKill = RegNext(wbKill || io.hartFatal, false.B)
+   val pastActive = RegNext(!reset.asBool, false.B)
+   val heldMem = RegNext(mem.asUInt)
+   val heldWb = RegNext(wb.asUInt)
+@@ -639,6 +627,10 @@ class BreezeBackend(
+     assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
+   }
+   when(!reset.asBool) {
++    when(io.hartFatal) {
++      assert(!(idLeave || wbCommit || io.l1d.req.fire || mulUnit.io.req.fire ||
++        divUnit.io.req.fire || fpUnit.io.req.fire), "[fatal] new issue or ordinary retirement")
++    }
+     assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[S15] L1D resp is not aligned to WB")
+     assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
+     assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")
+diff --git a/design/src/main/scala/backend/Writeback.scala b/design/src/main/scala/backend/Writeback.scala
+index 5c40eba..a7c8d46 100644
+--- a/design/src/main/scala/backend/Writeback.scala
++++ b/design/src/main/scala/backend/Writeback.scala
+@@ -13,9 +13,15 @@ class RegisterWrite extends Bundle {
+   val idx = UInt(5.W)
+   val data = UInt(64.W)
+ }
++class OrdinaryResult extends Bundle {
++  val rd = new L1DDestination
++  val data = UInt(64.W)
++}
+ 
+-/** One background grant, L1D > DIV > MUL > FPU. No result storage.
+-  * Ordinary WB writes win their bank. Fairness bubbles originate only in ID.
++/** WB captures W2; L1D late captures a single lateReg without RF fall-through.
++  * W2 wins its bank, then one background grant: lateReg > DIV > MUL > FPU.
++  * Already committed writes survive all pipeline holds/kills and hartFatal.
++  * Fairness bubbles originate only in ID.
+   */
+ class Writeback extends Module {
+   val io = IO(new Bundle {
+@@ -24,6 +30,7 @@ class Writeback extends Module {
+     val mul = Flipped(Decoupled(new IntMduResult))
+     val fp = Flipped(Decoupled(new FpResult))
+     val ordinary = Flipped(Valid(new FpResult))
++    val w2 = Output(Valid(new OrdinaryResult))
+     val gprWrite = Valid(new RegisterWrite)
+     val fprWrite = Valid(new RegisterWrite)
+     val clear = Valid(new L1DDestination)
+@@ -34,17 +41,31 @@ class Writeback extends Module {
+     val starvation = Output(Vec(2, UInt(2.W)))
+     val bubbleInFlight = Output(Vec(2, Bool()))
+     val hartFatal = Output(Bool())
++    val lateWriteError = Output(Bool())
+   })
+-  val valids = VecInit(Seq(io.late.valid, io.div.valid, io.mul.valid, io.fp.valid))
+-  val banks = VecInit(Seq(io.late.bits.rd.isFp, false.B, false.B, io.fp.bits.rd.isFp))
+-  val ordinaryWrite = io.ordinary.valid && (io.ordinary.bits.rd.isFp || io.ordinary.bits.rd.idx =/= 0.U)
+-  val needsPort = VecInit(Seq(!io.late.bits.error && (io.late.bits.rd.isFp || io.late.bits.rd.idx =/= 0.U),
++  val w2 = RegInit(0.U.asTypeOf(Valid(new OrdinaryResult)))
++  val lateReg = RegInit(0.U.asTypeOf(Valid(new L1DLate)))
++  // Consume W2 every cycle, even when the following WB is held or killed.
++  // The caller supplies only new, non-exceptional ordinary WB commits.
++  w2.valid := io.ordinary.valid && (io.ordinary.bits.rd.isFp || io.ordinary.bits.rd.idx =/= 0.U)
++  when(io.ordinary.valid) {
++    w2.bits.rd := io.ordinary.bits.rd
++    w2.bits.data := io.ordinary.bits.data
++  }
++  io.w2 := w2
++  val valids = VecInit(Seq(lateReg.valid, io.div.valid, io.mul.valid, io.fp.valid))
++  val banks = VecInit(Seq(lateReg.bits.rd.isFp, false.B, false.B, io.fp.bits.rd.isFp))
++  val ordinaryWrite = w2.valid
++  val needsPort = VecInit(Seq(!lateReg.bits.error && (lateReg.bits.rd.isFp || lateReg.bits.rd.idx =/= 0.U),
+     io.div.bits.rd =/= 0.U, io.mul.bits.rd =/= 0.U, io.fp.bits.rd.isFp || io.fp.bits.rd.idx =/= 0.U))
+   val eligible = VecInit((0 until 4).map(i => valids(i) &&
+-    !(needsPort(i) && ordinaryWrite && banks(i) === io.ordinary.bits.rd.isFp)))
++    !(needsPort(i) && ordinaryWrite && banks(i) === w2.bits.rd.isFp)))
+   val selected = PriorityEncoderOH(eligible.asUInt)
+   io.grant := selected
+-  io.late.ready := selected(0)
++  val lateRegGrant = selected(0)
++  io.late.ready := !lateReg.valid || lateRegGrant
++  lateReg.valid := (lateReg.valid && !lateRegGrant) || io.late.fire
++  when(io.late.fire) { lateReg.bits := io.late.bits }
+   io.div.ready := selected(1)
+   io.mul.ready := selected(2)
+   io.fp.ready := selected(3)
+@@ -62,27 +83,27 @@ class Writeback extends Module {
+     when(protect(bank)) { inFlight(bank) := true.B }
+     when(granted) { inFlight(bank) := false.B }
+   }
+-  // ID reads registers only: neither grant nor WB ordinaryWrite reaches this decision.
++  // ID reads only the registered starvation/protection state.
+   io.idStarve := protect.asUInt.orR
+   io.conflict := PopCount(conflicts)
+   io.starvation := starvation
+   io.bubbleInFlight := inFlight
+   val rd = Wire(new L1DDestination)
+-  rd.isFp := (selected(0) && io.late.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
+-  rd.idx := Mux1H(selected, Seq(io.late.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
+-  val data = Mux1H(selected, Seq(io.late.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
+-  val error = io.late.valid && io.late.bits.error
++  rd.isFp := (selected(0) && lateReg.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
++  rd.idx := Mux1H(selected, Seq(lateReg.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
++  val data = Mux1H(selected, Seq(lateReg.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
++  val error = lateReg.valid && lateReg.bits.error
+   val fatal = RegInit(false.B)
+   when(error) { fatal := true.B }
+   io.hartFatal := fatal || error
+-  val bgWrite = selected.orR && !error && (rd.isFp || rd.idx =/= 0.U)
+-  val normal = ordinaryWrite && !io.hartFatal
++  io.lateWriteError := lateRegGrant && lateReg.bits.error
++  val bgWrite = selected.orR && !io.lateWriteError && (rd.isFp || rd.idx =/= 0.U)
+   def write(fp: Boolean): Unit = {
+     val out = if (fp) io.fprWrite else io.gprWrite
+     val background = bgWrite && rd.isFp === fp.B
+-    out.valid := background || (normal && io.ordinary.bits.rd.isFp === fp.B)
+-    out.bits.idx := Mux(background, rd.idx, io.ordinary.bits.rd.idx)
+-    out.bits.data := Mux(background, data, io.ordinary.bits.data)
++    out.valid := background || (ordinaryWrite && w2.bits.rd.isFp === fp.B)
++    out.bits.idx := Mux(background, rd.idx, w2.bits.rd.idx)
++    out.bits.data := Mux(background, data, w2.bits.data)
+   }
+   write(false); write(true)
+   io.clear.valid := selected.orR && (rd.isFp || rd.idx =/= 0.U)
+@@ -92,11 +113,22 @@ class Writeback extends Module {
+   val pastActive = RegNext(!reset.asBool, false.B)
+   val wasLateBlocked = RegNext(io.late.valid && !io.late.ready, false.B)
+   val heldLate = RegNext(io.late.bits.asUInt)
++  val wasLateRegBlocked = RegNext(lateReg.valid && !lateRegGrant, false.B)
++  val heldLateReg = RegNext(lateReg.bits.asUInt)
+   when(pastActive && !reset.asBool && wasLateBlocked) {
+     assert(io.late.valid && io.late.bits.asUInt === heldLate, "[S07] stalled late result changed")
+   }
++  when(pastActive && !reset.asBool && wasLateRegBlocked) {
++    assert(lateReg.valid && lateReg.bits.asUInt === heldLateReg, "[S07] stalled lateReg changed")
++  }
+   when(!reset.asBool) {
+     assert(PopCount(selected) <= 1.U, "[S06] background grants not one-hot")
++    assert(!lateRegGrant || lateReg.valid, "[S08] lateReg completion without a buffered item")
++    when(w2.valid) {
++      val out = Mux(w2.bits.rd.isFp, io.fprWrite, io.gprWrite)
++      assert(out.valid && out.bits.idx === w2.bits.rd.idx && out.bits.data === w2.bits.data,
++        "[W2] committed ordinary write did not complete")
++    }
+     assert(!io.gprWrite.valid || io.gprWrite.bits.idx =/= 0.U, "[S01] physical x0 write")
+     assert(io.clear.valid === (selected.orR && (rd.isFp || rd.idx =/= 0.U)),
+       "[S08] clear must equal actual completion, including fatal late")
+diff --git a/design/src/test/scala/backend/BackendContractSpec.scala b/design/src/test/scala/backend/BackendContractSpec.scala
+index 3bd7b1e..20ade79 100644
+--- a/design/src/test/scala/backend/BackendContractSpec.scala
++++ b/design/src/test/scala/backend/BackendContractSpec.scala
+@@ -137,6 +137,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01)
+     val o = d.io.observe
+     if(bool(o.exFire)) record("ex",uint(o.exPc))
+     if(bool(o.commit)) record("commit",uint(o.commitPc))
++    if(bool(d.io.hartFatal)) record("fatal")
+     if(bool(o.gprWrite.valid)) record("gpr",r=uint(o.gprWrite.bits.idx).toInt,data=uint(o.gprWrite.bits.data))
+     if(bool(o.fprWrite.valid)) record("fpr",r=uint(o.fprWrite.bits.idx).toInt,data=uint(o.fprWrite.bits.data))
+     if(bool(o.fpIn)) record("fpIn",uint(o.exPc))
+@@ -209,13 +210,11 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+   }}
+   "T02_load_use_default" in { check() { m =>
+     val p=m.run(Seq(ld(1,0),add(3,1)),10); val e=m.at("ex",p(0))
+-    m.at("req",p(0)) mustBe e; m.written(1) mustBe e+2; m.at("ex",p(1)) mustBe e+3
++    m.at("req",p(0)) mustBe e; m.written(1) mustBe e+3; m.at("ex",p(1)) mustBe e+4
++    m.at("commit",p(0)) mustBe e+2; m.at("id",p(1)) mustBe e+3
+     m.all("resp").head mustBe e+2; m.writes(3).head.data mustBe 0x1234
+   }}
+-  "T02b_load_use_S2_EX_parameter" in { check(true) { m =>
+-    val p=m.run(Seq(ld(1,0),add(3,1)),10); val e=m.at("ex",p(0))
+-    m.written(1) mustBe e+2; m.at("ex",p(1)) mustBe e+2; m.writes(3).head.data mustBe 0x1234
+-  }}
++  // T02b was retired by SOC-3b; loadUseBypass has no functional effect.
+   "T03_independent_ALU_after_load" in { check() { m =>
+     val p=m.run(Seq(ld(1,0),add(3)),10); m.at("ex",p(1)) mustBe m.at("ex",p(0))+1
+   }}
+@@ -254,22 +253,22 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+   "T11_refill_R_plus_7_dependency" in { check() { m =>
+     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),add(2,1)),55)
+     val r=m.all("rspData").head
+-    m.all("late") mustBe Seq(r+7); m.written(1) mustBe r+7; m.at("id",p(1)) mustBe r+7
++    m.all("late") mustBe Seq(r+7); m.written(1) mustBe r+8; m.at("id",p(1)) mustBe r+8
+   }}
+   "T12_WB_wins_late_without_hold" in { check() { m =>
+     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
+     for(_ <- 0 until 4) m.issue(nop)
+     val n=m.cycle+3
+     val p=m.run(Seq(add(2),nop),12)
+-    m.at("commit",p.head) mustBe n; m.written(2) mustBe n
+-    m.all("late") mustBe Seq(n+1); m.all("hold") mustBe empty
+-    m.all("conflict") mustBe Seq(n)
++    m.at("commit",p.head) mustBe n; m.written(2) mustBe n+1; m.written(1) mustBe n+2
++    m.all("late") mustBe Seq(n); m.all("hold") mustBe empty
++    m.all("conflict") mustBe Seq(n+1)
+   }}
+   "T13_four_sources_fixed_priority" in { check() { m =>
+     // DIV takes 32 real arithmetic cycles. MUL E+4 and CLASSIFY's
+-    // committed return E+3 are aligned to it; L1D replay is scheduled at N.
++    // committed return E+3 are aligned to it; L1D late is received at N-1.
+     m.enableFp(); m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
+-    m.returnDelay=26; m.misses += BigInt(32); m.issue(ld(1,32))
++    m.returnDelay=25; m.misses += BigInt(32); m.issue(ld(1,32))
+     val div=m.issue(mdu(2,10,11,true))
+     val e=m.cycle // DIV's EX is this cycle
+     for(_ <- 0 until 29) m.issue(nop)
+@@ -322,19 +321,20 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+   "T21_ID_single_bubble_bounds_starvation" in { check() { m =>
+     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 9) m.issue(add(20))
+     val c=m.cycle; m.run(Seq.fill(16)(add(20)),15)
+-    m.all("late") mustBe Seq(c+6)
+-    val leaves=m.all("id").filter(x=>x>=c && x<=c+6)
+-    leaves mustBe (c to c+6).filter(_!=c+3)
+-    m.all("conflict").filter(_>=c) mustBe (c until c+6)
++    m.all("late") mustBe Seq(c); m.written(1) mustBe c+8
++    val leaves=m.all("id").filter(x=>x>=c && x<=c+8)
++    leaves mustBe (c to c+8).filter(_!=c+4)
++    m.all("conflict").filter(_>=c) mustBe (c+1 to c+7)
+   }}
+   "T22_B01_miss_ADD_hit_response_alignment" in { check() { m =>
+     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
+     for(_ <- 0 until 4) m.issue(nop)
+     val n=m.cycle+3; val p=m.run(Seq(add(2),ld(3,64),nop),15)
+-    m.at("commit",p(0)) mustBe n; m.written(2) mustBe n
+-    m.at("commit",p(1)) mustBe n+1; m.written(3) mustBe n+1
++    m.at("commit",p(0)) mustBe n; m.written(2) mustBe n+1
++    m.at("commit",p(1)) mustBe n+1; m.written(3) mustBe n+2
+     m.events.filter(e=>e.kind=="resp" && e.rd==3).map(_.cycle).toSeq mustBe Seq(n+1)
+-    m.all("late") mustBe Seq(n+2); m.all("hold") mustBe empty; m.all("conflict") mustBe Seq(n,n+1)
++    m.all("late") mustBe Seq(n); m.written(1) mustBe n+3
++    m.all("hold") mustBe empty; m.all("conflict") mustBe Seq(n+1,n+2)
+   }}
+   "P01_sixteen_loads_II1" in { check() { m =>
+     val p=m.run((1 to 16).map(r=>ld(r,64+r*8)),10)
+@@ -367,12 +367,12 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+     m.values(64)=mask; m.run(Seq(ld(10,64),addi(11,0,1)),5)
+     m.misses += BigInt(0)
+     val p=m.run(Seq(ld(1,0),mdu(2,10,11,true),fp(1,10,11,div=true))++Seq.fill(20)(add(20)),85)
+-    // Contract P06: (1) overlap, (2) gaps only at x1/x2 background GPR writes, one cycle each, (3) one write each.
++    // Contract P06: (1) overlap, (2) gaps one cycle before x1/x2 background GPR writes, (3) one write each.
+     val c=p.drop(3).map(m.at("commit",_))
+     val bg=Seq(m.written(1),m.written(2),m.written(1,true))
+     c.head must be < bg.min
+     val gaps=(c.head to c.last).filterNot(c.contains).toSet
+-    gaps mustBe Seq(m.written(1),m.written(2)).filter(w=>w>c.head && w<c.last).toSet
++    gaps mustBe Seq(m.written(1),m.written(2)).map(_-1).filter(w=>w>c.head && w<c.last).toSet
+     c.sliding(2).foreach(q=> if(q.size==2) (q(1)-q(0)) must be <= 2)
+     m.d.io.observe.gprBusy.expect(0.U); m.d.io.observe.fprBusy.expect(0.U)
+   }}
+@@ -409,12 +409,13 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+     (1 to 13).foreach(r=>m.writes(r).size mustBe 1)
+     m.d.io.observe.gprBusy.expect(0.U)
+   }}
+-  "S02b_optional_bypass_miss_keeps_dependent_in_EX" in { check(true) { m =>
++  "S02b_compatibility_parameter_miss_preserves_dependency" in { check(true) { m =>
+     m.misses += BigInt(0); m.values(0)=23
+     val p=m.run(Seq(ld(1,0),add(2,1,1),add(3,2)),65)
+     m.writes(2).head.data mustBe 46; m.writes(3).head.data mustBe 46
+     m.written(2) must be > m.written(1)
+     m.all("hold") mustBe empty
++    m.at("id",p(1)) mustBe m.written(1)
+   }}
+   "S01_S08_f0_and_cross_bank_RAW_WAW" in { check() { m =>
+     m.enableFp(); m.values(256)=BigInt("3ff0000000000000",16)
+@@ -428,14 +429,42 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
+   "S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV" in { check() { m =>
+     m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
+     m.returnDelay=0; m.misses += BigInt(64)
+-    m.issue(mdu(5,10,11,true)); m.issue(ld(1,64)); m.issue(nop); m.issue(nop); m.issue(nop)
++    m.issue(mdu(5,10,11,true)); m.issue(ld(1,64)); m.issue(nop); m.issue(nop)
++    for(_ <- 0 until 4) m.issue(nop)
+     m.lateError=true
++    val n=m.cycle+3
++    val ordinary=m.issue(addi(20,0,29))
++    for(_ <- 0 until 3) m.step(Some(m.pc -> addi(21,0,31)))
+     for(_ <- 0 until 50) m.step()
++    m.all("late") mustBe Seq(n); m.all("fatal").head mustBe n+1
++    m.at("commit",ordinary) mustBe n; m.written(20) mustBe n+1
++    m.writes(20).head.data mustBe 29; m.writes(21) mustBe empty
++    m.all("commit").filter(_>n) mustBe empty; m.all("id").filter(_>n) mustBe empty
+     m.d.io.hartFatal.expect(true.B); m.d.io.fetchBuffer.ready.expect(false.B)
+     m.all("redirect") mustBe empty; m.writes(1) mustBe empty; m.writes(5).size mustBe 1
+     m.d.io.observe.gprBusy.expect(0.U)
+   }}
+ 
++  "SOC3b_held_EX_captures_MEM_WB_W2_and_youngest_value" in {
++    // Reuse one elaboration; a second DIV waits in EX while its ordinary
++    // producer traverses MEM/WB/W2 and disappears. Vary their separation.
++    simulate(new BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux), enabledebug=true)) { d =>
++      for(gap <- 0 to 2) {
++        val m=new Environment(d); m.reset()
++        m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
++        val p=m.run(Seq(mdu(5,10,11,true),addi(12,0,10),addi(12,0,21)) ++
++          Seq.fill(gap)(nop) ++ Seq(mdu(6,12,11,true)),85)
++        withClue(s"producer gap=$gap: ") {
++          m.at("divIn",p.last) must be > m.at("id",p.last)+3
++          m.writes(12).map(_.data).toSeq mustBe Seq(BigInt(10),BigInt(21))
++          m.writes(6).map(_.data).toSeq mustBe Seq(BigInt(21))
++          m.writes(5).map(_.data).toSeq mustBe Seq(mask)
++          m.d.io.observe.gprBusy.expect(0.U)
++        }
++      }
++    }
++  }
++
+   "S09_BTB_training_waits_for_held_WB_once" in { check() { m =>
+     m.holdUntil=8
+     m.issue(ld(1,0)); m.issue(BigInt(0x463)) // beq x0,x0,+8
+diff --git a/design/src/test/scala/backend/WritebackSpec.scala b/design/src/test/scala/backend/WritebackSpec.scala
+index d77ad6d..0ad7223 100644
+--- a/design/src/test/scala/backend/WritebackSpec.scala
++++ b/design/src/test/scala/backend/WritebackSpec.scala
+@@ -20,26 +20,35 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
+   "T12_component_T13_component_S06: fixed priority, four consecutive writes, WB priority without pipeline hold" in {
+     simulate(new Writeback) { d =>
+       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
+-      d.io.late.valid.poke(true.B); d.io.div.valid.poke(true.B)
+-      d.io.mul.valid.poke(true.B); d.io.fp.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
++      d.io.late.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
++      d.io.grant.expect(0.U); d.io.conflict.expect(0.U)
++      d.io.gprWrite.valid.expect(false.B); d.io.late.ready.expect(true.B)
++      d.io.clear.valid.expect(false.B)
++      d.clock.step(); d.io.ordinary.valid.poke(false.B); d.io.late.valid.poke(false.B)
++      d.io.div.valid.poke(true.B); d.io.mul.valid.poke(true.B); d.io.fp.valid.poke(true.B)
+       d.io.grant.expect(0.U); d.io.conflict.expect(1.U)
+       d.io.gprWrite.valid.expect(true.B); d.io.gprWrite.bits.idx.expect(5.U)
+-      d.io.late.ready.expect(false.B); d.io.clear.valid.expect(false.B)
+-      d.clock.step(); d.io.ordinary.valid.poke(false.B)
+-      val valid = Seq(d.io.late.valid, d.io.div.valid, d.io.mul.valid, d.io.fp.valid)
+-      val ready = Seq(d.io.late.ready, d.io.div.ready, d.io.mul.ready, d.io.fp.ready)
++      d.io.gprWrite.bits.data.expect(105.U); d.io.late.ready.expect(false.B)
++      d.io.clear.valid.expect(false.B)
++      d.clock.step()
++      val valid = Seq(d.io.div.valid, d.io.mul.valid, d.io.fp.valid)
++      val ready = Seq(d.io.div.ready, d.io.mul.ready, d.io.fp.ready)
+       for (cycle <- 0 until 4) {
+         d.io.grant.expect((1 << cycle).U); d.io.conflict.expect(0.U)
+         d.io.gprWrite.valid.expect(true.B); d.io.gprWrite.bits.idx.expect((cycle + 1).U)
+         d.io.gprWrite.bits.data.expect((101 + cycle).U)
+         d.io.clear.valid.expect(true.B); d.io.clear.bits.idx.expect((cycle + 1).U)
+         d.io.fpFlags.valid.expect((cycle == 3).B)
+-        for (i <- 0 until 4) ready(i).expect((i == cycle).B)
+-        d.clock.step(); valid(cycle).poke(false.B)
++        d.io.late.ready.expect(true.B)
++        for (i <- 0 until 3) ready(i).expect((i+1 == cycle).B)
++        d.clock.step(); if(cycle>0) valid(cycle-1).poke(false.B)
+       }
+       d.io.ordinary.valid.poke(true.B)
+-      d.io.conflict.expect(0.U); d.io.gprWrite.valid.expect(true.B)
++      d.io.conflict.expect(0.U); d.io.gprWrite.valid.expect(false.B)
++      d.clock.step(); d.io.ordinary.valid.poke(false.B)
++      d.io.gprWrite.valid.expect(true.B); d.io.clear.valid.expect(false.B)
+       d.io.gprWrite.bits.idx.expect(5.U); d.io.gprWrite.bits.data.expect(105.U)
++      d.clock.step(); d.io.gprWrite.valid.expect(false.B)
+     }
+   }
+   "S01_S06_S08: f0 late occupies FPR port, independent GPR write and fatal error" in {
+@@ -47,15 +56,55 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
+       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
+       d.io.late.valid.poke(true.B); d.io.late.bits.rd.idx.poke(0.U); d.io.late.bits.rd.isFp.poke(true.B)
+       d.io.ordinary.valid.poke(true.B)
++      d.io.conflict.expect(0.U); d.io.fprWrite.valid.expect(false.B); d.io.gprWrite.valid.expect(false.B)
++      d.clock.step(); d.io.late.valid.poke(false.B); d.io.ordinary.valid.poke(false.B)
+       d.io.conflict.expect(0.U); d.io.fprWrite.valid.expect(true.B)
+       d.io.fprWrite.bits.idx.expect(0.U); d.io.gprWrite.valid.expect(true.B)
+-      d.io.ordinary.bits.rd.isFp.poke(true.B); d.io.conflict.expect(1.U)
+-      d.io.late.ready.expect(false.B); d.io.fprWrite.bits.idx.expect(5.U)
+-      d.io.ordinary.valid.poke(false.B); d.io.late.bits.error.poke(true.B)
+-      d.io.clear.valid.expect(true.B); d.io.fprWrite.valid.expect(false.B)
++      d.io.clear.valid.expect(true.B); d.io.clear.bits.idx.expect(0.U); d.io.clear.bits.isFp.expect(true.B)
++      d.clock.step()
++      // Error reception N has no combinational fatal; W2 captured on N
++      // still writes f5 on N+1 while the old erroneous f0 clears busy.
++      d.io.late.valid.poke(true.B); d.io.late.bits.error.poke(true.B)
++      d.io.ordinary.valid.poke(true.B); d.io.ordinary.bits.rd.isFp.poke(true.B)
++      d.io.hartFatal.expect(false.B); d.io.lateWriteError.expect(false.B)
++      d.clock.step(); d.io.late.valid.poke(false.B); d.io.ordinary.valid.poke(false.B)
++      d.io.clear.valid.expect(true.B)
++      d.io.fprWrite.valid.expect(true.B); d.io.fprWrite.bits.idx.expect(5.U)
++      d.io.fprWrite.bits.data.expect(105.U); d.io.lateWriteError.expect(true.B)
+       d.io.hartFatal.expect(true.B); d.clock.step(); d.io.late.valid.poke(false.B)
+-      d.io.hartFatal.expect(true.B); d.io.clear.valid.expect(false.B)
+-      d.io.ordinary.valid.poke(true.B); d.io.fprWrite.valid.expect(false.B)
++      d.io.hartFatal.expect(true.B); d.io.clear.valid.expect(false.B); d.io.lateWriteError.expect(false.B)
++      d.io.fprWrite.valid.expect(false.B)
++      // x0 is suppressed, and reset discards any buffered writes/fatal.
++      d.io.ordinary.valid.poke(true.B); d.io.ordinary.bits.rd.isFp.poke(false.B)
++      d.io.ordinary.bits.rd.idx.poke(0.U); d.clock.step(); d.io.ordinary.valid.poke(false.B)
++      d.io.gprWrite.valid.expect(false.B); d.io.clear.valid.expect(false.B)
++      d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
++      d.io.w2.valid.expect(false.B); d.io.hartFatal.expect(false.B)
++    }
++  }
++
++  "SOC3b_lateReg_backpressure_and_same_edge_replace_use_old_payload" in {
++    simulate(new Writeback) { d =>
++      idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
++      d.io.late.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
++      d.io.late.ready.expect(true.B); d.io.gprWrite.valid.expect(false.B)
++      d.clock.step()
++      // A is buffered; B remains unchanged while ordinary W2 blocks A.
++      d.io.late.bits.rd.idx.poke(6.U); d.io.late.bits.data.poke(106.U)
++      for(_ <- 0 until 2) {
++        d.io.late.ready.expect(false.B); d.io.gprWrite.bits.idx.expect(5.U)
++        d.io.grant.expect(0.U); d.io.clear.valid.expect(false.B)
++        d.clock.step()
++      }
++      d.io.ordinary.valid.poke(false.B); d.io.late.ready.expect(false.B)
++      d.clock.step()
++      d.io.late.ready.expect(true.B); d.io.grant.expect(1.U)
++      d.io.gprWrite.bits.idx.expect(1.U); d.io.gprWrite.bits.data.expect(101.U)
++      d.io.clear.bits.idx.expect(1.U); d.io.lateWriteError.expect(false.B)
++      d.clock.step(); d.io.late.valid.poke(false.B)
++      d.io.gprWrite.bits.idx.expect(6.U); d.io.gprWrite.bits.data.expect(106.U)
++      d.io.clear.bits.idx.expect(6.U); d.io.grant.expect(1.U)
++      d.clock.step(); d.io.gprWrite.valid.expect(false.B); d.io.clear.valid.expect(false.B)
+     }
+   }
+ }
