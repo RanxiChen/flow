@@ -55,7 +55,7 @@ class Sv39StructuresSpec extends AnyFreeSpec with ChiselSim {
       }
     }
   }
-  for ((sets, ways) <- Seq((1, 1), (1, 2), (2, 4), (4, 8))) {
+  for ((sets, ways) <- Seq((1, 1), (2, 1), (1, 2), (2, 4), (4, 8))) {
     s"walk-cache $sets sets, $ways ways: ASID, invalid-first replacement and flush" in {
       simulate(new Sv39WalkCache(sets, ways, 9)) { d =>
         d.io.flush.poke(false.B); d.io.port.lookupFire.poke(false.B)
@@ -66,7 +66,7 @@ class Sv39StructuresSpec extends AnyFreeSpec with ChiselSim {
         def lookup(key: Int, asid: Int, hit: Boolean, ppn: Int = 0): Unit = {
           d.io.port.lookup.key.poke(key.U); d.io.port.lookup.asid.poke(asid.U)
           d.io.port.lookup.hit.expect(hit.B)
-          if (hit) d.io.port.lookup.ppn.expect(ppn.U)
+          d.io.port.lookup.ppn.expect((if (hit) ppn else 0).U)
         }
         def fill(key: Int, asid: Int, ppn: Int): Unit = {
           d.io.port.fill.bits.key.poke(key.U); d.io.port.fill.bits.asid.poke(asid.U)
@@ -77,6 +77,7 @@ class Sv39StructuresSpec extends AnyFreeSpec with ChiselSim {
           fill(s + w * sets, 1, 0x100 + s + w * sets)
           for (i <- 0 to w) lookup(s + i * sets, 1, true, 0x100 + s + i * sets)
         }
+        lookup(ways * sets, 1, false) // nonzero cached PPNs must not leak on tag miss
         lookup(0, 0xffff, false); lookup(0, 1, true, 0x100)
         // Explicit touch then overflow: compare victim using a software tree.
         d.io.port.lookupFire.poke(true.B); d.clock.step(); d.io.port.lookupFire.poke(false.B)

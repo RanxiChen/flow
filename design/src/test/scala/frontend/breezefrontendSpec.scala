@@ -188,10 +188,8 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             debug.s3_valid.expect(false.B)
 
             // ==================== cache response becomes visible to s2 ====================
-            // 按照当前 cache/frontend 的时序，nextLevelRsp.vld 后一拍：
-            // 1. 老 miss 的返回通过 response path 对前端可见（s2_respValid = true）
-            // 2. frontend 的 s2 上下文已经前推到下一条请求 0x4
-            // 3. 因此这一拍不再要求 s2_pcReg = 0x0，而是在下一拍由 s3 挂住 0x0
+            // The SOC3e return queue adds one edge. S2 still owns the first
+            // accepted PC until its matching cache word is consumed.
             dut.io.nextLevelRsp.vld.poke(false.B)
             dut.clock.step(1)
 
@@ -206,13 +204,10 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             )
             debug.s2_respValid.expect(true.B)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect((BootAddr + 4).U)
+            debug.s2_pcReg.expect(BootAddr.U)
 
             // ==================== first visible instruction after refill ====================
-            // 再下一拍，流水线继续前推：
-            // 1. s3 挂着 0x4，对应第二条指令
-            // 2. s2 挂着 0x8
-            // 3. s1 推进到 0xc
+            // The first response reaches S3, while S2 owns the second PC.
             dut.clock.step(1)
 
             println(
@@ -230,20 +225,19 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
                 f"fetch_inst=0x${dut.io.fetchBuffer.bits.inst.peek().litValue}%x"
             )
             debug.s3_valid.expect(true.B)
-            debug.s3_pcReg.expect((BootAddr + 4).U)
+            debug.s3_pcReg.expect(BootAddr.U)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect((BootAddr + 8).U)
+            debug.s2_pcReg.expect((BootAddr + 4).U)
             debug.s2_respValid.expect(true.B)
             debug.s1_valid.expect(true.B)
             debug.s1_pcReg.expect((BootAddr + 0xc).U)
             debug.cache_s1_hit.expect(true.B)
             dut.io.fetchBuffer.valid.expect(true.B)
-            dut.io.fetchBuffer.bits.pc.expect((BootAddr + 4).U)
-            dut.io.fetchBuffer.bits.inst.expect(refillInstWords(1).U)
+            dut.io.fetchBuffer.bits.pc.expect(BootAddr.U)
+            dut.io.fetchBuffer.bits.inst.expect(refillInstWords.head.U)
 
             // ==================== next cycle should keep streaming ====================
-            // 如果前一拍组合逻辑已经在尝试把 0x10 推进进来，那么这一拍 s1 应推进到 0x10，
-            // 同时 s2/s3 继续分别前推到 0xc/0x8。
+            // The next word follows without a bubble, with the same PC/data owner.
             dut.clock.step(1)
             println(
               f"[INFO] stream-forward cycle: " +
@@ -257,9 +251,12 @@ class BreezeFrontendSpec extends AnyFreeSpec with Matchers with ChiselSim {
             debug.s1_valid.expect(true.B)
             debug.s1_pcReg.expect((BootAddr + 0x10).U)
             debug.s2_valid.expect(true.B)
-            debug.s2_pcReg.expect((BootAddr + 0xc).U)
+            debug.s2_pcReg.expect((BootAddr + 8).U)
             debug.s3_valid.expect(true.B)
-            debug.s3_pcReg.expect((BootAddr + 8).U)
+            debug.s3_pcReg.expect((BootAddr + 4).U)
+            dut.io.fetchBuffer.valid.expect(true.B)
+            dut.io.fetchBuffer.bits.pc.expect((BootAddr + 4).U)
+            dut.io.fetchBuffer.bits.inst.expect(refillInstWords(1).U)
         }
     }
 }

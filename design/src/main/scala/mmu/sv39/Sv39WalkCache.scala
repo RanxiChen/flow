@@ -24,9 +24,17 @@ class Sv39WalkCache(sets: Int, ways: Int, keyBits: Int) extends Module {
     VecInit(entries(set).map(e => index(io.port.lookup.key) === set.U &&
       e.valid && e.tag === tag(io.port.lookup.key) && e.asid === io.port.lookup.asid))
   }
-  val ppnParts = (0 until sets).map(set => Mux1H(setHits(set), entries(set).map(_.ppn)))
+  val ppnParts = (0 until sets).map { set =>
+    // Mux1H with one input returns that input without masking its select.
+    // PTW relies on every set contributing zero on a lookup miss.
+    if (ways == 1) Mux(setHits(set)(0), entries(set)(0).ppn, 0.U(44.W))
+    else Mux1H(setHits(set), entries(set).map(_.ppn))
+  }
   io.port.lookup.hit := setHits.map(_.asUInt.orR).reduce(_ || _)
   io.port.lookup.ppn := ppnParts.reduce(_ | _)
+  when(!io.port.lookup.hit) {
+    assert(io.port.lookup.ppn === 0.U, "walk-cache miss leaked a PPN")
+  }
   for (set <- 0 until sets) {
     when(io.port.lookupFire && setHits(set).asUInt.orR) {
       plru(set) := TreePlru.touch(plru(set), PriorityEncoder(setHits(set)), ways)

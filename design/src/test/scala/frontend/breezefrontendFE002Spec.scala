@@ -67,128 +67,80 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
             var cycle = 1
             var observedReq = false
             var refillSent = false
-            var reqAddr = BigInt(0)
             var delayCount = 0
-            var responseBeat = 0
+            var refillCycle = -1
+            var firstResponseCycle = -1
             var fetchBeat = 0
-            var observedFirstResponse = false
-            var postResponseCheckIndex = -1
+            // Reset release accepted the first word. Subsequent acceptance and
+            // return accounting follow the PC sequence, independent of DUT data.
+            val owners = scala.collection.mutable.Queue[BigInt](BootAddr)
+            var nextPc = BootAddr + 4
 
             while (cycle <= maxObserveCycles) {
-                val reqValid = dut.io.nextLevelReq.req.peek().litToBoolean
-                val reqPaddr = dut.io.nextLevelReq.paddr.peek().litValue
-                val cacheRspValid = debug.cache_drsp_valid.peek().litToBoolean
-                val cacheRspVaddr = debug.cache_drsp_vaddr.peek().litValue
-                val s2RespValid = debug.s2_respValid.peek().litToBoolean
-                val s2Pc = debug.s2_pcReg.peek().litValue
-                val fetchValid = dut.io.fetchBuffer.valid.peek().litToBoolean
-                val fetchPc = dut.io.fetchBuffer.bits.pc.peek().litValue
-                val fetchInst = dut.io.fetchBuffer.bits.inst.peek().litValue
-
-                if(false)println(
-                  f"[INFO] FE002 cycle $cycle: " +
-                    f"nextLevelReq.req=$reqValid " +
-                    f"nextLevelReq.paddr=0x${reqPaddr}%x " +
-                    f"cache_drsp_valid=$cacheRspValid " +
-                    f"cache_drsp_vaddr=0x${cacheRspVaddr}%x " +
-                    f"s2_respValid=$s2RespValid " +
-                    f"s2_pcReg=0x${s2Pc}%x " +
-                    f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
-                    f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x"
-                )
-
-                if (!observedReq && reqValid) {
-                    observedReq = true
-                    reqAddr = reqPaddr
-                    dut.io.nextLevelReq.paddr.expect(BootAddr.U)
-                    if(false)println(f"[INFO] FE002 observed miss request at cycle $cycle, paddr=0x${reqAddr}%x")
-                } else if (observedReq && !refillSent) {
+                val hadObservedReq = observedReq
+                debug.s1_pcReg.expect(nextPc.U)
+                val accepted = debug.dreq_fire.peek().litToBoolean
+                val acceptedPc = nextPc
+                if (debug.s2_valid.peek().litToBoolean) {
+                    owners.nonEmpty mustBe true
+                    debug.s2_pcReg.expect(owners.front.U)
+                }
+                if (dut.io.nextLevelReq.req.peek().litToBoolean) {
+                    if (!observedReq) {
+                        dut.io.nextLevelReq.paddr.expect(BootAddr.U)
+                        observedReq = true
+                    } else if (refillSent) {
+                        // The first request beyond the eight returned words is
+                        // a new line miss. It cannot return without new data.
+                        dut.io.nextLevelReq.paddr.expect((BootAddr + 32).U)
+                    }
+                }
+                if (hadObservedReq && !refillSent) {
                     delayCount += 1
                     if (delayCount == refillDelayCycles) {
                         dut.io.nextLevelRsp.data.poke(refillLineData.U)
                         dut.io.nextLevelRsp.vld.poke(true.B)
                         refillSent = true
-                        responseBeat = 0
-                        fetchBeat = 0
-                        println(
-                          f"[INFO] FE002 send refill at cycle $cycle: " +
-                            f"data=0x${refillLineData}%x"
-                        )
+                        refillCycle = cycle
                     }
                 }
-
-                if (!observedFirstResponse && (cacheRspValid || s2RespValid)) {
-                    val expectedPc = BootAddr + responseBeat * 4
-                    println(
-                      f"[INFO] FE002 response observe at cycle $cycle: " +
-                        f"cache_drsp_valid=$cacheRspValid " +
-                        f"cache_drsp_vaddr=0x${cacheRspVaddr}%x " +
-                        f"s2_respValid=$s2RespValid " +
-                        f"s2_pcReg=0x${s2Pc}%x " +
-                        f"s1_valid=${debug.s1_valid.peek().litToBoolean} " +
-                        f"s1_pcReg=0x${debug.s1_pcReg.peek().litValue}%x " +
-                        f"expected_pc=0x${expectedPc}%x"
-                    )
-                    cacheRspValid mustBe true
-                    s2RespValid mustBe true
-                    responseBeat must be < refillInstWords.length
+                val response = debug.cache_drsp_valid.peek().litToBoolean
+                debug.s2_respValid.expect(response.B)
+                if (response) {
+                    owners.nonEmpty mustBe true
+                    val expectedPc = owners.dequeue()
                     debug.cache_drsp_vaddr.expect(expectedPc.U)
                     debug.s2_pcReg.expect(expectedPc.U)
-                    debug.s1_valid.expect(true.B)
-                    debug.s1_pcReg.expect((BootAddr + 4).U)
-                    responseBeat += 1
-                    observedFirstResponse = true
-                    postResponseCheckIndex = 0
-                } else if (postResponseCheckIndex >= 0 && postResponseCheckIndex < refillInstWords.length) {
-                    val expectedS3Pc = BootAddr + postResponseCheckIndex * 4
-                    val expectedS2Pc = BootAddr + (postResponseCheckIndex + 1) * 4
-                    val expectedS1Pc = BootAddr + (postResponseCheckIndex + 2) * 4
-                    val expectedInst = refillInstWords(postResponseCheckIndex)
-                    println(
-                      f"[INFO] FE002 post-response stream cycle $cycle: " +
-                        f"idx=$postResponseCheckIndex " +
-                        f"s3_pcReg=0x${debug.s3_pcReg.peek().litValue}%x " +
-                        f"s3_inst=0x${fetchInst}%x " +
-                        s"s3_disasm=${disasmInst(fetchInst)}"
-                    )
-                    debug.s3_valid.expect(true.B)
-                    debug.s3_pcReg.expect(expectedS3Pc.U)
-                    debug.s2_valid.expect(true.B)
-                    debug.s2_pcReg.expect(expectedS2Pc.U)
-                    debug.s1_valid.expect(true.B)
-                    debug.s1_pcReg.expect(expectedS1Pc.U)
-                    dut.io.fetchBuffer.valid.expect(true.B)
-                    dut.io.fetchBuffer.bits.pc.expect(expectedS3Pc.U)
-                    dut.io.fetchBuffer.bits.inst.expect(expectedInst.U)
-                    dut.io.nextLevelReq.req.expect(false.B)
-                    postResponseCheckIndex += 1
+                    if (firstResponseCycle < 0) {
+                        expectedPc mustBe BootAddr
+                        cycle mustBe refillCycle + 2
+                        firstResponseCycle = cycle
+                    }
                 }
-
-                if (!observedFirstResponse && fetchValid) {
-                    val expectedPc = BootAddr + fetchBeat * 4
-                    val expectedInst = refillInstWords(fetchBeat)
-                    println(
-                      f"[INFO] FE002 fetch observe at cycle $cycle: " +
-                        f"fetch_pc=0x${fetchPc}%x " +
-                        f"fetch_inst=0x${fetchInst}%x " +
-                        s"fetch_disasm=${disasmInst(fetchInst)} " +
-                        f"expected_pc=0x${expectedPc}%x " +
-                        f"expected_inst=0x${expectedInst}%x " +
-                        s"expected_disasm=${disasmInst(expectedInst)}"
-                    )
+                if (dut.io.fetchBuffer.valid.peek().litToBoolean) {
                     fetchBeat must be < refillInstWords.length
+                    firstResponseCycle must be >= 0
+                    // The added return boundary retains a gap-free eight-word
+                    // stream after its first response; no tolerance or skip.
+                    cycle mustBe firstResponseCycle + 1 + fetchBeat
+                    val expectedPc = BootAddr + fetchBeat * 4
+                    debug.s3_valid.expect(true.B)
+                    debug.s3_pcReg.expect(expectedPc.U)
                     dut.io.fetchBuffer.bits.pc.expect(expectedPc.U)
-                    dut.io.fetchBuffer.bits.inst.expect(expectedInst.U)
+                    dut.io.fetchBuffer.bits.inst.expect(refillInstWords(fetchBeat).U)
                     fetchBeat += 1
                 }
-
-                dut.clock.step(1)
-                cycle += 1
-
-                if (refillSent) {
-                    dut.io.nextLevelRsp.vld.poke(false.B)
+                if (accepted) {
+                    owners.enqueue(acceptedPc)
+                    nextPc += 4
                 }
+                dut.clock.step()
+                cycle += 1
+                if (refillSent) dut.io.nextLevelRsp.vld.poke(false.B)
             }
+            observedReq mustBe true
+            refillSent mustBe true
+            fetchBeat mustBe refillInstWords.length
         }
     }
 }

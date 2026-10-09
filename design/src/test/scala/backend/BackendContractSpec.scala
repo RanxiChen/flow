@@ -528,7 +528,9 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
 
   "S13_WB_kill_at_EX_release_produces_no_training" in { check() { m =>
     m.holdUntil=8; m.faults += BigInt(0)
-    m.issue(ld(1,0)); m.issue(nop); val branch=m.issue(BigInt(0x463))
+    // PERM supplies an additional younger slot before the older load holds WB.
+    // Fill MEM/PERM so the branch remains in EX on the fault release edge.
+    m.issue(ld(1,0)); m.issue(nop); m.issue(nop); val branch=m.issue(BigInt(0x463))
     while(m.cycle<8) m.step()
     // The branch is still in EX when the older WB fault releases S2.
     // This is the potential decision edge: kill must suppress its advance.

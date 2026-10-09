@@ -63,7 +63,10 @@ class L1IRegisteredReturnSpec extends AnyFreeSpec with ChiselSim {
         d.io.coh.rspDown.valid.poke(true.B); d.io.coh.rspDown.bits.data.poke(0x22220093.U)
         d.clock.step(); d.io.coh.rspDown.valid.poke(false.B)
         d.io.response.valid.expect(false.B); d.clock.step()
+        // Registered client refill, cache selection, then the SOC3e return queue.
+        d.io.response.valid.expect(false.B); d.clock.step()
         d.io.response.valid.expect(true.B); d.io.response.bits.data.expect(0x22220093.U)
+        d.io.response.bits.vaddr.expect(0x80000000L.U)
         d.io.response.bits.accessFault.expect(false.B); d.clock.step(2)
         d.io.response.valid.expect(false.B)
       }

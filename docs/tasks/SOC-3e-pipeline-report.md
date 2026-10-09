@@ -46,3 +46,11 @@ I-cache 选好返回字后新增两项寄存队列，预留返回信用、支持
 | mmio_console | 43402 | 47685 | +9.87% | 4258 |
 
 三项tohost与console oracle均通过，测量进程exit0、wall70.148960s。固定频率下新增边界降低这组三程序的吞吐；cache II1与ALU依赖未新增气泡的定向条件不能代替整个前端的性能结论。后续将结合单核余量和四核最终时序判断这个代价是否值得，不能先宣称新版本性能更好。原始日志在cloud_chen `/home/cloud_chen/evidence/soc3e-4a8ebbb/performance/`；本轮后续仅测试/文档修改时，须证明RTL/config完全相同才能引用这些数据。
+
+## d5d3ca6 失败修复
+
+`d5d3ca6619c7141e1f9591b8976eb6a207f04be9` 的 T11/T12/T13 已通过，但 S13 kill 刺激未填满新增 PERM 后的年轻槽，分支提前离开 EX；此失败触发两项 Vivado 在综合阶段撤回，monotonic wall 分别850.634990/850.634464s，没有最终布线结果。定向任务exit1，wall1149.969094s。完整回归继续保留失败，未通过。
+
+三项单set MMU测试发现实际RTL错误：Chisel7.0单输入Mux1H直接返回数据，不对选择信号作mask。walk-cache ways=1在tag/ASID miss或flush之后会漏出旧PPN，违背SOC-3e明确规定的miss输出0；PTW的root OR简化依赖该规定，从而发往错误页表地址。修复单路分支显式Mux(hit,ppn,0)，多路静态局部一热结构保持。补miss零断言，walk-cache所有参数的miss也核对PPN零，并新增2sets/1way检查跨set旧PPN不会混合；MMU三个原PA golden不变。
+
+其他已定位测试迁移：S13增加一条年轻NOP，将分支重新放在fault release当拍EX，保留不训练/不提交/不写回及原8拍解除检查；L1IRegisteredReturn追加已批准的返回队列一拍并检查原地址/数据，flush后旧数据不能重新输出。Frontend S2 debug现在表示最老预测上下文，不能要求旧上下文提前覆盖；默认流核对首字PC/指令，FE002以独立已接受PC序列核对S2/缓存返回/S3，从首缓存返回后一拍起连续八字，延迟、6拍refill等待、40拍观察上限均不放宽，增加最终八字全部到达的非空验证。修复后先执行以上失败项目的定向子集，再恢复完整回归与单/四核并行Vivado。尚未取得新修复测试结果。
