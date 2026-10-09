@@ -33,7 +33,8 @@ private[backend] final case class Event(cycle: Int, kind: String, pc: BigInt = 0
 private[backend] class BackendTimingProbe(bypass: Boolean) extends
     BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true) {
   val fpComputeFire = IO(Output(Bool()))
-  fpComputeFire := fpUnit.impl.io.in_valid_i && fpUnit.impl.io.in_ready_o
+  fpComputeFire := chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.in_valid_i) &&
+    chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.in_ready_o)
 }
 private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) extends PeekPokeAPI {
   import Instructions._
