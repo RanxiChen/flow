@@ -488,6 +488,116 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.clock.step(3)
     }
   }
+  // Integer interval oracle: derive NAPOT size from trailing address ones,
+  // independently of the hardware decoder's XOR/mask arithmetic.
+  private def expectPmpState(d: CSRFile, cfg: Seq[Int], addr: Seq[BigInt]): Unit = {
+    d.io.mmu_context.pmpRangesValid.expect(true.B)
+    for (n <- 0 until 8) {
+      d.io.mmu_context.pmpcfg(n).expect(cfg(n).U)
+      d.io.mmu_context.pmpaddr(n).expect(addr(n).U)
+      val mode = (cfg(n) >> 3) & 3
+      val boundary = addr(n) << 2
+      val (lo, hi) = mode match {
+        case 0 | 1 => (if (n == 0) BigInt(0) else addr(n - 1) << 2, boundary)
+        case 2 => (boundary, boundary + 4)
+        case 3 =>
+          val trailingOnes = (0 until 54).takeWhile(addr(n).testBit).size
+          val bytes = BigInt(1) << (trailingOnes + 3)
+          val base = boundary / bytes * bytes
+          (base, base + bytes)
+      }
+      val r = d.io.mmu_context.pmpRanges(n)
+      r.lower.expect(lo.U); r.upper.expect(hi.U)
+      r.nonempty.expect((mode != 0 && lo < hi).B)
+      val blockMask = (BigInt(1) << 58) - 1
+      r.lowerBlockPrevious.expect((((lo >> 7) - 1) & blockMask).U)
+      r.upperBlockPrevious.expect((((hi >> 7) - 1) & blockMask).U)
+    }
+    for (n <- 8 until 16) {
+      d.io.mmu_context.pmpcfg(n).expect(0.U)
+      d.io.mmu_context.pmpaddr(n).expect(0.U)
+    }
+  }
+
+  "SOC3d-control PMP candidates cannot change state without valid write or during trap" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { d =>
+      reset(d)
+      commit(d, CSRMAP.pmpaddr0, 0x20)
+      commit(d, CSRMAP.pmpaddr0 + 1, 0x60)
+      commit(d, CSRMAP.pmpcfg0, 0x0f00)
+      val cfg = Seq(0, 0x0f) ++ Seq.fill(6)(0)
+      val addr = Seq(BigInt(0x20), BigInt(0x60)) ++ Seq.fill(6)(BigInt(0))
+      d.clock.step(2)
+      for ((valid, write, trap) <- Seq((false, true, false), (true, false, false),
+          (true, true, true), (false, false, true));
+           (address, value) <- Seq(CSRMAP.pmpcfg0 -> BigInt("ffffffffffffffff", 16),
+             CSRMAP.pmpaddr0 -> BigInt(0x70), (CSRMAP.pmpaddr0 + 1) -> BigInt(0x10))) {
+        withClue(s"valid=$valid write=$write trap=$trap csr=$address: ") {
+          d.io.commit_valid.poke(valid.B); d.io.commit_write_en.poke(write.B)
+          d.io.commit_addr.poke(address.U); d.io.commit_wdata.poke(value.U)
+          d.io.trap.valid.poke(trap.B); d.io.trap.cause.poke(2.U)
+          d.io.trap.pc.poke(0x100.U)
+          expectPmpState(d, cfg, addr) // No combinational architectural leakage.
+          for (_ <- 0 until 3) {
+            d.clock.step(); expectPmpState(d, cfg, addr)
+            d.io.mmu_context.permissionEvent.expect(trap.B)
+          }
+        }
+      }
+      idle(d)
+      // A blocked lock-bit candidate must not have secretly locked the bank.
+      commit(d, CSRMAP.pmpaddr0, 0x40)
+      expectPmpState(d, cfg, addr.updated(0, BigInt(0x40)))
+      commit(d, CSRMAP.pmpcfg0, 0x1f00)
+      expectPmpState(d, cfg.updated(1, 0x1f), addr.updated(0, BigInt(0x40)))
+      d.clock.step(2)
+    }
+  }
+
+  "SOC3d-control consecutive PMP writes keep raw state and ranges aligned through WARL and locks" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { d =>
+      reset(d)
+      val cfg = Array.fill(8)(0)
+      val addr = Array.fill(8)(BigInt(0))
+      val rng = new scala.util.Random(0x3d504d51)
+      val randomWrites = (0 until 32).map { n =>
+        if (n % 4 == 0) {
+          val bytes = (0 until 8).map(_ => rng.nextInt(128)) // Lock explicitly below.
+          CSRMAP.pmpcfg0 -> bytes.zipWithIndex.foldLeft(BigInt(0)) {
+            case (word, (byte, lane)) => word | (BigInt(byte) << (8 * lane))
+          }
+        } else (CSRMAP.pmpaddr0 + rng.nextInt(8)) -> BigInt(rng.nextInt(0x400))
+      }
+      val writes = Seq(CSRMAP.pmpaddr0 -> BigInt(0x20),
+        (CSRMAP.pmpaddr0 + 1) -> BigInt(0x60), CSRMAP.pmpcfg0 -> BigInt(0x0f00),
+        CSRMAP.pmpaddr0 -> BigInt(0x80), CSRMAP.pmpaddr0 -> BigInt(0x40)) ++
+        randomWrites ++ Seq(CSRMAP.pmpcfg0 -> BigInt(0x978f00),
+          CSRMAP.pmpaddr0 -> BigInt(1), (CSRMAP.pmpaddr0 + 1) -> BigInt(2),
+          (CSRMAP.pmpaddr0 + 2) -> BigInt(3), CSRMAP.pmpcfg0 -> BigInt(0),
+          CSRMAP.pmpcfg2 -> BigInt("ffffffffffffffff", 16),
+          (CSRMAP.pmpaddr0 + 8) -> BigInt(0x1234))
+      for ((address, value) <- writes) {
+        expectPmpState(d, cfg.toSeq, addr.toSeq)
+        d.io.commit_valid.poke(true.B); d.io.commit_write_en.poke(true.B)
+        d.io.commit_addr.poke(address.U); d.io.commit_wdata.poke(value.U)
+        if (address == CSRMAP.pmpcfg0) {
+          for (n <- 0 until 8 if (cfg(n) & 0x80) == 0) {
+            val byte = ((value >> (8 * n)) & 0x9f).toInt
+            cfg(n) = if ((byte & 1) == 0) byte & ~2 else byte
+          }
+        } else if (address >= CSRMAP.pmpaddr0 && address < CSRMAP.pmpaddr0 + 8) {
+          val n = address - CSRMAP.pmpaddr0
+          val locked = (cfg(n) & 0x80) != 0 ||
+            (n < 7 && (cfg(n + 1) & 0x98) == 0x88)
+          if (!locked) addr(n) = value & ((BigInt(1) << 54) - 1)
+        }
+        d.clock.step() // No idle edge between writes; check immediately.
+        expectPmpState(d, cfg.toSeq, addr.toSeq)
+      }
+      idle(d); d.clock.step(3)
+      expectPmpState(d, cfg.toSeq, addr.toSeq)
+    }
+  }
   "implement PMP CSRs and Sstc time/stimecmp pending state" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

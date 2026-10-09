@@ -1,0 +1,30 @@
+[
+  [
+    "csr",
+    "testOnly flow.core.BreezePrivilegeSpec -- -z SOC3d"
+  ],
+  [
+    "cache-new",
+    "testOnly flow.memsys.L1DCacheSpec -- -t \"SOC3d-control failed SC completes on the occupied MSHR line without a new miss\" -t \"SOC3d-control PTW and CPU recheck each finish once after a stalled store refill\""
+  ],
+  [
+    "cache-boundaries",
+    "testOnly flow.memsys.L1DCacheSpec -- -t \"load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW\" -t \"store hits on E merge bytes in place and an Inv probe returns the dirty line\" -t \"store miss sends GetM, replays through the pending store, and later loads see it\" -t \"store to a shared line upgrades with GetM and AckE and keeps the rest of the line\" -t \"a second miss waits for the single MSHR and a same-line access waits for the refill\" -t \"a shared store waiting for the MSHR lets a probe pass a younger same-set store\" -t \"killed stores never write, and a load miss killed at WB sends no GetS\" -t \"a probe that arrives with the grant waits for the replay and answers with its result\" -t \"a refill error is reported on late data or drops the store, and leaves the line invalid\" -t \"device accesses use blocking AXI-Lite with formatted data, byte strobes and error responses\" -t \"PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU\" -t \"FENCE completes only after an outstanding store miss has drained\" -t \"LR gets exclusive permission, SC succeeds once and a failed SC never misses\" -t \"AMO cold misses, shared upgrades and grant probes use GetM and protected RMW\" -t \"atomic permissions and refill errors trap before writes or failed-SC status\" -t \"atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge\" -z \"a FENCE waiting\""
+  ],
+  [
+    "context",
+    "testOnly flow.memsys.L1DContextSpec -- -z SOC3"
+  ],
+  [
+    "permissions",
+    "testOnly flow.memsys.L1DPermissionsSpec"
+  ],
+  [
+    "backend",
+    "testOnly flow.backend.BackendContractSpec -- -t \"T02_load_use_default\" -t \"T03_independent_ALU_after_load\" -t \"T08_store_same_word_conflict\" -t \"T09_store_different_word\" -t \"T10_miss_WB_commit_sets_busy\" -t \"T22_B01_miss_ADD_hit_response_alignment\""
+  ],
+  [
+    "cluster",
+    "testOnly flow.cluster.ClusterWbSplitSmokeSpec"
+  ]
+]

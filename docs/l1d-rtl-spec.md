@@ -8,6 +8,8 @@
 
 实现修订（SOC-3d 第一批，2026-10-09）：PMP/PMA 按 SOC-3 M1 保留在 CPU/internal 各自 S1，结果寄存进 S2。CSRFile 将 PMP 区间及边界高位前驱与合法 CSR 新值同沿寄存；S0 将末字节低 7 位及跨 128 B 块进位保存进 S1。生产集群使用可选 TLB 候选 PA，页权限与物理权限并行计算；候选随 fresh/held 快照保存，S2 的 permission snapshot 保存对应完整候选地址，事务 paddr/异常仍取原 TLB resp。fault/miss 候选不授权副作用。上下文事件、PTW 刷新、Recheck 与独立旧算法 shadow 检查保持。S0 各来源独立算资格后按原优先级一热仲裁，refill/probe/WbRead 授权不经 CPU kill/TLB 资格选择；端口、AMO、所有权与快照互锁不变。tag 写掩码直接使用一热 way。
 
+实现修订（SOC-3d 控制链，2026-10-09）：CSRFile 按 WB 的 CSR 地址、写数据和现有锁定/WARL 状态计算候选 PMP 配置、地址及区间，commit/write/trap 许可只控制原始 CSR 与区间寄存器的同沿更新，TOR 使用候选前驱地址。L1D S2 按内部刷新、内部服务、回放、CPU 占用、原子等待、FENCE、快照重查、权限异常、MMIO、SC 和普通 cache lookup 的原优先级限定局部条件，直接生成 Done/Mshr/Exc、等待和副作用资格，替代共享 outcome 编码后再解码。普通命中、PS 容量与 miss 分配容量分别判断；CPU/internal 流水级数、响应/提交拍数、kill 与资源所有权规则保持。新增 4 项测试及所选 39 项定向功能用例通过，执行版本、覆盖与证据见 [`tasks/SOC-3d-timing-batch-report.md`](tasks/SOC-3d-timing-batch-report.md) 文末；这不是完整回归或功能等价证明。第一批 Vivado 不覆盖此次修改，尚无此候选的物理时序证据。
+
 实现修订（2026-10-07，单核原子访存）：第 8 节 LR/SC、AMO、aq/rl 已补入 L1D。LR/AMO miss 保持 CPU S2 到内部回放，LR 以 `resp` 完成；AMO 在回放或命中拍把 RMW 数据交给 PS，次拍写入时返回旧值。AMO/rl 在 S0 以 `ready` 等待老请求排空，AMO/aq 在接受后关年轻入口；未增加 CPU 接口或流水级。实际仿真版本、覆盖与边界见 [`tasks/MEM-single-core-atomics-report.md`](tasks/MEM-single-core-atomics-report.md)，规格目标不自动等于验证通过。
 
 ## 0. 范围与参数

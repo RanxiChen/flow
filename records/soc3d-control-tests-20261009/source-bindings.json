@@ -1,0 +1,15 @@
+{
+  "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+  "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+  "same_rtl_as_previous_control_boundary_edit": true,
+  "file_count": 665,
+  "manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+  "input_snapshot_files_aligned_at_initial_binding_check": true,
+  "final_binding_check_utc": "2026-10-09T04:56:54.725915+00:00",
+  "post_execution_document_updates": [
+    "docs/l1d-rtl-spec.md",
+    "docs/tasks/SOC-3d-timing-batch-plan.md",
+    "docs/tasks/SOC-3d-timing-batch-report.md"
+  ],
+  "rtl_and_tests_match_executed_snapshot": true
+}

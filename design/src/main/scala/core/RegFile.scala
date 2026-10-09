@@ -252,10 +252,36 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val satp = RegInit(0.U(XLEN.W))
     val pmpcfg = RegInit(VecInit(Seq.fill(BreezePmpConfig.ActiveEntries)(0.U(8.W))))
     val pmpaddr = RegInit(VecInit(Seq.fill(BreezePmpConfig.ActiveEntries)(0.U(54.W))))
-    val nextPmpCfg = WireDefault(pmpcfg)
-    val nextPmpAddr = WireDefault(pmpaddr)
-    pmpcfg := nextPmpCfg
-    pmpaddr := nextPmpAddr
+    // Candidate state depends only on the WB CSR payload and stored locks.
+    // Keep the late commit/trap permission out of the wide range decoder;
+    // it gates the architectural and decoded registers together below.
+    val candidatePmpCfg = WireDefault(pmpcfg)
+    val candidatePmpAddr = WireDefault(pmpaddr)
+    val pmpCfgAddress = io.commit_addr === CSRMAP.pmpcfg0.U ||
+        io.commit_addr === CSRMAP.pmpcfg2.U
+    val pmpCfgBank = Mux(io.commit_addr === CSRMAP.pmpcfg0.U, 0.U, 8.U)
+    for (index <- 0 until BreezePmpConfig.ActiveEntries) {
+        val lane = index & 7
+        val requested = io.commit_wdata(8 * lane + 7, 8 * lane)
+        val legal = Cat(requested(7), 0.U(2.W), requested(4, 3),
+            requested(2), Mux(requested(0), requested(1), false.B), requested(0))
+        when(pmpCfgAddress && pmpCfgBank === (index & 8).U && !pmpcfg(index)(7)) {
+            candidatePmpCfg(index) := legal
+        }
+        val ownLocked = pmpcfg(index)(7)
+        val nextTorLocked = if (index == BreezePmpConfig.ActiveEntries - 1) false.B else
+            pmpcfg(index + 1)(7) && pmpcfg(index + 1)(4, 3) === 1.U
+        when(io.commit_addr === (CSRMAP.pmpaddr0 + index).U &&
+            !ownLocked && !nextTorLocked) {
+            candidatePmpAddr(index) := io.commit_wdata(53, 0)
+        }
+    }
+    // TOR also observes the candidate predecessor, so both bounds become
+    // visible on the same edge as the corresponding raw CSR write.
+    val candidatePmpRanges = VecInit((0 until BreezePmpConfig.ActiveEntries).map { index =>
+        flow.mmu.BreezePmpDecode.range(candidatePmpCfg(index), candidatePmpAddr(index),
+            if (index == 0) 0.U(54.W) else candidatePmpAddr(index - 1))
+    })
     val pmpRanges = RegInit(VecInit(Seq.fill(BreezePmpConfig.ActiveEntries)(
         flow.mmu.BreezePmpDecode.range(0.U(8.W), 0.U(54.W), 0.U(54.W)))))
     // Keep all 16 CSR slots visible to firmware probing. Entries 8..15 have
@@ -701,27 +727,6 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
                     stimecmp := io.commit_wdata
                 }
             }
-            is(CSRMAP.pmpcfg0.U, CSRMAP.pmpcfg2.U) {
-                val base = Mux(io.commit_addr === CSRMAP.pmpcfg0.U, 0.U, 8.U)
-                for (index <- 0 until BreezePmpConfig.ActiveEntries) {
-                    when(base === (index & 8).U) {
-                        val lane = index & 7
-                        val requested = io.commit_wdata(8 * lane + 7, 8 * lane)
-                        val legal = Cat(requested(7), 0.U(2.W), requested(4, 3),
-                            requested(2), Mux(requested(0), requested(1), false.B), requested(0))
-                        when(!pmpcfg(index)(7)) { nextPmpCfg(index) := legal }
-                    }
-                }
-            }
-        }
-        for (index <- 0 until BreezePmpConfig.ActiveEntries) {
-            val ownLocked = pmpcfg(index)(7)
-            val nextTorLocked = if (index == BreezePmpConfig.ActiveEntries - 1) false.B else
-                pmpcfg(index + 1)(7) && pmpcfg(index + 1)(4, 3) === 1.U
-            when(io.commit_addr === (CSRMAP.pmpaddr0 + index).U &&
-                !ownLocked && !nextTorLocked) {
-                nextPmpAddr(index) := io.commit_wdata(53, 0)
-            }
         }
     }
     val trapDelegated = if (enableSupervisorUser) {
@@ -818,16 +823,17 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.mmu_context.pmpaddr := visiblePmpAddr
     io.mmu_context.pmpRanges := pmpRanges
     io.mmu_context.pmpRangesValid := true.B
-    // Decode the post-WARL/post-lock next state, not the old register values.
-    // TOR's lower bound also changes when its predecessor's pmpaddr changes.
+    // Commit permission selects register updates after candidate decoding.
+    // A rejected/trapped write changes neither raw nor decoded PMP state.
     val pmpStateWrite = io.commit_valid && io.commit_write_en && !io.trap.valid &&
         (io.commit_addr === CSRMAP.pmpcfg0.U || io.commit_addr === CSRMAP.pmpcfg2.U ||
          (io.commit_addr >= CSRMAP.pmpaddr0.U &&
           io.commit_addr < (CSRMAP.pmpaddr0 + BreezePmpConfig.ActiveEntries).U))
     when(pmpStateWrite) {
         for (index <- 0 until BreezePmpConfig.ActiveEntries) {
-            pmpRanges(index) := flow.mmu.BreezePmpDecode.range(nextPmpCfg(index), nextPmpAddr(index),
-                if (index == 0) 0.U(54.W) else nextPmpAddr(index - 1))
+            pmpcfg(index) := candidatePmpCfg(index)
+            pmpaddr(index) := candidatePmpAddr(index)
+            pmpRanges(index) := candidatePmpRanges(index)
         }
     }
     when(!reset.asBool) {

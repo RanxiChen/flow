@@ -1,0 +1,23 @@
+[
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/home/chen/leisure/flow",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "python3",
+      "tools/frozen_check.py"
+    ],
+    "cwd": "/home/chen/leisure/flow",
+    "exit_code": 0,
+    "stdout": "frozen check: OK (8 files)\n",
+    "stderr": ""
+  }
+]

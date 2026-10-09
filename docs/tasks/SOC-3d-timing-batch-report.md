@@ -1,6 +1,6 @@
-# SOC-3d 第一批 RTL 实现记录
+# SOC-3d RTL 实现与验证记录
 
-初始实现记录日期：2026-10-09。当时用户已批准第一批实现，并要求暂不测试；下方“修改内容”和“源码与静态检查”记录该时点。随后用户授权增加必要测试并只运行子集，定向功能验证已完成，结果见本页末尾。尚未运行综合或布局布线，没有新的 100 MHz 时序结论。
+初始实现记录日期：2026-10-09。当时用户已批准第一批实现，并要求暂不测试；下方“修改内容”和“源码与静态检查”记录该时点。随后第一批定向功能子集通过，并在 Alan 启动单核/四核 LiteX/Vivado。CSR/PMP 与 L1D S2 控制链新候选完成后，用户授权补必要测试；新增 4 项及所选 39 项全部通过，含三个短集群程序。新候选与第一批执行证据分开记录，见文末。
 
 ## 修改内容
 
@@ -61,3 +61,100 @@
 3. 首次 Cache 入口缺少快照中的 `config/breeze_mcu_platform.json`，suite abort、实际执行 0 项；补齐同一工作区的原配置后运行 12/12，通过。入口失败保留于 `cloud/validated/cache.log`，不算 DUT 失败，也未换主机。
 
 本次覆盖四处修改的定向功能风险及有限系统联动，不是完整回归、数值穷举或形式证明。测试中生成/编译 RTL 不等于 FPGA 综合、BRAM/资源验收、routed setup/hold 或上板证据。本次没有运行 Vivado，尚无新的 WNS/TNS、bitstream 或上板结论。相关功能门槛已通过；进入原计划的单核完整布线前，仍须固定包含主仓与 CVFPU 改动的版本，并使用对应源码、100 MHz 约束和 Alan 作业证据。
+
+
+## 2026-10-09 单核与四核 LiteX / Vivado 启动
+
+用户在定向功能子集通过后授权单核和四核并行启动，随后暂停准备、确认使用 LiteX，并授权继续。固定主仓 `d276f8bbd03bc86873063331920e8489f6e658f2`、CVFPU `3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9`；两者已推送，硬件源码与已通过功能子集的输入逐文件哈希相同。此前“不运行 Vivado”描述仅适用于定向功能验证阶段。
+
+- RTL 生成在 cloud_chen 执行：`single gshare linux` / `small gshare linux`，production、tandem=false、debug=false，分别 1 / 4 核。生成 exit 0，实际 UTC 02:55:31.672146–02:56:02.913127，wall time **31.240966 秒**。命令与日志见 [generation-result.json](../../records/soc3d-vivado-20261009/generation-result.json)、[generation.log](../../records/soc3d-vivado-20261009/generation.log)。归档 SHA256：single `54bcbe6bcb701b9ed2b0778d951851bd29b63bec009c9118dca4e923216fca61`，small `66dfd55c92cd634b25c8a87fd5d2b8ad7c28666cb9965fd5c788076981b31da6`；Alan 安装前再次核对归档与各源码摘要。
+- Alan hostname `chen-System-Product-Name`，环境与 LiteX FPGA imports 检查通过；Vivado **2022.2**，RISC-V GCC **13.2.0**。启动前没有其他 Vivado 作业，磁盘约 111 GiB、可用内存约 56 GiB。
+- 入口仍为仓库 `fpga/kcu105/target.py` 的 LiteX `SnapshotBuilder.build`，由 LiteX 生成 SoC、BIOS、约束并启动 Vivado。外层 `build-soc.py` 只添加 `general.maxThreads=4`，外层 `alan-stage.py` 记录 SHA/cwd/argv/进程身份与 wall time，并设置每项一小时 timeout。器件 `xcku040-ffva1156-2-e`、100 MHz、现有综合/布局/布线 directives 保持。没有启动额外 OOC 作业。
+- 单核 cwd `/home/chen/FUN/flow-soc3d-d276f8b-tiny`，CPU `breeze-tiny`；四核 cwd `/home/chen/FUN/flow-soc3d-d276f8b-small`，CPU `breeze`；独立输出 `/home/chen/FUN/flow-runs/soc3d-d276f8b/{tiny,small}`。
+- 两项 LiteX 构建实际开始时间分别为 UTC **03:02:34.517874** / **03:02:34.521270**（北京时间 **11:02:34**）。已确认两个实际 Vivado 进程运行。启动观察不构成综合、routed timing、bitstream 或上板通过结论。
+- 完整 argv、driver PID 与外层脚本摘要见 [launched.json](../../records/soc3d-vivado-20261009/launched.json)，启动时进程身份/日志/状态见 [startup-observation.json](../../records/soc3d-vivado-20261009/startup-observation.json)。远端各 `soc-{tiny,small}-job/command.json` / `run.log` 保存精确起点与日志，完成时自动写 `result.json` / `exit`，包含真实结束 UTC、monotonic wall seconds 与 exit code；wall time 从各 LiteX 构建入口计起，包括 BIOS 和 Vivado，不按轮询次数估算。
+
+准备期间补齐缺失的 CVFPU 子模块与外层脚本执行权限；这些问题均发生在构建计时前。暂停状态保存在 `records/soc3d-vivado-20261009/paused.json`，后续启动以 `launched.json` 为准。当前仍在运行，最终 routed setup/hold、资源和 bitstream 结果待取证。
+
+
+### 2026-10-09 11:37 解除运行中作业的时限
+
+用户明确要求取消时限且不重跑。北京时间 **11:37:22** 已解除两项现有作业的一小时限制；这项最新指令覆盖上文启动时的一小时策略。只向各自的 `timeout` PID 400138 / 400140 发送 `SIGSTOP`，没有向进程组、LiteX 或 Vivado 发送暂停/终止信号。单核 Vivado PID **401463**、四核 PID **401501** 及 `/proc` start_ticks 均保持不变，原始起点 11:02:34 与输出目录保持。
+
+Alan 的 ptrace 策略不允许直接修改既有 `timeout` 进程内部定时器，因此停用外层监控，启动独立退出记录器 PID 423935；它没有时间上限。记录器以 pidfd 监听原有 LiteX 进程 400139 / 400141 的实际退出，读取保留的 kernel wait status。该机制先以独立的 exit 0 / exit 37 小进程验明，未编译或重跑硬件。机制参考 [GNU timeout 9.4 源码](https://raw.githubusercontent.com/coreutils/coreutils/v9.4/src/timeout.c)、[pidfd_open](https://man7.org/linux/man-pages/man2/pidfd_open.2.html)、[proc_pid_stat](https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html)。
+
+今后每项的真实构建结果读取 `soc-{tiny,small}-job/build-result.json` / `build-exit`，包括实际退出码、原起点、结束时刻和累计 wall time；[poll-vivado.py](../../records/soc3d-vivado-20261009/poll-vivado.py) 已优先读取这些结果及 `build-process.json`。累计时间使用原起点到接管时的实际 UTC 差加接管后的 monotonic 时长，原始外层记录器的 monotonic 总时长仍留存。原 LiteX 退出之后才清理停止的 timeout；旧 `result.json` 的监控器退出 -9 是清理动作，不能当作 Vivado/DUT 失败，不能替代 `build-result.json` 的实际退出状态。原始命令与启动版本文件继续保留，当前有效超时策略以 `timeout-removal.json` 为准。
+
+接管证据见 [timeout-removal.json](../../records/soc3d-vivado-20261009/timeout-removal.json)、[timeout-removal-observation.json](../../records/soc3d-vivado-20261009/timeout-removal-observation.json)，脚本与 SHA 在同一 evidence root。停用的 timeout 不应被单独 `SIGCONT` 恢复；作业结束后记录器会自动清理它们。此次没有重启、重新生成或重新构建。
+
+
+### 2026-10-09 12:15 进展（非最终报告）
+
+两项累计 wall time 约 **1 小时 12 分 44 秒**，原 Vivado PID 401463 / 401501 继续运行，时限解除生效，未重跑，日志无 `ERROR`。单核已完成首轮 `route_design` 并进入布线后 `phys_opt_design -directive default`：该次 route 日志摘要 WNS **-0.847 ns**、TNS **-2743.030 ns**、WHS **+0.030 ns**、THS **0.000 ns**；后续优化日志 sys_clk WNS 已出现 **-0.714 ns**，仍是过程中数值，不能替代最终 routed 报告。当前 setup 尚未闭合。四核进入 `route_design` Phase 4.2 Global Iteration 1（Rip-up And Reroute），无最终时序报告。两项尚无 bitstream。观察见 `records/soc3d-vivado-20261009/progress-121518.json`。
+
+
+### 2026-10-09 12:20 现有路径证据分析（综合与布线分开）
+
+当前 `tiny/gateware` 仅有综合详细时序报告与 synth/place 检查点；尚无 route 检查点、routed 详细路径报告。LiteX Tcl 先执行 `route_design`，再 `phys_opt_design -directive default`，之后才写 `xilinx_kcu105_route.dcp` 和详细时序报告。因此现在无法还原首轮 route 的完整最差路径；日志的“Processed net”也不等于该网就是整条最差路径的起点/终点。
+
+已取回同版本综合报告 [single-timing-synth.rpt](../../records/soc3d-vivado-20261009/single-timing-synth.rpt)。sys_clk 的综合最差 setup 路径为 `l1d/internal2_paddr_reg[14]/C` → `backend/csrFile/pmpRanges_7_nonempty_reg/D`，10.000 ns 要求、slack -1.534 ns、data path 11.369 ns，其中逻辑 3.383 ns、**综合估计**线延迟 7.986 ns（70.244%）、36 级（7 个 CARRY8）。这些数值不能替代首轮 routed WNS -0.847 ns 的路径分析。
+
+该综合网表路径依次经过 L1D miss 的 lineAddr/way/upgrade/wAf/recheck、core response valid、WB trap/CSR 控制、pmpaddr next-state 选择，最后经过 PMP lower/upper/nonempty 解码并进入预解码寄存器。可直接核对报告行 395–525。RTL 对应 `core/RegFile.scala` 中 nextPmpCfg/nextPmpAddr 受 commit/trap/锁定/WARL 条件选择，而 `pmpRanges` 同拍对 next state 解码更新（823–831）；这提供“PMP 预解码写入端的组合依赖”这一具体候选瓶颈，尚不能宣布它是首轮 routed 最差路径，也未授权新增 RTL 或时序例外。
+
+布线后物理优化日志的热点包括 dTLB 存储读地址/candidate PA、L1D PMP/PMA、CSR pmpRanges、L1D tag 与 miss 逻辑。12:20 附近工具输出 Current Timing Summary：WNS -0.674 ns、TNS -2584.971 ns、WHS +0.030 ns、THS 0.000 ns，属于当前优化过程摘要。最终路径报告写出后，需核对实际起终点、logic/routing 占比、扇出与最差十条，而不能用综合估计或历史 dTLB→PMP 路径替代。
+
+
+### D-cache / WB / CSR 阶段边界审阅建议（讨论，未改变冻结合同）
+
+结合当前综合路径与 RTL，建议优先审查跨模块控制边界：L1D CPU/internal S2 共用 `s2` 与 outcome 决策，`resp/s2Hold` 同拍送入 WB；`BreezeBackend.scala:157–167` 的通用 WB commit 又进入 CSR next-state 选择；`RegFile.scala:491–724` 的 nextPmpCfg/nextPmpAddr 已包含 commit/trap/锁定/WARL 门控，再于 823–831 对 next state 做完整 PMP 区间解码。因此，PMP 访问端前移之后，预解码更新端仍可能承接很晚的缓存/WB 控制。综合最差路径来自 internal2，不是普通 Load hit 的独立路径证据。
+
+建议顺序：① 让 CSR 地址/写数据/现有锁定与 WARL 状态独立生成候选 PMP 区间，将最终提交许可留在寄存器末端；必须保持 pmpaddr/pmpcfg/range 同沿、TOR 前驱联动及原锁定语义，目标是不增加架构延迟。② 审查普通命中判定、内部回放/重查与 miss 资源控制的组合共享，压缩共用 outcome/hold 的逻辑锥；已有容量 Boolean 与 victim 选择拆分应继续保持，并由综合网表验证。③ 最终 routed 路径若仍证明 S2 到提交端过重，再评审寄存完成边界；优先评估慢路径局部边界与统一增加提交级的不同成本，不预先宣布全局加级。
+
+任何新增完成级都必须随请求身份一起对齐 kind/data/exception/age，重新安排 kill、MSHR/PS/way 所有权与背压容量；不能只打一拍 resp.valid。内部流水必须继续在 CPU S2 等待时推进，否则会堵住释放 MSHR 所需的 refill/probe/PTW。统一加级还会改变 E+2 判定即 WB 提交、load-use、精确异常与 store 提交时刻，需先重新裁定任务合同；目前仅为建议，没有修改 RTL、规格、约束或运行中作业。访存与 CSR 写属于不同指令类型，跨到 CSR 的综合链还可能含共享 commit 门控造成的互斥依赖，应优先改善 RTL 结构，不据此自行加 false_path。
+
+本轮预解码实现对更新端组合链隔离考虑不足；这比仅按 D-cache 级数决定加流水更明确。最终判断仍需当前 routed 最差十条。FPGA 原则参考 [UG949 2022.2：Check Inferred Logic](https://docs.amd.com/r/2022.2-English/ug949-vivado-design-methodology/Check-Inferred-Logic)：按实际 fan-in、运算与布线逻辑锥评估流水寄存边界，而非按模块名字计级数。
+
+
+## 2026-10-09 控制链候选：RTL 已修改，测试延后
+
+用户授权先落实上述前两项，测试下一次加。本次工作位于 `/home/chen/leisure/flow`、分支 `feat/pcie-fase-20260920`，基于主仓 `d276f8bbd03bc86873063331920e8489f6e658f2` 的未提交修改；CVFPU 保持 `3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9`。只修改两个主 RTL 文件，未修改后端提交边界、流水寄存器、浮点或约束。同步 L1D spec 的实现说明，不改冻结拍数合同。
+
+| 文件 | 修改及保留的边界 |
+| --- | --- |
+| `design/src/main/scala/core/RegFile.scala` | `candidatePmpCfg/Addr/Ranges` 只依赖 CSR 地址、写数据与已有 PMP 状态；不包含 `commit_valid/commit_write_en/trap.valid`。原 `pmpStateWrite` 在寄存器末端同沿更新配置、地址和区间。保留 R=0 时 W 清零、保留位清零、自身 lock、locked TOR 对前驱的 lock、TOR 候选前驱联动、无效/陷入写保持和原 permissionEvent。 |
+| `design/src/main/scala/l1d/L1DCache.scala` | 将共享 outcome 优先 Mux 与后续枚举比较改为局部 Boolean 条件。按原顺序限定 refresh/internal/replay 与 CPU/原子/FENCE 等路径，分别生成完成、异常、重查、MMIO、AMO、PTW、MSHR 和等待条件；普通 hit、PS 容量与 miss 容量独立计算，victim/data 选择不进入分配容量。所有原 outcome 消费点改用对应条件，副作用的 kill/error、PTW/回放目的、快照失效、LR/SC reservation 与原断言保持。 |
+
+静态审阅逐项对照原决策分支：回放错误优先于 AMO；成功 Store 回放等待 PS、错误回放不写 PS；CPU 被内部占用时保持而内部仍推进；RMW 完成、atomicWait、FENCE 均先于重新查询；过期快照先重查再用权限；权限异常先于 MMIO/SC；SC reservation 失败可完成且不分配 MSHR；same-line 资源等待先于普通 hit/miss；PTW 与 CPU 使用原各自容量条件，LR/AMO miss 仍保持到回放。这是人工源码审阅，不是功能等价证明。
+
+本地检查只执行 `git diff --check` 与 `python3 tools/frozen_check.py`，均 exit 0；冻结检查 `OK (8 files)`。精确 RTL 补丁、两个文件摘要、base/CVFPU SHA、命令/cwd/exit 与检查日志记录于 [control-boundary/source-manifest.json](../../records/soc3d-rtl-20261009/control-boundary/source-manifest.json) 和同目录的 `rtl.patch`、`static-checks.log`。未编译、未生成 RTL、未新增或运行测试，也未新启 Vivado；功能与时序改善均待验证。第一批 42 项通过结果不能移用于此新候选。
+
+第一批单核/四核作业的固定输入、原 wall time 起点及无限时限策略均保持；本次未操作远端进程或输入，因此它们的结果只评价第一批 `d276f8b`。下一次验证需先覆盖 PMP 被禁止提交/同拍 trap 的状态保持、锁定与 TOR 联动，以及 S2 回放错误、PS 满、PTW refresh、SC fault/失败、MMIO、probe/refill 与 CPU 资源等待交叠，再决定新候选的物理构建；本次不执行这些测试。
+
+
+## 2026-10-09 控制链候选：必要测试与定向验证完成
+
+用户随后授权补必要测试。本轮新增 **4 项**，在 cloud_chen 运行所选 **39 个唯一用例，39/39 通过**；其中一个集群用例运行三个短自检程序，均通过。没有执行完整回归，没有修改既有 golden、断言或冻结拍数，没有因失败修订 RTL。验证的两个主 RTL 文件与上一节控制链实现摘要完全相同。
+
+### 输入与执行证据
+
+- 本地 cwd `/home/chen/leisure/flow`、分支 `feat/pcie-fase-20260920`；基于 `d276f8bbd03bc86873063331920e8489f6e658f2` 的未提交 RTL/测试改动，CVFPU `3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9` 保持且工作区干净。仅用 base SHA 无法复现本候选，须使用本轮输入快照。
+- [source.tgz](../../records/soc3d-control-tests-20261009/source.tgz) 与 [source-manifest.json](../../records/soc3d-control-tests-20261009/source-manifest.json) 保存 665 个实际输入文件；manifest SHA256 为 `d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75`。每个门槛执行前逐文件校验，结束时再次 **665/665**；[source-verify-final.json](../../records/soc3d-control-tests-20261009/cloud/source-verify-final.json)。两个 RTL 与此前修改的绑定见 [source-bindings.json](../../records/soc3d-control-tests-20261009/source-bindings.json)，精确主 RTL/测试补丁另存 `rtl-tests.patch`。
+- 实际执行主机 `cloud_chen@47.96.71.231`，hostname `iZbp16rhtg91v96m32vggjZ`；独立 cwd `/home/cloud_chen/work/soc3d-control-tests-20261009/design`，远端证据 `/home/cloud_chen/evidence/soc3d-control-tests-20261009/`。每个门槛前本地脚本重读共享主机配置并验证 SSH；启动前检查环境、磁盘、内存与代理。旧代理断开，恢复反向转发后预检通过，见 `preflight-corrected.log`。已有构建缓存复制到独立工作区使用，未写入旧测试工作区或 Alan Vivado 输入。
+- 实际工具：sbt 1.9.7、Verilator 5.028、OpenJDK 11.0.32.1、GCC 13.3.0；固定项目配置为 Chisel 7.0.0、Scala 2.13.16。首次日志确认两个 RTL 和两个测试 Scala 文件均重新编译；所选测试的 RTL 生成、Verilator 编译与仿真成功。
+- 完整命令见 [gates.json](../../records/soc3d-control-tests-20261009/gates.json)，均为 `sbt -batch 'testOnly ...'`。七项作业各自的 cwd、argv、实际 UTC 起止、monotonic wall seconds、exit 和日志路径在 `cloud/<gate>-result.json`，全部 exit 0。实际执行 UTC **04:43:53.529098–04:52:19.616784**，北京时间 **12:43:53–12:52:19**；七项作业累计 wall time **498.360 秒（8 分 18.36 秒）**，首项开始到末项结束 **506.088 秒**，不含准备与归档时间。
+- [acceptance.json](../../records/soc3d-control-tests-20261009/acceptance.json) 从每项独立保存的原始 JUnit 核对 39 个唯一测试、无失败/跳过及三个成功程序。日志、JUnit、生成 HDL 与模拟器构建记录归档到 `cloud-evidence.tgz`（SHA256 `c00e4bceeea98b2eefbc1a705c96f2f8304fd4aaf4ea2a948615a7c6385adaa6`），取回后已核对摘要；生成记录另在 `cloud/generated-test-evidence.tgz`。本节、计划和 L1D spec 的验证状态更新发生在执行之后，不属于已执行的输入快照；主 RTL/测试未改变。
+
+### 风险与用例对应
+
+| 风险 / 规格 | 激励与独立期望 | 实际结果 |
+| --- | --- | --- |
+| PMP 最终提交门控（CSR 写/trap 优先级；L1D spec 控制链修订） | **新增**无效 commit、write_en=0、同拍 trap 等四种许可组合，分别驱动 cfg/地址/TOR 前驱候选并连续保持 3 拍；所有 raw PMP 与区间均应保持，permissionEvent 只按实际 trap 更新。之后合法写应生效，禁止的锁定位候选不能暗中锁住 CSR。整数区间模型独立检查所有 8 项。 | `csr` 3/3，含新增 2 项与既有 TOR 同沿/锁定用例。 |
+| PMP 连续写、WARL、lock 和 TOR 联动 | **新增**连续无空拍写，seed `0x3d504d51`；32 次固定随机写加显式 TOR 正/空区间、锁住自身和 TOR 前驱、非活动 CSR 写。逐沿比较独立软件 WARL/锁定模型的 raw state、上下界、nonempty 与块前驱。 | 同上；`cloud/csr.log`。 |
+| SC reservation 失败与 MSHR 等待的优先级（L1D §5、§8） | **新增**seed=61：下游 Get 被反压，MSHR 持有与 SC 相同的行；未建立 reservation 的 SC 应独立返回 Done/1，不新增 GetM，年轻已有 hit 能完成，原 miss 尚未返回。释放后检查原 GetS 恰一次及 golden 数据。 | `cache-new` 2/2，含新增 2 项。 |
+| CPU 重查与内部 PTW/probe/refill 的推进与响应归属（L1D §5–7） | **新增**seed=62：store miss 被反压，年轻同一行 load 保持；PTW 等候其预留容量，另一个驻留行 Inv 能先完成；释放后 CPU 重查、PTW、PS 与 FENCE 排空均完成，PTW 恰一个响应，CPU 无重复/无主响应，最终脏行对照独立 golden。 | 同上；`cloud/cache-new.log`。 |
+| 其余 S2 优先区及副作用（L1D §4–8） | 复用并过滤 18 项：各种 Load 格式、Store hit/miss/升级、MSHR/同一行等待、probe 前进、FENCE 持有年轻 Store 时 Inv/Down、kill、grant+probe、refill error、MMIO 数据/strobes/error、PTW hit/miss、LR/SC、AMO 冷 miss/升级、原子权限与错误回放、RMW 写沿 kill。保留 PS 容量/所有权等原断言和最终脏行 golden 比较。 | `cache-boundaries` 18/18。 |
+| 上下文事件与权限异常（SOC3 permission snapshot；L1D §5） | 复用真实 CSR/MMU/cache 的 4 项 SOC3 上下文更新测试，覆盖 CSR 紧邻访存、S1 同沿更新、S2 多拍保持、PTW 刷新；另跑 5 项地址/权限/原子/PTW faults 和同拍故障取消用例。 | `context` 4/4，`permissions` 5/5。 |
+| 响应/提交拍数与年龄对齐（冻结 backend timing contract） | 只选 T02、T03、T08、T09、T10、T22，保持精确拍数与 load-use、MSHR busy、普通 hit/late/ADD 对齐判据。该测试台用行为缓存环境，真实后端/cache 连接由下一行补验。 | `backend` 6/6。 |
+| 单核真实集群：原子、异常、MMIO | 复用 `ClusterWbSplitSmokeSpec`：Linux single、seed=1、无 AXI 随机反压，三个 ELF 与既有 tohost/console 期望不变。 | `cluster` 1/1；`lrsc_amo_single` 14410 cycles/1127 retired，`trap_misc` 25587/2092，`mmio_console` 43389/4258，console 精确匹配。 |
+
+这些结果覆盖控制链重构的选定功能风险和有限集群联动，不是完整回归、形式等价证明或多核随机压力；也未单独统计所有 S2 内部 Boolean 分支的覆盖率。PS 安全性由所选并发场景中的原容量/所有权断言与 golden 检查约束，不声称穷举 PS-full 组合。此次没有新启、停止或重启 Vivado，没有综合/布局布线/bitstream/上板证据；第一批物理构建结果仍只对应 `d276f8b`。

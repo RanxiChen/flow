@@ -1,0 +1,341 @@
+{
+  "scope": "Selected control-boundary functional tests, no full regression or new FPGA build",
+  "unique_tests": 39,
+  "new_tests": 4,
+  "programs": [
+    [
+      "lrsc_amo_single",
+      "14410",
+      "1127 "
+    ],
+    [
+      "trap_misc",
+      "25587",
+      "2092 "
+    ],
+    [
+      "mmio_console",
+      "43389",
+      "4258 "
+    ]
+  ],
+  "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+  "source_verification": {
+    "verified": 665,
+    "mismatches": [],
+    "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75"
+  },
+  "sum_gate_wall_seconds": 498.3597950219846,
+  "gates": [
+    {
+      "gate": "csr",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.core.BreezePrivilegeSpec -- -z SOC3d"
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:43:53.529098+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/csr.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:44:19.400967+00:00",
+      "wall_seconds": 25.871759797999403,
+      "tests": [
+        [
+          "flow.core.BreezePrivilegeSpec",
+          "SOC3d PMP predecode changes on the CSR edge and preserves TOR predecessor locks"
+        ],
+        [
+          "flow.core.BreezePrivilegeSpec",
+          "SOC3d-control PMP candidates cannot change state without valid write or during trap"
+        ],
+        [
+          "flow.core.BreezePrivilegeSpec",
+          "SOC3d-control consecutive PMP writes keep raw state and ranges aligned through WARL and locks"
+        ]
+      ],
+      "count": 3
+    },
+    {
+      "gate": "cache-new",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DCacheSpec -- -t \"SOC3d-control failed SC completes on the occupied MSHR line without a new miss\" -t \"SOC3d-control PTW and CPU recheck each finish once after a stalled store refill\""
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:44:21.066404+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/cache-new.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:44:46.115408+00:00",
+      "wall_seconds": 25.048863324002014,
+      "tests": [
+        [
+          "flow.memsys.L1DCacheSpec",
+          "SOC3d-control failed SC completes on the occupied MSHR line without a new miss"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "SOC3d-control PTW and CPU recheck each finish once after a stalled store refill"
+        ]
+      ],
+      "count": 2
+    },
+    {
+      "gate": "cache-boundaries",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DCacheSpec -- -t \"load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW\" -t \"store hits on E merge bytes in place and an Inv probe returns the dirty line\" -t \"store miss sends GetM, replays through the pending store, and later loads see it\" -t \"store to a shared line upgrades with GetM and AckE and keeps the rest of the line\" -t \"a second miss waits for the single MSHR and a same-line access waits for the refill\" -t \"a shared store waiting for the MSHR lets a probe pass a younger same-set store\" -t \"killed stores never write, and a load miss killed at WB sends no GetS\" -t \"a probe that arrives with the grant waits for the replay and answers with its result\" -t \"a refill error is reported on late data or drops the store, and leaves the line invalid\" -t \"device accesses use blocking AXI-Lite with formatted data, byte strobes and error responses\" -t \"PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU\" -t \"FENCE completes only after an outstanding store miss has drained\" -t \"LR gets exclusive permission, SC succeeds once and a failed SC never misses\" -t \"AMO cold misses, shared upgrades and grant probes use GetM and protected RMW\" -t \"atomic permissions and refill errors trap before writes or failed-SC status\" -t \"atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge\" -z \"a FENCE waiting\""
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:44:47.318371+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/cache-boundaries.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:47:45.485397+00:00",
+      "wall_seconds": 178.16691401299613,
+      "tests": [
+        [
+          "flow.memsys.L1DCacheSpec",
+          "load miss refills with GetS, then hits return every size, offset, sign and NaN-boxed FLW"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "store hits on E merge bytes in place and an Inv probe returns the dirty line"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "store miss sends GetM, replays through the pending store, and later loads see it"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "store to a shared line upgrades with GetM and AckE and keeps the rest of the line"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a second miss waits for the single MSHR and a same-line access waits for the refill"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a shared store waiting for the MSHR lets a probe pass a younger same-set store"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a FENCE waiting for an older miss lets SnpOp(0=Inv) pass its held younger store"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a FENCE waiting for an older miss lets SnpOp(1=Down) pass its held younger store"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "killed stores never write, and a load miss killed at WB sends no GetS"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a probe that arrives with the grant waits for the replay and answers with its result"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "a refill error is reported on late data or drops the store, and leaves the line invalid"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "device accesses use blocking AXI-Lite with formatted data, byte strobes and error responses"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "FENCE completes only after an outstanding store miss has drained"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "LR gets exclusive permission, SC succeeds once and a failed SC never misses"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "AMO cold misses, shared upgrades and grant probes use GetM and protected RMW"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "atomic permissions and refill errors trap before writes or failed-SC status"
+        ],
+        [
+          "flow.memsys.L1DCacheSpec",
+          "atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge"
+        ]
+      ],
+      "count": 18
+    },
+    {
+      "gate": "context",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DContextSpec -- -z SOC3"
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:47:46.908411+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/context.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:48:29.705697+00:00",
+      "wall_seconds": 42.79715977799788,
+      "tests": [
+        [
+          "flow.memsys.L1DContextSpec",
+          "SOC3: CSRW pmpcfg0/pmpaddr0/MPRV/MPP immediately followed by load/store/AMO, both directions"
+        ],
+        [
+          "flow.memsys.L1DContextSpec",
+          "SOC3 C1-B: CPU S1 capture at the CSR update edge rechecks before any side effect"
+        ],
+        [
+          "flow.memsys.L1DContextSpec",
+          "SOC3: a multi-cycle S2 Hold invalidates permission snapshots on both context transitions"
+        ],
+        [
+          "flow.memsys.L1DContextSpec",
+          "SOC3: PTW denial and a permission-context change with a PTW item in S2 retain one response"
+        ]
+      ],
+      "count": 4
+    },
+    {
+      "gate": "permissions",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DPermissionsSpec"
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:48:30.855828+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/permissions.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:49:23.509295+00:00",
+      "wall_seconds": 52.65336200699676,
+      "tests": [
+        [
+          "flow.memsys.L1DPermissionsSpec",
+          "64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM"
+        ],
+        [
+          "flow.memsys.L1DPermissionsSpec",
+          "WB fault cancellation and reservation clearing cannot combinationally suppress their fault"
+        ],
+        [
+          "flow.memsys.L1DPermissionsSpec",
+          "MPRV selects MPP for PMP instead of bypassing protection as M-mode"
+        ],
+        [
+          "flow.memsys.L1DPermissionsSpec",
+          "ROM LR, SC and AMO use atomic PMA and the appropriate fault class"
+        ],
+        [
+          "flow.memsys.L1DPermissionsSpec",
+          "56-bit PTW address above 4 GiB and a device PTE read return accessFault without memory traffic"
+        ]
+      ],
+      "count": 5
+    },
+    {
+      "gate": "backend",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.backend.BackendContractSpec -- -t \"T02_load_use_default\" -t \"T03_independent_ALU_after_load\" -t \"T08_store_same_word_conflict\" -t \"T09_store_different_word\" -t \"T10_miss_WB_commit_sets_busy\" -t \"T22_B01_miss_ADD_hit_response_alignment\""
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:49:24.507968+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/backend.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:51:32.920631+00:00",
+      "wall_seconds": 128.4125331069954,
+      "tests": [
+        [
+          "flow.backend.BackendContractSpec",
+          "T02_load_use_default"
+        ],
+        [
+          "flow.backend.BackendContractSpec",
+          "T03_independent_ALU_after_load"
+        ],
+        [
+          "flow.backend.BackendContractSpec",
+          "T08_store_same_word_conflict"
+        ],
+        [
+          "flow.backend.BackendContractSpec",
+          "T09_store_different_word"
+        ],
+        [
+          "flow.backend.BackendContractSpec",
+          "T10_miss_WB_commit_sets_busy"
+        ],
+        [
+          "flow.backend.BackendContractSpec",
+          "T22_B01_miss_ADD_hit_response_alignment"
+        ]
+      ],
+      "count": 6
+    },
+    {
+      "gate": "cluster",
+      "hostname": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-control-tests-20261009/design",
+      "argv": [
+        "sbt",
+        "-batch",
+        "testOnly flow.cluster.ClusterWbSplitSmokeSpec"
+      ],
+      "base_head": "d276f8bbd03bc86873063331920e8489f6e658f2",
+      "cvfpu_head": "3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9",
+      "source_manifest_sha256": "d4434a85198908dbc4d560489607dd049484baa14064fab673501d5f96aeca75",
+      "start_utc": "2026-10-09T04:51:34.207414+00:00",
+      "log": "/home/cloud_chen/evidence/soc3d-control-tests-20261009/cluster.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T04:52:19.616784+00:00",
+      "wall_seconds": 45.40920299499703,
+      "tests": [
+        [
+          "flow.cluster.ClusterWbSplitSmokeSpec",
+          "SOC3b single-core atomic, trap and MMIO programs"
+        ]
+      ],
+      "count": 1
+    }
+  ]
+}

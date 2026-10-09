@@ -178,6 +178,61 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     finish()
   }
 
+  "SOC3d-control failed SC completes on the occupied MSHR line without a new miss" in withL1D(seed = 61) { e =>
+    import e._
+    val h = ram(0x1540); val m = ram(0x1580)
+    runOps(CoreOp.load(h))
+    val n = core.history.size
+    val getsBefore = l2.gets.size
+    l2.reqReadyProb = 0
+    core.enqueue(CoreOp.load(m, rd = 2), CoreOp.sc(m, 0x1234, success = false), CoreOp.load(h, rd = 3))
+    bench.runUntil(core.history.size >= n + 3 && core.history(n + 2).respCycle >= 0, limit = 1000)
+    core.history(n).kind mustBe "Mshr"
+    core.history(n).lateCycle mustBe -1L
+    core.history(n + 1).kind mustBe "Done"
+    core.history(n + 1).value mustBe BigInt(1)
+    core.history(n + 2).kind mustBe "Done"
+    l2.gets.size mustBe getsBefore
+    core.drained mustBe false
+    bench.steps(5) // Driver rejects duplicated/unowned responses.
+    l2.reqReadyProb = 1
+    bench.quiesce()
+    l2.getsOf(line(m)) mustBe Seq("GetS")
+    runOps(CoreOp.load(m)) // Failed SC must leave the independent golden intact.
+  }
+
+  "SOC3d-control PTW and CPU recheck each finish once after a stalled store refill" in withL1D(seed = 62) { e =>
+    import e._
+    val h = ram(0x1640); val m = ram(0x1680)
+    runOps(CoreOp.load(h))
+    val n = core.history.size
+    val holdsBefore = core.holdCycles
+    l2.reqReadyProb = 0
+    core.enqueue(CoreOp.store(m, 0x3456), CoreOp.load(m, rd = 2),
+      CoreOp.store(h + 8, 0x7788), CoreOp.load(h + 8, rd = 3), CoreOp.fence)
+    bench.runUntil(core.history.size >= n + 2 && core.holdCycles > holdsBefore + 3, limit = 1000)
+    core.history(n).kind mustBe "Mshr"
+    core.history(n + 1).respCycle mustBe -1L
+    ptw.read(h + 24)
+    bench.steps(5)
+    ptw.results mustBe empty // PTW admission waits for its reserved miss capacity.
+    l2.probe(SnpOp.Inv, line(h))
+    bench.runUntil(l2.acks.exists(_._3 == line(h)), limit = 1000)
+    core.history(n + 1).respCycle mustBe -1L
+    l2.getsOf(line(m)) mustBe empty
+    l2.reqReadyProb = 1
+    bench.quiesce()
+    ptw.results.size mustBe 1
+    ptw.results.head._1 mustBe h + 24
+    ptw.results.head._3 mustBe false
+    core.history.size mustBe n + 5
+    core.history(n + 1).kind mustBe "Done"
+    core.history.last.kind mustBe "Done" // FENCE retires after refill/PS/PTW drain.
+    core.history.drop(n + 1).foreach(_.done mustBe true)
+    l2.getsOf(line(m)) mustBe Seq("GetM")
+    runOps(CoreOp.load(m), CoreOp.load(h + 8))
+  }
+
   "a second miss waits for the single MSHR and a same-line access waits for the refill" in withL1D() { e =>
     import e._
     l2.minLatency = 15; l2.maxLatency = 15
