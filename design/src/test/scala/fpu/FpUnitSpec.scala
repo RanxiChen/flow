@@ -119,6 +119,80 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.io.committedFpr.expect(0.U); d.io.busy.expect(false.B)
     }
   }
+  "SOC3d FP32 five-stage stream preserves exact latency, II1, tags and exception flags" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      def box(x: BigInt): BigInt = (BigInt("ffffffff", 16) << 32) | x
+      // Independently known IEEE results: fused cancellation, invalid,
+      // inexact subnormal and an RNE tie. All share the ADDMUL slice.
+      val cases = Seq(
+        (BreezeFpOp.FMADD, BigInt("3f800001",16), BigInt("3f7ffffe",16), BigInt("bf800000",16), Response(box(BigInt("a8800000",16)),0)),
+        (BreezeFpOp.FMADD, BigInt("7f800000",16), BigInt(0), BigInt("3f800000",16), Response(box(BigInt("7fc00000",16)),16)),
+        (BreezeFpOp.MUL, BigInt(1), BigInt("3f000000",16), BigInt(0), Response(box(BigInt(0)),3)),
+        (BreezeFpOp.ADD, BigInt(0), BigInt("3f800000",16), BigInt("33800000",16), Response(box(BigInt("3f800000",16)),1)))
+      val received = scala.collection.mutable.ArrayBuffer.empty[(Int,Int)]
+      for (cycle <- 0 until 28) {
+        d.io.req.valid.poke((cycle < 16).B)
+        d.io.commit.poke((cycle >= 2 && cycle < 18).B)
+        if (cycle < 16) {
+          val (op,a,b,c,_) = cases(cycle % cases.size)
+          d.io.req.bits.operation.poke(op.U)
+          d.io.req.bits.srcFmt.poke(BreezeFpFmt.S.U); d.io.req.bits.dstFmt.poke(BreezeFpFmt.S.U)
+          d.io.req.bits.operandA.poke(box(a).U); d.io.req.bits.operandB.poke(box(b).U)
+          d.io.req.bits.operandC.poke(box(c).U); d.io.req.bits.rd.idx.poke(cycle.U)
+          d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B)
+        }
+        if (d.io.result.valid.peek().litToBoolean) {
+          val rd = d.io.result.bits.rd.idx.peek().litValue.toInt
+          val expected = cases(rd % cases.size)._5
+          d.io.result.bits.data.expect(expected.result.U); d.io.result.bits.flags.expect(expected.status.U)
+          d.io.result.bits.rd.isFp.expect(true.B); d.rawOutFire.expect(true.B)
+          received += ((rd,cycle))
+        }
+        d.clock.step()
+      }
+      received.toSeq mustBe (0 until 16).map(n => (n,n+5))
+      d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
+    }
+  }
+  "SOC3d FP32 kill at the normalization boundary drains a committed stalled result and reuses tags" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      val boxOne = BigInt("ffffffff3f800000",16)
+      d.io.req.bits.srcFmt.poke(BreezeFpFmt.S.U); d.io.req.bits.dstFmt.poke(BreezeFpFmt.S.U)
+      d.io.req.bits.operandA.poke(boxOne.U); d.io.req.bits.operandB.poke(boxOne.U)
+      d.io.req.bits.operandC.poke(boxOne.U)
+      d.io.result.ready.poke(false.B)
+      // Fill both sides of the new boundary before kill. Only f1 commits.
+      for (cycle <- 0 until 9) {
+        d.io.req.valid.poke((cycle < 3).B)
+        if (cycle < 3) { d.io.req.bits.rd.idx.poke((cycle+1).U); d.io.req.ready.expect(true.B) }
+        d.io.commit.poke((cycle == 2).B)
+        d.io.killUncommitted.poke((cycle == 4).B)
+        if (cycle >= 5) {
+          d.draining.expect(true.B); d.io.req.ready.expect(false.B)
+          d.io.result.valid.expect(true.B); d.io.result.bits.rd.idx.expect(1.U)
+          d.io.result.bits.data.expect(BigInt("ffffffff40000000",16).U)
+          d.io.result.bits.flags.expect(0.U)
+        }
+        d.clock.step()
+      }
+      d.io.req.valid.poke(false.B); d.io.killUncommitted.poke(false.B)
+      d.io.result.ready.poke(true.B)
+      var returned = 0
+      for (_ <- 0 until 16) {
+        if (d.io.result.valid.peek().litToBoolean) { d.io.result.bits.rd.idx.expect(1.U); returned += 1 }
+        d.clock.step()
+      }
+      returned mustBe 1; d.draining.expect(false.B); d.io.busy.expect(false.B)
+      for (_ <- 0 until 40) {
+        d.io.req.bits.rd.idx.poke(4.U)
+        transact(d,BreezeFpOp.FMADD,boxOne,boxOne,boxOne,BreezeFpFmt.S) mustBe
+          Response(BigInt("ffffffff40000000",16),0)
+      }
+      d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
+    }
+  }
   "SOC3d rounding boundary preserves all modes, subnormals, overflow and fused cancellation" in {
     simulate(new FpProbe) { d =>
       init(d)

@@ -67,6 +67,7 @@
 ## 5. FPU
 
 - `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线。SOC-3d 第一批：ADDMUL 的 FP32/FP64 PipeRegs 从 3/4 改为 4/5；FP32 启用全精度乘积/对齐加数到宽加法之间的已有边界，FP64 增加归一化到舍入/状态之间的边界，各增加一拍内部延迟。舍入仍仅发生一次；数据、舍入模式、特殊值、UF 所需位、tag/mask/aux 同步保持和 flush，busy 覆盖新增有效项。UnitTypes、DISTRIBUTED、其余格式与操作组不变，T14/T15 的后端两端直连和 T16 按实际 CVFPU 延迟测量的规则保持。[tasks/SOC-3d-timing-batch-plan.md]
+- 2026-10-09 独立 FP32 时序候选：用户授权再将 FP32 ADDMUL 从 4 级改为 5 级，复用上述归一化/舍入之间的未舍入 payload 边界；FP64 保持 5 级。FP32 无停顿 `in fire` 到 `out fire` 为 5 拍，II=1；commit 仍在 EX+2，RAW 在实际写回同拍解除，CSR 按 raw busy 等待。正/负 tie、subnormal、OF/UF/NX 与特殊值结果保持，禁止在新增边界提前舍入；所有 sideband、ready、flush、busy 与有效位同拍推进。当前运行的旧候选及其输入不变，使用独立 source SHA、测试和物理证据。[tasks/SOC-3d-fp32-normalization-report.md]
 - EX 将三个操作数、EX 确定的 rm/op/格式、目的送到原始 CVFPU input；接收同拍写 metadata 表，allocate 前进，无输入寄存级。SOC-3c C1：exFpIssued 保证 held EX 只接收一次；req.valid 不含 downHold/wbKill/allowEx，仅受本条已发及寄存 fatal/stopped 限制，resourceWait 的 FP 项仅在尚未发射时等待 ready；表满/killDrain 或 CVFPU 不 ready 时 EX 等待。[backend-timing-contract.md§1/T14]
 - commitCursor 从最老方向组合找 valid&&!committed 项；WB commit 只授权这一项并前进；WB kill 清所有未提交 valid，刚 commit 的项保留，committed 项不动。[tasks/V1-BE-backend-spec-and-rtl.md§2.1][backend-rtl-spec.md§4.2][自定]
 - `out_tag` 组合读表，valid&&committed 的输出直接参加后台仲裁；result fire 与 CVFPU out fire 同拍、无数据寄存级。[backend-timing-contract.md§1/T15]

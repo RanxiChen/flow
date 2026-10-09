@@ -298,6 +298,22 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.at("id",p(1)) mustBe m.written(1,true)+1
     m.writes(5).head.data mustBe 16 // 0/0 -> NV
   }}
+  "SOC3d_FP32_dependency_and_CSR_drain_follow_five_stage_completion" in { check() { m =>
+    m.enableFp()
+    m.values(256)=BigInt("ffffffff3f800000",16)
+    m.values(264)=BigInt("ffffffff33800000",16)
+    m.run(Seq(ld(10,256,true),ld(11,264,true)),5)
+    def addS(rd: Int,a: Int,b: Int): BigInt = fp(rd,a,b) - (BigInt(1)<<25)
+    val p=m.run(Seq(addS(1,10,11),addS(2,1,10),csr(5,1)),40)
+    m.at("fpIn",p.head) mustBe m.at("ex",p.head)
+    m.written(1,true)-m.at("ex",p.head) mustBe 5
+    m.at("id",p(1)) mustBe m.written(1,true)
+    m.at("id",p(2)) mustBe m.written(2,true)+1
+    m.writes(1,true).head.data mustBe BigInt("ffffffff3f800000",16)
+    m.writes(2,true).head.data mustBe BigInt("ffffffff40000000",16)
+    m.writes(5).head.data mustBe 1
+    m.d.io.observe.fprBusy.expect(0.U)
+  }}
   "T18_FENCEI_drained_WB_flush" in { check() { m =>
     val p=m.run(Seq(BigInt(0x100f)),8); val wb=m.at("ex",p.head)+2
     m.all("redirect") mustBe Seq(wb); m.all("icacheFlush") mustBe Seq(wb); m.at("commit",p.head) mustBe wb
