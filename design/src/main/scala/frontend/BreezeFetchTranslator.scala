@@ -41,8 +41,11 @@ class BreezeFetchTranslator(val xlen: Int = 64, val parallelLookup: Boolean = fa
   io.cacheReq.valid := state === CacheReq && !io.kill
   io.cacheReq.bits.vaddr := vaddr
   io.cacheReq.bits.paddr := paddr
-  io.cacheRsp.ready := state === CacheWait
-  io.inRsp.valid := (state === Fault || (state === CacheWait && io.cacheRsp.valid)) && !io.kill
+  val matchingReturn = io.cacheRsp.bits.vaddr === vaddr
+  // A killed cache request may return in Idle/Translate or while a new
+  // owner waits. Drain stale words; a live response follows inRsp backpressure.
+  io.cacheRsp.ready := state =/= CacheWait || io.kill || !matchingReturn || io.inRsp.ready
+  io.inRsp.valid := (state === Fault || (state === CacheWait && io.cacheRsp.valid && matchingReturn)) && !io.kill
   io.inRsp.bits.vaddr := vaddr
   io.inRsp.bits.data := Mux(state === CacheWait, io.cacheRsp.bits.data, 0.U)
   io.inRsp.bits.accessFault := Mux(state === CacheWait, io.cacheRsp.bits.accessFault, accessFault)

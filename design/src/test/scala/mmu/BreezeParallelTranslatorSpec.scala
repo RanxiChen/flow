@@ -90,8 +90,22 @@ class BreezeParallelTranslatorSpec extends AnyFreeSpec with ChiselSim {
       }
       d.io.cacheReq.ready.poke(true.B); d.clock.step()
       d.io.cacheReq.valid.expect(false.B)
-      d.io.cacheRsp.valid.poke(true.B); d.io.cacheRsp.bits.data.poke("h13".U)
-      d.io.inRsp.valid.expect(true.B); d.io.inRsp.bits.data.expect("h13".U)
+      // A stale return from a canceled owner cannot satisfy the new PC.
+      d.io.inRsp.ready.poke(false.B)
+      d.io.cacheRsp.valid.poke(true.B); d.io.cacheRsp.bits.vaddr.poke((va+4).U)
+      d.io.cacheRsp.bits.data.poke("hdead".U)
+      d.io.inRsp.valid.expect(false.B); d.io.cacheRsp.ready.expect(true.B); d.clock.step()
+      d.io.cacheRsp.bits.vaddr.poke(va.U); d.io.cacheRsp.bits.data.poke("h13".U)
+      for (_ <- 0 until 4) {
+        d.io.inRsp.valid.expect(true.B); d.io.inRsp.bits.data.expect("h13".U)
+        d.io.cacheRsp.ready.expect(false.B); d.clock.step()
+      }
+      d.io.inRsp.ready.poke(true.B); d.io.cacheRsp.ready.expect(true.B); d.clock.step()
+      d.io.cacheRsp.valid.poke(false.B); d.io.inReq.ready.expect(true.B)
+      // Idle must also consume a late killed return to free cache credits.
+      d.io.cacheRsp.valid.poke(true.B); d.io.cacheRsp.bits.vaddr.poke((va+8).U)
+      d.io.inRsp.valid.expect(false.B); d.io.cacheRsp.ready.expect(true.B); d.clock.step()
+      d.io.cacheRsp.valid.poke(false.B)
     }
   }
 }

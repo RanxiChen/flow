@@ -106,7 +106,22 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
         } else None
     })
 
-    val fetchAllowed = !io.fasePause.getOrElse(false.B)
+    val cancelFetch = Wire(Bool())
+    // The extra cache return boundary permits two accepted word fetches.
+    // Keep prediction metadata per request, rather than overwriting S2 before
+    // the older word returns. Compressed fetch already has a single owner.
+    val contexts = if (!cfg.enableCompressed) Some(withReset(reset.asBool || cancelFetch) {
+        Module(new Queue(new Bundle {
+            val pc = UInt(cfg.VLEN.W)
+            val ghr = UInt(cfg.branchPredCfg.ghrLength.max(1).W)
+            val taken = Bool()
+            val target = UInt(cfg.VLEN.W)
+            val kind = FrontendPredType()
+            val phtIdx = UInt(cfg.branchPredCfg.ghrLength.max(1).W)
+        }, 2, pipe = true, flow = false))
+    }) else None
+    val fetchAllowed = !io.fasePause.getOrElse(false.B) && !cancelFetch &&
+        contexts.map(_.io.enq.ready).getOrElse(true.B)
     // ===== Module Instances =====
     val icache = Module(new L1ICache(L1IParams(memGeometry), enabledebug = enabledebug, parallelLookup = cfg.enableMmu))
     val realigner = if (cfg.enableCompressed) Some(Module(new BreezeInstrRealigner(cfg.VLEN))) else None
@@ -140,15 +155,15 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s1_phtIdx = Wire(UInt(cfg.branchPredCfg.ghrLength.max(1).W))
 
     // ===== S2: Stage State =====
-    val s2_validReg = RegInit(false.B)
-    val s2_pcReg = Reg(UInt(cfg.VLEN.W))
+    val s2_validReg = if (cfg.enableCompressed) RegInit(false.B) else contexts.get.io.deq.valid
+    val s2_pcReg = if (cfg.enableCompressed) Reg(UInt(cfg.VLEN.W)) else contexts.get.io.deq.bits.pc
 
     // ===== GShare S2 Metadata =====
-    val s2_ghrSnapshotReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
-    val s2_predTakenReg = if (isGShare) Some(RegInit(false.B)) else None
-    val s2_predPcReg = if (isGShare) Some(RegInit(0.U(cfg.VLEN.W))) else None
-    val s2_predTypeReg = if (isGShare) Some(RegInit(FrontendPredType.NONE)) else None
-    val s2_phtIdxReg = if (isGShare) Some(RegInit(0.U(cfg.branchPredCfg.ghrLength.W))) else None
+    val s2_ghrSnapshotReg = if (isGShare) Some(if (cfg.enableCompressed) RegInit(0.U(cfg.branchPredCfg.ghrLength.W)) else contexts.get.io.deq.bits.ghr) else None
+    val s2_predTakenReg = if (isGShare) Some(if (cfg.enableCompressed) RegInit(false.B) else contexts.get.io.deq.bits.taken) else None
+    val s2_predPcReg = if (isGShare) Some(if (cfg.enableCompressed) RegInit(0.U(cfg.VLEN.W)) else contexts.get.io.deq.bits.target) else None
+    val s2_predTypeReg = if (isGShare) Some(if (cfg.enableCompressed) RegInit(FrontendPredType.NONE) else contexts.get.io.deq.bits.kind) else None
+    val s2_phtIdxReg = if (isGShare) Some(if (cfg.enableCompressed) RegInit(0.U(cfg.branchPredCfg.ghrLength.W)) else contexts.get.io.deq.bits.phtIdx) else None
 
     // ===== S3: Stage State =====
     val s3_validReg = RegInit(false.B)
@@ -186,7 +201,6 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     val s0_defaultNextPc = Wire(UInt(cfg.VLEN.W))
     val redirectValid = Wire(Bool())
     val redirectTarget = Wire(UInt(cfg.VLEN.W))
-    val cancelFetch = Wire(Bool())
     val s0_fallThroughSel = Wire(Bool())
     val s0_nextPc = Wire(UInt(cfg.VLEN.W))
     val s2_respValid = Wire(Bool())
@@ -325,7 +339,7 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             icache.io.dreq.valid := s1_validReg && fetchAllowed && io.fetchBuffer.canAccept3
             icache.io.dreq.bits.vaddr := s1_pcReg
             icache.io.dreq.bits.paddr := s1_pcReg
-            icache.io.drsp.ready := s2_validReg
+            icache.io.drsp.ready := true.B // drain canceled word owners as well
             s1_fire := icache.io.dreq.fire
             fetchRespValid := icache.io.drsp.valid
             fetchRespPc := icache.io.drsp.bits.vaddr
@@ -383,6 +397,20 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
     // the current s2 context; a late wrong-path refill is simply discarded.
     s2_respValid := s2_validReg && fetchRespValid && (fetchRespPc === s2_pcReg)
 
+    if (!cfg.enableCompressed) {
+        val q = contexts.get
+        q.io.enq.valid := s1_fire
+        q.io.enq.bits.pc := s1_pcReg
+        q.io.enq.bits.ghr := ghrReg.getOrElse(0.U)
+        q.io.enq.bits.taken := s1_predTaken
+        q.io.enq.bits.target := s1_predPc
+        q.io.enq.bits.kind := s1_predType
+        q.io.enq.bits.phtIdx := s1_phtIdx
+        q.io.deq.ready := s2_respValid
+        when(!reset.asBool && !cancelFetch) {
+            assert(q.io.enq.fire === s1_fire, "[SOC3e] fetch metadata lacks a reserved slot")
+        }
+    } else {
     when(reset.asBool || cancelFetch) {
         s2_validReg := false.B
         s2_pcReg := 0.U
@@ -412,6 +440,8 @@ class BreezeFrontend(val cfg: BreezeFrontendConfig = BreezeFrontendConfig(), val
             s2_predTypeReg.get := FrontendPredType.NONE
             s2_phtIdxReg.get := 0.U
         }
+    }
+
     }
 
     // ===== S3: Cache Response Registers =====

@@ -439,3 +439,5 @@ L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列�
 同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
 
 L1I 在已选定返回数据/地址/权限错误与 realigner 之间增加两项无 flow/pipe 返回队列，命中与 refill/error 响应都多一拍；accepted-undelivered 请求共最多两项并提前预留返回容量。背压不丢失/重复返回；flush 取消旧返回及信用，旧 miss 的迟到数据不得重新输出。BTB 仍全相联、容量/最低索引 winner/替换/查找拍数不变，按四项局部一热收束；walk-cache 仍按原 set/way/ASID/PLRU/全局规则，每 set 静态局部 PPN 选择，lookup miss 输出 0。PTW sLookup→内存请求拍数不变。
+
+SOC-3e 返回边界配套：非压缩 frontend 以两项预测上下文队列保留每个已接受 PC 的 GHR/预测目标/类型/PHT index，不能在旧字返回前覆写 S2。队列与 redirect/flush 同拍取消；旧 cache 返回在无主或 PC 不符时排空。阻塞式 FetchTranslator 仅同 PC 返回可供当前请求，live 返回遵从 inRsp.ready，取消后的旧返回在 Idle/Translate 或新 CacheWait 中排空，不可泄漏给新 owner、堵塞返回信用。压缩 realigner 的既有单 owner 与错 PC 丢弃规则不变。
