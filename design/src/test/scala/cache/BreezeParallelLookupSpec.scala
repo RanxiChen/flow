@@ -52,6 +52,7 @@ class BreezeParallelLookupSpec extends AnyFreeSpec with ChiselSim {
         d.clock.step(); d.io.next_level_rsp.data.poke(data.U)
         d.io.next_level_rsp.vld.poke(true.B); d.clock.step()
         d.io.next_level_rsp.vld.poke(false.B)
+        d.io.drsp.valid.expect(false.B); d.clock.step()
         d.io.drsp.valid.expect(true.B); d.io.drsp.bits.data.expect((data & 0xffffffffL).U)
         d.clock.step(2)
       }
@@ -59,6 +60,7 @@ class BreezeParallelLookupSpec extends AnyFreeSpec with ChiselSim {
       for (_ <- 0 until 8) { d.io.next_level_req.req.expect(false.B); d.io.drsp.valid.expect(false.B); d.clock.step() }
       request(pa, true); refill(pa, BigInt("12345678", 16))
       early(); request(pa, true)
+      d.io.drsp.valid.expect(false.B); d.clock.step()
       d.io.drsp.valid.expect(true.B); d.io.drsp.bits.data.expect("h12345678".U)
       d.clock.step(2)
       early(); request(pa + 4096, true); refill(pa + 4096, BigInt("76543210", 16))
@@ -67,6 +69,7 @@ class BreezeParallelLookupSpec extends AnyFreeSpec with ChiselSim {
       request(pa, false); refill(pa, BigInt("abcdef12", 16))
       // Early array reads are harmless even if later physical PMA denies.
       early(); request(BigInt("20000000", 16), true)
+      d.io.drsp.valid.expect(false.B); d.clock.step()
       d.io.drsp.valid.expect(true.B); d.io.drsp.bits.accessFault.expect(true.B)
       d.io.next_level_req.req.expect(false.B)
     }
