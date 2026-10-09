@@ -71,10 +71,10 @@ class BreezeFrontendFE002Spec extends AnyFreeSpec with Matchers with ChiselSim {
             var refillCycle = -1
             var firstResponseCycle = -1
             var fetchBeat = 0
-            // Reset release accepted the first word. Subsequent acceptance and
-            // return accounting follow the PC sequence, independent of DUT data.
-            val owners = scala.collection.mutable.Queue[BigInt](BootAddr)
-            var nextPc = BootAddr + 4
+            // Reset clears all owners; only a fire after reset release counts.
+            // Return accounting follows the PC sequence, independent of DUT data.
+            val owners = scala.collection.mutable.Queue.empty[BigInt]
+            var nextPc = BootAddr
 
             while (cycle <= maxObserveCycles) {
                 val hadObservedReq = observedReq
