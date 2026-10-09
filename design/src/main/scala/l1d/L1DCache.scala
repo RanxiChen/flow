@@ -29,7 +29,16 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     Mux(flw, "hffffffff".U(32.W) ## shifted(31, 0), ext)
   }
 
-  val tags = SyncReadMem(p.sets, Vec(p.ways, new L1TagEntry(p)))
+  // Each way/set group owns its read/write decode and storage. Avoid a
+  // single late write enable/address driving every bit of the tag array.
+  val tagBanks = math.min(8, p.sets)
+  val tagRows = p.sets / tagBanks
+  val tagRowBits = log2Ceil(tagRows)
+  private def tagBank(a: UInt): UInt =
+    if (tagBanks == 1) 0.U(1.W) else a(p.idxBits - 1, tagRowBits)
+  private def tagRow(a: UInt): UInt =
+    if (tagRows == 1) 0.U(1.W) else a(tagRowBits - 1, 0)
+  val tags = Seq.tabulate(tagBanks, p.ways) { (_, _) => SyncReadMem(tagRows, new L1TagEntry(p)) }
   val data = Seq.fill(p.ways)(SyncReadMem(p.sets * p.wordsPerLine, Vec(8, UInt(8.W))))
   val plru = RegInit(VecInit(Seq.fill(p.sets)(0.U(p.plruBits.W))))
   val initIdx = RegInit(0.U((p.idxBits + 1).W))
@@ -202,7 +211,13 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   when(internal2.valid && internalAdvance && internal2.req.lastBeat &&
     internal2.req.src === wholeOwner) { wholeBusy := false.B }
 
-  val tagRead = tags.read(s0Req.idx, s0Fire)
+  val tagReadBank = RegEnable(tagBank(s0Req.idx), s0Fire)
+  val tagReads = VecInit((0 until tagBanks).map { bank =>
+    VecInit((0 until p.ways).map { way =>
+      tags(bank)(way).read(tagRow(s0Req.idx), s0Fire && tagBank(s0Req.idx) === bank.U)
+    })
+  })
+  val tagRead = if (tagBanks == 1) tagReads(0) else tagReads(tagReadBank)
   val dataRead = VecInit(data.map(_.read(s0Req.idx ## s0Req.word, s0Fire).asUInt))
   val cpuFresh = RegNext(cpuFire, false.B)
   val cpuTagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
@@ -670,41 +685,44 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     rsvValid := false.B; rsvTimer := 0.U
   }
 
-  val tagWrite = WireDefault(false.B)
-  val tagIdx = WireDefault(0.U(p.idxW.W))
-  val tagWay = WireDefault(0.U(p.wayBits.W))
-  val tagMask = WireDefault(0.U(p.ways.W))
-  val tagValue = WireDefault(0.U.asTypeOf(new L1TagEntry(p)))
-  when(psWrites && ps.setDirty) {
-    tagWrite := true.B; tagIdx := ps.idx; tagWay := ps.way
-    tagMask := UIntToOH(ps.way, p.ways)
-    tagValue.tag := tag(ps.paddr); tagValue.state := L1State.M
+  // Preserve install > probe > allocation > PS priority. Candidate payloads
+  // and row/bank/way decode are independent of the final source authorization.
+  val tagRequests = Seq(psWrites && ps.setDirty, allocates && victimValid,
+    probe.io.tagUpdate.valid, installLast)
+  val tagGrants = tagRequests.indices.map { source =>
+    tagRequests(source) && !tagRequests.drop(source + 1).foldLeft(false.B)(_ || _)
   }
-  when(allocates && victimValid) {
-    tagWrite := true.B; tagIdx := s2.req.idx; tagWay := allocWay
-    tagMask := allocWayOH
-    tagValue := victimEntry; tagValue.state := L1State.I
+  val tagIndices = Seq(ps.idx, s2.req.idx, probeIdx, miss.io.s0Req.bits.idx)
+  val tagWays = Seq(ps.way, allocWay, probe.io.tagUpdate.bits.way, miss.io.s0Req.bits.way)
+  val tagMasks = Seq(UIntToOH(ps.way, p.ways), allocWayOH,
+    UIntToOH(probe.io.tagUpdate.bits.way, p.ways), UIntToOH(miss.io.s0Req.bits.way, p.ways))
+  val psTag = WireDefault(0.U.asTypeOf(new L1TagEntry(p)))
+  psTag.tag := tag(ps.paddr); psTag.state := L1State.M
+  val evictedTag = WireDefault(victimEntry)
+  evictedTag.state := L1State.I
+  val probeTag = WireDefault(0.U.asTypeOf(new L1TagEntry(p)))
+  probeTag.tag := tag(probePaddr); probeTag.state := probe.io.tagUpdate.bits.newState
+  val tagValues = Seq(psTag, evictedTag, probeTag, miss.io.s0Req.bits.installTag)
+  // Shared metadata consumers retain their original one selected update.
+  val tagWrite = tagGrants.reduce(_ || _)
+  val tagIdx = Mux1H(tagGrants, tagIndices)
+  val tagWay = Mux1H(tagGrants, tagWays)
+  val tagMask = Mux1H(tagGrants, tagMasks)
+  val tagValue = Mux1H(tagGrants, tagValues)
+  when(installLast && miss.io.s0Req.bits.installTag.state =/= L1State.I) {
+    plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
   }
-  when(probe.io.tagUpdate.valid) {
-    tagWrite := true.B; tagIdx := probeIdx; tagWay := probe.io.tagUpdate.bits.way
-    tagMask := UIntToOH(probe.io.tagUpdate.bits.way, p.ways)
-    tagValue.tag := tag(probePaddr); tagValue.state := probe.io.tagUpdate.bits.newState
-  }
-  when(installLast) {
-    tagWrite := true.B; tagIdx := miss.io.s0Req.bits.idx; tagWay := miss.io.s0Req.bits.way
-    tagMask := UIntToOH(miss.io.s0Req.bits.way, p.ways)
-    tagValue := miss.io.s0Req.bits.installTag
-    when(tagValue.state =/= L1State.I) {
-      plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
+  for (bank <- 0 until tagBanks; way <- 0 until p.ways) {
+    val selects = tagGrants.indices.map { source =>
+      tagGrants(source) && tagMasks(source)(way) && tagBank(tagIndices(source)) === bank.U
     }
-  }
-  // Use one masked write port for both initialization and runtime updates.
-  // Mixing an unmasked port with a masked port loses the per-way mask when
-  // the mutually exclusive ports are combined by memory lowering.
-  when(!initDone || tagWrite) {
-    tags.write(Mux(initDone, tagIdx, initIdx),
-      VecInit(Seq.fill(p.ways)(Mux(initDone, tagValue, 0.U.asTypeOf(tagValue)))),
-      Mux(initDone, tagMask, Fill(p.ways, 1.U(1.W))).asBools)
+    val initializing = !initDone && tagBank(initIdx) === bank.U
+    when(initializing || selects.reduce(_ || _)) {
+      // Exactly one unmasked port per local memory, including initialization.
+      tags(bank)(way).write(
+        Mux(initializing, tagRow(initIdx), Mux1H(selects, tagIndices.map(tagRow))),
+        Mux(initializing, 0.U.asTypeOf(new L1TagEntry(p)), Mux1H(selects, tagValues)))
+    }
   }
   when(!initDone) {
     initIdx := initIdx + 1.U

@@ -7,7 +7,7 @@
 - 保持 ID/RR、EX、MEM、WB 四级顺序执行/提交；EX/MEM/WB 对齐 L1D S0/S1/S2。仅普通 GPR/FPR 物理写增加 WB 后的 W2，L1D 迟到结果增加单项 lateReg，不移动提交点。[SOC-3b§1]
 - 本条指令 EX 拍为 E，无保持时 MEM=E+1、WB=E+2；所有事件按当前组合信号、周期末上升沿更新测量。[backend-timing-contract.md§0]
 - T01 的 A01–A08、S01–S16、整数真实源表、MDU 提交/kill/保持全部沿用；T01 仅适用于旧阻塞访存/FPU 的条款由下述 v1 条款替代。[tasks/V1-BE-backend-spec-and-rtl.md§1–2]
-- 不改前端、L1D/L2/MMU 对外事务协议；后端新增寄存边界仅 W2/单项 lateReg，不新增其它队列、结果缓存或特定地址/PC/指令序列行为。SOC-3d 第一批允许 §5 指定的 CVFPU 内部计算边界和可选 TLB 候选地址旁带，不改变后端级数或提交点。[SOC-3b§1][backend-timing-contract.md§3–4][tasks/SOC-3d-timing-batch-plan.md]
+- 不改前端、L1D/L2/MMU 对外事务协议；后端新增寄存边界为 W2/单项 lateReg 及本次授权的 FpUnit 两项请求缓冲，不新增其它队列、输出结果缓存或特定地址/PC/指令序列行为。SOC-3d 第一批允许 §5 指定的 CVFPU 内部计算边界和可选 TLB 候选地址旁带，不改变后端级数或提交点。[SOC-3b§1][backend-timing-contract.md§3–4][tasks/SOC-3d-timing-batch-plan.md]
 
 ## 1. 寄存器与单元
 
@@ -38,7 +38,7 @@
 - load-use 采用 T02：req=E，resp/commit=E+2，普通写 W2=E+3，依赖 ID 离开 E+3、EX=E+4。loadUseBypass/T02b 作废，不实现、不测试；参数可删除或保留为无此功能的兼容参数，报告说明。[backend-timing-contract.md§4]
 - 禁止 S2→EX 的可选 load bypass 及其 miss-dependent EX 延迟执行机制；依赖者由 ID 的寄存元数据/busy 保护，直到实际 RF 写穿透可用。[backend-timing-contract.md§4]
 - CSR 等空使用原始两组 busy==0，而非 effectiveBusy；同时 EX/MEM/WB 不得有已发射未提交 MDU/FPU 或尚未判定的访存，防止下一拍才提交置位的项越过 CSR。[backend-rtl-spec.md§3.1/A07][tasks/V1-BE-backend-spec-and-rtl.md§2.1]
-- FP→x0 不能置整数 busy，但转换/比较可能产生 flags；将表中 `valid&&committed&&!isFp&&rd==0` 的组合归约接到 CSR 等空和 FPU 来源等待事件，仍用当前状态，最后 fire 后下一拍才放行 CSR；不新增计数器/表字段。[V1-BE-B01-ruling§3/ND02]
+- FP→x0 不能置整数 busy，但转换/比较可能产生 flags；将与表中 `valid&&committed&&!isFp&&rd==0` 同沿等价的所有权计数非零检测接到 CSR 等空和 FPU 来源等待事件，仍用当前状态，最后 fire 后下一拍才放行 CSR；本批允许新增 flags-only 计数，仿真断言逐拍对照表归约；不新增表字段。[V1-BE-B01-ruling§3/ND02]
 - ESTOP 在 WB 等两组 busy 空，后台继续；FASE empty 包含两组 busy 空，v1 不支持 useFASE=true；中断/WFI 不以 busy 空为条件。[backend-rtl-spec.md§6及9][v1-integration-notes.md§3]
 
 ## 3. 写口、保持与事件
@@ -66,13 +66,13 @@
 
 ## 5. FPU
 
-- `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线。SOC-3d 第一批：ADDMUL 的 FP32/FP64 PipeRegs 从 3/4 改为 4/5；FP32 启用全精度乘积/对齐加数到宽加法之间的已有边界，FP64 增加归一化到舍入/状态之间的边界，各增加一拍内部延迟。舍入仍仅发生一次；数据、舍入模式、特殊值、UF 所需位、tag/mask/aux 同步保持和 flush，busy 覆盖新增有效项。UnitTypes、DISTRIBUTED、其余格式与操作组不变，T14/T15 的后端两端直连和 T16 按实际 CVFPU 延迟测量的规则保持。[tasks/SOC-3d-timing-batch-plan.md]
-- 2026-10-09 独立 FP32 时序候选：用户授权再将 FP32 ADDMUL 从 4 级改为 5 级，复用上述归一化/舍入之间的未舍入 payload 边界；FP64 保持 5 级。FP32 无停顿 `in fire` 到 `out fire` 为 5 拍，II=1；commit 仍在 EX+2，RAW 在实际写回同拍解除，CSR 按 raw busy 等待。正/负 tie、subnormal、OF/UF/NX 与特殊值结果保持，禁止在新增边界提前舍入；所有 sideband、ready、flush、busy 与有效位同拍推进。当前运行的旧候选及其输入不变，使用独立 source SHA、测试和物理证据。[tasks/SOC-3d-fp32-normalization-report.md]
-- EX 将三个操作数、EX 确定的 rm/op/格式、目的送到原始 CVFPU input；接收同拍写 metadata 表，allocate 前进，无输入寄存级。SOC-3c C1：exFpIssued 保证 held EX 只接收一次；req.valid 不含 downHold/wbKill/allowEx，仅受本条已发及寄存 fatal/stopped 限制，resourceWait 的 FP 项仅在尚未发射时等待 ready；表满/killDrain 或 CVFPU 不 ready 时 EX 等待。[backend-timing-contract.md§1/T14]
+- `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线。SOC-3d 第一批：ADDMUL 的 FP32/FP64 PipeRegs 从 3/4 改为 4/5；FP32 启用全精度乘积/对齐加数到宽加法之间的已有边界，FP64 增加归一化到舍入/状态之间的边界，各增加一拍内部延迟。舍入仍仅发生一次；数据、舍入模式、特殊值、UF 所需位、tag/mask/aux 同步保持和 flush，busy 覆盖新增有效项。UnitTypes、DISTRIBUTED、其余格式与操作组不变，T15 输出直连保持；本批输入边界以以下最新授权修订及 T14/T16 为准。[tasks/SOC-3d-timing-batch-plan.md]
+- 2026-10-09 独立 FP32 时序候选：用户授权再将 FP32 ADDMUL 从 4 级改为 5 级，复用上述归一化/舍入之间的未舍入 payload 边界；FP64 保持 5 级。原始 CVFPU 的 FP32 无停顿 `in fire` 到 `out fire` 为 5 拍（新请求缓冲使后端接受到输出为 6 拍），II=1；commit 仍在 EX+2，RAW 在实际写回同拍解除，CSR 按 raw busy 等待。正/负 tie、subnormal、OF/UF/NX 与特殊值结果保持，禁止在新增边界提前舍入；所有 sideband、ready、flush、busy 与有效位同拍推进。当前运行的旧候选及其输入不变，使用独立 source SHA、测试和物理证据。[tasks/SOC-3d-fp32-normalization-report.md]
+- SOC-3d 合并控制链（2026-10-09 用户授权四项一起实现）：EX 的请求先进入两项 `Queue(pipe=false,flow=false)`，接受时分配 metadata/tag，原始 CVFPU 最早下一拍收到同一请求。req.ready 只依赖寄存占用、tag 是否空及 killDrain；无停顿 II=1，满时保持 EX。queued 已提交项即使 kill 也继续，queued 作废项本地丢弃；原始 CVFPU 的作废返回仍丢弃。killDrain 等请求缓冲和 CVFPU 同时空闲才放行。exFpIssued 保持请求仅接受一次，commit 仍 E+2。T14/T16 同步授权修改，T15 保持输出直连。
 - commitCursor 从最老方向组合找 valid&&!committed 项；WB commit 只授权这一项并前进；WB kill 清所有未提交 valid，刚 commit 的项保留，committed 项不动。[tasks/V1-BE-backend-spec-and-rtl.md§2.1][backend-rtl-spec.md§4.2][自定]
 - `out_tag` 组合读表，valid&&committed 的输出直接参加后台仲裁；result fire 与 CVFPU out fire 同拍、无数据寄存级。[backend-timing-contract.md§1/T15]
 - valid&&!committed 的早完成输出 ready=0，等 WB；valid=0 的作废返回直接 ready=1 丢弃，不写 RF/flags；不得用 flush_i 清 CVFPU，因为那会取消已提交项。[backend-pipeline-design.md§4及7][v1-integration-notes.md§3]
-- kill 后设置 killDrain，待 CVFPU busy=0 才重新允许分配 tag；已提交输出照常参与仲裁，作废输出照常丢弃，防止无世代 tag 的迟到 ABA 误认。[V1-BE-B01-ruling§3/ND01]
+- kill 后设置 killDrain，待请求缓冲为空且 CVFPU busy=0 才重新允许分配 tag；已提交输出照常参与仲裁，作废输出照常丢弃，防止无世代 tag 的迟到 ABA 误认。[V1-BE-B01-ruling§3/ND01]
 - SOC-3c §6 D2/S13/S05：canAllocate 不含 killUncommitted；FP fire/kill 同拍时新项显式 valid=0，allocate 前进且无 commit 时 commitCursor 跳过该 tag。作废返回 ready=1 丢弃，不写 RF/flags、不获提交；killDrain 期间禁止 tag 复用。L1D/MUL/DIV 请求仍在 WB kill 拍禁止，其余 speculative-write 等安全检查保留。
 - fflags 只在真实已提交 FP 完成的 fire 拍按位或累积；CSR 等空保证读取最终值，FP flags 不随退休提前更新。[backend-pipeline-design.md§6–7][backend-timing-contract.md§1/T17及§2/P07]
 - CVFPU 各单元保存未消费结果，但跨单元仲裁的 tag/data/status 在反压时可以变化；仅在 fire 拍取样。S07 对 MDU/late 的字段稳定断言保留，FPU 的检查使用 tag 台账验证不丢/不重复/不写 killed 项，不要求原始组合 mux 不变。[v1-integration-notes.md§3/CVFPU]

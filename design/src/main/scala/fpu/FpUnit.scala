@@ -24,7 +24,7 @@ class FpEntry extends Bundle {
   val isFp = Bool()
 }
 
-/** Direct EX-to-CVFPU and CVFPU-to-writeback paths. Only metadata is stored.
+/** Buffered EX-to-CVFPU requests and direct CVFPU-to-writeback results.
   * Kill never flushes CVFPU: already committed calculations must survive.
   */
 class FpUnit(val depth: Int = 32) extends Module {
@@ -47,22 +47,35 @@ class FpUnit(val depth: Int = 32) extends Module {
   // Invalidated tags remain inside CVFPU until it drains. Block tag reuse
   // during this interval rather than adding per-entry tombstones/data buffers.
   val killDrain = RegInit(false.B)
+  // No flow/pipe bypass: backend ready depends only on registered occupancy.
+  // Allocate the tag on backend acceptance, so WB may commit queued work.
+  val input = Module(new Queue(new Bundle {
+    val request = new FpRequest
+    val tag = UInt(tagWidth.W)
+  }, 2, pipe = false, flow = false))
   impl.io.clk_i := clock
   impl.io.reset_i := reset.asBool
   impl.io.flush_i := false.B
   val canAllocate = !entries(allocate).valid && !killDrain
-  impl.io.in_valid_i := io.req.valid && canAllocate
-  io.req.ready := impl.io.in_ready_o && canAllocate
-  impl.io.tag_i := allocate
-  impl.io.operand_a_i := io.req.bits.operandA
-  impl.io.operand_b_i := io.req.bits.operandB
-  impl.io.operand_c_i := io.req.bits.operandC
-  impl.io.rnd_mode_i := io.req.bits.rm
-  impl.io.op_i := io.req.bits.operation
-  impl.io.op_mod_i := io.req.bits.opMod
-  impl.io.src_fmt_i := io.req.bits.srcFmt
-  impl.io.dst_fmt_i := io.req.bits.dstFmt
-  impl.io.int_fmt_i := io.req.bits.intFmt
+  input.io.enq.valid := io.req.valid && canAllocate
+  input.io.enq.bits.request := io.req.bits
+  input.io.enq.bits.tag := allocate
+  io.req.ready := input.io.enq.ready && canAllocate
+  val queuedLive = entries(input.io.deq.bits.tag).valid
+  impl.io.in_valid_i := input.io.deq.valid && queuedLive
+  // Killed queued work is discarded locally; committed queued work survives.
+  input.io.deq.ready := !queuedLive || impl.io.in_ready_o
+  impl.io.tag_i := input.io.deq.bits.tag
+  val request = input.io.deq.bits.request
+  impl.io.operand_a_i := request.operandA
+  impl.io.operand_b_i := request.operandB
+  impl.io.operand_c_i := request.operandC
+  impl.io.rnd_mode_i := request.rm
+  impl.io.op_i := request.operation
+  impl.io.op_mod_i := request.opMod
+  impl.io.src_fmt_i := request.srcFmt
+  impl.io.dst_fmt_i := request.dstFmt
+  impl.io.int_fmt_i := request.intFmt
 
   val candidates = VecInit((0 until depth).map { offset =>
     val index = (commitCursor + offset.U)(tagWidth - 1, 0)
@@ -78,14 +91,21 @@ class FpUnit(val depth: Int = 32) extends Module {
   // Invalidated returns are discarded. A live early result waits for commit.
   // CVFPU output arbitration may change tag/data while stalled: sample on fire.
   impl.io.out_ready_i := !returned.valid || (returned.committed && io.result.ready)
-  io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o || killDrain
+  io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o || input.io.deq.valid || killDrain
   def pending(fp: Boolean): UInt = entries.map { e =>
     Mux(e.valid && e.committed && e.isFp === fp.B && (fp.B || e.rd =/= 0.U),
       UIntToOH(e.rd, 32), 0.U(32.W))
   }.reduce(_ | _)
   io.committedGpr := pending(false)
   io.committedFpr := pending(true)
-  io.committedFlagsOnly := entries.map(e => e.valid && e.committed && !e.isFp && e.rd === 0.U).reduce(_ || _)
+  // Same registered ownership as the table, without a table-wide late OR.
+  val flagsOnlyCount = RegInit(0.U(log2Ceil(depth + 1).W))
+  val flagsSet = io.commit && !entries(oldest).isFp && entries(oldest).rd === 0.U
+  val flagsClear = io.result.fire && !returned.isFp && returned.rd === 0.U
+  when(flagsSet =/= flagsClear) {
+    flagsOnlyCount := Mux(flagsSet, flagsOnlyCount + 1.U, flagsOnlyCount - 1.U)
+  }
+  io.committedFlagsOnly := flagsOnlyCount =/= 0.U
 
   when(io.req.fire) {
     // The pre-edge entry is empty, so the kill loop below cannot see a new
@@ -101,7 +121,7 @@ class FpUnit(val depth: Int = 32) extends Module {
     commitCursor := oldest + 1.U
   }
   when(io.result.fire) { entries(impl.io.tag_o).valid := false.B }
-  when(killDrain && !impl.io.busy_o) { killDrain := false.B }
+  when(killDrain && !impl.io.busy_o && !input.io.deq.valid) { killDrain := false.B }
   when(io.killUncommitted) {
     for (i <- 0 until depth) {
       // Resolve commit before kill even when both pulses arrive together.
@@ -121,7 +141,11 @@ class FpUnit(val depth: Int = 32) extends Module {
     }
     assert(!killDrain || !io.req.fire, "[S05] FP tag reused before killed returns drained")
     assert(!io.result.fire || (returned.valid && returned.committed), "[S05/S08] speculative FP write")
-    assert(io.req.fire === (impl.io.in_valid_i && impl.io.in_ready_o), "[T14] input handshake changed")
+    assert(io.req.fire === input.io.enq.fire, "[T14] input enqueue handshake changed")
+    assert(!(impl.io.in_valid_i && impl.io.in_ready_o) ||
+      (input.io.deq.fire && queuedLive), "[T14] CVFPU accepted an unowned request")
+    assert(flagsOnlyCount === PopCount(entries.map(e =>
+      e.valid && e.committed && !e.isFp && e.rd === 0.U)), "[S14] flags ownership count differs from table")
     assert(io.result.fire === (impl.io.out_valid_o && impl.io.out_ready_i && returned.valid),
       "[T15] output handshake changed")
     for (i <- 0 until depth; j <- i + 1 until depth) {

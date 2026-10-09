@@ -461,37 +461,37 @@ class BreezeBackend(
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) {
       ex.valid := idLeave
-      when(idLeave) {
-        ex.pc := io.fetchBuffer.bits.pc
-        ex.inst := inst
-        ex.rawInst := io.fetchBuffer.bits.rawInst
-        ex.instLen := Mux(io.fetchBuffer.bits.instLen === 2.U, 2.U, 4.U)
-        ex.instruction_access_fault := io.fetchBuffer.bits.instructionAccessFault
-        ex.instruction_page_fault := io.fetchBuffer.bits.instructionPageFault
-        ex.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
-        ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid) ||
-          (fpCtrl.valid && !csrFile.io.fp_enabled) || (ctrl.is_mret && csrFile.io.mret_illegal) ||
-          (ctrl.is_sret && csrFile.io.sret_illegal) || (ctrl.is_wfi && csrFile.io.wfi_illegal) ||
-          (ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)
-        ex.ctrl := ctrl
-        ex.is_ecall := ctrl.is_ecall
-        ex.is_ebreak := ctrl.is_ebreak
-        ex.is_mret := ctrl.is_mret
-        ex.is_sret := ctrl.is_sret
-        ex.is_wfi := ctrl.is_wfi
-        ex.estop := idEstop
-        ex.pred := io.fetchBuffer.bits.pred
-        ex.rs1_addr := rs1
-        ex.rs2_addr := rs2
-        ex.rd_addr := rd
-        ex.rs1_data := regFile.io.rs1_data
-        ex.rs2_data := regFile.io.rs2_data
-        ex.imm := immGen.io.imm
-        ex.src1 := regFile.io.rs1_data
-        ex.src2 := regFile.io.rs2_data
-        exFp := fpCtrl
-        exFpr := VecInit(Seq(fpRegFile.io.rs1Data, fpRegFile.io.rs2Data, fpRegFile.io.rs3Data))
-      }
+      // Payload is irrelevant when valid=0. Capture on slot advance; only
+      // ex.valid needs the late ID authorization/hazard/redirect conditions.
+      ex.pc := io.fetchBuffer.bits.pc
+      ex.inst := inst
+      ex.rawInst := io.fetchBuffer.bits.rawInst
+      ex.instLen := Mux(io.fetchBuffer.bits.instLen === 2.U, 2.U, 4.U)
+      ex.instruction_access_fault := io.fetchBuffer.bits.instructionAccessFault
+      ex.instruction_page_fault := io.fetchBuffer.bits.instructionPageFault
+      ex.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
+      ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid) ||
+        (fpCtrl.valid && !csrFile.io.fp_enabled) || (ctrl.is_mret && csrFile.io.mret_illegal) ||
+        (ctrl.is_sret && csrFile.io.sret_illegal) || (ctrl.is_wfi && csrFile.io.wfi_illegal) ||
+        (ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)
+      ex.ctrl := ctrl
+      ex.is_ecall := ctrl.is_ecall
+      ex.is_ebreak := ctrl.is_ebreak
+      ex.is_mret := ctrl.is_mret
+      ex.is_sret := ctrl.is_sret
+      ex.is_wfi := ctrl.is_wfi
+      ex.estop := idEstop
+      ex.pred := io.fetchBuffer.bits.pred
+      ex.rs1_addr := rs1
+      ex.rs2_addr := rs2
+      ex.rd_addr := rd
+      ex.rs1_data := regFile.io.rs1_data
+      ex.rs2_data := regFile.io.rs2_data
+      ex.imm := immGen.io.imm
+      ex.src1 := regFile.io.rs1_data
+      ex.src2 := regFile.io.rs2_data
+      exFp := fpCtrl
+      exFpr := VecInit(Seq(fpRegFile.io.rs1Data, fpRegFile.io.rs2Data, fpRegFile.io.rs3Data))
     }.otherwise {
       ex.rs1_data := exR1
       ex.rs2_data := exR2

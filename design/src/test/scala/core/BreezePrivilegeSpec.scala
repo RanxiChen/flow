@@ -758,4 +758,30 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.io.csr_old_data.expect(3.U)
     }
   }
+  "SOC3d-combined Sstc compare preserves same-cycle pending across every byte boundary and rearm" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { d =>
+      reset(d)
+      commit(d, CSRMAP.menvcfg, BigInt(1) << 63)
+      commit(d, CSRMAP.mideleg, BigInt(1) << 5)
+      val max = (BigInt(1) << 64) - 1
+      val rng = new scala.util.Random(0x3dc04L)
+      val thresholds = Seq(BigInt(0),max,BigInt(1) << 63) ++
+        (8 until 64 by 8).flatMap(n => Seq((BigInt(1)<<n)-1,BigInt(1)<<n)) ++
+        Seq.fill(32)(BigInt(64,rng))
+      for (threshold <- thresholds) {
+        commit(d, CSRMAP.stimecmp, threshold)
+        for (now <- Seq((threshold-1)&max,threshold,(threshold+1)&max,BigInt(64,rng))) {
+          d.io.time.poke(now.U); selectRead(d, CSRMAP.sip)
+          ((d.io.csr_old_data.peek().litValue >> 5) & 1) mustBe (if(now >= threshold) BigInt(1) else BigInt(0))
+        }
+      }
+      d.io.time.poke(100.U); commit(d, CSRMAP.stimecmp,99)
+      selectRead(d, CSRMAP.sip); ((d.io.csr_old_data.peek().litValue >> 5)&1) mustBe BigInt(1)
+      commit(d, CSRMAP.stimecmp,101)
+      selectRead(d, CSRMAP.sip); ((d.io.csr_old_data.peek().litValue >> 5)&1) mustBe BigInt(0)
+      commit(d, CSRMAP.menvcfg,0); commit(d, CSRMAP.mip,BigInt(1)<<5)
+      selectRead(d, CSRMAP.sip); ((d.io.csr_old_data.peek().litValue >> 5)&1) mustBe BigInt(1)
+    }
+  }
+
 }

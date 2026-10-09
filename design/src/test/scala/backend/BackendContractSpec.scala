@@ -30,6 +30,11 @@ private[backend] object Instructions {
 }
 private[backend] final case class Request(addr: BigInt, rd: Int, fp: Boolean, op: Int, data: BigInt)
 private[backend] final case class Event(cycle: Int, kind: String, pc: BigInt = 0, rd: Int = -1, data: BigInt = 0)
+private[backend] class BackendTimingProbe(bypass: Boolean) extends
+    BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true) {
+  val fpComputeFire = IO(Output(Bool()))
+  fpComputeFire := fpUnit.impl.io.in_valid_i && fpUnit.impl.io.in_ready_o
+}
 private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) extends PeekPokeAPI {
   import Instructions._
   var cycle = 0
@@ -141,6 +146,10 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(o.gprWrite.valid)) record("gpr",r=uint(o.gprWrite.bits.idx).toInt,data=uint(o.gprWrite.bits.data))
     if(bool(o.fprWrite.valid)) record("fpr",r=uint(o.fprWrite.bits.idx).toInt,data=uint(o.fprWrite.bits.data))
     if(bool(o.fpIn)) record("fpIn",uint(o.exPc))
+    d match {
+      case p: BackendTimingProbe => if(bool(p.fpComputeFire)) record("fpComputeIn")
+      case _ =>
+    }
     if(bool(o.fpOut)) record("fpOut")
     if(bool(o.fpFlags.valid)) record("flags",data=uint(o.fpFlags.bits))
     if(bool(o.mulIn)) record("mulIn",uint(o.exPc))
@@ -199,7 +208,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
 class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   import Instructions._
   private def check(bypass: Boolean = false)(f: Environment => Unit): Unit =
-    simulate(new BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true)) { d =>
+    simulate(new BackendTimingProbe(bypass)) { d =>
       val m=new Environment(d); m.reset(); f(m)
     }
   private def consecutive(cs: Seq[Int]): Unit = { cs.sliding(2).foreach(p=> if(p.size==2) p(1) mustBe p(0)+1) }
@@ -281,8 +290,9 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.at("commit",div) must be < m.written(2); m.at("fpIn",fpPc) mustBe m.at("ex",fpPc)
     m.at("mulIn",mul) mustBe m.at("ex",mul)
   }}
-  "T14_FPU_direct_EX_fire" in { check() { m =>
+  "T14_FPU_EX_accept_and_registered_CVFPU_issue" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1)),20); m.at("fpIn",p.head) mustBe m.at("ex",p.head)
+    m.all("fpComputeIn") mustBe Seq(m.at("ex",p.head)+1)
   }}
   "T15_FPU_direct_output_write" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1),fp(2,toGpr=true)),25)
@@ -291,14 +301,14 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   "T16_FPU_dependency_write_through" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1),fp(2,1)),25)
     m.at("id",p(1)) mustBe m.written(1,true)
-    m.written(1,true)-m.at("ex",p.head) mustBe m.all("fpOut").head-m.at("fpIn",p.head)
+    m.written(1,true)-m.at("ex",p.head) mustBe m.all("fpOut").head-m.all("fpComputeIn").head+1
   }}
   "T17_CSR_raw_busy_fflags" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1,div=true),csr(5,1)),70)
     m.at("id",p(1)) mustBe m.written(1,true)+1
     m.writes(5).head.data mustBe 16 // 0/0 -> NV
   }}
-  "SOC3d_FP32_dependency_and_CSR_drain_follow_five_stage_completion" in { check() { m =>
+  "SOC3d_FP32_dependency_and_CSR_drain_follow_buffered_five_stage_completion" in { check() { m =>
     m.enableFp()
     m.values(256)=BigInt("ffffffff3f800000",16)
     m.values(264)=BigInt("ffffffff33800000",16)
@@ -306,7 +316,9 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     def addS(rd: Int,a: Int,b: Int): BigInt = fp(rd,a,b) - (BigInt(1)<<25)
     val p=m.run(Seq(addS(1,10,11),addS(2,1,10),csr(5,1)),40)
     m.at("fpIn",p.head) mustBe m.at("ex",p.head)
-    m.written(1,true)-m.at("ex",p.head) mustBe 5
+    m.all("fpComputeIn").head mustBe m.at("ex",p.head)+1
+    m.written(1,true)-m.all("fpComputeIn").head mustBe 5
+    m.written(1,true)-m.at("ex",p.head) mustBe 6
     m.at("id",p(1)) mustBe m.written(1,true)
     m.at("id",p(2)) mustBe m.written(2,true)+1
     m.writes(1,true).head.data mustBe BigInt("ffffffff3f800000",16)

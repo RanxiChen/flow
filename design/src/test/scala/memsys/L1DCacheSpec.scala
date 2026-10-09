@@ -694,4 +694,19 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
   "non-default geometry smoke: random traffic on the two-set direct-mapped stress L1D" in
     withL1D(BreezeMemGeometry.stress, seed = 22) { e => randomTraffic(e, 800) }
+  "SOC3d-combined tag banks preserve all sets ways and dirty victims across consecutive bank switches" in
+    withL1D(seed = 0x3d04) { e =>
+      import e._
+      // Each set gets ways+1 tags, exercising all ways plus replacement.
+      // Interleave distant banks; byte stores must preserve neighboring data.
+      val sets = (0 until g.l1Sets).sortBy(s => (s % 16, s / 16))
+      for (generation <- 0 to g.l1dWays; set <- sets) {
+        val a = ram(set * LineBytes + generation * stride)
+        val v = BigInt(generation * g.l1Sets + set + 1)
+        runOps(CoreOp.load(a), CoreOp.store(a + 1,v & 255,0), CoreOp.load(a))
+      }
+      for (set <- sets.reverse) runOps(CoreOp.load(ram(set * LineBytes)))
+      l2.gets.size must be > g.l1Sets * g.l1dWays
+    }
+
 }

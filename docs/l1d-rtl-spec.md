@@ -12,6 +12,8 @@
 
 实现修订（2026-10-07，单核原子访存）：第 8 节 LR/SC、AMO、aq/rl 已补入 L1D。LR/AMO miss 保持 CPU S2 到内部回放，LR 以 `resp` 完成；AMO 在回放或命中拍把 RMW 数据交给 PS，次拍写入时返回旧值。AMO/rl 在 S0 以 `ready` 等待老请求排空，AMO/aq 在接受后关年轻入口；未增加 CPU 接口或流水级。实际仿真版本、覆盖与边界见 [`tasks/MEM-single-core-atomics-report.md`](tasks/MEM-single-core-atomics-report.md)，规格目标不自动等于验证通过。
 
+实现修订（SOC-3d 合并控制链，2026-10-09 用户授权）：tag 存储按最多 8 个 set 分组、逐 way 使用独立 SyncReadMem；S0 同拍选择分组并发起读，S1 用同沿寄存的 bank 选择返回，不增加流水拍。各写来源提前生成 idx/way/data，按 install > probe > allocation > PS 优先级生成独热许可，并与各分组/way 译码直接汇合。每个局部存储仅一个无掩码写口，初始化和运行更新共用；初始化仍逐 set 写全 way，data 不初始化。容量、查询/更新顺序、快照失效、同拍 kill、PS/MSHR/原子与 PTW 所有权保持。验证状态见 `tasks/SOC-3d-combined-control-report.md`。
+
 ## 0. 范围与参数
 
 ### 0.1 文件

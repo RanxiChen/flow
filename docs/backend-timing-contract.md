@@ -1,6 +1,6 @@
 # Breeze v1 后端拍数与重叠合同
 
-状态：**冻结**（2026-10-06 用户确认 B01；2026-10-08 用户完成 SOC-3b 多轮裁定，现稿已同步 W2/lateReg、T12/T13/T21/T22、P06 与结构门槛）。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得修改**；测不过只能改 RTL。认为某行与微架构构造不符时，停下报告（附推导），不得自行改期望值。本轮规格修订不代表 RTL 或验证已完成。
+状态：**冻结**（2026-10-06 用户确认 B01；2026-10-08 用户完成 SOC-3b 多轮裁定，现稿已同步 W2/lateReg、T12/T13/T21/T22、P06 与结构门槛）。本表每一行就是一条冻结测试：codex 按规范实现 RTL，并按本表写测试。**期望拍数不得自行修改**；测不过只能改 RTL。认为某行与微架构构造不符时，停下报告（附推导），不得自行改期望值。本轮规格修订不代表 RTL 或验证已完成。
 
 依据：[`backend-pipeline-design.md`](backend-pipeline-design.md)、[`backend-rtl-spec.md`](backend-rtl-spec.md)（T01 冻结稿）、[`l1d-rtl-spec.md`](l1d-rtl-spec.md)。
 
@@ -36,9 +36,9 @@
 | T11 ※ | Load miss 迟到数据（RSP↓ DataE 在拍 R fire，`late.ready` 恒可得） | `l1d.late.fire = R+7`（R+1…R+4 安装 4 拍，R+5 回放 S0，R+7 回放 S2），当拍进入后端 `lateReg`；`gprWrite(x1) = R+8`；依赖指令 `idLeave = R+8`（SOC-3b：由 R+7 改为 R+8） |
 | T12 ※b | late 首次 valid 与普通 GPR 指令 WB 提交同拍 N，N+1 的 WB 不写 GPR | 普通指令 `commit=N`、`gprWrite=N+1`；`l1d.late.fire=N`、迟到目的 `gprWrite=N+2`；ID/EX/MEM/WB 不因写口保持；`wb_port_conflict` 仅 N+1 计 1 |
 | T13 | 写口优先级：lateReg、DIV、MUL、FPU→GPR 四个写口来源在 N 同拍 valid，N…N+3 的 W2 无普通 GPR 写 | 连续 4 拍 N…N+3 依次写入，顺序 lateReg > DIV > MUL > FPU；未选者保留未完成结果。测试 L1D late 在 N−1 接收：现有刺激 `returnDelay=26` 改为 25，原物理写回期望 N…N+3 不变；FPU 反压遵循 v1 RTL spec 的 tag/fire 合同 |
-| T14 | FPU 发射附加拍 | FP 运算在 EX 的拍 E：`fpu.in_valid` 在 E（若 `in_ready=1` 则同拍 fire）。后端不加寄存级 |
+| T14 | FPU 请求接受与计算发射 | SOC-3d 合并控制链候选（2026-10-09 用户授权）：EX 拍 E 在 FpUnit 入口有容量时接受请求并分配 tag；两项无 flow/pipe 请求缓冲使原始 CVFPU 最早 E+1 fire。入口 ready 只依赖寄存容量/tag 可分配，不能组合读取 CVFPU ready。无停顿 II=1；满时保持 EX，不重复接受。 |
 | T15 | FPU 写回附加拍 | `fpu.out_valid&&out_ready` 的拍 = `fprWrite`（或 `gprWrite`，FP→整数类）的拍；在途表查 tag 不加拍。仅在被更高优先级来源或 W2 普通写占口时延后 |
-| T16 | FP 依赖：`fadd.d f1,..; fadd.d f2,f1,..` | `idLeave(第二条) = fprWrite(f1)`；`fprWrite(f1) − ex(第一条)` 等于 CVFPU FP64 ADDMUL 的实际延迟（测试台从 `in fire`→`out fire` 测得），后端两端都不加拍 |
+| T16 | FP 依赖：`fadd.d f1,..; fadd.d f2,f1,..` | `idLeave(第二条) = fprWrite(f1)`；`fprWrite(f1) − ex(第一条)` 等于 1 + CVFPU FP64 ADDMUL 的实际延迟（测试台从原始 `in fire`→`out fire` 测得），对应本批一拍输入边界；输出不加拍 |
 | T17 | CSR 等空：`fdiv.d f1,..; csrr x5,fflags` | `idLeave(csrr) = fprWrite(f1) + 1`（A07 用 `busy==0`，不用 effectiveBusy）；读到的 fflags 含 fdiv 的标志 |
 | T18 | FENCE.I 在 WB，`drained=1` | `frontendRedirect.valid` 在 WB 当拍；I-cache 清空同拍发出 |
 | T19 | FENCE.I 在 WB，MSHR 忙，`drained` 在拍 D 变 1 | redirect 在 D 当拍；此前 WB 保持，不提交；FENCE.I 离开 ID 之后到 redirect 之前，没有指令离开 ID，`l1d.req.fire` 不出现 |
@@ -69,8 +69,8 @@
 
 - 不增加后端流水级；EX/MEM/WB 与 S0/S1/S2 一一对齐。唯一例外（SOC-3b）：WB 之后的 GPR/FPR 写级 W2 与 L1D 迟到结果寄存器 `lateReg`，见 §4。
 - 停顿方向（B01）：后端自身发起的停顿只能落在 ID/EX；MEM/WB 只在 L1D `s2Hold` 或 WB 串行指令（其后全为气泡）时保持。用仿真断言检查：MEM 有访存指令时，MEM/WB 保持必然伴随 `s2Hold`。
-- 后端与 L1D、MDU、FPU 之间不加额外 FIFO 或结果缓冲（例外仅 SOC-3b 的单项 `lateReg`）；需要保持的结果由各来源自身保持（L1D `late`、MDU `result`、FPU 在途表）。
-- FPU 在途表是唯一新增的 FPU 侧结构：按 CVFPU `tag` 索引，存 rd、目的寄存器堆、committed、valid，不存数据。
+- 后端与 L1D、MDU、FPU 之间不加额外 FIFO 或结果缓冲（例外为 SOC-3b 的单项 `lateReg` 和 SOC-3d 合并控制链候选 FpUnit 内部两项请求缓冲；不增加输出结果缓存）；需要保持的结果由各来源自身保持（L1D `late`、MDU `result`、FPU 在途表）。
+- FPU 在途表按 CVFPU `tag` 索引，存 rd、目的寄存器堆、committed、valid，不存结果数据。本批新增两项请求缓冲（操作数/操作/rm/格式/tag）及 flags-only 所有权计数；不是结果缓存。
 - 不为任何测试场景写特判（地址、PC、指令序列识别）。
 
 ## 4. 已定事项
@@ -87,3 +87,10 @@
 - **结构门槛：取证**：可定位的寄存器终点用 `report_timing -from … -to …`，可定位的中间点可用 `-through`。网名优化后无法查询时，允许 RTL 级 fan-in 分析替代该中间链查询，写明范围、源位置与无法定位的对象；可定位终点仍提供网表 timing。不得为查询加 keep 属性或修改综合策略。此证据与 routed timing 分开。
 - **写口与饥饿保护**：W2 普通写优先；后台全局一拍至多一个 grant，lateReg > DIV > MUL > FPU。每堆计数饱和于 3，计数为 3 且无在途保护气泡时 ID 停发 1 拍；该堆获后台 grant 后解除在途保护。`wb_port_conflict` 每拍每堆有 lateReg/DIV/MUL/FPU 结果 valid 但该堆无后台 grant 时计 1。L1D late 的接收或因 lateReg 满而等待都不直接计数，也不提前用于饥饿计数。
 - **T11、P05（※）**：按 L1D spec 推导（安装 `wordsPerLine` 拍 + 回放走一次 S0–S2）。codex 若按 L1D spec 推出不同值，停下报告推导，由 Claude 裁定；不得各写各的。
+
+
+## 2026-10-09 SOC-3d 合并控制链授权修订
+
+用户明确要求四项同时实现以尽快时序收敛。T14/T16 的输入边界与上述结构例外按本次授权更新；其余整数、L1D、WB/W2/lateReg 提交/写回拍数不变。FpUnit 请求接受仍在 EX，commit 仍在 E+2；无停顿原始 CVFPU input 延后一拍，FP32/FP64 ADDMUL 均为原始输入到输出五拍，后端接受到输出六拍。T15 保持直接输出。同拍 enqueue/kill 新 tag 作废；刚 commit 与既有 committed 项保留，包括尚在缓冲中的请求。队头作废请求本地丢弃，已进入 CVFPU 的作废结果按原规则丢弃。killDrain 等请求缓冲和 CVFPU 同时排空，期间禁止 tag 复用。flags-only 计数只由实际 commit/completion 更新，与原 valid&&committed&&x0 归约同沿等价，CSR 仍按 raw ownership 等待。
+
+EX payload 在槽位推进时可捕获不被接受的 ID 值，但 ex.valid 仍只由原 idLeave 授权；无效 payload 不得产生发射、提交或副作用。CSR time/stimecmp 分段比较保持同拍 pending，不增加中断延迟。L1D tag 存储分组保持 S0 同拍读发起、S1 返回，写优先级及初始化/快照失效/kill/所有权规则不变。功能与物理结果见 `tasks/SOC-3d-combined-control-report.md`；不得沿用旧候选通过结论。

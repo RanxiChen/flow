@@ -8,9 +8,13 @@ class FpProbe extends FpUnit {
   val rawInFire = IO(Output(Bool()))
   val rawOutFire = IO(Output(Bool()))
   val draining = IO(Output(Bool()))
+  val rawInTag = IO(Output(UInt(tagWidth.W)))
+  val queued = IO(Output(UInt(2.W)))
   rawInFire := impl.io.in_valid_i && impl.io.in_ready_o
   rawOutFire := impl.io.out_valid_o && impl.io.out_ready_i
   draining := killDrain
+  rawInTag := impl.io.tag_i
+  queued := input.io.count
 }
 
 /** Component evidence only: this does not instantiate BreezeBackend or ID/WB.
@@ -105,7 +109,8 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         d.io.req.valid.poke((cycle < 8).B)
         d.io.req.bits.rd.idx.poke((if (cycle < 8) cycle else 0).U) // includes writable f0
         d.io.commit.poke((cycle >= 2 && cycle < 10).B)
-        if (cycle < 8) { d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B) }
+        if (cycle < 8) d.io.req.ready.expect(true.B)
+        d.rawInFire.expect((cycle >= 1 && cycle <= 8).B)
         if (d.io.result.valid.peek().litToBoolean) {
           d.rawOutFire.expect(true.B)
           d.io.result.bits.data.expect(BigInt("4000000000000000", 16).U) // 1*1+1
@@ -119,7 +124,7 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.io.committedFpr.expect(0.U); d.io.busy.expect(false.B)
     }
   }
-  "SOC3d FP32 five-stage stream preserves exact latency, II1, tags and exception flags" in {
+  "SOC3d FP32 five-stage stream plus input boundary preserves exact latency, II1, tags and exception flags" in {
     simulate(new FpProbe) { d =>
       init(d)
       def box(x: BigInt): BigInt = (BigInt("ffffffff", 16) << 32) | x
@@ -140,8 +145,9 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
           d.io.req.bits.srcFmt.poke(BreezeFpFmt.S.U); d.io.req.bits.dstFmt.poke(BreezeFpFmt.S.U)
           d.io.req.bits.operandA.poke(box(a).U); d.io.req.bits.operandB.poke(box(b).U)
           d.io.req.bits.operandC.poke(box(c).U); d.io.req.bits.rd.idx.poke(cycle.U)
-          d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B)
+          d.io.req.ready.expect(true.B)
         }
+        d.rawInFire.expect((cycle >= 1 && cycle <= 16).B)
         if (d.io.result.valid.peek().litToBoolean) {
           val rd = d.io.result.bits.rd.idx.peek().litValue.toInt
           val expected = cases(rd % cases.size)._5
@@ -151,7 +157,7 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         }
         d.clock.step()
       }
-      received.toSeq mustBe (0 until 16).map(n => (n,n+5))
+      received.toSeq mustBe (0 until 16).map(n => (n,n+6))
       d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
     }
   }
@@ -168,12 +174,14 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         d.io.req.valid.poke((cycle < 3).B)
         if (cycle < 3) { d.io.req.bits.rd.idx.poke((cycle+1).U); d.io.req.ready.expect(true.B) }
         d.io.commit.poke((cycle == 2).B)
-        d.io.killUncommitted.poke((cycle == 4).B)
-        if (cycle >= 5) {
+        d.io.killUncommitted.poke((cycle == 5).B)
+        if (cycle >= 6) {
           d.draining.expect(true.B); d.io.req.ready.expect(false.B)
-          d.io.result.valid.expect(true.B); d.io.result.bits.rd.idx.expect(1.U)
-          d.io.result.bits.data.expect(BigInt("ffffffff40000000",16).U)
-          d.io.result.bits.flags.expect(0.U)
+          if (cycle >= 6) { d.io.result.valid.expect(true.B); d.io.result.bits.rd.idx.expect(1.U) }
+          if (cycle >= 6) {
+            d.io.result.bits.data.expect(BigInt("ffffffff40000000",16).U)
+            d.io.result.bits.flags.expect(0.U)
+          }
         }
         d.clock.step()
       }
@@ -377,7 +385,7 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       init(d)
       d.io.req.bits.rd.idx.poke(31.U)
       d.io.req.valid.poke(true.B); d.io.killUncommitted.poke(true.B)
-      d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B)
+      d.io.req.ready.expect(true.B); d.rawInFire.expect(false.B)
       d.clock.step()
       d.io.killUncommitted.poke(false.B)
       d.draining.expect(true.B)
@@ -393,7 +401,8 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         d.io.req.valid.poke((cycle < 40).B)
         d.io.req.bits.rd.idx.poke((cycle % 30 + 1).U)
         d.io.commit.poke((cycle >= 2 && cycle < 42).B)
-        if (cycle < 40) { d.io.req.ready.expect(true.B); d.rawInFire.expect(true.B) }
+        if (cycle < 40) d.io.req.ready.expect(true.B)
+        d.rawInFire.expect((cycle >= 1 && cycle <= 40).B)
         if (d.io.result.valid.peek().litToBoolean) {
           d.io.result.bits.data.expect(BigInt("4000000000000000", 16).U)
           d.io.result.bits.flags.expect(0.U)
@@ -405,4 +414,74 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
     }
   }
+  "SOC3d-combined input buffer holds two requests across CVFPU stalls without loss or duplicate issue" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      val waiting = scala.collection.mutable.Queue.empty[Int]
+      val returned = scala.collection.mutable.ArrayBuffer.empty[Int]
+      var issued = 0
+      var delayedCommits = List(false, false)
+      var fullStalls = 0
+      for (cycle <- 0 until 100) {
+        d.io.result.ready.poke((cycle >= 35).B)
+        d.io.commit.poke(delayedCommits.head.B)
+        d.io.req.valid.poke((issued < 20).B)
+        d.io.req.bits.rd.idx.poke((issued + 1).U)
+        val enqueue = issued < 20 && d.io.req.ready.peek().litToBoolean
+        if (d.rawInFire.peek().litToBoolean) {
+          waiting.nonEmpty mustBe true
+          d.rawInTag.peek().litValue.toInt mustBe waiting.dequeue()
+        }
+        if (cycle < 35 && d.queued.peek().litValue == 2) {
+          d.io.req.ready.expect(false.B); fullStalls += 1
+        }
+        if (d.io.result.valid.peek().litToBoolean && cycle >= 35) {
+          d.io.result.bits.data.expect(BigInt("4000000000000000",16).U)
+          d.io.result.bits.flags.expect(0.U)
+          returned += d.io.result.bits.rd.idx.peek().litValue.toInt
+        }
+        if (enqueue) { waiting.enqueue(issued); issued += 1 }
+        d.clock.step(); delayedCommits = delayedCommits.tail :+ enqueue
+      }
+      issued mustBe 20; fullStalls must be > 0
+      waiting mustBe empty; returned.toSeq mustBe (1 to 20)
+      d.io.busy.expect(false.B); d.queued.expect(0.U)
+    }
+  }
+  "SOC3d-combined kill preserves committed queued DIV and cancels speculative requests before CVFPU issue" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      d.io.req.bits.operation.poke(BreezeFpOp.DIV.U)
+      d.io.req.bits.operandB.poke(three.U)
+      var accepted = 0
+      var committed = 0
+      var delayedCommits = List(false, false)
+      val results = scala.collection.mutable.ArrayBuffer.empty[Int]
+      var heldCommitted = false
+      for (cycle <- 0 until 250) {
+        val killing = cycle == 8
+        val send = cycle < 8 && accepted < 5
+        d.io.req.valid.poke(send.B); d.io.req.bits.rd.idx.poke((accepted + 1).U)
+        d.io.commit.poke(delayedCommits.head.B); d.io.killUncommitted.poke(killing.B)
+        val enqueue = send && d.io.req.ready.peek().litToBoolean
+        if (delayedCommits.head) committed += 1
+        if (killing) { heldCommitted = d.queued.peek().litValue > 0 }
+        if (d.io.result.valid.peek().litToBoolean) {
+          d.io.result.bits.data.expect(BigInt("3fd5555555555555",16).U)
+          d.io.result.bits.flags.expect(1.U)
+          results += d.io.result.bits.rd.idx.peek().litValue.toInt
+        }
+        d.clock.step()
+        // Last accepted request remains speculative, including when queued.
+        delayedCommits = delayedCommits.tail :+ (enqueue && accepted < 2)
+        if (enqueue) accepted += 1
+      }
+      heldCommitted mustBe true; committed mustBe 2
+      results.toSeq mustBe Seq(1,2)
+      d.io.busy.expect(false.B); d.draining.expect(false.B); d.queued.expect(0.U)
+      d.io.req.bits.rd.idx.poke(6.U)
+      transact(d, BreezeFpOp.FMADD,one,one,one) mustBe Response(BigInt("4000000000000000",16),0)
+    }
+  }
+
 }

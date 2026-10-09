@@ -342,6 +342,23 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         (mstatus_SPIE.asUInt << 5) | (mstatus_SIE.asUInt << 1)
     val mie_read = Wire(UInt(XLEN.W))
     val mip_read = Wire(UInt(XLEN.W))
+    // Independent small compares followed by a balanced lexicographic tree.
+    // Preserve combinational time/stimecmp visibility (no pending register).
+    val timerChunks = (0 until (XLEN + 7) / 8).reverse.map { chunk =>
+        val hi = math.min(XLEN - 1, chunk * 8 + 7)
+        val t = io.time(hi, chunk * 8)
+        val c = stimecmp(hi, chunk * 8)
+        (t > c, t === c)
+    }
+    def compareTimer(parts: Seq[(Bool, Bool)]): (Bool, Bool) = {
+        if (parts.size == 1) parts.head else {
+            val (highGt, highEq) = compareTimer(parts.take(parts.size / 2))
+            val (lowGt, lowEq) = compareTimer(parts.drop(parts.size / 2))
+            (highGt || (highEq && lowGt), highEq && lowEq)
+        }
+    }
+    val (timerGt, timerEq) = compareTimer(timerChunks)
+    val supervisorTimerPending = timerGt || timerEq
     mie_read := (mie_MEIE.asUInt << MACHINE_INTERRUPT_CAUSE.EXTERNAL) |
         (mie_MTIE.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
         (mie_MSIE.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
@@ -352,7 +369,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         (io.machineTimerInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.TIMER) |
         (io.machineSoftwareInterrupt.asUInt << MACHINE_INTERRUPT_CAUSE.SOFTWARE) |
         ((enableSupervisorUser.B && (mip_SEIP || io.supervisorExternalInterrupt)).asUInt << SUPERVISOR_INTERRUPT_CAUSE.EXTERNAL) |
-        (Mux(menvcfg(63), io.time >= stimecmp, mip_STIP).asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
+        (Mux(menvcfg(63), supervisorTimerPending, mip_STIP).asUInt << SUPERVISOR_INTERRUPT_CAUSE.TIMER) |
         (sip_SSIP.asUInt << SUPERVISOR_INTERRUPT_CAUSE.SOFTWARE)
     val sie_read = mie_read & mideleg
     val sip_read = mip_read & mideleg
