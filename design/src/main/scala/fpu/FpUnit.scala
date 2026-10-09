@@ -24,7 +24,7 @@ class FpEntry extends Bundle {
   val isFp = Bool()
 }
 
-/** Buffered EX-to-CVFPU requests and direct CVFPU-to-writeback results.
+/** Buffered EX-to-CVFPU requests and registered CVFPU-to-writeback results.
   * Kill never flushes CVFPU: already committed calculations must survive.
   */
 class FpUnit(val depth: Int = 32) extends Module {
@@ -83,15 +83,28 @@ class FpUnit(val depth: Int = 32) extends Module {
   })
   val oldest = (commitCursor + PriorityEncoder(candidates.asUInt))(tagWidth - 1, 0)
   val returned = entries(impl.io.tag_o)
-  io.result.valid := impl.io.out_valid_o && returned.valid && returned.committed
-  io.result.bits.rd.idx := returned.rd
-  io.result.bits.rd.isFp := returned.isFp
-  io.result.bits.data := impl.io.result_o
-  io.result.bits.flags := impl.io.status_o
-  // Invalidated returns are discarded. A live early result waits for commit.
-  // CVFPU output arbitration may change tag/data while stalled: sample on fire.
-  impl.io.out_ready_i := !returned.valid || (returned.committed && io.result.ready)
-  io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o || input.io.deq.valid || killDrain
+  // Only the actual CVFPU handshake fixes arbitration tag/data. A two-entry
+  // non-flow/non-pipe queue makes CVFPU ready depend on registered occupancy,
+  // rather than on WB/scoreboard/ID advance in this cycle.
+  val completed = Module(new Queue(new Bundle {
+    val tag = UInt(tagWidth.W)
+    val result = new FpResult
+  }, 2, pipe = false, flow = false))
+  val resultBuffered = RegInit(VecInit(Seq.fill(depth)(false.B)))
+  completed.io.enq.valid := impl.io.out_valid_o && returned.valid && returned.committed
+  completed.io.enq.bits.tag := impl.io.tag_o
+  completed.io.enq.bits.result.rd.idx := returned.rd
+  completed.io.enq.bits.result.rd.isFp := returned.isFp
+  completed.io.enq.bits.result.data := impl.io.result_o
+  completed.io.enq.bits.result.flags := impl.io.status_o
+  io.result.valid := completed.io.deq.valid
+  io.result.bits := completed.io.deq.bits.result
+  completed.io.deq.ready := io.result.ready
+  impl.io.out_ready_i := !returned.valid || (returned.committed && completed.io.enq.ready)
+  val completingTag = completed.io.deq.bits.tag
+  val completingEntry = entries(completingTag)
+  io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o ||
+    input.io.deq.valid || completed.io.deq.valid || killDrain
   def pending(fp: Boolean): UInt = entries.map { e =>
     Mux(e.valid && e.committed && e.isFp === fp.B && (fp.B || e.rd =/= 0.U),
       UIntToOH(e.rd, 32), 0.U(32.W))
@@ -101,7 +114,7 @@ class FpUnit(val depth: Int = 32) extends Module {
   // Same registered ownership as the table, without a table-wide late OR.
   val flagsOnlyCount = RegInit(0.U(log2Ceil(depth + 1).W))
   val flagsSet = io.commit && !entries(oldest).isFp && entries(oldest).rd === 0.U
-  val flagsClear = io.result.fire && !returned.isFp && returned.rd === 0.U
+  val flagsClear = io.result.fire && !completingEntry.isFp && completingEntry.rd === 0.U
   when(flagsSet =/= flagsClear) {
     flagsOnlyCount := Mux(flagsSet, flagsOnlyCount + 1.U, flagsOnlyCount - 1.U)
   }
@@ -120,7 +133,11 @@ class FpUnit(val depth: Int = 32) extends Module {
     entries(oldest).committed := true.B
     commitCursor := oldest + 1.U
   }
-  when(io.result.fire) { entries(impl.io.tag_o).valid := false.B }
+  when(completed.io.enq.fire) { resultBuffered(impl.io.tag_o) := true.B }
+  when(io.result.fire) {
+    entries(completingTag).valid := false.B
+    resultBuffered(completingTag) := false.B
+  }
   when(killDrain && !impl.io.busy_o && !input.io.deq.valid) { killDrain := false.B }
   when(io.killUncommitted) {
     for (i <- 0 until depth) {
@@ -140,14 +157,23 @@ class FpUnit(val depth: Int = 32) extends Module {
       assert(!entries(killedTag).valid && killDrain, "[S05] killed FP allocation survived or reused its tag")
     }
     assert(!killDrain || !io.req.fire, "[S05] FP tag reused before killed returns drained")
-    assert(!io.result.fire || (returned.valid && returned.committed), "[S05/S08] speculative FP write")
+    assert(!io.result.fire || (completingEntry.valid && completingEntry.committed && resultBuffered(completingTag)), "[S05/S08] speculative FP write")
     assert(io.req.fire === input.io.enq.fire, "[T14] input enqueue handshake changed")
     assert(!(impl.io.in_valid_i && impl.io.in_ready_o) ||
       (input.io.deq.fire && queuedLive), "[T14] CVFPU accepted an unowned request")
     assert(flagsOnlyCount === PopCount(entries.map(e =>
       e.valid && e.committed && !e.isFp && e.rd === 0.U)), "[S14] flags ownership count differs from table")
-    assert(io.result.fire === (impl.io.out_valid_o && impl.io.out_ready_i && returned.valid),
-      "[T15] output handshake changed")
+    assert(completed.io.enq.fire ===
+      (impl.io.out_valid_o && impl.io.out_ready_i && returned.valid),
+      "[T15] buffered CVFPU return handshake changed")
+    assert(!completed.io.enq.fire || !resultBuffered(impl.io.tag_o),
+      "[SOC3e] CVFPU returned the same live tag twice")
+    when(completed.io.deq.valid) {
+      assert(completingEntry.valid && completingEntry.committed && resultBuffered(completingTag),
+        "[SOC3e] buffered FP result lost committed ownership")
+      assert(io.result.bits.rd.idx === completingEntry.rd &&
+        io.result.bits.rd.isFp === completingEntry.isFp, "[SOC3e] FP result destination changed")
+    }
     for (i <- 0 until depth; j <- i + 1 until depth) {
       assert(!(entries(i).valid && entries(j).valid &&
         entries(i).isFp === entries(j).isFp && entries(i).rd === entries(j).rd &&

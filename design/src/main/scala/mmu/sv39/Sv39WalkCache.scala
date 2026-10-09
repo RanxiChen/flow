@@ -18,12 +18,19 @@ class Sv39WalkCache(sets: Int, ways: Int, keyBits: Int) extends Module {
   def tag(key: UInt): UInt = key >> indexBits
   def matches(key: UInt, asid: UInt): Vec[Bool] = VecInit(entries(index(key)).map(e =>
     e.valid && e.tag === tag(key) && e.asid === asid))
-  val hits = matches(io.port.lookup.key, io.port.lookup.asid)
-  io.port.lookup.hit := hits.asUInt.orR
-  io.port.lookup.ppn := Mux1H(hits, entries(index(io.port.lookup.key)).map(_.ppn))
-  when(io.port.lookupFire && io.port.lookup.hit) {
-    val s = index(io.port.lookup.key)
-    plru(s) := TreePlru.touch(plru(s), PriorityEncoder(hits), ways)
+  // Select locally within each static set. Do not mux all ASID/tag/PPN
+  // fields by the set index before beginning the lookup comparisons.
+  val setHits = Seq.tabulate(sets) { set =>
+    VecInit(entries(set).map(e => index(io.port.lookup.key) === set.U &&
+      e.valid && e.tag === tag(io.port.lookup.key) && e.asid === io.port.lookup.asid))
+  }
+  val ppnParts = (0 until sets).map(set => Mux1H(setHits(set), entries(set).map(_.ppn)))
+  io.port.lookup.hit := setHits.map(_.asUInt.orR).reduce(_ || _)
+  io.port.lookup.ppn := ppnParts.reduce(_ | _)
+  for (set <- 0 until sets) {
+    when(io.port.lookupFire && setHits(set).asUInt.orR) {
+      plru(set) := TreePlru.touch(plru(set), PriorityEncoder(setHits(set)), ways)
+    }
   }
   when(io.port.fill.valid) {
     assert(!matches(io.port.fill.bits.key, io.port.fill.bits.asid).asUInt.orR, "walk-cache duplicate fill")

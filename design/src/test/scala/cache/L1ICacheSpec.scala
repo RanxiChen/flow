@@ -105,8 +105,7 @@ class L1ICacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.debug.get.s1_valid.expect(false.B)
             dut.io.debug.get.s2_valid.expect(true.B)
             println(s"[INFO] cycle ${cycle_count} , s2 cycle ${s2Cycle} , drsp should respond")
-            dut.io.drsp.valid.expect(true.B)
-            dut.io.drsp.bits.data.expect("h03020100".U)
+            dut.io.drsp.valid.expect(false.B) // selected refill is captured at this edge
             dut.clock.step(1)
             cycle_count += 1
             println(s"[INFO] ==================== enter post-refill hit pipeline check ====================")
@@ -123,7 +122,9 @@ class L1ICacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.debug.get.s1_valid.expect(true.B)
             dut.io.debug.get.s2_valid.expect(false.B)
             dut.io.drsp.valid.expect(true.B)
-            dut.io.drsp.bits.data.expect("h07060504".U)
+            dut.io.drsp.bits.data.expect("h03020100".U)
+            dut.io.dreq.valid.poke(false.B); dut.clock.step()
+            dut.io.drsp.valid.expect(true.B); dut.io.drsp.bits.data.expect("h07060504".U)
         }
     }
 
@@ -191,6 +192,8 @@ class L1ICacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.clock.step()
             dut.io.debug.get.s1_vaddr.expect(missedAddr.U)
             dut.io.debug.get.s1_hit.expect(true.B)
+            dut.io.drsp.valid.expect(false.B)
+            dut.io.dreq.valid.poke(false.B); dut.clock.step()
             dut.io.drsp.valid.expect(true.B)
             dut.io.drsp.bits.data.expect("h00050913".U)
 
@@ -207,4 +210,40 @@ class L1ICacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
 
     
+    "SOC3e keeps two accepted hit returns stable under backpressure and flush discards both" in {
+        simulate(new L1ICache(cfg)) { d =>
+            val a = BigInt("10000000",16)
+            val line = BigInt("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100",16)
+            d.io.flush.poke(false.B); d.io.drsp.ready.poke(true.B)
+            d.io.dreq.valid.poke(false.B); d.io.dreq.bits.vaddr.poke(a.U); d.io.dreq.bits.paddr.poke(a.U)
+            d.io.next_level_rsp.vld.poke(false.B); d.io.next_level_rsp.error.poke(false.B)
+            d.io.next_level_rsp.data.poke(0.U)
+            d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+            d.io.dreq.valid.poke(true.B); d.io.dreq.ready.expect(true.B)
+            d.clock.step(); d.io.dreq.valid.poke(false.B); d.clock.step(2)
+            d.io.next_level_rsp.vld.poke(true.B); d.io.next_level_rsp.data.poke(line.U)
+            d.clock.step(); d.io.next_level_rsp.vld.poke(false.B)
+            d.io.drsp.valid.expect(false.B); d.clock.step()
+            d.io.drsp.valid.expect(true.B); d.io.drsp.bits.data.expect(BigInt("03020100",16).U)
+            d.clock.step(); d.io.drsp.ready.poke(false.B)
+            for (off <- Seq(4,8)) {
+                d.io.dreq.valid.poke(true.B); d.io.dreq.bits.vaddr.poke((a+off).U)
+                d.io.dreq.bits.paddr.poke((a+off).U); d.io.dreq.ready.expect(true.B); d.clock.step()
+            }
+            d.io.dreq.valid.poke(false.B); d.clock.step()
+            for (_ <- 0 until 7) {
+                d.io.drsp.valid.expect(true.B); d.io.drsp.bits.vaddr.expect((a+4).U)
+                d.io.drsp.bits.data.expect(BigInt("07060504",16).U)
+                d.io.dreq.ready.expect(false.B); d.clock.step()
+            }
+            d.io.drsp.ready.poke(true.B); d.clock.step()
+            d.io.drsp.valid.expect(true.B); d.io.drsp.bits.vaddr.expect((a+8).U)
+            d.io.drsp.bits.data.expect(BigInt("0b0a0908",16).U)
+            // Flush coincides with a potential output handshake: cancel it.
+            d.io.flush.poke(true.B); d.io.drsp.valid.expect(false.B); d.clock.step()
+            d.io.flush.poke(false.B); d.io.drsp.valid.expect(false.B)
+            d.clock.step(4); d.io.drsp.valid.expect(false.B); d.io.dreq.ready.expect(true.B)
+        }
+    }
+
 }

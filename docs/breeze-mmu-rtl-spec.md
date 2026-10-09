@@ -428,3 +428,14 @@ io.idle   ← 4.4 节定义
 | T15 | 一个 set 填满后继续 refill | 先用 invalid 的 way，之后按 PLRU 替换 |
 | T16 | PTW 通道随机反压 | 结果与无反压一致 |
 | T17 | 随机测试 | 随机页表 + 随机访问序列，与 Scala 参考 Sv39 walker 比对结果 |
+
+
+## 2026-10-09 SOC-3e 用户授权流水边界修订
+
+本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
+
+L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列输出、S2 并行判断寄存 PA 的 PMP/PMA 与 tag/data、S3 最终响应/分配/PS 接收。S0 的 dTLB 和 VIPT SRAM 查询仍并行；命中接收间隔保持一拍，命中响应从 E+2 改为 E+3。所有 CPU 在途槽随 hold 保持；旧接口 `s2Hold/s2Kill` 对应最终 S3，`s1Kill` 清年轻 S1/S2，`s2Kill` 另清最终 CPU S3 及三段重查。内部 probe/refill/PTW 不受 CPU kill 撤销。原样保留请求、翻译、末地址、归属和快照失效；permissionEvent 在 S1/S2/S3 都须使旧 CPU 权限作废并重查；内部 PTW 在上下文变化时刷新。probe 开始条件覆盖 S1/S2/S3，阻塞的年轻 store 不得卡住完成旧 miss 所需的 probe。TLB miss 的 S3 旧主、S2/S1 年轻槽由各自 valid 保持，逐一重查，无额外请求复制。
+
+同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
+
+L1I 在已选定返回数据/地址/权限错误与 realigner 之间增加两项无 flow/pipe 返回队列，命中与 refill/error 响应都多一拍；accepted-undelivered 请求共最多两项并提前预留返回容量。背压不丢失/重复返回；flush 取消旧返回及信用，旧 miss 的迟到数据不得重新输出。BTB 仍全相联、容量/最低索引 winner/替换/查找拍数不变，按四项局部一热收束；walk-cache 仍按原 set/way/ASID/PLRU/全局规则，每 set 静态局部 PPN 选择，lookup miss 输出 0。PTW sLookup→内存请求拍数不变。

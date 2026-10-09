@@ -59,15 +59,40 @@ class L1ICache(val cacheConfig: L1IParams, val enabledebug: Boolean = false,val 
             s"Executable PMA region ${region.name} must be aligned to the ICache line size"
         )
     }
+    val rawRsp = Wire(Decoupled(new BreezeCacheRespIO(cacheConfig.VLEN, cacheConfig.FETCH_WIDTH)))
+    val returns = withReset(reset.asBool || io.flush) {
+        Module(new Queue(new BreezeCacheRespIO(cacheConfig.VLEN, cacheConfig.FETCH_WIDTH),
+            2, pipe = false, flow = false))
+    }
+    val outstanding = RegInit(0.U(2.W))
+    returns.io.enq.valid := rawRsp.valid
+    returns.io.enq.bits := rawRsp.bits
+    rawRsp.ready := returns.io.enq.ready
+    io.drsp.valid := returns.io.deq.valid && !io.flush
+    io.drsp.bits := returns.io.deq.bits
+    returns.io.deq.ready := io.drsp.ready && !io.flush
+    // At most two accepted, undelivered requests. These include the S1/miss
+    // owner, so a pulse response always has space even under output stalls.
+    when(io.flush) { outstanding := 0.U }
+      .elsewhen(io.dreq.fire =/= io.drsp.fire) {
+        outstanding := Mux(io.dreq.fire, outstanding + 1.U, outstanding - 1.U)
+      }
+    val responseCredit = outstanding < 2.U || io.drsp.fire
+    when(!reset.asBool && !io.flush) {
+        assert(!rawRsp.valid || rawRsp.ready, "[SOC3e] I-cache return has no reserved capacity")
+        assert(outstanding <= 2.U, "[SOC3e] I-cache response credits overflow")
+        assert(!io.drsp.fire || outstanding =/= 0.U, "[SOC3e] I-cache returned an unowned request")
+    }
+
     //initial IO
     //dreq
     io.dreq.ready := false.B
     //drsp
-    io.drsp.valid := false.B
-    io.drsp.bits.vaddr := 0xdeadbeefL.U
-    io.drsp.bits.data := 0xdeadbeefL.U
-    io.drsp.bits.accessFault := false.B
-    io.drsp.bits.pageFault := false.B
+    rawRsp.valid := false.B
+    rawRsp.bits.vaddr := 0xdeadbeefL.U
+    rawRsp.bits.data := 0xdeadbeefL.U
+    rawRsp.bits.accessFault := false.B
+    rawRsp.bits.pageFault := false.B
     //next level req
     io.next_level_req.req := false.B
     io.next_level_req.paddr := 0xdeadbeefL.U
@@ -310,7 +335,7 @@ class L1ICache(val cacheConfig: L1IParams, val enabledebug: Boolean = false,val 
 
     //当后面有进入miss处理的时候，不再允许接收新的请求，直到miss处理完成
     val stop_new_req = s1_miss || s2_valid && !s2_done
-    io.dreq.ready := !io.flush && ~(stop_new_req) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
+    io.dreq.ready := !io.flush && responseCredit && ~(stop_new_req) //当s1 valid且miss时，阻止新的请求进入，然后一直到s2处理完成才允许新的请求进入
     
     def index_pos(vaddr:UInt,cfg:L1IParams): UInt = {
         if (cfg.ICACHE_SET_NUM == 1) 0.U(1.W)
@@ -319,29 +344,29 @@ class L1ICache(val cacheConfig: L1IParams, val enabledebug: Boolean = false,val 
     
     // handshake and response: prefer returning the refill result when s2 completes
     when(!io.flush && !s2_flush_seen && s2_valid && s2_done){
-        io.drsp.valid := true.B
-        io.drsp.bits.vaddr := s2_vaddr
-        io.drsp.bits.data := Mux(s2_refill_error, 0.U, s2_dout)
-        io.drsp.bits.accessFault := s2_refill_error
-        io.drsp.bits.pageFault := false.B
+        rawRsp.valid := true.B
+        rawRsp.bits.vaddr := s2_vaddr
+        rawRsp.bits.data := Mux(s2_refill_error, 0.U, s2_dout)
+        rawRsp.bits.accessFault := s2_refill_error
+        rawRsp.bits.pageFault := false.B
     }.elsewhen(!io.flush && s1_pma_fault){
-        io.drsp.valid := true.B
-        io.drsp.bits.vaddr := s1_vaddr
-        io.drsp.bits.data := 0.U
-        io.drsp.bits.accessFault := true.B
-        io.drsp.bits.pageFault := false.B
+        rawRsp.valid := true.B
+        rawRsp.bits.vaddr := s1_vaddr
+        rawRsp.bits.data := 0.U
+        rawRsp.bits.accessFault := true.B
+        rawRsp.bits.pageFault := false.B
     }.elsewhen(!io.flush && s1_valid && s1_hit){
-        io.drsp.valid := true.B
-        io.drsp.bits.vaddr := s1_vaddr
-        io.drsp.bits.data := s1_dout
-        io.drsp.bits.accessFault := false.B
-        io.drsp.bits.pageFault := false.B
+        rawRsp.valid := true.B
+        rawRsp.bits.vaddr := s1_vaddr
+        rawRsp.bits.data := s1_dout
+        rawRsp.bits.accessFault := false.B
+        rawRsp.bits.pageFault := false.B
     }.otherwise{
-        io.drsp.valid := false.B
-        io.drsp.bits.vaddr := 0.U
-        io.drsp.bits.data := 0.U
-        io.drsp.bits.accessFault := false.B
-        io.drsp.bits.pageFault := false.B
+        rawRsp.valid := false.B
+        rawRsp.bits.vaddr := 0.U
+        rawRsp.bits.data := 0.U
+        rawRsp.bits.accessFault := false.B
+        rawRsp.bits.pageFault := false.B
     }
 
     if(enabledebug){

@@ -18,7 +18,7 @@ class FpProbe extends FpUnit {
 }
 
 /** Component evidence only: this does not instantiate BreezeBackend or ID/WB.
-  * Commit pulses are supplied at the specified EX+2 boundary by the testbench.
+  * Commit is injected by the component testbench; integrated WB is now EX+3.
   */
 class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   private val one = BigInt("3ff0000000000000", 16)
@@ -101,7 +101,7 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
     }
   }
 
-  "T14_component_T15_component_P08_component: eight consecutive FMA inputs and direct output handshakes" in {
+  "T14_component_T15_component_P08_component: eight consecutive FP64 FMA inputs with seven stages and registered output handshakes" in {
     simulate(new FpProbe) { d =>
       init(d)
       val received = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
@@ -112,19 +112,18 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         if (cycle < 8) d.io.req.ready.expect(true.B)
         d.rawInFire.expect((cycle >= 1 && cycle <= 8).B)
         if (d.io.result.valid.peek().litToBoolean) {
-          d.rawOutFire.expect(true.B)
           d.io.result.bits.data.expect(BigInt("4000000000000000", 16).U) // 1*1+1
           d.io.result.bits.flags.expect(0.U); d.io.result.bits.rd.isFp.expect(true.B)
           received += ((d.io.result.bits.rd.idx.peek().litValue.toInt, cycle))
         }
         d.clock.step()
       }
-      received.map(_._1).toSeq mustBe (0 until 8)
+      received.toSeq mustBe (0 until 8).map(n => (n,n+9))
       received.map(_._2).sliding(2).foreach(pair => pair(1) mustBe pair(0) + 1)
       d.io.committedFpr.expect(0.U); d.io.busy.expect(false.B)
     }
   }
-  "SOC3d FP32 five-stage stream plus input boundary preserves exact latency, II1, tags and exception flags" in {
+  "SOC3d FP32 five-stage stream plus input/output boundaries preserves exact latency, II1, tags and exception flags" in {
     simulate(new FpProbe) { d =>
       init(d)
       def box(x: BigInt): BigInt = (BigInt("ffffffff", 16) << 32) | x
@@ -152,12 +151,12 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
           val rd = d.io.result.bits.rd.idx.peek().litValue.toInt
           val expected = cases(rd % cases.size)._5
           d.io.result.bits.data.expect(expected.result.U); d.io.result.bits.flags.expect(expected.status.U)
-          d.io.result.bits.rd.isFp.expect(true.B); d.rawOutFire.expect(true.B)
+          d.io.result.bits.rd.isFp.expect(true.B)
           received += ((rd,cycle))
         }
         d.clock.step()
       }
-      received.toSeq mustBe (0 until 16).map(n => (n,n+6))
+      received.toSeq mustBe (0 until 16).map(n => (n,n+7))
       d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
     }
   }
@@ -177,8 +176,8 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
         d.io.killUncommitted.poke((cycle == 5).B)
         if (cycle >= 6) {
           d.draining.expect(true.B); d.io.req.ready.expect(false.B)
-          if (cycle >= 6) { d.io.result.valid.expect(true.B); d.io.result.bits.rd.idx.expect(1.U) }
-          if (cycle >= 6) {
+          if (cycle >= 7) { d.io.result.valid.expect(true.B); d.io.result.bits.rd.idx.expect(1.U) }
+          if (cycle >= 7) {
             d.io.result.bits.data.expect(BigInt("ffffffff40000000",16).U)
             d.io.result.bits.flags.expect(0.U)
           }
@@ -199,6 +198,32 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
           Response(BigInt("ffffffff40000000",16),0)
       }
       d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
+    }
+  }
+  "SOC3e buffered result keeps its destination and flags owned through kill and backpressure" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      d.io.result.ready.poke(false.B)
+      d.io.req.bits.operation.poke(BreezeFpOp.ADD.U)
+      d.io.req.bits.operandB.poke(inf.U); d.io.req.bits.operandC.poke(negInf.U)
+      d.io.req.bits.rd.idx.poke(0.U); d.io.req.bits.rd.isFp.poke(false.B)
+      d.io.req.valid.poke(true.B); d.clock.step(); d.io.req.valid.poke(false.B)
+      d.clock.step(2); d.io.commit.poke(true.B); d.clock.step(); d.io.commit.poke(false.B)
+      var waited = 0
+      while (!d.io.result.valid.peek().litToBoolean && waited < 20) { d.clock.step(); waited += 1 }
+      d.io.result.valid.expect(true.B)
+      for (cycle <- 0 until 8) {
+        d.io.killUncommitted.poke((cycle == 0).B)
+        d.io.result.bits.rd.idx.expect(0.U); d.io.result.bits.rd.isFp.expect(false.B)
+        d.io.result.bits.data.expect(BigInt("7ff8000000000000",16).U)
+        d.io.result.bits.flags.expect(16.U)
+        d.io.committedFlagsOnly.expect(true.B); d.io.busy.expect(true.B)
+        d.rawOutFire.expect(false.B) // CVFPU has already handed this owner to the queue.
+        d.clock.step(); d.io.result.valid.expect(true.B)
+      }
+      d.io.killUncommitted.poke(false.B); d.io.result.ready.poke(true.B)
+      d.clock.step(); d.io.result.valid.expect(false.B)
+      d.io.committedFlagsOnly.expect(false.B); d.io.busy.expect(false.B)
     }
   }
   "SOC3d rounding boundary preserves all modes, subnormals, overflow and fused cancellation" in {
@@ -277,8 +302,8 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
           val rd = d.io.result.bits.rd.idx.peek().litValue.toInt
           val actual = Response(d.io.result.bits.data.peek().litValue, d.io.result.bits.flags.peek().litValue)
           actual mustBe expected(rd); d.io.result.bits.rd.isFp.expect(true.B)
-          // Cross-unit arbitration may change its selected tag while stalled
-          // (backend-v1 spec §5); account completions only on actual fire.
+          // The registered output holds its selected tag/data under backpressure;
+          // account completions only on actual fire.
           if (ready) { seen.contains(rd) mustBe false; seen += rd }
           else stalls += 1
         }

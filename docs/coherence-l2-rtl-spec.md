@@ -346,3 +346,10 @@ REPLAY 任务：重新读取命中路（不保存快照）；S2：
 按 [`observability-design.md`](observability-design.md) 2.5 节输出事件脉冲（按来源细分）：请求数、命中、miss、set 保护等待拍数、槽满撤销次数、probe 发出数、内存读写数、写缓冲等待拍数。计数器本体在 observability 步骤实现，本步只引出事件线。
 
 实现（2026-10-07）：`L2Home.io.events`（`L2Events`，经 `BreezeCluster.io.l2Events` 引出）。请求类事件按 REQ 端口顺序细分：`req` 为 S2 握手，`hit`/`needProbe`/`miss` 为握手时的分类（快路径 / 需 probe / 需访问内存）；`slotFullStall` 为槽满撤销后等待的拍，`setWait` 为因 set 保护不参加仲裁的拍。`put`、`probeSent` 按核；`probeCycles` 为 probe 任务已接受、答复未收齐的拍；`memRead`/`memWrite` 为 AR/AW 握手；`memReadsInFlight` 是在途读数（逐拍累加即 `mem_read_cycles`），`memTwoInflight` 为在途读 ≥ 2 的拍。
+
+
+## 2026-10-09 SOC-3e 用户授权流水边界修订
+
+本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
+
+L2MemEngine 增加深度 l2Slots 的无 flow/pipe AR dispatch 队列。readReq.fire 同拍预留 order 与 dispatch 两项资源，order 包含尚未发 AR 的已接受读；AR 从寄存队头发出，最早多一拍，ARready 不再决定 order 写使能。内存仍按 AR 顺序返回完整行，RID/beat/RLAST 检查与错误归并不变。一项 WB 优先于同拍新读；已有 dispatch 队头在离开 AR 前阻止新 WB，避免 AR 在背压期间受新写影响。已有 WB 同行读等 B，不同行读可推进；R 完成才释放 order 容量。不得漏发/重复 AR 或复用在途 slot。

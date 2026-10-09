@@ -86,6 +86,21 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     l2.gets.size mustBe 1
   }
 
+  "SOC3e independent hot loads return at S3 with three-cycle latency and II1" in withL1D() { e =>
+    import e._
+    val a = ram(0x280)
+    preload(a,8,BigInt("0123456789abcdef",16)); runOps(CoreOp.load(a))
+    val n = core.history.size
+    runOps((0 until 16).map(i => CoreOp.load(a, rd=i+1)): _*)
+    val requests = txns(n)
+    requests.size mustBe 16
+    requests.foreach { t => t.kind mustBe "Done"; t.respCycle-t.fired mustBe 3L }
+    requests.sliding(2).foreach { pair =>
+      pair(1).fired mustBe pair(0).fired+1
+      pair(1).respCycle mustBe pair(0).respCycle+1
+    }
+  }
+
   "store hits on E merge bytes in place and an Inv probe returns the dirty line" in withL1D() { e =>
     import e._
     val a = ram(0x200)

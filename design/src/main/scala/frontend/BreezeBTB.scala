@@ -32,14 +32,19 @@ class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16,
     val lookupKey = io.lookup.pc(vlen - 1, pcShift)
     val matchVec = Wire(Vec(entryNum, Bool()))
     val hit = Wire(Bool())
-    val hitIdx = Wire(UInt(log2Ceil(entryNum).W))
 
     for (i <- 0 until entryNum) {
         matchVec(i) := entries(i).valid && entries(i).pcKey === lookupKey
     }
 
     hit := matchVec.asUInt.orR
-    hitIdx := PriorityEncoder(matchVec)
+    // Preserve the old lowest-index winner, without encoding an index and
+    // using it to select every target/type bit through a second mux tree.
+    val lookupGrant = PriorityEncoderOH(matchVec.asUInt)
+    val groups = (0 until entryNum).grouped(4).toSeq
+    val targetParts = groups.map(ids => Mux1H(ids.map(i => lookupGrant(i)), ids.map(i => entries(i).target)))
+    val typeParts = groups.map(ids => Mux1H(ids.map(i => lookupGrant(i)), ids.map(i => entries(i).predType.asUInt)))
+    val takenParts = groups.map(ids => ids.map(i => lookupGrant(i) && entries(i).taken).reduce(_ || _))
 
     io.resp.hit := hit
     io.resp.taken := false.B
@@ -47,9 +52,9 @@ class BreezeBTB(val vlen: Int = 64, val entryNum: Int = 16,
     io.resp.target := 0.U
 
     when(hit) {
-        io.resp.taken := entries(hitIdx).taken
-        io.resp.predType := entries(hitIdx).predType
-        io.resp.target := entries(hitIdx).target
+        io.resp.taken := takenParts.reduce(_ || _)
+        io.resp.predType := typeParts.reduce(_ | _).asTypeOf(FrontendPredType())
+        io.resp.target := targetParts.reduce(_ | _)
     }
 
     val updateKey = io.update.pc(vlen - 1, pcShift)

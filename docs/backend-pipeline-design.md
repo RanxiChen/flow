@@ -158,3 +158,12 @@ MDU、FPU 只要求在一笔操作未完成时能拒绝新操作（ready 为低�
 ## 13. SOC-3b 边界
 
 FENCE.I/SFENCE 不额外等待 W2/lateReg，ESTOP 的 busy 已覆盖 lateReg，中断/WFI 不等后台 busy；W2 不被 redirect 取消。结构禁止/允许与 report_timing/RTL fan-in 取证均按时序合同 §4。第 9 节的旧乘法 DSP 自动推断/重定时设想已由 SOC-3 M2 明确 DSP 寄存结构覆盖，本轮不改 MulUnit、不启用 retiming；现有 M1/M2 保持。
+
+
+## 2026-10-09 SOC-3e 用户授权流水边界修订
+
+本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
+
+后端为 ID/EX/MEM/PERM/WB，PERM 随全局下游 hold 保持并随精确 kill 作废。E 为 EX，MEM=E+1、PERM=E+2、WB=E+3，W2=E+4。L1D S0/S1/S2/S3 对齐 EX/MEM/PERM/WB。CSR 在 PERM 求值、WB 生效；RAW/WAW、CSR 串行、interrupt 排空与 forwarding 必须包含 PERM。普通 ALU 旁路按 MEM>PERM>WB>W2>已捕获值；ALU 依赖与独立 load 命中仍 II=1。load-use 的依赖 ID 在 E+4 写穿透、EX 在 E+5。MUL 无冲突仍 E+4 写，常规 DIV 算法及迭代数不变；快 DIV 因 committed 门控在 E+4 写而非 E+3。lateReg、W2 的提交后 kill 行为不变。饥饿阈值仍 3，c+4 插入的 ID 气泡经新增 PERM 后于 c+9 让出 W2，冲突为 c+1…c+8，共 8。
+
+FpUnit 保留两项请求边界，并新增两项无 flow/pipe 返回队列。实际原始 CVFPU out-fire 才捕获 tag/data/flags；其后最早一拍向 Writeback 提供结果。CVFPU ready 不组合依赖后端 ready；队列内 committed 所有权保持到实际物理完成，kill 不撤销已提交输出，busy/fflags-only 不提前清。队列输出在背压时稳定，即使原始跨单元仲裁的未接受输出可变化。FP32 ADDMUL 内部五拍保留，FP64 五→七拍，新增对齐控制→宽移位、归一化控制→宽移位边界。无停顿 backend 接收到结果最早 FP32 E+7、FP64 E+9（两端各一拍），II=1，独立算术/特殊值/舍入/flags 不变。

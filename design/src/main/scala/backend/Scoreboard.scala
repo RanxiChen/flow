@@ -22,11 +22,12 @@ class Operand extends Bundle {
 /** WB sets, actual completion clears; kill has no scoreboard write enable.
   * The caller supplies only genuinely issued EX/MEM/WB producers.
   */
-class Scoreboard extends Module {
+class Scoreboard(val pipeStages: Int = 3) extends Module {
+  require(pipeStages >= 3)
   val io = IO(new Bundle {
     val set = Flipped(Valid(new Producer))
     val clear = Flipped(Valid(new L1DDestination))
-    val pipe = Input(Vec(3, Valid(new Producer)))
+    val pipe = Input(Vec(pipeStages, Valid(new Producer)))
     val operands = Input(Vec(4, new Operand)) // real sources + destination (WAW)
     val idValid = Input(Bool())
     val idLeave = Input(Bool())
@@ -87,12 +88,16 @@ class Scoreboard extends Module {
   io.hazard := operandBusy.reduce(_ || _) || pipeMatches.flatten.reduce(_ || _) ||
     (io.csr && !io.csrDrainOk)
   for (src <- 0 until 4) {
-    io.sourceStall(src) := io.idValid && !io.idLeave &&
+    // Attribution implies hazard, which already prevents idLeave. Do not
+    // route the backend's entire advance/redirect cone back into counters.
+    io.sourceStall(src) := io.idValid &&
       (matches(src) || (io.csr && (csrSources(src) || ((src == LongSource.FPU).B && io.fpFlagsPending))))
   }
   io.gprBusy := gprBusy
   io.fprBusy := fprBusy
   when(!reset.asBool) {
+    assert(!io.sourceStall.asUInt.orR || io.hazard,
+      "[SOC3e] source attribution without a dependency or CSR drain hazard")
     assert(!gprBusy(0), "[S01] x0 busy")
     assert(!(gSet & gClear).orR && !(fSet & fClear).orR, "[S10] same rd set and clear")
     assert(!(gSet & gprBusy).orR && !(fSet & fprBusy).orR, "[S01] duplicate outstanding rd")

@@ -90,9 +90,15 @@ class L1S1(p: L1DParams) extends Bundle {
   val req = new L1PipeReq(p)
   val snapInvalid = Bool()
   val pmpEnd = new flow.mmu.BreezePmpAccessEnd
+  val needsRecheck = Bool()
 }
 
 class L1S2(p: L1DParams) extends Bundle {
+  val pmpEnd = new flow.mmu.BreezePmpAccessEnd
+  val tagMatch = Vec(p.ways, Bool())
+  val hitData = UInt(64.W)
+  val storeDataAligned = UInt(64.W)
+  val storeMask = UInt(8.W)
   val physicalAddress = UInt(64.W)
   val pmpAllowed = Bool()
   val pmaAllowed = Bool()

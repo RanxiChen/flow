@@ -37,9 +37,14 @@ class Sv39Ptw extends Module {
       }
     }
     is(State.sLookup) {
-      when(io.middle.lookup.hit) { wLevel := 0.U; wBase := io.middle.lookup.ppn }
-        .elsewhen(io.upper.lookup.hit) { wLevel := 1.U; wBase := io.upper.lookup.ppn }
-        .otherwise { wLevel := 2.U; wBase := wRoot }
+      val middle = io.middle.lookup.hit
+      val upper = !middle && io.upper.lookup.hit
+      val root = !middle && !io.upper.lookup.hit
+      wLevel := Mux(middle, 0.U, Mux(upper, 1.U, 2.U))
+      // Cache PPN outputs are already zero on a miss. The upper result does
+      // not need its own hit fed back across every PPN bit a second time.
+      wBase := Mux(middle, io.middle.lookup.ppn,
+        io.upper.lookup.ppn | Mux(root, wRoot, 0.U))
       state := State.sReq
     }
     is(State.sReq) { when(io.mem.req.fire) { state := State.sWait } }

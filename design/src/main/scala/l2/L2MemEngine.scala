@@ -33,19 +33,42 @@ class L2MemEngine(p: CoherenceParams) extends Module {
   val wbValid = RegInit(false.B)
   val wbAddr = Reg(UInt(p.lineAddrBits.W))
   val wbData = Reg(UInt(p.lineBits.W))
-  // RAW through memory: a read of the buffered line waits for B (§7.1).
+  // Reserve the response owner at local acceptance, independently of the
+  // shared AXI AR ready tree. AR is driven only by a registered dispatch head.
+  val dispatch = Module(new Queue(chiselTypeOf(io.readReq.bits), p.l2Slots,
+    pipe = false, flow = false))
   val rawBlock = wbValid && wbAddr === io.readReq.bits.addr
-
-  io.mem.ar.valid := io.readReq.valid && order.io.enq.ready && !rawBlock
-  io.mem.ar.bits.id := io.readReq.bits.slot
-  io.mem.ar.bits.addr := io.readReq.bits.addr ## 0.U(p.offBits.W)
+  // A write accepted at this edge has priority. Once a read is queued, no
+  // new write is accepted until its AR has left, so stalled AR remains stable.
+  val admitRead = !rawBlock && !io.wbPush.valid
+  io.readReq.ready := dispatch.io.enq.ready && order.io.enq.ready && admitRead
+  dispatch.io.enq.valid := io.readReq.valid && order.io.enq.ready && admitRead
+  dispatch.io.enq.bits := io.readReq.bits
+  order.io.enq.valid := io.readReq.valid && dispatch.io.enq.ready && admitRead
+  order.io.enq.bits := io.readReq.bits.slot
+  io.mem.ar.valid := dispatch.io.deq.valid
+  io.mem.ar.bits.id := dispatch.io.deq.bits.slot
+  io.mem.ar.bits.addr := dispatch.io.deq.bits.addr ## 0.U(p.offBits.W)
   io.mem.ar.bits.len := (p.memBeats - 1).U
   io.mem.ar.bits.size := log2Ceil(p.memDataBits / 8).U
   io.mem.ar.bits.burst := Axi4.BurstIncr
   io.mem.ar.bits.prot := 0.U
-  io.readReq.ready := io.mem.ar.ready && order.io.enq.ready && !rawBlock
-  order.io.enq.valid := io.mem.ar.fire
-  order.io.enq.bits := io.readReq.bits.slot
+  dispatch.io.deq.ready := io.mem.ar.ready
+  val issuedReads = RegInit(0.U(log2Ceil(p.l2Slots + 1).W))
+  val lineReturn = io.mem.r.fire && io.mem.r.bits.last
+  when(io.mem.ar.fire =/= lineReturn) {
+    issuedReads := Mux(io.mem.ar.fire, issuedReads + 1.U, issuedReads - 1.U)
+  }
+  when(!reset.asBool) {
+    assert(io.readReq.fire === order.io.enq.fire &&
+      io.readReq.fire === dispatch.io.enq.fire, "read reservation/dispatch mismatch")
+    assert(order.io.count === dispatch.io.count +& issuedReads,
+      "accepted read lost its dispatch or response owner")
+    assert(!io.mem.r.fire || issuedReads =/= 0.U || io.mem.ar.fire,
+      "read data returned before AR was issued")
+    assert(!dispatch.io.deq.valid || !wbValid || wbAddr =/= dispatch.io.deq.bits.addr,
+      "buffered write overtook an accepted read")
+  }
 
   val rBeats = Reg(Vec(p.memBeats, UInt(p.memDataBits.W)))
   val rBeat = RegInit(0.U(log2Ceil(p.memBeats).W))
@@ -68,9 +91,9 @@ class L2MemEngine(p: CoherenceParams) extends Module {
   val awSent = RegInit(false.B)
   val wBeat = RegInit(0.U(log2Ceil(p.memBeats + 1).W))
   val errCount = RegInit(0.U(8.W))
-  io.wbFree := !wbValid
+  io.wbFree := !wbValid && !dispatch.io.deq.valid
   when(io.wbPush.valid) {
-    assert(!wbValid, "write buffer pushed while busy")
+    assert(io.wbFree, "write buffer pushed without admission")
     wbValid := true.B
     wbAddr := io.wbPush.bits.addr
     wbData := io.wbPush.bits.data

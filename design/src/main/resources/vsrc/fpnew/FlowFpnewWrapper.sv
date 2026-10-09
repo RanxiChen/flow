@@ -28,13 +28,14 @@ module FlowFpnewWrapper #(
   fpnew_pkg::status_t status;
   // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
   // FP32/FP64 ADDMUL: input + full-precision pre-adder + sum +
-  // unrounded normalization + rounded output/status.
+  // unrounded normalization + rounded output/status. FP64 additionally
+  // registers alignment control and normalization control before wide shifts.
   // CONV adds a pre-rounding stage between shifting and rounding in our fork.
   // DISTRIBUTED enables the arithmetic units' internal register boundaries;
   // BEFORE alone only registers inputs and leaves the arithmetic path intact.
   // Tagged valid/ready responses return through FpUnit's commit table.
   localparam fpnew_pkg::fpu_implementation_t FlowImplementation = '{
-    PipeRegs:   '{'{5, 5, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
+    PipeRegs:   '{'{5, 7, 1, 1, 1},  // ADDMUL: FP32, FP64, FP16, FP8, FP16alt
                   '{default: 2},    // DIVSQRT (not the total iterative latency)
                   '{default: 1},    // NONCOMP
                   '{default: 4}},   // CONV: input + internal + pre-round + output

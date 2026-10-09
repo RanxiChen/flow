@@ -94,3 +94,18 @@
 用户明确要求四项同时实现以尽快时序收敛。T14/T16 的输入边界与上述结构例外按本次授权更新；其余整数、L1D、WB/W2/lateReg 提交/写回拍数不变。FpUnit 请求接受仍在 EX，commit 仍在 E+2；无停顿原始 CVFPU input 延后一拍，FP32/FP64 ADDMUL 均为原始输入到输出五拍，后端接受到输出六拍。T15 保持直接输出。同拍 enqueue/kill 新 tag 作废；刚 commit 与既有 committed 项保留，包括尚在缓冲中的请求。队头作废请求本地丢弃，已进入 CVFPU 的作废结果按原规则丢弃。killDrain 等请求缓冲和 CVFPU 同时排空，期间禁止 tag 复用。flags-only 计数只由实际 commit/completion 更新，与原 valid&&committed&&x0 归约同沿等价，CSR 仍按 raw ownership 等待。
 
 EX payload 在槽位推进时可捕获不被接受的 ID 值，但 ex.valid 仍只由原 idLeave 授权；无效 payload 不得产生发射、提交或副作用。CSR time/stimecmp 分段比较保持同拍 pending，不增加中断延迟。L1D tag 存储分组保持 S0 同拍读发起、S1 返回，写优先级及初始化/快照失效/kill/所有权规则不变。功能与物理结果见 `tasks/SOC-3d-combined-control-report.md`；不得沿用旧候选通过结论。
+
+
+## 2026-10-09 SOC-3e 用户授权流水边界修订
+
+本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
+
+后端为 ID/EX/MEM/PERM/WB，PERM 随全局下游 hold 保持并随精确 kill 作废。E 为 EX，MEM=E+1、PERM=E+2、WB=E+3，W2=E+4。L1D S0/S1/S2/S3 对齐 EX/MEM/PERM/WB。CSR 在 PERM 求值、WB 生效；RAW/WAW、CSR 串行、interrupt 排空与 forwarding 必须包含 PERM。普通 ALU 旁路按 MEM>PERM>WB>W2>已捕获值；ALU 依赖与独立 load 命中仍 II=1。load-use 的依赖 ID 在 E+4 写穿透、EX 在 E+5。MUL 无冲突仍 E+4 写，常规 DIV 算法及迭代数不变；快 DIV 因 committed 门控在 E+4 写而非 E+3。lateReg、W2 的提交后 kill 行为不变。饥饿阈值仍 3，c+4 插入的 ID 气泡经新增 PERM 后于 c+9 让出 W2，冲突为 c+1…c+8，共 8。
+
+FpUnit 保留两项请求边界，并新增两项无 flow/pipe 返回队列。实际原始 CVFPU out-fire 才捕获 tag/data/flags；其后最早一拍向 Writeback 提供结果。CVFPU ready 不组合依赖后端 ready；队列内 committed 所有权保持到实际物理完成，kill 不撤销已提交输出，busy/fflags-only 不提前清。队列输出在背压时稳定，即使原始跨单元仲裁的未接受输出可变化。FP32 ADDMUL 内部五拍保留，FP64 五→七拍，新增对齐控制→宽移位、归一化控制→宽移位边界。无停顿 backend 接收到结果最早 FP32 E+7、FP64 E+9（两端各一拍），II=1，独立算术/特殊值/舍入/flags 不变。
+
+L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列输出、S2 并行判断寄存 PA 的 PMP/PMA 与 tag/data、S3 最终响应/分配/PS 接收。S0 的 dTLB 和 VIPT SRAM 查询仍并行；命中接收间隔保持一拍，命中响应从 E+2 改为 E+3。所有 CPU 在途槽随 hold 保持；旧接口 `s2Hold/s2Kill` 对应最终 S3，`s1Kill` 清年轻 S1/S2，`s2Kill` 另清最终 CPU S3 及三段重查。内部 probe/refill/PTW 不受 CPU kill 撤销。原样保留请求、翻译、末地址、归属和快照失效；permissionEvent 在 S1/S2/S3 都须使旧 CPU 权限作废并重查；内部 PTW 在上下文变化时刷新。probe 开始条件覆盖 S1/S2/S3，阻塞的年轻 store 不得卡住完成旧 miss 所需的 probe。TLB miss 的 S3 旧主、S2/S1 年轻槽由各自 valid 保持，逐一重查，无额外请求复制。
+
+同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
+
+本轮逐行精确迁移：T01/T03/T04/T06/T07/T09/T12/T17/T19/T20/T22 的相对条件及数值不变（T12/T22 的 N 为实际新 WB）；T02 Done/commit E+3、写/ID E+4、依赖 EX E+5；T05 写 E+4、依赖 EX E+5；T08 接收 E+5；T10 Done/commit E+3；T11 late R+8、写/ID R+9；T13 仍 N…N+3 四源顺序，测试刺激提前 FP CLASSIFY 并将 returnDelay 25→23 以抵消新增授权/返回/回放级，MUL 发射与物理期望不变；T14 不变；T15 实际原始 CVFPU out-fire+1 为无冲突写回；T16 实际原始 CVFPU 延迟+2；T18 从 EX 到 WB 为3；T21 写 c+9、ID 除 c+4 外连续、8次冲突。P01/P02/P03/P07/P08/P09/P10 的数量、并行和副作用条件不变；P04 B/C commit E+4/E+5；P05 同行重查 R+12（回放 S3 R+8 完成，R+9 重发 S0，R+12 响应）；P06 ID 气泡 b 在 WB b+4、W2 b+5 让口。新增 PA 捕获级应保留这些重叠收益；本轮并未批准任意额外保持或串行化。

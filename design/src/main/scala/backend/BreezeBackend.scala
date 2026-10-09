@@ -48,7 +48,7 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val predictionMiss = Bool()
 }
 
-/** Four-stage v1 backend. EX accepts, WB commits, W2/lateReg write the RFs. */
+/** Five-stage backend: ID/EX/MEM/PERM/WB. EX accepts, WB commits, W2/lateReg write the RFs. */
 class BreezeBackend(
     val cfg: BackendConfig = BackendConfig(), val enabledebug: Boolean = false,
     val hartId: Int = 0, val useFASE: Boolean = false
@@ -91,7 +91,7 @@ class BreezeBackend(
   val fpRegFile = Module(new BreezeFpRegFile)
   val csrFile = Module(new CSRFile(64, enabledebug = enabledebug, hartId = hartId,
     privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
-  val scoreboard = Module(new Scoreboard)
+  val scoreboard = Module(new Scoreboard(pipeStages = 4))
   val writeback = Module(new Writeback)
   val mulUnit = Module(new MulUnit)
   val divUnit = Module(new DivUnit)
@@ -105,6 +105,7 @@ class BreezeBackend(
   val exFpIssued = RegInit(false.B)
   val exRedirectSent = RegInit(false.B)
   val mem = RegInit(0.U.asTypeOf(new Stage(cfg)))
+  val perm = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val wb = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val sleeping = RegInit(false.B)
   val stopped = RegInit(false.B)
@@ -130,7 +131,7 @@ class BreezeBackend(
   val idEstop = inst === "h7ff00073".U
   val idSerial = ctrl.fencei || ctrl.is_sfence_vma || ctrl.is_wfi || idEstop
   val serialInFlight = (ex.valid && (ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.is_wfi || ex.estop)) ||
-    (mem.valid && mem.serial) || (wb.valid && wb.serial)
+    (mem.valid && mem.serial) || (perm.valid && perm.serial) || (wb.valid && wb.serial)
   val gpr1Used = Mux(fpCtrl.valid, fpCtrl.usesGpr1,
     (ctrl.sel_alu1 === SEL_ALU1.RS1.U && !(idCsr && ctrl.csr_cmd(2))) || ctrl.bru_inst ||
       ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.is_sfence_vma)
@@ -153,7 +154,7 @@ class BreezeBackend(
   operands(3).rd.idx := rd
   operands(3).rd.isFp := idBank
 
-  // S2 is consumed directly at WB. A valid response is never captured.
+  // Cache S3 is consumed directly at WB. A valid response is never captured.
   val wbResponse = wb.valid && wb.mem && io.l1d.resp.valid
   val wbDone = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Done
   val wbMiss = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Mshr
@@ -165,7 +166,7 @@ class BreezeBackend(
   val downHold = io.l1d.s2Hold || serialWait
   val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
   wbCommit := wbCanLeave && !wbExc
-  val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !wb.valid &&
+  val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !perm.valid && !wb.valid &&
     !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped
   val fenceRedirect = wbCommit && (wb.fencei || wb.sfence)
   val xret = wbCommit && (wb.mret || wb.sret)
@@ -213,7 +214,7 @@ class BreezeBackend(
   val exFpLong = exLegal && exFp.fpuValid
   val exBank = exFp.valid && exFp.writesFpr
   val exWrites = Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
-  for ((stage, index) <- Seq(mem -> 1, wb -> 2)) {
+  for ((stage, index) <- Seq(mem -> 1, perm -> 2, wb -> 3)) {
     // A WB memory destination remains protected through its whole S2 cycle,
     // independently of Done/Mshr/Exc. Next cycle W2 writes or busy takes over.
     scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem)
@@ -238,7 +239,10 @@ class BreezeBackend(
     val fromWb = wb.valid && wb.writes && !wb.mem && !wb.mul && !wb.div && !wb.fp && matches(wb.rd)
     val fromMem = mem.valid && mem.writes && !mem.mem && !mem.mul && !mem.div && !mem.fp &&
       mem.csrCmd === CSR_CMD.NOP.U && matches(mem.rd)
-    Mux(fromMem, mem.data, Mux(fromWb, wb.data, Mux(fromW2, writeback.io.w2.bits.data, saved)))
+    val fromPerm = perm.valid && perm.writes && !perm.mem && !perm.mul && !perm.div && !perm.fp &&
+      perm.csrCmd === CSR_CMD.NOP.U && matches(perm.rd)
+    Mux(fromMem, mem.data, Mux(fromPerm, perm.data,
+      Mux(fromWb, wb.data, Mux(fromW2, writeback.io.w2.bits.data, saved))))
   }
   val exR1 = exRead(ex.rs1_addr, ex.rs1_data)
   val exR2 = exRead(ex.rs2_addr, ex.rs2_data)
@@ -359,12 +363,12 @@ class BreezeBackend(
     when(branchRedirect) { exRedirectSent := true.B }
   }
 
-  // CSR evaluates in MEM, commits in WB. Existing conservative CSR state hazards remain.
-  csrFile.io.csr_addr := mem.csrAddr
-  csrFile.io.csr_cmd := Mux(mem.valid && !mem.exception, mem.csrCmd, CSR_CMD.NOP.U)
-  csrFile.io.csr_reg_data := mem.csrSource
-  csrFile.io.rs1_id := mem.rs1
-  csrFile.io.rd_id := mem.rd.idx
+  // CSR evaluates in PERM, commits in WB. Existing conservative CSR state hazards remain.
+  csrFile.io.csr_addr := perm.csrAddr
+  csrFile.io.csr_cmd := Mux(perm.valid && !perm.exception, perm.csrCmd, CSR_CMD.NOP.U)
+  csrFile.io.csr_reg_data := perm.csrSource
+  csrFile.io.rs1_id := perm.rs1
+  csrFile.io.rd_id := perm.rd.idx
   csrFile.io.commit_valid := wbCommit && wb.csrCmd =/= CSR_CMD.NOP.U
   csrFile.io.commit_addr := wb.csrAddr
   csrFile.io.commit_wdata := wb.csrData
@@ -437,19 +441,22 @@ class BreezeBackend(
   io.frontendGhrUpdate := ghr
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
-    (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
+    (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) ||
+    (perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
   val oldCsrUsesRs1 = ctrl.sel_alu1 === SEL_ALU1.RS1.U || ctrl.bru_inst || ctrl.is_sfence_vma ||
     ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.csr_cmd === CSR_CMD.RW.U ||
     ctrl.csr_cmd === CSR_CMD.RS.U || ctrl.csr_cmd === CSR_CMD.RC.U
   val csrRegHazard = idCsr && Seq(
     (ex.valid && exWrites && !exBank && ex.rd_addr =/= 0.U, ex.rd_addr),
     (mem.valid && mem.writes && !mem.rd.isFp && mem.rd.idx =/= 0.U, mem.rd.idx),
+    (perm.valid && perm.writes && !perm.rd.isFp && perm.rd.idx =/= 0.U, perm.rd.idx),
     (wb.valid && wb.writes && !wb.rd.isFp && wb.rd.idx =/= 0.U, wb.rd.idx)
   ).map { case (v,r) => v && ((oldCsrUsesRs1 && rs1 === r) || (gpr2Used && rs2 === r)) }.reduce(_ || _)
   // Conservative CSR/local-FP protection continues through WB; W2 RF
   // write-through then lets ID capture the new value without a W2 hazard check.
   val ordinaryHazard = Seq((ex.valid, exWrites, exBank, ex.rd_addr, ex.ctrl.sel_wb === SEL_WB.CSR.U || exFp.valid),
     (mem.valid, mem.writes, mem.rd.isFp, mem.rd.idx, mem.csrCmd =/= CSR_CMD.NOP.U || mem.rd.isFp),
+    (perm.valid, perm.writes, perm.rd.isFp, perm.rd.idx, perm.csrCmd =/= CSR_CMD.NOP.U || perm.rd.isFp),
     (wb.valid, wb.writes, wb.rd.isFp, wb.rd.idx, wb.csrCmd =/= CSR_CMD.NOP.U || wb.rd.isFp)).map {
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
@@ -497,7 +504,7 @@ class BreezeBackend(
       ex.rs2_data := exR2
       exFpr := exFprRead
     }
-  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; wb.valid := false.B }
+  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; perm.valid := false.B; wb.valid := false.B }
     .elsewhen(!downHold) {
       // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
       mem := 0.U.asTypeOf(mem)
@@ -539,13 +546,14 @@ class BreezeBackend(
       mem.rs1 := ex.rs1_addr
       mem.rs2 := ex.rs2_addr
       mem.predictionMiss := redirected
-      wb := mem
-      when(mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) {
+      perm := mem
+      wb := perm
+      when(perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) {
         wb.data := csrFile.io.csr_old_data
         wb.csrWrite := csrFile.io.csr_write_en
         wb.csrData := csrFile.io.csr_new_data
-        when(csrFile.io.csr_illegal && !mem.exception) {
-          wb.exception := true.B; wb.cause := 2.U; wb.tval := mem.rawInst
+        when(csrFile.io.csr_illegal && !perm.exception) {
+          wb.exception := true.B; wb.cause := 2.U; wb.tval := perm.rawInst
         }
       }
     }
@@ -562,7 +570,7 @@ class BreezeBackend(
   io.backendEvents.controlTaken := io.backendEvents.controlRetired && wb.nextPc =/= wb.pc + wb.instLen
   io.backendEvents.predictionMiss := io.backendEvents.controlRetired && wb.predictionMiss
   io.backendEvents.memStallCycle := io.l1d.s2Hold
-  io.backendEvents.loadUseStall := io.fetchBuffer.valid && !idLeave && scoreboard.io.sourceStall(LongSource.L1D)
+  io.backendEvents.loadUseStall := scoreboard.io.sourceStall(LongSource.L1D)
   io.backendEvents.mulSourceStall := scoreboard.io.sourceStall(LongSource.MUL)
   io.backendEvents.divSourceStall := scoreboard.io.sourceStall(LongSource.DIV)
   io.backendEvents.wbPortConflict := writeback.io.conflict
@@ -648,9 +656,10 @@ class BreezeBackend(
   val pastKill = RegNext(wbKill || io.hartFatal, false.B)
   val pastActive = RegNext(!reset.asBool, false.B)
   val heldMem = RegNext(mem.asUInt)
+  val heldPerm = RegNext(perm.asUInt)
   val heldWb = RegNext(wb.asUInt)
   when(pastActive && !reset.asBool && pastDownHold && !pastKill) {
-    assert(mem.asUInt === heldMem && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
+    assert(mem.asUInt === heldMem && perm.asUInt === heldPerm && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
   }
   when(!reset.asBool) {
     when(io.hartFatal) {
@@ -660,7 +669,7 @@ class BreezeBackend(
     assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[S15] L1D resp is not aligned to WB")
     assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
     assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")
-    assert(!serialWait || (!ex.valid && !mem.valid), "[stall direction] serial wait with younger pipeline entries")
+    assert(!serialWait || (!ex.valid && !mem.valid && !perm.valid), "[stall direction] serial wait with younger pipeline entries")
     assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire), "[S13] younger request survived WB kill")
     assert(!(branchRedirect && exRedirectSent), "[S09] EX redirected twice in one occupancy")
     when(downHold && wb.valid) {
@@ -672,6 +681,6 @@ class BreezeBackend(
         "[S09] SFENCE repeated or issued before drain/idle")
     }
     assert(!downHold || !wbCommit, "[S09] held WB retired")
-    assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[S15] memory retired without S2 decision")
+    assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[S15] memory retired without S3 decision")
   }
 }

@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
 
 /** Cycle model is an environment, not a prediction copied from backend RTL.
-  * S1/S2 are advanced on every non-s2Hold edge, irrespective of late.ready.
+  * S1/S2/S3 are advanced on every non-s2Hold edge, irrespective of late.ready.
   * A replay that loses its write port moves to MSHR LATE; ordinary hits still
   * generate their unique Valid response. Seeds and response schedules are explicit.
   */
@@ -32,6 +32,9 @@ private[backend] final case class Request(addr: BigInt, rd: Int, fp: Boolean, op
 private[backend] final case class Event(cycle: Int, kind: String, pc: BigInt = 0, rd: Int = -1, data: BigInt = 0)
 private[backend] class BackendTimingProbe(bypass: Boolean) extends
     BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true) {
+  val fpRawOutFire = IO(Output(Bool()))
+  fpRawOutFire := chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.out_valid_o) &&
+    chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.out_ready_i)
   val fpComputeFire = IO(Output(Bool()))
   fpComputeFire := chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.in_valid_i) &&
     chisel3.util.experimental.BoringUtils.bore(fpUnit.impl.io.in_ready_o)
@@ -60,6 +63,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var instructionPageFault = false
   var faultSecondParcel = false
   private val rng = new scala.util.Random(seed)
+  private var s0Read: Option[Request] = None
   private var s1: Option[Request] = None
   private var s2: Option[Request] = None
   private var ps: Option[Request] = None
@@ -105,7 +109,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       case None => d.io.fetchBuffer.valid.poke(false.B)
     }
     d.io.mmuIdle.poke(mmuIdle.B); d.io.machineSoftwareInterrupt.poke(softwareInterrupt.B); d.io.machineTimerInterrupt.poke(timerInterrupt.B)
-    val lateAt = pending.map { case (_,r) => (r+7) }
+    val lateAt = pending.map { case (_,r) => (r+8) }
     val lateValid = lateAt.exists(cycle >= _)
     d.io.l1d.late.valid.poke(lateValid.B)
     pending.foreach { case (q,_) =>
@@ -113,9 +117,9 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       d.io.l1d.late.bits.data.poke(lateData.getOrElse(values(q.addr)).U); d.io.l1d.late.bits.error.poke(lateError.B)
     }
     val blockedLine = s2.exists(q => pending.exists { case (a,r) =>
-      (q.addr>>5)==(a.addr>>5) && cycle <= (r+7)
+      (q.addr>>5)==(a.addr>>5) && cycle <= (r+8)
     })
-    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => (r+7)+3 }
+    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => (r+8)+3 }
     val retry = s2.nonEmpty && retryAt.exists(cycle < _)
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
@@ -134,7 +138,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     d.io.l1d.req.ready.poke((!hold).B)
     val reqAddr = uint(d.io.l1d.req.bits.vaddr)
     val read = uint(d.io.l1d.req.bits.op)==0 || uint(d.io.l1d.req.bits.op)==2
-    val conflict = read && Seq(s1,s2,ps).flatten.exists(q => (q.op==1 || q.op==3 || q.op==4) &&
+    val conflict = read && Seq(s0Read,s1,s2,ps).flatten.exists(q => (q.op==1 || q.op==3 || q.op==4) &&
       ((q.addr>>3)&511)==((reqAddr>>3)&511))
     val installing = pending.exists { case (_,r) => cycle >= r+1 && cycle <= r+5 }
     d.io.l1d.req.ready.poke((!hold && !conflict && !installing).B)
@@ -148,7 +152,9 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(o.fprWrite.valid)) record("fpr",r=uint(o.fprWrite.bits.idx).toInt,data=uint(o.fprWrite.bits.data))
     if(bool(o.fpIn)) record("fpIn",uint(o.exPc))
     d match {
-      case p: BackendTimingProbe => if(bool(p.fpComputeFire)) record("fpComputeIn")
+      case p: BackendTimingProbe =>
+        if(bool(p.fpComputeFire)) record("fpComputeIn")
+        if(bool(p.fpRawOutFire)) record("fpRawOut")
       case _ =>
     }
     if(bool(o.fpOut)) record("fpOut")
@@ -178,8 +184,8 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val kill = bool(d.io.l1d.s2Kill)
     d.clock.step()
     ps = if(s2.exists(q=>q.op==1) && !hold && !kill) s2 else None
-    if(kill) { s1=None; s2=None; retryAt=None }
-    else if(!hold) { s2=s1; s1=newReq; retryAt=None }
+    if(kill) { s0Read=None; s1=None; s2=None; retryAt=None }
+    else if(!hold) { s2=s1; s1=s0Read; s0Read=newReq; retryAt=None }
     if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false; lateData=None }
     if(allocated.nonEmpty && !kill) { pending=allocated; misses -= allocated.get._1.addr }
     cycle += 1
@@ -220,9 +226,9 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "T02_load_use_default" in { check() { m =>
     val p=m.run(Seq(ld(1,0),add(3,1)),10); val e=m.at("ex",p(0))
-    m.at("req",p(0)) mustBe e; m.written(1) mustBe e+3; m.at("ex",p(1)) mustBe e+4
-    m.at("commit",p(0)) mustBe e+2; m.at("id",p(1)) mustBe e+3
-    m.all("resp").head mustBe e+2; m.writes(3).head.data mustBe 0x1234
+    m.at("req",p(0)) mustBe e; m.written(1) mustBe e+4; m.at("ex",p(1)) mustBe e+5
+    m.at("commit",p(0)) mustBe e+3; m.at("id",p(1)) mustBe e+4
+    m.all("resp").head mustBe e+3; m.writes(3).head.data mustBe 0x1234
   }}
   // T02b was retired by SOC-3b; loadUseBypass has no functional effect.
   "T03_independent_ALU_after_load" in { check() { m =>
@@ -234,7 +240,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "T05_DIV_fast_dependency" in { check() { m =>
     val p=m.run(Seq(mdu(1,0,0,true),add(2,1)),12); val e=m.at("ex",p(0))
-    m.written(1) mustBe e+3; m.at("ex",p(1)) mustBe e+4; m.writes(1).head.data mustBe mask
+    m.written(1) mustBe e+4; m.at("ex",p(1)) mustBe e+5; m.writes(1).head.data mustBe mask
   }}
   "T06_DIV_actual_iterations" in { check() { m =>
     m.run(Seq(ld(10,0),addi(11,0,1)),4); m.values(0)=mask
@@ -250,25 +256,25 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.at("id",p(2)) mustBe m.at("divIn",p(1))
   }}
   "T08_store_same_word_conflict" in { check() { m =>
-    val p=m.run(Seq(sd(0),ld(1,0)),12); m.at("req",p(1)) mustBe m.at("ex",p(0))+4
+    val p=m.run(Seq(sd(0),ld(1,0)),12); m.at("req",p(1)) mustBe m.at("ex",p(0))+5
   }}
   "T09_store_different_word" in { check() { m =>
     val p=m.run(Seq(sd(0),ld(1,8)),12); m.at("req",p(1)) mustBe m.at("ex",p(0))+1
   }}
   "T10_miss_WB_commit_sets_busy" in { check() { m =>
-    m.misses += BigInt(0); val p=m.issue(ld(1,0)); m.issue(nop); m.issue(nop); m.issue(nop)
-    val e=m.at("ex",p); m.all("resp").head mustBe e+2; m.at("commit",p) mustBe e+2
+    m.misses += BigInt(0); val p=m.issue(ld(1,0)); m.issue(nop); m.issue(nop); m.issue(nop); m.issue(nop)
+    val e=m.at("ex",p); m.all("resp").head mustBe e+3; m.at("commit",p) mustBe e+3
     m.d.io.observe.gprBusy.expect(2.U)
   }}
-  "T11_refill_R_plus_7_dependency" in { check() { m =>
+  "T11_refill_R_plus_8_dependency" in { check() { m =>
     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),add(2,1)),55)
     val r=m.all("rspData").head
-    m.all("late") mustBe Seq(r+7); m.written(1) mustBe r+8; m.at("id",p(1)) mustBe r+8
+    m.all("late") mustBe Seq(r+8); m.written(1) mustBe r+8; m.at("id",p(1)) mustBe r+8
   }}
   "T12_WB_wins_late_without_hold" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
     for(_ <- 0 until 4) m.issue(nop)
-    val n=m.cycle+3
+    val n=m.cycle+4
     val p=m.run(Seq(add(2),nop),12)
     m.at("commit",p.head) mustBe n; m.written(2) mustBe n+1; m.written(1) mustBe n+2
     m.all("late") mustBe Seq(n); m.all("hold") mustBe empty
@@ -278,13 +284,13 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     // DIV takes 32 real arithmetic cycles. MUL E+4 and CLASSIFY's
     // committed return E+3 are aligned to it; L1D late is received at N-1.
     m.enableFp(); m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
-    m.returnDelay=25; m.misses += BigInt(32); m.issue(ld(1,32))
+    m.returnDelay=23; m.misses += BigInt(32); m.issue(ld(1,32))
     val div=m.issue(mdu(2,10,11,true))
     val e=m.cycle // DIV's EX is this cycle
-    for(_ <- 0 until 29) m.issue(nop)
-    val mul=m.issue(mdu(3,0,0))
+    for(_ <- 0 until 28) m.issue(nop)
     val classify=(BigInt(0x71)<<25)|(BigInt(1)<<12)|(BigInt(4)<<7)|0x53
     val fpPc=m.issue(classify)
+    val mul=m.issue(mdu(3,0,0))
     val n=e+34
     m.run(Seq.fill(8)(nop),35)
     val ws=(1 to 4).map(m.written(_)); ws mustBe Seq(n,n+1,n+2,n+3)
@@ -295,14 +301,15 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.enableFp(); val p=m.run(Seq(fp(1)),20); m.at("fpIn",p.head) mustBe m.at("ex",p.head)
     m.all("fpComputeIn") mustBe Seq(m.at("ex",p.head)+1)
   }}
-  "T15_FPU_direct_output_write" in { check() { m =>
+  "T15_FPU_registered_output_write" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1),fp(2,toGpr=true)),25)
     m.all("fpOut") mustBe Seq(m.written(1,true),m.written(2)).sorted
+    m.all("fpRawOut").map(_+1) mustBe m.all("fpOut")
   }}
   "T16_FPU_dependency_write_through" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1),fp(2,1)),25)
     m.at("id",p(1)) mustBe m.written(1,true)
-    m.written(1,true)-m.at("ex",p.head) mustBe m.all("fpOut").head-m.all("fpComputeIn").head+1
+    m.written(1,true)-m.at("ex",p.head) mustBe m.all("fpRawOut").head-m.all("fpComputeIn").head+2
   }}
   "T17_CSR_raw_busy_fflags" in { check() { m =>
     m.enableFp(); val p=m.run(Seq(fp(1,div=true),csr(5,1)),70)
@@ -318,8 +325,8 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     val p=m.run(Seq(addS(1,10,11),addS(2,1,10),csr(5,1)),40)
     m.at("fpIn",p.head) mustBe m.at("ex",p.head)
     m.all("fpComputeIn").head mustBe m.at("ex",p.head)+1
-    m.written(1,true)-m.all("fpComputeIn").head mustBe 5
-    m.written(1,true)-m.at("ex",p.head) mustBe 6
+    m.written(1,true)-m.all("fpComputeIn").head mustBe 6
+    m.written(1,true)-m.at("ex",p.head) mustBe 7
     m.at("id",p(1)) mustBe m.written(1,true)
     m.at("id",p(2)) mustBe m.written(2,true)+1
     m.writes(1,true).head.data mustBe BigInt("ffffffff3f800000",16)
@@ -328,7 +335,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.d.io.observe.fprBusy.expect(0.U)
   }}
   "T18_FENCEI_drained_WB_flush" in { check() { m =>
-    val p=m.run(Seq(BigInt(0x100f)),8); val wb=m.at("ex",p.head)+2
+    val p=m.run(Seq(BigInt(0x100f)),8); val wb=m.at("ex",p.head)+3
     m.all("redirect") mustBe Seq(wb); m.all("icacheFlush") mustBe Seq(wb); m.at("commit",p.head) mustBe wb
   }}
   "T19_FENCEI_wait_serial_ID" in { check() { m =>
@@ -345,20 +352,20 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     val r=m.cycle; m.mmuIdle=true; m.step(Some(m.pc->ld(1,8)))
     m.all("sfence") mustBe Seq(s); m.all("redirect") mustBe Seq(r)
     m.all("req") mustBe empty; m.events.filter(e=>e.kind=="id" && e.cycle>m.at("id",p)) mustBe empty
-    m.all("xlatBlock") must contain allElementsOf (m.at("ex",p)+2 to r)
+    m.all("xlatBlock") must contain allElementsOf (m.at("ex",p)+3 to r)
   }}
   "T21_ID_single_bubble_bounds_starvation" in { check() { m =>
-    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 9) m.issue(add(20))
+    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 10) m.issue(add(20))
     val c=m.cycle; m.run(Seq.fill(16)(add(20)),15)
-    m.all("late") mustBe Seq(c); m.written(1) mustBe c+8
-    val leaves=m.all("id").filter(x=>x>=c && x<=c+8)
-    leaves mustBe (c to c+8).filter(_!=c+4)
-    m.all("conflict").filter(_>=c) mustBe (c+1 to c+7)
+    m.all("late") mustBe Seq(c); m.written(1) mustBe c+9
+    val leaves=m.all("id").filter(x=>x>=c && x<=c+9)
+    leaves mustBe (c to c+9).filter(_!=c+4)
+    m.all("conflict").filter(_>=c) mustBe (c+1 to c+8)
   }}
   "T22_B01_miss_ADD_hit_response_alignment" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
     for(_ <- 0 until 4) m.issue(nop)
-    val n=m.cycle+3; val p=m.run(Seq(add(2),ld(3,64),nop),15)
+    val n=m.cycle+4; val p=m.run(Seq(add(2),ld(3,64),nop),15)
     m.at("commit",p(0)) mustBe n; m.written(2) mustBe n+1
     m.at("commit",p(1)) mustBe n+1; m.written(3) mustBe n+2
     m.events.filter(e=>e.kind=="resp" && e.rd==3).map(_.cycle).toSeq mustBe Seq(n+1)
@@ -382,12 +389,12 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "P04_hit_under_miss" in { check() { m =>
     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),ld(2,64),sd(96))++Seq.fill(10)(add(20)),55)
-    val e=m.at("ex",p.head); m.at("commit",p(1)) mustBe e+3; m.at("commit",p(2)) mustBe e+4
+    val e=m.at("ex",p.head); m.at("commit",p(1)) mustBe e+4; m.at("commit",p(2)) mustBe e+5
     p.tail.map(m.at("commit",_)).max must be < m.all("late").head
   }}
-  "P05_same_line_recheck_R_plus_10" in { check() { m =>
+  "P05_same_line_recheck_R_plus_12" in { check() { m =>
     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),ld(2,64),sd(96))++Seq.fill(10)(add(20))++Seq(ld(3,8)),55)
-    m.at("commit",p.last) mustBe m.all("rspData").head+10
+    m.at("commit",p.last) mustBe m.all("rspData").head+12
     m.all("hold") must not be empty
   }}
   "P06_three_background_sources_and_twenty_ALUs" in { check() { m =>
@@ -461,7 +468,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.issue(mdu(5,10,11,true)); m.issue(ld(1,64)); m.issue(nop); m.issue(nop)
     for(_ <- 0 until 4) m.issue(nop)
     m.lateError=true
-    val n=m.cycle+3
+    val n=m.cycle+4
     val ordinary=m.issue(addi(20,0,29))
     for(_ <- 0 until 3) m.step(Some(m.pc -> addi(21,0,31)))
     for(_ <- 0 until 50) m.step()

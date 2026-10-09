@@ -450,3 +450,16 @@ CSR在ID等csrDrainOk（A07）时，只要ID有效、不离开并确因相应来
 | FMV.W.X、FMV.D.X | 读 | — | —（写FPR） | `design/src/main/scala/fpu/BreezeFp.scala:214-222` |
 
 由表产生新MDU RAW/WAW资格，不替换旧CSR/FP保守hazard，也不因非法编码中默认wb_en/源selector而发MDU。旧整数源组合会对CSR immediate产生保守RS1匹配，事实见 `design/src/main/scala/backend/BreezeBackend.scala:225-231`，此旧规则保留；新MDU真实源表与旧保守条件分开定义。
+
+
+## 2026-10-09 SOC-3e 用户授权流水边界修订
+
+本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
+
+后端为 ID/EX/MEM/PERM/WB，PERM 随全局下游 hold 保持并随精确 kill 作废。E 为 EX，MEM=E+1、PERM=E+2、WB=E+3，W2=E+4。L1D S0/S1/S2/S3 对齐 EX/MEM/PERM/WB。CSR 在 PERM 求值、WB 生效；RAW/WAW、CSR 串行、interrupt 排空与 forwarding 必须包含 PERM。普通 ALU 旁路按 MEM>PERM>WB>W2>已捕获值；ALU 依赖与独立 load 命中仍 II=1。load-use 的依赖 ID 在 E+4 写穿透、EX 在 E+5。MUL 无冲突仍 E+4 写，常规 DIV 算法及迭代数不变；快 DIV 因 committed 门控在 E+4 写而非 E+3。lateReg、W2 的提交后 kill 行为不变。饥饿阈值仍 3，c+4 插入的 ID 气泡经新增 PERM 后于 c+9 让出 W2，冲突为 c+1…c+8，共 8。
+
+FpUnit 保留两项请求边界，并新增两项无 flow/pipe 返回队列。实际原始 CVFPU out-fire 才捕获 tag/data/flags；其后最早一拍向 Writeback 提供结果。CVFPU ready 不组合依赖后端 ready；队列内 committed 所有权保持到实际物理完成，kill 不撤销已提交输出，busy/fflags-only 不提前清。队列输出在背压时稳定，即使原始跨单元仲裁的未接受输出可变化。FP32 ADDMUL 内部五拍保留，FP64 五→七拍，新增对齐控制→宽移位、归一化控制→宽移位边界。无停顿 backend 接收到结果最早 FP32 E+7、FP64 E+9（两端各一拍），II=1，独立算术/特殊值/舍入/flags 不变。
+
+L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列输出、S2 并行判断寄存 PA 的 PMP/PMA 与 tag/data、S3 最终响应/分配/PS 接收。S0 的 dTLB 和 VIPT SRAM 查询仍并行；命中接收间隔保持一拍，命中响应从 E+2 改为 E+3。所有 CPU 在途槽随 hold 保持；旧接口 `s2Hold/s2Kill` 对应最终 S3，`s1Kill` 清年轻 S1/S2，`s2Kill` 另清最终 CPU S3 及三段重查。内部 probe/refill/PTW 不受 CPU kill 撤销。原样保留请求、翻译、末地址、归属和快照失效；permissionEvent 在 S1/S2/S3 都须使旧 CPU 权限作废并重查；内部 PTW 在上下文变化时刷新。probe 开始条件覆盖 S1/S2/S3，阻塞的年轻 store 不得卡住完成旧 miss 所需的 probe。TLB miss 的 S3 旧主、S2/S1 年轻槽由各自 valid 保持，逐一重查，无额外请求复制。
+
+同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
