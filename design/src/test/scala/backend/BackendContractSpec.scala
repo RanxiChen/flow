@@ -119,7 +119,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val blockedLine = s2.exists(q => pending.exists { case (a,r) =>
       (q.addr>>5)==(a.addr>>5) && cycle <= (r+8)
     })
-    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => (r+8)+3 }
+    if (blockedLine && retryAt.isEmpty) retryAt = pending.map { case (_,r) => (r+8)+4 }
     val retry = s2.nonEmpty && retryAt.exists(cycle < _)
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
@@ -273,7 +273,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "T12_WB_wins_late_without_hold" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
-    for(_ <- 0 until 4) m.issue(nop)
+    for(_ <- 0 until 5) m.issue(nop)
     val n=m.cycle+4
     val p=m.run(Seq(add(2),nop),12)
     m.at("commit",p.head) mustBe n; m.written(2) mustBe n+1; m.written(1) mustBe n+2
@@ -355,7 +355,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.all("xlatBlock") must contain allElementsOf (m.at("ex",p)+3 to r)
   }}
   "T21_ID_single_bubble_bounds_starvation" in { check() { m =>
-    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 10) m.issue(add(20))
+    m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 11) m.issue(add(20))
     val c=m.cycle; m.run(Seq.fill(16)(add(20)),15)
     m.all("late") mustBe Seq(c); m.written(1) mustBe c+9
     val leaves=m.all("id").filter(x=>x>=c && x<=c+9)
@@ -364,7 +364,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "T22_B01_miss_ADD_hit_response_alignment" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
-    for(_ <- 0 until 4) m.issue(nop)
+    for(_ <- 0 until 5) m.issue(nop)
     val n=m.cycle+4; val p=m.run(Seq(add(2),ld(3,64),nop),15)
     m.at("commit",p(0)) mustBe n; m.written(2) mustBe n+1
     m.at("commit",p(1)) mustBe n+1; m.written(3) mustBe n+2
