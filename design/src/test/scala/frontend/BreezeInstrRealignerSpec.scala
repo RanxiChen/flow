@@ -5,6 +5,48 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 
 class BreezeInstrRealignerSpec extends AnyFreeSpec with ChiselSim {
+  "SOC3d candidate captures cannot survive redirect or change a held instruction" in {
+    simulate(new BreezeInstrRealigner(64)) { d =>
+      d.io.redirect.poke(false.B); d.io.req.valid.poke(false.B)
+      d.io.resp.ready.poke(false.B); d.io.wordReq.ready.poke(true.B)
+      d.io.wordRsp.valid.poke(false.B); d.io.wordRsp.bits.vaddr.poke(0.U)
+      d.io.wordRsp.bits.data.poke(0.U); d.io.wordRsp.bits.accessFault.poke(false.B)
+      d.io.wordRsp.bits.pageFault.poke(false.B)
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      def begin(pc: Int): Unit = {
+        d.io.req.ready.expect(true.B); d.io.req.bits.pc.poke(pc.U)
+        d.io.req.valid.poke(true.B); d.clock.step(); d.io.req.valid.poke(false.B)
+      }
+      def word(address: Int): Unit = {
+        var guard = 0
+        while (!d.io.wordReq.valid.peek().litToBoolean && guard < 20) { d.clock.step(); guard += 1 }
+        assert(guard < 20); d.io.wordReq.bits.vaddr.expect(address.U); d.clock.step()
+      }
+      begin(0x1002); word(0x1000)
+      for (n <- 0 until 3) {
+        d.io.wordRsp.bits.data.poke((0xdead0000L + n).U)
+        d.io.resp.valid.expect(false.B); d.clock.step()
+      }
+      d.io.wordRsp.bits.vaddr.poke(0x1000.U); d.io.wordRsp.bits.data.poke(0x00930001.U)
+      d.io.wordRsp.valid.poke(true.B); d.clock.step(); d.io.wordRsp.valid.poke(false.B)
+      word(0x1004)
+      d.io.wordRsp.bits.vaddr.poke(0x1004.U); d.io.wordRsp.bits.data.poke(0x0010.U)
+      d.io.wordRsp.valid.poke(true.B); d.io.redirect.poke(true.B)
+      d.io.resp.valid.expect(false.B); d.clock.step()
+      d.io.redirect.poke(false.B); d.io.wordRsp.valid.poke(false.B)
+      d.io.resp.valid.expect(false.B)
+      begin(0x2000); word(0x2000)
+      d.io.wordRsp.bits.vaddr.poke(0x2000.U); d.io.wordRsp.bits.data.poke(0x12300093.U)
+      d.io.wordRsp.valid.poke(true.B); d.clock.step(); d.io.wordRsp.valid.poke(false.B)
+      d.clock.step(); d.io.resp.valid.expect(true.B)
+      for (n <- 0 until 5) {
+        d.io.wordRsp.bits.data.poke(n.U); d.io.wordRsp.bits.accessFault.poke(true.B)
+        d.io.resp.bits.pc.expect(0x2000.U); d.io.resp.bits.rawInst.expect(0x12300093.U)
+        d.io.resp.bits.accessFault.expect(false.B); d.io.resp.valid.expect(true.B); d.clock.step()
+      }
+      d.io.resp.ready.poke(true.B); d.clock.step(); d.io.req.ready.expect(true.B)
+    }
+  }
   "assemble compressed, aligned, and cross-word instructions" in {
     simulate(new BreezeInstrRealigner(64)) { dut =>
       dut.io.redirect.poke(false.B)

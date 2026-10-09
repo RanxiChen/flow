@@ -709,8 +709,17 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val tagWay = Mux1H(tagGrants, tagWays)
   val tagMask = Mux1H(tagGrants, tagMasks)
   val tagValue = Mux1H(tagGrants, tagValues)
-  when(installLast && miss.io.s0Req.bits.installTag.state =/= L1State.I) {
-    plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
+  val installPlru = installLast && miss.io.s0Req.bits.installTag.state =/= L1State.I
+  val hitPlru = s2.valid && hit && s2Done && !io.core.s2Kill && !installLast
+  val installWayOH = UIntToOH(miss.io.s0Req.bits.way, p.ways)
+  // Data candidates use each set's own state and early way selection. The
+  // late completion/kill grant controls only the local write authorization.
+  if (p.ways > 1) for (set <- 0 until p.sets) {
+    val candidates = (0 until p.ways).map(w => TreePlru.touch(plru(set), w.U, p.ways))
+    val installed = Mux1H(installWayOH.asBools, candidates)
+    val touched = Mux1H(hitVec.toSeq, candidates)
+    when(installPlru && miss.io.s0Req.bits.idx === set.U) { plru(set) := installed }
+      .elsewhen(hitPlru && s2.req.idx === set.U) { plru(set) := touched }
   }
   for (bank <- 0 until tagBanks; way <- 0 until p.ways) {
     val selects = tagGrants.indices.map { source =>
@@ -736,9 +745,6 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
         Mux(refillWrite, miss.io.s0Req.bits.installData, ps.data).asTypeOf(Vec(8, UInt(8.W))),
         Mux(refillWrite, "hff".U(8.W), ps.mask).asBools)
     }
-  }
-  when(s2.valid && hit && s2Done && !io.core.s2Kill && !installLast) {
-    plru(s2.req.idx) := TreePlru.touch(plru(s2.req.idx), hitWay, p.ways)
   }
 
   val invalidatesSnapshot = installNow || probe.io.tagUpdate.valid || (allocates && victimValid) ||

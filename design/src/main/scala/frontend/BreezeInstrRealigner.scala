@@ -71,6 +71,20 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
   io.resp.bits.pageFault := pageFaultReg
   io.resp.bits.faultVaddr := faultVaddrReg
 
+  // Capture wide candidates using local registered state, independently of
+  // late response qualification/redirect. State and validity still authorize
+  // consumption; speculative payload captures cannot produce a response.
+  when(state === RequestFirst) { firstWordReg := wordBufData }
+  when(state === WaitFirst) { firstWordReg := io.wordRsp.bits.data }
+  when(state === InspectFirst) {
+    val parcel = Mux(pcReg(1), firstWordReg(31, 16), firstWordReg(15, 0))
+    when(firstFaultReg || firstPageFaultReg) { rawInstReg := 0.U }
+      .elsewhen(parcel(1, 0) =/= 3.U) { rawInstReg := Cat(0.U(16.W), parcel) }
+      .elsewhen(!pcReg(1)) { rawInstReg := firstWordReg }
+  }
+  when(state === RequestSecond) { rawInstReg := Cat(wordBufData(15, 0), firstWordReg(31, 16)) }
+  when(state === WaitSecond) { rawInstReg := Cat(io.wordRsp.bits.data(15, 0), firstWordReg(31, 16)) }
+
   when(io.redirect) {
     state := Idle
     wordBufValid := false.B
@@ -84,7 +98,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
       }
       is(RequestFirst) {
         when(wordBufValid && wordBufAddr === firstAddr) {
-          firstWordReg := wordBufData
           firstFaultReg := wordBufFault
           firstPageFaultReg := wordBufPageFault
           state := InspectFirst
@@ -96,7 +109,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
       }
       is(WaitFirst) {
         when(io.wordRsp.fire && io.wordRsp.bits.vaddr === firstAddr) {
-          firstWordReg := io.wordRsp.bits.data
           firstFaultReg := io.wordRsp.bits.accessFault
           firstPageFaultReg := io.wordRsp.bits.pageFault
           wordBufValid := true.B
@@ -111,7 +123,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
         val parcel = Mux(pcReg(1), firstWordReg(31, 16), firstWordReg(15, 0))
         val compressed = parcel(1, 0) =/= 3.U
         when(firstFaultReg || firstPageFaultReg) {
-          rawInstReg := 0.U
           instLenReg := 2.U
           compressedReg := false.B
           accessFaultReg := firstFaultReg
@@ -119,7 +130,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
           faultVaddrReg := pcReg
           state := Emit
         }.elsewhen(compressed) {
-          rawInstReg := Cat(0.U(16.W), parcel)
           instLenReg := 2.U
           compressedReg := true.B
           accessFaultReg := false.B
@@ -127,7 +137,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
           faultVaddrReg := 0.U
           state := Emit
         }.elsewhen(!pcReg(1)) {
-          rawInstReg := firstWordReg
           instLenReg := 4.U
           compressedReg := false.B
           accessFaultReg := false.B
@@ -140,7 +149,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
       }
       is(RequestSecond) {
         when(wordBufValid && wordBufAddr === secondAddr) {
-          rawInstReg := Cat(wordBufData(15, 0), firstWordReg(31, 16))
           instLenReg := 4.U
           compressedReg := false.B
           accessFaultReg := wordBufFault
@@ -155,7 +163,6 @@ class BreezeInstrRealigner(val vlen: Int = 64) extends Module {
       }
       is(WaitSecond) {
         when(io.wordRsp.fire && io.wordRsp.bits.vaddr === secondAddr) {
-          rawInstReg := Cat(io.wordRsp.bits.data(15, 0), firstWordReg(31, 16))
           instLenReg := 4.U
           compressedReg := false.B
           accessFaultReg := io.wordRsp.bits.accessFault

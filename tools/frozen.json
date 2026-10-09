@@ -2,8 +2,8 @@
   "docs/backend-pipeline-design.md": "4944c778b5d66a0fe6533509006c9a8032126547ba09913808e9642407c17e95",
   "docs/backend-rtl-spec.md": "1fe2d3a5cdbb0d6c08a05441ae0ab9d33ec9d205bd4109b2299b17096067a875",
   "docs/backend-timing-contract.md": "8847300d56ff42db83272e0d0d740c61340bc11a40dcf846f863a0b8ce72cf0f",
-  "docs/breeze-mmu-rtl-spec.md": "c5dff299001623a5dae043e757ee3b118e4cd0a5372cacc524fefc16b1594415",
-  "docs/cluster-soc-rtl-spec.md": "23927779bcb793a1ab20e3c8f2a6d77bd4cfcf9d724a03cab698ddf3bd5877dc",
+  "docs/breeze-mmu-rtl-spec.md": "bcc885f1f73c3ea852363c685ce3dda8641f7cb23b6a58620896fcbf5b8dc6d6",
+  "docs/cluster-soc-rtl-spec.md": "3aae26905d9bd4e3654156cff7d057e97ed6da3ab2d8cf082b0642eb8123ef03",
   "docs/dcache-pipeline-design.md": "1e98b5a10336e9324d363e1105ddd371938750a4699f35039924c0e5647a2444",
   "docs/tasks/V1-BE-B01-ruling.md": "bc1656c86eb4b73e594ef9bf70a1eedf415ce5dad1baf69775fff113ef3837a1",
   "docs/v1-integration-notes.md": "bb1aa063eb02de6063fa932bfdf2704101336448356be6b24d0a5b8205b74c13"

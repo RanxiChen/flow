@@ -25,15 +25,35 @@ class BreezePmpChecker(val xlen: Int = 64, val decoded: Boolean = false,
     val end = io.accessEnd.getOrElse(BreezePmpDecode.accessEnd(io.addr(6, 0), io.sizeLog2))
     val high = Cat(0.U(1.W), io.addr(63, 7))
     val low = io.addr(6, 0)
-    def startBelow(boundary: UInt): Bool =
-      high < boundary(64, 7) || (high === boundary(64, 7) && low < boundary(6, 0))
+    // Small parallel compares followed by a balanced lexicographic tree.
+    // The translated address must not enter a long wide carry comparator.
+    def compareHigh(bound: UInt): (Bool, Bool) = {
+      val chunks = (0 until 8).reverse.map { n =>
+        val hi = math.min(57, n * 8 + 7)
+        val a = high(hi, n * 8); val b = bound(hi, n * 8)
+        (a < b, a === b)
+      }
+      def merge(parts: Seq[(Bool, Bool)]): (Bool, Bool) = {
+        if (parts.size == 1) parts.head else {
+          val (hLt, hEq) = merge(parts.take(parts.size / 2))
+          val (lLt, lEq) = merge(parts.drop(parts.size / 2))
+          (hLt || (hEq && lLt), hEq && lEq)
+        }
+      }
+      merge(chunks)
+    }
+    def startBelow(boundary: UInt): Bool = {
+      val (lt, eq) = compareHigh(boundary(64, 7))
+      lt || (eq && low < boundary(6, 0))
+    }
     def endBelow(boundary: UInt, previousBlock: UInt): Bool = {
-      val sameBlock = high < boundary(64, 7) ||
-        (high === boundary(64, 7) && end.low < boundary(6, 0))
+      val (lt, eq) = compareHigh(boundary(64, 7))
+      val (previousLt, previousEq) = compareHigh(previousBlock)
+      val sameBlock = lt || (eq && end.low < boundary(6, 0))
       // Compare against the predecoded predecessor instead of incrementing
       // the translated high address and then starting another wide compare.
       val nextBlock = boundary(64, 7).orR &&
-        (high < previousBlock || (high === previousBlock && end.low < boundary(6, 0)))
+        (previousLt || (previousEq && end.low < boundary(6, 0)))
       Mux(end.carry, nextBlock, sameBlock)
     }
     val overlaps = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))

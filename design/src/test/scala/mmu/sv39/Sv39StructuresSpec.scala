@@ -122,4 +122,26 @@ class Sv39StructuresSpec extends AnyFreeSpec with ChiselSim {
       }
     }
   }
+  "SOC3d local TLB ports preserve every set way and targeted SFENCE across bank switches" in {
+    simulate(new Sv39Mmu()) { d =>
+      val h = new Driver(d, latency = 2)
+      val addresses = (for (way <- 0 until 4; set <- Seq(0, 7, 2, 5, 1, 6, 3, 4))
+        yield BigInt((way * 8 + set) * 4096 + 0x124))
+      for ((va, n) <- addresses.zipWithIndex) {
+        h.map4k(va, 0x400 + n, Rwx)
+        assert(h.access(va).pa == BigInt((0x400 + n) * 4096 + 0x124))
+      }
+      val readCount = h.reads.size
+      for ((va, n) <- addresses.zipWithIndex.reverse) {
+        val result = h.request(va)
+        assert(result.kind == "hit" && result.pa == BigInt((0x400 + n) * 4096 + 0x124))
+      }
+      assert(h.reads.size == readCount, "populated TLB bank unexpectedly walked")
+      val selected = addresses(11)
+      h.fence(selected, rs1Nz = true)
+      for (va <- addresses if va != selected) assert(h.request(va).kind == "hit")
+      assert(h.request(selected).kind == "miss")
+      h.waitReady(); assert(h.request(selected).kind == "hit")
+    }
+  }
 }

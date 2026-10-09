@@ -57,16 +57,28 @@ class L1IClient(g: BreezeMemGeometry) extends Module {
   io.coh.rspDown.ready := true.B
   val demandRsp = io.coh.rspDown.fire && io.coh.rspDown.bits.id === 0.U
   val prefetchRsp = io.coh.rspDown.fire && io.coh.rspDown.bits.id === 1.U
-  io.demandRsp.vld := demandRsp || bad(0)
-  io.demandRsp.data := Mux(bad(0), 0.U, io.coh.rspDown.bits.data)
-  io.demandRsp.error := bad(0) || (demandRsp && io.coh.rspDown.bits.error)
-  io.prefetchRsp.valid := prefetchRsp || bad(1)
-  io.prefetchRsp.bits := io.coh.rspDown.bits
-  when(bad(1)) {
-    io.prefetchRsp.bits := 0.U.asTypeOf(io.prefetchRsp.bits)
-    io.prefetchRsp.bits.id := 1.U; io.prefetchRsp.bits.op := RspDownOp.ReadData
-    io.prefetchRsp.bits.error := true.B
+  // Each pulse/data/error crosses one registered boundary. Valid consumers
+  // always consume at the next edge; the two IDs can return on adjacent cycles.
+  // Never flush accepted responses here: the cache retains its miss owner and
+  // uses flush tracking to suppress installation/delivery of an old refill.
+  val demandReturn = demandRsp || bad(0)
+  val demandData = RegEnable(Mux(bad(0), 0.U, io.coh.rspDown.bits.data), demandReturn)
+  val demandError = RegEnable(bad(0) || io.coh.rspDown.bits.error, demandReturn)
+  io.demandRsp.vld := RegNext(demandReturn, false.B)
+  io.demandRsp.data := demandData
+  io.demandRsp.error := demandError
+  val prefetchReturn = prefetchRsp || bad(1)
+  val prefetchData = Reg(new CoherenceRspDown(p))
+  when(prefetchReturn) {
+    prefetchData := io.coh.rspDown.bits
+    when(bad(1)) {
+      prefetchData := 0.U.asTypeOf(prefetchData)
+      prefetchData.id := 1.U; prefetchData.op := RspDownOp.ReadData
+      prefetchData.error := true.B
+    }
   }
+  io.prefetchRsp.valid := RegNext(prefetchReturn, false.B)
+  io.prefetchRsp.bits := prefetchData
   bad := VecInit(Seq.fill(2)(false.B))
   // Input capture above takes priority over clearing a previous error pulse.
   when(io.demand.req) { bad(0) := io.demand.paddr(63,p.paddrBits).orR }

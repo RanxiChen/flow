@@ -21,7 +21,7 @@
 
 必须：
 
-- C1 不修改 L1D、L2/Home、后端、MMU、前端的行为来适配 SoC。若上板前测试暴露这些模块的 bug，保存证据、单独提交修复，并在报告中列出；不得通过 SoC 侧绕开（例如在路由里吞掉响应、改顺序）。
+- C1 不修改 L1D、L2/Home、后端、MMU、前端的行为来适配 SoC。若上板前测试暴露这些模块的 bug，保存证据、单独提交修复，并在报告中列出；不得通过 SoC 侧绕开（例如在路由里吞掉响应、改顺序）。SOC-3d 后续时序优化例外（2026-10-09 用户明确授权）：L1IClient demand/prefetch 返回 payload/error/valid 增加一拍寄存边界，保持每拍可接收一条 RSPdown，命中取指不加拍，refill 返回增加一拍。已接受协议响应不因 redirect/flush 取消，I-cache 原 flush 跟踪决定安装/交付；本地高 PA fault 也经过该边界。D-cache 命中、WB/W2 与 PTW 状态拍数保持。
 - C2 `L2MemEngine` 断言 R 通道**按 AR 发出顺序**返回（跨 ID 也是）。SoC 侧必须满足这个顺序（见 §3 R1），不得放宽或删除该断言。
 - C3 参数只来自 `BreezeClusterConfig`（profile `single` 与 `small`），不另设第二套几何参数。
 

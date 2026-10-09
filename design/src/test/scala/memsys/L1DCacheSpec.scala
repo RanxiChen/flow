@@ -709,4 +709,22 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
       l2.gets.size must be > g.l1Sets * g.l1dWays
     }
 
+  "SOC3d local PLRU preserves the victim when a hit is killed in each tag bank" in
+    withL1D(seed = 0x3d05) { e =>
+      import e._
+      for (set <- 0 until g.l1Sets by 16) {
+        val a = ram(set * LineBytes)
+        for (way <- 0 until 4) runOps(CoreOp.load(a + way * stride))
+        // Filling/touching ways 0,1,2,3 makes way 0 the tree victim.
+        // A killed hit on way 0 must not change that replacement decision.
+        runOps(CoreOp.load(a).copy(s2KillAtResp = true))
+        runOps(CoreOp.load(a + 4 * stride))
+        val before = l2.gets.size
+        for (way <- 1 until 4) runOps(CoreOp.load(a + way * stride))
+        l2.gets.size mustBe before
+        runOps(CoreOp.load(a))
+        l2.gets.size mustBe before + 1
+      }
+    }
+
 }

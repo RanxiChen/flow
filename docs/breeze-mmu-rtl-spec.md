@@ -146,7 +146,7 @@ D-cache 保证：`req` 被接收后，若干拍后恰好返回一个 `resp`。
 
 | 存储 | 实现 | 内容 |
 | --- | --- | --- |
-| 基础页阵列数据 | `SyncReadMem(sets, Vec(ways, BaseEntry))`，带 way 写掩码 | `tag`（27 − log2(sets) 位）、`asid`、`g`、`ppn`、`r w x u a d` |
+| 基础页阵列数据 | SOC-3d 后续授权：按 `min(4,sets)` bank × way 划分独立无掩码 `SyncReadMem(sets/banks, BaseEntry)` | `tag`（27 − log2(sets) 位）、`asid`、`g`、`ppn`、`r w x u a d` |
 | 基础页 valid | `RegInit` `sets × ways` 位 | 复位为 0 |
 | 基础页 PLRU | `RegInit` `sets × (ways−1)` 位 | |
 | 超页阵列 | `RegInit` `superpages` 项 | `valid`、`vpn`（27）、`level`（1 或 2）、`asid`、`g`、`ppn`、`r w x u a d` |
@@ -154,6 +154,7 @@ D-cache 保证：`req` 被接收后，若干拍后恰好返回一个 `resp`。
 
 - 基础页组索引 `set = vpn(log2(sets)−1, 0)`，`tag = vpn(26, log2(sets))`。sets 为 1 时没有索引位。
 - `SyncReadMem` 读和写不会发生在同一拍（读只在 `req.fire` 或 sfence S0 拍，写只在 refill 拍，两者互斥，见 5.4 节），用断言保证。因此可以综合成单口 RAM。
+- 2026-10-09 用户授权关键路径后续优化：bank 选择与查询同沿锁存，读返回仍在下一拍；refill 各 bank/way 使用局部写许可。基础页/超页 PA 候选并行生成，唯一命中独热选出页面字段和 PA，不再先选页面再选页大小。原命中唯一性、权限、fault、kill、sfence 和响应拍数不变。
 
 ### 5.2 寄存器清单
 
@@ -306,6 +307,8 @@ PTW 的 `done` 中带有 refill 项（`refillValid`、`vpn`、`asid`、`level`�
 | `sReq` | `mem.req.valid = 1`，`paddr = {wBase, vpnSlice(wVpn, wLevel), 3'b000}` | `mem.req.fire` → `sWait` |
 | `sWait` | — | `mem.resp.valid`：`wPte := data`、`wAf := accessFault`，→ `sCheck` |
 | `sCheck` | 见 7.3 节 | 继续下一层 → `sReq`；结束 → `sIdle` |
+
+SOC-3d 后续优化（2026-10-09 用户授权）：在同一个 `sWait` 接收边沿，按本次 `data` 和当前 `wLevel` 同时保存 `wLeaf`、`wPageFault`（badPte、叶超页未对齐或末级非叶）；`sCheck` 使用这些判定。下面 7.3 的语义与优先级保持，不新增状态或 done/refill 延迟，access fault 仍优先于 page fault。
 
 `vpnSlice(vpn, 2) = vpn(26,18)`，`(vpn, 1) = vpn(17,9)`，`(vpn, 0) = vpn(8,0)`。
 

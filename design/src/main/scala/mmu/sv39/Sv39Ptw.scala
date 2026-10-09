@@ -15,6 +15,7 @@ class Sv39Ptw extends Module {
   val wSide = Reg(Bool()); val wVpn = Reg(UInt(27.W)); val wAsid = Reg(UInt(16.W))
   val wRoot = Reg(UInt(44.W)); val wLevel = Reg(UInt(2.W)); val wBase = Reg(UInt(44.W))
   val wPte = Reg(UInt(64.W)); val wAf = Reg(Bool())
+  val wLeaf = Reg(Bool()); val wPageFault = Reg(Bool())
   io.idle := state === State.sIdle
   io.dGrant := io.idle && io.dMiss.valid && !io.dMiss.granted
   io.iGrant := io.idle && io.iMiss.valid && !io.iMiss.granted && !io.dGrant
@@ -43,12 +44,21 @@ class Sv39Ptw extends Module {
     }
     is(State.sReq) { when(io.mem.req.fire) { state := State.sWait } }
     is(State.sWait) {
-      when(io.mem.resp.valid) { wPte := io.mem.resp.bits.data; wAf := io.mem.resp.bits.accessFault; state := State.sCheck }
+      when(io.mem.resp.valid) {
+        val incoming = io.mem.resp.bits.data
+        val leaf = PteDecode.leaf(incoming)
+        val ppn = PteDecode.ppn(incoming)
+        val misalign = (wLevel === 2.U && ppn(17, 0).orR) ||
+          (wLevel === 1.U && ppn(8, 0).orR)
+        wPte := incoming; wAf := io.mem.resp.bits.accessFault
+        wLeaf := leaf
+        wPageFault := PteDecode.bad(incoming) || (leaf && misalign) || (!leaf && wLevel === 0.U)
+        state := State.sCheck
+      }
     }
     is(State.sCheck) {
-      val leaf = PteDecode.leaf(wPte); val ppn = PteDecode.ppn(wPte)
-      val misalign = (wLevel === 2.U && ppn(17, 0).orR) || (wLevel === 1.U && ppn(8, 0).orR)
-      val pf = PteDecode.bad(wPte) || (leaf && misalign) || (!leaf && wLevel === 0.U)
+      val leaf = wLeaf; val ppn = PteDecode.ppn(wPte)
+      val pf = wPageFault
       when(wAf || pf || leaf) {
         io.done.valid := true.B; io.done.bits.accessFault := wAf; io.done.bits.pageFault := !wAf && pf
         io.done.bits.refillValid := !wAf && !pf && leaf

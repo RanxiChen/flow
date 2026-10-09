@@ -171,7 +171,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | PTW 读 | miss | 分配 MSHR（GetS），等回放 |
 
 - “分配”同拍：记 MSHR、选 victim（PLRU 跳过锁定 way；优先无效 way）；victim 有效 → 写回槽记地址、RSP↑ 发 Put（M 带整行，从 `data` 读出，见 6.3 节），victim 的 tag 置 I 并锁定。写升级不选 victim，锁原 way，原 S 状态保持（可被 Inv 撤销）。
-- 判定为 Done/Mshr 时：PLRU 更新为命中路（miss 时不更新，安装时更新）。
+- 判定为 Done/Mshr 时：PLRU 更新为命中路（miss 时不更新，安装时更新）。SOC-3d 后续授权（2026-10-09）：每 set 使用本地 PLRU 状态并行算各 way 的 touch 候选，命中独热/安装 way 选择与最终更新许可分开；安装使用自身 idx/way，CPU 更新保留同拍 s2Kill 与 installLast 优先级，不增加更新延迟。
 
 ### 5.3 快照失效
 

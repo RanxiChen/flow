@@ -97,6 +97,16 @@ class BreezePmpDecodedSpec extends AnyFreeSpec with ChiselSim {
           BigInt(1) << 56, (BigInt(1) << 57) - 1, (BigInt(1) << 64) - 1)
         check(cfg, addr, points.flatMap(a => Seq(0, 2, 3, 7).map(a -> _)))
       }
+      // Cross each high-compare chunk boundary and the low-block carry. The
+      // interval oracle remains independent of the balanced hardware tree.
+      for (bit <- Seq(7, 15, 23, 31, 39, 47, 55)) {
+        val boundary = BigInt(1) << bit
+        val cfg = Seq(0x0f) ++ Seq.fill(7)(0)
+        val addr = Seq(boundary >> 2) ++ Seq.fill(7)(BigInt(0))
+        val points = Seq(boundary - 129, boundary - 128, boundary - 127,
+          boundary - 8, boundary - 1, boundary, boundary + 1).filter(_ >= 0)
+        check(cfg, addr, points.flatMap(a => Seq(0, 3, 7).map(a -> _)))
+      }
       for (_ <- 0 until 40) {
         val cfg = Seq.fill(8)(rng.nextInt(256))
         val addr = Seq.fill(8)(if (rng.nextBoolean()) BigInt(rng.nextInt(1024)) else BigInt(54, rng))

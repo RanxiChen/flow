@@ -15,7 +15,13 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   def tag(vpn: UInt): UInt = vpn >> setBits
   def superMatch(e: SuperEntry, vpn: UInt): Bool =
     Mux(e.level === 2.U, e.vpn(26, 18) === vpn(26, 18), e.vpn(26, 9) === vpn(26, 9))
-  val mem = SyncReadMem(p.sets, Vec(p.ways, new BaseEntry(27 - setBits)))
+  // Independent unmasked bank/way ports keep late refill authorization local.
+  private val banks = math.min(4, p.sets)
+  private val rows = p.sets / banks
+  private val rowBits = log2Ceil(rows)
+  private def bankOf(s: UInt): UInt = if (banks == 1) 0.U(1.W) else s(setBits - 1, rowBits)
+  private def rowOf(s: UInt): UInt = if (rows == 1) 0.U(1.W) else s(rowBits - 1, 0)
+  val mem = Seq.tabulate(banks, p.ways) { (_, _) => SyncReadMem(rows, new BaseEntry(27 - setBits)) }
   val baseValid = RegInit(VecInit(Seq.fill(p.sets)(VecInit(Seq.fill(p.ways)(false.B)))))
   val basePlru = RegInit(VecInit(Seq.fill(p.sets)(0.U((p.ways - 1).W))))
   val sp = RegInit(VecInit(Seq.fill(p.superpages)(0.U.asTypeOf(new SuperEntry))))
@@ -35,17 +41,24 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   val sfRead = io.sfence.valid && io.sfence.rs1Nz
   val readEnable = io.port.req.fire || sfRead
   val readVpn = Mux(sfRead, io.sfence.vaddr(38, 12), io.port.req.bits.vaddr(38, 12))
-  val data = mem.read(index(readVpn), readEnable)
+  val readSet = index(readVpn)
+  val readBank = RegEnable(bankOf(readSet), readEnable)
+  val bankData = VecInit((0 until banks).map { b =>
+    VecInit((0 until p.ways).map { w =>
+      mem(b)(w).read(rowOf(readSet), readEnable && bankOf(readSet) === b.U)
+    })
+  })
+  val data = if (banks == 1) bankData(0) else bankData(readBank)
   val vpn = s1Vaddr(38, 12); val set = index(vpn)
   val baseHit = VecInit((0 until p.ways).map(i => baseValid(set)(i) && data(i).tag === tag(vpn) &&
     (data(i).g || data(i).asid === io.csr.asid)))
   val superHit = VecInit(sp.map(e => e.valid && superMatch(e, vpn) && (e.g || e.asid === io.csr.asid)))
   val anyHit = baseHit.asUInt.orR || superHit.asUInt.orR
-  val entry = Wire(new PageEntry)
-  entry := 0.U.asTypeOf(new PageEntry)
-  for (i <- (0 until p.superpages).reverse) when(superHit(i)) { entry.assignPage(sp(i)) }
-  for (i <- (0 until p.ways).reverse) when(baseHit(i)) { entry.assignPage(data(i)) }
-  val level = Mux(baseHit.asUInt.orR, 0.U, Mux1H(superHit, sp.map(_.level)))
+  def page(e: PageEntry): PageEntry = {
+    val result = Wire(new PageEntry); result.assignPage(e); result
+  }
+  val hits = baseHit.toSeq ++ superHit.toSeq
+  val entry = Mux1H(hits, data.toSeq.map(page) ++ sp.toSeq.map(page))
   val effPriv = Mux(s1Cmd =/= MmuCmd.Fetch && io.csr.mprv, io.csr.mpp, io.csr.priv)
   val translate = io.csr.sv39 && effPriv =/= 3.U
   val canonical = !s1Vaddr(63, 38).orR || s1Vaddr(63, 38).andR
@@ -53,8 +66,11 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
     (s1Cmd === MmuCmd.Load && !(entry.r || (io.csr.mxr && entry.x))) ||
     (s1Cmd === MmuCmd.Store && !(entry.w && entry.d)) ||
     (effPriv === 0.U && !entry.u) || (effPriv === 1.U && entry.u && (s1Cmd === MmuCmd.Fetch || !io.csr.sum))
-  val pa = MuxLookup(level, Cat(entry.ppn, s1Vaddr(11, 0)))(Seq(
-    1.U -> Cat(entry.ppn(43, 9), s1Vaddr(20, 0)), 2.U -> Cat(entry.ppn(43, 18), s1Vaddr(29, 0))))
+  // Form every PA before hit selection; no selected level -> selected PPN mux.
+  val basePa = data.toSeq.map(e => Cat(e.ppn, s1Vaddr(11, 0)).pad(64))
+  val superPa = sp.toSeq.map(e => Mux(e.level === 2.U,
+    Cat(e.ppn(43, 18), s1Vaddr(29, 0)), Cat(e.ppn(43, 9), s1Vaddr(20, 0))).pad(64))
+  val pa = Mux1H(hits, basePa ++ superPa)
   // PMP can compare this candidate in parallel with permFail. The public
   // hit/miss/fault/paddr response below keeps its existing priority and zeros.
   io.port.candidatePaddr.foreach(_ := Mux(translate, pa, s1Vaddr))
@@ -103,16 +119,23 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   }
   val refill = io.done.valid && io.done.bits.refillValid
   val baseWrite = refill && io.done.bits.refill.level === 0.U
+  val refillEntry = io.done.bits.refill
+  val refillSet = index(refillEntry.vpn)
+  val refillInvalid = VecInit(baseValid(refillSet).map(v => !v))
+  val refillVictim = Mux(refillInvalid.asUInt.orR, PriorityEncoder(refillInvalid),
+    TreePlru.victim(basePlru(refillSet), p.ways))
+  val refillValue = Wire(new BaseEntry(27 - setBits))
+  refillValue.assignPage(refillEntry); refillValue.tag := tag(refillEntry.vpn)
+  for (b <- 0 until banks; w <- 0 until p.ways) {
+    when(baseWrite && bankOf(refillSet) === b.U && refillVictim === w.U) {
+      mem(b)(w).write(rowOf(refillSet), refillValue)
+    }
+  }
   when(baseWrite) {
-    val f = io.done.bits.refill; val s = index(f.vpn)
-    val invalid = VecInit(baseValid(s).map(v => !v))
-    val victim = Mux(invalid.asUInt.orR, PriorityEncoder(invalid), TreePlru.victim(basePlru(s), p.ways))
-    val values = Wire(Vec(p.ways, new BaseEntry(27 - setBits)))
-    val mask = (0 until p.ways).map(i => victim === i.U)
-    for (i <- 0 until p.ways) { values(i).assignPage(f); values(i).tag := tag(f.vpn) }
-    mem.write(s, values, mask)
-    if (p.ways == 1) baseValid(s)(0) := true.B else baseValid(s)(victim) := true.B
-    basePlru(s) := TreePlru.touch(basePlru(s), victim, p.ways)
+    for (s <- 0 until p.sets; w <- 0 until p.ways) {
+      when(refillSet === s.U && refillVictim === w.U) { baseValid(s)(w) := true.B }
+    }
+    basePlru(refillSet) := TreePlru.touch(basePlru(refillSet), refillVictim, p.ways)
   }
   when(refill && !baseWrite) {
     val invalid = VecInit(sp.map(e => !e.valid))

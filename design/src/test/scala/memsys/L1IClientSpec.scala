@@ -35,20 +35,27 @@ class L1IClientSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.coh.req.bits.addr.expect((0x80000000L >> 5).U); d.clock.step()
       d.io.coh.rspDown.valid.poke(true.B); d.io.coh.rspDown.bits.id.poke(0.U)
       d.io.coh.rspDown.bits.data.poke(0x1234.U)
+      d.io.demandRsp.vld.expect(false.B); d.io.prefetchRsp.valid.expect(false.B); d.clock.step()
+      d.io.coh.rspDown.bits.id.poke(1.U); d.io.coh.rspDown.bits.error.poke(true.B)
+      d.io.coh.rspDown.bits.data.poke(0x5678.U)
       d.io.demandRsp.vld.expect(true.B); d.io.demandRsp.data.expect(0x1234.U)
       d.io.demandRsp.error.expect(false.B); d.io.prefetchRsp.valid.expect(false.B); d.clock.step()
-      d.io.coh.rspDown.bits.id.poke(1.U); d.io.coh.rspDown.bits.error.poke(true.B)
-      d.io.demandRsp.vld.expect(false.B); d.io.prefetchRsp.valid.expect(true.B)
-      d.io.prefetchRsp.bits.error.expect(true.B); d.clock.step()
       d.io.coh.rspDown.valid.poke(false.B); d.io.prefetch.ready.expect(true.B)
+      d.io.coh.rspDown.bits.data.poke(0xdead.U); d.io.coh.rspDown.bits.error.poke(false.B)
+      d.io.demandRsp.vld.expect(false.B); d.io.prefetchRsp.valid.expect(true.B)
+      d.io.prefetchRsp.bits.error.expect(true.B); d.io.prefetchRsp.bits.data.expect(0x5678.U)
+      d.clock.step(); d.io.demandRsp.vld.expect(false.B); d.io.prefetchRsp.valid.expect(false.B)
     }
   }
   "a high physical address returns an error without a wrapped coherence request" in {
     simulate(new L1IClient(BreezeMemGeometry.singleCore)) { d =>
       init(d); d.io.demand.req.poke(true.B); d.io.demand.paddr.poke(BigInt("180000000",16).U)
       d.clock.step(); d.io.demand.req.poke(false.B)
+      d.io.demandRsp.vld.expect(false.B); d.clock.step()
       d.io.demandRsp.vld.expect(true.B); d.io.demandRsp.error.expect(true.B)
+      d.io.demandRsp.data.expect(0.U)
       for(_ <- 0 until 6) { d.io.coh.req.valid.expect(false.B); d.clock.step() }
+      d.io.demandRsp.vld.expect(false.B)
     }
   }
 }
