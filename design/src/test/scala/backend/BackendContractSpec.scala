@@ -269,7 +269,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   "T11_refill_R_plus_8_dependency" in { check() { m =>
     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),add(2,1)),55)
     val r=m.all("rspData").head
-    m.all("late") mustBe Seq(r+8); m.written(1) mustBe r+8; m.at("id",p(1)) mustBe r+8
+    m.all("late") mustBe Seq(r+8); m.written(1) mustBe r+9; m.at("id",p(1)) mustBe r+9
   }}
   "T12_WB_wins_late_without_hold" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); m.issue(nop); m.issue(nop)
@@ -282,7 +282,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "T13_four_sources_fixed_priority" in { check() { m =>
     // DIV takes 32 real arithmetic cycles. MUL E+4 and CLASSIFY's
-    // committed return E+3 are aligned to it; L1D late is received at N-1.
+    // buffered committed return E+5 are aligned to it; L1D late is received at N-1.
     m.enableFp(); m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
     m.returnDelay=23; m.misses += BigInt(32); m.issue(ld(1,32))
     val div=m.issue(mdu(2,10,11,true))
@@ -426,7 +426,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   }}
   "P09_interrupt_does_not_wait_for_committed_DIV" in { check() { m =>
     m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1),addi(12,0,8),csr(0,0x304,12),csr(0,0x300,12)),6)
-    val p=m.issue(mdu(1,10,11,true)); for(_ <- 0 until 3) m.step()
+    val p=m.issue(mdu(1,10,11,true)); for(_ <- 0 until 4) m.step()
     val boundary=m.cycle; m.softwareInterrupt=true; m.step(); m.softwareInterrupt=false
     for(_ <- 0 until 45) m.step()
     m.all("redirect").head mustBe boundary; boundary must be < m.written(1)
@@ -434,7 +434,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   "P10_exception_kills_young_MUL_retains_DIV" in { check() { m =>
     m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5); m.faults += BigInt(128)
     val p=m.run(Seq(mdu(5,10,11,true),ld(1,128),mdu(6,0,0)),45)
-    val trap=m.at("ex",p(1))+2
+    val trap=m.at("ex",p(1))+3
     m.all("redirect").head mustBe trap; m.writes(6) mustBe empty
     m.writes(5).size mustBe 1; m.d.io.observe.gprBusy.expect(0.U)
   }}
@@ -466,7 +466,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.values(0)=mask; m.run(Seq(ld(10,0),addi(11,0,1)),5)
     m.returnDelay=0; m.misses += BigInt(64)
     m.issue(mdu(5,10,11,true)); m.issue(ld(1,64)); m.issue(nop); m.issue(nop)
-    for(_ <- 0 until 4) m.issue(nop)
+    for(_ <- 0 until 5) m.issue(nop)
     m.lateError=true
     val n=m.cycle+4
     val ordinary=m.issue(addi(20,0,29))

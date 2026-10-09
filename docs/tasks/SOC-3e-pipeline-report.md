@@ -28,3 +28,21 @@ I-cache 选好返回字后新增两项寄存队列，预留返回信用、支持
 | 匹配性能与物理证据 | 同SHA配置/同ELF对比cycles和retired；single/small最终100MHz报告 | ClusterWbSplitSmokeSpec相同三个程序；LiteX target→Vivado | 待启动 |
 
 执行脚本、准确候选SHA/子模块、manifest、实际主机、cwd、命令、版本、exit、wall time、XML和各阶段报告将记录在 `records/soc3e-20261009/`。综合/布局估计/最终布线/bitstream/上板证据分别报告。
+
+## 首次执行与修复
+
+候选 `8dddbafb33fbdb5beaa5b7b3fb1588c0eb224490` 在 cloud_chen 全回归中出现 GShare redirect 后旧 refill 无法完成的 RTL 错误（32拍上限不变）。补齐非压缩 frontend 预测上下文队列及 FetchTranslator 的错PC/取消返回排空、live ready 传播后，`4a8ebbb6e6b47d10f3ca88b31239b9dc6e61c0ed` 同一测试通过。FP32/64精确流、各舍入、flags、随机背压、kill、L2两slot/RAW等定向项目已在日志中通过；全回归未结束，不能宣称全通过。
+
+`4a8ebbb` 的 T11 测试漏迁移了两个写回/依赖期望，仍要求 R+8，而已批准的新合同为 late R+8、物理写与ID R+9。实际为43拍、旧期望42拍，属于测试合同迁移遗漏；新增PERM也要求中断刺激等到真实提交后，以及trap WB与fatal对齐多一拍。修复这些精确拍数，保持数值golden、种子和规模。自动监控按保守规则先取消两项Vivado，wall分别122.670616/122.649837s；保留失败、取消和综合日志，未取得该候选最终时序。首个启动脚本因未带执行权限失败，错误记录另存，chmod后才进入实际综合。
+
+## 单核匹配性能首测
+
+基线 d4ae2fc 与RTL候选4a8ebbb，Linux/gshare单核，默认seed1，AXI无背压，maxCycles2000000、watchdog20000不变。为避免新编译ELF元信息/代码差异混入比较，候选测量使用基线同三个ELF的逐字节副本，SHA256记录在performance-inputs.json。这是程序从启动到tohost的总周期/退休数，不是ROI微核、频率提升收益或板上实测；包含冷启动、取指/总线、trap/MMIO/原子操作。
+
+| 程序 | 基线周期 | 新周期 | 周期增幅 | 两版本退休数 |
+|---|---:|---:|---:|---:|
+| lrsc_amo_single | 14575 | 15768 | +8.19% | 1127 |
+| trap_misc | 25722 | 28079 | +9.16% | 2092 |
+| mmio_console | 43402 | 47685 | +9.87% | 4258 |
+
+三项tohost与console oracle均通过，测量进程exit0、wall70.148960s。固定频率下新增边界降低这组三程序的吞吐；cache II1与ALU依赖未新增气泡的定向条件不能代替整个前端的性能结论。后续将结合单核余量和四核最终时序判断这个代价是否值得，不能先宣称新版本性能更好。原始日志在cloud_chen `/home/cloud_chen/evidence/soc3e-4a8ebbb/performance/`；本轮后续仅测试/文档修改时，须证明RTL/config完全相同才能引用这些数据。
