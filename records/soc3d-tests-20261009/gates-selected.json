@@ -1,0 +1,34 @@
+[
+  [
+    "control",
+    "testOnly flow.backend.ScoreboardSpec flow.mmu.BreezePmpDecodedSpec flow.mmu.sv39.Sv39PmpCandidateSpec flow.mmu.FetchPmpCandidateSpec"
+  ],
+  [
+    "csr",
+    "testOnly flow.core.BreezePrivilegeSpec -- -z SOC3d"
+  ],
+  [
+    "fp",
+    "testOnly flow.fpu.FpUnitSpec"
+  ],
+  [
+    "cache",
+    "testOnly flow.memsys.L1DCacheSpec -- -t \"store hits on E merge bytes in place and an Inv probe returns the dirty line\" -t \"store miss sends GetM, replays through the pending store, and later loads see it\" -t \"victims fill invalid ways first, only dirty victims carry data, and evicted data returns\" -t \"a hit completes under a miss, and back-to-back store/load pairs see program order\" -t \"a shared store waiting for the MSHR lets a probe pass a younger same-set store\" -t \"killed stores never write, and a load miss killed at WB sends no GetS\" -t \"a probe that arrives with the grant waits for the replay and answers with its result\" -t \"a refill error is reported on late data or drops the store, and leaves the line invalid\" -t \"TLB misses and a busy dTLB delay requests, which still complete in program order\" -t \"PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU\" -t \"an AMO upgrade waiting for GetM lets the required sharer Inv finish first\" -t \"atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge\""
+  ],
+  [
+    "permissions",
+    "testOnly flow.memsys.L1DPermissionsSpec"
+  ],
+  [
+    "context",
+    "testOnly flow.memsys.L1DContextSpec -- -z SOC3"
+  ],
+  [
+    "cluster",
+    "testOnly flow.cluster.ClusterWbSplitSmokeSpec"
+  ],
+  [
+    "backend",
+    "testOnly flow.backend.BackendContractSpec -- -t \"T16_FPU_dependency_write_through\" -t \"T17_CSR_raw_busy_fflags\" -t \"P07_FPU_out_of_order_flags_OR\" -t \"P08_eight_FMADD_inputs_II1\""
+  ]
+]

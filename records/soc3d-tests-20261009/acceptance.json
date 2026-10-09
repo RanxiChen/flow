@@ -1,0 +1,409 @@
+{
+  "result": "PASS",
+  "unique_selected_test_cases": 42,
+  "new_test_cases": 7,
+  "cluster_programs": [
+    {
+      "name": "lrsc_amo_single",
+      "cycles": 14410,
+      "retired": 1127
+    },
+    {
+      "name": "trap_misc",
+      "cycles": 25587,
+      "retired": 2092
+    },
+    {
+      "name": "mmio_console",
+      "cycles": 43389,
+      "retired": 4258
+    }
+  ],
+  "final_fp_boundary_rechecks": 2,
+  "full_regression_run": false,
+  "vivado_run": false,
+  "rtl_modified_during_validation": false,
+  "source_verification": {
+    "time_utc": "2026-10-09T02:40:03.661673+00:00",
+    "files_verified": 664,
+    "manifest_sha256": "1f3b6aee7a25aae02d0d5f410b59933278168a0b8aa6614cab15e86d75809f30",
+    "root_base_sha": "d364bacb959da13ea58178f919547c56aafda0e0",
+    "cvfpu_base_sha": "1b220f3bc89df99e246b72e3574a3a533cf87653",
+    "result": "PASS"
+  },
+  "accepted_job_wall_seconds": 574.4668868590088,
+  "accepted_jobs": [
+    {
+      "gate": "control",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.backend.ScoreboardSpec flow.mmu.BreezePmpDecodedSpec flow.mmu.sv39.Sv39PmpCandidateSpec flow.mmu.FetchPmpCandidateSpec"
+      ],
+      "start_utc": "2026-10-09T02:28:27.572790+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/validated/control.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:28:44.201955+00:00",
+      "wall_seconds": 16.629152296009124,
+      "source_binding": {
+        "manifest": "source-manifest-validated.json",
+        "manifest_sha256": "07986f084391a6e59c3d3c6d33e4fef612e874345af191a07dc16524225e444c"
+      },
+      "phase": "validated"
+    },
+    {
+      "gate": "csr",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.core.BreezePrivilegeSpec -- -z SOC3d"
+      ],
+      "start_utc": "2026-10-09T02:28:44.202254+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/validated/csr.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:28:52.981387+00:00",
+      "wall_seconds": 8.77913494600216,
+      "source_binding": {
+        "manifest": "source-manifest-validated.json",
+        "manifest_sha256": "07986f084391a6e59c3d3c6d33e4fef612e874345af191a07dc16524225e444c"
+      },
+      "phase": "validated"
+    },
+    {
+      "gate": "fp",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.fpu.FpUnitSpec"
+      ],
+      "start_utc": "2026-10-09T02:28:52.981734+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/validated/fp.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:31:09.732838+00:00",
+      "wall_seconds": 136.75110660100472,
+      "source_binding": {
+        "manifest": "source-manifest-validated.json",
+        "manifest_sha256": "07986f084391a6e59c3d3c6d33e4fef612e874345af191a07dc16524225e444c"
+      },
+      "phase": "validated"
+    },
+    {
+      "gate": "cache",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DCacheSpec -- -t \"store hits on E merge bytes in place and an Inv probe returns the dirty line\" -t \"store miss sends GetM, replays through the pending store, and later loads see it\" -t \"victims fill invalid ways first, only dirty victims carry data, and evicted data returns\" -t \"a hit completes under a miss, and back-to-back store/load pairs see program order\" -t \"a shared store waiting for the MSHR lets a probe pass a younger same-set store\" -t \"killed stores never write, and a load miss killed at WB sends no GetS\" -t \"a probe that arrives with the grant waits for the replay and answers with its result\" -t \"a refill error is reported on late data or drops the store, and leaves the line invalid\" -t \"TLB misses and a busy dTLB delay requests, which still complete in program order\" -t \"PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU\" -t \"an AMO upgrade waiting for GetM lets the required sharer Inv finish first\" -t \"atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge\""
+      ],
+      "start_utc": "2026-10-09T02:32:10.732128+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/rest/cache.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:34:18.234147+00:00",
+      "wall_seconds": 127.50200334099645,
+      "source_binding": {
+        "manifest": "source-manifest-with-config.json",
+        "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+      },
+      "phase": "rest"
+    },
+    {
+      "gate": "permissions",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DPermissionsSpec"
+      ],
+      "start_utc": "2026-10-09T02:34:18.234488+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/rest/permissions.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:35:14.396352+00:00",
+      "wall_seconds": 56.16186427300272,
+      "source_binding": {
+        "manifest": "source-manifest-with-config.json",
+        "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+      },
+      "phase": "rest"
+    },
+    {
+      "gate": "context",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.memsys.L1DContextSpec -- -z SOC3"
+      ],
+      "start_utc": "2026-10-09T02:35:14.396713+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/rest/context.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:36:00.039400+00:00",
+      "wall_seconds": 45.64269125199644,
+      "source_binding": {
+        "manifest": "source-manifest-with-config.json",
+        "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+      },
+      "phase": "rest"
+    },
+    {
+      "gate": "cluster",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.cluster.ClusterWbSplitSmokeSpec"
+      ],
+      "start_utc": "2026-10-09T02:36:00.039758+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/rest/cluster.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:36:48.010590+00:00",
+      "wall_seconds": 47.970834097999614,
+      "source_binding": {
+        "manifest": "source-manifest-with-config.json",
+        "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+      },
+      "phase": "rest"
+    },
+    {
+      "gate": "backend",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.backend.BackendContractSpec -- -t \"T16_FPU_dependency_write_through\" -t \"T17_CSR_raw_busy_fflags\" -t \"P07_FPU_out_of_order_flags_OR\" -t \"P08_eight_FMADD_inputs_II1\""
+      ],
+      "start_utc": "2026-10-09T02:36:48.010960+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/rest/backend.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:38:22.693774+00:00",
+      "wall_seconds": 94.68281689699506,
+      "source_binding": {
+        "manifest": "source-manifest-with-config.json",
+        "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+      },
+      "phase": "rest"
+    },
+    {
+      "gate": "fp-boundary",
+      "host": "iZbp16rhtg91v96m32vggjZ",
+      "user": "cloud_chen",
+      "cwd": "/home/cloud_chen/work/soc3d-tests-20261009/design",
+      "command": [
+        "sbt",
+        "-batch",
+        "testOnly flow.fpu.FpUnitSpec -- -z SOC3d"
+      ],
+      "start_utc": "2026-10-09T02:38:44.289390+00:00",
+      "source_manifest": "/home/cloud_chen/work/soc3d-tests-20261009/source-manifest.json",
+      "log": "/home/cloud_chen/evidence/soc3d-tests-20261009/fp-boundary/fp-boundary.log",
+      "exit_code": 0,
+      "end_utc": "2026-10-09T02:39:24.636690+00:00",
+      "wall_seconds": 40.347283155002515,
+      "source_binding": {
+        "manifest": "source-manifest-complete.json",
+        "manifest_sha256": "1f3b6aee7a25aae02d0d5f410b59933278168a0b8aa6614cab15e86d75809f30"
+      },
+      "phase": "fp-boundary"
+    }
+  ],
+  "selected_test_cases": [
+    {
+      "suite": "flow.backend.BackendContractSpec",
+      "name": "T16_FPU_dependency_write_through"
+    },
+    {
+      "suite": "flow.backend.BackendContractSpec",
+      "name": "T17_CSR_raw_busy_fflags"
+    },
+    {
+      "suite": "flow.backend.BackendContractSpec",
+      "name": "P07_FPU_out_of_order_flags_OR"
+    },
+    {
+      "suite": "flow.backend.BackendContractSpec",
+      "name": "P08_eight_FMADD_inputs_II1"
+    },
+    {
+      "suite": "flow.backend.ScoreboardSpec",
+      "name": "S01_S02_S03_S08_S10: all four sources, f0, cross-bank RAW/WAW and actual-write release"
+    },
+    {
+      "suite": "flow.backend.ScoreboardSpec",
+      "name": "SOC3d completing one operand cannot release another bank or an in-flight producer"
+    },
+    {
+      "suite": "flow.backend.ScoreboardSpec",
+      "name": "T17_component_S14_S16: CSR uses current busy and waits one cycle beyond final write"
+    },
+    {
+      "suite": "flow.backend.ScoreboardSpec",
+      "name": "S01_S14: FP-to-x0 flags keep CSR draining without making x0 busy"
+    },
+    {
+      "suite": "flow.cluster.ClusterWbSplitSmokeSpec",
+      "name": "SOC3b single-core atomic, trap and MMIO programs"
+    },
+    {
+      "suite": "flow.core.BreezePrivilegeSpec",
+      "name": "SOC3d PMP predecode changes on the CSR edge and preserves TOR predecessor locks"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "execute exact FP32/FP64 arithmetic and report IEEE exception flags"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "T14_component_T15_component_P08_component: eight consecutive FMA inputs and direct output handshakes"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "SOC3d rounding boundary preserves all modes, subnormals, overflow and fused cancellation"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "SOC3d mixed FP32 FP64 stream preserves data flags and destinations under random output stalls"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "P07_component_S04_S08: cross-unit out-of-order results and cumulative flags"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "S05_S15: commit-before-kill preserves old DIV, drops young FMA, drains tags before reuse"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "S01_S08_S14: FP-to-x0 preserves conversion flags and explicit CSR drain state"
+    },
+    {
+      "suite": "flow.fpu.FpUnitSpec",
+      "name": "SOC3c D2 same-edge FP fire/kill drains its tag before forty consecutive new requests"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "store hits on E merge bytes in place and an Inv probe returns the dirty line"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "store miss sends GetM, replays through the pending store, and later loads see it"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "victims fill invalid ways first, only dirty victims carry data, and evicted data returns"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "a hit completes under a miss, and back-to-back store/load pairs see program order"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "a shared store waiting for the MSHR lets a probe pass a younger same-set store"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "killed stores never write, and a load miss killed at WB sends no GetS"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "a probe that arrives with the grant waits for the replay and answers with its result"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "a refill error is reported on late data or drops the store, and leaves the line invalid"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "TLB misses and a busy dTLB delay requests, which still complete in program order"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "PTW reads hit, miss through GetS, see committed stores, and leave the line usable by the CPU"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "an AMO upgrade waiting for GetM lets the required sharer Inv finish first"
+    },
+    {
+      "suite": "flow.memsys.L1DCacheSpec",
+      "name": "atomic kill suppresses reservation and AMO or SC writes, including the RMW write edge"
+    },
+    {
+      "suite": "flow.memsys.L1DContextSpec",
+      "name": "SOC3: CSRW pmpcfg0/pmpaddr0/MPRV/MPP immediately followed by load/store/AMO, both directions"
+    },
+    {
+      "suite": "flow.memsys.L1DContextSpec",
+      "name": "SOC3 C1-B: CPU S1 capture at the CSR update edge rechecks before any side effect"
+    },
+    {
+      "suite": "flow.memsys.L1DContextSpec",
+      "name": "SOC3: a multi-cycle S2 Hold invalidates permission snapshots on both context transitions"
+    },
+    {
+      "suite": "flow.memsys.L1DContextSpec",
+      "name": "SOC3: PTW denial and a permission-context change with a PTW item in S2 retain one response"
+    },
+    {
+      "suite": "flow.memsys.L1DPermissionsSpec",
+      "name": "64-bit CPU PA above 4 GiB must fault instead of aliasing low RAM"
+    },
+    {
+      "suite": "flow.memsys.L1DPermissionsSpec",
+      "name": "WB fault cancellation and reservation clearing cannot combinationally suppress their fault"
+    },
+    {
+      "suite": "flow.memsys.L1DPermissionsSpec",
+      "name": "MPRV selects MPP for PMP instead of bypassing protection as M-mode"
+    },
+    {
+      "suite": "flow.memsys.L1DPermissionsSpec",
+      "name": "ROM LR, SC and AMO use atomic PMA and the appropriate fault class"
+    },
+    {
+      "suite": "flow.memsys.L1DPermissionsSpec",
+      "name": "56-bit PTW address above 4 GiB and a device PTE read return accessFault without memory traffic"
+    },
+    {
+      "suite": "flow.mmu.BreezePmpDecodedSpec",
+      "name": "SOC3d decoded PMP agrees with integer intervals at boundaries and seeded random overlaps"
+    },
+    {
+      "suite": "flow.mmu.FetchPmpCandidateSpec",
+      "name": "SOC3d fetch candidate checks execute bounds but cannot authorize a miss or page fault"
+    },
+    {
+      "suite": "flow.mmu.sv39.Sv39PmpCandidateSpec",
+      "name": "SOC3d candidate PA matches all leaf sizes while page faults retain zero public PA"
+    }
+  ],
+  "artifact_sha256": {
+    "source-complete.tgz": "b9b4b1769d41db9c9703b512c56d448f6f6a91b31281456115df5b7681fb8ad8",
+    "cloud/generated-test-evidence.tgz": "43b4a687d1dd6042eedc957cd87acd2a36ee4828fd4acf3e87aec0f5c72def25"
+  }
+}

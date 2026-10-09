@@ -11,9 +11,9 @@ import flow.mmu.sv39.{MmuCmd, TlbResp, TreePlru}
   * CPU S1/S2 retain their backend-aligned slots during s2Hold. Internal work
   * shares the SRAM ports, but can finish an older miss while CPU S2 waits.
   */
-class L1DCache(g: BreezeMemGeometry) extends Module {
+class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends Module {
   val p = L1DParams(g)
-  val io = IO(new L1DIO(p))
+  val io = IO(new L1DIO(p, withPmpCandidate))
   private def idx(a: UInt): UInt = if (p.idxBits == 0) 0.U(p.idxW.W) else a(p.offBits + p.idxBits - 1, p.offBits)
   private def word(a: UInt): UInt = a(p.offBits - 1, 3)
   private def line(a: UInt): UInt = a(p.paddrBits - 1, p.offBits)
@@ -97,7 +97,6 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
 
   val s0Req = WireDefault(0.U.asTypeOf(new L1PipeReq(p)))
   val selected = WireDefault(L1Src.Cpu)
-  val candidate = WireDefault(false.B)
   // Trap is derived from this cache's response in the integrated backend.
   // It clears state at the edge, never feeds the response/hold decision.
   val rsvProbeHeld = rsvValid && rsvTimer =/= 0.U && probe.io.pending.addr === rsvLine
@@ -114,79 +113,91 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   // miss/requery waits this guard opens again, so grants can depend on probes.
   val localAmo = Wire(Bool())
 
-  // A non-line internal query reserves its completion lane until S2. Only
-  // beats of the already-owned whole-line operation overlap in that lane.
-  when(initDone && (wholeBusy || (!internal1.valid && !internal2.valid))) {
-    when(probe.io.s0Req.valid && !localAmo && (!wholeBusy || wholeOwner === L1Src.Probe)) {
-      candidate := true.B; selected := L1Src.Probe
-      s0Req.hasPaddr := true.B
-      s0Req.paddr := probe.io.pending.addr ## 0.U(p.offBits.W)
-      s0Req.physicalAddress := s0Req.paddr
-      s0Req.idx := idx(s0Req.paddr)
-      s0Req.word := probe.io.s0Req.bits
-      s0Req.beat := probe.io.s0Req.bits
-      s0Req.lastBeat := probe.io.s0Req.bits === (p.wordsPerLine - 1).U
-    }.elsewhen(miss.io.s0Req.valid && miss.io.s0Req.bits.install && (!wholeBusy || wholeOwner === L1Src.Refill)) {
-      candidate := true.B; selected := L1Src.Refill
-      s0Req.hasPaddr := true.B
-      s0Req.idx := miss.io.s0Req.bits.idx
-      s0Req.word := miss.io.s0Req.bits.beat
-      s0Req.beat := miss.io.s0Req.bits.beat
-      s0Req.lastBeat := miss.io.s0Req.bits.installIsAckE || s0Req.beat === (p.wordsPerLine - 1).U
-    }.elsewhen(miss.io.s0Req.valid && miss.io.s0Req.bits.wbRead && (!wholeBusy || wholeOwner === L1Src.WbRead)) {
-      candidate := true.B; selected := L1Src.WbRead
-      s0Req.hasPaddr := true.B
-      s0Req.idx := miss.io.s0Req.bits.idx
-      s0Req.word := miss.io.s0Req.bits.beat
-      s0Req.beat := miss.io.s0Req.bits.beat
-      s0Req.lastBeat := s0Req.beat === (p.wordsPerLine - 1).U
-    }.elsewhen(!wholeBusy) {
-      when(miss.io.s0Req.valid && miss.io.s0Req.bits.replay && !replayConflict && !ps.valid) {
-        candidate := true.B; selected := L1Src.Replay
-        s0Req := miss.io.s0Req.bits.replayReq
-      }.elsewhen(io.ptw.req.valid && canPtw) {
-        candidate := true.B; selected := L1Src.Ptw
-        s0Req.hasPaddr := true.B
-        s0Req.physicalAddress := io.ptw.req.bits.paddr
-        s0Req.paddr := io.ptw.req.bits.paddr(p.paddrBits - 1, 0)
-        s0Req.idx := idx(s0Req.paddr)
-        s0Req.word := word(s0Req.paddr)
-        s0Req.core.op := L1DOp.Load
-        s0Req.core.size := 3.U
-      }.elsewhen(retryReady && !retryConflict && io.tlb.req.ready) {
-        candidate := true.B; selected := L1Src.Recheck
-        s0Req := cpu2.req
-        s0Req.hasPaddr := false.B
-      }.elsewhen(io.core.req.valid && cpuEntryOpen && !cpuConflict && !cpuKill) {
-        candidate := true.B; selected := L1Src.Cpu
-        s0Req.core := io.core.req.bits
-        s0Req.idx := idx(io.core.req.bits.vaddr)
-        s0Req.word := word(io.core.req.bits.vaddr)
-        when(io.core.req.bits.op === L1DOp.Fence) { s0Req.hasPaddr := true.B }
-      }
-    }
+  // Each source computes admission independently. Higher-priority maintenance
+  // grants never pass through CPU kill or the selected request's TLB mux.
+  val laneOpen = initDone && (wholeBusy || (!internal1.valid && !internal2.valid))
+  val requests = VecInit(Seq(
+    laneOpen && probe.io.s0Req.valid && !localAmo && (!wholeBusy || wholeOwner === L1Src.Probe),
+    laneOpen && miss.io.s0Req.valid && miss.io.s0Req.bits.install && (!wholeBusy || wholeOwner === L1Src.Refill),
+    laneOpen && miss.io.s0Req.valid && miss.io.s0Req.bits.wbRead && (!wholeBusy || wholeOwner === L1Src.WbRead),
+    laneOpen && !wholeBusy && miss.io.s0Req.valid && miss.io.s0Req.bits.replay && !replayConflict && !ps.valid,
+    laneOpen && !wholeBusy && io.ptw.req.valid && canPtw,
+    laneOpen && !wholeBusy && retryReady && !retryConflict && io.tlb.req.ready,
+    laneOpen && !wholeBusy && io.core.req.valid && cpuEntryOpen && !cpuConflict && !cpuKill))
+  val chosen = PriorityEncoderOH(requests.asUInt)
+  when(chosen(0)) {
+    selected := L1Src.Probe
+    s0Req.hasPaddr := true.B
+    s0Req.paddr := probe.io.pending.addr ## 0.U(p.offBits.W)
+    s0Req.physicalAddress := s0Req.paddr
+    s0Req.idx := idx(s0Req.paddr)
+    s0Req.word := probe.io.s0Req.bits
+    s0Req.beat := probe.io.s0Req.bits
+    s0Req.lastBeat := probe.io.s0Req.bits === (p.wordsPerLine - 1).U
+  }.elsewhen(chosen(1)) {
+    selected := L1Src.Refill
+    s0Req.hasPaddr := true.B
+    s0Req.idx := miss.io.s0Req.bits.idx
+    s0Req.word := miss.io.s0Req.bits.beat
+    s0Req.beat := miss.io.s0Req.bits.beat
+    s0Req.lastBeat := miss.io.s0Req.bits.installIsAckE || s0Req.beat === (p.wordsPerLine - 1).U
+  }.elsewhen(chosen(2)) {
+    selected := L1Src.WbRead
+    s0Req.hasPaddr := true.B
+    s0Req.idx := miss.io.s0Req.bits.idx
+    s0Req.word := miss.io.s0Req.bits.beat
+    s0Req.beat := miss.io.s0Req.bits.beat
+    s0Req.lastBeat := s0Req.beat === (p.wordsPerLine - 1).U
+  }.elsewhen(chosen(3)) {
+    selected := L1Src.Replay
+    s0Req := miss.io.s0Req.bits.replayReq
+  }.elsewhen(chosen(4)) {
+    selected := L1Src.Ptw
+    s0Req.hasPaddr := true.B
+    s0Req.physicalAddress := io.ptw.req.bits.paddr
+    s0Req.paddr := io.ptw.req.bits.paddr(p.paddrBits - 1, 0)
+    s0Req.idx := idx(s0Req.paddr)
+    s0Req.word := word(s0Req.paddr)
+    s0Req.core.op := L1DOp.Load
+    s0Req.core.size := 3.U
+  }.elsewhen(chosen(5)) {
+    selected := L1Src.Recheck
+    s0Req := cpu2.req
+    s0Req.hasPaddr := false.B
+  }.elsewhen(chosen(6)) {
+    selected := L1Src.Cpu
+    s0Req.core := io.core.req.bits
+    s0Req.idx := idx(io.core.req.bits.vaddr)
+    s0Req.word := word(io.core.req.bits.vaddr)
+    when(io.core.req.bits.op === L1DOp.Fence) { s0Req.hasPaddr := true.B }
   }
   s0Req.src := selected
-  val isCpuIssue = selected === L1Src.Cpu
-  val needsTlb = (isCpuIssue || selected === L1Src.Recheck) && !s0Req.hasPaddr
-  val cpuFire = candidate && isCpuIssue && cpu1Advance && (!needsTlb || io.tlb.req.ready)
-  val internalFire = candidate && !isCpuIssue && internal1Advance && (!needsTlb || io.tlb.req.ready)
+  val cpuNeedsTlb = io.core.req.bits.op =/= L1DOp.Fence
+  val cpuFire = chosen(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.req.ready)
+  val probeFire = chosen(0) && internal1Advance
+  val refillFire = chosen(1) && internal1Advance
+  val wbReadFire = chosen(2) && internal1Advance
+  val replayFire = chosen(3) && internal1Advance
+  val ptwFire = chosen(4) && internal1Advance
+  val recheckFire = chosen(5) && internal1Advance && io.tlb.req.ready
+  val internalFire = probeFire || refillFire || wbReadFire || replayFire || ptwFire || recheckFire
   val s0Fire = cpuFire || internalFire
   io.core.req.ready := cpuFire
-  io.ptw.req.ready := s0Fire && selected === L1Src.Ptw
-  io.tlb.req.valid := candidate && needsTlb && Mux(isCpuIssue, cpu1Advance, internal1Advance) && !cpuKill
+  io.ptw.req.ready := ptwFire
+  io.tlb.req.valid := ((chosen(6) && cpuNeedsTlb && cpu1Advance) ||
+    (chosen(5) && internal1Advance)) && !cpuKill
   io.tlb.req.bits.vaddr := s0Req.core.vaddr
   io.tlb.req.bits.cmd := Mux(storeLike(s0Req.core.op), MmuCmd.Store, MmuCmd.Load)
   io.tlb.kill := cpuKill
   when(cpuFire && (io.core.req.bits.op === L1DOp.AMO || (incomingAtomic && io.core.req.bits.aq))) {
     acquireBusy := true.B
   }
-  miss.io.s0Grant := s0Fire && (selected === L1Src.Refill || selected === L1Src.WbRead || selected === L1Src.Replay)
-  probe.io.s0Grant := s0Fire && selected === L1Src.Probe
-  when(s0Fire && selected === L1Src.Recheck) { recheckIssued := true.B }
+  miss.io.s0Grant := refillFire || wbReadFire || replayFire
+  probe.io.s0Grant := probeFire
+  when(recheckFire) { recheckIssued := true.B }
   when(io.ptw.req.fire) { ptwOutstanding := true.B }
 
-  val wholeIssue = internalFire && (selected === L1Src.Probe || selected === L1Src.Refill || selected === L1Src.WbRead)
+  val wholeIssue = probeFire || refillFire || wbReadFire
   when(wholeIssue && !wholeBusy) { wholeBusy := true.B; wholeOwner := selected }
   when(internal2.valid && internalAdvance && internal2.req.lastBeat &&
     internal2.req.src === wholeOwner) { wholeBusy := false.B }
@@ -197,40 +208,50 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val cpuTagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
   val cpuDataHeld = Reg(Vec(p.ways, UInt(64.W)))
   val cpuTlbHeld = Reg(new TlbResp)
+  val cpuCandidateHeld = Reg(UInt(64.W))
   val cpuTlbValidHeld = RegInit(false.B)
   when(cpuFresh) {
     cpuTagHeld := tagRead; cpuDataHeld := dataRead
     cpuTlbHeld := io.tlb.resp.bits; cpuTlbValidHeld := io.tlb.resp.valid
+    cpuCandidateHeld := io.tlb.candidatePaddr.getOrElse(io.tlb.resp.bits.paddr)
   }
   val cpuTags = Mux(cpuFresh, tagRead, cpuTagHeld)
   val cpuData = Mux(cpuFresh, dataRead, cpuDataHeld)
   val cpuTlb = Mux(cpuFresh, io.tlb.resp.bits, cpuTlbHeld)
   val cpuTlbValid = Mux(cpuFresh, io.tlb.resp.valid, cpuTlbValidHeld)
+  val cpuCandidate = Mux(cpuFresh,
+    io.tlb.candidatePaddr.getOrElse(io.tlb.resp.bits.paddr), cpuCandidateHeld)
 
   val internalFresh = RegNext(internalFire, false.B)
   val internalTagHeld = Reg(Vec(p.ways, new L1TagEntry(p)))
   val internalDataHeld = Reg(Vec(p.ways, UInt(64.W)))
   val internalTlbHeld = Reg(new TlbResp)
+  val internalCandidateHeld = Reg(UInt(64.W))
   val internalTlbValidHeld = RegInit(false.B)
   when(internalFresh) {
     internalTagHeld := tagRead; internalDataHeld := dataRead
     internalTlbHeld := io.tlb.resp.bits; internalTlbValidHeld := io.tlb.resp.valid
+    internalCandidateHeld := io.tlb.candidatePaddr.getOrElse(io.tlb.resp.bits.paddr)
   }
   val internalTags = Mux(internalFresh, tagRead, internalTagHeld)
   val internalData = Mux(internalFresh, dataRead, internalDataHeld)
   val internalTlb = Mux(internalFresh, io.tlb.resp.bits, internalTlbHeld)
   val internalTlbValid = Mux(internalFresh, io.tlb.resp.valid, internalTlbValidHeld)
+  val internalCandidate = Mux(internalFresh,
+    io.tlb.candidatePaddr.getOrElse(io.tlb.resp.bits.paddr), internalCandidateHeld)
 
-  val cpuPhysical = Mux(cpu1.req.hasPaddr, cpu1.req.physicalAddress, cpuTlb.paddr)
-  val internalPhysical = Mux(internal1.req.hasPaddr, internal1.req.physicalAddress, internalTlb.paddr)
+  val cpuPhysical = Mux(cpu1.req.hasPaddr, cpu1.req.physicalAddress, cpuCandidate)
+  val internalPhysical = Mux(internal1.req.hasPaddr, internal1.req.physicalAddress, internalCandidate)
   // Each lane has its own checker, before its S1->S2 register boundary.
   // A changed-context internal item retains its slot for one refresh edge;
   // this lane's checker is reused, without selecting between CPU/internal S2.
-  def permissionCheck(address: UInt, req: L1PipeReq): (Bool, flow.platform.PMAResult) = {
+  def permissionCheck(address: UInt, req: L1PipeReq,
+                      end: flow.mmu.BreezePmpAccessEnd): (Bool, flow.platform.PMAResult) = {
     val isPtw = req.src === L1Src.Ptw || (req.src === L1Src.Replay && req.replayPtw)
     val isWrite = !isPtw && storeLike(req.core.op)
     val pma = Module(new flow.platform.PMAChecker)
-    val pmp = Module(new flow.mmu.BreezePmpChecker(64))
+    val pmp = Module(new flow.mmu.BreezePmpChecker(64, decoded = true,
+      precomputedEnd = withPmpCandidate))
     pma.io.query.addr := address
     pma.io.query.sizeLog2 := Mux(isPtw, 3.U, req.core.size)
     pma.io.query.accessType := Mux(isWrite, flow.platform.PMAAccessType.Store, flow.platform.PMAAccessType.Load)
@@ -239,12 +260,17 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     pmp.io.access := Mux(isWrite, BreezeMmuAccess.Store, BreezeMmuAccess.Load)
     pmp.io.privilege := Mux(isPtw, 1.U, Mux(io.core.csr.mprv, io.core.csr.mpp, io.core.csr.privilege))
     pmp.io.context := io.core.csr
+    pmp.io.accessEnd.foreach(_ := end)
     (pmp.io.allowed, pma.io.result)
   }
-  val (cpuPmpAllowed, cpuPma) = permissionCheck(cpuPhysical, cpu1.req)
+  val (cpuPmpAllowed, cpuPma) = permissionCheck(cpuPhysical, cpu1.req, cpu1.pmpEnd)
   val internalCheckAddress = Mux(internalRefresh, internal2.physicalAddress, internalPhysical)
   val internalCheckReq = Mux(internalRefresh, internal2.req, internal1.req)
-  val (internalPmpAllowed, internalPma) = permissionCheck(internalCheckAddress, internalCheckReq)
+  val refreshEnd = flow.mmu.BreezePmpDecode.accessEnd(internal2.physicalAddress(6, 0),
+    Mux(internal2.req.src === L1Src.Ptw ||
+      (internal2.req.src === L1Src.Replay && internal2.req.replayPtw), 3.U, internal2.req.core.size))
+  val internalCheckEnd = Mux(internalRefresh, refreshEnd, internal1.pmpEnd)
+  val (internalPmpAllowed, internalPma) = permissionCheck(internalCheckAddress, internalCheckReq, internalCheckEnd)
   def capturePermission(slot: L1S2, address: UInt, allowed: Bool, pma: flow.platform.PMAResult): Unit = {
     slot.pmpAllowed := allowed
     slot.pmaAllowed := pma.allowed
@@ -269,6 +295,8 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     cpu1.valid := cpuFire
     cpu1.req := s0Req
     cpu1.snapInvalid := false.B
+    cpu1.pmpEnd := flow.mmu.BreezePmpDecode.accessEnd(
+      Mux(s0Req.hasPaddr, s0Req.physicalAddress, s0Req.core.vaddr)(6, 0), s0Req.core.size)
   }
   when(cpuAdvance) {
     cpu2.valid := cpu1.valid && !cpuKill
@@ -289,6 +317,9 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
     internal1.valid := internalFire
     internal1.req := s0Req
     internal1.snapInvalid := false.B
+    internal1.pmpEnd := flow.mmu.BreezePmpDecode.accessEnd(
+      Mux(s0Req.hasPaddr, s0Req.physicalAddress, s0Req.core.vaddr)(6, 0),
+      Mux(selected === L1Src.Ptw || s0Req.replayPtw, 3.U, s0Req.core.size))
   }
   when(internalAdvance) {
     internal2.valid := internal1.valid
@@ -373,12 +404,15 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val scSuccess = rsvValid && rsvLine === line(s2.paddr)
   val upgrade = sharedHit && (isStore || isLr)
   val allocWay = Mux(upgrade, hitWay, victimWay)
+  val allocWayOH = Mux(upgrade, hitVec.asUInt,
+    Mux(invalidWays.asUInt.orR, PriorityEncoderOH(invalidWays.asUInt), UIntToOH(replacement, p.ways)))
   val victimEntry = if (p.ways == 1) s2.tagVec(0) else s2.tagVec(allocWay)
   val victimValid = !upgrade && victimEntry.state =/= L1State.I
   val victimAddress = if (p.idxBits == 0) victimEntry.tag else victimEntry.tag ## s2.req.idx
 
-  val installNow = internalFire && selected === L1Src.Refill
-  val installLast = installNow && s0Req.lastBeat
+  val installNow = refillFire
+  val installLast = refillFire && (miss.io.s0Req.bits.installIsAckE ||
+    miss.io.s0Req.bits.beat === (p.wordsPerLine - 1).U)
   val psWriteBlocked = wholeBusy || miss.io.status.mshrState === MshrState.Install || probe.io.tagUpdate.valid
   val psCompletes = ps.valid && !psWriteBlocked
   val psWrites = psCompletes && !(psAtomic && io.core.s2Kill)
@@ -619,21 +653,26 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   val tagWrite = WireDefault(false.B)
   val tagIdx = WireDefault(0.U(p.idxW.W))
   val tagWay = WireDefault(0.U(p.wayBits.W))
+  val tagMask = WireDefault(0.U(p.ways.W))
   val tagValue = WireDefault(0.U.asTypeOf(new L1TagEntry(p)))
   when(psWrites && ps.setDirty) {
     tagWrite := true.B; tagIdx := ps.idx; tagWay := ps.way
+    tagMask := UIntToOH(ps.way, p.ways)
     tagValue.tag := tag(ps.paddr); tagValue.state := L1State.M
   }
   when(allocates && victimValid) {
     tagWrite := true.B; tagIdx := s2.req.idx; tagWay := allocWay
+    tagMask := allocWayOH
     tagValue := victimEntry; tagValue.state := L1State.I
   }
   when(probe.io.tagUpdate.valid) {
     tagWrite := true.B; tagIdx := probeIdx; tagWay := probe.io.tagUpdate.bits.way
+    tagMask := UIntToOH(probe.io.tagUpdate.bits.way, p.ways)
     tagValue.tag := tag(probePaddr); tagValue.state := probe.io.tagUpdate.bits.newState
   }
   when(installLast) {
     tagWrite := true.B; tagIdx := miss.io.s0Req.bits.idx; tagWay := miss.io.s0Req.bits.way
+    tagMask := UIntToOH(miss.io.s0Req.bits.way, p.ways)
     tagValue := miss.io.s0Req.bits.installTag
     when(tagValue.state =/= L1State.I) {
       plru(tagIdx) := TreePlru.touch(plru(tagIdx), tagWay, p.ways)
@@ -645,7 +684,7 @@ class L1DCache(g: BreezeMemGeometry) extends Module {
   when(!initDone || tagWrite) {
     tags.write(Mux(initDone, tagIdx, initIdx),
       VecInit(Seq.fill(p.ways)(Mux(initDone, tagValue, 0.U.asTypeOf(tagValue)))),
-      Mux(initDone, UIntToOH(tagWay, p.ways), Fill(p.ways, 1.U(1.W))).asBools)
+      Mux(initDone, tagMask, Fill(p.ways, 1.U(1.W))).asBools)
   }
   when(!initDone) {
     initIdx := initIdx + 1.U

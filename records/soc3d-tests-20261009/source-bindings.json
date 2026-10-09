@@ -1,0 +1,33 @@
+{
+  "rtl_unchanged_from_first_batch": true,
+  "rtl_files_sha256": {
+    "design/src/main/resources/vsrc/fpnew/FlowFpnewWrapper.sv": "c2cb09df2355e10cc886570ba1cd297076cc83f82cbb29d89b1c38a17e32257e",
+    "design/src/main/scala/backend/Scoreboard.scala": "6edbdbd63b25c6a18e293ba51ea5830d68fd3470438675347e8039fe188f5e24",
+    "design/src/main/scala/core/RegFile.scala": "58c837023ebd44b8bb169a1f613cb2b5da3cd54cdec15969971ec706268b2d42",
+    "design/src/main/scala/interface/interface.scala": "cccfd29e3d6a65fbdcc583e26fb80a8e93803b907fb65773fb9f327fe2f45d1f",
+    "design/src/main/scala/l1d/L1DBundles.scala": "a9ce0f576b39ca849cc2836dc7f3e387ffea6f1cb855d31234e3d54df792e2ad",
+    "design/src/main/scala/l1d/L1DCache.scala": "66315dba3572d643786b9fbc6c9cfb9cc6aa143b3b72ef3d8dc773dd5ca1864c",
+    "design/src/main/scala/l1i/FetchTlbClient.scala": "368ff0f82ef19171fef757876e567f8d42d7c06e37fb2b35b33dad5af3f838fd",
+    "design/src/main/scala/mmu/BreezePmpChecker.scala": "9e31f397a21887e877bb0e03653af0cf877375f17cd58ac3d37992a64c0aef77",
+    "design/src/main/scala/mmu/BreezePmpDecode.scala": "39b5a0cd3a571edf66f10e5053d7c479b1bdb2ee07950b515dabec128e211794",
+    "design/src/main/scala/mmu/sv39/Sv39Mmu.scala": "f796aca846a8ccf2c60c24e1e84c5f8338e4b1cf666c58234126785e151fa627",
+    "design/src/main/scala/mmu/sv39/Sv39MmuBundles.scala": "2636f254dd6dacc4d1b853178a1a43278d9603eef06d99e948c8ed726ca040f4",
+    "design/src/main/scala/mmu/sv39/Sv39Tlb.scala": "b2ca59b18a3159ce103a1a6378ef9995bd2a430ecf6cc2728b0823d24555594d",
+    "design/src/main/scala/top/BreezeCluster.scala": "76231dad071dbca467c75b7fd26a3318d645f36ce1d38e8bc54a566189dba95b",
+    "third_party/cvfpu/src/fpnew_fma.sv": "287431a405c95680e98f0d357e667e1c0aa28139c457479dbbd161473a4dd009"
+  },
+  "accepted_phases": {
+    "validated": {
+      "manifest": "source-manifest-validated.json",
+      "manifest_sha256": "07986f084391a6e59c3d3c6d33e4fef612e874345af191a07dc16524225e444c"
+    },
+    "rest": {
+      "manifest": "source-manifest-with-config.json",
+      "manifest_sha256": "59411ba938ca198734f862c73c21283a47e1ee7e1dfa5bbdfb2cc3b1293530ab"
+    },
+    "fp-boundary": {
+      "manifest": "source-manifest-complete.json",
+      "manifest_sha256": "1f3b6aee7a25aae02d0d5f410b59933278168a0b8aa6614cab15e86d75809f30"
+    }
+  }
+}

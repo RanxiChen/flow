@@ -300,6 +300,15 @@ class CSRTrapInfo(val XLEN: Int = 64) extends Bundle {
     val tval         = UInt(XLEN.W)
 }
 
+/** CSR-derived PMP interval; all arithmetic is done at the CSR write edge. */
+class BreezePmpRange extends Bundle {
+    val lower = UInt(65.W)
+    val upper = UInt(65.W)
+    val lowerBlockPrevious = UInt(58.W)
+    val upperBlockPrevious = UInt(58.W)
+    val nonempty = Bool()
+}
+
 /** Privileged translation state exported by the CSR file. */
 class BreezeMmuContext(val XLEN: Int = 64) extends Bundle {
     val satp = UInt(XLEN.W)
@@ -311,6 +320,10 @@ class BreezeMmuContext(val XLEN: Int = 64) extends Bundle {
     val adue = Bool()
     val pmpcfg = Vec(BreezePmpConfig.CsrEntries, UInt(8.W))
     val pmpaddr = Vec(BreezePmpConfig.CsrEntries, UInt(54.W))
+    val pmpRanges = Vec(BreezePmpConfig.ActiveEntries, new BreezePmpRange)
+    // CSRFile drives true. Raw-context clients can leave this false and use
+    // the checker's combinational decoder without changing their CSR layout.
+    val pmpRangesValid = Bool()
     // Registered by CSRFile at the same edge as the permission-state update.
     // Consumers must not register this pulse again.
     val permissionEvent = Bool()

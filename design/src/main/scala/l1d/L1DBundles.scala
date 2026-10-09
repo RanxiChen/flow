@@ -36,10 +36,10 @@ class L1DEvents extends Bundle {
   val mmio_cycles = Bool()
 }
 
-class L1DIO(p: L1DParams) extends Bundle {
+class L1DIO(p: L1DParams, withPmpCandidate: Boolean = false) extends Bundle {
   val core = new L1DCoreIO
   /** L1D drives dTLB requests: TlbPortIO is TLB-side, so flip it. */
-  val tlb = Flipped(new TlbPortIO)
+  val tlb = Flipped(new TlbPortIO(withPmpCandidate))
   /** PTW reads enter L1D: PtwMemIO is PTW-side, so flip it. */
   val ptw = Flipped(new PtwMemIO)
   val coh = new L1DCoherenceIO(p.coh)
@@ -89,6 +89,7 @@ class L1S1(p: L1DParams) extends Bundle {
   val valid = Bool()
   val req = new L1PipeReq(p)
   val snapInvalid = Bool()
+  val pmpEnd = new flow.mmu.BreezePmpAccessEnd
 }
 
 class L1S2(p: L1DParams) extends Bundle {

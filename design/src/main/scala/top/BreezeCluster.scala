@@ -50,10 +50,10 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false)
     val frontend = Module(new BreezeFrontend(coreCfg.frontendCfg, memGeometry = mem))
     val buffer = Module(new FetchBuffer(64, 6, coreCfg.backendCfg.ghrLength))
     val frontendBoundary = Module(new BreezeFrontendBoundary(coreCfg.backendCfg.ghrLength))
-    val l1d = Module(new L1DCache(mem))
+    val l1d = Module(new L1DCache(mem, withPmpCandidate = true))
     val l1i = Module(new L1IClient(mem))
-    val mmu = Module(new Sv39Mmu)
-    val fetchTlb = Module(new FetchTlbClient)
+    val mmu = Module(new Sv39Mmu(withPmpCandidate = true))
+    val fetchTlb = Module(new FetchTlbClient(withPmpCandidate = true))
 
     backend.io.resetAddr := io.resetAddr
     backend.io.machineSoftwareInterrupt := io.msip(h)

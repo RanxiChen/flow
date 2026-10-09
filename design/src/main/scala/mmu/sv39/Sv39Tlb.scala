@@ -3,9 +3,10 @@ package flow.mmu.sv39
 import chisel3._
 import chisel3.util._
 
-class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean) extends Module {
+class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
+              withPmpCandidate: Boolean = false) extends Module {
   val io = IO(new Bundle {
-    val port = new TlbPortIO; val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
+    val port = new TlbPortIO(withPmpCandidate); val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
     val miss = Output(new TlbMiss); val grant = Input(Bool())
     val done = Flipped(Valid(new PtwDone)); val idle = Output(Bool())
   })
@@ -54,6 +55,9 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean) extends Module {
     (effPriv === 0.U && !entry.u) || (effPriv === 1.U && entry.u && (s1Cmd === MmuCmd.Fetch || !io.csr.sum))
   val pa = MuxLookup(level, Cat(entry.ppn, s1Vaddr(11, 0)))(Seq(
     1.U -> Cat(entry.ppn(43, 9), s1Vaddr(20, 0)), 2.U -> Cat(entry.ppn(43, 18), s1Vaddr(29, 0))))
+  // PMP can compare this candidate in parallel with permFail. The public
+  // hit/miss/fault/paddr response below keeps its existing priority and zeros.
+  io.port.candidatePaddr.foreach(_ := Mux(translate, pa, s1Vaddr))
   io.port.resp.valid := s1Valid && !io.port.kill
   io.port.resp.bits := 0.U.asTypeOf(new TlbResp)
   when(s1FromFault) {

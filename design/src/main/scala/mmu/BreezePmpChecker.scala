@@ -7,86 +7,130 @@ import flow.config.BreezePmpConfig
 import flow.interface._
 
 /** Parallel first-match checker for the active RV64 PMP entries. */
-class BreezePmpChecker(val xlen: Int = 64) extends Module {
+class BreezePmpChecker(val xlen: Int = 64, val decoded: Boolean = false,
+                       val precomputedEnd: Boolean = false) extends Module {
+  require(xlen == 64, "PMP uses the RV64 address range")
+  require(!precomputedEnd || decoded)
   val io = IO(new Bundle {
     val addr = Input(UInt(xlen.W))
     val sizeLog2 = Input(UInt(3.W))
     val access = Input(BreezeMmuAccess())
     val privilege = Input(UInt(PRIV_MODE.width.W))
     val context = Input(new BreezeMmuContext(xlen))
+    val accessEnd = if (precomputedEnd) Some(Input(new BreezePmpAccessEnd)) else None
     val allowed = Output(Bool())
   })
 
-  val accessStart = Cat(0.U(1.W), io.addr)
-  val accessLast = Wire(UInt(65.W))
-  accessLast := accessStart + ((1.U(65.W) << io.sizeLog2) - 1.U)
+  if (decoded) {
+    val end = io.accessEnd.getOrElse(BreezePmpDecode.accessEnd(io.addr(6, 0), io.sizeLog2))
+    val high = Cat(0.U(1.W), io.addr(63, 7))
+    val low = io.addr(6, 0)
+    def startBelow(boundary: UInt): Bool =
+      high < boundary(64, 7) || (high === boundary(64, 7) && low < boundary(6, 0))
+    def endBelow(boundary: UInt, previousBlock: UInt): Bool = {
+      val sameBlock = high < boundary(64, 7) ||
+        (high === boundary(64, 7) && end.low < boundary(6, 0))
+      // Compare against the predecoded predecessor instead of incrementing
+      // the translated high address and then starting another wide compare.
+      val nextBlock = boundary(64, 7).orR &&
+        (high < previousBlock || (high === previousBlock && end.low < boundary(6, 0)))
+      Mux(end.carry, nextBlock, sameBlock)
+    }
+    val overlaps = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+    val permissions = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+    for (n <- 0 until BreezePmpConfig.ActiveEntries) {
+      val raw = BreezePmpDecode.range(io.context.pmpcfg(n), io.context.pmpaddr(n),
+        if (n == 0) 0.U(54.W) else io.context.pmpaddr(n - 1))
+      val r = Mux(io.context.pmpRangesValid, io.context.pmpRanges(n), raw)
+      val startsBeforeUpper = startBelow(r.upper)
+      val endsBeforeLower = endBelow(r.lower, r.lowerBlockPrevious)
+      val contains = !startBelow(r.lower) && endBelow(r.upper, r.upperBlockPrevious)
+      overlaps(n) := r.nonempty && startsBeforeUpper && !endsBeforeLower
+      val cfg = io.context.pmpcfg(n)
+      val rwx = MuxLookup(io.access, false.B)(Seq(
+        BreezeMmuAccess.Fetch -> cfg(2), BreezeMmuAccess.Load -> cfg(0),
+        BreezeMmuAccess.Store -> cfg(1)))
+      permissions(n) := contains && Mux(io.privilege === PRIV_MODE.M.U && !cfg(7), true.B, rwx)
+    }
+    val winners = (0 until BreezePmpConfig.ActiveEntries).map { n =>
+      val earlier = if (n == 0) false.B else overlaps.take(n).reduce(_ || _)
+      overlaps(n) && !earlier && permissions(n)
+    }
+    io.allowed := winners.reduce(_ || _) ||
+      (!overlaps.asUInt.orR && io.privilege === PRIV_MODE.M.U)
+  } else {
+    // Independent legacy arithmetic remains the assertion/reference checker.
+    val accessStart = Cat(0.U(1.W), io.addr)
+    val accessLast = Wire(UInt(65.W))
+    accessLast := accessStart + ((1.U(65.W) << io.sizeLog2) - 1.U)
 
-  // sizeLog2 is three bits: an access spans at most 128 bytes and can
-  // therefore touch at most two adjacent 128-byte blocks, even unaligned.
-  private val blockBits = 7
-  val startHigh = accessStart(64, blockBits)
-  val lastHigh = accessLast(64, blockBits)
-  val startLow = accessStart(blockBits - 1, 0)
-  val lastLow = accessLast(blockBits - 1, 0)
-  val sameBlock = startHigh === lastHigh
+    // sizeLog2 is three bits: an access spans at most 128 bytes and can
+    // therefore touch at most two adjacent 128-byte blocks, even unaligned.
+    val blockBits = 7
+    val startHigh = accessStart(64, blockBits)
+    val lastHigh = accessLast(64, blockBits)
+    val startLow = accessStart(blockBits - 1, 0)
+    val lastLow = accessLast(blockBits - 1, 0)
+    val sameBlock = startHigh === lastHigh
 
-  // TOR entries share their boundaries with their neighbours. Compute each
-  // endpoint/boundary relation once, rather than comparing against selected
-  // TOR/NA4/NAPOT lower and upper bounds inside every entry.
-  val boundaries = io.context.pmpaddr.take(BreezePmpConfig.ActiveEntries)
-    .map(addr => Cat(0.U(9.W), addr, 0.U(2.W)))
-  def belowBoundary(high: UInt, low: UInt, boundary: UInt): Bool = {
-    val boundHigh = boundary(64, blockBits)
-    val boundLow = boundary(blockBits - 1, 0)
-    high < boundHigh || (high === boundHigh && low < boundLow)
+    // TOR entries share their boundaries with their neighbours. Compute each
+    // endpoint/boundary relation once, rather than comparing against selected
+    // TOR/NA4/NAPOT lower and upper bounds inside every entry.
+    val boundaries = io.context.pmpaddr.take(BreezePmpConfig.ActiveEntries)
+      .map(addr => Cat(0.U(9.W), addr, 0.U(2.W)))
+    def belowBoundary(high: UInt, low: UInt, boundary: UInt): Bool = {
+      val boundHigh = boundary(64, blockBits)
+      val boundLow = boundary(blockBits - 1, 0)
+      high < boundHigh || (high === boundHigh && low < boundLow)
+    }
+    val startBelow = boundaries.map(b => belowBoundary(startHigh, startLow, b))
+    val lastBelow = boundaries.map(b => belowBoundary(lastHigh, lastLow, b))
+    val overlaps = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+    val contains = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+    val permissions = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
+
+    for (n <- 0 until BreezePmpConfig.ActiveEntries) {
+      val cfg = io.context.pmpcfg(n)
+      val a = cfg(4, 3)
+      val encoded = io.context.pmpaddr(n)
+      val napotMask = encoded ^ (encoded + 1.U)
+      val byteMask = Cat(0.U(9.W), Mux(a(0), napotMask, 0.U(54.W)), 3.U(2.W))
+      val comparand = boundaries(n)
+      val startMatch = ((accessStart ^ comparand) & ~byteMask) === 0.U
+      val lastMatch = ((accessLast ^ comparand) & ~byteMask) === 0.U
+
+      // Endpoint matches also prove full containment for a power-of-two region.
+      // For overlap, a small region may lie entirely between the two endpoints.
+      // Cover that case using only seven-bit comparisons and block equality;
+      // do not assume that callers have removed misaligned accesses.
+      val smallRegion = !byteMask(64, blockBits).orR
+      val baseLow = comparand(blockBits - 1, 0) & ~byteMask(blockBits - 1, 0)
+      val baseHigh = comparand(64, blockBits)
+      val baseInStartBlock = startHigh === baseHigh && startLow <= baseLow
+      val baseInLastBlock = lastHigh === baseHigh && baseLow <= lastLow
+      val coversBase = Mux(sameBlock,
+        baseInStartBlock && baseInLastBlock, baseInStartBlock || baseInLastBlock)
+      val pow2Overlap = startMatch || lastMatch || (smallRegion && coversBase)
+      val pow2Contains = startMatch && lastMatch
+
+      val startAtOrAboveLower = if (n == 0) true.B else !startBelow(n - 1)
+      val lastAtOrAboveLower = if (n == 0) true.B else !lastBelow(n - 1)
+      val torNonempty = if (n == 0) boundaries(n) =/= 0.U else
+        boundaries(n - 1) < boundaries(n)
+      val torOverlap = torNonempty && startBelow(n) && lastAtOrAboveLower
+      val torContains = startAtOrAboveLower && lastBelow(n)
+      overlaps(n) := Mux(a(1), pow2Overlap, a(0) && torOverlap)
+      contains(n) := Mux(a(1), pow2Contains, torContains)
+      val rwx = MuxLookup(io.access, false.B)(Seq(
+        BreezeMmuAccess.Fetch -> cfg(2),
+        BreezeMmuAccess.Load -> cfg(0),
+        BreezeMmuAccess.Store -> cfg(1)))
+      permissions(n) := contains(n) &&
+        Mux(io.privilege === PRIV_MODE.M.U && !cfg(7), true.B, rwx)
+    }
+
+    val anyMatch = overlaps.asUInt.orR
+    val selected = PriorityEncoder(overlaps.asUInt)
+    io.allowed := Mux(anyMatch, permissions(selected), io.privilege === PRIV_MODE.M.U)
   }
-  val startBelow = boundaries.map(b => belowBoundary(startHigh, startLow, b))
-  val lastBelow = boundaries.map(b => belowBoundary(lastHigh, lastLow, b))
-  val overlaps = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
-  val contains = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
-  val permissions = Wire(Vec(BreezePmpConfig.ActiveEntries, Bool()))
-
-  for (n <- 0 until BreezePmpConfig.ActiveEntries) {
-    val cfg = io.context.pmpcfg(n)
-    val a = cfg(4, 3)
-    val encoded = io.context.pmpaddr(n)
-    val napotMask = encoded ^ (encoded + 1.U)
-    val byteMask = Cat(0.U(9.W), Mux(a(0), napotMask, 0.U(54.W)), 3.U(2.W))
-    val comparand = boundaries(n)
-    val startMatch = ((accessStart ^ comparand) & ~byteMask) === 0.U
-    val lastMatch = ((accessLast ^ comparand) & ~byteMask) === 0.U
-
-    // Endpoint matches also prove full containment for a power-of-two region.
-    // For overlap, a small region may lie entirely between the two endpoints.
-    // Cover that case using only seven-bit comparisons and block equality;
-    // do not assume that callers have removed misaligned accesses.
-    val smallRegion = !byteMask(64, blockBits).orR
-    val baseLow = comparand(blockBits - 1, 0) & ~byteMask(blockBits - 1, 0)
-    val baseHigh = comparand(64, blockBits)
-    val baseInStartBlock = startHigh === baseHigh && startLow <= baseLow
-    val baseInLastBlock = lastHigh === baseHigh && baseLow <= lastLow
-    val coversBase = Mux(sameBlock,
-      baseInStartBlock && baseInLastBlock, baseInStartBlock || baseInLastBlock)
-    val pow2Overlap = startMatch || lastMatch || (smallRegion && coversBase)
-    val pow2Contains = startMatch && lastMatch
-
-    val startAtOrAboveLower = if (n == 0) true.B else !startBelow(n - 1)
-    val lastAtOrAboveLower = if (n == 0) true.B else !lastBelow(n - 1)
-    val torNonempty = if (n == 0) boundaries(n) =/= 0.U else
-      boundaries(n - 1) < boundaries(n)
-    val torOverlap = torNonempty && startBelow(n) && lastAtOrAboveLower
-    val torContains = startAtOrAboveLower && lastBelow(n)
-    overlaps(n) := Mux(a(1), pow2Overlap, a(0) && torOverlap)
-    contains(n) := Mux(a(1), pow2Contains, torContains)
-    val rwx = MuxLookup(io.access, false.B)(Seq(
-      BreezeMmuAccess.Fetch -> cfg(2),
-      BreezeMmuAccess.Load -> cfg(0),
-      BreezeMmuAccess.Store -> cfg(1)))
-    permissions(n) := contains(n) &&
-      Mux(io.privilege === PRIV_MODE.M.U && !cfg(7), true.B, rwx)
-  }
-
-  val anyMatch = overlaps.asUInt.orR
-  val selected = PriorityEncoder(overlaps.asUInt)
-  io.allowed := Mux(anyMatch, permissions(selected), io.privilege === PRIV_MODE.M.U)
 }

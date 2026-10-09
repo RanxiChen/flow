@@ -15,9 +15,10 @@ import flow.mmu.sv39._
   * `faultRegion` (base, bytes) additionally page-faults every lookup inside
   * it, so a fault follows its address across TLB-miss re-lookups.
   */
-class IdentityTlb(faultRegion: Option[(BigInt, BigInt)] = None) extends Module {
+class IdentityTlb(faultRegion: Option[(BigInt, BigInt)] = None,
+                  withPmpCandidate: Boolean = false) extends Module {
   val io = IO(new Bundle {
-    val port = new TlbPortIO
+    val port = new TlbPortIO(withPmpCandidate)
     val ready = Input(Bool())
     val miss = Input(Bool())
     val pageFault = Input(Bool())
@@ -38,6 +39,7 @@ class IdentityTlb(faultRegion: Option[(BigInt, BigInt)] = None) extends Module {
   io.port.resp.bits.pageFault := pageFault && !miss
   io.port.resp.bits.accessFault := false.B
   io.port.resp.bits.paddr := va
+  io.port.candidatePaddr.foreach(_ := va)
   val count = RegInit(0.U(32.W))
   when(io.port.req.fire) { count := count + 1.U }
   io.requests := count
@@ -61,8 +63,9 @@ class L1DTestHarness(g: BreezeMemGeometry) extends Module {
     val tlb = new TlbKnobIO
     val events = Output(new L1DEvents)
   })
-  val cache = Module(new L1DCache(g))
-  val tlb = Module(new IdentityTlb)
+  // Match production's permission path, including saved candidate PA and S0 end.
+  val cache = Module(new L1DCache(g, withPmpCandidate = true))
+  val tlb = Module(new IdentityTlb(withPmpCandidate = true))
   cache.io.core <> io.core
   cache.io.ptw <> io.ptw
   io.coh <> cache.io.coh

@@ -455,6 +455,39 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "SOC3d PMP predecode changes on the CSR edge and preserves TOR predecessor locks" in {
+    simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { d =>
+      reset(d)
+      def bounds(n: Int, lo: BigInt, hi: BigInt, nonempty: Boolean): Unit = {
+        val r = d.io.mmu_context.pmpRanges(n)
+        d.io.mmu_context.pmpRangesValid.expect(true.B)
+        r.lower.expect(lo.U); r.upper.expect(hi.U); r.nonempty.expect(nonempty.B)
+        val blockMask = (BigInt(1) << 58) - 1
+        r.lowerBlockPrevious.expect((((lo >> 7) - 1) & blockMask).U)
+        r.upperBlockPrevious.expect((((hi >> 7) - 1) & blockMask).U)
+      }
+      commit(d, CSRMAP.pmpaddr0, 0x20)
+      commit(d, CSRMAP.pmpaddr0 + 1, 0x60)
+      commit(d, CSRMAP.pmpcfg0, 0x0f00)
+      bounds(1, 0x80, 0x180, true)
+      commit(d, CSRMAP.pmpaddr0, 0x40)
+      bounds(1, 0x100, 0x180, true)
+      commit(d, CSRMAP.pmpcfg0, 0x8f00)
+      commit(d, CSRMAP.pmpaddr0, 0)
+      commit(d, CSRMAP.pmpaddr0 + 1, 0)
+      commit(d, CSRMAP.pmpcfg0, 0)
+      bounds(1, 0x100, 0x180, true)
+      d.io.mmu_context.pmpaddr(0).expect(0x40.U)
+      // An unlocked NA4 entry and then a NAPOT entry decode their new bounds.
+      commit(d, CSRMAP.pmpaddr0 + 2, 0x80)
+      commit(d, CSRMAP.pmpcfg0, BigInt(0x17) << 16)
+      bounds(2, 0x200, 0x204, true)
+      commit(d, CSRMAP.pmpaddr0 + 2, 0x8f)
+      commit(d, CSRMAP.pmpcfg0, BigInt(0x1f) << 16)
+      bounds(2, 0x200, 0x280, true)
+      d.clock.step(3)
+    }
+  }
   "implement PMP CSRs and Sstc time/stimecmp pending state" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
       reset(dut)

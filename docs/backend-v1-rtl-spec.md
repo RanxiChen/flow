@@ -7,7 +7,7 @@
 - 保持 ID/RR、EX、MEM、WB 四级顺序执行/提交；EX/MEM/WB 对齐 L1D S0/S1/S2。仅普通 GPR/FPR 物理写增加 WB 后的 W2，L1D 迟到结果增加单项 lateReg，不移动提交点。[SOC-3b§1]
 - 本条指令 EX 拍为 E，无保持时 MEM=E+1、WB=E+2；所有事件按当前组合信号、周期末上升沿更新测量。[backend-timing-contract.md§0]
 - T01 的 A01–A08、S01–S16、整数真实源表、MDU 提交/kill/保持全部沿用；T01 仅适用于旧阻塞访存/FPU 的条款由下述 v1 条款替代。[tasks/V1-BE-backend-spec-and-rtl.md§1–2]
-- 不改前端、L1D/L2/MMU 对外协议与 CVFPU 内部；允许的新增寄存边界仅 W2/单项 lateReg，不新增其它队列、结果缓存或特定地址/PC/指令序列行为。[SOC-3b§1][backend-timing-contract.md§3–4]
+- 不改前端、L1D/L2/MMU 对外事务协议；后端新增寄存边界仅 W2/单项 lateReg，不新增其它队列、结果缓存或特定地址/PC/指令序列行为。SOC-3d 第一批允许 §5 指定的 CVFPU 内部计算边界和可选 TLB 候选地址旁带，不改变后端级数或提交点。[SOC-3b§1][backend-timing-contract.md§3–4][tasks/SOC-3d-timing-batch-plan.md]
 
 ## 1. 寄存器与单元
 
@@ -66,7 +66,7 @@
 
 ## 5. FPU
 
-- `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线；CVFPU 算术、PipeRegs、UnitTypes 和 PipeConfig 不改。[tasks/V1-BE-backend-spec-and-rtl.md§2.1及3.6]
+- `FlowFpnewWrapper` 参数 TAG_WIDTH=log2(tableDepth)，TagType 使用相同 packed logic vector，tag_i/tag_o 直接接线。SOC-3d 第一批：ADDMUL 的 FP32/FP64 PipeRegs 从 3/4 改为 4/5；FP32 启用全精度乘积/对齐加数到宽加法之间的已有边界，FP64 增加归一化到舍入/状态之间的边界，各增加一拍内部延迟。舍入仍仅发生一次；数据、舍入模式、特殊值、UF 所需位、tag/mask/aux 同步保持和 flush，busy 覆盖新增有效项。UnitTypes、DISTRIBUTED、其余格式与操作组不变，T14/T15 的后端两端直连和 T16 按实际 CVFPU 延迟测量的规则保持。[tasks/SOC-3d-timing-batch-plan.md]
 - EX 将三个操作数、EX 确定的 rm/op/格式、目的送到原始 CVFPU input；接收同拍写 metadata 表，allocate 前进，无输入寄存级。SOC-3c C1：exFpIssued 保证 held EX 只接收一次；req.valid 不含 downHold/wbKill/allowEx，仅受本条已发及寄存 fatal/stopped 限制，resourceWait 的 FP 项仅在尚未发射时等待 ready；表满/killDrain 或 CVFPU 不 ready 时 EX 等待。[backend-timing-contract.md§1/T14]
 - commitCursor 从最老方向组合找 valid&&!committed 项；WB commit 只授权这一项并前进；WB kill 清所有未提交 valid，刚 commit 的项保留，committed 项不动。[tasks/V1-BE-backend-spec-and-rtl.md§2.1][backend-rtl-spec.md§4.2][自定]
 - `out_tag` 组合读表，valid&&committed 的输出直接参加后台仲裁；result fire 与 CVFPU out fire 同拍、无数据寄存级。[backend-timing-contract.md§1/T15]

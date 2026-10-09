@@ -14,10 +14,13 @@ class TlbResp extends Bundle {
   val hit = Bool(); val miss = Bool(); val pageFault = Bool(); val accessFault = Bool()
   val paddr = UInt(64.W)
 }
-class TlbPortIO extends Bundle {
+class TlbPortIO(val withPmpCandidate: Boolean = false) extends Bundle {
   val req = Flipped(Decoupled(new TlbReq))
   val resp = Valid(new TlbResp)
   val kill = Input(Bool())
+  // Internal timing sideband only. It has the same response cycle, is not
+  // permission-qualified, and must never authorize an access by itself.
+  val candidatePaddr = if (withPmpCandidate) Some(Output(UInt(64.W))) else None
 }
 class SfenceIO extends Bundle {
   val valid = Bool(); val rs1Nz = Bool(); val rs2Nz = Bool()

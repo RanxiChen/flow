@@ -119,6 +119,95 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.io.committedFpr.expect(0.U); d.io.busy.expect(false.B)
     }
   }
+  "SOC3d rounding boundary preserves all modes, subnormals, overflow and fused cancellation" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      for ((fmt, bits, frac, bias) <- Seq((BreezeFpFmt.S, 32, 23, 127), (BreezeFpFmt.D, 64, 52, 1023))) {
+        def box(x: BigInt): BigInt = if (bits == 32) (BigInt("ffffffff", 16) << 32) | x else x
+        val oneBits = BigInt(bias) << frac
+        val halfUlp = BigInt(bias - frac - 1) << frac
+        val neg = BigInt(1) << (bits - 1)
+        for (rm <- 0 until 5) {
+          val positive = transact(d, BreezeFpOp.ADD, 0, box(oneBits), box(halfUlp), fmt, rm)
+          positive mustBe Response(box(oneBits + (if (rm == 3 || rm == 4) 1 else 0)), 1)
+          val negative = transact(d, BreezeFpOp.ADD, 0, box(neg | oneBits), box(neg | halfUlp), fmt, rm)
+          negative mustBe Response(box(neg | (oneBits + (if (rm == 2 || rm == 4) 1 else 0))), 1)
+          val zero = transact(d, BreezeFpOp.ADD, 0, box(oneBits), box(neg | oneBits), fmt, rm)
+          zero mustBe Response(box(if (rm == 2) neg else BigInt(0)), 0)
+          val tiny = transact(d, BreezeFpOp.MUL, box(BigInt(1)), box(BigInt(bias - 1) << frac), fmt = fmt, rm = rm)
+          tiny mustBe Response(box(if (rm == 3 || rm == 4) BigInt(1) else BigInt(0)), 3)
+          val max = ((BigInt(1) << (bits - 1)) - (BigInt(1) << frac)) - 1
+          val over = transact(d, BreezeFpOp.MUL, box(max), box(BigInt(bias + 1) << frac), fmt = fmt, rm = rm)
+          over mustBe Response(box(if (rm == 1 || rm == 2) max else max + 1), 5)
+        }
+        val normal = transact(d, BreezeFpOp.MUL, box(BigInt(1) << frac), box(oneBits), fmt = fmt)
+        normal mustBe Response(box(BigInt(1) << frac), 0)
+        val sub = transact(d, BreezeFpOp.MUL, box(BigInt(1) << frac), box(BigInt(bias - 1) << frac), fmt = fmt)
+        sub mustBe Response(box(BigInt(1) << (frac - 1)), 0)
+        // Tininess is checked after rounding to precision, before limiting
+        // the exponent range. A tie at min-normal still has UF; a product
+        // just below min-normal that rounds to normal at full precision does not.
+        val tinyBoundary = transact(d, BreezeFpOp.MUL,
+          box(BigInt(1) << frac), box(oneBits - 1), fmt = fmt)
+        tinyBoundary mustBe Response(box(BigInt(1) << frac), 3)
+        val normalBoundary = transact(d, BreezeFpOp.MUL,
+          box((BigInt(1) << frac) + 1), box(oneBits - 2), fmt = fmt)
+        normalBoundary mustBe Response(box(BigInt(1) << frac), 1)
+        // (1+2^-p)*(1-2^-p)-1 = -2^(-2p), one final rounding.
+        val fused = transact(d, BreezeFpOp.FMADD, box(oneBits + 1), box(oneBits - 2), box(neg | oneBits), fmt)
+        fused mustBe Response(box(neg | (BigInt(bias - 2 * frac) << frac)), 0)
+      }
+    }
+  }
+  "SOC3d mixed FP32 FP64 stream preserves data flags and destinations under random output stalls" in {
+    simulate(new FpProbe) { d =>
+      init(d)
+      val rng = new scala.util.Random(0x3df00dL)
+      val expected = scala.collection.mutable.Map.empty[Int, Response]
+      val seen = scala.collection.mutable.Set.empty[Int]
+      var issued = 0
+      var commits = List(false, false)
+      var stalls = 0
+      for (cycle <- 0 until 180) {
+        val ready = cycle >= 24 && rng.nextBoolean()
+        d.io.result.ready.poke(ready.B); d.io.commit.poke(commits.head.B)
+        val sending = issued < 16
+        d.io.req.valid.poke(sending.B)
+        if (sending) {
+          val single = issued % 2 == 0
+          d.io.req.bits.srcFmt.poke((if (single) BreezeFpFmt.S else BreezeFpFmt.D).U)
+          d.io.req.bits.dstFmt.poke((if (single) BreezeFpFmt.S else BreezeFpFmt.D).U)
+          d.io.req.bits.operation.poke(BreezeFpOp.ADD.U); d.io.req.bits.rd.idx.poke(issued.U)
+          d.io.req.bits.rm.poke((issued % 5).U)
+          val special = issued % 4 < 2
+          val b = if (special) { if (single) BigInt("ffffffff7f800000", 16) else inf }
+            else { if (single) BigInt("ffffffff3f800000", 16) else one }
+          val c = if (special) { if (single) BigInt("ffffffffff800000", 16) else negInf }
+            else { if (single) BigInt("ffffffff33800000", 16) else BigInt("3ca0000000000000", 16) }
+          d.io.req.bits.operandB.poke(b.U); d.io.req.bits.operandC.poke(c.U)
+          val result = if (special) {
+            if (single) BigInt("ffffffff7fc00000", 16) else BigInt("7ff8000000000000", 16)
+          } else b + (if (issued % 5 == 3 || issued % 5 == 4) 1 else 0)
+          expected(issued) = Response(result, if (special) 16 else 1)
+        }
+        val fire = sending && d.io.req.ready.peek().litToBoolean
+        if (d.io.result.valid.peek().litToBoolean) {
+          val rd = d.io.result.bits.rd.idx.peek().litValue.toInt
+          val actual = Response(d.io.result.bits.data.peek().litValue, d.io.result.bits.flags.peek().litValue)
+          actual mustBe expected(rd); d.io.result.bits.rd.isFp.expect(true.B)
+          // Cross-unit arbitration may change its selected tag while stalled
+          // (backend-v1 spec §5); account completions only on actual fire.
+          if (ready) { seen.contains(rd) mustBe false; seen += rd }
+          else stalls += 1
+        }
+        d.clock.step(); commits = commits.tail :+ fire
+        if (fire) issued += 1
+      }
+      issued mustBe 16; seen.toSet mustBe (0 until 16).toSet
+      stalls must be > 0
+      d.io.busy.expect(false.B); d.io.committedFpr.expect(0.U)
+    }
+  }
   "P07_component_S04_S08: cross-unit out-of-order results and cumulative flags" in {
     simulate(new FpProbe) { d =>
       init(d)

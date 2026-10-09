@@ -49,23 +49,32 @@ class Scoreboard extends Module {
   val fSet = mask(io.set.valid, io.set.bits.rd, true)
   val gClear = mask(io.clear.valid, io.clear.bits, false)
   val fClear = mask(io.clear.valid, io.clear.bits, true)
-  val gEffective = gprBusy & ~gClear
-  val fEffective = fprBusy & ~fClear
   gprBusy := (gprBusy & ~gClear) | gSet
   fprBusy := (fprBusy & ~fClear) | fSet
   when(io.set.valid && writable(io.set.bits.rd)) {
     when(io.set.bits.rd.isFp) { fprSource(io.set.bits.rd.idx) := io.set.bits.source }
       .otherwise { gprSource(io.set.bits.rd.idx) := io.set.bits.source }
   }
+  // Read registered ownership in parallel with completion comparison. The
+  // late clear must not decode a 32-bit mask before ID can read its busy bit.
+  val operandBusy = io.operands.map { operand =>
+    val rd = operand.rd
+    val busy = Mux(rd.isFp, fprBusy(rd.idx), gprBusy(rd.idx))
+    val completing = io.clear.valid && writable(io.clear.bits) &&
+      io.clear.bits.asUInt === rd.asUInt
+    operand.used && writable(rd) && busy && !completing
+  }
+  val pipeMatches = io.operands.map { operand =>
+    io.pipe.map(p => operand.used && writable(operand.rd) && p.valid &&
+      writable(p.bits.rd) && p.bits.rd.asUInt === operand.rd.asUInt)
+  }
+  // Attribution is for counters only; no source lookup feeds the ID hazard.
   val matches = (0 until 4).map { src =>
-    io.operands.map { operand =>
-      val rd = operand.rd
-      val sb = Mux(rd.isFp,
-        fEffective(rd.idx) && fprSource(rd.idx) === src.U,
-        gEffective(rd.idx) && gprSource(rd.idx) === src.U)
-      val pipe = io.pipe.map(p => p.valid && writable(p.bits.rd) &&
-        p.bits.source === src.U && p.bits.rd.asUInt === rd.asUInt).reduce(_ || _)
-      operand.used && writable(rd) && (sb || pipe)
+    io.operands.indices.map { n =>
+      val rd = io.operands(n).rd
+      val source = Mux(rd.isFp, fprSource(rd.idx), gprSource(rd.idx))
+      (operandBusy(n) && source === src.U) ||
+        io.pipe.indices.map(i => pipeMatches(n)(i) && io.pipe(i).bits.source === src.U).reduce(_ || _)
     }.reduce(_ || _)
   }
   io.csrDrainOk := !(gprBusy.orR || fprBusy.orR || io.fpFlagsPending || io.pipe.map(_.valid).reduce(_ || _))
@@ -75,7 +84,8 @@ class Scoreboard extends Module {
         (fprBusy(idx) && fprSource(idx) === src.U)
     }.reduce(_ || _) || io.pipe.map(p => p.valid && p.bits.source === src.U).reduce(_ || _)
   }
-  io.hazard := matches.reduce(_ || _) || (io.csr && !io.csrDrainOk)
+  io.hazard := operandBusy.reduce(_ || _) || pipeMatches.flatten.reduce(_ || _) ||
+    (io.csr && !io.csrDrainOk)
   for (src <- 0 until 4) {
     io.sourceStall(src) := io.idValid && !io.idLeave &&
       (matches(src) || (io.csr && (csrSources(src) || ((src == LongSource.FPU).B && io.fpFlagsPending))))

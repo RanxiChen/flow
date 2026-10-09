@@ -52,6 +52,31 @@ class ScoreboardSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.set.valid.poke(false.B); d.io.clear.valid.poke(false.B); d.io.gprBusy.expect(64.U)
     }
   }
+  "SOC3d completing one operand cannot release another bank or an in-flight producer" in {
+    simulate(new Scoreboard) { d =>
+      idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
+      for (fp <- Seq(false, true)) {
+        d.io.set.valid.poke(true.B); d.io.set.bits.rd.idx.poke(7.U)
+        d.io.set.bits.rd.isFp.poke(fp.B); d.io.set.bits.source.poke((if (fp) 3 else 2).U)
+        d.clock.step()
+      }
+      d.io.set.valid.poke(false.B)
+      for (n <- 0 until 2) {
+        d.io.operands(n).used.poke(true.B); d.io.operands(n).rd.idx.poke(7.U)
+        d.io.operands(n).rd.isFp.poke((n == 1).B)
+      }
+      d.io.clear.valid.poke(true.B); d.io.clear.bits.idx.poke(7.U)
+      d.io.clear.bits.isFp.poke(false.B)
+      d.io.hazard.expect(true.B); d.io.sourceStall(2).expect(false.B); d.io.sourceStall(3).expect(true.B)
+      d.io.operands(1).used.poke(false.B); d.io.hazard.expect(false.B)
+      d.io.pipe(0).valid.poke(true.B); d.io.pipe(0).bits.rd.idx.poke(7.U)
+      d.io.pipe(0).bits.rd.isFp.poke(false.B); d.io.pipe(0).bits.source.poke(0.U)
+      d.io.hazard.expect(true.B); d.io.sourceStall(0).expect(true.B)
+      d.io.pipe(0).valid.poke(false.B); d.clock.step()
+      d.io.clear.bits.isFp.poke(true.B); d.clock.step(); d.io.clear.valid.poke(false.B)
+      d.io.gprBusy.expect(0.U); d.io.fprBusy.expect(0.U)
+    }
+  }
   "T17_component_S14_S16: CSR uses current busy and waits one cycle beyond final write" in {
     simulate(new Scoreboard) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)

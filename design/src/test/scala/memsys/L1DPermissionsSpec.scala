@@ -17,8 +17,8 @@ class L1DPermissionHarness(killOnFault: Boolean = false) extends Module {
     val coherenceRequest = Output(Bool())
     val mmioRequest = Output(Bool())
   })
-  val cache = Module(new L1DCache(BreezeMemGeometry.singleCore))
-  val mmu = Module(new Sv39Mmu)
+  val cache = Module(new L1DCache(BreezeMemGeometry.singleCore, withPmpCandidate = true))
+  val mmu = Module(new Sv39Mmu(withPmpCandidate = true))
   cache.io.core <> io.core; cache.io.ptw <> io.ptw
   if (killOnFault) {
     val fault = cache.io.core.resp.valid && cache.io.core.resp.bits.kind === L1DRespKind.Exc

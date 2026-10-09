@@ -104,8 +104,11 @@ object MmuCmd extends ChiselEnum { val Fetch, Load, Store = Value }
 | `resp.bits.accessFault` | Out | 只来自 PTW 读 PTE 时 D-cache 返回的 access fault |
 | `resp.bits.paddr` | Out, 64 | 仅 `hit` 时有意义 |
 | `kill` | In | 请求方冲刷：丢弃该侧所有未完成的请求 |
+| `candidatePaddr` | 可选 Out, 64 | SOC-3d 内部时序旁带：与 resp 同拍的 PA 候选；不经过页权限/fault 资格。只供下游并行计算 PMP/PMA，不授权访问。 |
 
 `resp.valid` 时 `hit / miss / pageFault / accessFault` 恰好一个为 1（断言）。异常码由请求方根据自己的 `cmd` 映射（取指、load、store/AMO 三类）。
+
+SOC-3d 第一批启用 `withPmpCandidate=true` 的生产集群；默认 false 的独立模块保留原端口。候选为 `translate ? pa : s1Vaddr`，只在成功 hit 时保证等于 `resp.bits.paddr`；miss/fault/kill 时不得使用候选发请求或产生副作用。原有 resp 的优先级、paddr 置零、valid/ready/kill、流水拍数与 PTW/sfence 行为保持。
 
 ### 4.3 sfence 输入 `SfenceIO`
 
