@@ -379,7 +379,7 @@ class BreezeBackend(
   fpIn.intFmt := exFp.intFmt
   fpIn.rd.idx := ex.rd_addr
   fpIn.rd.isFp := exBank
-  val resourceWait = exMem && !io.l1d.req.ready
+  val resourceWait = exMem && !io.l1d.canAccept
   exAdvance := allowEx && !resourceWait
   mulUnit.io.commit := mulPortCommitD
   divUnit.io.commit := RegNext(wbCommit && wb.div, false.B)

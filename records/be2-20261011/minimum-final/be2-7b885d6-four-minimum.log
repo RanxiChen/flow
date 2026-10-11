@@ -1,0 +1,111 @@
+7b885d6f758dc5c299bf78d8bd00f537743a8986
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-b3-8ea5db5/design
++ BE2_FIB_ELF=/home/chen/FUN/flow-runs/be2-fibonacci-64k.elf
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4
++ taskset -c 4-7 nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.config.BreezeCoreConfigSpec' 'testOnly flow.cluster.BE2MinimumSpec' 'testOnly flow.cluster.ClusterProgramSpec -- -t "multi-hart programs, small (4 harts), Linux profile"'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BreezeCoreConfigSpec:
+[info] - single deployment inherits the four-hart configuration except profile and hart count
+[info] - privilege profiles should keep MCU as default and enable Linux Bare mode explicitly
+[info] - BreezeCoreConfig should derive baseline frontend and backend branch predictor settings when requested
+[info] - BreezeCoreConfig should derive gshare frontend and backend branch predictor settings
+[info] - parameterless defaults select GShare at every Scala layer
+[info] - cluster presets carry the memory geometry as the single entry point
+[info] - default geometry derives the l1d-rtl-spec §0.2 constants
+[info] - cluster presets keep explicit baseline without changing geometry
+[info] - geometry outside the v1 constraints is rejected at construction
+[info] Run completed in 493 milliseconds.
+[info] Total number of tests run: 9
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 9, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 5 s, completed Oct 11, 2026, 4:25:51 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2MinimumSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - minimum RV64I M A C and CSR programs retain their original pass signatures (single)
+[info]   + rv64ui-p-add passed=true cycles=7089 retired=509 
+[info]   + rv64ui-p-lw passed=true cycles=4664 retired=322 
+[info]   + rv64ui-p-sw passed=true cycles=7627 retired=553 
+[info]   + rv64ui-p-beq passed=true cycles=4783 retired=330 
+[info]   + rv64um-p-mul passed=true cycles=6955 retired=499 
+[info]   + rv64um-p-div passed=true cycles=2420 retired=148 
+[info]   + rv64ua-p-amoadd_d passed=true cycles=1884 retired=108 
+[info]   + rv64ua-p-lrsc passed=true cycles=69903 retired=6282 
+[info]   + rv64uc-p-rvc passed=true cycles=4182 retired=299 
+[info]   + rv64mi-p-csr passed=true cycles=4180 retired=278 
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - minimum RV64I M A C and CSR programs retain their original pass signatures (small)
+[info]   + rv64ui-p-add passed=true cycles=7862 retired=509/1591/1590/1590 
+[info]   + rv64ui-p-lw passed=true cycles=5420 retired=322/981/980/979 
+[info]   + rv64ui-p-sw passed=true cycles=8400 retired=553/1726/1725/1724 
+[info]   + rv64ui-p-beq passed=true cycles=5560 retired=330/1016/1015/1014 
+[info]   + rv64um-p-mul passed=true cycles=7732 retired=499/1559/1558/1557 
+[info]   + rv64um-p-div passed=true cycles=3194 retired=148/424/423/423 
+[info]   + rv64ua-p-amoadd_d passed=true cycles=2648 retired=108/288/287/286 
+[info]   + rv64ua-p-lrsc passed=true cycles=70674 retired=6282/17294/17293/17293 
+[info]   + rv64uc-p-rvc passed=true cycles=4930 retired=299/858/857/857 
+[info]   + rv64mi-p-csr passed=true cycles=4939 retired=278/859/858/858 
+[info] Run completed in 1 minute, 49 seconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 2, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 109 s (01:49), completed Oct 11, 2026, 4:27:40 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ClusterProgramSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - multi-hart programs, small (4 harts), Linux profile
+[info]   + mh_amo_lock_4: PASS cycles=116780 retired=8939/7886/6442/7177 h0=pass h1=pass h2=pass h3=pass mh_amo_lock_4.elf: all 4 hart(s) passed at cycle 116779
+[info] mh_lrsc_counter_4: PASS cycles=27904 retired=1290/1284/1280/1276 h0=pass h1=pass h2=pass h3=pass mh_lrsc_counter_4.elf: all 4 hart(s) passed at cycle 27903
+[info] mh_message_pass_4: PASS cycles=29660 retired=2239/2407/2395/2379 h0=pass h1=pass h2=pass h3=pass mh_message_pass_4.elf: all 4 hart(s) passed at cycle 29659
+[info] mh_ipi_4: PASS cycles=19417 retired=1532/550/550/545 h0=pass h1=pass h2=pass h3=pass mh_ipi_4.elf: all 4 hart(s) passed at cycle 19416
+[info] mh_sv39_4: PASS cycles=10185 retired=545/526/534/541 h0=pass h1=pass h2=pass h3=pass mh_sv39_4.elf: all 4 hart(s) passed at cycle 10184
+[info] mh_fencei_4: PASS cycles=5262 retired=271/283/283/275 h0=pass h1=pass h2=pass h3=pass mh_fencei_4.elf: all 4 hart(s) passed at cycle 5261 
+[info] Run completed in 1 minute, 39 seconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 99 s (01:39), completed Oct 11, 2026, 4:29:20 PM

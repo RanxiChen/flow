@@ -1,0 +1,107 @@
+6ac3415e04fe99c8abb0f6ba6989bbea36524bcb
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-b3-8ea5db5/design
++ BE2_FIB_ELF=/home/chen/FUN/flow-runs/be2-fibonacci-64k.elf
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4
++ taskset -c 4-7 nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.cluster.BE2MinimumSpec' 'testOnly flow.cluster.ClusterProgramSpec -- -t "single-hart system programs, single core, Linux profile"' 'testOnly flow.cluster.BE2PerformanceSpec'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] waiting for lock on /home/chen/.sbt/boot/sbt.boot.lock to be available...
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] waiting for lock on /home/chen/.ivy2/.sbt.ivy.lock to be available...
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] compiling 3 Scala sources to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/test-classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/test-classes ...
+[warn] /home/chen/FUN/flow-be2-b3-8ea5db5/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2MinimumSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - minimum RV64I M A C and CSR programs retain their original pass signatures
+[info]   + rv64ui-p-add passed=true cycles=7089 retired=509 
+[info]   + rv64ui-p-lw passed=true cycles=4664 retired=322 
+[info]   + rv64ui-p-sw passed=true cycles=7627 retired=553 
+[info]   + rv64ui-p-beq passed=true cycles=4783 retired=330 
+[info]   + rv64um-p-mul passed=true cycles=6955 retired=499 
+[info]   + rv64um-p-div passed=true cycles=2420 retired=148 
+[info]   + rv64ua-p-amoadd_d passed=true cycles=1884 retired=108 
+[info]   + rv64ua-p-lrsc passed=true cycles=69903 retired=6282 
+[info]   + rv64uc-p-rvc passed=true cycles=4182 retired=299 
+[info]   + rv64mi-p-csr passed=true cycles=4180 retired=278 
+[info] Run completed in 31 seconds, 884 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 46 s, completed Oct 11, 2026, 4:21:04 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ClusterProgramSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - single-hart system programs, single core, Linux profile
+[info]   + fencei_smc: PASS cycles=5831 retired=350 h0=pass fencei_smc.elf: all 1 hart(s) passed at cycle 5830
+[info] sv39_basic: PASS cycles=11574 retired=778 h0=pass sv39_basic.elf: all 1 hart(s) passed at cycle 11573
+[info] sv39_ptw_cache: PASS cycles=11824 retired=869 h0=pass sv39_ptw_cache.elf: all 1 hart(s) passed at cycle 11823
+[info] trap_misc: PASS cycles=28222 retired=2092 h0=pass trap_misc.elf: all 1 hart(s) passed at cycle 28221
+[info] mmio_console: PASS cycles=48511 retired=4258 h0=pass mmio_console.elf: all 1 hart(s) passed at cycle 48510
+[info] timer_irq: PASS cycles=7557 retired=441 h0=pass timer_irq.elf: all 1 hart(s) passed at cycle 7556
+[info] lrsc_amo_single: PASS cycles=15934 retired=1127 h0=pass lrsc_amo_single.elf: all 1 hart(s) passed at cycle 15933 
+[info] Run completed in 33 seconds, 285 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 34 s, completed Oct 11, 2026, 4:21:37 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2PerformanceSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - P1 matched cold programs and original Fibonacci firmware
+[info]   + P1 lrsc_amo_single cycles=15934 retired=1127 replay=0/0/3/2/0/1/0 soloWB=266 
+[info]   + P1 trap_misc cycles=28222 retired=2092 replay=0/0/5/2/0/0/0 soloWB=67 
+[info]   + P1 mmio_console cycles=48511 retired=4258 replay=0/0/3/2/41/0/0 soloWB=307 
+[info]   + P1 fibonacci cycles=17886 retired=1329 replay=0/0/4/0/120/0/0 soloWB=724 
+[info] Run completed in 33 seconds, 162 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 33 s, completed Oct 11, 2026, 4:22:11 PM

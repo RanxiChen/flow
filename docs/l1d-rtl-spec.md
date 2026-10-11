@@ -78,6 +78,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | --- | --- | --- |
 | `req` | 入，Decoupled | EX 拍：`op`（Load/Store/LR/SC/AMO/Fence）、`vaddr` 64、`size` 2、`signed`、`amoFunc`、`aq`、`rl`、`wdata` 64、`rd`{isFp, idx 5}、`isFlw`（NaN-boxing） |
 | `req.ready` | 出 | 0 = S0 冲突、入口关闭或级保持；同拍反压 EX |
+| `canAccept` | 出 | BE2：对当前请求按相同 S0 优先级计算、排除 CPU kill 的接收条件；EX 只用它判断推进。无 kill 时与 req.ready 相等；kill 时 req.ready 仍为 0，canAccept 不能授权 cache/TLB 副作用 |
 | `s1Kill` | 入 | 后端 MEM 级作废 S1 请求；L1D 当拍作废 S1，不依赖当拍 `tlb.resp.valid`（K6） |
 | `s2Kill` | 入 | WB 发起的 kill（更老异常、中断、xRET）；作废 S2 与 S1 |
 | `resp` | 出，Valid | S2 判定：`kind`（Done / Mshr / Exc）、`data` 64、`excCause`、`tval`；每请求恰一次 |
@@ -92,6 +93,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 ### 1.2 MMU
 
 - `tlb: TlbPortIO`（发出方）：`req.valid` = S0 有 CPU 请求；`cmd` = Load（Load、LR）/ Store（Store、SC、AMO）；`kill` = `s1Kill || s2Kill`。
+- BE2 的 `tlb.canAccept` 仅表示 `!missValid && !sfence.valid && !sfS1Valid`；用于上述 admission 仲裁，默认 dTLB 的 req.ready/fire 仍保留 kill 抑制。iTLB 的既有 pipelinedFetchKill 规则不变。
 - `ptw: Flipped(PtwMemIO)`：PTW 入口，见第 7 节。
 - `idle` 不经 L1D。
 

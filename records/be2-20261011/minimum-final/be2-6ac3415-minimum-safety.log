@@ -1,0 +1,722 @@
+6ac3415e04fe99c8abb0f6ba6989bbea36524bcb
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design
++ BE2_LEDGER_DIR=/home/chen/FUN/flow-runs/be2-6ac3415-ledgers
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4
++ taskset -c 0-3 nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.backend.BackendSoc3cSpec' 'testOnly flow.backend.BackendContractSpec -- -z "BE2 R6" -z "flags-only" -z "P09" -z "P10" -z "S05_S08"' 'testOnly flow.backend.BE2PerturbationSpec' 'testOnly flow.memsys.L1DL2MultiCoreFaultSpec -- -z "store held" -z "two cores, seed 91" -z "two cores, seed 92"' 'testOnly flow.memsys.L1DL2LitmusSpec -- -t "SB+fence.rw.rw (2 cores, seed 35): no forbidden outcome, every required outcome observed"'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/)
+[info] compiling 2 Scala sources to /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BackendSoc3cSpec:
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00000463
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x03700293
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00000463
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x03700293
+[CYCLE] c=         9 kind=gpr rd= 5 data=0x0000000000000037
+[CYCLE] c=        52 kind=late rd= 1 error=0
+[CYCLE] c=        53 kind=gpr rd= 1 data=0x0000000000001234
+[info] - D1 branch advances and redirects once while an older committed miss is outstanding
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00000463
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[info] - D1 older WB fault overrides an earlier EX redirect without committing the branch
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00100f13
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00df1f13
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00100f13
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00df1f13
+[CYCLE] c=         5 kind=gpr rd=30 data=0x0000000000000001
+[CYCLE] c=         6 kind=id pc=0x0000000000000408 inst=0x300f2073
+[CYCLE] c=         6 kind=gpr rd=30 data=0x0000000000002000
+[CYCLE] c=         7 kind=ex pc=0x0000000000000408
+[CYCLE] c=        10 kind=commit pc=0x0000000000000408 inst=0x300f2073
+[CYCLE] c=        11 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        12 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        12 kind=ex pc=0x000000000000040c
+[CYCLE] c=        13 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        13 kind=ex pc=0x0000000000000410
+[CYCLE] c=        14 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        14 kind=ex pc=0x0000000000000414
+[CYCLE] c=        15 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x0000000000000418
+[CYCLE] c=        15 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        16 kind=id pc=0x0000000000000420 inst=0x00003083
+[CYCLE] c=        16 kind=ex pc=0x000000000000041c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        17 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        17 kind=ex pc=0x0000000000000420
+[CYCLE] c=        17 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x0000000000000428 inst=0x02000153
+[CYCLE] c=        18 kind=ex pc=0x0000000000000424
+[CYCLE] c=        18 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        19 kind=ex pc=0x0000000000000428
+[CYCLE] c=        19 kind=commit pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        19 kind=fpIn pc=0x0000000000000428 rd= 2
+[CYCLE] c=        20 kind=commit pc=0x0000000000000420 inst=0x00003083
+[CYCLE] c=        21 kind=commit pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        22 kind=commit pc=0x0000000000000428 inst=0x02000153
+[CYCLE] c=        28 kind=fpOut fp=1 rd= 2
+[CYCLE] c=        28 kind=fpr rd= 2 data=0x0000000000000000
+[CYCLE] c=        58 kind=late rd= 1 error=0
+[CYCLE] c=        59 kind=gpr rd= 1 data=0x0000000000001234
+[info] - C1 FP request fires once and advances while an older committed miss is outstanding
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00000463
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x00803283
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00000463
+[CYCLE] c=        10 kind=id pc=0x0000000000000414 inst=0x04200313
+[CYCLE] c=        10 kind=ex pc=0x0000000000000410
+[CYCLE] c=        11 kind=id pc=0x0000000000000418 inst=0x04d00393
+[CYCLE] c=        11 kind=ex pc=0x0000000000000414
+[CYCLE] c=        12 kind=ex pc=0x0000000000000418
+[CYCLE] c=        13 kind=commit pc=0x0000000000000410 inst=0x00803283
+[CYCLE] c=        14 kind=commit pc=0x0000000000000414 inst=0x04200313
+[CYCLE] c=        14 kind=gpr rd= 5 data=0x0000000000000037
+[CYCLE] c=        15 kind=commit pc=0x0000000000000418 inst=0x04d00393
+[CYCLE] c=        15 kind=gpr rd= 6 data=0x0000000000000042
+[CYCLE] c=        16 kind=gpr rd= 7 data=0x000000000000004d
+[CYCLE] c=        30 kind=late rd= 1 error=0
+[CYCLE] c=        31 kind=gpr rd= 1 data=0x0000000000001234
+[info] - D1 production skid retains corrected instructions while L1D S0 holds EX
+[info] Run completed in 41 seconds, 195 milliseconds.
+[info] Total number of tests run: 4
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 4, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 46 s, completed Oct 11, 2026, 4:21:04 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BackendContractSpec:
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00100f13
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00df1f13
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00100f13
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00df1f13
+[CYCLE] c=         5 kind=gpr rd=30 data=0x0000000000000001
+[CYCLE] c=         6 kind=id pc=0x0000000000000408 inst=0x300f2073
+[CYCLE] c=         6 kind=gpr rd=30 data=0x0000000000002000
+[CYCLE] c=         7 kind=ex pc=0x0000000000000408
+[CYCLE] c=        10 kind=commit pc=0x0000000000000408 inst=0x300f2073
+[CYCLE] c=        11 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        12 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        12 kind=ex pc=0x000000000000040c
+[CYCLE] c=        13 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        13 kind=ex pc=0x0000000000000410
+[CYCLE] c=        14 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        14 kind=ex pc=0x0000000000000414
+[CYCLE] c=        15 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x0000000000000418
+[CYCLE] c=        15 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        16 kind=id pc=0x0000000000000420 inst=0x20003087
+[CYCLE] c=        16 kind=ex pc=0x000000000000041c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        17 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        17 kind=ex pc=0x0000000000000420
+[CYCLE] c=        17 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        18 kind=ex pc=0x0000000000000424
+[CYCLE] c=        18 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        19 kind=id pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        19 kind=ex pc=0x0000000000000428
+[CYCLE] c=        19 kind=commit pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        20 kind=id pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        20 kind=ex pc=0x000000000000042c
+[CYCLE] c=        20 kind=commit pc=0x0000000000000420 inst=0x20003087
+[CYCLE] c=        21 kind=id pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        21 kind=ex pc=0x0000000000000430
+[CYCLE] c=        21 kind=commit pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        21 kind=fpr rd= 1 data=0x7ff8000000000000
+[CYCLE] c=        22 kind=id pc=0x0000000000000438 inst=0xc0008053
+[CYCLE] c=        22 kind=ex pc=0x0000000000000434
+[CYCLE] c=        22 kind=commit pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        23 kind=ex pc=0x0000000000000438
+[CYCLE] c=        23 kind=commit pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        23 kind=fpIn pc=0x0000000000000438 rd= 0
+[CYCLE] c=        24 kind=commit pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        25 kind=commit pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        26 kind=commit pc=0x0000000000000438 inst=0xc0008053
+[CYCLE] c=        29 kind=fpOut fp=0 rd= 0
+[CYCLE] c=        30 kind=id pc=0x000000000000043c inst=0x001022f3
+[CYCLE] c=        31 kind=ex pc=0x000000000000043c
+[CYCLE] c=        34 kind=commit pc=0x000000000000043c inst=0x001022f3
+[CYCLE] c=        35 kind=id pc=0x0000000000000440 inst=0x00000013
+[CYCLE] c=        35 kind=gpr rd= 5 data=0x0000000000000010
+[CYCLE] c=        36 kind=id pc=0x0000000000000444 inst=0x00000013
+[CYCLE] c=        36 kind=ex pc=0x0000000000000440
+[CYCLE] c=        37 kind=id pc=0x0000000000000448 inst=0x00000013
+[CYCLE] c=        37 kind=ex pc=0x0000000000000444
+[CYCLE] c=        38 kind=id pc=0x000000000000044c inst=0x00000013
+[CYCLE] c=        38 kind=ex pc=0x0000000000000448
+[CYCLE] c=        39 kind=id pc=0x0000000000000450 inst=0x00000013
+[CYCLE] c=        39 kind=ex pc=0x000000000000044c
+[CYCLE] c=        39 kind=commit pc=0x0000000000000440 inst=0x00000013
+[CYCLE] c=        40 kind=id pc=0x0000000000000454 inst=0x00000013
+[CYCLE] c=        40 kind=ex pc=0x0000000000000450
+[CYCLE] c=        40 kind=commit pc=0x0000000000000444 inst=0x00000013
+[CYCLE] c=        41 kind=id pc=0x0000000000000458 inst=0x00000013
+[CYCLE] c=        41 kind=ex pc=0x0000000000000454
+[CYCLE] c=        41 kind=commit pc=0x0000000000000448 inst=0x00000013
+[CYCLE] c=        42 kind=id pc=0x000000000000045c inst=0x00000013
+[CYCLE] c=        42 kind=ex pc=0x0000000000000458
+[CYCLE] c=        42 kind=commit pc=0x000000000000044c inst=0x00000013
+[CYCLE] c=        43 kind=id pc=0x0000000000000460 inst=0x00000013
+[CYCLE] c=        43 kind=ex pc=0x000000000000045c
+[CYCLE] c=        43 kind=commit pc=0x0000000000000450 inst=0x00000013
+[CYCLE] c=        44 kind=id pc=0x0000000000000464 inst=0x00000013
+[CYCLE] c=        44 kind=ex pc=0x0000000000000460
+[CYCLE] c=        44 kind=commit pc=0x0000000000000454 inst=0x00000013
+[CYCLE] c=        45 kind=id pc=0x0000000000000468 inst=0x00000013
+[CYCLE] c=        45 kind=ex pc=0x0000000000000464
+[CYCLE] c=        45 kind=commit pc=0x0000000000000458 inst=0x00000013
+[CYCLE] c=        46 kind=id pc=0x000000000000046c inst=0x00000013
+[CYCLE] c=        46 kind=ex pc=0x0000000000000468
+[CYCLE] c=        46 kind=commit pc=0x000000000000045c inst=0x00000013
+[CYCLE] c=        47 kind=id pc=0x0000000000000470 inst=0x00000013
+[CYCLE] c=        47 kind=ex pc=0x000000000000046c
+[CYCLE] c=        47 kind=commit pc=0x0000000000000460 inst=0x00000013
+[CYCLE] c=        48 kind=id pc=0x0000000000000474 inst=0x00000013
+[CYCLE] c=        48 kind=ex pc=0x0000000000000470
+[CYCLE] c=        48 kind=commit pc=0x0000000000000464 inst=0x00000013
+[CYCLE] c=        49 kind=id pc=0x0000000000000478 inst=0x00000013
+[CYCLE] c=        49 kind=ex pc=0x0000000000000474
+[CYCLE] c=        49 kind=commit pc=0x0000000000000468 inst=0x00000013
+[CYCLE] c=        50 kind=id pc=0x000000000000047c inst=0x00000013
+[CYCLE] c=        50 kind=ex pc=0x0000000000000478
+[CYCLE] c=        50 kind=commit pc=0x000000000000046c inst=0x00000013
+[CYCLE] c=        51 kind=id pc=0x0000000000000480 inst=0x00000013
+[CYCLE] c=        51 kind=ex pc=0x000000000000047c
+[CYCLE] c=        51 kind=commit pc=0x0000000000000470 inst=0x00000013
+[CYCLE] c=        52 kind=id pc=0x0000000000000484 inst=0x00000013
+[CYCLE] c=        52 kind=ex pc=0x0000000000000480
+[CYCLE] c=        52 kind=commit pc=0x0000000000000474 inst=0x00000013
+[CYCLE] c=        53 kind=id pc=0x0000000000000488 inst=0x00000013
+[CYCLE] c=        53 kind=ex pc=0x0000000000000484
+[CYCLE] c=        53 kind=commit pc=0x0000000000000478 inst=0x00000013
+[CYCLE] c=        54 kind=id pc=0x000000000000048c inst=0x00000013
+[CYCLE] c=        54 kind=ex pc=0x0000000000000488
+[CYCLE] c=        54 kind=commit pc=0x000000000000047c inst=0x00000013
+[CYCLE] c=        55 kind=id pc=0x0000000000000490 inst=0x00000013
+[CYCLE] c=        55 kind=ex pc=0x000000000000048c
+[CYCLE] c=        55 kind=commit pc=0x0000000000000480 inst=0x00000013
+[CYCLE] c=        56 kind=id pc=0x0000000000000494 inst=0x00000013
+[CYCLE] c=        56 kind=ex pc=0x0000000000000490
+[CYCLE] c=        56 kind=commit pc=0x0000000000000484 inst=0x00000013
+[CYCLE] c=        57 kind=id pc=0x0000000000000498 inst=0x00000013
+[CYCLE] c=        57 kind=ex pc=0x0000000000000494
+[CYCLE] c=        57 kind=commit pc=0x0000000000000488 inst=0x00000013
+[CYCLE] c=        58 kind=id pc=0x000000000000049c inst=0x00000013
+[CYCLE] c=        58 kind=ex pc=0x0000000000000498
+[CYCLE] c=        58 kind=commit pc=0x000000000000048c inst=0x00000013
+[CYCLE] c=        59 kind=id pc=0x00000000000004a0 inst=0x00000013
+[CYCLE] c=        59 kind=ex pc=0x000000000000049c
+[CYCLE] c=        59 kind=commit pc=0x0000000000000490 inst=0x00000013
+[CYCLE] c=        60 kind=id pc=0x00000000000004a4 inst=0x00000013
+[CYCLE] c=        60 kind=ex pc=0x00000000000004a0
+[CYCLE] c=        60 kind=commit pc=0x0000000000000494 inst=0x00000013
+[CYCLE] c=        61 kind=id pc=0x00000000000004a8 inst=0x00000013
+[CYCLE] c=        61 kind=ex pc=0x00000000000004a4
+[CYCLE] c=        61 kind=commit pc=0x0000000000000498 inst=0x00000013
+[CYCLE] c=        62 kind=id pc=0x00000000000004ac inst=0x00000013
+[CYCLE] c=        62 kind=ex pc=0x00000000000004a8
+[CYCLE] c=        62 kind=commit pc=0x000000000000049c inst=0x00000013
+[CYCLE] c=        63 kind=id pc=0x00000000000004b0 inst=0x00000013
+[CYCLE] c=        63 kind=ex pc=0x00000000000004ac
+[CYCLE] c=        63 kind=commit pc=0x00000000000004a0 inst=0x00000013
+[CYCLE] c=        64 kind=id pc=0x00000000000004b4 inst=0x00000013
+[CYCLE] c=        64 kind=ex pc=0x00000000000004b0
+[CYCLE] c=        64 kind=commit pc=0x00000000000004a4 inst=0x00000013
+[CYCLE] c=        65 kind=id pc=0x00000000000004b8 inst=0x00000013
+[CYCLE] c=        65 kind=ex pc=0x00000000000004b4
+[CYCLE] c=        65 kind=commit pc=0x00000000000004a8 inst=0x00000013
+[CYCLE] c=        66 kind=id pc=0x00000000000004bc inst=0x00000013
+[CYCLE] c=        66 kind=ex pc=0x00000000000004b8
+[CYCLE] c=        66 kind=commit pc=0x00000000000004ac inst=0x00000013
+[CYCLE] c=        67 kind=id pc=0x00000000000004c0 inst=0x00000013
+[CYCLE] c=        67 kind=ex pc=0x00000000000004bc
+[CYCLE] c=        67 kind=commit pc=0x00000000000004b0 inst=0x00000013
+[CYCLE] c=        68 kind=id pc=0x00000000000004c4 inst=0x00000013
+[CYCLE] c=        68 kind=ex pc=0x00000000000004c0
+[CYCLE] c=        68 kind=commit pc=0x00000000000004b4 inst=0x00000013
+[CYCLE] c=        69 kind=id pc=0x00000000000004c8 inst=0x00000013
+[CYCLE] c=        69 kind=ex pc=0x00000000000004c4
+[CYCLE] c=        69 kind=commit pc=0x00000000000004b8 inst=0x00000013
+[info] - BE2 R2 flags-only authorization bridges WB ownership to delayed unit commit
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x10003023
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x10003023
+[CYCLE] c=         7 kind=id pc=0x0000000000000404 inst=0x0000100f
+[CYCLE] c=         8 kind=ex pc=0x0000000000000404
+[CYCLE] c=        11 kind=commit pc=0x0000000000000404 inst=0x0000100f
+[CYCLE] c=        13 kind=id pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        14 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        14 kind=ex pc=0x0000000000000408
+[CYCLE] c=        15 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x000000000000040c
+[CYCLE] c=        16 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        16 kind=ex pc=0x0000000000000410
+[CYCLE] c=        17 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        17 kind=ex pc=0x0000000000000414
+[CYCLE] c=        17 kind=commit pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        18 kind=ex pc=0x0000000000000418
+[CYCLE] c=        18 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        19 kind=id pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        19 kind=ex pc=0x000000000000041c
+[CYCLE] c=        19 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        20 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        20 kind=ex pc=0x0000000000000420
+[CYCLE] c=        20 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        21 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        21 kind=ex pc=0x0000000000000424
+[CYCLE] c=        21 kind=commit pc=0x0000000000000418 inst=0x00000013
+[info] - BE2 R6 FENCEI samples CPU drain after the last WB creates a PS obligation
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x10003083
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x10003083
+[CYCLE] c=        32 kind=late rd= 1 error=0
+[CYCLE] c=        33 kind=gpr rd= 1 data=0x0000000000001234
+[CYCLE] c=        34 kind=id pc=0x0000000000000404 inst=0x0000100f
+[CYCLE] c=        35 kind=ex pc=0x0000000000000404
+[CYCLE] c=        38 kind=commit pc=0x0000000000000404 inst=0x0000100f
+[CYCLE] c=        40 kind=id pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        41 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        41 kind=ex pc=0x0000000000000408
+[CYCLE] c=        42 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        42 kind=ex pc=0x000000000000040c
+[CYCLE] c=        43 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        43 kind=ex pc=0x0000000000000410
+[CYCLE] c=        44 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        44 kind=ex pc=0x0000000000000414
+[CYCLE] c=        44 kind=commit pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        45 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        45 kind=ex pc=0x0000000000000418
+[CYCLE] c=        45 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        46 kind=id pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        46 kind=ex pc=0x000000000000041c
+[CYCLE] c=        46 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        47 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        47 kind=ex pc=0x0000000000000420
+[CYCLE] c=        47 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        48 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        48 kind=ex pc=0x0000000000000424
+[CYCLE] c=        48 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        49 kind=id pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        49 kind=ex pc=0x0000000000000428
+[CYCLE] c=        49 kind=commit pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        50 kind=id pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        50 kind=ex pc=0x000000000000042c
+[CYCLE] c=        50 kind=commit pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        51 kind=id pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        51 kind=ex pc=0x0000000000000430
+[CYCLE] c=        51 kind=commit pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        52 kind=id pc=0x0000000000000438 inst=0x00000013
+[CYCLE] c=        52 kind=ex pc=0x0000000000000434
+[CYCLE] c=        52 kind=commit pc=0x0000000000000428 inst=0x00000013
+[info] - BE2 R6 FENCEI waits for CPU MSHR ownership created by the last WB
+[CYCLE] c=         4 kind=id pc=0x0000000000000400 inst=0x12000073
+[CYCLE] c=         5 kind=ex pc=0x0000000000000400
+[CYCLE] c=         8 kind=commit pc=0x0000000000000400 inst=0x12000073
+[CYCLE] c=        10 kind=id pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=        11 kind=id pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        11 kind=ex pc=0x0000000000000404
+[CYCLE] c=        12 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        12 kind=ex pc=0x0000000000000408
+[CYCLE] c=        13 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        13 kind=ex pc=0x000000000000040c
+[CYCLE] c=        14 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        14 kind=ex pc=0x0000000000000410
+[CYCLE] c=        14 kind=commit pc=0x0000000000000404 inst=0x00000013
+[CYCLE] c=        15 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x0000000000000414
+[CYCLE] c=        15 kind=commit pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=        16 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        16 kind=ex pc=0x0000000000000418
+[CYCLE] c=        16 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=        17 kind=id pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        17 kind=ex pc=0x000000000000041c
+[CYCLE] c=        17 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        18 kind=ex pc=0x0000000000000420
+[CYCLE] c=        18 kind=commit pc=0x0000000000000414 inst=0x00000013
+[info] - BE2 R6 SFENCE rejects an idle sample preceding its first translation-block edge
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00800613
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         5 kind=gpr rd=10 data=0xffffffffffffffff
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00800613
+[CYCLE] c=         6 kind=gpr rd=11 data=0x0000000000000001
+[CYCLE] c=         7 kind=id pc=0x000000000000040c inst=0x30462073
+[CYCLE] c=         7 kind=gpr rd=12 data=0x0000000000000008
+[CYCLE] c=         8 kind=ex pc=0x000000000000040c
+[CYCLE] c=        11 kind=commit pc=0x000000000000040c inst=0x30462073
+[CYCLE] c=        12 kind=id pc=0x0000000000000410 inst=0x30062073
+[CYCLE] c=        13 kind=ex pc=0x0000000000000410
+[CYCLE] c=        16 kind=commit pc=0x0000000000000410 inst=0x30062073
+[CYCLE] c=        17 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        18 kind=ex pc=0x0000000000000414
+[CYCLE] c=        19 kind=id pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        19 kind=ex pc=0x0000000000000418
+[CYCLE] c=        20 kind=id pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        20 kind=ex pc=0x000000000000041c
+[CYCLE] c=        21 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        21 kind=ex pc=0x0000000000000420
+[CYCLE] c=        21 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        22 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        22 kind=ex pc=0x0000000000000424
+[CYCLE] c=        22 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        23 kind=id pc=0x000000000000042c inst=0x02b550b3
+[CYCLE] c=        23 kind=ex pc=0x0000000000000428
+[CYCLE] c=        23 kind=commit pc=0x000000000000041c inst=0x00000013
+[CYCLE] c=        24 kind=ex pc=0x000000000000042c
+[CYCLE] c=        24 kind=commit pc=0x0000000000000420 inst=0x00000013
+[CYCLE] c=        25 kind=commit pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        26 kind=commit pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        27 kind=commit pc=0x000000000000042c inst=0x02b550b3
+[CYCLE] c=        58 kind=gpr rd= 1 data=0xffffffffffffffff
+[info] - P09_interrupt_does_not_wait_for_committed_DIV
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=         4 kind=ex pc=0x000000000000040c
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         5 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         5 kind=gpr rd=10 data=0xffffffffffffffff
+[CYCLE] c=         6 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=         6 kind=ex pc=0x0000000000000414
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=         6 kind=gpr rd=11 data=0x0000000000000001
+[CYCLE] c=         7 kind=id pc=0x000000000000041c inst=0x02b552b3
+[CYCLE] c=         7 kind=ex pc=0x0000000000000418
+[CYCLE] c=         7 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=         8 kind=id pc=0x0000000000000420 inst=0x08003083
+[CYCLE] c=         8 kind=ex pc=0x000000000000041c
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=         9 kind=id pc=0x0000000000000424 inst=0x02000333
+[CYCLE] c=         9 kind=ex pc=0x0000000000000420
+[CYCLE] c=         9 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        10 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        10 kind=ex pc=0x0000000000000424
+[CYCLE] c=        10 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        11 kind=id pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        11 kind=ex pc=0x0000000000000428
+[CYCLE] c=        11 kind=commit pc=0x000000000000041c inst=0x02b552b3
+[CYCLE] c=        12 kind=ex pc=0x000000000000042c
+[CYCLE] c=        14 kind=id pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        15 kind=id pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x0000000000000430
+[CYCLE] c=        16 kind=id pc=0x0000000000000438 inst=0x00000013
+[CYCLE] c=        16 kind=ex pc=0x0000000000000434
+[CYCLE] c=        17 kind=id pc=0x000000000000043c inst=0x00000013
+[CYCLE] c=        17 kind=ex pc=0x0000000000000438
+[CYCLE] c=        18 kind=id pc=0x0000000000000440 inst=0x00000013
+[CYCLE] c=        18 kind=ex pc=0x000000000000043c
+[CYCLE] c=        18 kind=commit pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        19 kind=id pc=0x0000000000000444 inst=0x00000013
+[CYCLE] c=        19 kind=ex pc=0x0000000000000440
+[CYCLE] c=        19 kind=commit pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        20 kind=id pc=0x0000000000000448 inst=0x00000013
+[CYCLE] c=        20 kind=ex pc=0x0000000000000444
+[CYCLE] c=        20 kind=commit pc=0x0000000000000438 inst=0x00000013
+[CYCLE] c=        21 kind=id pc=0x000000000000044c inst=0x00000013
+[CYCLE] c=        21 kind=ex pc=0x0000000000000448
+[CYCLE] c=        21 kind=commit pc=0x000000000000043c inst=0x00000013
+[CYCLE] c=        22 kind=id pc=0x0000000000000450 inst=0x00000013
+[CYCLE] c=        22 kind=ex pc=0x000000000000044c
+[CYCLE] c=        22 kind=commit pc=0x0000000000000440 inst=0x00000013
+[CYCLE] c=        23 kind=id pc=0x0000000000000454 inst=0x00000013
+[CYCLE] c=        23 kind=ex pc=0x0000000000000450
+[CYCLE] c=        23 kind=commit pc=0x0000000000000444 inst=0x00000013
+[CYCLE] c=        24 kind=id pc=0x0000000000000458 inst=0x00000013
+[CYCLE] c=        24 kind=ex pc=0x0000000000000454
+[CYCLE] c=        24 kind=commit pc=0x0000000000000448 inst=0x00000013
+[CYCLE] c=        25 kind=id pc=0x000000000000045c inst=0x00000013
+[CYCLE] c=        25 kind=ex pc=0x0000000000000458
+[CYCLE] c=        25 kind=commit pc=0x000000000000044c inst=0x00000013
+[CYCLE] c=        26 kind=id pc=0x0000000000000460 inst=0x00000013
+[CYCLE] c=        26 kind=ex pc=0x000000000000045c
+[CYCLE] c=        26 kind=commit pc=0x0000000000000450 inst=0x00000013
+[CYCLE] c=        27 kind=id pc=0x0000000000000464 inst=0x00000013
+[CYCLE] c=        27 kind=ex pc=0x0000000000000460
+[CYCLE] c=        27 kind=commit pc=0x0000000000000454 inst=0x00000013
+[CYCLE] c=        28 kind=id pc=0x0000000000000468 inst=0x00000013
+[CYCLE] c=        28 kind=ex pc=0x0000000000000464
+[CYCLE] c=        28 kind=commit pc=0x0000000000000458 inst=0x00000013
+[CYCLE] c=        29 kind=id pc=0x000000000000046c inst=0x00000013
+[CYCLE] c=        29 kind=ex pc=0x0000000000000468
+[CYCLE] c=        29 kind=commit pc=0x000000000000045c inst=0x00000013
+[CYCLE] c=        30 kind=id pc=0x0000000000000470 inst=0x00000013
+[CYCLE] c=        30 kind=ex pc=0x000000000000046c
+[CYCLE] c=        30 kind=commit pc=0x0000000000000460 inst=0x00000013
+[CYCLE] c=        31 kind=id pc=0x0000000000000474 inst=0x00000013
+[CYCLE] c=        31 kind=ex pc=0x0000000000000470
+[CYCLE] c=        31 kind=commit pc=0x0000000000000464 inst=0x00000013
+[CYCLE] c=        32 kind=id pc=0x0000000000000478 inst=0x00000013
+[CYCLE] c=        32 kind=ex pc=0x0000000000000474
+[CYCLE] c=        32 kind=commit pc=0x0000000000000468 inst=0x00000013
+[CYCLE] c=        33 kind=id pc=0x000000000000047c inst=0x00000013
+[CYCLE] c=        33 kind=ex pc=0x0000000000000478
+[CYCLE] c=        33 kind=commit pc=0x000000000000046c inst=0x00000013
+[CYCLE] c=        34 kind=id pc=0x0000000000000480 inst=0x00000013
+[CYCLE] c=        34 kind=ex pc=0x000000000000047c
+[CYCLE] c=        34 kind=commit pc=0x0000000000000470 inst=0x00000013
+[CYCLE] c=        35 kind=id pc=0x0000000000000484 inst=0x00000013
+[CYCLE] c=        35 kind=ex pc=0x0000000000000480
+[CYCLE] c=        35 kind=commit pc=0x0000000000000474 inst=0x00000013
+[CYCLE] c=        36 kind=id pc=0x0000000000000488 inst=0x00000013
+[CYCLE] c=        36 kind=ex pc=0x0000000000000484
+[CYCLE] c=        36 kind=commit pc=0x0000000000000478 inst=0x00000013
+[CYCLE] c=        37 kind=id pc=0x000000000000048c inst=0x00000013
+[CYCLE] c=        37 kind=ex pc=0x0000000000000488
+[CYCLE] c=        37 kind=commit pc=0x000000000000047c inst=0x00000013
+[CYCLE] c=        38 kind=id pc=0x0000000000000490 inst=0x00000013
+[CYCLE] c=        38 kind=ex pc=0x000000000000048c
+[CYCLE] c=        38 kind=commit pc=0x0000000000000480 inst=0x00000013
+[CYCLE] c=        39 kind=id pc=0x0000000000000494 inst=0x00000013
+[CYCLE] c=        39 kind=ex pc=0x0000000000000490
+[CYCLE] c=        39 kind=commit pc=0x0000000000000484 inst=0x00000013
+[CYCLE] c=        40 kind=id pc=0x0000000000000498 inst=0x00000013
+[CYCLE] c=        40 kind=ex pc=0x0000000000000494
+[CYCLE] c=        40 kind=commit pc=0x0000000000000488 inst=0x00000013
+[CYCLE] c=        41 kind=id pc=0x000000000000049c inst=0x00000013
+[CYCLE] c=        41 kind=ex pc=0x0000000000000498
+[CYCLE] c=        41 kind=commit pc=0x000000000000048c inst=0x00000013
+[CYCLE] c=        42 kind=id pc=0x00000000000004a0 inst=0x00000013
+[CYCLE] c=        42 kind=ex pc=0x000000000000049c
+[CYCLE] c=        42 kind=commit pc=0x0000000000000490 inst=0x00000013
+[CYCLE] c=        42 kind=gpr rd= 5 data=0xffffffffffffffff
+[CYCLE] c=        43 kind=id pc=0x00000000000004a4 inst=0x00000013
+[CYCLE] c=        43 kind=ex pc=0x00000000000004a0
+[CYCLE] c=        43 kind=commit pc=0x0000000000000494 inst=0x00000013
+[CYCLE] c=        44 kind=id pc=0x00000000000004a8 inst=0x00000013
+[CYCLE] c=        44 kind=ex pc=0x00000000000004a4
+[CYCLE] c=        44 kind=commit pc=0x0000000000000498 inst=0x00000013
+[CYCLE] c=        45 kind=id pc=0x00000000000004ac inst=0x00000013
+[CYCLE] c=        45 kind=ex pc=0x00000000000004a8
+[CYCLE] c=        45 kind=commit pc=0x000000000000049c inst=0x00000013
+[CYCLE] c=        46 kind=id pc=0x00000000000004b0 inst=0x00000013
+[CYCLE] c=        46 kind=ex pc=0x00000000000004ac
+[CYCLE] c=        46 kind=commit pc=0x00000000000004a0 inst=0x00000013
+[CYCLE] c=        47 kind=id pc=0x00000000000004b4 inst=0x00000013
+[CYCLE] c=        47 kind=ex pc=0x00000000000004b0
+[CYCLE] c=        47 kind=commit pc=0x00000000000004a4 inst=0x00000013
+[CYCLE] c=        48 kind=id pc=0x00000000000004b8 inst=0x00000013
+[CYCLE] c=        48 kind=ex pc=0x00000000000004b4
+[CYCLE] c=        48 kind=commit pc=0x00000000000004a8 inst=0x00000013
+[CYCLE] c=        49 kind=id pc=0x00000000000004bc inst=0x00000013
+[CYCLE] c=        49 kind=ex pc=0x00000000000004b8
+[CYCLE] c=        49 kind=commit pc=0x00000000000004ac inst=0x00000013
+[CYCLE] c=        50 kind=id pc=0x00000000000004c0 inst=0x00000013
+[CYCLE] c=        50 kind=ex pc=0x00000000000004bc
+[CYCLE] c=        50 kind=commit pc=0x00000000000004b0 inst=0x00000013
+[CYCLE] c=        51 kind=id pc=0x00000000000004c4 inst=0x00000013
+[CYCLE] c=        51 kind=ex pc=0x00000000000004c0
+[CYCLE] c=        51 kind=commit pc=0x00000000000004b4 inst=0x00000013
+[CYCLE] c=        52 kind=id pc=0x00000000000004c8 inst=0x00000013
+[CYCLE] c=        52 kind=ex pc=0x00000000000004c4
+[CYCLE] c=        52 kind=commit pc=0x00000000000004b8 inst=0x00000013
+[CYCLE] c=        53 kind=id pc=0x00000000000004cc inst=0x00000013
+[CYCLE] c=        53 kind=ex pc=0x00000000000004c8
+[CYCLE] c=        53 kind=commit pc=0x00000000000004bc inst=0x00000013
+[CYCLE] c=        54 kind=id pc=0x00000000000004d0 inst=0x00000013
+[CYCLE] c=        54 kind=ex pc=0x00000000000004cc
+[CYCLE] c=        54 kind=commit pc=0x00000000000004c0 inst=0x00000013
+[CYCLE] c=        55 kind=id pc=0x00000000000004d4 inst=0x00000013
+[CYCLE] c=        55 kind=ex pc=0x00000000000004d0
+[CYCLE] c=        55 kind=commit pc=0x00000000000004c4 inst=0x00000013
+[CYCLE] c=        56 kind=id pc=0x00000000000004d8 inst=0x00000013
+[CYCLE] c=        56 kind=ex pc=0x00000000000004d4
+[CYCLE] c=        56 kind=commit pc=0x00000000000004c8 inst=0x00000013
+[info] - P10_exception_kills_young_MUL_retains_DIV
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=id pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=         4 kind=ex pc=0x000000000000040c
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003503
+[CYCLE] c=         5 kind=id pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00100593
+[CYCLE] c=         5 kind=gpr rd=10 data=0xffffffffffffffff
+[CYCLE] c=         6 kind=id pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=         6 kind=ex pc=0x0000000000000414
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00000013
+[CYCLE] c=         6 kind=gpr rd=11 data=0x0000000000000001
+[CYCLE] c=         7 kind=id pc=0x000000000000041c inst=0x02b552b3
+[CYCLE] c=         7 kind=ex pc=0x0000000000000418
+[CYCLE] c=         7 kind=commit pc=0x000000000000040c inst=0x00000013
+[CYCLE] c=         8 kind=id pc=0x0000000000000420 inst=0x04003083
+[CYCLE] c=         8 kind=ex pc=0x000000000000041c
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x00000013
+[CYCLE] c=         9 kind=id pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=         9 kind=ex pc=0x0000000000000420
+[CYCLE] c=         9 kind=commit pc=0x0000000000000414 inst=0x00000013
+[CYCLE] c=        10 kind=id pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        10 kind=ex pc=0x0000000000000424
+[CYCLE] c=        10 kind=commit pc=0x0000000000000418 inst=0x00000013
+[CYCLE] c=        11 kind=id pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        11 kind=ex pc=0x0000000000000428
+[CYCLE] c=        11 kind=commit pc=0x000000000000041c inst=0x02b552b3
+[CYCLE] c=        12 kind=id pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        12 kind=ex pc=0x000000000000042c
+[CYCLE] c=        12 kind=commit pc=0x0000000000000420 inst=0x04003083
+[CYCLE] c=        13 kind=id pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        13 kind=ex pc=0x0000000000000430
+[CYCLE] c=        13 kind=commit pc=0x0000000000000424 inst=0x00000013
+[CYCLE] c=        14 kind=id pc=0x0000000000000438 inst=0x00000013
+[CYCLE] c=        14 kind=ex pc=0x0000000000000434
+[CYCLE] c=        14 kind=commit pc=0x0000000000000428 inst=0x00000013
+[CYCLE] c=        15 kind=id pc=0x000000000000043c inst=0x00000013
+[CYCLE] c=        15 kind=ex pc=0x0000000000000438
+[CYCLE] c=        15 kind=commit pc=0x000000000000042c inst=0x00000013
+[CYCLE] c=        16 kind=id pc=0x0000000000000440 inst=0x01d00a13
+[CYCLE] c=        16 kind=ex pc=0x000000000000043c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000430 inst=0x00000013
+[CYCLE] c=        17 kind=id pc=0x0000000000000444 inst=0x01f00a93
+[CYCLE] c=        17 kind=ex pc=0x0000000000000440
+[CYCLE] c=        17 kind=commit pc=0x0000000000000434 inst=0x00000013
+[CYCLE] c=        18 kind=id pc=0x0000000000000444 inst=0x01f00a93
+[CYCLE] c=        18 kind=ex pc=0x0000000000000444
+[CYCLE] c=        18 kind=commit pc=0x0000000000000438 inst=0x00000013
+[CYCLE] c=        19 kind=id pc=0x0000000000000444 inst=0x01f00a93
+[CYCLE] c=        19 kind=ex pc=0x0000000000000444
+[CYCLE] c=        19 kind=commit pc=0x000000000000043c inst=0x00000013
+[CYCLE] c=        20 kind=ex pc=0x0000000000000444
+[CYCLE] c=        20 kind=commit pc=0x0000000000000440 inst=0x01d00a13
+[CYCLE] c=        20 kind=late rd= 1 error=1
+[CYCLE] c=        21 kind=gpr rd=20 data=0x000000000000001d
+[CYCLE] c=        42 kind=gpr rd= 5 data=0xffffffffffffffff
+[info] - S05_S08_fatal_late_stops_hart_without_trap_retains_committed_DIV
+[info] Run completed in 1 minute, 9 seconds.
+[info] Total number of tests run: 7
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 7, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 70 s (01:10), completed Oct 11, 2026, 4:22:14 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2PerturbationSpec:
+[info] - G2 committed arithmetic and delayed late ownership under random W2 contention
+[info] Run completed in 1 minute, 49 seconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 109 s (01:49), completed Oct 11, 2026, 4:24:03 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] L1DL2MultiCoreFaultSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - a store held in S2 behind a busy MSHR is killed, sends no GetM, and still answers another core's Inv
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 193:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - random traffic with kills, traps, page faults, refill errors and PTW reads, two cores, seed 91 *** FAILED ***
+[info]   svsim.Simulation$UnexpectedEndOfMessages$:
+[info]   at svsim.Simulation$UnexpectedEndOfMessages$.<clinit>(Simulation.scala:370)
+[info]   at svsim.Simulation$Controller.readNextAvailableMessage(Simulation.scala:164)
+[info]   at svsim.Simulation$Controller.processNextMessage(Simulation.scala:238)
+[info]   at svsim.Simulation$Port.get(Simulation.scala:402)
+[info]   at chisel3.simulator.TestableElement.peekValue(PeekPokeAPI.scala:166)
+[info]   at chisel3.simulator.TestableElement.peekValue$(PeekPokeAPI.scala:164)
+[info]   at chisel3.simulator.PeekPokeAPI$TestableBool.peekValue(PeekPokeAPI.scala:340)
+[info]   at chisel3.simulator.TestableElement.peek(PeekPokeAPI.scala:169)
+[info]   at chisel3.simulator.TestableElement.peek$(PeekPokeAPI.scala:169)
+[info]   at chisel3.simulator.PeekPokeAPI$TestableBool.peek(PeekPokeAPI.scala:340)
+[info]   ...
+[info]   + failure at cycle 1332673, effective RNG seed 111
+[info] coherence-monitor: core 0 get None put None probe None held 8; core 1 get None put None probe None held 7
+[info] recent messages:
+[info]   @1332019 core 1 PutAck 0x8020c020
+[info]   @1332038 core 1 DataE 0x80208020
+[info]   @1332079 core 1 Put 0x8021c020 data=false (was S)
+[info]   @1332081 core 1 GetS 0x80022020 (holds I)
+[info]   @1332083 core 1 PutAck 0x8021c020
+[info]   @1332096 core 1 DataE 0x80022020 error
+[info]   @1332119 core 0 GetS 0x8010c000 (holds I)
+[info]   @1332120 core 0 DataE 0x8010c000
+[info]   @1332197 core 1 GetS 0x80002020 (holds I)
+[info]   @1332198 core 1 DataE 0x80002020
+[info]   @1332214 core 1 Put 0x80214020 data=false (was S)
+[info]   @1332216 core 1 GetS 0x80220020 (holds I)
+[info]   @1332220 core 1 PutAck 0x80214020
+[info]   @1332243 core 1 DataE 0x80220020
+[info]   @1332354 core 0 Put 0x8020c020 data=false (was S)
+[info]   @1332356 core 0 GetS 0x80200020 (holds I)
+[info]   @1332360 core 0 PutAck 0x8020c020
+[info]   @1332380 core 0 DataE 0x80200020
+[info]   @1332399 core 1 Put 0x80114000 data=false (was S)
+[info]   @1332400 core 0 Put 0x80104000 data=false (was X)
+[info]   @1332401 core 1 GetS 0x80022000 (holds I)
+[info]   @1332403 core 1 PutAck 0x80114000
+[info]   @1332406 core 0 PutAck 0x80104000
+[info]   @1332408 core 0 GetS 0x80100000 (holds I)
+[info]   @1332410 core 1 Down 0x80100000 owner=true (holds X)
+[info]   @1332418 core 1 DownAck 0x80100000 data=false (was X)
+[info]   @1332422 core 0 DataS 0x80100000
+[info]   @1332423 core 1 DataE 0x80022000 error
+[info]   @1332442 core 0 Put 0x80002000 data=false (was X)
+[info]   @1332444 core 0 GetS 0x80118000 (holds I)
+[info]   @1332445 core 0 DataE 0x80118000
+[info]   @1332446 core 0 PutAck 0x80002000 
+[info]   + core 0 recent transactions: #485 Load(0x80108000, size 3) fired 12616 resp 12641 Done late -1; #486 op4(0x80110014, size 2) fired 12643 resp 12689 Done late -1; #487 Load(0x80022018, size 3) fired 12690 resp 12693 Mshr late 12724; #488 Load(0x8021403a, size 1) fired 12726 resp 12760 Done late -1; #489 op4(0x80006010, size 2) fired 12762 resp 12799 Done late -1; #490 Load(0x8010001c, size 2) fired 12800 resp 12803 Mshr late 12854; #491 op2(0x80026018, size 3) fired 12857 resp 12892 Exc late -1; #492 Load(0x80002032, size 1) fired 12894 resp 12897 Mshr late 12929; #493 op4(0x80002000, size 3) fired 12934 resp 12968 Done late -1; #494 Store(0x80002028, size 3, data 0x10000000000645a) fired 12977 resp 12983 Done late -1; #495 op2(0x80002020, size 3) fired 12978 resp -1  late -1 killed; #496 op3(0x80002020, size 3) fired 12980 resp -1  late -1 
+[info]   + core 1 recent transactions: #481 Store(0x80208030, size 2, data 0x449c1e55a0726d94) fired 13161 resp 13186 Done late -1; #482 Load(0x8011400b, size 0) fired 13188 resp 13191 Mshr late 13206; #483 Store(0x80006028, size 3, data 0x20000000000675a) fired 13189 resp 13192 Done late -1; #484 Load(0x80214020, size 3) fired 13210 resp 13251 Done late -1; #485 Load(0x80204020, size 3) fired 13252 resp 13255 Mshr late 13270; #486 Store(0x8020c03c, size 1, data 0x7f864393e5bb8fb9) fired 13272 resp 13297 Done late -1; #487 Store(0x80002008, size 3, data 0x20000000000685a) fired 13298 resp 13301 Done late -1; #488 op4(0x80006020, size 3) fired 13303 resp 13307 Done late -1; #489 op4(0x80002000, size 3) fired 13309 resp 13313 Done late -1; #490 Load(0x80218020, size 3) fired 13314 resp 13317 Mshr late 13334; #491 Load(0x80204020, size 3) fired 13315 resp -1  late -1; #492 Store(0x8020803a, size 1, data 0x45a461cfd836d835) fired 13316 resp -1  late -1 killed 
++ rc=143
++ echo 143

@@ -81,6 +81,7 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
       d.io.hpmEvents.wbPortConflict.poke(0.U)
       d.io.fetchBuffer.valid.poke(false.B)
       d.io.l1d.req.ready.poke(true.B); d.io.l1d.s2Hold.poke(false.B)
+      d.io.l1d.canAccept.poke(true.B)
       d.io.l1d.resp.valid.poke(false.B); d.io.l1d.resp.bits.kind.poke(L1DRespKind.Mshr)
       d.io.l1d.resp.bits.data.poke(0.U); d.io.l1d.resp.bits.excCause.poke(0.U); d.io.l1d.resp.bits.tval.poke(0.U)
       d.io.l1d.late.valid.poke(false.B); d.io.l1d.late.bits.rd.idx.poke(1.U)
@@ -110,6 +111,7 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
         // and completes at WB=13. Both following corrected ALUs use the skid.
         val held=cycle>=5 && cycle<10
         d.io.l1d.s2Hold.poke(false.B); d.io.l1d.req.ready.poke((!held).B)
+        d.io.l1d.canAccept.poke((!held).B)
         d.io.l1d.resp.valid.poke((cycle==4 || cycle==13).B)
         d.io.l1d.resp.bits.kind.poke(if(cycle==13) L1DRespKind.Done else L1DRespKind.Mshr)
         d.io.l1d.resp.bits.data.poke(55.U)

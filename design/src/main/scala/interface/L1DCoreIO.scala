@@ -43,6 +43,9 @@ class L1DLate extends Bundle {
 }
 class L1DCoreIO extends Bundle {
   val req = Flipped(Decoupled(new L1DCoreReq))
+  // Admission for the current request before cancellation. This only lets
+  // EX advance; req.fire remains the sole owner of cache side effects.
+  val canAccept = Output(Bool())
   val s1Kill = Input(Bool())
   val s2Kill = Input(Bool())
   val resp = Valid(new L1DCoreResp)

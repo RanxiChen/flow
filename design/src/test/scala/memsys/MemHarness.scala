@@ -25,6 +25,7 @@ class IdentityTlb(faultRegion: Option[(BigInt, BigInt)] = None,
     val requests = Output(UInt(32.W))
   })
   io.port.req.ready := io.ready
+  io.port.canAccept := io.ready
   val fire = io.port.req.fire && !io.port.kill
   val valid = RegNext(fire, false.B)
   val va = RegEnable(io.port.req.bits.vaddr, fire)

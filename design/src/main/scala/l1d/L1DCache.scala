@@ -90,7 +90,8 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val cpuRetry = cpu3.valid && cpu3.req.core.op =/= L1DOp.Fence &&
     (cpu3.translationMiss || cpu3.snapInvalid || cpu3.needsRecheck || cpuPermissionStale)
   val resourcesClear = !miss.io.status.mshrValid && !miss.io.status.wbValid
-  val retryReady = cpuRetry && !atomicWait && !amoRmw && !recheckIssued && resourcesClear && !probe.io.pending.valid && !cpuKill
+  val retryCapacity = cpuRetry && !atomicWait && !amoRmw && !recheckIssued && resourcesClear && !probe.io.pending.valid
+  val retryReady = retryCapacity && !cpuKill
 
   def conflict(k: UInt): Bool = {
     val s1Store = cpu1.valid && storeLike(cpu1.req.core.op) && key(cpu1.req.core.vaddr) === k
@@ -138,6 +139,12 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     laneOpen && !wholeBusy && retryReady && !retryConflict && io.tlb.req.ready,
     laneOpen && !wholeBusy && io.core.req.valid && cpuEntryOpen && !cpuConflict && !cpuKill))
   val chosen = PriorityEncoderOH(requests.asUInt)
+  // Keep the same priority and capacity conditions before cancellation.
+  // The normal request and all side effects still use `chosen`/cpuFire.
+  val admissionRequests = VecInit(requests.take(5) ++ Seq(
+    laneOpen && !wholeBusy && retryCapacity && !retryConflict && io.tlb.canAccept,
+    laneOpen && !wholeBusy && io.core.req.valid && cpuEntryOpen && !cpuConflict))
+  val admitted = PriorityEncoderOH(admissionRequests.asUInt)
   val candidates = Wire(Vec(7, new L1PipeReq(p)))
   candidates(0) := 0.U.asTypeOf(new L1PipeReq(p))
     candidates(0).src := L1Src.Probe
@@ -200,6 +207,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val selectedEnd = Mux1H(chosen.asBools, sourceEnds)
   val cpuNeedsTlb = io.core.req.bits.op =/= L1DOp.Fence
   val cpuFire = chosen(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.req.ready)
+  io.core.canAccept := admitted(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.canAccept)
   val probeFire = chosen(0) && internal1Advance
   val refillFire = chosen(1) && internal1Advance
   val wbReadFire = chosen(2) && internal1Advance
@@ -215,6 +223,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   io.tlb.req.bits.vaddr := Mux(chosen(5), cpu3.req.core.vaddr, io.core.req.bits.vaddr)
   io.tlb.req.bits.cmd := Mux(storeLike(Mux(chosen(5), cpu3.req.core.op, io.core.req.bits.op)), MmuCmd.Store, MmuCmd.Load)
   io.tlb.kill := cpuKill
+  when(!reset.asBool && !cpuKill) {
+    assert(io.core.canAccept === io.core.req.ready, "[R1] admission differs from acceptance without cancellation")
+  }
   when(cpuFire && (io.core.req.bits.op === L1DOp.AMO || (incomingAtomic && io.core.req.bits.aq))) {
     acquireBusy := true.B
   }

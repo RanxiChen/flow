@@ -69,6 +69,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var instructionAccessFault = false
   var instructionPageFault = false
   var faultSecondParcel = false
+  var cancelReadyOnKill = false
   private val rng = new scala.util.Random(seed)
   private var wakeD = true
   private val fetched = mutable.Map.empty[BigInt,BigInt]
@@ -98,6 +99,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     d.io.hpmEvents.wbPortConflict.poke(0.U)
     d.io.mmuIdle.poke(true.B)
     d.io.l1d.req.ready.poke(true.B); d.io.l1d.s2Hold.poke(false.B)
+    d.io.l1d.canAccept.poke(true.B)
     d.io.l1d.resp.valid.poke(false.B); d.io.l1d.resp.bits.kind.poke(L1DRespKind.Done)
     d.io.l1d.resp.bits.data.poke(0.U); d.io.l1d.resp.bits.excCause.poke(0.U); d.io.l1d.resp.bits.tval.poke(0.U)
     d.io.l1d.late.valid.poke(false.B); d.io.l1d.late.bits.rd.idx.poke(0.U)
@@ -168,12 +170,22 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       if (!hold && miss) allocated = Some(q -> (cycle+(if(randomHold) 1+rng.nextInt(40) else returnDelay)))
     }
     d.io.l1d.req.ready.poke((!hold).B)
+    d.io.l1d.canAccept.poke((!hold).B)
     val reqAddr = uint(d.io.l1d.req.bits.vaddr)
     val read = uint(d.io.l1d.req.bits.op)==0 || uint(d.io.l1d.req.bits.op)==2
     val conflict = read && Seq(s0Read,s1,s2,ps).flatten.exists(q => (q.op==1 || q.op==3 || q.op==4) &&
       ((q.addr>>3)&511)==((reqAddr>>3)&511))
     val installing = pending.exists { case (_,r) => cycle >= r+1 && cycle <= r+5 }
     d.io.l1d.req.ready.poke((!hold && !conflict && !installing).B)
+    d.io.l1d.canAccept.poke((!hold && !conflict && !installing).B)
+    if(cancelReadyOnKill && bool(d.io.l1d.s2Kill)) {
+      d.io.l1d.req.ready.poke(false.B)
+      if(bool(d.io.l1d.req.valid)) {
+        d.io.l1d.canAccept.expect(true.B)
+        d.io.observe.exHold.expect(false.B)
+        record("cancelAdmission")
+      }
+    }
     val accepted = actualInstruction.nonEmpty && bool(d.io.fetchBuffer.ready)
     val replayAccepted = accepted && replayFetch.nonEmpty
     if(accepted) {
@@ -643,6 +655,20 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     for(kind <- Seq("btb", "pht", "ghr")) m.all(kind) mustBe empty
     m.events.filter(e => e.kind=="commit" && e.pc==branch) mustBe empty
     m.events.filter(e => e.kind=="gpr" && e.rd!=0) mustBe empty
+    m.d.io.observe.gprBusy.expect(0.U)
+  }}
+
+  "BE2 R1 cancellation blocks memory fire without holding EX payload" in { check() { m =>
+    m.cancelReadyOnKill=true; m.faults += BigInt(0)
+    m.issue(ld(1,0)); m.issue(nop); m.issue(nop); val younger=m.issue(ld(2,32))
+    m.cycle mustBe 4
+    m.d.io.debug.get.idExePc.expect(younger.U)
+    m.step(); for(_ <- 0 until 12) m.step()
+    m.all("cancelAdmission") mustBe Seq(4)
+    m.all("req") mustBe Seq(1)
+    m.events.filter(e => e.kind=="commit" && e.pc==younger) mustBe empty
+    m.writes(1) mustBe empty; m.writes(2) mustBe empty
+    m.d.io.debug.get.csrMcause.expect(13.U)
     m.d.io.observe.gprBusy.expect(0.U)
   }}
 
