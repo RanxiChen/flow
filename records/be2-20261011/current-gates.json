@@ -236,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "persistent data position comparison PASS; actual common X1Y2 clocks placed; complete routing in progress",
+      "status": "QUALIFIED routed timing and SD IO budget PASS; bitstream and final FAT software collected",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -317,7 +317,7 @@
         "reports": "physical-d902fb5/placed-replication"
       },
       "candidate_physical_clock_property": "all primitive LOC fixed; simple LUT/FF BEL fixed; Quick clock-resource placement require actual common X1Y2",
-      "candidate_status": "ROUTING",
+      "candidate_status": "PASS",
       "candidate_RTL_config_timing_requirements_unchanged": true,
       "clock_reroute_superseded": {
         "reason": "Route35-359 prerequisite: update_clock_routing before clock reroute; own candidate intentionally SIGTERM",
@@ -427,8 +427,37 @@
           "original-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a",
           "clock-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a"
         }
-      }
+      },
+      "process_exit": 0,
+      "WNS_ns": 0.012,
+      "WHS_ns": 0.015,
+      "WPWS_ns": 0.108,
+      "TNS_ns": 0,
+      "THS_ns": 0,
+      "TPWS_ns": 0,
+      "setup_failures": 0,
+      "hold_failures": 0,
+      "pulse_or_skew_failures": 0,
+      "route_errors": 0,
+      "bit_generated": true,
+      "final_reports": "physical-d902fb5/clock-resume-batch-final",
+      "board": "NOT_RUN"
     },
-    "local_scalar_products_hash_verified": true
+    "local_scalar_products_hash_verified": true,
+    "release": {
+      "status": "PASS: all three complete products collected and 70 local artifact hashes verified",
+      "remote": "/home/chen/FUN/flow-runs/be2-release-three-sd-20261012",
+      "local": "/home/chen/leisure/flow-be2/build/be2-products/be2-release-three-sd-20261012",
+      "collector_exit": 0,
+      "profiles": [
+        "four",
+        "single",
+        "single-rvv"
+      ],
+      "sd_external_timing": "OPEN",
+      "board": "NOT_RUN",
+      "local_hash_errors": 0,
+      "local_files_verified": 70
+    }
   }
 }

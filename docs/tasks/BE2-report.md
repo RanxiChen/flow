@@ -1,5 +1,19 @@
 # BE2 后端解耦实施报告
 
+## 三个 SD 产品交付状态（2026-10-12）
+
+三个实际 KCU105 bitstream 均完成 100MHz routed setup/hold/pulse-or-skew 门禁、零路由错误及 SD 内部 IO transport 预算检查。BIOS 已嵌入各自 bitstream；三份 FAT 启动包重新绑定各自最终 bitstream/BIOS/CSR，收集器 exit0。交付目录为工作区 `build/be2-products/be2-release-three-sd-20261012/`，逐文件 SHA256 见其中 `manifest.json`。这三份产品尚未上板启动，SD/card/mux 完整外部时序仍 OPEN。
+
+| 产品 | 生产源 | WNS / WHS / WPWS（ns） | 交付文件 |
+|---|---|---|---|
+| 四核标量 | 7f7f186b9326fa7329890013ba578e68b68211ba | +0.002 / +0.030 / +0.108 | `four/be2-four-sd.bit`、`four/sd/` |
+| 单核标量，继承四核每核配置 | 同上 | +0.127 / +0.030 / +0.103 | `single/be2-single-sd.bit`、`single/sd/` |
+| 单核 WT/dataless/512-bit AXI/R04 RVV | d902fb518f67a00aa1bf7f8af0dd18e43150f201，标量基础为7f7f186 | +0.012 / +0.015 / +0.108 | `single-rvv/be2-single-rvv-sd.bit`、`single-rvv/sd/` |
+
+全部 TNS/THS/TPWS 和 setup/hold/pulse-or-skew failing endpoints 为0。四核和 RVV setup 余量小，以上结论限于记录的器件、源、约束及实现结果。硬件加载 `.bit`；SD FAT 根目录放对应 `sd/` 的 `Image`、`fw_jump.bin`、DTB、`serial-handoff.bin`、`boot.json` 五文件，SD 只承载软件镜像。Linux 含原 GAPBS initramfs，镜像可后续独立重编，使用流程见 [sd-bringup.md](../../fpga/kcu105/sd-bringup.md)。RVV 限已实现 R04 整数/unit-stride 子集，不声明完整 V ISA。
+
+本交付完成三个硬件/软件产品，并不改写原 BE2 门禁：P1 原 +1% 门槛仍有3项 FAIL，S2 仍 OPEN，完整 G1 按用户指示延期，BOARD_NOT_RUN。所有历史失败与中止原因保留在下文及准确 SHA 的原记录中。
+
 2026-10-11。按任务书 §10 BE2-P 和 §11 加速模式连续实施；本文供用户最终审核。起点 `2051dd0bb9a0c701bb95fd3f1e755ae175023093`；分支 `refactor/be2-backend-decoupling`，工作区 `/home/chen/leisure/flow-be2`。主工作区及其既有未跟踪记录未修改。
 
 原标量验证生产源：`c735fbd`（部署几何来自 `558096c`，后端来自 `790c1f6`；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
@@ -318,3 +332,9 @@ clock-placed-balanced新候选先冻结现有已放置原语LOC/BEL并保存两�
 wrapper允许显式第四参数clock-placed.dcp（默认仍routed输入），只接受这两种既定文件名，记录实际input checkpoint文件名+SHA；收集器按同字段核对原目录/源SHA/输入SHA，不能拿旧routed hash冒充新placed输入。新resume脚本不重做RTL/综合/放置，检查actual common X1Y2及group后直接完整route NoTimingRelaxation/tns_cleanup，再完整12指标、route0、SD原10ns预算，合格才bit。增加comparison checkpoint hash记录支持；当前运行版本的比较输入也可沿父candidate input SHA链核对。所有失败候选和已放置DCP保留，新的candidate CPU0–3/max4/nice10/Alan。
 
 01:06 CST：clock-resume-batch的实际位置核对PASS：每个持久数据NAME/LOC及普通LUT/FF BEL按原输入逐项比较，errors0，数量和CSV SHA在placement-audit.json；实际sys_clk/sys4x_clk的CLOCK_ROOT和USER_CLOCK_ROOT**均X1Y2**，CLOCK_DELAY_GROUP均be2_ddr_serdes。说明本次Quick重新放置落实了共同根，不能把早先仅USER属性相同的partial-reroute作同等结果。route前DRC0error，进入完整NoTimingRelaxation/tns_cleanup。前一Tcl dictionary循环耗时较长，按精确PID2455710/cwd主动SIGTERM换为批量TSV/Python逐项同条件比对，未减少数据范围、未改golden/断言/seed/规模；退出记录保留，不作timing FAIL。新auditor文件SHA和实际comparison checkpoint SHA由wrapper记录；保存的clock-placed.dcp直接复用，不重做放置/仿真。
+
+2026-10-12 01:28 CST：d902 最终 clock-resume-batch 完成，Vivado/write_bitstream/runner exit0，16007026字节实际bitstream；全设计 WNS+0.012/WHS+0.015/WPWS+0.108ns，TNS/THS/TPWS与全部 failing endpoints0，route errors0。完整12字段门禁先于write_bitstream通过，SD IO transport budget PASS。实际 sys4x_clk/sys_clk 在 route 前后均为 CLOCK_ROOT=USER_CLOCK_ROOT=X1Y2、CLOCK_DELAY_GROUP=be2_ddr_serdes；persistent data LOC213943项/simple LUT-FF BEL188287项相等、errors0，DDR校准重建网络不计此相等检查，但仍在最终DRC及完整时序覆盖内。未改RTL/config、100MHz及任何时序例外，物理固定和clock placement变更保留父候选链；原setup/DDR skew失败没有重标为通过。原日志/报告见 physical-d902fb5/clock-resume-batch-final。
+
+01:35 CST：最终RVV FAT软件打包及三产品collector均exit0，重新核验三份完整timing/route、嵌入ROM与BIOS前缀、最终bitstream/BIOS/CSR绑定、各五启动文件SHA256及配置继承。打包前重读共享配置，cloud_chen免密SSH五秒超时exit255；Alan预检GCC13.2.0/DTC1.7.0、资源可用后，在准确99df4a1工具工作区CPU6–7/nice10执行，硬件生产源仍d902、未重新生成RTL。复用相同Linux Image/OpenSBI/hash，不重编全套软件；从未烧板或写SD。精确命令及exit在 prepare-final-rvv.sh、collect-final-sd.sh 和对应日志中。
+
+交付目录下载完毕，verify-local-release.py核对三个产品全部70个manifest文件，hash_errors0；bitstream各16007026字节，准确SHA256：four=c7b1fa8719173cd7a6cde81979ee940b3ebb3e8ef4cb454300ed78ff2d9de6c9；single=3b8333d0448f984f3e5e6c04aa8adf4a720bdc973e2431485c359d8e32fe285f；single-rvv=6d21a4df75cf48024d4c7b848715b8844a7f5ad6ac658f140e20c126c3bc979c。下载时按SHA复用本地已验的相同Linux Image和标量bitstream，rsync随后checksum同步，最后独立逐项hash；这不复用旧硬件的软件绑定。baseline/final report_exceptions正文一致，仅报告时间/文件名不同。完整release manifest及本地校验JSON归档；三个产品交付完成，板级使用证明仍待用户加载新bit并运行。

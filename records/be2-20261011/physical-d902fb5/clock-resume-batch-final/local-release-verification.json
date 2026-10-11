@@ -1,0 +1,76 @@
+{
+  "release": "/home/chen/leisure/flow-be2/build/be2-products/be2-release-three-sd-20261012",
+  "checked_files": 70,
+  "hash_errors": 0,
+  "products": {
+    "four": {
+      "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "bitstream": {
+        "bytes": 16007026,
+        "sha256": "c7b1fa8719173cd7a6cde81979ee940b3ebb3e8ef4cb454300ed78ff2d9de6c9"
+      },
+      "routed_timing_ns": {
+        "WNS": 0.002,
+        "TNS": 0.0,
+        "setup_failures": 0.0,
+        "setup_endpoints": 395844.0,
+        "WHS": 0.03,
+        "THS": 0.0,
+        "hold_failures": 0.0,
+        "hold_endpoints": 395833.0,
+        "WPWS": 0.108,
+        "TPWS": 0.0,
+        "pulse_failures": 0.0,
+        "pulse_endpoints": 137831.0
+      },
+      "board": "NOT_RUN",
+      "bios_matches_rom_init": true
+    },
+    "single": {
+      "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "bitstream": {
+        "bytes": 16007026,
+        "sha256": "3b8333d0448f984f3e5e6c04aa8adf4a720bdc973e2431485c359d8e32fe285f"
+      },
+      "routed_timing_ns": {
+        "WNS": 0.127,
+        "TNS": 0.0,
+        "setup_failures": 0.0,
+        "setup_endpoints": 128268.0,
+        "WHS": 0.03,
+        "THS": 0.0,
+        "hold_failures": 0.0,
+        "hold_endpoints": 128257.0,
+        "WPWS": 0.103,
+        "TPWS": 0.0,
+        "pulse_failures": 0.0,
+        "pulse_endpoints": 45183.0
+      },
+      "board": "NOT_RUN",
+      "bios_matches_rom_init": true
+    },
+    "single-rvv": {
+      "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+      "bitstream": {
+        "bytes": 16007026,
+        "sha256": "6d21a4df75cf48024d4c7b848715b8844a7f5ad6ac658f140e20c126c3bc979c"
+      },
+      "routed_timing_ns": {
+        "WNS": 0.012,
+        "TNS": 0.0,
+        "setup_failures": 0.0,
+        "setup_endpoints": 233770.0,
+        "WHS": 0.015,
+        "THS": 0.0,
+        "hold_failures": 0.0,
+        "hold_endpoints": 233759.0,
+        "WPWS": 0.108,
+        "TPWS": 0.0,
+        "pulse_failures": 0.0,
+        "pulse_endpoints": 73161.0
+      },
+      "board": "NOT_RUN",
+      "bios_matches_rom_init": true
+    }
+  }
+}

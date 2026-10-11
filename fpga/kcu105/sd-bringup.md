@@ -14,6 +14,12 @@ SD 使用官方 LiteSDCard/LiteX read+write IP。64-bit Wishbone DMA 经专用�
 
 CSR SD 页为 `0x12006000`，IRQ11，UART IRQ10；DTB 和 Linux MMC 驱动使用真实生成的 PHY/core/reader/writer/IRQ 子块偏移。软件打包器检查这些偏移和 hart 数，记录 BIOS/CSR/镜像哈希。
 
+## 已生成的三个产品
+
+2026-10-12 交付目录为本工作区 `build/be2-products/be2-release-three-sd-20261012/`。三个子目录 `four`、`single`、`single-rvv` 各有 `be2-<profile>-sd.bit`、内置 BIOS 的独立核对文件、配置/时序报告及对应 `sd/` 五文件启动包，根目录 `manifest.json` 记录准确源与全部文件 SHA256。
+
+三者100MHz最终 routed setup/hold/pulse-or-skew 全部通过，零路由错误；四核 WNS +0.002ns，普通单核 +0.127ns，RVV +0.012ns。已经生成 bitstream，尚未上板验证新 Linux/SD 启动，外部 SD/card/mux 时序仍 OPEN。原 BE2 P1/S2 未过项保留，详见报告。
+
 ## 构建
 
 仿真、编译及 RTL 生成前重新读取 [共享主机配置](../../docs/cross-project/simulation-host.md)，先预检 cloud_chen，不可用才使用 Alan；Vivado 始终用 Alan。通过本地反向 HTTP 代理同步准确提交，不使用 bundle。主机选择和资源上限由运行者落实，脚本不在本地自动发起远端任务。

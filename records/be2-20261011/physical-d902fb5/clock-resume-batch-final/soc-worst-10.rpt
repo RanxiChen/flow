@@ -1,0 +1,1017 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Mon Oct 12 01:26:41 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.012ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[11]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.959ns  (logic 1.957ns (21.844%)  route 7.002ns (78.156%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=3 LUT6=10 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.542    14.977    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X37Y96         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    15.018 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_3/O
+                         net (fo=8, routed)           0.578    15.596    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_3_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[11]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[11])
+                                                     -0.439    15.609    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.609    
+                         arrival time                         -15.596    
+  -------------------------------------------------------------------
+                         slack                                  0.012    
+
+Slack (MET) :             0.017ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[9]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.993ns  (logic 1.959ns (21.784%)  route 7.034ns (78.216%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=3 LUT6=10 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.482ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.938ns = ( 15.938 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.419    14.854    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X42Y96         LUT5 (Prop_D6LUT_SLICEM_I2_O)
+                                                      0.043    14.897 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_5/O
+                         net (fo=8, routed)           0.733    15.630    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_5_n_0
+    RAMB36_X4Y23         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[9]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.134    15.938    
+                         clock pessimism              0.218    16.156    
+                         clock uncertainty           -0.079    16.076    
+    RAMB36_X4Y23         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[9])
+                                                     -0.429    15.647    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3
+  -------------------------------------------------------------------
+                         required time                         15.647    
+                         arrival time                         -15.630    
+  -------------------------------------------------------------------
+                         slack                                  0.017    
+
+Slack (MET) :             0.020ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[7]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.967ns  (logic 2.031ns (22.650%)  route 6.936ns (77.350%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=3 LUT6=10 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.322    14.757    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X44Y97         LUT5 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.115    14.872 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_7/O
+                         net (fo=8, routed)           0.732    15.604    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_7_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[7]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[7])
+                                                     -0.423    15.625    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.625    
+                         arrival time                         -15.604    
+  -------------------------------------------------------------------
+                         slack                                  0.020    
+
+Slack (MET) :             0.022ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[8]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.923ns  (logic 2.000ns (22.414%)  route 6.923ns (77.586%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=2 LUT6=11 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.482ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.938ns = ( 15.938 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.231    14.258    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y99         LUT6 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    14.299 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12/O
+                         net (fo=3, routed)           0.468    14.767    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12_n_0
+    SLICE_X41Y96         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.115    14.882 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_6_comp/O
+                         net (fo=8, routed)           0.678    15.560    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_6_n_0
+    RAMB36_X4Y23         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[8]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.134    15.938    
+                         clock pessimism              0.218    16.156    
+                         clock uncertainty           -0.079    16.076    
+    RAMB36_X4Y23         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[8])
+                                                     -0.494    15.582    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3
+  -------------------------------------------------------------------
+                         required time                         15.582    
+                         arrival time                         -15.560    
+  -------------------------------------------------------------------
+                         slack                                  0.022    
+
+Slack (MET) :             0.025ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[10]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.985ns  (logic 1.959ns (21.803%)  route 7.026ns (78.197%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=2 LUT6=11 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.482ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.938ns = ( 15.938 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.423    14.858    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X42Y96         LUT6 (Prop_F6LUT_SLICEM_I3_O)
+                                                      0.043    14.901 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_4/O
+                         net (fo=8, routed)           0.721    15.622    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_4_n_0
+    RAMB36_X4Y23         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3/ADDRARDADDR[10]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.134    15.938    
+                         clock pessimism              0.218    16.156    
+                         clock uncertainty           -0.079    16.076    
+    RAMB36_X4Y23         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[10])
+                                                     -0.429    15.647    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_3
+  -------------------------------------------------------------------
+                         required time                         15.647    
+                         arrival time                         -15.622    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.026ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[10]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.955ns  (logic 1.959ns (21.876%)  route 6.996ns (78.124%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=2 LUT6=11 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.423    14.858    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X42Y96         LUT6 (Prop_F6LUT_SLICEM_I3_O)
+                                                      0.043    14.901 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_4/O
+                         net (fo=8, routed)           0.691    15.592    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_4_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[10]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[10])
+                                                     -0.429    15.619    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.619    
+                         arrival time                         -15.592    
+  -------------------------------------------------------------------
+                         slack                                  0.026    
+
+Slack (MET) :             0.029ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[8]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.887ns  (logic 2.000ns (22.505%)  route 6.887ns (77.495%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=2 LUT6=11 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.231    14.258    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y99         LUT6 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    14.299 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12/O
+                         net (fo=3, routed)           0.468    14.767    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12_n_0
+    SLICE_X41Y96         LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.115    14.882 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_6_comp/O
+                         net (fo=8, routed)           0.642    15.524    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_6_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[8]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[8])
+                                                     -0.494    15.554    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.554    
+                         arrival time                         -15.524    
+  -------------------------------------------------------------------
+                         slack                                  0.029    
+
+Slack (MET) :             0.037ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[9]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.944ns  (logic 1.959ns (21.903%)  route 6.985ns (78.097%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=3 LUT6=10 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.419    14.854    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X42Y96         LUT5 (Prop_D6LUT_SLICEM_I2_O)
+                                                      0.043    14.897 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_5/O
+                         net (fo=8, routed)           0.684    15.581    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_5_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[9]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[9])
+                                                     -0.429    15.619    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.619    
+                         arrival time                         -15.581    
+  -------------------------------------------------------------------
+                         slack                                  0.037    
+
+Slack (MET) :             0.049ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_7/ADDRARDADDR[10]
+                            (rising edge-triggered cell RAMB18E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.968ns  (logic 1.957ns (21.822%)  route 7.011ns (78.178%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=3 LUT6=10 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.471ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.949ns = ( 15.949 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.336    14.363    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y96         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.072    14.435 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_4_comp_5/O
+                         net (fo=18, routed)          0.542    14.977    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5]
+    SLICE_X37Y96         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    15.018 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_3/O
+                         net (fo=8, routed)           0.587    15.605    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_3_n_0
+    RAMB18_X5Y34         RAMB18E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_7/ADDRARDADDR[10]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.145    15.949    
+                         clock pessimism              0.218    16.167    
+                         clock uncertainty           -0.079    16.087    
+    RAMB18_X5Y34         RAMB18E2 (Setup_RAMB18E2_L_RAMB180_CLKARDCLK_ADDRARDADDR[10])
+                                                     -0.433    15.654    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_7
+  -------------------------------------------------------------------
+                         required time                         15.654    
+                         arrival time                         -15.605    
+  -------------------------------------------------------------------
+                         slack                                  0.049    
+
+Slack (MET) :             0.053ns  (required time - arrival time)
+  Source:                 BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[13]
+                            (rising edge-triggered cell RAMB36E2 clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.874ns  (logic 2.017ns (22.729%)  route 6.857ns (77.271%))
+  Logic Levels:           18  (LUT3=2 LUT4=1 LUT5=2 LUT6=11 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.510ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.909ns = ( 15.909 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.637ns
+    Clock Pessimism Removal (CPR):    0.218ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.878     3.878    
+                         propagated clock network latency
+                                                      2.759     6.637    
+    SLICE_X62Y68         FDRE                         0.000     6.637 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/C
+    SLICE_X62Y68         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     6.754 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_replica/Q
+                         net (fo=1, routed)           0.165     6.919    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[1]_repN
+    SLICE_X62Y70         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.190     7.109 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/active_i_2/O
+                         net (fo=173, routed)         0.157     7.266    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[1]_1
+    SLICE_X62Y68         LUT3 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     7.306 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/i__i_1725/O
+                         net (fo=32, routed)          0.403     7.709    BreezeRvvAxi/cluster/backend/vector/rvv/sb/_mac_io_hazard_slot[1]
+    SLICE_X63Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.175     7.884 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752/O
+                         net (fo=1, routed)           0.000     7.884    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1752_n_0
+    SLICE_X63Y61         MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.058     7.942 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742/O
+                         net (fo=1, routed)           0.000     7.942    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1742_n_0
+    SLICE_X63Y61         MUXF8 (Prop_F8MUX_BOT_SLICEL_I0_O)
+                                                      0.060     8.002 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733/O
+                         net (fo=16, routed)          0.537     8.539    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1733_n_0
+    SLICE_X64Y56         LUT6 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.071     8.610 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723/O
+                         net (fo=1, routed)           0.152     8.762    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1723_n_0
+    SLICE_X64Y54         LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.137     8.899 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687/O
+                         net (fo=2, routed)           0.255     9.154    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1687_n_0
+    SLICE_X64Y47         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     9.194 r  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440/O
+                         net (fo=33, routed)          0.170     9.364    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1440_n_0
+    SLICE_X64Y46         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.118     9.482 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_980/O
+                         net (fo=26, routed)          0.437     9.919    BreezeRvvAxi/cluster/backend/vector/rvv/sb/p_311_in
+    SLICE_X63Y37         LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.116    10.035 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567/O
+                         net (fo=1, routed)           0.284    10.319    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_567_n_0
+    SLICE_X64Y32         LUT4 (Prop_H5LUT_SLICEM_I0_O)
+                                                      0.195    10.514 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133/O
+                         net (fo=1, routed)           0.570    11.084    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_133_n_0
+    SLICE_X69Y29         LUT6 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.073    11.157 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25/O
+                         net (fo=2, routed)           0.192    11.349    BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_25_n_0
+    SLICE_X69Y31         LUT6 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.176    11.525 f  BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_5/O
+                         net (fo=5, routed)           1.012    12.537    BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/i__i_30_0_alias
+    SLICE_X60Y87         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.070    12.607 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/piece[5]_i_23_comp_1/O
+                         net (fo=14, routed)          0.966    13.573    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/physicalWrite_row_reg[4]_rep_0
+    SLICE_X48Y102        LUT6 (Prop_B6LUT_SLICEM_I2_O)
+                                                      0.074    13.647 r  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_comp/O
+                         net (fo=100, routed)         0.246    13.893    BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0
+    SLICE_X48Y100        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134    14.027 f  BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_2/O
+                         net (fo=102, routed)         0.231    14.258    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/_mac_snoop_0_valid_T
+    SLICE_X47Y99         LUT6 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    14.299 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12/O
+                         net (fo=3, routed)           0.508    14.807    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece[5]_i_12_n_0
+    SLICE_X37Y97         LUT6 (Prop_B6LUT_SLICEL_I3_O)
+                                                      0.132    14.939 r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_1_comp/O
+                         net (fo=8, routed)           0.572    15.511    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_0_i_1_n_0
+    RAMB36_X3Y20         RAMB36E2                                     r  BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4/ADDRARDADDR[13]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.804    13.804    
+                         propagated clock network latency
+                                                      2.105    15.909    
+                         clock pessimism              0.218    16.127    
+                         clock uncertainty           -0.079    16.048    
+    RAMB36_X3Y20         RAMB36E2 (Setup_RAMB36E2_RAMB36_CLKARDCLK_ADDRARDADDR[13])
+                                                     -0.483    15.565    BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/Memory_reg_4
+  -------------------------------------------------------------------
+                         required time                         15.565    
+                         arrival time                         -15.511    
+  -------------------------------------------------------------------
+                         slack                                  0.053    
+
+
+
+

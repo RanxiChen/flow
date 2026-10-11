@@ -1,0 +1,28 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Mon Oct 12 01:25:16 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_clock_interaction -file clock-balanced-interaction.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Clock Interaction Report
+
+Clock Interaction Table
+-----------------------
+
+                                                  WNS                            TNS Failing  TNS Total    WNS Path         Clock-Pair           Inter-Clock          
+From Clock               To Clock                 Clock Edges  WNS(ns)  TNS(ns)    Endpoints    Endpoints  Requirement(ns)  Classification       Constraints          
+-----------------------  -----------------------  -----------  -------  -------  -----------  -----------  ---------------  -------------------  -------------------  
+clk125_p                 clk125_p                 rise - rise     7.12     0.00            0            7             8.00  Clean                Timed                
+clkout0_INTERNAL_DIVCLK  sys_clk                  rise - rise     6.40     0.00            0          512            10.00  Clean                Timed                
+clkout1                  clkout1                  rise - rise     0.60     0.00            0           42             5.00  Clean                Timed                
+clkout1                  sys_clk                                                           0            2                   Ignored              False Path           
+sys_clk                  clk125_p                                                          0            1                   Ignored              Asynchronous Groups  
+sys_clk                  sys_clk                  rise - rise     0.01     0.00            0       233199            10.00  Clean                Partial False Path   
+
+

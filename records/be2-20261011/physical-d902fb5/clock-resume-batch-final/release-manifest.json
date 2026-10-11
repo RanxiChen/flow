@@ -1,0 +1,582 @@
+{
+  "four": {
+    "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "hardware_input": "/home/chen/FUN/flow-runs/be2-7f7f186-breeze-sd",
+    "software_input": "/home/chen/FUN/flow-runs/be2-final-7f7f186-sd-four",
+    "build": {
+      "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "host": "Alan",
+      "hostname": "chen-System-Product-Name",
+      "cwd": "/home/chen/FUN/flow-be2-1a4deba",
+      "profile": "small",
+      "clock_hz": 100000000,
+      "target": "xcku040-ffva1156-2-e",
+      "vivado": "2022.2",
+      "source_dirty": false,
+      "golden_changed": false,
+      "board": "NOT_RUN",
+      "new_timing_exceptions": false
+    },
+    "routed_timing_ns": {
+      "WNS": 0.002,
+      "TNS": 0.0,
+      "setup_failures": 0.0,
+      "setup_endpoints": 395844.0,
+      "WHS": 0.03,
+      "THS": 0.0,
+      "hold_failures": 0.0,
+      "hold_endpoints": 395833.0,
+      "WPWS": 0.108,
+      "TPWS": 0.0,
+      "pulse_failures": 0.0,
+      "pulse_endpoints": 137831.0
+    },
+    "route_errors": 0,
+    "routed_checkpoint": {
+      "bytes": 215751617,
+      "sha256": "62818013dc725e3b531b1cc1bb9e89956d766bc8aa44e29284feca993af3b016"
+    },
+    "config": {
+      "hangThresholdCycles": "10000000",
+      "bus": "axi",
+      "profile": "small",
+      "preset": "gshare",
+      "privilege": "linux",
+      "tandem": "false",
+      "debug": "false",
+      "platformSha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+      "nCores": "4",
+      "lineBytes": "32",
+      "l1Sets": "64",
+      "l1dWays": "2",
+      "l1iWays": "2",
+      "l2Ways": "4",
+      "l2BytesPerCore": "32768",
+      "l2Slots": "2",
+      "idBits": "1",
+      "coherentDma": "true",
+      "rvv": "false",
+      "memoryBits": "64"
+    },
+    "bios_matches_rom_init": true,
+    "board": "NOT_RUN",
+    "sd_external_timing": "OPEN; see sd-timing.md",
+    "files": {
+      "be2-four-sd.bit": {
+        "bytes": 16007026,
+        "sha256": "c7b1fa8719173cd7a6cde81979ee940b3ebb3e8ef4cb454300ed78ff2d9de6c9"
+      },
+      "bios-rom.init": {
+        "bytes": 139264,
+        "sha256": "0c4ea96e9c24e85e6d43fd2f529359526deb3d10f19404428512bfb7ff2dc27c"
+      },
+      "bios.bin": {
+        "bytes": 40908,
+        "sha256": "4cb3f1006153240e4fdfb3ed43a81f87472baadb564b47f7cb183689dd6c7e8b"
+      },
+      "build-binding.json": {
+        "bytes": 380,
+        "sha256": "0e082dfa45e6e79904ea2ce961a0e4d18b973de7e28b0624c94af5ff510f4d46"
+      },
+      "cluster-profile.txt": {
+        "bytes": 328,
+        "sha256": "c8fd45156c4419658ae069254b8384493fa49224bf978e550e2e1fa5f3a8590f"
+      },
+      "csr.json": {
+        "bytes": 14818,
+        "sha256": "ae7ddb9601157e4002779dcfdf71fb0e97e8a9b4b019083e9a3e13534737fbc4"
+      },
+      "platform.json": {
+        "bytes": 3844,
+        "sha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68"
+      },
+      "sd/Image": {
+        "bytes": 44165632,
+        "sha256": "d5f145bbd0b392b915892104966ceb6649106fbd96c4f0f52ab63d87083ed56d"
+      },
+      "sd/boot.json": {
+        "bytes": 158,
+        "sha256": "ff51c335f6e3e628624480f94d776ead9734f8ac9cd80b9c53798baee51da009"
+      },
+      "sd/flow-be2-quad.dtb": {
+        "bytes": 3450,
+        "sha256": "a5f6b07fe67a3cfbe24c72c5a700ec42a910faf9021b0b62eef3b3b6d075030e"
+      },
+      "sd/fw_jump.bin": {
+        "bytes": 277856,
+        "sha256": "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41"
+      },
+      "sd/manifest.json": {
+        "bytes": 756,
+        "sha256": "614e44a15ff94ef5c374638ba1496d52cf6d9778b1e5bde9a6518dae5a648e9c"
+      },
+      "sd/product-binding.json": {
+        "bytes": 1893,
+        "sha256": "f3c927036d35b3e5135d57caafa6c8f092ce4ad0c71183f211f2317724fac101"
+      },
+      "sd/serial-handoff.bin": {
+        "bytes": 48,
+        "sha256": "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0"
+      },
+      "sd/serial-handoff.elf": {
+        "bytes": 4864,
+        "sha256": "0d35db87b9dfd799e8339d1c280a4c4ad94cd5269f0863addc0fb87f855b2551"
+      },
+      "sd_input_paths.rpt": {
+        "bytes": 12585,
+        "sha256": "0df65866a0b3bef79a0570e955e0ff84bef0aa0baae87ccb66821702a58f7cdc"
+      },
+      "sd_output_min_paths.rpt": {
+        "bytes": 20978,
+        "sha256": "0366dff98e27913ba70337ccc7bcade5b55fbf48580c0ac3e9bb94eb0092f1b7"
+      },
+      "sd_output_paths.rpt": {
+        "bytes": 13660,
+        "sha256": "6f744995fffafbf9be8390c460f2ffec81972d2a68aa93ffcdd6f3f8c685a47f"
+      },
+      "soc-utilization.rpt": {
+        "bytes": 13579,
+        "sha256": "6ded969069cb0ad55665bffc694d8c30e954b48b56eced1157e3c2988416e7c0"
+      },
+      "soc-worst-10.rpt": {
+        "bytes": 87136,
+        "sha256": "8c9ab26d59ecb314056ed42bb56fb23bcbfe4ae6163fb99bc14dd14485661a5f"
+      },
+      "xilinx_kcu105_drc.rpt": {
+        "bytes": 294321,
+        "sha256": "55768605e6183404f59d12f91d35979d411feb4d1feff4411104a1e57d8ca8c6"
+      },
+      "xilinx_kcu105_route_status.rpt": {
+        "bytes": 651,
+        "sha256": "22ce12c8c9b9a73e900d9bd7a66036585e9467c68c9d79262dbe47e5701033d6"
+      },
+      "xilinx_kcu105_timing.rpt": {
+        "bytes": 906147,
+        "sha256": "0053ce3aa3de5f521ab9b9f52cbcf21992da6737424f0e611415344f5bb931bc"
+      }
+    }
+  },
+  "single": {
+    "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "hardware_input": "/home/chen/FUN/flow-runs/be2-7f7f186-single-parallel-sd",
+    "software_input": "/home/chen/FUN/flow-runs/be2-final-7f7f186-sd-single",
+    "build": {
+      "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "host": "Alan",
+      "hostname": "chen-System-Product-Name",
+      "cwd": "/home/chen/FUN/flow-be2-1a4deba",
+      "profile": "single",
+      "clock_hz": 100000000,
+      "target": "xcku040-ffva1156-2-e",
+      "vivado": "2022.2",
+      "source_dirty": false,
+      "golden_changed": false,
+      "board": "NOT_RUN",
+      "new_timing_exceptions": false
+    },
+    "routed_timing_ns": {
+      "WNS": 0.127,
+      "TNS": 0.0,
+      "setup_failures": 0.0,
+      "setup_endpoints": 128268.0,
+      "WHS": 0.03,
+      "THS": 0.0,
+      "hold_failures": 0.0,
+      "hold_endpoints": 128257.0,
+      "WPWS": 0.103,
+      "TPWS": 0.0,
+      "pulse_failures": 0.0,
+      "pulse_endpoints": 45183.0
+    },
+    "route_errors": 0,
+    "routed_checkpoint": {
+      "bytes": 92075584,
+      "sha256": "9b7b812c1e12fae218e9ccb7dbdaa74ddcf142c78f8c335c89710682201cb581"
+    },
+    "config": {
+      "hangThresholdCycles": "10000000",
+      "bus": "axi",
+      "profile": "single",
+      "preset": "gshare",
+      "privilege": "linux",
+      "tandem": "false",
+      "debug": "false",
+      "platformSha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+      "nCores": "1",
+      "lineBytes": "32",
+      "l1Sets": "64",
+      "l1dWays": "2",
+      "l1iWays": "2",
+      "l2Ways": "4",
+      "l2BytesPerCore": "32768",
+      "l2Slots": "2",
+      "idBits": "1",
+      "coherentDma": "true",
+      "rvv": "false",
+      "memoryBits": "64"
+    },
+    "bios_matches_rom_init": true,
+    "board": "NOT_RUN",
+    "sd_external_timing": "OPEN; see sd-timing.md",
+    "files": {
+      "be2-single-sd.bit": {
+        "bytes": 16007026,
+        "sha256": "3b8333d0448f984f3e5e6c04aa8adf4a720bdc973e2431485c359d8e32fe285f"
+      },
+      "bios-rom.init": {
+        "bytes": 139264,
+        "sha256": "727c2424fa4d7754ae9b7cdef797bc7be85f25ad140d078b13a46e1edde02d09"
+      },
+      "bios.bin": {
+        "bytes": 40908,
+        "sha256": "020a084e5245117a531a76c8e7bdaa6feb300ae3de6d8b50b1de49f885a929fb"
+      },
+      "build-binding.json": {
+        "bytes": 381,
+        "sha256": "cffc4ec80a91aa95d12c1746e073f0d9f392efa9e63dfd8d02974eb082c67cd0"
+      },
+      "cluster-profile.txt": {
+        "bytes": 329,
+        "sha256": "469f067571fd6e167f7e4ce533477bffc7c78abe837ae00528c5a2f2174f7fc5"
+      },
+      "csr.json": {
+        "bytes": 14827,
+        "sha256": "7ae66b4a8532265dfaeaff61f0fc69e14eb88c035e4907cab42bb89e8ef97241"
+      },
+      "platform.json": {
+        "bytes": 3844,
+        "sha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68"
+      },
+      "sd/Image": {
+        "bytes": 44165632,
+        "sha256": "d5f145bbd0b392b915892104966ceb6649106fbd96c4f0f52ab63d87083ed56d"
+      },
+      "sd/boot.json": {
+        "bytes": 160,
+        "sha256": "993fc36036b38b18c9018b1902c053ab24405207632949c4ce55624a0e795055"
+      },
+      "sd/flow-be2-single.dtb": {
+        "bytes": 2486,
+        "sha256": "431c96287ff48ba0d9737dc6013068281abf4905a96075418465642de7e70d94"
+      },
+      "sd/fw_jump.bin": {
+        "bytes": 277856,
+        "sha256": "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41"
+      },
+      "sd/manifest.json": {
+        "bytes": 758,
+        "sha256": "34ab4885c0e47fa0dbcd79f51dd3b2f9179af67e2351102cef9d12c09bd7f76e"
+      },
+      "sd/product-binding.json": {
+        "bytes": 1896,
+        "sha256": "f46db82130a19c992a59a40e976d894570060343b143cec0a16f9cd67eb14299"
+      },
+      "sd/serial-handoff.bin": {
+        "bytes": 48,
+        "sha256": "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0"
+      },
+      "sd/serial-handoff.elf": {
+        "bytes": 4864,
+        "sha256": "c03dd18451cb2b624b2c9af32139a4c5eb4c5293eea9e6f40e359203cd80823c"
+      },
+      "sd_input_paths.rpt": {
+        "bytes": 12583,
+        "sha256": "2728879fe8e80d610815397f1ca7ddf880baaeab1f8072dcb1e5c7f22c113109"
+      },
+      "sd_output_min_paths.rpt": {
+        "bytes": 20977,
+        "sha256": "f6751ec2e60196c00ffce1db2e8e8a873a3e598d074747dbf353fac22fbc1922"
+      },
+      "sd_output_paths.rpt": {
+        "bytes": 13660,
+        "sha256": "935f4a7d782c1b97af95ced8e06dd7231db478078b0780dc2a87cfef8cfa0102"
+      },
+      "soc-utilization.rpt": {
+        "bytes": 13528,
+        "sha256": "25b89af557ee72981721c035d1b247c6f4a049aa4ca6dc352d81ad8ffb544799"
+      },
+      "soc-worst-10.rpt": {
+        "bytes": 70007,
+        "sha256": "8db27d52905075c6747292de0221dec7c9cc409c982ae8a01e3700ab630c8de3"
+      },
+      "xilinx_kcu105_drc.rpt": {
+        "bytes": 76775,
+        "sha256": "bb69a5567ccc987f2b226c30958d7dd059b671a53c21ea24c8c01f3def1ac005"
+      },
+      "xilinx_kcu105_route_status.rpt": {
+        "bytes": 651,
+        "sha256": "0d7ac5f4e702c14e85203119f5e150335aa0e3e92e3ca7681347f4ad53fd522e"
+      },
+      "xilinx_kcu105_timing.rpt": {
+        "bytes": 903922,
+        "sha256": "9fc621d5c1c86c929fe34035cc0132757df3da2c0bef2406748ff0c8b6dd1341"
+      }
+    }
+  },
+  "single-rvv": {
+    "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+    "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "hardware_input": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-resume-batch-sd",
+    "software_input": "/home/chen/FUN/flow-runs/be2-final-d902fb5-sd-single-rvv",
+    "build": {
+      "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+      "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "scalar_base_rtl_diff": [
+        "design/src/main/scala/rvv/RvvAluPipeline.scala",
+        "design/src/main/scala/rvv/RvvAxiArbiter.scala",
+        "design/src/main/scala/rvv/RvvLoadStore.scala",
+        "design/src/main/scala/rvv/RvvRegisterFile.scala"
+      ],
+      "source_dirty": false,
+      "host": "Alan",
+      "hostname": "chen-System-Product-Name",
+      "cwd": "/home/chen/FUN/flow-be2-b3-8ea5db5",
+      "profile": "single-rvv",
+      "clock_hz": 100000000,
+      "target": "xcku040-ffva1156-2-e",
+      "vivado": "2022.2",
+      "golden_changed": false,
+      "board": "NOT_RUN",
+      "new_timing_exceptions": false
+    },
+    "routed_timing_ns": {
+      "WNS": 0.012,
+      "TNS": 0.0,
+      "setup_failures": 0.0,
+      "setup_endpoints": 233770.0,
+      "WHS": 0.015,
+      "THS": 0.0,
+      "hold_failures": 0.0,
+      "hold_endpoints": 233759.0,
+      "WPWS": 0.108,
+      "TPWS": 0.0,
+      "pulse_failures": 0.0,
+      "pulse_endpoints": 73161.0
+    },
+    "route_errors": 0,
+    "routed_checkpoint": {
+      "bytes": 169881965,
+      "sha256": "ea7b5dbcbf8281f68c2b015f1d9a3a779ff7913e5e289e8cf4edaf5a1857cae9"
+    },
+    "config": {
+      "hangThresholdCycles": "10000000",
+      "bus": "axi",
+      "profile": "single-rvv",
+      "preset": "gshare",
+      "privilege": "linux",
+      "tandem": "false",
+      "debug": "false",
+      "platformSha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+      "nCores": "1",
+      "lineBytes": "32",
+      "l1Sets": "64",
+      "l1dWays": "2",
+      "l1iWays": "2",
+      "l2Ways": "4",
+      "l2BytesPerCore": "32768",
+      "l2Slots": "2",
+      "idBits": "2",
+      "coherentDma": "true",
+      "rvv": "true",
+      "memoryBits": "512"
+    },
+    "bios_matches_rom_init": true,
+    "board": "NOT_RUN",
+    "sd_external_timing": "OPEN; see sd-timing.md",
+    "physical_candidate": {
+      "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd",
+      "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+      "input_checkpoint_filename": "clock-placed.dcp",
+      "input_checkpoint_sha256": "f008764b62b14700b2dd10c42184a8c6aa57c2ce1282e7a390f85f2c008c4781",
+      "script_sha256": "e0d49fabe1ff2436506188a8dc971a57b325040b2d03b6626c91ebd688a02fe4",
+      "host": "Alan",
+      "clock_hz": 100000000,
+      "vivado": "2022.2",
+      "maxThreads": 4,
+      "affinity": "0-3",
+      "nice": 10,
+      "directives": [
+        "NoTimingRelaxation",
+        "tns_cleanup"
+      ],
+      "constraints_unchanged": true,
+      "new_timing_exceptions": false,
+      "start_utc": "2026-10-11T17:03:43.070251+00:00",
+      "board": "NOT_RUN",
+      "placement_comparison_checkpoint": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp",
+      "placement_comparison_sha256": "5ee1ae4fa82757f08d65be9316b29ad137bf61274c756723145fd79df67ec9d1",
+      "placement_auditor_sha256": "84c91b8f4e77f5301cabcdc84538f516629e916e294ffdbbed44026e57e6105e",
+      "parent_candidate": {
+        "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd",
+        "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+        "input_checkpoint_sha256": "5ee1ae4fa82757f08d65be9316b29ad137bf61274c756723145fd79df67ec9d1",
+        "script_sha256": "4425911d583e7164e920d0dc5db04c5476f6d22e22e5697a7c4898d054add52a",
+        "host": "Alan",
+        "clock_hz": 100000000,
+        "vivado": "2022.2",
+        "maxThreads": 4,
+        "affinity": "0-3",
+        "nice": 10,
+        "directives": [
+          "freeze primitive LOC/BEL",
+          "unroute all",
+          "place unplace",
+          "place Quick no_psip no_bufg_opt",
+          "NoTimingRelaxation",
+          "tns_cleanup"
+        ],
+        "constraints_unchanged": false,
+        "new_timing_exceptions": false,
+        "start_utc": "2026-10-11T16:44:05.903472+00:00",
+        "board": "NOT_RUN",
+        "physical_clock_routing_property": "CLOCK_DELAY_GROUP be2_ddr_serdes on BUFGCE/O and BUFGCE_DIV/O nets; USER_CLOCK_ROOT both outputs set to existing original default DCP measured common X1Y2 CLOCK_ROOT",
+        "timing_constraints_unchanged": true,
+        "physical_cell_constraint": "all primitive LOC fixed, simple LUT/FF BEL fixed; RAM/SRL internal BEL packing allowed; actual equality and placed common clock roots required before routing",
+        "parent_candidate": {
+          "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd",
+          "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+          "input_checkpoint_sha256": "76e7072593be3e0152959a1a626452ab8e0bd1b1ee4b776ec612278b07ce4a30",
+          "script_sha256": "b8de5cbaed04e7d9a43c25eac546cf20dc8271280ba06db1b60a969244459761",
+          "host": "Alan",
+          "clock_hz": 100000000,
+          "vivado": "2022.2",
+          "maxThreads": 4,
+          "affinity": "0-3",
+          "nice": 10,
+          "directives": [
+            "unroute preserving placement for pre-route replication",
+            "force_replication_on_nets on failing register startpoints",
+            "AggressiveExplore",
+            "NoTimingRelaxation"
+          ],
+          "constraints_unchanged": true,
+          "new_timing_exceptions": false,
+          "start_utc": "2026-10-11T15:34:37.461237+00:00",
+          "board": "NOT_RUN",
+          "netlist_attribute_change": "DONT_TOUCH cleared only on selected failing register drivers/nets",
+          "parent_candidate": {
+            "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-sd",
+            "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+            "input_checkpoint_sha256": "22c888da79de2c08a9fe52acb469de0e1aa8e6a77a836e66107fe3c68d11e778",
+            "script_sha256": "f2b4334097e1216700c99cbd875f745671fce8b1b6d78a4cedc8a1d7aa783578",
+            "host": "Alan",
+            "clock_hz": 100000000,
+            "vivado": "2022.2",
+            "maxThreads": 4,
+            "affinity": "0-3",
+            "nice": 10,
+            "directives": [
+              "AggressiveExplore",
+              "NoTimingRelaxation",
+              "tns_cleanup"
+            ],
+            "constraints_unchanged": true,
+            "new_timing_exceptions": false,
+            "start_utc": "2026-10-11T15:07:35.368347+00:00",
+            "board": "NOT_RUN"
+          }
+        }
+      }
+    },
+    "files": {
+      "be2-single-rvv-sd.bit": {
+        "bytes": 16007026,
+        "sha256": "6d21a4df75cf48024d4c7b848715b8844a7f5ad6ac658f140e20c126c3bc979c"
+      },
+      "bios-rom.init": {
+        "bytes": 139264,
+        "sha256": "ea576bc889751ca49fedb0008587f50ad0b08df7b302fa8c1ed487e0b407a313"
+      },
+      "bios.bin": {
+        "bytes": 40924,
+        "sha256": "268bb402a1e2172dc6f327a7e1b2eda6d2e12cb5984b835a6a143880e58ec8a2"
+      },
+      "build-binding.json": {
+        "bytes": 706,
+        "sha256": "1fdc8b8afb9ec1801bf16d4663a18dac079d6b3b4efada43f738de1520f16158"
+      },
+      "cluster-profile.txt": {
+        "bytes": 333,
+        "sha256": "0e27802bf963301d588b1fcdf85d44ca8285d62e65cb3f13506effd837605f56"
+      },
+      "csr.json": {
+        "bytes": 14844,
+        "sha256": "7e0afe546d5f82bd43e7ded030690266be594c6f800877bc3a14987dc706363c"
+      },
+      "physical-candidate.json": {
+        "bytes": 4113,
+        "sha256": "f9db7507b4b7a6b4f406d45e7338bef3d838152e823d0a7efefa8934d2d82240"
+      },
+      "platform.json": {
+        "bytes": 3844,
+        "sha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68"
+      },
+      "sd/Image": {
+        "bytes": 44165632,
+        "sha256": "d5f145bbd0b392b915892104966ceb6649106fbd96c4f0f52ab63d87083ed56d"
+      },
+      "sd/boot.json": {
+        "bytes": 164,
+        "sha256": "5a65d95e91eb6da6d2caf9cfa2b2b97b5e091363fc77862ea1914ecdd60023c2"
+      },
+      "sd/flow-be2-single-rvv.dtb": {
+        "bytes": 2490,
+        "sha256": "2641a218d9bfaac7f010697a378214b1e0dd6c83f8ac408655d18d69fdae4ea2"
+      },
+      "sd/fw_jump.bin": {
+        "bytes": 277856,
+        "sha256": "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41"
+      },
+      "sd/manifest.json": {
+        "bytes": 762,
+        "sha256": "1cc367a4df665b9c2da97798eac5aa5449ae39d42f1686922016e675ba1a2c68"
+      },
+      "sd/product-binding.json": {
+        "bytes": 2299,
+        "sha256": "73daa921f170fd8933b13ddf52888aa4c75305aec5f8212cd0f207f375e4ee8a"
+      },
+      "sd/serial-handoff.bin": {
+        "bytes": 48,
+        "sha256": "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0"
+      },
+      "sd/serial-handoff.elf": {
+        "bytes": 4864,
+        "sha256": "d59e9ce7ba1790e94f274049aa36a6df1cd2248493e589ab92fa320541efbde2"
+      },
+      "sd_input_paths.rpt": {
+        "bytes": 12584,
+        "sha256": "4d95dcd46e679ec352e2458c0e522b89e8b752a3ad5ccf39762e01863eb1eed8"
+      },
+      "sd_output_min_paths.rpt": {
+        "bytes": 20978,
+        "sha256": "e493b70f838211dbba33f06f1341fc9c7208df6b86f2f658cee4b320bc181d9b"
+      },
+      "sd_output_paths.rpt": {
+        "bytes": 13654,
+        "sha256": "29650c901023af08b6b2eda2492049ac74b2f454b4057f089931b388d7a2121f"
+      },
+      "soc-utilization.rpt": {
+        "bytes": 13610,
+        "sha256": "916973933fce061a66987b16d10c27c02df9d5baf1bfdcf4af645320f252c7cc"
+      },
+      "soc-worst-10.rpt": {
+        "bytes": 95481,
+        "sha256": "d10478370b23778b7571cad54ba61772a858aff342ea75b9a61b9328a57f8934"
+      },
+      "xilinx_kcu105_drc.rpt": {
+        "bytes": 205510,
+        "sha256": "f99063b6fdc30ede402dca342e9961808fd49064b49b0d6b58788b7cb6fcb888"
+      },
+      "xilinx_kcu105_route_status.rpt": {
+        "bytes": 651,
+        "sha256": "8d12950fbadf043f639498e2238b4b9079d7d196fd552eddcd5cc3df2fb69308"
+      },
+      "xilinx_kcu105_timing.rpt": {
+        "bytes": 196122,
+        "sha256": "5ffc976320aefdc93007a4bfc094190823f8b69cb1b867acbe057c85ee0ccbf3"
+      }
+    }
+  }
+}
