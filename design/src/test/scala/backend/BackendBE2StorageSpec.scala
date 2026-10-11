@@ -13,7 +13,7 @@ import org.scalatest.matchers.must.Matchers
 class BE2W2StorageProbe extends BreezeBackend(BackendConfig(privilegeProfile = PrivilegeProfile.Linux)) {
   val occupyW2 = IO(Input(Bool()))
   writeback.io.ordinary.valid := wbOrdinary || occupyW2
-  when(occupyW2) {
+  when(occupyW2 && !wbOrdinary) {
     writeback.io.ordinary.bits.rd.idx := 31.U
     writeback.io.ordinary.bits.rd.isFp := false.B
     writeback.io.ordinary.bits.data := 0x1234.U
