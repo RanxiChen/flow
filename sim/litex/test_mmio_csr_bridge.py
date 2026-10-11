@@ -326,6 +326,23 @@ class MmioCsrBridgeTest(unittest.TestCase):
             self.assertEqual(byte, ord('R'))
         self.simulate(dut, process(), observations)
 
+    def test_native_uart_full_tx_fifo_status_reads_one(self):
+        dut, observations = CsrPath(native_uart=True), []
+        driver = AxiDriver(dut.axil, observations)
+
+        def process():
+            yield dut.uart.source.ready.eq(0)
+            yield from driver.write(UART_BASE, ord('Q'))
+            self.assertEqual((yield dut.uart._txfull.status), 1,
+                             'fixture did not fill TX queue')
+            self.assertEqual((yield dut.uart.source.valid), 1)
+            self.assertEqual((yield dut.uart.source.data), ord('Q'))
+            actual = yield from driver.read(UART_BASE + 4)
+            observations.append({'stored_txfull': (yield dut.uart._txfull.status),
+                                  'txfull_read': actual})
+            self.assertEqual(actual, 1, 'full UART TX queue was reported as empty')
+        self.simulate(dut, process(), observations)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
