@@ -81,6 +81,9 @@ class MulUnit(val registeredCommit: Boolean = false) extends Module {
   val resolvedCommitted = VecInit((0 until 3).map(i => committed(i) || authorize(i)))
   val resolvedValid = VecInit((0 until 3).map(i =>
     valid(i) && (!io.killUncommitted || resolvedCommitted(i))))
+  io.killed := Mux(io.killUncommitted, count - committedCount - authorizeResult.asUInt +
+    PopCount((0 until 3).map(i => valid(i) && !resolvedCommitted(i))), 0.U)
+  io.drained := outstanding === 0.U
   val enqueue = resolvedValid(2)
   val enqueueCommitted = enqueue && resolvedCommitted(2)
   val authorizedCount = committedCount + authorizeResult.asUInt

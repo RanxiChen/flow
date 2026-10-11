@@ -32,4 +32,6 @@ class IntMduIO[T <: Data](request: T) extends Bundle {
   val commit = Input(Bool())
   val killUncommitted = Input(Bool())
   val result = Decoupled(new IntMduResult)
+  val killed = Output(UInt(4.W))
+  val drained = Output(Bool())
 }

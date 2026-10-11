@@ -27,7 +27,7 @@ class FpEntry extends Bundle {
 /** Buffered EX-to-CVFPU requests and registered CVFPU-to-writeback results.
   * Kill never flushes CVFPU: already committed calculations must survive.
   */
-class FpUnit(val depth: Int = 32) extends Module {
+class FpUnit(val depth: Int = 32, val issueReservation: Boolean = false) extends Module {
   require(depth >= 8 && isPow2(depth), "FP tag table requires a power-of-two depth >= 8")
   val tagWidth = log2Ceil(depth)
   val io = IO(new Bundle {
@@ -39,6 +39,10 @@ class FpUnit(val depth: Int = 32) extends Module {
     val committedGpr = Output(UInt(32.W))
     val committedFpr = Output(UInt(32.W))
     val committedFlagsOnly = Output(Bool())
+    val reserve = Input(Bool())
+    val reserveReady = Output(Bool())
+    val killed = Output(UInt(log2Ceil(depth + 1).W))
+    val drained = Output(Bool())
   })
   val impl = Module(new FlowFpnewBlackBox(tagWidth))
   val entries = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new FpEntry))))
@@ -61,6 +65,22 @@ class FpUnit(val depth: Int = 32) extends Module {
   input.io.enq.bits.request := io.req.bits
   input.io.enq.bits.tag := allocate
   io.req.ready := input.io.enq.ready && canAllocate
+  // Credits include the ID reservation still resident in EX. Two entrance
+  // slots are reserved separately from tags; a dequeue returns entrance only.
+  val entrance = RegInit(0.U(2.W))
+  val pending = RegInit(0.U(2.W))
+  val reserveTag = (allocate + pending)(tagWidth - 1, 0)
+  io.reserveReady := entrance < 2.U && !killDrain && !entries(reserveTag).valid
+  if (issueReservation) {
+    val cancelPending = Mux(io.killUncommitted, pending, 0.U)
+    entrance := entrance + io.reserve.asUInt - input.io.deq.fire.asUInt - cancelPending
+    pending := pending + io.reserve.asUInt - io.req.fire.asUInt - cancelPending
+    when(!reset.asBool) {
+      assert(!io.reserve || io.reserveReady, "[R3] FP reservation without entrance/tag capacity")
+      assert(!io.req.valid || (pending =/= 0.U && io.req.ready), "[R3] reserved FP request rejected")
+      assert(entrance <= 2.U && pending <= 1.U, "[R3] FP reservation overflow")
+    }
+  }
   val queuedLive = entries(input.io.deq.bits.tag).valid
   impl.io.in_valid_i := input.io.deq.valid && queuedLive
   // Killed queued work is discarded locally; committed queued work survives.
@@ -104,6 +124,9 @@ class FpUnit(val depth: Int = 32) extends Module {
   impl.io.out_ready_i := !returned.valid || (returnCommitted && completed.io.enq.ready)
   val completingTag = completed.io.deq.bits.tag
   val completingEntry = entries(completingTag)
+  io.killed := Mux(io.killUncommitted, PopCount((0 until depth).map(i =>
+    entries(i).valid && !entries(i).committed && !(io.commit && oldest === i.U))), 0.U)
+  io.drained := !io.busy
   io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o ||
     input.io.deq.valid || completed.io.deq.valid || killDrain
   def pending(fp: Boolean): UInt = entries.map { e =>
@@ -124,7 +147,7 @@ class FpUnit(val depth: Int = 32) extends Module {
   when(io.req.fire) {
     // The pre-edge entry is empty, so the kill loop below cannot see a new
     // request. Explicitly tombstone a fire/kill allocation at this edge.
-    entries(allocate).valid := !io.killUncommitted
+    entries(allocate).valid := true.B
     entries(allocate).committed := false.B
     entries(allocate).rd := io.req.bits.rd.idx
     entries(allocate).isFp := io.req.bits.rd.isFp
@@ -150,13 +173,9 @@ class FpUnit(val depth: Int = 32) extends Module {
     commitCursor := Mux(io.commit, oldest + 1.U, allocate + io.req.fire.asUInt)
     killDrain := true.B
   }
-  val killedFire = RegNext(io.req.fire && io.killUncommitted, false.B)
-  val killedTag = RegEnable(allocate, io.req.fire && io.killUncommitted)
   when(!reset.asBool) {
     assert(!io.commit || candidates.asUInt.orR, "[S04] FPU commit without live uncommitted item")
-    when(killedFire) {
-      assert(!entries(killedTag).valid && killDrain, "[S05] killed FP allocation survived or reused its tag")
-    }
+    assert(!(io.req.fire && io.killUncommitted), "[R2] FP allocation during delayed kill")
     assert(!killDrain || !io.req.fire, "[S05] FP tag reused before killed returns drained")
     assert(!io.result.fire || (completingEntry.valid && completingEntry.committed && resultBuffered(completingTag)), "[S05/S08] speculative FP write")
     assert(io.req.fire === input.io.enq.fire, "[T14] input enqueue handshake changed")

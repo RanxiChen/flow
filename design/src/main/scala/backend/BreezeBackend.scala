@@ -95,7 +95,7 @@ class BreezeBackend(
   val writeback = Module(new Writeback)
   val mulUnit = Module(new MulUnit(registeredCommit = true))
   val divUnit = Module(new DivUnit(registeredCommit = true))
-  val fpUnit = Module(new FpUnit)
+  val fpUnit = Module(new FpUnit(issueReservation = true))
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
   val jau = Module(new JAU(64))
@@ -344,8 +344,7 @@ class BreezeBackend(
   fpIn.intFmt := exFp.intFmt
   fpIn.rd.idx := ex.rd_addr
   fpIn.rd.isFp := exBank
-  val resourceWait = (exMem && !io.l1d.req.ready) || (exMul && !mulUnit.io.req.ready) ||
-    (exDiv && !divUnit.io.req.ready) || (exFpLong && !exFpIssued && !fpUnit.io.req.ready)
+  val resourceWait = exMem && !io.l1d.req.ready
   exAdvance := allowEx && !resourceWait
   mulUnit.io.commit := RegNext(wbCommit && wb.mul, false.B)
   divUnit.io.commit := RegNext(wbCommit && wb.div, false.B)
@@ -461,9 +460,33 @@ class BreezeBackend(
     (wb.valid, wb.writes, wb.rd.isFp, wb.rd.idx, wb.csrCmd =/= CSR_CMD.NOP.U || wb.rd.isFp)).map {
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
+  // Only registered occupancy decides ID capacity. Grant may return a
+  // credit in the same RF-write-through cone; EX reads no unit ready.
+  val idLegal = !decoder.io.illegal_inst && !io.fetchBuffer.bits.illegalCompressed &&
+    !io.fetchBuffer.bits.instructionAccessFault && !io.fetchBuffer.bits.instructionPageFault
+  val idMul = idLegal && ctrl.mul_valid && rd =/= 0.U
+  val idDiv = idLegal && ctrl.div_valid && rd =/= 0.U
+  val idFp = fpCtrl.fpuValid && csrFile.io.fp_enabled &&
+    !io.fetchBuffer.bits.instructionAccessFault && !io.fetchBuffer.bits.instructionPageFault
+  def credit(capacity: Int, reserve: Bool, release: Bool, killed: UInt, orphan: Bool): Bool = {
+    val used = RegInit(0.U(log2Ceil(capacity + 1).W))
+    val canceled = RegNext((wbKill || io.hartFatal) && orphan, false.B)
+    val returns = release.asUInt +& killed +& canceled.asUInt
+    used := used + reserve.asUInt - returns
+    when(!reset.asBool) {
+      assert(used <= capacity.U && returns <= used, "[R3] credit ownership underflow/overflow")
+    }
+    used < capacity.U || release
+  }
+  val mulCredit = credit(8, idLeave && idMul, mulUnit.io.result.fire, mulUnit.io.killed,
+    exMul && !mulUnit.io.req.fire)
+  val divCredit = credit(1, idLeave && idDiv, divUnit.io.result.fire, divUnit.io.killed,
+    exDiv && !divUnit.io.req.fire)
+  fpUnit.io.reserve := idLeave && idFp
+  val creditWait = (idMul && !mulCredit) || (idDiv && !divCredit) || (idFp && !fpUnit.io.reserveReady)
   val slowRedirectGap = RegNext(wbKill, false.B)
   io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !creditWait && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
@@ -663,6 +686,9 @@ class BreezeBackend(
     assert(mem.asUInt === heldMem && perm.asUInt === heldPerm && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
   }
   when(!reset.asBool) {
+    assert(!mulUnit.io.req.valid || mulUnit.io.req.ready, "[R3] reserved MUL rejected")
+    assert(!divUnit.io.req.valid || divUnit.io.req.ready, "[R3] reserved DIV rejected")
+    assert(!fpUnit.io.req.valid || fpUnit.io.req.ready, "[R3] reserved FP rejected")
     when(io.hartFatal) {
       assert(!(idLeave || wbCommit || io.l1d.req.fire || mulUnit.io.req.fire ||
         divUnit.io.req.fire || fpUnit.io.req.fire), "[fatal] new issue or ordinary retirement")
