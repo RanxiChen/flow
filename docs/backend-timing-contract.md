@@ -36,13 +36,13 @@
 | T11 ※ | Load miss 迟到数据（RSP↓ DataE 在拍 R fire，`late.ready` 恒可得） | `l1d.late.fire = R+7`（R+1…R+4 安装 4 拍，R+5 回放 S0，R+7 回放 S2），当拍进入后端 `lateReg`；`gprWrite(x1) = R+8`；依赖指令 `idLeave = R+8`（SOC-3b：由 R+7 改为 R+8） |
 | T12 ※b | late 首次 valid 与普通 GPR 指令 WB 提交同拍 N，N+1 的 WB 不写 GPR | 普通指令 `commit=N`、`gprWrite=N+1`；`l1d.late.fire=N`、迟到目的 `gprWrite=N+2`；ID/EX/MEM/WB 不因写口保持；`wb_port_conflict` 仅 N+1 计 1 |
 | T13 | 写口优先级：lateReg、DIV、MUL、FPU→GPR 四个写口来源在 N 同拍 valid，N…N+3 的 W2 无普通 GPR 写 | 连续 4 拍 N…N+3 依次写入，顺序 lateReg > DIV > MUL > FPU；未选者保留未完成结果。测试 L1D late 在 N−1 接收：现有刺激 `returnDelay=26` 改为 25，原物理写回期望 N…N+3 不变；FPU 反压遵循 v1 RTL spec 的 tag/fire 合同 |
-| T14 | FPU 请求接受与计算发射 | SOC-3d 合并控制链候选（2026-10-09 用户授权）：EX 拍 E 在 FpUnit 入口有容量时接受请求并分配 tag；两项无 flow/pipe 请求缓冲使原始 CVFPU 最早 E+1 fire。入口 ready 只依赖寄存容量/tag 可分配，不能组合读取 CVFPU ready。无停顿 II=1；满时保持 EX，不重复接受。 |
+| T14 | FPU 请求接受与计算发射 | SOC-3d 合并控制链候选（2026-10-09 用户授权）：EX 拍 E 在 FpUnit 入口有容量时接受请求并分配 tag；两项无 flow/pipe 请求缓冲使原始 CVFPU 最早 E+1 fire。入口 ready 只依赖寄存容量/tag 可分配，不能组合读取 CVFPU ready。无停顿 II=1；容量在 ID 预留，满时保持 ID；离开 ID 的请求在 EX 必然被接受一次。预留同时覆盖两项入口、tag 和 killDrain，不新增 FIFO。 |
 | T15 | FPU 写回附加拍 | `fpu.out_valid&&out_ready` 的拍 = `fprWrite`（或 `gprWrite`，FP→整数类）的拍；在途表查 tag 不加拍。仅在被更高优先级来源或 W2 普通写占口时延后 |
 | T16 | FP 依赖：`fadd.d f1,..; fadd.d f2,f1,..` | `idLeave(第二条) = fprWrite(f1)`；`fprWrite(f1) − ex(第一条)` 等于 1 + CVFPU FP64 ADDMUL 的实际延迟（测试台从原始 `in fire`→`out fire` 测得），对应本批一拍输入边界；输出不加拍 |
 | T17 | CSR 等空：`fdiv.d f1,..; csrr x5,fflags` | `idLeave(csrr) = fprWrite(f1) + 1`（A07 用 `busy==0`，不用 effectiveBusy）；读到的 fflags 含 fdiv 的标志 |
-| T18 | FENCE.I 在 WB，`drained=1` | `frontendRedirect.valid` 在 WB 当拍；I-cache 清空同拍发出 |
-| T19 | FENCE.I 在 WB，MSHR 忙，`drained` 在拍 D 变 1 | redirect 在 D 当拍；此前 WB 保持，不提交；FENCE.I 离开 ID 之后到 redirect 之前，没有指令离开 ID，`l1d.req.fire` 不出现 |
-| T20 | SFENCE.VMA 在 WB | `sfence.valid` 在第一个 `drained && mmu.idle` 的拍 S（仅 1 拍）；redirect 在 S 之后第一个 `mmu.idle` 的拍；期间无任何 `dtlb.req`/`itlb.req`；SFENCE.VMA 离开 ID 之后到 redirect 之前没有指令离开 ID |
+| T18 | FENCE.I 在 ID，寄存 `cpuDrained=1` | 更老项离开 WB 后下一拍离开 ID；ID 拍 I，EX=I+1，WB/redirect/cacheFlush=I+4；WB 不等待 |
+| T19 | FENCE.I 在 ID，`cpuDrained` 在拍 D 变 1，老流水已空 | D+1 离开 ID，EX=D+2，WB/commit/redirect/cacheFlush=D+5；期间不发年轻指令。采样到发射期间 raw cpuDrained 不回落 |
+| T20 | SFENCE.VMA 在 ID，原始 `cpuDrained && mmuIdle` 在 D 满足，老流水已空 | 停止前端新翻译；D+1 离开 ID，EX=D+2，WB/commit/sfence/redirect=D+5。MMU 在 sfence S0/S1 内部拒绝查询，无 WB 第二阶段等待。raw 条件从采样到发射稳定 |
 | T21 ※b | 写口饥饿保护：`late.valid` 首拍为 c，普通独立 ALU 流已稳定，除保护气泡外持续提交，不读 late 的 rd | `l1d.late.fire=c`；迟到目的 `gprWrite=c+8`；只有 c+4 一拍没有指令离开 ID，其余各拍照常离开；`wb_port_conflict` 在 c+1…c+7 各计 1，共 7 |
 | T22 ※b | B01 反例：Load A 已提交 miss；B 为 `add`（写 GPR）、C 为紧随的命中 `ld`（不同字）、其后为 `nop`；A 的 `late.valid` 首拍 = B 的 WB 拍 N | `commit(B)=N`、`gprWrite(B)=N+1`；C 的 `l1d.resp.valid`（Done）=`commit(C)=N+1`、`gprWrite(C)=N+2`；`l1d.late.fire=N`、`gprWrite(A)=N+3`；后端无保持，resp 与 WB 始终同拍；冲突 N+1、N+2，共 2 |
 
@@ -58,7 +58,7 @@
 | P02 | MUL 吞吐：8 条独立 MUL | `req.fire` 连续 8 拍；`gprWrite` 连续 8 拍（各为对应 E+4） |
 | P03 | DIV 后台：一条常规 DIV（≥20 拍迭代）后跟 20 条不相关 ADD | 20 条 ADD 在 DIV 写回之前全部提交，且 `commit` 连续（每拍一条） |
 | P04 | hit-under-miss：Load A miss（拍 E），随后 Load B（他行命中，E+1）、Store C（他行命中，E+2）、10 条 ALU | B 的 Done 在 E+3、C 的 Done 在 E+4；B、C 与 10 条 ALU 都在 A 的 `late.fire` 之前提交 |
-| P05 ※ | miss 同行停住：P04 之后 Load D 访问 A 的行 | D 在 WB 收 `s2Hold` 直到 A 回放完成；D 的 Done = R+10（A 回放 S2 在 R+7，MSHR 当拍空闲，D 于 R+8 重进 S0） |
+| P05 ※ | miss 同行停住：P04 之后 Load D 访问 A 的行 | D 第一次 S3 未判定时从本条 PC 回放；CPU MSHR 在 R+8 内部回放/late 后释放，R+9 原始资源空闲，R+10 寄存唤醒允许 D 从 ID solo 发射，S0=R+11，S3/Done/commit=R+14。D 恰好提交一次，无第二次 Replay |
 | P06 | 后台三路并存：Load miss（x1）、常规 DIV（x2）、FDIV.D（f1）先后提交，随后 20 条不依赖它们的 ALU | ① 重叠：第 1 条 ALU 的 `commit` 早于三路结果中最早的一次写回；② 不停顿：提交空拍集合 = `{g−1}`，g 取 x1/x2 后台 `gprWrite` 拍，并且 g−1 严格落在首末 ALU commit 之间；每个空拍恰 1 拍，FDIV 写 FPR 不产生空拍。ID 在 b 插气泡时 WB 空拍为 b+3、W2 让口/后台写回为 b+4；③ 三路结果各写一次，记分板最终全 0。不要求 20 条 ALU 全部早于后台写回（FDIV 延迟由 CVFPU 决定） |
 | P07 | FPU 乱序返回：`fdiv.d f1,..` 后紧跟 `fadd.d f2,..`（不相关） | `fadd` 在 fdiv 未完成时发射；`fprWrite(f2) < fprWrite(f1)`；两者 fflags 都累积 |
 | P08 | FPU 吞吐：8 条独立 `fmadd.d` | `fpu.in fire` 连续 8 拍（在途表容量不得成为瓶颈） |
@@ -109,3 +109,19 @@ L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列�
 同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
 
 本轮逐行精确迁移：T01/T03/T04/T06/T07/T09/T12/T17/T19/T20/T22 的相对条件及数值不变（T12/T22 的 N 为实际新 WB）；T02 Done/commit E+3、写/ID E+4、依赖 EX E+5；T05 写 E+4、依赖 EX E+5；T08 接收 E+5；T10 Done/commit E+3；T11 late R+8、写/ID R+9；T13 仍 N…N+3 四源顺序，测试刺激提前 FP CLASSIFY 并将 returnDelay 25→23 以抵消新增授权/返回/回放级，MUL 发射与物理期望不变；T14 不变；T15 实际原始 CVFPU out-fire+1 为无冲突写回；T16 实际原始 CVFPU 延迟+2；T18 从 EX 到 WB 为3；T21 写 c+9、ID 除 c+4 外连续、8次冲突。P01/P02/P03/P07/P08/P09/P10 的数量、并行和副作用条件不变；P04 B/C commit E+4/E+5；P05 同行重查 R+12（回放 S3 R+8 完成，R+9 重发 S0，R+12 响应）；P06 ID 气泡 b 在 WB b+4、W2 b+5 让口。新增 PA 捕获级应保留这些重叠收益；本轮并未批准任意额外保持或串行化。
+
+
+## BE2-P 实施修订（2026-10-11，§10/§11 授权）
+
+本节覆盖上文 SOC-3b/c/d/e 的旧保持和令牌条文。MEM/PERM 无条件推进，kill 仅清 valid；WB 仅对 solo 阻塞项自保持，EX/MEM/PERM 必须为空。EX 唯一等待源为 L1D S0 接收。串行操作在 ID 使用寄存 cpuDrained/mmuIdle/标量 drain 等待；WFI 正常流水提交。T07 的第二条 DIV 在 ID 等 credit，接受仍在前一条物理写回后一拍。
+
+WB 本地架构动作和 L1D CPU valid 作废保留同拍，执行单元 commitD/killD 延后一拍；输出允许寄存 commitD 当拍授权最老项。MUL 八项总预留覆盖流水与八槽结果，晚返回使用两项无 flow/pipe 队列；FPU 两项入口预留与 tag 容量分开。写口输入统一为 rd/bank/data/flags 的寄存结果，授权只做出队、busy clear、credit return。优先级和阈值 3 保留。桩默认关闭；加速桩只支持 custom-0 的 Ok/Exc 随机判定，Serial/标量结果推迟到 R05'。
+
+| 新合同 | 检查 |
+| --- | --- |
+| N01 | MEM/PERM 每拍推进；WB self-hold 仅 solo 且年轻 EX/MEM/PERM 全空；串行指令 WB 无等待 |
+| N02 | Replay 同拍 wbKill，目标 wb.pc；solo 重执行恰好提交一次，无 PS/MSHR/reservation/MMIO 副作用 |
+| N03 | MUL 每拍推进；连续八拍 W2 冲突时八结果仍按序完成 |
+| N04 | commitD/killD 延后一拍；T04/T05/T16/P02/P08/P10 的原数值与副作用要求不放宽 |
+
+上文“s2Hold→各级保持”已删除为结构允许项。允许的例外仅 WB 本地 busy/CSR/退休/W2 捕获与 CPU/后端 valid 作废；串行 drained/idle 不进入 WB 判定。MMU 原 C4 的 sfence 两阶段后端等待在本任务范围内替换为 ID 采样和 MMU 自身 S0/S1 接收阻塞；不修改原 MMU 冻结文件或起点已有哈希差异。

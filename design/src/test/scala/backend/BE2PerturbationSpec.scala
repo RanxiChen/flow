@@ -24,7 +24,7 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           for(_ <- 0 until 6) m.step()
           m.returnDelay = 1 + rng.nextInt(40)
           m.misses += 0x100
-          val program = Vector(ld(10,0x100)) ++ (1 to 8).map(rd => mdu(rd,20,21)) ++
+          val program = Vector(ld(10,0x100),ld(14,0x108)) ++ (1 to 8).map(rd => mdu(rd,20,21)) ++
             Vector(mdu(11,20,21,div=true), addi(12,1,7), addi(13,10,1))
           var index = 0
           val start = m.pc
@@ -43,9 +43,15 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
             (pcs.toVector ++ program.indices.map(i => start+i*4))
           for(rd <- 1 to 8) m.writes(rd).map(_.data).toVector mustBe Vector(BigInt(a*b))
           m.writes(10).map(_.data).toVector mustBe Vector(BigInt(0x1234))
+          m.writes(14).map(_.data).toVector mustBe Vector(BigInt(0x1234))
           m.writes(11).map(_.data).toVector mustBe Vector(BigInt(a/b))
           m.writes(12).map(_.data).toVector mustBe Vector(BigInt(a*b+7))
           m.writes(13).map(_.data).toVector mustBe Vector(BigInt(0x1235))
+          val sets=m.events.filter(_.kind=="busySet").map(e=>(e.rd,e.data)).sorted
+          val clears=m.events.filter(_.kind=="busyClear").map(e=>(e.rd,e.data)).sorted
+          sets mustBe clears
+          sets.distinct mustBe sets
+          d.io.observe.memAdvance.expect(true.B); d.io.observe.permAdvance.expect(true.B)
           d.io.observe.gprBusy.expect(0.U)
         }
       }

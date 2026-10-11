@@ -29,4 +29,6 @@ class BackendObservation extends Bundle {
   val memAdvance = Bool()
   val permAdvance = Bool()
   val killD = Bool()
+  val busySet = Valid(new flow.interface.L1DDestination)
+  val busyClear = Valid(new flow.interface.L1DDestination)
 }

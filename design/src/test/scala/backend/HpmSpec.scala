@@ -23,7 +23,7 @@ class HpmSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.write.poke(true.B); d.io.address.poke(0xb03.U); d.io.data.poke(11.U)
       e.wbPortConflict.poke(2.U); d.clock.step(); d.io.counter(0).expect(11.U)
       d.io.write.poke(false.B); d.clock.step(); d.io.counter(0).expect(11.U)
-      d.io.write.poke(true.B); d.io.address.poke(0x323.U); d.io.data.poke(14.U); d.clock.step()
+      d.io.write.poke(true.B); d.io.address.poke(0x323.U); d.io.data.poke(21.U); d.clock.step()
       d.io.selector(0).expect(0.U); d.io.counter(0).expect(13.U)
       d.io.write.poke(false.B); d.clock.step(); d.io.counter(0).expect(15.U)
     }

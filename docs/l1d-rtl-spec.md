@@ -84,6 +84,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 | `s2Hold` | 出 | S2 暂不判定，后端停在 WB |
 | `late` | 出，Decoupled | 迟到数据：`rd`、`data` 64、`error`；后端 ready=0 时由 MSHR 保持（不占 S2，6.2 节） |
 | `drained` | 出 | MSHR 与 pending-store 均空（FENCE.I、SFENCE.VMA 用） |
+| `cpuDrained` | out | PS、CPU 来源的 MSHR 和 CPU replay 义务全空；不计 PTW/probe/writeback。BE2-P 串行 ID 使用其寄存版本 |
 | `mmioBusy` | 出 | MMIO 已发出未退休（中断/调试等待） |
 | `trapClearRsv` | 入 | 本 hart 陷入，清 reservation |
 | `csr` | 入 | `BreezeMmuContext`（PMP、有效特权计算） |
@@ -390,3 +391,5 @@ nCores 核 L1D + L2 + AXI 内存模型：随机访存压力 + golden memory、MP
 L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列输出、S2 并行判断寄存 PA 的 PMP/PMA 与 tag/data、S3 最终响应/分配/PS 接收。S0 的 dTLB 和 VIPT SRAM 查询仍并行；命中接收间隔保持一拍，命中响应从 E+2 改为 E+3。所有 CPU 在途槽随 hold 保持；旧接口 `s2Hold/s2Kill` 对应最终 S3，`s1Kill` 清年轻 S1/S2，`s2Kill` 另清最终 CPU S3 及三段重查。内部 probe/refill/PTW 不受 CPU kill 撤销。原样保留请求、翻译、末地址、归属和快照失效；permissionEvent 在 S1/S2/S3 都须使旧 CPU 权限作废并重查；内部 PTW 在上下文变化时刷新。probe 开始条件覆盖 S1/S2/S3，阻塞的年轻 store 不得卡住完成旧 miss 所需的 probe。TLB miss 的 S3 旧主、S2/S1 年轻槽由各自 valid 保持，逐一重查，无额外请求复制。
 
 同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
+
+BE2-P：请求携带 solo；非 solo S3 未判定返回 Replay/replayReason，回放尝试无副作用。solo 仅自保持 CPU S3 并等待实际结果/精确 Exc；CPU S1/S2 恒推进。replayWake 为 TLB 接收与 miss 资源可用的寄存唤醒信号。

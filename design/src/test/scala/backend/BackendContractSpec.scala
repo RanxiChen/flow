@@ -63,6 +63,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var instructionPageFault = false
   var faultSecondParcel = false
   private val rng = new scala.util.Random(seed)
+  private var wakeD = true
   private val fetched = mutable.Map.empty[BigInt,BigInt]
   private val replayFetch = mutable.Queue.empty[(BigInt,BigInt)]
   private var s0Read: Option[Request] = None
@@ -133,7 +134,8 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val soloHold = hold && s2.exists(_.solo)
     d.io.l1d.s2Hold.poke(soloHold.B)
     d.io.l1d.cpuDrained.poke((drained && pending.isEmpty && ps.isEmpty).B)
-    d.io.l1d.replayWake.poke((pending.isEmpty && cycle >= holdUntil).B)
+    val nextWake = pending.isEmpty && cycle >= holdUntil
+    d.io.l1d.replayWake.poke(wakeD.B)
     d.io.l1d.resp.bits.replayReason.poke((if(blockedLine) 2 else if(full) 3 else 0).U)
     d.io.l1d.drained.poke((drained && pending.isEmpty && ps.isEmpty).B)
     d.io.l1d.resp.valid.poke((s2.nonEmpty && !soloHold).B)
@@ -165,6 +167,8 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(o.replay)) record("replay",uint(o.replayPc),data=uint(o.replayReason))
     if(bool(o.commit)) record("commit",uint(o.commitPc))
     if(bool(d.io.hartFatal)) record("fatal")
+    if(bool(o.busySet.valid)) record("busySet",r=uint(o.busySet.bits.idx).toInt,data=uint(o.busySet.bits.isFp))
+    if(bool(o.busyClear.valid)) record("busyClear",r=uint(o.busyClear.bits.idx).toInt,data=uint(o.busyClear.bits.isFp))
     if(bool(o.gprWrite.valid)) record("gpr",r=uint(o.gprWrite.bits.idx).toInt,data=uint(o.gprWrite.bits.data))
     if(bool(o.fprWrite.valid)) record("fpr",r=uint(o.fprWrite.bits.idx).toInt,data=uint(o.fprWrite.bits.data))
     if(bool(o.fpIn)) record("fpIn",uint(o.exPc))
@@ -213,6 +217,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     }
     if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false; lateData=None }
     if(allocated.nonEmpty && !kill) { pending=allocated; misses -= allocated.get._1.addr }
+    wakeD = nextWake
     cycle += 1
     accepted && !replayAccepted
   }
@@ -275,7 +280,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.all("iter").size mustBe 32; m.written(1) mustBe e+2+m.all("iter").size
     m.writes(1).head.data mustBe mask
   }}
-  "T07_two_DIVs_EX_wait" in { check() { m =>
+  "T07_two_DIVs_ID_credit_wait" in { check() { m =>
     val p=m.run(Seq(mdu(1,0,0,true),mdu(2,0,0,true),add(3)),15)
     m.at("divIn",p(1)) mustBe m.written(1)+1
     m.at("id",p(2)) mustBe m.at("divIn",p(1))
@@ -364,20 +369,23 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.all("redirect") mustBe Seq(wb); m.all("icacheFlush") mustBe Seq(wb); m.at("commit",p.head) mustBe wb
   }}
   "T19_FENCEI_wait_serial_ID" in { check() { m =>
-    m.drained=false; val p=m.issue(BigInt(0x100f)); for(_ <- 0 until 9) m.step(Some(m.pc->ld(1,8)))
-    val end=m.cycle; m.drained=true; m.run(Seq(ld(1,8)),10)
-    m.all("redirect").head mustBe end; m.at("commit",p) mustBe end
-    m.events.filter(e=>e.kind=="id" && e.cycle>m.at("id",p) && e.cycle<=end) mustBe empty
-    m.all("req").filter(_<=end) mustBe empty
+    m.drained=false; val p=m.pc
+    for(_ <- 0 until 9) m.step(Some(p->BigInt(0x100f))) mustBe false
+    val d=m.cycle; m.drained=true; m.issue(BigInt(0x100f)); m.run(Seq(ld(1,8)),10)
+    m.at("id",p) mustBe d+1
+    m.all("redirect").head mustBe d+5; m.at("commit",p) mustBe d+5
+    m.events.filter(e=>e.kind=="id" && e.pc!=p && e.cycle<=d+5) mustBe empty
+    m.all("req").filter(_<=d+5) mustBe empty
   }}
-  "T20_SFENCE_two_idle_phases" in { check() { m =>
-    m.mmuIdle=false; val p=m.issue(BigInt(0x12000073)); for(_ <- 0 until 7) m.step(Some(m.pc->ld(1,8)))
-    val s=m.cycle; m.mmuIdle=true; m.step(Some(m.pc->ld(1,8))); m.mmuIdle=false
-    for(_ <- 0 until 3) m.step(Some(m.pc->ld(1,8)))
-    val r=m.cycle; m.mmuIdle=true; m.step(Some(m.pc->ld(1,8)))
-    m.all("sfence") mustBe Seq(s); m.all("redirect") mustBe Seq(r)
-    m.all("req") mustBe empty; m.events.filter(e=>e.kind=="id" && e.cycle>m.at("id",p)) mustBe empty
-    m.all("xlatBlock") must contain allElementsOf (m.at("ex",p)+3 to r)
+  "T20_SFENCE_ID_registered_idle_then_WB_pulse_and_redirect" in { check() { m =>
+    m.mmuIdle=false; val p=m.pc
+    for(_ <- 0 until 7) m.step(Some(p->BigInt(0x12000073))) mustBe false
+    val d=m.cycle; m.mmuIdle=true; m.issue(BigInt(0x12000073)); m.run(Seq(ld(1,8)),10)
+    m.at("id",p) mustBe d+1
+    m.all("sfence") mustBe Seq(d+5); m.all("redirect") mustBe Seq(d+5)
+    m.all("req").filter(_<=d+5) mustBe empty
+    m.events.filter(e=>e.kind=="id" && e.pc!=p && e.cycle<=d+5) mustBe empty
+    m.all("xlatBlock") must contain allElementsOf (0 to d+5)
   }}
   "T21_ID_single_bubble_bounds_starvation" in { check() { m =>
     m.returnDelay=0; m.misses += BigInt(0); m.issue(ld(1,0)); for(_ <- 0 until 11) m.issue(add(20))
@@ -417,9 +425,11 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     val e=m.at("ex",p.head); m.at("commit",p(1)) mustBe e+4; m.at("commit",p(2)) mustBe e+5
     p.tail.map(m.at("commit",_)).max must be < m.all("late").head
   }}
-  "P05_same_line_recheck_R_plus_12" in { check() { m =>
+  "P05_same_line_replay_solo_R_plus_14" in { check() { m =>
     m.misses += BigInt(0); val p=m.run(Seq(ld(1,0),ld(2,64),sd(96))++Seq.fill(10)(add(20))++Seq(ld(3,8)),55)
-    m.at("commit",p.last) mustBe m.all("rspData").head+12
+    m.at("commit",p.last) mustBe m.all("rspData").head+14
+    m.events.count(e=>e.kind=="commit" && e.pc==p.last) mustBe 1
+    m.events.count(e=>e.kind=="replay" && e.pc==p.last) mustBe 1
     m.all("hold") must not be empty
   }}
   "P06_three_background_sources_and_twenty_ALUs" in { check() { m =>
