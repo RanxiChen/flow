@@ -1,0 +1,18 @@
+[
+  {
+    "case": "scalar-pass",
+    "input": "records/be2-20261011/physical-7f7f186/four/xilinx_kcu105_timing.rpt",
+    "expected_pass": true,
+    "tcl_exit": 0,
+    "tcl_output": "FLOW_COMPLETE_TIMING_GATE PASS: 0.002 0.000 0 395844 0.030 0.000 0 395833 0.108 0.000 0 137831\n",
+    "collector_pass": true
+  },
+  {
+    "case": "ddr-skew-fail",
+    "input": "records/be2-20261011/physical-d902fb5/placed-replication/xilinx_kcu105_timing.rpt",
+    "expected_pass": false,
+    "tcl_exit": 1,
+    "tcl_output": "Routed setup/hold/pulse-or-skew failed: 0.072 0.000 0 233770 0.030 0.000 0 233759 -0.230 -19.484 106 73161; bitstream withheld\n",
+    "collector_pass": false
+  }
+]

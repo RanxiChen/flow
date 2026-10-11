@@ -25,14 +25,19 @@ record=dict(original=str(original),source_sha=binding['source_sha'],
 if 'force_replication_on_nets' in tcl.read_text():
  record['directives'].insert(0,'force_replication_on_nets on failing register startpoints')
  record['netlist_attribute_change']='DONT_TOUCH cleared only on selected failing register drivers/nets'
-if 'route_design -unroute' in tcl.read_text():
+if 'route_design -unroute\n' in tcl.read_text():
  record['directives'].insert(0,'unroute preserving placement for pre-route replication')
  record['directives'].remove('tns_cleanup')
+if 'CLOCK_DELAY_GROUP' in tcl.read_text():
+ record['physical_clock_routing_property']='CLOCK_DELAY_GROUP be2_ddr_serdes on BUFGCE/O and BUFGCE_DIV/O nets'
+ record['directives']=['partial clock unroute','NoTimingRelaxation','tns_cleanup']
+ record['timing_constraints_unchanged']=True
 prior=original/'physical-candidate.json'
 if prior.is_file(): record['parent_candidate']=json.loads(prior.read_text())
 (dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
 cp "$script" "$output/gateware/postroute-closure.tcl"
+cp "$(dirname "$script")/routed_timing_gate.tcl" "$output/gateware/routed_timing_gate.tcl"
 cd "$output/gateware"
 # A copied old bitstream must never survive a failing candidate gate.
 if [[ -f xilinx_kcu105.bit ]]; then mv xilinx_kcu105.bit input-reference.bit; fi

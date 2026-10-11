@@ -44,6 +44,8 @@ report_drc -file xilinx_kcu105_drc.rpt
 report_exceptions -file final-exceptions.rpt
 report_utilization -file soc-utilization.rpt
 report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt
+source routed_timing_gate.tcl
+flow_require_routed_timing xilinx_kcu105_timing.rpt
 set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]
 set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]
 if {![llength $setup_path] || ![llength $hold_path]} {error "Missing routed timing paths"}

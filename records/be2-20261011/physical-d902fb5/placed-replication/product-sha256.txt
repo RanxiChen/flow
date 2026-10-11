@@ -1,0 +1,2 @@
+2e7815baaa85e181da815265268ccec02ba95123d7bc6f8aff9066fdfbfd4514  xilinx_kcu105.bit
+268bb402a1e2172dc6f327a7e1b2eda6d2e12cb5984b835a6a143880e58ec8a2  ../software/bios/bios.bin

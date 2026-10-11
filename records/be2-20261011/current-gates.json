@@ -284,10 +284,10 @@
       "default_setup_failures": 43,
       "default_route_errors": 0,
       "default_reports": "physical-d902fb5/default-routed",
-      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd",
+      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-balanced-sd",
       "candidate_maxThreads": 4,
       "candidate_affinity": "0-3",
-      "candidate_RTL_config_constraints_unchanged": true,
+      "candidate_RTL_config_constraints_unchanged": false,
       "postroute_reference": {
         "exit": 1,
         "WNS_ns": -0.027,
@@ -301,7 +301,24 @@
         "exit": 1,
         "reason": "Vivado2022.2 force_replication_on_nets unsupported in post-route mode; no replication executed",
         "reports": "physical-d902fb5/targeted-mode-rejected"
-      }
+      },
+      "placed_replication_reference": {
+        "process_exit": 0,
+        "qualified": false,
+        "bit_generated": true,
+        "bit_delivered": false,
+        "WNS_ns": 0.072,
+        "WHS_ns": 0.03,
+        "WPWS_ns": -0.23,
+        "TPWS_ns": -19.484,
+        "pulse_or_skew_failures": 106,
+        "route_errors": 0,
+        "reason": "DDR OSERDESE3 fast Max Skew actual0.550ns exceeds0.320ns; root timing FAIL despite setup/hold PASS",
+        "reports": "physical-d902fb5/placed-replication"
+      },
+      "candidate_physical_clock_property": "CLOCK_DELAY_GROUP be2_ddr_serdes on related BUFG outputs",
+      "candidate_status": "RUNNING",
+      "candidate_RTL_config_timing_requirements_unchanged": true
     },
     "local_scalar_products_hash_verified": true
   }

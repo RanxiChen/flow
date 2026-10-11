@@ -135,9 +135,12 @@ def main():
         csr_json=os.path.join(output, 'csr.json'), integrated_rom_auto_size=False, bios_console='lite')
     soc.platform.toolchain.pre_synthesis_commands.append(
         f'set_param general.maxThreads {args.vivado_threads}')
-    # A generated file is publishable only after setup/hold and routing pass.
+    # A generated file is publishable only after complete routed timing passes.
     # This check runs before write_bitstream, without weakening any constraint.
     soc.platform.toolchain.bitstream_commands += [
+        'report_timing_summary -delay_type min_max -report_unconstrained -file routed-generation-gate.rpt',
+        'source {{' + os.path.join(FLOW_ROOT, 'fpga/kcu105/routed_timing_gate.tcl') + '}}',
+        'flow_require_routed_timing routed-generation-gate.rpt',
         'set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]',
         'set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]',
         'if {{![llength $setup_path] || ![llength $hold_path]}} {{ error "Missing routed timing paths" }}',
