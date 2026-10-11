@@ -91,7 +91,6 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     (cpu3.translationMiss || cpu3.snapInvalid || cpu3.needsRecheck || cpuPermissionStale)
   val resourcesClear = !miss.io.status.mshrValid && !miss.io.status.wbValid
   val retryCapacity = cpuRetry && !atomicWait && !amoRmw && !recheckIssued && resourcesClear && !probe.io.pending.valid
-  val retryReady = retryCapacity && !cpuKill
 
   def conflict(k: UInt): Bool = {
     val s1Store = cpu1.valid && storeLike(cpu1.req.core.op) && key(cpu1.req.core.vaddr) === k
@@ -127,8 +126,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   // miss/requery waits this guard opens again, so grants can depend on probes.
   val localAmo = Wire(Bool())
 
-  // Each source computes admission independently. Higher-priority maintenance
-  // grants never pass through CPU kill or the selected request's TLB mux.
+  // One cancellation-independent admission selects both the payload and EX
+  // capacity. CPU/recheck fire is separately cancelled below; maintenance
+  // priority and grants never pass through CPU kill.
   val laneOpen = initDone && (wholeBusy || (!internal1.valid && !internal2.valid && !internal3.valid))
   val requests = VecInit(Seq(
     laneOpen && probe.io.s0Req.valid && !localAmo && (!wholeBusy || wholeOwner === L1Src.Probe),
@@ -136,15 +136,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     laneOpen && miss.io.s0Req.valid && miss.io.s0Req.bits.wbRead && (!wholeBusy || wholeOwner === L1Src.WbRead),
     laneOpen && !wholeBusy && miss.io.s0Req.valid && miss.io.s0Req.bits.replay && !replayConflict && !ps.valid,
     laneOpen && !wholeBusy && io.ptw.req.valid && canPtw,
-    laneOpen && !wholeBusy && retryReady && !retryConflict && io.tlb.req.ready,
-    laneOpen && !wholeBusy && io.core.req.valid && cpuEntryOpen && !cpuConflict && !cpuKill))
-  val chosen = PriorityEncoderOH(requests.asUInt)
-  // Keep the same priority and capacity conditions before cancellation.
-  // The normal request and all side effects still use `chosen`/cpuFire.
-  val admissionRequests = VecInit(requests.take(5) ++ Seq(
     laneOpen && !wholeBusy && retryCapacity && !retryConflict && io.tlb.canAccept,
     laneOpen && !wholeBusy && io.core.req.valid && cpuEntryOpen && !cpuConflict))
-  val admitted = PriorityEncoderOH(admissionRequests.asUInt)
+  val chosen = PriorityEncoderOH(requests.asUInt)
   val candidates = Wire(Vec(7, new L1PipeReq(p)))
   candidates(0) := 0.U.asTypeOf(new L1PipeReq(p))
     candidates(0).src := L1Src.Probe
@@ -206,14 +200,14 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   }
   val selectedEnd = Mux1H(chosen.asBools, sourceEnds)
   val cpuNeedsTlb = io.core.req.bits.op =/= L1DOp.Fence
-  val cpuFire = chosen(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.req.ready)
-  io.core.canAccept := admitted(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.canAccept)
+  val cpuFire = chosen(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.req.ready) && !cpuKill
+  io.core.canAccept := chosen(6) && cpu1Advance && (!cpuNeedsTlb || io.tlb.canAccept)
   val probeFire = chosen(0) && internal1Advance
   val refillFire = chosen(1) && internal1Advance
   val wbReadFire = chosen(2) && internal1Advance
   val replayFire = chosen(3) && internal1Advance
   val ptwFire = chosen(4) && internal1Advance
-  val recheckFire = chosen(5) && internal1Advance && io.tlb.req.ready
+  val recheckFire = chosen(5) && internal1Advance && io.tlb.req.ready && !cpuKill
   val internalFire = probeFire || refillFire || wbReadFire || replayFire || ptwFire || recheckFire
   val s0Fire = cpuFire || internalFire
   io.core.req.ready := cpuFire
