@@ -134,11 +134,11 @@ def main():
         f'set_param general.maxThreads {args.vivado_threads}')
     # A generated file is publishable only after setup/hold and routing pass.
     # This check runs before write_bitstream, without weakening any constraint.
-    soc.platform.toolchain.pre_bitstream_commands += [
+    soc.platform.toolchain.bitstream_commands += [
         'set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]',
         'set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]',
-        'if {![llength $setup_path] || ![llength $hold_path]} { error "Missing routed timing paths" }',
-        'if {[get_property SLACK $setup_path] < 0 || [get_property SLACK $hold_path] < 0} { error "Routed setup/hold failed; bitstream withheld" }',
+        'if {{![llength $setup_path] || ![llength $hold_path]}} {{ error "Missing routed timing paths" }}',
+        'if {{[get_property SLACK $setup_path] < 0 || [get_property SLACK $hold_path] < 0}} {{ error "Routed setup/hold failed; bitstream withheld" }}',
     ]
     os.makedirs(output, exist_ok=True)
     if args.debug:
