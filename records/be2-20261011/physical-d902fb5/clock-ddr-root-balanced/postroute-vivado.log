@@ -1,0 +1,383 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.531 ; gain = 0.000 ; free physical = 18512 ; free virtual = 42312
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:00.56 . Memory (MB): peak = 2569.113 ; gain = 0.000 ; free physical = 17169 ; free virtual = 41481
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 21 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.973 ; gain = 257.812 ; free physical = 14021 ; free virtual = 38847
+Restored from archive | CPU: 10.100000 secs | Memory: 252.983635 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.973 ; gain = 257.812 ; free physical = 14021 ; free virtual = 38847
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3711.566 ; gain = 0.000 ; free physical = 13980 ; free virtual = 38806
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 111a25d11
+----- Checksum: PlaceDB: 480a1ccd ShapeSum: 418bf1ed RouteDB: 880c4e57 
+open_checkpoint: Time (s): cpu = 00:00:54 ; elapsed = 00:00:56 . Memory (MB): peak = 3711.566 ; gain = 2018.035 ; free physical = 13990 ; free virtual = 38816
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:56 ; elapsed = 00:00:17 . Memory (MB): peak = 4248.133 ; gain = 536.566 ; free physical = 12648 ; free virtual = 37474
+# report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:29 ; elapsed = 00:00:11 . Memory (MB): peak = 4248.133 ; gain = 0.000 ; free physical = 12425 ; free virtual = 37251
+# set fast_cell [get_cells BUFGCE]
+# set slow_cell [get_cells BUFGCE_DIV]
+# if {[llength $fast_cell] != 1 || [llength $slow_cell] != 1} {error "DDR clock buffer selection incomplete"}
+# set fast_input [get_nets -of_objects [get_pins BUFGCE/I]]
+# set slow_input [get_nets -of_objects [get_pins BUFGCE_DIV/I]]
+# if {$fast_input ne $slow_input} {error "DDR buffers do not have the expected common source"}
+# set fast_net [get_nets -of_objects [get_pins BUFGCE/O]]
+# set slow_net [get_nets -of_objects [get_pins BUFGCE_DIV/O]]
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+# set fast_clock [get_clocks -of_objects [get_pins BUFGCE/O]]
+# if {[llength $fast_clock] != 1 || [get_property PERIOD $fast_clock] != 2.5} {error "Expected unchanged 400MHz DDR clock"}
+# set audit [open clock-routing-properties.txt w]
+# puts $audit "FAST_INPUT=$fast_input SLOW_INPUT=$slow_input FAST_NET=$fast_net SLOW_NET=$slow_net"
+# foreach cell [concat $fast_cell $slow_cell] {puts $audit "CELL=$cell LOC=[get_property LOC $cell]"}
+# foreach net [concat $fast_net $slow_net] {puts $audit "BEFORE NET=$net CLOCK_ROOT=[get_property CLOCK_ROOT $net] USER_CLOCK_ROOT=[get_property USER_CLOCK_ROOT $net] GROUP=[get_property CLOCK_DELAY_GROUP $net]"}
+# set common_root [get_property CLOCK_ROOT $fast_net]
+# if {$common_root eq "" || [llength [get_clock_regions $common_root]] != 1} {error "Missing existing system clock root"}
+# puts $audit "COMMON_ROOT=$common_root derived from existing sys4x_clk; no frequency/waveform/skew relaxation"
+# route_design -unroute -nets [concat $fast_net $slow_net]
+Command: route_design -unroute -nets {sys4x_clk sys_clk}
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+CRITICAL WARNING: [Route 35-359] Clock nets were unrouted. To achieve proper clock routing for UltraScale and Versal devices, update_clock_routing must be run before routing the unrouted clock nets.
+INFO: [Route 35-333] 2 nets were fully unrouted.
+INFO: [Common 17-83] Releasing license: Implementation
+3 Infos, 0 Warnings, 1 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# set_property USER_CLOCK_ROOT $common_root [concat $fast_net $slow_net]
+WARNING: [Vivado 12-4792] Clock net 'sys_clk' must be fully unrouted before moving its clock root, otherwise it may result in sub-optimal clock routing and unnecessary clock skew.
+Resolution: Before running any commands that update the clock routing, run this command to fully unroute the clock: route_design -unroute -nets [get_nets sys_clk]
+# set_property CLOCK_DELAY_GROUP be2_ddr_serdes [concat $fast_net $slow_net]
+# flush $audit
+# update_clock_routing
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5132.004 ; gain = 0.000 ; free physical = 10810 ; free virtual = 35637
+INFO: [Place 30-933] Rebuilding out-of-date clock tree for clock net: sys4x_clk
+INFO: [Place 30-933] Rebuilding out-of-date clock tree for clock net: sys_clk
+update_clock_routing: Time (s): cpu = 00:00:31 ; elapsed = 00:00:26 . Memory (MB): peak = 5132.004 ; gain = 875.867 ; free physical = 11120 ; free virtual = 35947
+# route_design -directive NoTimingRelaxation -tns_cleanup
+Command: route_design -directive NoTimingRelaxation -tns_cleanup
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 480a1ccd ConstDB: 0 ShapeSum: 98fe9a4a RouteDB: 7c01e809
+Post Restoration Checksum: NetGraph: b5af706b NumContArr: 663ab604 Constraints: bd69a4c2 Timing: 0
+Phase 1 Build RT Design | Checksum: 1d953cb31
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:04 . Memory (MB): peak = 5146.031 ; gain = 6.023 ; free physical = 12127 ; free virtual = 37545
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 1d953cb31
+
+Time (s): cpu = 00:01:51 ; elapsed = 00:01:05 . Memory (MB): peak = 5146.031 ; gain = 6.023 ; free physical = 12096 ; free virtual = 37514
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 1d953cb31
+
+Time (s): cpu = 00:01:52 ; elapsed = 00:01:06 . Memory (MB): peak = 5146.031 ; gain = 6.023 ; free physical = 12105 ; free virtual = 37523
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 191315f3b
+
+Time (s): cpu = 00:02:00 ; elapsed = 00:01:10 . Memory (MB): peak = 5179.031 ; gain = 39.023 ; free physical = 11929 ; free virtual = 37347
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 180bdd11d
+
+Time (s): cpu = 00:02:45 ; elapsed = 00:01:27 . Memory (MB): peak = 5243.031 ; gain = 103.023 ; free physical = 10707 ; free virtual = 36125
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.065  | TNS=0.000  | WHS=-0.122 | THS=-8.031 |
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 21.3417 %
+  Global Horizontal Routing Utilization  = 20.1193 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 3
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 2
+  Number of Partially Routed Nets     = 1
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 1f9b236c4
+
+Time (s): cpu = 00:03:45 ; elapsed = 00:01:51 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 10371 ; free virtual = 35789
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: 1f9b236c4
+
+Time (s): cpu = 00:03:46 ; elapsed = 00:01:51 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 10346 ; free virtual = 35765
+Phase 3 Initial Routing | Checksum: 19aa84ddb
+
+Time (s): cpu = 00:03:55 ; elapsed = 00:01:55 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 10312 ; free virtual = 35731
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 2201
+ Number of Nodes with overlaps = 951
+ Number of Nodes with overlaps = 579
+ Number of Nodes with overlaps = 205
+ Number of Nodes with overlaps = 83
+ Number of Nodes with overlaps = 39
+ Number of Nodes with overlaps = 19
+ Number of Nodes with overlaps = 14
+ Number of Nodes with overlaps = 9
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.101  | TNS=0.000  | WHS=0.025  | THS=0.000  |
+
+Phase 4.1 Global Iteration 0 | Checksum: fcb7b750
+
+Time (s): cpu = 00:05:58 ; elapsed = 00:03:10 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9417 ; free virtual = 34835
+
+Phase 4.2 Additional Iteration for Hold
+Phase 4.2 Additional Iteration for Hold | Checksum: 1320247dd
+
+Time (s): cpu = 00:05:59 ; elapsed = 00:03:11 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9403 ; free virtual = 34822
+Phase 4 Rip-up And Reroute | Checksum: 1320247dd
+
+Time (s): cpu = 00:05:59 ; elapsed = 00:03:11 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9386 ; free virtual = 34805
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 TNS Cleanup
+
+Phase 5.1.1 Delay CleanUp
+Phase 5.1.1 Delay CleanUp | Checksum: 1320247dd
+
+Time (s): cpu = 00:06:00 ; elapsed = 00:03:12 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9383 ; free virtual = 34802
+Phase 5.1 TNS Cleanup | Checksum: 1320247dd
+
+Time (s): cpu = 00:06:01 ; elapsed = 00:03:12 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9383 ; free virtual = 34802
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 1320247dd
+
+Time (s): cpu = 00:06:01 ; elapsed = 00:03:13 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9387 ; free virtual = 34805
+Phase 5 Delay and Skew Optimization | Checksum: 1320247dd
+
+Time (s): cpu = 00:06:01 ; elapsed = 00:03:13 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9388 ; free virtual = 34806
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 138c57ae6
+
+Time (s): cpu = 00:06:30 ; elapsed = 00:03:23 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9392 ; free virtual = 34821
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.101  | TNS=0.000  | WHS=0.025  | THS=0.000  |
+
+Phase 6.1 Hold Fix Iter | Checksum: 1bb113b84
+
+Time (s): cpu = 00:06:31 ; elapsed = 00:03:24 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9393 ; free virtual = 34822
+Phase 6 Post Hold Fix | Checksum: 1bb113b84
+
+Time (s): cpu = 00:06:31 ; elapsed = 00:03:24 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9391 ; free virtual = 34820
+
+Phase 7 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 21.3528 %
+  Global Horizontal Routing Utilization  = 20.1319 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 7 Route finalize | Checksum: 1f8830950
+
+Time (s): cpu = 00:06:39 ; elapsed = 00:03:29 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9329 ; free virtual = 34760
+
+Phase 8 Verifying routed nets
+
+ Verification completed successfully
+Phase 8 Verifying routed nets | Checksum: 1f8830950
+
+Time (s): cpu = 00:06:39 ; elapsed = 00:03:30 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9336 ; free virtual = 34767
+
+Phase 9 Depositing Routes
+Phase 9 Depositing Routes | Checksum: 1f8830950
+
+Time (s): cpu = 00:06:50 ; elapsed = 00:03:36 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 9132 ; free virtual = 34571
+
+Phase 10 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=0.101  | TNS=0.000  | WHS=0.025  | THS=0.000  |
+
+Phase 10 Post Router Timing | Checksum: 13c0e7a1a
+
+Time (s): cpu = 00:07:57 ; elapsed = 00:03:58 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 8044 ; free virtual = 33484
+INFO: [Route 35-61] The design met the timing requirement.
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:07:57 ; elapsed = 00:03:58 . Memory (MB): peak = 5515.977 ; gain = 375.969 ; free physical = 8455 ; free virtual = 33895
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+13 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:08:08 ; elapsed = 00:04:03 . Memory (MB): peak = 5515.977 ; gain = 383.973 ; free physical = 8455 ; free virtual = 33895
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# foreach net [concat $fast_net $slow_net] {puts $audit "AFTER NET=$net CLOCK_ROOT=[get_property CLOCK_ROOT $net] USER_CLOCK_ROOT=[get_property USER_CLOCK_ROOT $net] GROUP=[get_property CLOCK_DELAY_GROUP $net]"}
+# close $audit
+# report_clocks -file clock-balanced-clocks.rpt
+# report_clock_interaction -file clock-balanced-interaction.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+# report_cdc -file clock-balanced-cdc.rpt
+INFO: [Timing 38-91] UpdateTimingParams: No interconnect No Cell Dly, Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-433] Consider using Xilinx recommended XPM_CDC modules to avoid Critical severities
+INFO: [Timing 38-314] The report_cdc command only analyzes and reports clock domain crossing paths where clocks have been defined on both source and destination sides. Ports with no input delay constraint are skipped. Please run check_timing to verify there are no missing clock definitions in your design, nor any unconstrained input port.
+# write_checkpoint -force xilinx_kcu105_route.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:22 ; elapsed = 00:00:10 . Memory (MB): peak = 5564.000 ; gain = 40.020 ; free physical = 8652 ; free virtual = 34376
+report_design_analysis: Time (s): cpu = 00:00:16 ; elapsed = 00:00:10 . Memory (MB): peak = 5564.000 ; gain = 0.000 ; free physical = 8807 ; free virtual = 34531
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-ddr-root-balanced-sd/gateware/xilinx_kcu105_route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:48 ; elapsed = 00:00:31 . Memory (MB): peak = 5564.000 ; gain = 48.023 ; free physical = 9260 ; free virtual = 34700
+# report_timing_summary -delay_type min_max -report_unconstrained -file xilinx_kcu105_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:01:01 ; elapsed = 00:00:17 . Memory (MB): peak = 5564.000 ; gain = 0.000 ; free physical = 9196 ; free virtual = 34636
+# report_route_status -file xilinx_kcu105_route_status.rpt
+# report_drc -file xilinx_kcu105_drc.rpt
+Command: report_drc -file xilinx_kcu105_drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-ddr-root-balanced-sd/gateware/xilinx_kcu105_drc.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:19 ; elapsed = 00:00:07 . Memory (MB): peak = 5564.000 ; gain = 0.000 ; free physical = 8718 ; free virtual = 34158
+# report_exceptions -file final-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:30 ; elapsed = 00:00:12 . Memory (MB): peak = 5564.000 ; gain = 0.000 ; free physical = 9031 ; free virtual = 34471
+# report_utilization -file soc-utilization.rpt
+# report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 10 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:24 ; elapsed = 00:00:10 . Memory (MB): peak = 5564.000 ; gain = 0.000 ; free physical = 9618 ; free virtual = 35013
+# source routed_timing_gate.tcl
+## proc flow_require_routed_timing {report_path} {
+##     set stream [open $report_path r]
+##     set report [read $stream]
+##     close $stream
+##     set section [string first {| Design Timing Summary} $report]
+##     if {$section < 0} {error "Missing design timing summary; bitstream withheld"}
+##     foreach line [split [string range $report $section end] "\n"] {
+##         set fields [regexp -all -inline {\S+} $line]
+##         if {[llength $fields] != 12} {continue}
+##         set numeric 1
+##         foreach value $fields {
+##             if {![regexp {^-?[0-9]+(?:\.[0-9]+)?$} $value]} {set numeric 0; break}
+##         }
+##         if {!$numeric} {continue}
+##         foreach index {0 4 8} {
+##             if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}
+##         }
+##         foreach index {1 2 5 6 9 10} {
+##             if {[lindex $fields $index] != 0} {error "Routed failed endpoints/total slack: $fields; bitstream withheld"}
+##         }
+##         puts "FLOW_COMPLETE_TIMING_GATE PASS: $fields"
+##         return
+##     }
+##     error "No complete design timing row; bitstream withheld"
+## }
+# flow_require_routed_timing xilinx_kcu105_timing.rpt
+Routed setup/hold/pulse-or-skew failed: 0.101 0.000 0 233770 0.025 0.000 0 233759 -0.230 -19.484 106 73161; bitstream withheld
+    while executing
+"error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld""
+    invoked from within
+"if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}"
+    ("foreach" body line 2)
+    invoked from within
+"foreach index {0 4 8} {
+            if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}
+   ..."
+    ("foreach" body line 9)
+    invoked from within
+"foreach line [split [string range $report $section end] "\n"] {
+        set fields [regexp -all -inline {\S+} $line]
+        if {[llength $fields] != ..."
+    (procedure "flow_require_routed_timing" line 7)
+    invoked from within
+"flow_require_routed_timing xilinx_kcu105_timing.rpt"
+    (file "postroute-closure.tcl" line 48)
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 00:26:19 2026...

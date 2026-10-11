@@ -1,0 +1,360 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source clock-place-help-v2.tcl
+# set_param general.maxThreads 2
+# puts [help place_design]
+place_design
+
+Description: 
+Automatically place ports and leaf-level instances
+
+Syntax: 
+place_design  [-directive <arg>] [-no_timing_driven] [-timing_summary]
+              [-unplace] [-post_place_opt] [-no_psip] [-no_bufg_opt]
+              [-ultrathreads] [-quiet] [-verbose]
+
+Usage: 
+  Name                 Description
+  --------------------------------
+  [-directive]         Mode of behavior (directive) for this command. Please 
+                       refer to Arguments section of this help for values for
+                       this option.
+                       Default: Default
+  [-no_timing_driven]  Do not run in timing driven mode
+  [-timing_summary]    Enable accurate post-placement timing summary.
+  [-unplace]           Unplace all the instances which are not locked by 
+                       Constraints.
+  [-post_place_opt]    Run only the post commit optimizer
+  [-no_psip]           Disable PSIP (Physical Synthesis In Placer) 
+                       optimization during placement.
+  [-no_bufg_opt]       Disable global buffer insertion during placement
+  [-ultrathreads]      Enable ultra-threads mode to speed up place_design
+  [-quiet]             Ignore command errors
+  [-verbose]           Suspend message limits during command execution
+
+Categories: 
+Tools
+
+Description:
+
+  Place the specified ports and logic cells in the current design, or all
+  ports and logic cells, onto device resources on the target part. The tool
+  optimizes placement to minimize negative timing slack and reduce overall
+  wire length, while also attempting to spread out placement to reduce
+  routing congestion.
+
+  Placement is one step of the complete design implementation process, which
+  can be run automatically through the use of the launch_runs command when
+  running the Vivado tools in Project Mode.
+
+  In Non-Project Mode, the implementation process must be run manually with
+  the individual commands: opt_design, place_design, phys_opt_design,
+  power_opt_design, and route_design. Refer to the Vivado Design Suite User
+  Guide: Design Flows Overview (UG892) for a complete description of Project
+  Mode and Non-Project Mode.
+
+  Both placement and routing can be completed incrementally, based on prior
+  results stored in a Design Checkpoint file (DCP), using the incremental
+  implementation flow. Refer to the read_checkpoint command, or to Vivado
+  Design Suite User Guide: Implementation (UG904) for more information on
+  incremental place and route.
+
+  Tip: The place_design can be multi-threaded to speed the process. Refer to
+  the set_param command for more information on setting the
+  general.maxThreads parameter.
+
+  You can also manually place some elements of the design using place_ports,
+  or by setting LOC properties on the cell, and then automatically place the
+  remainder of the design using place_design.
+
+  This command requires an open synthesized design, and it is recommended
+  that you run the opt_design command prior to running place_design to avoid
+  placing a suboptimal netlist.
+
+Arguments:
+
+  -directive <arg> - (Optional) Direct placement to achieve specific design
+  objectives. Only one directive can be specified for a single place_design
+  command, and values are case-sensitive. Supported values include:
+
+   *  Explore - Increased placer effort in detail placement and
+      post-placement optimization .
+
+   *  EarlyBlockPlacement - Timing-driven placement of RAM and DSP blocks.
+      The RAM and DSP block locations are finalized early in the placement
+      process and are used as anchors to place the remaining logic.
+
+   *  WLDrivenBlockPlacement - Wire length-driven placement of RAM and DSP
+      blocks. Override timing-driven placement by directing the Vivado placer
+      to minimize the distance of connections to and from blocks.
+
+   *  ExtraNetDelay_high - Increases estimated delay of high fanout and
+      long-distance nets. Three levels of pessimism are supported: high,
+      medium, and low. ExtraNetDelay_high applies the highest level of
+      pessimism.
+
+   *  ExtraNetDelay_low - Increases estimated delay of high fanout and
+      long-distance nets. Three levels of pessimism are supported: high,
+      medium, and low. ExtraNetDelay_low applies the lowest level of
+      pessimism.
+
+   *  AltSpreadLogic_high - Spreads logic throughout the device to avoid
+      creating congested regions. Three levels are supported: high, medium,
+      and low. AltSpreadLogic_high achieves the highest level of spreading.
+
+   *  AltSpreadLogic_medium - Spreads logic throughout the device to avoid
+      creating congested regions. Three levels are supported: high, medium,
+      and low. AltSpreadLogic_medium achieves a medium level of spreading
+      compared to low and high.
+
+   *  AltSpreadLogic_low - Spreads logic throughout the device to avoid
+      creating congested regions. Three levels are supported: high, medium,
+      and low. AltSpreadLogic_low achieves the lowest level of spreading.
+
+   *  ExtraPostPlacementOpt - Increased placer effort in post-placement
+      optimization.
+
+   *  ExtraTimingOpt - Use an alternate algorithm for timing-driven placement
+      with greater effort for timing.
+
+   *  SSI_SpreadLogic_high - Distribute logic across SLRs.
+      SSI_SpreadLogic_high achieves the highest level of distribution.
+
+   *  SSI_SpreadLogic_low - Distribute logic across SLRs. SSI_SpreadLogic_low
+      achieves a minimum level of logic distribution, while reducing
+      placement runtime.
+
+   *  SSI_SpreadSLLs - Partition across SLRs and allocate extra area for
+      regions of higher connectivity.
+
+   *  SSI_BalanceSLLs - Partition across SLRs while attempting to balance
+      SLLs between SLRs.
+
+   *  SSI_BalanceSLRs - Partition across SLRs to balance number of cells
+      between SLRs.
+
+   *  SSI_HighUtilSLRs - Direct the placer to attempt to place logic closer
+      together in each SLR.
+
+   *  RuntimeOptimized - Run fewest iterations, trade higher design
+      performance for faster runtime.
+
+   *  Quick - Absolute, fastest runtime, non-timing-driven, performs the
+      minimum required placement for a legal design.
+
+   *  RQS - Instructs place_design to select the place_design directive
+      specified by the report_qor_suggestion strategy suggestion. Requires an
+      RQS file with a strategy suggestion to be read in prior to calling this
+      directive. See report_qor_suggestions -help for more details.
+
+   *  Auto_1 - Instructs place_design to use machine learning to select the
+      best predicted directive.
+
+   *  Auto_2 - Instructs place_design to use machine learning to select the
+      second best predicted directive.
+
+   *  Auto_3 - Instructs place_design to use machine learning to select the
+      third best predicted directive.
+
+   *  Default - Run place_design with default settings.
+
+  Important: The -directive option controls the overall placement strategy,
+  and is not compatible with some place_design options. It can be used with
+  -no_psip, -no_bufg_opt, -quiet and -verbose. Only the Explore, Quick, and
+  Default directives are compatible with high reuse designs and the
+  incremental implementation flow as defined by read_checkpoint -incremental.
+  Refer to the Vivado Design Suite User Guide: Implementation (UG904) for
+  more information on placement strategies and the use of the -directive
+  option.
+
+  -no_timing_driven - (Optional) Disables the default timing driven placement
+  algorithm. This results in a faster placement based on wire lengths, but
+  ignores any timing constraints during the placement process.
+
+  -timing_summary - (Optional) Report the post-placement worst negative slack
+  (WNS) using results from static timing analysis. The WNS value is identical
+  to that of report_timing_summary when run on the post-placement design. By
+  default the placer reports an estimated WNS based on incremental placement
+  updates during the design implementation. The -timing_summary option incurs
+  additional runtime to run a full timing analysis.
+
+  -unplace - (Optional) Unplace all the instances which are not locked by
+  constraints. Cells with fixed placement (IS_LOC_FIXED set to TRUE), are not
+  affected.
+
+  Tip: Use the set_property to change IS_LOC_FIXED to FALSE prior to
+  unplacing fixed cells.
+
+  -post_place_opt - (Optional) Run optimization after placement to improve
+  critical path timing at the expense of additional placement and routing
+  runtime. This optimization can be run at any stage after placement. The
+  optimization examines the worst case timing paths and tries to improve
+  placement to reduce delay.
+
+  Tip: Any placement changes will result in unrouted connections, so
+  route_design will need to be run after -post_place_opt.
+
+  -no_psip - (Optional) Disable PSIP (Physical Synthesis In Placer)
+  optimization during placement. By default, to improve delay the Vivado
+  placer performs optimizations such as replicating drivers of high-fanout
+  nets and drivers of loads that are far-apart. This option disables those
+  optimizations.
+
+  -no_bufg_opt - (Optional) By default, global buffers are inserted during
+  placement to drive high-fanout nets. This option disables global buffer
+  insertion to reduce the number of routing resources consumed by high fanout
+  nets that are not timing-critical.
+
+  -ultrathreads - (Optional) This option (UltraScale+ SSI and vu440 devices 
+  only) speeds up placement by distributing multiple threads indicated by 
+  general.maxThreads as evenly as possible across multiple SLRs. 
+  The ultrathreads option can be used with any place_design directive, however
+  it is automatically enabled for UltraScale+ SSI for the directives: Default, 
+  RuntimeOptimized, and Quick. The ultrathreads option is only active when 
+  available threads are greater than or equal to the number of device SLRs, 
+  otherwise the option is ignored. Placement results will differ slightly 
+  depending on whether or not ultrathreads is used.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  The following example places the current design, runs optimization, routes
+  the design, runs post placement optimization, and then reroutes the design
+  to cleanup any unconnected nets as a result of post placement optimization:
+
+    place_design
+    phys_opt_design
+    route_design
+    place_design -post_place_opt
+    phys_opt_design
+    route_design
+
+  The following example directs the Vivado placer to try different placement
+  algorithms to achieve a better placement result:
+
+    place_design -directive Explore
+
+  The following example directs the Vivado placer to use the Machine Learning
+  based predictor to select the top directive:
+
+    place_design -directive Auto_1
+
+  This example unplaces the current design:
+
+    place_design -unplace
+
+See Also:
+
+   *  launch_runs
+   *  opt_design
+   *  place_ports
+   *  phys_opt_design
+   *  power_opt_design
+   *  read_checkpoint
+   *  route_design
+   *  set_property
+
+# puts [help update_clock_routing]
+update_clock_routing
+
+Description: 
+Update clock routing on global clocks if they are modified after placement
+
+Syntax: 
+update_clock_routing  [-pin <args>] [-net <args>] [-quiet] [-verbose]
+
+Usage: 
+  Name        Description
+  -----------------------
+  [-pin]      A single pin (pin should be already unrouted)
+  [-net]      A single nets (net should be already unrouted)
+  [-quiet]    Ignore command errors
+  [-verbose]  Suspend message limits during command execution
+
+Categories: 
+Tools, Tcl
+
+Description:
+
+  The update_clock_routing command is an advanced command used for manually
+  updating the routing structures of all global clocks in designs targeting
+  the UltraScale architecture. The command operates on all global clocks in a
+  design, not individual clocks.
+
+  Due to a more flexible clocking architecture, UltraScale and UltraScale+
+  designs require a two-step process for routing global clocks. First the
+  Vivado placer assigns the routing resources required to route the global
+  clocks from the clock source to the destination clock regions (CLOCK_ROOT
+  or USER_CLOCK_ROOT). Next the Vivado router fills in the routing gaps on
+  the clock nets. In between these two steps the resulting structures are
+  called gap trees: each global clock net has its base routing resources
+  assigned but with large routing gaps where no routing resources have been
+  assigned.
+
+  After gap trees are constructed, the router optimally routes the remaining
+  clock network to all leaf-level primitives to fill in the routing gaps.
+  During an implementation run the global clock routing is handled
+  automatically. However in cases where the clock tree has been changed after
+  implementation, by modifying the USER_CLOCK_ROOT property on a clock net
+  for instance, the Vivado tool may need the update_clock_routing command to
+  properly rebuild the gap trees and fill in the routing gaps.
+
+  Examples of this include:
+
+   *  Moving the clock root of a global clock.
+
+   *  Adding or moving loads of a global clock into a clock region not yet
+      occupied by the global clock, then running timing analysis on the
+      updated design.
+
+Arguments:
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  The following example updates the USER_CLOCK_ROOT property on the specified
+  clock nets, unroutes the nets, and then updates the clock routing:
+
+    set_property USER_CLOCK_ROOT X1Y0 [get_nets {clk1 clk2}]  
+    route_design -unroute -nets [get_nets {clk1 clk2}]  
+    update_clock_routing  
+    
+
+  Note: The unroute command is needed to clean out existing clock routing on
+  the clock nets before updating the clock routing.
+
+See Also:
+
+   *  route_design
+   *  set_property
+
+# exit
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 00:31:04 2026...

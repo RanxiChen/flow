@@ -27,7 +27,7 @@ record=dict(original=str(original),source_sha=binding['source_sha'],
 if 'force_replication_on_nets' in tcl.read_text():
  record['directives'].insert(0,'force_replication_on_nets on failing register startpoints')
  record['netlist_attribute_change']='DONT_TOUCH cleared only on selected failing register drivers/nets'
-if 'route_design -unroute\n' in tcl.read_text():
+if 'force_replication_on_nets' in tcl.read_text() and 'route_design -unroute\n' in tcl.read_text():
  record['directives'].insert(0,'unroute preserving placement for pre-route replication')
  record['directives'].remove('tns_cleanup')
 if 'CLOCK_DELAY_GROUP' in tcl.read_text():
@@ -39,6 +39,9 @@ if 'CLOCK_DELAY_GROUP' in tcl.read_text():
   record['physical_clock_routing_property'] += '; USER_CLOCK_ROOT both outputs set to existing ' + root + ' CLOCK_ROOT'
  record['constraints_unchanged']=False
  record['timing_constraints_unchanged']=True
+ if 'place_design -directive Quick' in tcl.read_text():
+  record['directives']=['freeze primitive LOC/BEL','unroute all','place unplace','place Quick no_psip no_bufg_opt','NoTimingRelaxation','tns_cleanup']
+  record['physical_cell_constraint']='existing primitive LOC/BEL fixed; actual equality and placed common clock roots required before routing'
 prior=original/'physical-candidate.json'
 if prior.is_file(): record['parent_candidate']=json.loads(prior.read_text())
 (dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')
