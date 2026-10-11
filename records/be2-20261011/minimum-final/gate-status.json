@@ -1,0 +1,25 @@
+{
+  "production_source": "7b885d6",
+  "latest_test_source": "8df9ec9",
+  "baseline": "2051dd0",
+  "host": "Alan",
+  "complete_G1": "deferred by user",
+  "minimal_gate": "passed",
+  "G2_seeds": 1000,
+  "Spike_seeds": 1000,
+  "single_ISA_ELFs": 10,
+  "four_ISA_ELFs": 10,
+  "single_system_ELFs": 7,
+  "four_system_ELFs": 6,
+  "critical_fault_tests": 4,
+  "litmus_tests": 1,
+  "physical": "running",
+  "exits": {
+    "be2-6ac3415-minimum-cluster.exit": "0",
+    "be2-8df9ec9-fault-minimum.exit": "0",
+    "be2-6ac3415-spike.exit": "0",
+    "be2-6ac3415-minimum-safety.exit": "143",
+    "be2-7b885d6-rtl.exit": "0",
+    "be2-7b885d6-four-minimum.exit": "0"
+  }
+}

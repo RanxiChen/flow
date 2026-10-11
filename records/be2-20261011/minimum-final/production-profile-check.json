@@ -1,0 +1,58 @@
+{
+  "source": "7b885d6",
+  "profiles": {
+    "small": {
+      "hangThresholdCycles": "10000000",
+      "bus": "axi",
+      "profile": "small",
+      "preset": "gshare",
+      "privilege": "linux",
+      "tandem": "false",
+      "debug": "false",
+      "platformSha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+      "nCores": "4",
+      "lineBytes": "32",
+      "l1Sets": "128",
+      "l1dWays": "4",
+      "l1iWays": "4",
+      "l2Ways": "8",
+      "l2BytesPerCore": "65536",
+      "l2Slots": "2",
+      "idBits": "1"
+    },
+    "single": {
+      "hangThresholdCycles": "10000000",
+      "bus": "axi",
+      "profile": "single",
+      "preset": "gshare",
+      "privilege": "linux",
+      "tandem": "false",
+      "debug": "false",
+      "platformSha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+      "nCores": "1",
+      "lineBytes": "32",
+      "l1Sets": "128",
+      "l1dWays": "4",
+      "l1iWays": "4",
+      "l2Ways": "8",
+      "l2BytesPerCore": "65536",
+      "l2Slots": "2",
+      "idBits": "1"
+    }
+  },
+  "checks": {
+    "small": {
+      "copro_module": false,
+      "fifth_writeback_port": false,
+      "observation_port": false,
+      "filelist_sha256": "9203ee6be71b69b519212608ab0e998a9805d5bae147542848a4ee6009e81cb4"
+    },
+    "single": {
+      "copro_module": false,
+      "fifth_writeback_port": false,
+      "observation_port": false,
+      "filelist_sha256": "544fb43baae57f63f83013f6bfbaee5954b38bdb79fbe05b03f85629b45d5a87"
+    }
+  },
+  "same_parameters_except_harts_and_profile": true
+}
