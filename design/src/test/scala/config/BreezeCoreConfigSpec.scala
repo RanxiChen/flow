@@ -4,6 +4,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
+    "single deployment inherits the four-hart configuration except profile and hart count" in {
+        val four = BreezeClusterPresets.small
+        BreezeClusterPresets.single.copy(profileName = four.profileName,
+            mem = BreezeClusterPresets.single.mem.copy(nCores = four.nCores)) mustBe four
+    }
     "privilege profiles should keep MCU as default and enable Linux Bare mode explicitly" in {
         PrivilegeProfile.fromName("mcu") mustBe PrivilegeProfile.Mcu
         PrivilegeProfile.fromName("linux") mustBe PrivilegeProfile.Linux

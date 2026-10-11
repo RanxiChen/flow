@@ -245,9 +245,11 @@ final case class BreezeClusterConfig(
   * geometries. Every preset defaults to the GShare branch predictor.
   */
 object BreezeClusterPresets {
-    val single: BreezeClusterConfig = BreezeClusterConfig("single", BreezeMemGeometry.singleCore)
-    val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))
     val small: BreezeClusterConfig = BreezeClusterConfig("small", BreezeMemGeometry.default)
+    // Deployment tuning is owned by the four-hart profile. A single hart
+    // uses exactly the same parameters, changing only its name and hart count.
+    val single: BreezeClusterConfig = small.copy(profileName = "single", mem = small.mem.copy(nCores = 1))
+    val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))
     val stress: BreezeClusterConfig = BreezeClusterConfig("stress", BreezeMemGeometry.stress)
     val smokeL2w4: BreezeClusterConfig = BreezeClusterConfig("smoke-l2w4", BreezeMemGeometry.l2FourWay)
     val smokeL1dw2: BreezeClusterConfig = BreezeClusterConfig("smoke-l1dw2", BreezeMemGeometry.l1dTwoWay)
