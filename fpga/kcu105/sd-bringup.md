@@ -26,7 +26,7 @@ bash fpga/kcu105/build_sd.sh single /absolute/fresh/single
 bash fpga/kcu105/build_sd.sh single-rvv /absolute/fresh/single-rvv
 ```
 
-可加 `--prepare-only` 仅生成 RTL/BIOS/工程；随后 `--vivado-only` 消费已冻结工程。构建器冻结源、记录约束、先检查映射再实现；setup/hold 不通过时在 write_bitstream 前拒绝生成。最小功能门禁由 BE2 执行记录单独绑定，不把只成功生成工程称为测试通过。产物为 `gateware/xilinx_kcu105.bit`，BIOS 已初始化在其中；独立 BIOS 文件为 `software/bios/bios.bin`。
+可加 `--prepare-only` 仅生成 RTL/BIOS/工程；随后 `--vivado-only` 消费已冻结工程。构建器冻结源、记录约束、先检查映射再实现；完整 setup/hold/pulse-or-skew 指标不通过时在 write_bitstream 前拒绝生成。最小功能门禁由 BE2 执行记录单独绑定，不把只成功生成工程称为测试通过。产物为 `gateware/xilinx_kcu105.bit`，BIOS 已初始化在其中；独立 BIOS 文件为 `software/bios/bios.bin`。
 
 完整软件可以稍后独立编译：
 

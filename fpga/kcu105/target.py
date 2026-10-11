@@ -139,7 +139,7 @@ def main():
     # This check runs before write_bitstream, without weakening any constraint.
     soc.platform.toolchain.bitstream_commands += [
         'report_timing_summary -delay_type min_max -report_unconstrained -file routed-generation-gate.rpt',
-        'source {{' + os.path.join(FLOW_ROOT, 'fpga/kcu105/routed_timing_gate.tcl') + '}}',
+        'source routed_timing_gate.tcl',
         'flow_require_routed_timing routed-generation-gate.rpt',
         'set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]',
         'set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]',

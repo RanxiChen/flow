@@ -11,6 +11,10 @@ from litex.soc.integration.builder import Builder
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        # Freeze the pre-bitstream gate with the generated project as well.
+        timing_gate = Path(self.gateware_dir) / 'routed_timing_gate.tcl'
+        timing_gate.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(Path(__file__).with_name('routed_timing_gate.tcl'), timing_gate)
         if hasattr(self.soc, 'sdcard'):
             self.prepare_sd_driver()
             timing = Path(self.gateware_dir) / 'flow_sd_timing.tcl'
