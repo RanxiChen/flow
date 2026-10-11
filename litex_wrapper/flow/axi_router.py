@@ -6,6 +6,7 @@ backpressured until an AW chooses its destination. Responses are transparent.
 """
 import json
 import os
+import math
 
 from migen import Array, Cat, Constant, FSM, If, Module, NextState, NextValue, Signal
 from litex.soc.integration.soc import SoCRegion
@@ -36,15 +37,16 @@ class BreezeAxiRouter(Module):
         low_names = ("boot_rom", "linux_boot_rom", "sram")
 
         def decode(channel, write=False):
+            max_size = int(math.log2(master.data_width // 8))
             last_addr = Signal(master.address_width + 1)
             beats = Signal(9)
             span = Signal(17)
-            self.comb += [beats.eq(channel.len + 1), span.eq(Array([beats] + [Cat(Constant(0, n), beats) for n in (1, 2, 3)])[channel.size]),
+            self.comb += [beats.eq(channel.len + 1), span.eq(Array([beats] + [Cat(Constant(0, n), beats) for n in range(1, max_size + 1)])[channel.size]),
                           last_addr.eq(channel.addr + span - 1)]
             def inside(region):
                 permitted = region["writable" if write else "readable"]
                 return (Constant(int(permitted)) & (channel.burst == 1) &
-                    (channel.size <= 3) & (channel.addr >= region["origin"]) &
+                    (channel.size <= max_size) & (channel.addr >= region["origin"]) &
                     (last_addr < region["origin"] + region["size"]))
             dram = inside(regions["main_ram"])
             low = Constant(0)

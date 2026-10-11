@@ -16,7 +16,7 @@ from migen import Cat
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
-from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma
+from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma, BreezeRvvDma
 from flow.axi_router import check_soc_regions, platform_regions, add_inactive_boot_rom
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
@@ -43,6 +43,7 @@ CPUS['breeze_tiny_debug'] = BreezeTinyDebug
 CPUS['breeze_dma'] = BreezeDma
 CPUS['breeze_tiny_dma'] = BreezeTinyDma
 CPUS['breeze_tiny_debug_dma'] = BreezeTinyDebugDma
+CPUS['breeze_rvv_dma'] = BreezeRvvDma
 
 
 class BreezeKCU105SoC(SoCCore):
@@ -51,7 +52,7 @@ class BreezeKCU105SoC(SoCCore):
     irq_map = {'uart': UART_PLIC_SOURCE, 'sdcard': UART_PLIC_SOURCE + 1}
 
     def __init__(self, cpu_type='breeze', debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False):
-        if cpu_type not in ('breeze', 'breeze-tiny'):
+        if cpu_type not in ('breeze', 'breeze-tiny', 'breeze-rvv'):
             raise ValueError(f'Unsupported KCU105 CPU: {cpu_type}')
         if debug and cpu_type != 'breeze-tiny':
             raise ValueError('--debug only supports --cpu-type breeze-tiny (single hart)')
@@ -62,6 +63,8 @@ class BreezeKCU105SoC(SoCCore):
         cpu_key = 'breeze_tiny_debug' if debug else cpu_type.replace('-', '_')
         if with_sdcard:
             cpu_key += '_dma'
+        if cpu_type == 'breeze-rvv' and not with_sdcard:
+            raise ValueError('the RVV product includes SD hardware')
         super().__init__(platform, clk_freq=sys_clk_freq,
             ident='Breeze v1 AXI DDR4 SoC on KCU105',
             cpu_type=cpu_key,
@@ -114,7 +117,7 @@ class BreezeKCU105SoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--cpu-type', choices=('breeze', 'breeze-tiny'), default='breeze-tiny')
+    parser.add_argument('--cpu-type', choices=('breeze', 'breeze-tiny', 'breeze-rvv'), default='breeze-tiny')
     parser.add_argument('--sys-clk-freq', type=int, choices=(SYS_CLK_FREQ,), default=SYS_CLK_FREQ)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--with-sdcard', action='store_true',

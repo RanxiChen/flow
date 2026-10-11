@@ -7,7 +7,7 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 object GenerateBreezeCluster extends App {
     require(args.length >= 3 && args.length <= 6,
         "usage: GenerateBreezeCluster <single|small> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug] [coherent-dma]")
-    require(Set("single", "small").contains(args(0)), "未支持的 SoC profile")
+    require(Set("single", "small", "single-rvv").contains(args(0)), "未支持的 SoC profile")
     require(args.drop(3).forall(Set("tandem", "fpga-debug", "coherent-dma")), "未支持：FASE 或未知选项")
     require(args.drop(3).distinct.length == args.drop(3).length, "duplicate optional feature")
     private val corePreset = CorePreset.fromName(args(1))

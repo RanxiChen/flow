@@ -99,6 +99,7 @@ class _BreezeClusterCPU(CPU):
     debug_enabled = False
     tandem_enabled = False
     coherent_dma = False
+    rtl_module = 'BreezeClusterAxi'
     io_regions = {0x02000000: 0x10000, 0x0c000000: 0x4000000, 0x12000000: 0x1000000}
 
     @property
@@ -113,9 +114,9 @@ class _BreezeClusterCPU(CPU):
         self.add_sources(platform)
         marker = self._read_profile_marker(marker_path)
         self.id_width = int(marker["idBits"])
-        self.l2_bytes = self.num_harts * int(marker["l2BytesPerCore"])
+        self.l2_bytes = 0 if marker.get('rvv', 'false') == 'true' else self.num_harts * int(marker["l2BytesPerCore"])
         self.reset = Signal()
-        self.memory_bus = axi.AXIInterface(data_width=64, address_width=32, id_width=self.id_width)
+        self.memory_bus = axi.AXIInterface(data_width=int(marker.get('memoryBits', '64')), address_width=32, id_width=self.id_width)
         self.mmio_bus = axi.AXILiteInterface(data_width=64, address_width=32)
         self.submodules.axi_router = BreezeAxiRouter(self.memory_bus, platform_regions(self.flow_root_dir()))
         # Only the DRAM exit is eligible for LiteX's direct native connection.
@@ -266,7 +267,7 @@ class _BreezeClusterCPU(CPU):
     def do_finalize(self):
         if not hasattr(self, "reset_address"):
             raise RuntimeError("LiteX did not assign the Breeze reset address")
-        self.specials += Instance("BreezeClusterAxi", **self.cpu_params)
+        self.specials += Instance(self.rtl_module, **self.cpu_params)
 
 
 class Breeze(_BreezeClusterCPU):
@@ -313,3 +314,11 @@ class BreezeTinyDma(BreezeTiny):
 
 class BreezeTinyDebugDma(BreezeTinyDebug):
     coherent_dma = True
+
+
+class BreezeRvvDma(BreezeTinyDma):
+    name = 'breeze-rvv'
+    human_name = 'Breeze BE2 RV64GC with R04 vector subset, write-through, SD DMA'
+    cluster_profile = 'single-rvv'
+    rtl_module = 'BreezeRvvAxi'
+    expected_marker = {'rvv': 'true', 'memoryBits': '512', 'idBits': '2'}

@@ -19,11 +19,13 @@ class SnapshotBuilder(Builder):
             self.soc.platform.toolchain.pre_optimize_commands.add(f'source {timing}')
             self.soc.platform.toolchain.additional_commands.append('flow_report_sd_timing')
         self.freeze_sources()
-        self.check_l2_sources()
+        if self.soc.cpu.cluster_profile != 'single-rvv':
+            self.check_l2_sources()
         # Execute the mapping gate immediately after synthesis reports/checkpoint,
         # before opt_design or place_design. Copy the hook into this build's snapshot.
-        hook = Path(self.output_dir).resolve() / "source-snapshot" / "soc2-bram-gate.tcl"
-        shutil.copy2(Path(__file__).with_name("soc2-bram-gate.tcl"), hook)
+        gate = 'rvv-mapping-gate.tcl' if self.soc.cpu.cluster_profile == 'single-rvv' else 'soc2-bram-gate.tcl'
+        hook = Path(self.output_dir).resolve() / "source-snapshot" / gate
+        shutil.copy2(Path(__file__).with_name(gate), hook)
         self.soc.platform.toolchain.pre_synthesis_commands.append(
             'set_msg_config -id {{Synth 8-4767}} -limit 100000')
         self.soc.platform.toolchain.pre_optimize_commands.add(f'source {hook}')
