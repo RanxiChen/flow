@@ -115,6 +115,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   private var lateReady = true
   private var respValid = false
   private var s1Victim: Option[CoreTxn] = None
+  private var s1Killed = Vector.empty[CoreTxn]
   private var s2KillNow = false
   private var excKillNow = false
   private def decodedSolo(o: CoreOp): Boolean = enumIs(o.op,L1DOp.AMO) ||
@@ -158,6 +159,9 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   override def decide(): Unit = {
     // A request accepted in the previous cycle is in S1 now.
     s1Victim = inPipe.lastOption.filter(t => t.op.s1Kill && t.fired == now - 1)
+    // The permission-stage split contract makes s1Kill cancel both young
+    // S1/S2 slots. The final S3 owner (accepted three cycles ago) survives.
+    s1Killed = if (s1Victim.nonEmpty) inPipe.filter(_.fired >= now - 2).toVector else Vector.empty
     respValid = core.resp.valid.peek().litToBoolean
     def deadline(t: CoreTxn): Boolean = t.op.s2KillAfter.exists(delay => now >= t.firstFired + delay)
     // Replay moves the logical instruction to ID. Cancellation retains its
@@ -225,7 +229,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       presentingRetry.foreach { t => kill(t); presenting=None; presentingRetry=None }
       retryWake=false; armSolo=false; progress()
     }
-    s1Victim.foreach { v =>
+    s1Killed.foreach { v =>
       if (inPipe.exists(_ eq v)) { kill(v); inPipe.dequeueAll(_ eq v); soloActive=false }
       if (retries.exists(_ eq v)) { kill(v); retries.dequeueAll(_ eq v) }
       presentingRetry.filter(_ eq v).foreach { t => kill(t); presenting=None; presentingRetry=None }

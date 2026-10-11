@@ -637,11 +637,11 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
         feeders.foreach(f => println(f.describe))
       }
       for (c <- 0 until n) {
-      cores(c).trapClear = rng.nextInt(500) == 0
-      if (rng.nextInt(100) == 0 && ptws(c).pending.size < 2) {
-        if (rng.nextInt(10) == 0) ptws(c).read(pick(errLines) << 5, expectFault = true)
-        else ptws(c).read(pick(words))
-      }
+        cores(c).trapClear = rng.nextInt(500) == 0
+        if (rng.nextInt(100) == 0 && ptws(c).pending.size < 2) {
+          if (rng.nextInt(10) == 0) ptws(c).read(pick(errLines) << 5, expectFault = true)
+          else ptws(c).read(pick(words))
+        }
       }
     }
     mem.arReadyProb = 0.7; mem.awReadyProb = 0.7; mem.wReadyProb = 0.8; mem.rValidProb = 0.8
@@ -673,6 +673,24 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
     monitor.probes.exists(_._3 == "Inv") mustBe true
     monitor.probes.exists(_._3 == "Down") mustBe true
     mem.writes must not be empty
+  }
+
+  "BE2 S1 kill cancels both young permission slots and preserves the older response" in withFault(seed = 44) { e =>
+    import e._
+    val w = ram(0x3000)
+    runOps(0, CoreOp.load(w))
+    val original = arch.read(w + 8, 8)
+    val start = cores(0).history.size
+    cores(0).enqueue(CoreOp.load(w), CoreOp.store(w + 8, 0x1234),
+      CoreOp.load(w + 16).copy(s1Kill = true))
+    bench.quiesce()
+    val issued = cores(0).history.drop(start)
+    issued.size mustBe 3
+    issued.head.done mustBe true
+    issued.head.killed mustBe false
+    issued.tail.foreach(_.killed mustBe true)
+    runOps(1, CoreOp.load(w + 8))
+    cores(1).history.last.value mustBe original
   }
 
   for ((name, g, ops, seeds) <- Seq(("two cores", two, 1000, Seq(91, 92)), ("four cores", four, 1000, Seq(91)),
