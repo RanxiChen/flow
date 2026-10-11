@@ -226,3 +226,7 @@ R05' 任务书在 BE2 验收以后，由 Claude 在原 R05 的基础上改写：
 用户将当前仿真门禁收缩到最小必备测试集，详细覆盖延后扩大；完整 G1 保留且标记延期，不改原用例 golden、随机规模或种子。最低门禁覆盖基本 ISA/系统程序及精确异常、程序顺序、kill/重放所有权、无死锁的关键用例，G2 仍保留 0–999。
 
 单核与四核可以并行验证，以四核通过为主要目标。四核若资源或时序不通过，可以据实测删减硬件资源；单核从通过的四核配置派生，只改核数和 profile 名称，不独立调参数。缓存容量、目录及端口数量按同一参数规则派生。每次资源配置调整后重新核验两种部署的最低门禁和物理结果，100 MHz 及四条底线不变。此指示替代 §11(4) 的单核优先和四核启动先决顺序。
+
+用户随后追加单核 RVV 版及配套启动软件：先确定可通过的四核基础配置，保留从它派生的普通单核作为对照，再在该单核上接入现有 RVV 后端。R05' 以本 BE2 后端为基线，按 §7 的 ID credit、队首判定、commitD/killD、LongLatUnit、翻译服务及寄存冲突查询挂载，不回到旧09a105e。继承基础时钟、平台地址图、L1几何和公共资源参数；RVV特需的写直通L1D、替代L2的dataless home、宽AXI及作废/冲突路径属于明确追加项，只在RVV预设启用，四核/普通单核保持写回MESI+L2。RVV已有功能限制及其所需编译选项必须如实记录。
+
+三种产品均需配套BIOS和SD启动交付。用户明确SD卡只存Linux等软件镜像，不加载bitstream，不追加配置Flash烧录交付；用户通过现有方式单独加载bitstream。沿用已发布单核GAPBS的启动链：LiteX BIOS初始化DDR/SD，从SD的FAT分区按boot.json加载Image、fw_jump.bin、对应DTB和serial-handoff.bin，经跳板/OpenSBI进入Linux。rootfs按现有sd-gapbs方案内嵌initramfs，不把Linux挂载SD根分区列为本任务前置条件；已有sdcard_init/sdcardboot手动入口保留，并实现配置完成后的自动SD软件启动。核数、DTB/ISA描述、CSR/PMA/内存布局绑定对应硬件。SD DMA必须覆盖该产品的缓存一致性/行作废及加载后FENCE.I，不能在RVV的dataless home上沿用依赖L2目录的数据路径。交付bitstream、对应BIOS、SD目录/清单及独立Linux/应用软件构建脚本，复用linux/sd-gapbs/build.sh和Buildroot配方；用户自行加载硬件和准备SD。软件后期可在硬件接口兼容时重新编译并替换SD文件，无须重新综合bitstream；构建、时序、板上SD读取及实际Linux启动证据分别记录。

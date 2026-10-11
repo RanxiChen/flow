@@ -4,6 +4,19 @@
 
 当前生产源：`c735fbd`（部署几何来自 `558096c`，后端来自 `790c1f6`；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
 
+当前门禁状态（2026-10-11 18:51 CST，以下旧版本记录保留其原 SHA/几何范围）：
+
+| 门禁 | 最新证据与结论 |
+|---|---|
+| 部署最小功能集 | c735fbd，20/20 Scala 用例、单/四核各10个ISA ELF、6个原四核系统程序，以及两几何fault/真实PTW，exit0 |
+| 后端安全/G2 | 790c1f6，安全9/9；G2及独立Spike各1000/1000。c735fbd复用相同后端源，部署几何另外验证 |
+| 单核 routed/S1 | c735fbd，100MHz/default，exit0，WNS +0.412ns/WHS +0.031ns |
+| 四核 routed/X1 | c735fbd，综合完成、正在默认布线，尚无最终setup/hold报告。综合LUT209547/242400（86.447%） |
+| A1 | c735fbd vs 2051dd0+同部署配置补丁，同阶段综合比较通过 |
+| P1 | 同配置/ELF/退休数，原+1%门槛保留，4项中3项未通过；详细数值见末尾 |
+| S2 | 精确同配置checkpoint查询进行中；无阳性对照或空source组保留未解析，不宣称整体通过 |
+| 完整G1/bitstream/板上 | 完整G1按用户指示延期；未生成bitstream、未上板 |
+
 ## 实现映射
 
 | 规则 | 实现位置和所有权 | 检查 |
@@ -14,7 +27,7 @@
 | R4 | MUL 运算流水无条件推进，八槽结果环；总预留包含流水和结果，最多八项。lateReg 两项无 flow/pipe 队列。FPU 原两项请求/两项返回边界不增加 | N03 八项结果及连续八拍 W2 冲突；原 MUL 算术/等价测试；late 第二槽错误 N+1 fatal |
 | R5 | L1D 新增 Replay 判定、原因及寄存 replayWake；WB Replay 不提交，从 wb.pc 重定向，清本条和年轻 valid；soloArm 使重取首条在 ID 等醒后 solo 发射 | N02 实际 cache 同行测试；Replay 不分配 MSHR、不写 PS、不建 reservation、不发 MMIO 的断言；G2 原因 1/2/3/4/6 |
 | R6 | 串行项在 ID 等 olderEmpty、cpuDrainedD/mmuIdleD/标量所有权；SFENCE 等待期间停止新翻译，WB 发脉冲及 redirect，无第二次等待。AMO、aq/rl 首次 solo；MMIO/LR miss/其它 Replay 重执行 solo；WFI 正常提交 | T17–T20、P05/P09；solo WB 年轻槽全空及无第二次 Replay/Mshr 断言；真实 PTW 命中/缺失对照 |
-| R7 | wbCommit/wbKill 不再读 drained/idle，存储判定取 L1D S3，copro 判定取已寄存队首。保留现有 P09 中断 CSR 判定锥，详见自行裁定 | 已通过 P09 定向；综合/布线逻辑级数及 S2 尚待取得 |
+| R7 | wbCommit/wbKill 不再读 drained/idle，存储判定取 L1D S3，copro 判定取已寄存队首。保留现有 P09 中断 CSR 判定锥，详见自行裁定 | P09 定向通过；最新S2查询进行中。单核routed报告已有，不能把全CPU最差路径级数冒充WB判定锥级数 |
 | R8 | `BreezeClusterConfig.coprocessorStub: Option[Int]` 默认 None，向 Core/Backend 传递；默认关闭时模块和第五写口均不存在。未新增测试专用生产分支 | 7b885d6 两份生产 RTL 已确认无 copro 模块/第五写口/观察端口，参数一致；最小集独立入口，完整用例及 golden 不改 |
 
 `LongLatResult` 定义 rd(bank/index)/data/flags；既有 `FpResult` 继承该类型保持调用兼容。`LongLatUnit` 汇总 reserve/available/commitD/killD/returned/drained 和 Decoupled result。MUL/DIV/FPU 接入同一结果适配口，Writeback late 适配同一口；late error 在本地封装保留。优先级仍 W2 > late > DIV > MUL > FPU > 可选 copro，饥饿阈值仍 3。late 为已经提交的结果，不需要再次授权，不响应未提交 kill。
@@ -109,7 +122,7 @@ RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等�
 
 统一 Java 调用为 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4 taskset -c <0-3 或 4-7> nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar '<sbt 参数>'`。G1 cwd `/home/chen/FUN/flow-be2-b3-8ea5db5/design`，G2 cwd `/home/chen/FUN/flow-be2-1a4deba/design`。每项原始 `.exit` 随日志保留。
 
-以下阶段记录均按各自 SHA/几何解释。S1/A1/S2 当前状态见末尾；P1 已取得匹配冷启动及 64 KiB Fibonacci 的基线与候选数据，预算有失败，见下表；没有本候选 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
+以下阶段记录均按各自 SHA/几何解释。最新门禁状态见首表，P1 匹配数据及单核 routed 报告见末尾；该历史阶段没有 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
 
 补充证据：4757d5e G2 ledger 导出 1000 seeds 全通过，`be2-4757d5e-g2.log`；Spike 1000 seeds 全通过，`be2-4757d5e-spike-v4.log` 及 `be2-4757d5e-spike-v4/result.json`。初次 ELF 缺少 section table、误关闭 boot ROM 的 reference 适配失败另存 v1/v2/v3，不记为 DUT 失败。
 
@@ -198,3 +211,7 @@ c735fbd 对 2051dd0+同几何配置补丁的 A1 综合比较通过：backend扣�
 
 
 c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=0，100MHz sys_clk WNS=+0.559ns。LUT59167、FF34563、BRAM52tiles（51RAMB36+2RAMB18）、DSP23。报告/Tcl/XDC/源文件hash清单在`physical-c735fbd/single/`。布局/布线使用default，无新例外，无bitstream/板上证据。单核仅改核数/profile；其四核配对结果仍待完成。
+
+23. **追加单核RVV及SD自动启动交付**：用户明确要求三种产品：四核基础版、同配置普通单核版、在普通单核上挂载RVV的版本，以及对应BIOS和可后期独立编译更新的SD软件。已核对flow-rvv/cc0be2f现有R05任务书及设计文档未提交补充，原工作树修改保留；接入采用BE2 §7落点。继承四核基础参数不意味着强迫RVV保留写回L2：该预设按已有方案启用写直通L1D、dataless home及宽AXI，标量/向量/SD DMA排序与作废一并覆盖；其余两个产品保留原缓存策略。
+
+当前BE2工程还未接通SD：`target.py`未提供`--with-sdcard`，旧`build_sd.sh`却传此选项，旧SD文档还描述已废止的Wishbone/coherent-dma入口；旧`prepare_sd_boot.py`限定历史软件hash且直接修改旧DTB内存，不能当作当前三产品的软件包。已有可复用的软件基线则是README和`linux/sd-gapbs/`记录的29ee514硬件/b2a895b软件：用户JTAG加载.bit，BIOS通过sdcard_init/sdcardboot从FAT按boot.json加载Image/OpenSBI/DTB/跳板，进入内嵌initramfs的Buildroot Linux，再运行gapbs-smoke。六个小图自检的板级结果记录在`docs/benchmarks/breeze-gapbs-20260918.md`，仅代表该旧产品，不冒充BE2验证。后续三产品沿用这条SD加载Linux的链路，更新构建入口、缓存/DMA接线、匹配BIOS/DTB及自动SD软件启动；不追加配置Flash镜像交付，SD也不存或加载bitstream。软件后续通过`linux/sd-gapbs/build.sh`独立编译，兼容更新只替换SD文件。该项已加入任务书§12；本段是范围与现状核查，不是新RVV、SD或启动通过证据。
