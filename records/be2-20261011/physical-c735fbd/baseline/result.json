@@ -1,0 +1,9 @@
+{
+  "seeds": 1000,
+  "failures": 0,
+  "spike": "/home/chen/RISCV/bin/spike",
+  "spike_sha256": "33a958f70b5b7bb09ca2d31ac53c218e701f35138ddf7b5c3e808e50027a16a6",
+  "custom0": "Ok no-op adapter; Exc excluded",
+  "mmio": "fixture value in mapped RAM",
+  "comparison": "every actual committed PC once/in order; exact register write multiset"
+}

@@ -1,0 +1,10 @@
+{
+  "reason": "superseded RTL with confirmed S2 EX payload path; deploy pruned shared config",
+  "stopped": [
+    {
+      "pid": 2140353,
+      "cwd": "/home/chen/FUN/flow-runs/be2-7b885d6-small-default/gateware",
+      "command": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source xilinx_kcu105.tcl "
+    }
+  ]
+}

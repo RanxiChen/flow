@@ -173,3 +173,20 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 21. **共享部署缓存缩减**：7b885d6 四核综合 LUT=228169/242400（94.13%），全局布线迭代0耗时48分24秒，迭代1仍始于38771冲突节点。按用户四核优先及允许删减资源的授权，small 改为 L1 64sets/两路、L2四路/32768字节每核；single仅改核数/profile，不能单独放大缓存。标准 BreezeMemGeometry.default 及原默认/压力测试保持原几何；保留100MHz、GShare、RV64IMAFDC/Linux、MSHR1、slots2、line32、paddr32和 BE2 credit 容量。新增准确部署几何的原 seed91/每核1000操作故障测试，golden/断言/看门狗不变。此裁定需要重跑两部署最小程序及匹配配置 baseline 综合；旧 A1/P1 数字只代表旧默认几何，不冒充新配置通过。
 
 790c1f6 的最新最小回归：config9、两配置20个原始 ISA ELF、6个原始四核系统程序、原 S1 kill/默认几何四核 fault seed91、真实 Sv39 PTW hit/miss，合计16个 Scala 用例，exit0。独立后端安全集及 G2 seed0–999 exit0，生产 single/small 生成 exit0。缓存裁定前的后端测试只在后端/执行单元源文件完全相同时复用，并明确配置范围；新增部署几何另作动态核验。
+
+
+截至部署验证阶段：新增 small 精确几何四核 seed91/每核1000操作通过，oracle AMO694/load3588/LR249/SC成功223/失败43/store654，取消427、精确异常153、refill error40、PTW1873（fault220）、Inv1429/Down929/Puts2181；原默认几何同种子也通过，golden未改。790c1f6 ledgers 的独立 Spike 1000/1000 比对通过，参考配置/适配器与前述一致。旧默认四核7b885d6 在布线第1迭代剩55冲突节点时被新源替代，按精确pid/cwd终止为143，完整原日志/stop记录保留；不作为 routed 成功或失败结论。此项停止只结束被替代的构建，BE2任务继续。
+
+P1 的主要成本有契约原因：旧匹配数据中 Fibonacci 有120次原因4（MMIO）Replay，MMIO首次推测响应必须Replay后按solo重取，独占WB724拍；原 mmio_console 为41次原因4、solo307拍。+1%门槛原样保留，不用调整固件、减少输出或更改退休数隐藏开销。新几何仍用同一 ELF再量测。
+
+
+c735fbd 的部署最小集最终 exit0：六 suites/20 Scala 用例，无失败/cancel/ignore，含两部署各10 ISA、6四核系统 ELF、S1 kill +原默认/新部署四核fault共3项、real Sv39 hit/miss×两几何共4项及P1四原始程序1项。新配置 P1 同固件/同退休数：
+
+| 程序 | 2051dd0+仅共享配置补丁 cycles | c735fbd cycles | retired | 增加 | 原+1% |
+|---|---:|---:|---:|---:|---|
+| lrsc_amo_single | 15768 | 15934 | 1127 | 1.053% | 未通过 |
+| trap_misc | 28108 | 28252 | 2092 | 0.512% | 通过 |
+| mmio_console | 47685 | 48511 | 4258 | 1.732% | 未通过 |
+| fibonacci | 15654 | 17886 | 1329 | 14.258% | 未通过 |
+
+对应replay[0..6]/soloWB：lrsc 0/0/3/2/0/1/0及266；trap 0/0/5/2/0/0/0及67；MMIO 0/0/3/2/41/0/0及307；Fibonacci 0/0/4/0/120/0/0及724。新配置的single/small默认完整物理已同时启动，每项4CPU/maxThreads4，baseline仅综合2CPU，亲和性集合最多10CPU；Vivado2022.2/xcku040-ffva1156-2-e/100MHz/no新时序例外。原始最小日志在 `records/be2-20261011/minimum-c735fbd/`，精确命令在同目录上级的c735fbd脚本。

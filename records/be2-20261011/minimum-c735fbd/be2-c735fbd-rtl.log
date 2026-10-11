@@ -1,0 +1,2436 @@
+c735fbd435a1e60a8935399b3ddbbdd8629052d3
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2
++ taskset -c 8-9 nice -n 10 java -XX:ActiveProcessorCount=2 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'runMain flow.top.GenerateBreezeCluster small gshare linux' 'runMain flow.top.GenerateBreezeCluster single gshare linux'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] waiting for lock on /home/chen/.sbt/boot/sbt.boot.lock to be available...
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] running flow.top.GenerateBreezeCluster small gshare linux
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 194:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 194:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[success] Total time: 17 s, completed Oct 11, 2026, 6:07:03 PM
+[info] running flow.top.GenerateBreezeCluster single gshare linux
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 194:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 194:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[success] Total time: 6 s, completed Oct 11, 2026, 6:07:09 PM
++ for profile in small single
++ BE2_VIVADO_THREADS=2
++ taskset -c 8-9 nice -n 10 python /home/chen/FUN/flow-runs/build-default-soc.py /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b /home/chen/FUN/flow-runs/be2-c735fbd-small-default small --generate-only
+INFO:SoC:        __   _ __      _  __  
+INFO:SoC:       / /  (_) /____ | |/_/  
+INFO:SoC:      / /__/ / __/ -_)>  <    
+INFO:SoC:     /____/_/\__/\__/_/|_|  
+INFO:SoC:  Build your hardware, easily!
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Creating SoC... (2026-10-11 18:07:09)
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:FPGA device : xcku040-ffva1156-2-e.
+INFO:SoC:System clock: 100.000MHz.
+INFO:SoCBusHandler:Creating Bus Handler...
+INFO:SoCBusHandler:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoCBusHandler:Adding reserved Bus Regions...
+INFO:SoCBusHandler:Bus Handler created.
+INFO:SoCCSRHandler:Creating CSR Handler...
+INFO:SoCCSRHandler:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+INFO:SoCCSRHandler:Adding reserved CSRs...
+INFO:SoCCSRHandler:ctrl CSR added at Location 0.
+INFO:SoCCSRHandler:uart CSR added at Location 1.
+INFO:SoCCSRHandler:timer0 CSR added at Location 2.
+INFO:SoCCSRHandler:ddrphy CSR added at Location 3.
+INFO:SoCCSRHandler:identifier_mem CSR added at Location 4.
+INFO:SoCCSRHandler:sdram CSR added at Location 5.
+INFO:SoCCSRHandler:CSR Handler created.
+INFO:SoCIRQHandler:Creating IRQ Handler...
+INFO:SoCIRQHandler:IRQ Handler (up to 32 Locations).
+INFO:SoCIRQHandler:Adding reserved IRQs...
+INFO:SoCIRQHandler:IRQ Handler created.
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Initial SoC:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoC:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+CSR Locations: (6)
+- ctrl           : 0
+- uart           : 1
+- timer0         : 2
+- ddrphy         : 3
+- identifier_mem : 4
+- sdram          : 5
+INFO:SoC:IRQ Handler (up to 32 Locations).
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Controller ctrl added.
+INFO:SoC:CPU breeze added.
+INFO:SoC:CPU breeze adding IO Region 0 at 0x02000000 (Size: 0x00010000).
+INFO:SoCBusHandler:io0 Region added at Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze adding IO Region 1 at 0x0c000000 (Size: 0x04000000).
+INFO:SoCBusHandler:io1 Region added at Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze adding IO Region 2 at 0x12000000 (Size: 0x01000000).
+INFO:SoCBusHandler:io2 Region added at Origin: 0x12000000, Size: 0x01000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze overriding rom mapping from 0x00000000 to 0x10010000.
+INFO:SoC:CPU breeze overriding sram mapping from 0x01000000 to 0x11000000.
+INFO:SoC:CPU breeze overriding main_ram mapping from 0x40000000 to 0x80000000.
+INFO:SoC:CPU breeze setting reset address to 0x10010000.
+INFO:SoC:CPU breeze adding Bus Master(s).
+INFO:SoCBusHandler:cpu_bus0 Bus adapted from AXI 64-bit to Wishbone 64-bit.
+INFO:SoCBusHandler:cpu_bus0 added as Bus Master.
+INFO:SoCBusHandler:cpu_bus1 Bus adapted from AXI-Lite 64-bit to Wishbone 64-bit.
+INFO:SoCBusHandler:cpu_bus1 added as Bus Master.
+INFO:SoC:CPU breeze adding Interrupt(s).
+INFO:SoCBusHandler:rom Region added at Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:rom added as Bus Slave.
+INFO:SoC:RAM rom added Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:sram Region added at Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:sram added as Bus Slave.
+INFO:SoC:RAM sram added Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False.
+INFO:SoCIRQHandler:uart IRQ allocated at Location 0.
+INFO:SoCIRQHandler:timer0 IRQ allocated at Location 1.
+INFO:SoCBusHandler:main_ram Region added at Origin: 0x80000000, Size: 0x80000000, Mode: RWX, Cached:  True, Linker: False.
+WARNING:SoC:Converting MemBus(64) data width to LiteDRAM(512).
+INFO:SoCBusHandler:main_ram added as Bus Slave.
+INFO:SoCBusHandler:boot_rom Region added at Origin: 0x10000000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:boot_rom added as Bus Slave.
+INFO:SoCBusHandler:clint Region added at Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:clint added as Bus Slave.
+INFO:SoCBusHandler:plic Region added at Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:plic added as Bus Slave.
+INFO:SoC:CSR Bridge csr added.
+INFO:SoCBusHandler:csr Region added at Origin: 0x12000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:csr added as Bus Slave.
+INFO:SoCCSRHandler:csr added as CSR Master.
+INFO:SoCBusHandler:Interconnect: InterconnectShared (2 <-> 7).
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Finalized SoC:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:64-bit wishbone Bus, 4.0GiB Address Space.
+IO Regions: (3)
+io0                 : Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+io1                 : Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False
+io2                 : Origin: 0x12000000, Size: 0x01000000, Mode:  RW, Cached: False, Linker: False
+Bus Regions: (7)
+clint               : Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+plic                : Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False
+boot_rom            : Origin: 0x10000000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False
+rom                 : Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False
+sram                : Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False
+csr                 : Origin: 0x12000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+main_ram            : Origin: 0x80000000, Size: 0x80000000, Mode: RWX, Cached:  True, Linker: False
+Bus Masters: (2)
+- cpu_bus0          : rw
+- cpu_bus1          : rw
+Bus Slaves: (7)
+- rom               : r
+- sram              : rw
+- main_ram          : rw
+- boot_rom          : rw
+- clint             : rw
+- plic              : rw
+- csr               : rw
+INFO:SoC:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+CSR Locations: (6)
+- ctrl           : 0
+- uart           : 1
+- timer0         : 2
+- ddrphy         : 3
+- identifier_mem : 4
+- sdram          : 5
+INFO:SoC:IRQ Handler (up to 32 Locations).
+IRQ Locations: (2)
+- uart   : 0
+- timer0 : 1
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:USMMCM:Config:
+divclk_divide : 5
+clkout0_freq  : 400.00MHz
+clkout0_divide: 3
+clkout0_phase : 0.00°
+clkout1_freq  : 200.00MHz
+clkout1_divide: 6
+clkout1_phase : 0.00°
+clkout2_freq  : 200.00MHz
+clkout2_divide: 6
+clkout2_phase : 0.00°
+vco           : 1200.00MHz
+clkfbout_mult : 48
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:SoC Hierarchy:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:
+BreezeKCU105SoC
+├── crg (_CRG)
+│    ├── pll (USMMCM)
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:MMCME2_ADV]
+│    │    ├── [BB:BUFG]
+│    │    └── [BB:BUFG]
+│    ├── idelayctrl (USIDELAYCTRL)
+│    │    └── [BB:IDELAYCTRL]
+│    ├── [BB:BUFGCE_DIV]
+│    └── [BB:BUFGCE]
+├── bus (SoCBusHandler)
+│    ├── axi2wishbone_0 (AXI2Wishbone) [Gen]
+│    │    ├── axi2axilite_0 (AXI2AXILite) [Gen]
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── axiburst2beat_0 (AXIBurst2Beat) [Gen]
+│    │    │    └── fsm (FSM)
+│    │    └── axilite2wishbone_0 (AXILite2Wishbone) [Gen]
+│    │         └── fsm (FSM)
+│    ├── axilite2wishbone_0 (AXILite2Wishbone) [Gen]
+│    │    └── fsm (FSM)
+│    └── _interconnect (InterconnectShared)
+│         ├── arbiter (Arbiter)
+│         │    └── rr (RoundRobin)
+│         └── decoder (Decoder)
+├── csr (SoCCSRHandler)
+├── irq (SoCIRQHandler)
+├── ctrl (SoCController)
+├── cpu (Breeze)
+│    ├── axi_router (BreezeAxiRouter)
+│    │    ├── read_fsm (FSM)
+│    │    └── write_fsm (FSM)
+│    └── [BB:BreezeClusterAxi]
+├── rom (SRAM)
+├── sram (SRAM)
+├── identifier (Identifier)
+├── uart (UART)
+│    ├── ev (EventManager)
+│    │    ├── eventsourcelevel_0 (EventSourceLevel) [Gen]
+│    │    └── eventsourcelevel_1 (EventSourceLevel) [Gen]
+│    ├── phy (RS232PHY)
+│    │    ├── tx (RS232PHYTX)
+│    │    │    ├── clk_phase_accum (RS232ClkPhaseAccum)
+│    │    │    └── fsm (FSM)
+│    │    └── rx (RS232PHYRX)
+│    │         ├── clk_phase_accum (RS232ClkPhaseAccum)
+│    │         └── fsm (FSM)
+│    ├── tx_fifo (SyncFIFO)
+│    │    └── fifo (SyncFIFOBuffered)
+│    │         └── fifo (SyncFIFO)
+│    └── rx_fifo (SyncFIFO)
+│         └── fifo (SyncFIFOBuffered)
+│              └── fifo (SyncFIFO)
+├── timer0 (Timer)
+│    └── ev (EventManager)
+│         └── eventsourceprocess_0 (EventSourceProcess) [Gen]
+├── ddrphy (USDDRPHY)
+│    ├── ddr4dfimux_0 (DDR4DFIMux) [Gen]
+│    ├── tappeddelayline_0 (TappedDelayLine) [Gen]
+│    ├── dqspattern_0 (DQSPattern) [Gen]
+│    ├── bitslip_0 (BitSlip) [Gen]
+│    ├── bitslip_1 (BitSlip) [Gen]
+│    ├── bitslip_2 (BitSlip) [Gen]
+│    ├── bitslip_3 (BitSlip) [Gen]
+│    ├── bitslip_4 (BitSlip) [Gen]
+│    ├── bitslip_5 (BitSlip) [Gen]
+│    ├── bitslip_6 (BitSlip) [Gen]
+│    ├── bitslip_7 (BitSlip) [Gen]
+│    ├── bitslip_8 (BitSlip) [Gen]
+│    ├── bitslip_9 (BitSlip) [Gen]
+│    ├── bitslip_10 (BitSlip) [Gen]
+│    ├── bitslip_11 (BitSlip) [Gen]
+│    ├── bitslip_12 (BitSlip) [Gen]
+│    ├── bitslip_13 (BitSlip) [Gen]
+│    ├── bitslip_14 (BitSlip) [Gen]
+│    ├── bitslip_15 (BitSlip) [Gen]
+│    ├── tappeddelayline_1 (TappedDelayLine) [Gen]
+│    ├── bitslip_16 (BitSlip) [Gen]
+│    ├── bitslip_17 (BitSlip) [Gen]
+│    ├── bitslip_18 (BitSlip) [Gen]
+│    ├── bitslip_19 (BitSlip) [Gen]
+│    ├── bitslip_20 (BitSlip) [Gen]
+│    ├── bitslip_21 (BitSlip) [Gen]
+│    ├── bitslip_22 (BitSlip) [Gen]
+│    ├── bitslip_23 (BitSlip) [Gen]
+│    ├── bitslip_24 (BitSlip) [Gen]
+│    ├── bitslip_25 (BitSlip) [Gen]
+│    ├── bitslip_26 (BitSlip) [Gen]
+│    ├── bitslip_27 (BitSlip) [Gen]
+│    ├── bitslip_28 (BitSlip) [Gen]
+│    ├── bitslip_29 (BitSlip) [Gen]
+│    ├── bitslip_30 (BitSlip) [Gen]
+│    ├── bitslip_31 (BitSlip) [Gen]
+│    ├── bitslip_32 (BitSlip) [Gen]
+│    ├── bitslip_33 (BitSlip) [Gen]
+│    ├── bitslip_34 (BitSlip) [Gen]
+│    ├── bitslip_35 (BitSlip) [Gen]
+│    ├── bitslip_36 (BitSlip) [Gen]
+│    ├── bitslip_37 (BitSlip) [Gen]
+│    ├── bitslip_38 (BitSlip) [Gen]
+│    ├── bitslip_39 (BitSlip) [Gen]
+│    ├── bitslip_40 (BitSlip) [Gen]
+│    ├── bitslip_41 (BitSlip) [Gen]
+│    ├── bitslip_42 (BitSlip) [Gen]
+│    ├── bitslip_43 (BitSlip) [Gen]
+│    ├── bitslip_44 (BitSlip) [Gen]
+│    ├── bitslip_45 (BitSlip) [Gen]
+│    ├── bitslip_46 (BitSlip) [Gen]
+│    ├── bitslip_47 (BitSlip) [Gen]
+│    ├── bitslip_48 (BitSlip) [Gen]
+│    ├── bitslip_49 (BitSlip) [Gen]
+│    ├── bitslip_50 (BitSlip) [Gen]
+│    ├── bitslip_51 (BitSlip) [Gen]
+│    ├── bitslip_52 (BitSlip) [Gen]
+│    ├── bitslip_53 (BitSlip) [Gen]
+│    ├── bitslip_54 (BitSlip) [Gen]
+│    ├── bitslip_55 (BitSlip) [Gen]
+│    ├── bitslip_56 (BitSlip) [Gen]
+│    ├── bitslip_57 (BitSlip) [Gen]
+│    ├── bitslip_58 (BitSlip) [Gen]
+│    ├── bitslip_59 (BitSlip) [Gen]
+│    ├── bitslip_60 (BitSlip) [Gen]
+│    ├── bitslip_61 (BitSlip) [Gen]
+│    ├── bitslip_62 (BitSlip) [Gen]
+│    ├── bitslip_63 (BitSlip) [Gen]
+│    ├── bitslip_64 (BitSlip) [Gen]
+│    ├── bitslip_65 (BitSlip) [Gen]
+│    ├── bitslip_66 (BitSlip) [Gen]
+│    ├── bitslip_67 (BitSlip) [Gen]
+│    ├── bitslip_68 (BitSlip) [Gen]
+│    ├── bitslip_69 (BitSlip) [Gen]
+│    ├── bitslip_70 (BitSlip) [Gen]
+│    ├── bitslip_71 (BitSlip) [Gen]
+│    ├── bitslip_72 (BitSlip) [Gen]
+│    ├── bitslip_73 (BitSlip) [Gen]
+│    ├── bitslip_74 (BitSlip) [Gen]
+│    ├── bitslip_75 (BitSlip) [Gen]
+│    ├── bitslip_76 (BitSlip) [Gen]
+│    ├── bitslip_77 (BitSlip) [Gen]
+│    ├── bitslip_78 (BitSlip) [Gen]
+│    ├── bitslip_79 (BitSlip) [Gen]
+│    ├── bitslip_80 (BitSlip) [Gen]
+│    ├── bitslip_81 (BitSlip) [Gen]
+│    ├── bitslip_82 (BitSlip) [Gen]
+│    ├── bitslip_83 (BitSlip) [Gen]
+│    ├── bitslip_84 (BitSlip) [Gen]
+│    ├── bitslip_85 (BitSlip) [Gen]
+│    ├── bitslip_86 (BitSlip) [Gen]
+│    ├── bitslip_87 (BitSlip) [Gen]
+│    ├── bitslip_88 (BitSlip) [Gen]
+│    ├── bitslip_89 (BitSlip) [Gen]
+│    ├── bitslip_90 (BitSlip) [Gen]
+│    ├── bitslip_91 (BitSlip) [Gen]
+│    ├── bitslip_92 (BitSlip) [Gen]
+│    ├── bitslip_93 (BitSlip) [Gen]
+│    ├── bitslip_94 (BitSlip) [Gen]
+│    ├── bitslip_95 (BitSlip) [Gen]
+│    ├── bitslip_96 (BitSlip) [Gen]
+│    ├── bitslip_97 (BitSlip) [Gen]
+│    ├── bitslip_98 (BitSlip) [Gen]
+│    ├── bitslip_99 (BitSlip) [Gen]
+│    ├── bitslip_100 (BitSlip) [Gen]
+│    ├── bitslip_101 (BitSlip) [Gen]
+│    ├── bitslip_102 (BitSlip) [Gen]
+│    ├── bitslip_103 (BitSlip) [Gen]
+│    ├── bitslip_104 (BitSlip) [Gen]
+│    ├── bitslip_105 (BitSlip) [Gen]
+│    ├── bitslip_106 (BitSlip) [Gen]
+│    ├── bitslip_107 (BitSlip) [Gen]
+│    ├── bitslip_108 (BitSlip) [Gen]
+│    ├── bitslip_109 (BitSlip) [Gen]
+│    ├── bitslip_110 (BitSlip) [Gen]
+│    ├── bitslip_111 (BitSlip) [Gen]
+│    ├── bitslip_112 (BitSlip) [Gen]
+│    ├── bitslip_113 (BitSlip) [Gen]
+│    ├── bitslip_114 (BitSlip) [Gen]
+│    ├── bitslip_115 (BitSlip) [Gen]
+│    ├── bitslip_116 (BitSlip) [Gen]
+│    ├── bitslip_117 (BitSlip) [Gen]
+│    ├── bitslip_118 (BitSlip) [Gen]
+│    ├── bitslip_119 (BitSlip) [Gen]
+│    ├── bitslip_120 (BitSlip) [Gen]
+│    ├── bitslip_121 (BitSlip) [Gen]
+│    ├── bitslip_122 (BitSlip) [Gen]
+│    ├── bitslip_123 (BitSlip) [Gen]
+│    ├── bitslip_124 (BitSlip) [Gen]
+│    ├── bitslip_125 (BitSlip) [Gen]
+│    ├── bitslip_126 (BitSlip) [Gen]
+│    ├── bitslip_127 (BitSlip) [Gen]
+│    ├── bitslip_128 (BitSlip) [Gen]
+│    ├── bitslip_129 (BitSlip) [Gen]
+│    ├── bitslip_130 (BitSlip) [Gen]
+│    ├── bitslip_131 (BitSlip) [Gen]
+│    ├── bitslip_132 (BitSlip) [Gen]
+│    ├── bitslip_133 (BitSlip) [Gen]
+│    ├── bitslip_134 (BitSlip) [Gen]
+│    ├── bitslip_135 (BitSlip) [Gen]
+│    ├── bitslip_136 (BitSlip) [Gen]
+│    ├── bitslip_137 (BitSlip) [Gen]
+│    ├── bitslip_138 (BitSlip) [Gen]
+│    ├── bitslip_139 (BitSlip) [Gen]
+│    ├── bitslip_140 (BitSlip) [Gen]
+│    ├── bitslip_141 (BitSlip) [Gen]
+│    ├── bitslip_142 (BitSlip) [Gen]
+│    ├── bitslip_143 (BitSlip) [Gen]
+│    ├── tappeddelayline_2 (TappedDelayLine) [Gen]
+│    ├── tappeddelayline_3 (TappedDelayLine) [Gen]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OBUFDS]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    └── [BB:ODELAYE3]
+├── sdram (LiteDRAMCore)
+│    ├── dfii (DFIInjector)
+│    │    ├── pi0 (PhaseInjector)
+│    │    ├── pi1 (PhaseInjector)
+│    │    ├── pi2 (PhaseInjector)
+│    │    └── pi3 (PhaseInjector)
+│    ├── controller (LiteDRAMController)
+│    │    ├── refresher (Refresher)
+│    │    │    ├── timer (RefreshTimer)
+│    │    │    ├── postponer (RefreshPostponer)
+│    │    │    ├── sequencer (RefreshSequencer)
+│    │    │    │    └── refreshexecuter_0 (RefreshExecuter) [Gen]
+│    │    │    ├── zqcs_timer (RefreshTimer)
+│    │    │    ├── zqs_executer (ZQCSExecuter)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_0 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_1 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_2 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_3 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_4 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_5 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_6 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_7 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    └── multiplexer (Multiplexer)
+│    │         ├── choose_cmd (_CommandChooser)
+│    │         │    └── roundrobin_0 (RoundRobin) [Gen]
+│    │         ├── choose_req (_CommandChooser)
+│    │         │    └── roundrobin_0 (RoundRobin) [Gen]
+│    │         ├── _steerer_0 (_Steerer) [Gen]
+│    │         ├── trrdcon (tXXDController)
+│    │         ├── tfawcon (tFAWController)
+│    │         ├── tccdcon (tXXDController)
+│    │         ├── twtrcon (tXXDController)
+│    │         └── fsm (FSM)
+│    └── crossbar (LiteDRAMCrossbar)
+│         ├── roundrobin_0 (RoundRobin) [Gen]
+│         ├── roundrobin_1 (RoundRobin) [Gen]
+│         ├── roundrobin_2 (RoundRobin) [Gen]
+│         ├── roundrobin_3 (RoundRobin) [Gen]
+│         ├── roundrobin_4 (RoundRobin) [Gen]
+│         ├── roundrobin_5 (RoundRobin) [Gen]
+│         ├── roundrobin_6 (RoundRobin) [Gen]
+│         └── roundrobin_7 (RoundRobin) [Gen]
+├── axiupconverter_0 (AXIUpConverter) [Gen]
+│    ├── aw_burst2beat (AXIBurst2Beat)
+│    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_1 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_2 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── ar_burst2beat (AXIBurst2Beat)
+│    ├── syncfifo_3 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_4 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    └── syncfifo_5 (SyncFIFO) [Gen]
+│         └── fifo (SyncFIFO)
+├── litedramaxi2native_0 (LiteDRAMAXI2Native) [Gen]
+│    ├── write (LiteDRAMAXI2NativeW)
+│    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    ├── pipe_valid (PipeValid)
+│    │    │    └── pipeline (Pipeline)
+│    │    ├── aw_burst2beat (AXIBurst2Beat)
+│    │    ├── w_buffer (SyncFIFO)
+│    │    │    └── fifo (SyncFIFOBuffered)
+│    │    │         └── fifo (SyncFIFO)
+│    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    └── fifo (SyncFIFO)
+│    │    └── syncfifo_1 (SyncFIFO) [Gen]
+│    │         └── fifo (SyncFIFO)
+│    ├── read (LiteDRAMAXI2NativeR)
+│    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    ├── pipe_valid (PipeValid)
+│    │    │    └── pipeline (Pipeline)
+│    │    ├── ar_burst2beat (AXIBurst2Beat)
+│    │    ├── r_buffer (SyncFIFO)
+│    │    │    └── fifo (SyncFIFOBuffered)
+│    │    │         └── fifo (SyncFIFO)
+│    │    └── syncfifo_0 (SyncFIFO) [Gen]
+│    │         └── fifo (SyncFIFO)
+│    └── roundrobin_0 (RoundRobin) [Gen]
+├── converter_0 (Converter) [Gen]
+│    └── upconverter_0 (UpConverter) [Gen]
+├── wishbone_bridge (LiteDRAMWishbone2Native)
+│    └── fsm (FSM)
+├── boot_rom (ZeroBootRom)
+├── clint (BreezeClintVerilog)
+│    └── [BB:FlowClint]
+├── plic (BreezePlicVerilog)
+│    └── [BB:FlowPlic]
+├── csr_bridge (Wishbone2CSR)
+│    └── fsm (FSM)
+├── csr_bankarray (CSRBankArray)
+│    ├── csrbank_0 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    └── csrstatus_0 (CSRStatus) [Gen]
+│    ├── csrbank_1 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    ├── csrstorage_4 (CSRStorage) [Gen]
+│    │    └── csrstorage_5 (CSRStorage) [Gen]
+│    ├── sram_0 (SRAM) [Gen]
+│    ├── csrbank_2 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstorage_4 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstorage_5 (CSRStorage) [Gen]
+│    │    ├── csrstorage_6 (CSRStorage) [Gen]
+│    │    ├── csrstorage_7 (CSRStorage) [Gen]
+│    │    ├── csrstorage_8 (CSRStorage) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstorage_9 (CSRStorage) [Gen]
+│    │    ├── csrstorage_10 (CSRStorage) [Gen]
+│    │    ├── csrstorage_11 (CSRStorage) [Gen]
+│    │    ├── csrstorage_12 (CSRStorage) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    ├── csrstorage_13 (CSRStorage) [Gen]
+│    │    ├── csrstorage_14 (CSRStorage) [Gen]
+│    │    ├── csrstorage_15 (CSRStorage) [Gen]
+│    │    ├── csrstorage_16 (CSRStorage) [Gen]
+│    │    └── csrstatus_3 (CSRStatus) [Gen]
+│    ├── csrbank_3 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    └── csrstorage_4 (CSRStorage) [Gen]
+│    └── csrbank_4 (CSRBank) [Gen]
+│         ├── csrstatus_0 (CSRStatus) [Gen]
+│         ├── csrstatus_1 (CSRStatus) [Gen]
+│         ├── csrstatus_2 (CSRStatus) [Gen]
+│         ├── csrstatus_3 (CSRStatus) [Gen]
+│         ├── csrstorage_0 (CSRStorage) [Gen]
+│         ├── csrstatus_4 (CSRStatus) [Gen]
+│         └── csrstatus_5 (CSRStatus) [Gen]
+└── csr_interconnect (InterconnectShared)
+Legend:
+  [Gen]: Auto-generated instance name.
+  [BB:NAME]: Blackbox instance (verilog Instance).
+
+INFO:SoC:--------------------------------------------------------------------------------
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libc'
+cp /home/chen/FUN/flow_litex/litex/litex/soc/software/libc/picolibc-minimal.h /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libc/picolibc.h
+printf "#define FORMAT_DEFAULT_%s\n" "INTEGER" >> /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libc/picolibc.h
+printf "#define __IO_DEFAULT '%s'\n" "i" >> /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libc/picolibc.h
+rm -f -r /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/include/../picolibc_src
+cp -a /home/chen/FUN/flow_litex/pythondata-software-picolibc/pythondata_software_picolibc/data /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/include/../picolibc_src
+if [ -d "/home/chen/FUN/flow_litex/litex/litex/soc/software/libc/riscv" ]; then \
+	cp /home/chen/FUN/flow_litex/litex/litex/soc/software/libc/riscv/* /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/include/../picolibc_src/libc/machine/riscv/ ;\
+fi
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_ctype_ctype_.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_errno_errno.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_string_strchr.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_string_strncpy.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_string_strncmp.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_string_strnlen.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_fgetc.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_fputc.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_fputs.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_printf.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_puts.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_strtoul.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_strtoull.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdlib_lldiv.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_memcpy-asm.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_strcmp.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_memmove.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_memset.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_strcpy.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_machine_riscv_strlen.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-small-default_software_include_.._picolibc_src_libc_stdio_vfiprintf.o
+ AR       __libc_minimal.a
+ CC       _libc_minimal.a
+ AR       _libc_minimal.a
+cp __libc_minimal.a _libc_minimal.a
+ CC       libc-minimal.a
+ AR       libc-minimal.a
+cp _libc_minimal.a libc-minimal.a
+cp libc-minimal.a libc.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libc'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libcompiler_rt'
+ CC       umodsi3.o
+ CC       udivsi3.o
+ CC       divsi3.o
+ CC       modsi3.o
+ CC       comparesf2.o
+ CC       comparedf2.o
+ CC       negsf2.o
+ CC       negdf2.o
+ CC       addsf3.o
+ CC       subsf3.o
+ CC       mulsf3.o
+ CC       divsf3.o
+ CC       extendsfdf2.o
+ CC       truncdfsf2.o
+ CC       lshrdi3.o
+ CC       muldi3.o
+ CC       divdi3.o
+ CC       ashrdi3.o
+ CC       ashldi3.o
+ CC       udivmoddi4.o
+/home/chen/FUN/flow_litex/pythondata-software-compiler_rt/pythondata_software_compiler_rt/data/lib/builtins/comparesf2.c:85:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+   85 | FNALIAS(__cmpsf2, __lesf2);
+      | ^~~~~~~
+/home/chen/FUN/flow_litex/pythondata-software-compiler_rt/pythondata_software_compiler_rt/data/lib/builtins/comparedf2.c:85:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+   85 | FNALIAS(__cmpdf2, __ledf2);
+      | ^~~~~~~
+ CC       floatsisf.o
+ CC       floatunsisf.o
+ CC       fixsfsi.o
+ CC       fixdfdi.o
+ CC       fixunssfsi.o
+ CC       fixunsdfdi.o
+ CC       adddf3.o
+ CC       subdf3.o
+ CC       muldf3.o
+ CC       divdf3.o
+ CC       floatsidf.o
+ CC       floatunsidf.o
+ CC       floatdidf.o
+ CC       fixdfsi.o
+ CC       fixunsdfsi.o
+ CC       clzsi2.o
+ CC       ctzsi2.o
+ CC       clzdi2.o
+ CC       ctzdi2.o
+ CC       udivdi3.o
+ CC       umoddi3.o
+ CC       moddi3.o
+ CC       ucmpdi2.o
+ CC       mulsi3.o
+ AR       libcompiler_rt.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libcompiler_rt'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libbase'
+ CC       crc16.o
+ CC       console.o
+ CC       crc32.o
+ CC       format.o
+ CC       parse.o
+ CC       timeout.o
+ CC       system.o
+ CC       progress.o
+ CC       memtest.o
+ CC       uart.o
+ CC       startup.o
+ CC       spiflash.o
+ CC       i2c.o
+ CC       isr.o
+ CC       hyperram.o
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c: In function 'litex_print_size':
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:17:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   17 |                 printf("%" PRIu64 ".%" PRIu64 "KiB", size/KIB, (size - KIB*(size/KIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:17:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   17 |                 printf("%" PRIu64 ".%" PRIu64 "KiB", size/KIB, (size - KIB*(size/KIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                       |
+      |                                                                                       long long unsigned int
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:19:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   19 |                 printf("%" PRIu64 ".%" PRIu64 "MiB", size/MIB, (size/KIB - KIB*(size/MIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:19:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   19 |                 printf("%" PRIu64 ".%" PRIu64 "MiB", size/MIB, (size/KIB - KIB*(size/MIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                           |
+      |                                                                                           long long unsigned int
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:21:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   21 |                 printf("%" PRIu64 ".%" PRIu64 "GiB", size/GIB, (size/MIB - KIB*(size/GIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:21:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   21 |                 printf("%" PRIu64 ".%" PRIu64 "GiB", size/GIB, (size/MIB - KIB*(size/GIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                           |
+      |                                                                                           long long unsigned int
+ AR       libbase.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libbase'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libfatfs'
+ CC       ffunicode.o
+ CC       ff.o
+ AR       libfatfs.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libfatfs'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitespi'
+ CC       spiflash.o
+ CC       spiram.o
+ AR       liblitespi.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitespi'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitedram'
+ CC       sdram.o
+ CC       bist.o
+ CC       sdram_dbg.o
+ CC       sdram_spd.o
+ CC       utils.o
+ CC       accessors.o
+ AR       liblitedram.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitedram'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libliteeth'
+ CC       udp.o
+ CC       tftp.o
+ CC       mdio.o
+ CC       dhcp.o
+ AR       libliteeth.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/libliteeth'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitesdcard'
+ CC       sdcard.o
+ CC       spisdcard.o
+ AR       liblitesdcard.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitesdcard'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitesata'
+ CC       sata.o
+ AR       liblitesata.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/liblitesata'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/bios'
+ CC       crt0.o
+ CC       boot-helper.o
+ CC       boot.o
+ CC       helpers.o
+ CC       cmd_bios.o
+ CC       cmd_mem.o
+ CC       cmd_boot.o
+ CC       cmd_i2c.o
+ CC       cmd_spiflash.o
+ CC       cmd_litedram.o
+ CC       cmd_liteeth.o
+ CC       cmd_litesdcard.o
+ CC       cmd_litesata.o
+ CC       sim_debug.o
+ CC       main.o
+ CC       readline_simple.o
+ CC       bios.elf
+/usr/lib/gcc/riscv64-unknown-elf/13.2.0/../../../riscv64-unknown-elf/bin/ld: warning: bios.elf has a LOAD segment with RWX permissions
+chmod -x bios.elf
+ OBJCOPY  bios.bin
+chmod -x bios.bin
+python3 -m litex.soc.software.crcfbigen bios.bin --little
+python3 -m litex.soc.software.memusage  bios.elf /home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/bios/../include/generated/regions.ld riscv64-unknown-elf
+
+ROM usage: 26.00KiB 	(40.63%)
+SRAM usage: 0.64KiB 	(1.00%)
+  .data: 0.05KiB
+  .bss: 0.59KiB
+  stack margin: 63.36KiB
+
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-small-default/software/bios'
+INFO:SoC:Initializing ROM rom with contents (Size: 0x10000).
++ for profile in small single
++ BE2_VIVADO_THREADS=2
++ taskset -c 8-9 nice -n 10 python /home/chen/FUN/flow-runs/build-default-soc.py /home/chen/FUN/flow-be2-r6-handoff-8e5bd3b /home/chen/FUN/flow-runs/be2-c735fbd-single-default single --generate-only
+INFO:SoC:        __   _ __      _  __  
+INFO:SoC:       / /  (_) /____ | |/_/  
+INFO:SoC:      / /__/ / __/ -_)>  <    
+INFO:SoC:     /____/_/\__/\__/_/|_|  
+INFO:SoC:  Build your hardware, easily!
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Creating SoC... (2026-10-11 18:07:14)
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:FPGA device : xcku040-ffva1156-2-e.
+INFO:SoC:System clock: 100.000MHz.
+INFO:SoCBusHandler:Creating Bus Handler...
+INFO:SoCBusHandler:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoCBusHandler:Adding reserved Bus Regions...
+INFO:SoCBusHandler:Bus Handler created.
+INFO:SoCCSRHandler:Creating CSR Handler...
+INFO:SoCCSRHandler:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+INFO:SoCCSRHandler:Adding reserved CSRs...
+INFO:SoCCSRHandler:ctrl CSR added at Location 0.
+INFO:SoCCSRHandler:uart CSR added at Location 1.
+INFO:SoCCSRHandler:timer0 CSR added at Location 2.
+INFO:SoCCSRHandler:ddrphy CSR added at Location 3.
+INFO:SoCCSRHandler:identifier_mem CSR added at Location 4.
+INFO:SoCCSRHandler:sdram CSR added at Location 5.
+INFO:SoCCSRHandler:CSR Handler created.
+INFO:SoCIRQHandler:Creating IRQ Handler...
+INFO:SoCIRQHandler:IRQ Handler (up to 32 Locations).
+INFO:SoCIRQHandler:Adding reserved IRQs...
+INFO:SoCIRQHandler:IRQ Handler created.
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Initial SoC:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoC:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+CSR Locations: (6)
+- ctrl           : 0
+- uart           : 1
+- timer0         : 2
+- ddrphy         : 3
+- identifier_mem : 4
+- sdram          : 5
+INFO:SoC:IRQ Handler (up to 32 Locations).
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Controller ctrl added.
+INFO:SoC:CPU breeze_tiny added.
+INFO:SoC:CPU breeze_tiny adding IO Region 0 at 0x02000000 (Size: 0x00010000).
+INFO:SoCBusHandler:io0 Region added at Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze_tiny adding IO Region 1 at 0x0c000000 (Size: 0x04000000).
+INFO:SoCBusHandler:io1 Region added at Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze_tiny adding IO Region 2 at 0x12000000 (Size: 0x01000000).
+INFO:SoCBusHandler:io2 Region added at Origin: 0x12000000, Size: 0x01000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoC:CPU breeze_tiny overriding rom mapping from 0x00000000 to 0x10010000.
+INFO:SoC:CPU breeze_tiny overriding sram mapping from 0x01000000 to 0x11000000.
+INFO:SoC:CPU breeze_tiny overriding main_ram mapping from 0x40000000 to 0x80000000.
+INFO:SoC:CPU breeze_tiny setting reset address to 0x10010000.
+INFO:SoC:CPU breeze_tiny adding Bus Master(s).
+INFO:SoCBusHandler:cpu_bus0 Bus adapted from AXI 64-bit to Wishbone 64-bit.
+INFO:SoCBusHandler:cpu_bus0 added as Bus Master.
+INFO:SoCBusHandler:cpu_bus1 Bus adapted from AXI-Lite 64-bit to Wishbone 64-bit.
+INFO:SoCBusHandler:cpu_bus1 added as Bus Master.
+INFO:SoC:CPU breeze_tiny adding Interrupt(s).
+INFO:SoCBusHandler:rom Region added at Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:rom added as Bus Slave.
+INFO:SoC:RAM rom added Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:sram Region added at Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:sram added as Bus Slave.
+INFO:SoC:RAM sram added Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False.
+INFO:SoCIRQHandler:uart IRQ allocated at Location 0.
+INFO:SoCIRQHandler:timer0 IRQ allocated at Location 1.
+INFO:SoCBusHandler:main_ram Region added at Origin: 0x80000000, Size: 0x80000000, Mode: RWX, Cached:  True, Linker: False.
+WARNING:SoC:Converting MemBus(64) data width to LiteDRAM(512).
+INFO:SoCBusHandler:main_ram added as Bus Slave.
+INFO:SoCBusHandler:boot_rom Region added at Origin: 0x10000000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False.
+INFO:SoCBusHandler:boot_rom added as Bus Slave.
+INFO:SoCBusHandler:clint Region added at Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:clint added as Bus Slave.
+INFO:SoCBusHandler:plic Region added at Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:plic added as Bus Slave.
+INFO:SoC:CSR Bridge csr added.
+INFO:SoCBusHandler:csr Region added at Origin: 0x12000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False.
+INFO:SoCBusHandler:csr added as Bus Slave.
+INFO:SoCCSRHandler:csr added as CSR Master.
+INFO:SoCBusHandler:Interconnect: InterconnectShared (2 <-> 7).
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Finalized SoC:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:64-bit wishbone Bus, 4.0GiB Address Space.
+IO Regions: (3)
+io0                 : Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+io1                 : Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False
+io2                 : Origin: 0x12000000, Size: 0x01000000, Mode:  RW, Cached: False, Linker: False
+Bus Regions: (7)
+clint               : Origin: 0x02000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+plic                : Origin: 0x0c000000, Size: 0x04000000, Mode:  RW, Cached: False, Linker: False
+boot_rom            : Origin: 0x10000000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False
+rom                 : Origin: 0x10010000, Size: 0x00010000, Mode:  RX, Cached:  True, Linker: False
+sram                : Origin: 0x11000000, Size: 0x00010000, Mode: RWX, Cached:  True, Linker: False
+csr                 : Origin: 0x12000000, Size: 0x00010000, Mode:  RW, Cached: False, Linker: False
+main_ram            : Origin: 0x80000000, Size: 0x80000000, Mode: RWX, Cached:  True, Linker: False
+Bus Masters: (2)
+- cpu_bus0          : rw
+- cpu_bus1          : rw
+Bus Slaves: (7)
+- rom               : r
+- sram              : rw
+- main_ram          : rw
+- boot_rom          : rw
+- clint             : rw
+- plic              : rw
+- csr               : rw
+INFO:SoC:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+CSR Locations: (6)
+- ctrl           : 0
+- uart           : 1
+- timer0         : 2
+- ddrphy         : 3
+- identifier_mem : 4
+- sdram          : 5
+INFO:SoC:IRQ Handler (up to 32 Locations).
+IRQ Locations: (2)
+- uart   : 0
+- timer0 : 1
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:USMMCM:Config:
+divclk_divide : 5
+clkout0_freq  : 400.00MHz
+clkout0_divide: 3
+clkout0_phase : 0.00°
+clkout1_freq  : 200.00MHz
+clkout1_divide: 6
+clkout1_phase : 0.00°
+clkout2_freq  : 200.00MHz
+clkout2_divide: 6
+clkout2_phase : 0.00°
+vco           : 1200.00MHz
+clkfbout_mult : 48
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:SoC Hierarchy:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:
+BreezeKCU105SoC
+├── crg (_CRG)
+│    ├── pll (USMMCM)
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:FDCE]
+│    │    ├── [BB:MMCME2_ADV]
+│    │    ├── [BB:BUFG]
+│    │    └── [BB:BUFG]
+│    ├── idelayctrl (USIDELAYCTRL)
+│    │    └── [BB:IDELAYCTRL]
+│    ├── [BB:BUFGCE_DIV]
+│    └── [BB:BUFGCE]
+├── bus (SoCBusHandler)
+│    ├── axi2wishbone_0 (AXI2Wishbone) [Gen]
+│    │    ├── axi2axilite_0 (AXI2AXILite) [Gen]
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── axiburst2beat_0 (AXIBurst2Beat) [Gen]
+│    │    │    └── fsm (FSM)
+│    │    └── axilite2wishbone_0 (AXILite2Wishbone) [Gen]
+│    │         └── fsm (FSM)
+│    ├── axilite2wishbone_0 (AXILite2Wishbone) [Gen]
+│    │    └── fsm (FSM)
+│    └── _interconnect (InterconnectShared)
+│         ├── arbiter (Arbiter)
+│         │    └── rr (RoundRobin)
+│         └── decoder (Decoder)
+├── csr (SoCCSRHandler)
+├── irq (SoCIRQHandler)
+├── ctrl (SoCController)
+├── cpu (BreezeTiny)
+│    ├── axi_router (BreezeAxiRouter)
+│    │    ├── read_fsm (FSM)
+│    │    └── write_fsm (FSM)
+│    └── [BB:BreezeClusterAxi]
+├── rom (SRAM)
+├── sram (SRAM)
+├── identifier (Identifier)
+├── uart (UART)
+│    ├── ev (EventManager)
+│    │    ├── eventsourcelevel_0 (EventSourceLevel) [Gen]
+│    │    └── eventsourcelevel_1 (EventSourceLevel) [Gen]
+│    ├── phy (RS232PHY)
+│    │    ├── tx (RS232PHYTX)
+│    │    │    ├── clk_phase_accum (RS232ClkPhaseAccum)
+│    │    │    └── fsm (FSM)
+│    │    └── rx (RS232PHYRX)
+│    │         ├── clk_phase_accum (RS232ClkPhaseAccum)
+│    │         └── fsm (FSM)
+│    ├── tx_fifo (SyncFIFO)
+│    │    └── fifo (SyncFIFOBuffered)
+│    │         └── fifo (SyncFIFO)
+│    └── rx_fifo (SyncFIFO)
+│         └── fifo (SyncFIFOBuffered)
+│              └── fifo (SyncFIFO)
+├── timer0 (Timer)
+│    └── ev (EventManager)
+│         └── eventsourceprocess_0 (EventSourceProcess) [Gen]
+├── ddrphy (USDDRPHY)
+│    ├── ddr4dfimux_0 (DDR4DFIMux) [Gen]
+│    ├── tappeddelayline_0 (TappedDelayLine) [Gen]
+│    ├── dqspattern_0 (DQSPattern) [Gen]
+│    ├── bitslip_0 (BitSlip) [Gen]
+│    ├── bitslip_1 (BitSlip) [Gen]
+│    ├── bitslip_2 (BitSlip) [Gen]
+│    ├── bitslip_3 (BitSlip) [Gen]
+│    ├── bitslip_4 (BitSlip) [Gen]
+│    ├── bitslip_5 (BitSlip) [Gen]
+│    ├── bitslip_6 (BitSlip) [Gen]
+│    ├── bitslip_7 (BitSlip) [Gen]
+│    ├── bitslip_8 (BitSlip) [Gen]
+│    ├── bitslip_9 (BitSlip) [Gen]
+│    ├── bitslip_10 (BitSlip) [Gen]
+│    ├── bitslip_11 (BitSlip) [Gen]
+│    ├── bitslip_12 (BitSlip) [Gen]
+│    ├── bitslip_13 (BitSlip) [Gen]
+│    ├── bitslip_14 (BitSlip) [Gen]
+│    ├── bitslip_15 (BitSlip) [Gen]
+│    ├── tappeddelayline_1 (TappedDelayLine) [Gen]
+│    ├── bitslip_16 (BitSlip) [Gen]
+│    ├── bitslip_17 (BitSlip) [Gen]
+│    ├── bitslip_18 (BitSlip) [Gen]
+│    ├── bitslip_19 (BitSlip) [Gen]
+│    ├── bitslip_20 (BitSlip) [Gen]
+│    ├── bitslip_21 (BitSlip) [Gen]
+│    ├── bitslip_22 (BitSlip) [Gen]
+│    ├── bitslip_23 (BitSlip) [Gen]
+│    ├── bitslip_24 (BitSlip) [Gen]
+│    ├── bitslip_25 (BitSlip) [Gen]
+│    ├── bitslip_26 (BitSlip) [Gen]
+│    ├── bitslip_27 (BitSlip) [Gen]
+│    ├── bitslip_28 (BitSlip) [Gen]
+│    ├── bitslip_29 (BitSlip) [Gen]
+│    ├── bitslip_30 (BitSlip) [Gen]
+│    ├── bitslip_31 (BitSlip) [Gen]
+│    ├── bitslip_32 (BitSlip) [Gen]
+│    ├── bitslip_33 (BitSlip) [Gen]
+│    ├── bitslip_34 (BitSlip) [Gen]
+│    ├── bitslip_35 (BitSlip) [Gen]
+│    ├── bitslip_36 (BitSlip) [Gen]
+│    ├── bitslip_37 (BitSlip) [Gen]
+│    ├── bitslip_38 (BitSlip) [Gen]
+│    ├── bitslip_39 (BitSlip) [Gen]
+│    ├── bitslip_40 (BitSlip) [Gen]
+│    ├── bitslip_41 (BitSlip) [Gen]
+│    ├── bitslip_42 (BitSlip) [Gen]
+│    ├── bitslip_43 (BitSlip) [Gen]
+│    ├── bitslip_44 (BitSlip) [Gen]
+│    ├── bitslip_45 (BitSlip) [Gen]
+│    ├── bitslip_46 (BitSlip) [Gen]
+│    ├── bitslip_47 (BitSlip) [Gen]
+│    ├── bitslip_48 (BitSlip) [Gen]
+│    ├── bitslip_49 (BitSlip) [Gen]
+│    ├── bitslip_50 (BitSlip) [Gen]
+│    ├── bitslip_51 (BitSlip) [Gen]
+│    ├── bitslip_52 (BitSlip) [Gen]
+│    ├── bitslip_53 (BitSlip) [Gen]
+│    ├── bitslip_54 (BitSlip) [Gen]
+│    ├── bitslip_55 (BitSlip) [Gen]
+│    ├── bitslip_56 (BitSlip) [Gen]
+│    ├── bitslip_57 (BitSlip) [Gen]
+│    ├── bitslip_58 (BitSlip) [Gen]
+│    ├── bitslip_59 (BitSlip) [Gen]
+│    ├── bitslip_60 (BitSlip) [Gen]
+│    ├── bitslip_61 (BitSlip) [Gen]
+│    ├── bitslip_62 (BitSlip) [Gen]
+│    ├── bitslip_63 (BitSlip) [Gen]
+│    ├── bitslip_64 (BitSlip) [Gen]
+│    ├── bitslip_65 (BitSlip) [Gen]
+│    ├── bitslip_66 (BitSlip) [Gen]
+│    ├── bitslip_67 (BitSlip) [Gen]
+│    ├── bitslip_68 (BitSlip) [Gen]
+│    ├── bitslip_69 (BitSlip) [Gen]
+│    ├── bitslip_70 (BitSlip) [Gen]
+│    ├── bitslip_71 (BitSlip) [Gen]
+│    ├── bitslip_72 (BitSlip) [Gen]
+│    ├── bitslip_73 (BitSlip) [Gen]
+│    ├── bitslip_74 (BitSlip) [Gen]
+│    ├── bitslip_75 (BitSlip) [Gen]
+│    ├── bitslip_76 (BitSlip) [Gen]
+│    ├── bitslip_77 (BitSlip) [Gen]
+│    ├── bitslip_78 (BitSlip) [Gen]
+│    ├── bitslip_79 (BitSlip) [Gen]
+│    ├── bitslip_80 (BitSlip) [Gen]
+│    ├── bitslip_81 (BitSlip) [Gen]
+│    ├── bitslip_82 (BitSlip) [Gen]
+│    ├── bitslip_83 (BitSlip) [Gen]
+│    ├── bitslip_84 (BitSlip) [Gen]
+│    ├── bitslip_85 (BitSlip) [Gen]
+│    ├── bitslip_86 (BitSlip) [Gen]
+│    ├── bitslip_87 (BitSlip) [Gen]
+│    ├── bitslip_88 (BitSlip) [Gen]
+│    ├── bitslip_89 (BitSlip) [Gen]
+│    ├── bitslip_90 (BitSlip) [Gen]
+│    ├── bitslip_91 (BitSlip) [Gen]
+│    ├── bitslip_92 (BitSlip) [Gen]
+│    ├── bitslip_93 (BitSlip) [Gen]
+│    ├── bitslip_94 (BitSlip) [Gen]
+│    ├── bitslip_95 (BitSlip) [Gen]
+│    ├── bitslip_96 (BitSlip) [Gen]
+│    ├── bitslip_97 (BitSlip) [Gen]
+│    ├── bitslip_98 (BitSlip) [Gen]
+│    ├── bitslip_99 (BitSlip) [Gen]
+│    ├── bitslip_100 (BitSlip) [Gen]
+│    ├── bitslip_101 (BitSlip) [Gen]
+│    ├── bitslip_102 (BitSlip) [Gen]
+│    ├── bitslip_103 (BitSlip) [Gen]
+│    ├── bitslip_104 (BitSlip) [Gen]
+│    ├── bitslip_105 (BitSlip) [Gen]
+│    ├── bitslip_106 (BitSlip) [Gen]
+│    ├── bitslip_107 (BitSlip) [Gen]
+│    ├── bitslip_108 (BitSlip) [Gen]
+│    ├── bitslip_109 (BitSlip) [Gen]
+│    ├── bitslip_110 (BitSlip) [Gen]
+│    ├── bitslip_111 (BitSlip) [Gen]
+│    ├── bitslip_112 (BitSlip) [Gen]
+│    ├── bitslip_113 (BitSlip) [Gen]
+│    ├── bitslip_114 (BitSlip) [Gen]
+│    ├── bitslip_115 (BitSlip) [Gen]
+│    ├── bitslip_116 (BitSlip) [Gen]
+│    ├── bitslip_117 (BitSlip) [Gen]
+│    ├── bitslip_118 (BitSlip) [Gen]
+│    ├── bitslip_119 (BitSlip) [Gen]
+│    ├── bitslip_120 (BitSlip) [Gen]
+│    ├── bitslip_121 (BitSlip) [Gen]
+│    ├── bitslip_122 (BitSlip) [Gen]
+│    ├── bitslip_123 (BitSlip) [Gen]
+│    ├── bitslip_124 (BitSlip) [Gen]
+│    ├── bitslip_125 (BitSlip) [Gen]
+│    ├── bitslip_126 (BitSlip) [Gen]
+│    ├── bitslip_127 (BitSlip) [Gen]
+│    ├── bitslip_128 (BitSlip) [Gen]
+│    ├── bitslip_129 (BitSlip) [Gen]
+│    ├── bitslip_130 (BitSlip) [Gen]
+│    ├── bitslip_131 (BitSlip) [Gen]
+│    ├── bitslip_132 (BitSlip) [Gen]
+│    ├── bitslip_133 (BitSlip) [Gen]
+│    ├── bitslip_134 (BitSlip) [Gen]
+│    ├── bitslip_135 (BitSlip) [Gen]
+│    ├── bitslip_136 (BitSlip) [Gen]
+│    ├── bitslip_137 (BitSlip) [Gen]
+│    ├── bitslip_138 (BitSlip) [Gen]
+│    ├── bitslip_139 (BitSlip) [Gen]
+│    ├── bitslip_140 (BitSlip) [Gen]
+│    ├── bitslip_141 (BitSlip) [Gen]
+│    ├── bitslip_142 (BitSlip) [Gen]
+│    ├── bitslip_143 (BitSlip) [Gen]
+│    ├── tappeddelayline_2 (TappedDelayLine) [Gen]
+│    ├── tappeddelayline_3 (TappedDelayLine) [Gen]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IOBUFDSE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ISERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:IDELAYE3]
+│    ├── [BB:IOBUF]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OBUFDS]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    ├── [BB:OSERDESE3]
+│    ├── [BB:ODELAYE3]
+│    └── [BB:OSERDESE3]
+├── sdram (LiteDRAMCore)
+│    ├── dfii (DFIInjector)
+│    │    ├── pi0 (PhaseInjector)
+│    │    ├── pi1 (PhaseInjector)
+│    │    ├── pi2 (PhaseInjector)
+│    │    └── pi3 (PhaseInjector)
+│    ├── controller (LiteDRAMController)
+│    │    ├── refresher (Refresher)
+│    │    │    ├── timer (RefreshTimer)
+│    │    │    ├── postponer (RefreshPostponer)
+│    │    │    ├── sequencer (RefreshSequencer)
+│    │    │    │    └── refreshexecuter_0 (RefreshExecuter) [Gen]
+│    │    │    ├── zqcs_timer (RefreshTimer)
+│    │    │    ├── zqs_executer (ZQCSExecuter)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_0 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_1 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_2 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_3 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_4 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_5 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_6 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    ├── bankmachine_7 (BankMachine) [Gen]
+│    │    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    │    └── fifo (SyncFIFO)
+│    │    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    │    ├── pipe_valid (PipeValid)
+│    │    │    │    └── pipeline (Pipeline)
+│    │    │    ├── twtpcon (tXXDController)
+│    │    │    ├── trccon (tXXDController)
+│    │    │    ├── trascon (tXXDController)
+│    │    │    └── fsm (FSM)
+│    │    └── multiplexer (Multiplexer)
+│    │         ├── choose_cmd (_CommandChooser)
+│    │         │    └── roundrobin_0 (RoundRobin) [Gen]
+│    │         ├── choose_req (_CommandChooser)
+│    │         │    └── roundrobin_0 (RoundRobin) [Gen]
+│    │         ├── _steerer_0 (_Steerer) [Gen]
+│    │         ├── trrdcon (tXXDController)
+│    │         ├── tfawcon (tFAWController)
+│    │         ├── tccdcon (tXXDController)
+│    │         ├── twtrcon (tXXDController)
+│    │         └── fsm (FSM)
+│    └── crossbar (LiteDRAMCrossbar)
+│         ├── roundrobin_0 (RoundRobin) [Gen]
+│         ├── roundrobin_1 (RoundRobin) [Gen]
+│         ├── roundrobin_2 (RoundRobin) [Gen]
+│         ├── roundrobin_3 (RoundRobin) [Gen]
+│         ├── roundrobin_4 (RoundRobin) [Gen]
+│         ├── roundrobin_5 (RoundRobin) [Gen]
+│         ├── roundrobin_6 (RoundRobin) [Gen]
+│         └── roundrobin_7 (RoundRobin) [Gen]
+├── axiupconverter_0 (AXIUpConverter) [Gen]
+│    ├── aw_burst2beat (AXIBurst2Beat)
+│    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_1 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_2 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── ar_burst2beat (AXIBurst2Beat)
+│    ├── syncfifo_3 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    ├── syncfifo_4 (SyncFIFO) [Gen]
+│    │    └── fifo (SyncFIFO)
+│    └── syncfifo_5 (SyncFIFO) [Gen]
+│         └── fifo (SyncFIFO)
+├── litedramaxi2native_0 (LiteDRAMAXI2Native) [Gen]
+│    ├── write (LiteDRAMAXI2NativeW)
+│    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    ├── pipe_valid (PipeValid)
+│    │    │    └── pipeline (Pipeline)
+│    │    ├── aw_burst2beat (AXIBurst2Beat)
+│    │    ├── w_buffer (SyncFIFO)
+│    │    │    └── fifo (SyncFIFOBuffered)
+│    │    │         └── fifo (SyncFIFO)
+│    │    ├── syncfifo_0 (SyncFIFO) [Gen]
+│    │    │    └── fifo (SyncFIFO)
+│    │    └── syncfifo_1 (SyncFIFO) [Gen]
+│    │         └── fifo (SyncFIFO)
+│    ├── read (LiteDRAMAXI2NativeR)
+│    │    ├── buffer_0 (Buffer) [Gen]
+│    │    │    ├── pipe_valid (PipeValid)
+│    │    │    └── pipeline (Pipeline)
+│    │    ├── ar_burst2beat (AXIBurst2Beat)
+│    │    ├── r_buffer (SyncFIFO)
+│    │    │    └── fifo (SyncFIFOBuffered)
+│    │    │         └── fifo (SyncFIFO)
+│    │    └── syncfifo_0 (SyncFIFO) [Gen]
+│    │         └── fifo (SyncFIFO)
+│    └── roundrobin_0 (RoundRobin) [Gen]
+├── converter_0 (Converter) [Gen]
+│    └── upconverter_0 (UpConverter) [Gen]
+├── wishbone_bridge (LiteDRAMWishbone2Native)
+│    └── fsm (FSM)
+├── boot_rom (ZeroBootRom)
+├── clint (BreezeClintVerilog)
+│    └── [BB:FlowClint]
+├── plic (BreezePlicVerilog)
+│    └── [BB:FlowPlic]
+├── csr_bridge (Wishbone2CSR)
+│    └── fsm (FSM)
+├── csr_bankarray (CSRBankArray)
+│    ├── csrbank_0 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    └── csrstatus_0 (CSRStatus) [Gen]
+│    ├── csrbank_1 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    ├── csrstorage_4 (CSRStorage) [Gen]
+│    │    └── csrstorage_5 (CSRStorage) [Gen]
+│    ├── sram_0 (SRAM) [Gen]
+│    ├── csrbank_2 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstorage_4 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstorage_5 (CSRStorage) [Gen]
+│    │    ├── csrstorage_6 (CSRStorage) [Gen]
+│    │    ├── csrstorage_7 (CSRStorage) [Gen]
+│    │    ├── csrstorage_8 (CSRStorage) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstorage_9 (CSRStorage) [Gen]
+│    │    ├── csrstorage_10 (CSRStorage) [Gen]
+│    │    ├── csrstorage_11 (CSRStorage) [Gen]
+│    │    ├── csrstorage_12 (CSRStorage) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    ├── csrstorage_13 (CSRStorage) [Gen]
+│    │    ├── csrstorage_14 (CSRStorage) [Gen]
+│    │    ├── csrstorage_15 (CSRStorage) [Gen]
+│    │    ├── csrstorage_16 (CSRStorage) [Gen]
+│    │    └── csrstatus_3 (CSRStatus) [Gen]
+│    ├── csrbank_3 (CSRBank) [Gen]
+│    │    ├── csrstorage_0 (CSRStorage) [Gen]
+│    │    ├── csrstorage_1 (CSRStorage) [Gen]
+│    │    ├── csrstorage_2 (CSRStorage) [Gen]
+│    │    ├── csrstorage_3 (CSRStorage) [Gen]
+│    │    ├── csrstatus_0 (CSRStatus) [Gen]
+│    │    ├── csrstatus_1 (CSRStatus) [Gen]
+│    │    ├── csrstatus_2 (CSRStatus) [Gen]
+│    │    └── csrstorage_4 (CSRStorage) [Gen]
+│    └── csrbank_4 (CSRBank) [Gen]
+│         ├── csrstatus_0 (CSRStatus) [Gen]
+│         ├── csrstatus_1 (CSRStatus) [Gen]
+│         ├── csrstatus_2 (CSRStatus) [Gen]
+│         ├── csrstatus_3 (CSRStatus) [Gen]
+│         ├── csrstorage_0 (CSRStorage) [Gen]
+│         ├── csrstatus_4 (CSRStatus) [Gen]
+│         └── csrstatus_5 (CSRStatus) [Gen]
+└── csr_interconnect (InterconnectShared)
+Legend:
+  [Gen]: Auto-generated instance name.
+  [BB:NAME]: Blackbox instance (verilog Instance).
+
+INFO:SoC:--------------------------------------------------------------------------------
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libc'
+cp /home/chen/FUN/flow_litex/litex/litex/soc/software/libc/picolibc-minimal.h /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libc/picolibc.h
+printf "#define FORMAT_DEFAULT_%s\n" "INTEGER" >> /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libc/picolibc.h
+printf "#define __IO_DEFAULT '%s'\n" "i" >> /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libc/picolibc.h
+rm -f -r /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/include/../picolibc_src
+cp -a /home/chen/FUN/flow_litex/pythondata-software-picolibc/pythondata_software_picolibc/data /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/include/../picolibc_src
+if [ -d "/home/chen/FUN/flow_litex/litex/litex/soc/software/libc/riscv" ]; then \
+	cp /home/chen/FUN/flow_litex/litex/litex/soc/software/libc/riscv/* /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/include/../picolibc_src/libc/machine/riscv/ ;\
+fi
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_ctype_ctype_.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_errno_errno.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_string_strchr.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_string_strncpy.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_string_strncmp.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_string_strnlen.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_fgetc.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_fputc.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_fputs.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_printf.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_puts.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_strtoul.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_strtoull.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdlib_lldiv.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_memcpy-asm.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_memmove.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_memset.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_strcmp.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_strcpy.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_machine_riscv_strlen.o
+ CC       minimal__home_chen_FUN_flow-runs_be2-c735fbd-single-default_software_include_.._picolibc_src_libc_stdio_vfiprintf.o
+ AR       __libc_minimal.a
+ CC       _libc_minimal.a
+ AR       _libc_minimal.a
+cp __libc_minimal.a _libc_minimal.a
+ CC       libc-minimal.a
+ AR       libc-minimal.a
+cp _libc_minimal.a libc-minimal.a
+cp libc-minimal.a libc.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libc'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libcompiler_rt'
+ CC       umodsi3.o
+ CC       udivsi3.o
+ CC       divsi3.o
+ CC       modsi3.o
+ CC       comparesf2.o
+ CC       comparedf2.o
+ CC       negsf2.o
+ CC       negdf2.o
+ CC       addsf3.o
+ CC       subsf3.o
+ CC       mulsf3.o
+ CC       divsf3.o
+ CC       truncdfsf2.o
+ CC       extendsfdf2.o
+ CC       lshrdi3.o
+ CC       muldi3.o
+ CC       divdi3.o
+ CC       ashldi3.o
+ CC       ashrdi3.o
+ CC       udivmoddi4.o
+/home/chen/FUN/flow_litex/pythondata-software-compiler_rt/pythondata_software_compiler_rt/data/lib/builtins/comparesf2.c:85:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+   85 | FNALIAS(__cmpsf2, __lesf2);
+      | ^~~~~~~
+/home/chen/FUN/flow_litex/pythondata-software-compiler_rt/pythondata_software_compiler_rt/data/lib/builtins/comparedf2.c:85:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+   85 | FNALIAS(__cmpdf2, __ledf2);
+      | ^~~~~~~
+ CC       floatsisf.o
+ CC       floatunsisf.o
+ CC       fixsfsi.o
+ CC       fixdfdi.o
+ CC       fixunssfsi.o
+ CC       fixunsdfdi.o
+ CC       adddf3.o
+ CC       subdf3.o
+ CC       muldf3.o
+ CC       divdf3.o
+ CC       floatsidf.o
+ CC       floatunsidf.o
+ CC       floatdidf.o
+ CC       fixdfsi.o
+ CC       fixunsdfsi.o
+ CC       clzsi2.o
+ CC       ctzsi2.o
+ CC       clzdi2.o
+ CC       udivdi3.o
+ CC       ctzdi2.o
+ CC       umoddi3.o
+ CC       moddi3.o
+ CC       ucmpdi2.o
+ CC       mulsi3.o
+ AR       libcompiler_rt.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libcompiler_rt'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libbase'
+ CC       crc16.o
+ CC       crc32.o
+ CC       console.o
+ CC       format.o
+ CC       parse.o
+ CC       timeout.o
+ CC       system.o
+ CC       progress.o
+ CC       uart.o
+ CC       memtest.o
+ CC       startup.o
+ CC       spiflash.o
+ CC       i2c.o
+ CC       isr.o
+ CC       hyperram.o
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c: In function 'litex_print_size':
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:17:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   17 |                 printf("%" PRIu64 ".%" PRIu64 "KiB", size/KIB, (size - KIB*(size/KIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:17:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   17 |                 printf("%" PRIu64 ".%" PRIu64 "KiB", size/KIB, (size - KIB*(size/KIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                       |
+      |                                                                                       long long unsigned int
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:19:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   19 |                 printf("%" PRIu64 ".%" PRIu64 "MiB", size/MIB, (size/KIB - KIB*(size/MIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:19:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   19 |                 printf("%" PRIu64 ".%" PRIu64 "MiB", size/MIB, (size/KIB - KIB*(size/MIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                           |
+      |                                                                                           long long unsigned int
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:21:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'long long unsigned int' [-Wformat=]
+   21 |                 printf("%" PRIu64 ".%" PRIu64 "GiB", size/GIB, (size/MIB - KIB*(size/GIB))/(KIB/10));
+      |                        ^~~
+/home/chen/FUN/flow_litex/litex/litex/soc/software/libbase/format.c:21:24: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'long long unsigned int' [-Wformat=]
+   21 |                 printf("%" PRIu64 ".%" PRIu64 "GiB", size/GIB, (size/MIB - KIB*(size/GIB))/(KIB/10));
+      |                        ^~~                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                           |
+      |                                                                                           long long unsigned int
+ AR       libbase.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libbase'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libfatfs'
+ CC       ffunicode.o
+ CC       ff.o
+ AR       libfatfs.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libfatfs'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitespi'
+ CC       spiflash.o
+ CC       spiram.o
+ AR       liblitespi.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitespi'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitedram'
+ CC       sdram.o
+ CC       sdram_dbg.o
+ CC       bist.o
+ CC       sdram_spd.o
+ CC       utils.o
+ CC       accessors.o
+ AR       liblitedram.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitedram'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libliteeth'
+ CC       udp.o
+ CC       mdio.o
+ CC       tftp.o
+ CC       dhcp.o
+ AR       libliteeth.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/libliteeth'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitesdcard'
+ CC       sdcard.o
+ CC       spisdcard.o
+ AR       liblitesdcard.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitesdcard'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitesata'
+ CC       sata.o
+ AR       liblitesata.a
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/liblitesata'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/bios'
+ CC       crt0.o
+ CC       boot-helper.o
+ CC       boot.o
+ CC       helpers.o
+ CC       cmd_bios.o
+ CC       cmd_boot.o
+ CC       cmd_i2c.o
+ CC       cmd_mem.o
+ CC       cmd_spiflash.o
+ CC       cmd_litedram.o
+ CC       cmd_liteeth.o
+ CC       cmd_litesdcard.o
+ CC       cmd_litesata.o
+ CC       sim_debug.o
+ CC       main.o
+ CC       readline_simple.o
+ CC       bios.elf
+/usr/lib/gcc/riscv64-unknown-elf/13.2.0/../../../riscv64-unknown-elf/bin/ld: warning: bios.elf has a LOAD segment with RWX permissions
+chmod -x bios.elf
+ OBJCOPY  bios.bin
+chmod -x bios.bin
+python3 -m litex.soc.software.crcfbigen bios.bin --little
+python3 -m litex.soc.software.memusage  bios.elf /home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/bios/../include/generated/regions.ld riscv64-unknown-elf
+
+ROM usage: 26.01KiB 	(40.64%)
+SRAM usage: 0.64KiB 	(1.00%)
+  .data: 0.05KiB
+  .bss: 0.59KiB
+  stack margin: 63.36KiB
+
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-c735fbd-single-default/software/bios'
+INFO:SoC:Initializing ROM rom with contents (Size: 0x10000).

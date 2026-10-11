@@ -1,0 +1,52 @@
+{
+  "source_sha": "c735fbd435a1e60a8935399b3ddbbdd8629052d3",
+  "host": "Alan",
+  "minimum_cluster": {
+    "exit": 0,
+    "suites": 6,
+    "tests": 20,
+    "failures": 0,
+    "canceled": 0,
+    "ignored": 0,
+    "isa_elfs": 20,
+    "four_hart_system_elfs": 6,
+    "fault_traffic_ops_per_hart": 1000,
+    "fault_seed": 91,
+    "log": "minimum-c735fbd/be2-c735fbd-cluster-minimum.log"
+  },
+  "backend_safety": {
+    "source": "790c1f6",
+    "tests": 9,
+    "exit": 0,
+    "reused_unchanged_backend": true
+  },
+  "G2": {
+    "source": "790c1f6",
+    "seeds": [
+      0,
+      999
+    ],
+    "exit": 0,
+    "spike_seeds": 1000,
+    "spike_failures": 0
+  },
+  "production_rtl": {
+    "exit": 0,
+    "profiles": [
+      "small",
+      "single"
+    ],
+    "tandem": false,
+    "debug": false
+  },
+  "G1_full": "deferred by user, unchanged original golden and test scales",
+  "physical": {
+    "source": "c735fbd",
+    "small": "running",
+    "single": "running",
+    "clock_hz": 100000000,
+    "new_timing_exceptions": false,
+    "bitstream": "not run",
+    "board": "not run"
+  }
+}
