@@ -1,0 +1,145 @@
+test_axi_bridge_full_width_slave_both_lanes (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_lower_csr_read (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_lower_read_backpressure_no_duplicate_side_effect (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_upper_csr_read (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+test_composed_upper_read_targets_only_requested_csr (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+test_composed_upper_read_with_r_backpressure (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+test_composed_writes_both_lanes_and_independent_aw_w (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_zero_write_strobes_have_no_csr_side_effect (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_direct_wishbone_csr_both_lanes (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+test_native_uart_bios_service_clears_irq (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+test_native_uart_pending_and_enable_readback (test_mmio_csr_bridge.MmioCsrBridgeTest) ... FAIL
+
+======================================================================
+FAIL: test_composed_upper_csr_read (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 222, in test_composed_upper_csr_read
+    self.check_slot_read(5)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 216, in check_slot_read
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 215, in process
+    self.assertEqual(actual, VALUES[slot], f'CSR slot{slot} value/lane mismatch')
+AssertionError: 0 != 1432778632 : CSR slot5 value/lane mismatch
+
+======================================================================
+FAIL: test_composed_upper_read_targets_only_requested_csr (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 225, in test_composed_upper_read_targets_only_requested_csr
+    self.check_slot_read(5, side_effect_only=True)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 216, in check_slot_read
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 213, in process
+    self.assertEqual(counts, expected, 'read touched a different CSR or repeated its side effect')
+AssertionError: Lists differ: [0, 0, 0, 0, 1, 0] != [0, 0, 0, 0, 0, 1]
+
+First differing element 4:
+1
+0
+
+- [0, 0, 0, 0, 1, 0]
+?               ---
+
++ [0, 0, 0, 0, 0, 1]
+?              +++
+ : read touched a different CSR or repeated its side effect
+
+======================================================================
+FAIL: test_composed_upper_read_with_r_backpressure (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 228, in test_composed_upper_read_with_r_backpressure
+    self.check_slot_read(5, backpressure=7)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 216, in check_slot_read
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 215, in process
+    self.assertEqual(actual, VALUES[slot], f'CSR slot{slot} value/lane mismatch')
+AssertionError: 0 != 1432778632 : CSR slot5 value/lane mismatch
+
+======================================================================
+FAIL: test_direct_wishbone_csr_both_lanes (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 184, in test_direct_wishbone_csr_both_lanes
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 182, in process
+    self.assertEqual((yield dut.read_counts[4]), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_native_uart_bios_service_clears_irq (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 306, in test_native_uart_bios_service_clears_irq
+    self.check_native_uart(handler=True)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 300, in check_native_uart
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 299, in process
+    self.assertEqual((yield dut.uart.ev.irq), 0, 'BIOS UART service makes no progress')
+AssertionError: 1 != 0 : BIOS UART service makes no progress
+
+======================================================================
+FAIL: test_native_uart_pending_and_enable_readback (test_mmio_csr_bridge.MmioCsrBridgeTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 303, in test_native_uart_pending_and_enable_readback
+    self.check_native_uart()
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 300, in check_native_uart
+    self.simulate(dut, process(), observations)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 148, in simulate
+    run_simulation(dut, process)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-csr-tests-20261012/sim/litex/test_mmio_csr_bridge.py", line 278, in process
+    self.assertEqual(enabled, 3, 'native UART enable read differs from its stored value')
+AssertionError: 0 != 3 : native UART enable read differs from its stored value
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.205s
+
+FAILED (failures=6)

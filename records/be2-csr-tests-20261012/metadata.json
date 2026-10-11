@@ -1,0 +1,103 @@
+{
+  "hardware_source_sha": "b8e62666de08752a96fd27b838a2fcd79536d3da",
+  "final_test_source_sha": "0b4e18b20aa2cb62e4edab08c8e6c4077842f9a1",
+  "host": "Alan",
+  "cwd": "/home/chen/FUN/flow-be2-csr-tests-20261012",
+  "python_version": "3.10.19 conda-forge",
+  "litex_commit": "6d8a38cade2092cb1e7db3e5602e81093aead8f9",
+  "litex_root": "/home/chen/FUN/flow_litex/litex",
+  "migen_commit": "e64d0bc12bff644e746d2ddb0d26b3e682b12064",
+  "migen_root": "/home/chen/FUN/flow_litex/migen",
+  "execution": "Migen in-process simulation of production bridge classes and native CSRBank/UART, not full CPU/SoC RTL",
+  "command": "BE2_BRIDGE_EVIDENCE=/home/chen/FUN/flow-runs/be2-csr-tests-0b4e18b-20261012/observations bash /home/chen/FUN/flow-runs/be2-env.sh taskset -c 6-7 nice -n 10 python -m unittest discover -s sim/litex -p test_mmio_csr_bridge.py -v",
+  "production_diff_vs_hardware_source": [],
+  "cloud_preflight": "5-second SSH timeout, exit255 before each run",
+  "alan_preflight": "Python/module path/disk/memory/clean worktree verified",
+  "sync_proxy": "fresh scoped reverse HTTP 127.0.0.1:18898 to WSL 127.0.0.1:7897; configured18897 occupied and unresponsive, preserved",
+  "golden_changed": false,
+  "production_changed": false,
+  "hardware_programmed": false,
+  "status": "FAIL_UNFIXED_CSR_READ_CONTRACT",
+  "related_source_sha256": {
+    "litex/soc/integration/soc.py": "8d622e0dfef384e427c2fd76473e29321410ae365387fd369629a0067245de12",
+    "litex/soc/interconnect/axi/axi_lite_to_wishbone.py": "f67d45f7e007adbab8096aabcc40434d7adf31659813e523722104663734e28d",
+    "litex/soc/interconnect/wishbone.py": "237576784c5a902abd556806f36259da8e1c825e8bf5f2673b639e90588a7444",
+    "litex/soc/interconnect/csr_bus.py": "31468768d82e864c56f92d06886ad2c571e5eb6c3c13c94ff6125f1ae5e73e34",
+    "litex/soc/cores/uart.py": "e4734962e9fd0137a8b4f763d646589e16a6bdd9a4c7a4b45054f29456c28e64",
+    "litex/soc/interconnect/csr_eventmanager.py": "115ce8ac3d3ce81c7104fbc7cb07e9f0f0659315394e97bbe7edbf8cb54a7571"
+  },
+  "runs": [
+    {
+      "directory": "be2-csr-tests-0b4e18b-20261012",
+      "exit": 1,
+      "tests": 13,
+      "passed": 7,
+      "failed": 6,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.263,
+      "cases": {
+        "test_axi_bridge_full_width_slave_both_lanes": "ok",
+        "test_composed_lower_csr_read": "ok",
+        "test_composed_lower_read_backpressure_no_duplicate_side_effect": "ok",
+        "test_composed_upper_csr_read": "FAIL",
+        "test_composed_upper_read_targets_only_requested_csr": "FAIL",
+        "test_composed_upper_read_with_r_backpressure": "FAIL",
+        "test_composed_writes_both_lanes_and_independent_aw_w": "ok",
+        "test_composed_zero_write_strobes_have_no_csr_side_effect": "ok",
+        "test_direct_wishbone_csr_both_lanes": "ok",
+        "test_native_uart_bios_service_clears_irq": "FAIL",
+        "test_native_uart_full_tx_fifo_status_reads_one": "FAIL",
+        "test_native_uart_pending_and_enable_readback": "FAIL",
+        "test_native_uart_txfull_read_does_not_pop_rx_fifo": "ok"
+      }
+    },
+    {
+      "directory": "be2-csr-tests-b5ab470-20261012",
+      "exit": 1,
+      "tests": 11,
+      "passed": 5,
+      "failed": 6,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.205,
+      "cases": {
+        "test_axi_bridge_full_width_slave_both_lanes": "ok",
+        "test_composed_lower_csr_read": "ok",
+        "test_composed_lower_read_backpressure_no_duplicate_side_effect": "ok",
+        "test_composed_upper_csr_read": "FAIL",
+        "test_composed_upper_read_targets_only_requested_csr": "FAIL",
+        "test_composed_upper_read_with_r_backpressure": "FAIL",
+        "test_composed_writes_both_lanes_and_independent_aw_w": "ok",
+        "test_composed_zero_write_strobes_have_no_csr_side_effect": "ok",
+        "test_direct_wishbone_csr_both_lanes": "FAIL",
+        "test_native_uart_bios_service_clears_irq": "FAIL",
+        "test_native_uart_pending_and_enable_readback": "FAIL"
+      }
+    },
+    {
+      "directory": "be2-csr-tests-db92471-20261012",
+      "exit": 1,
+      "tests": 12,
+      "passed": 7,
+      "failed": 5,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.236,
+      "cases": {
+        "test_axi_bridge_full_width_slave_both_lanes": "ok",
+        "test_composed_lower_csr_read": "ok",
+        "test_composed_lower_read_backpressure_no_duplicate_side_effect": "ok",
+        "test_composed_upper_csr_read": "FAIL",
+        "test_composed_upper_read_targets_only_requested_csr": "FAIL",
+        "test_composed_upper_read_with_r_backpressure": "FAIL",
+        "test_composed_writes_both_lanes_and_independent_aw_w": "ok",
+        "test_composed_zero_write_strobes_have_no_csr_side_effect": "ok",
+        "test_direct_wishbone_csr_both_lanes": "ok",
+        "test_native_uart_bios_service_clears_irq": "FAIL",
+        "test_native_uart_pending_and_enable_readback": "FAIL",
+        "test_native_uart_txfull_read_does_not_pop_rx_fifo": "ok"
+      }
+    }
+  ]
+}

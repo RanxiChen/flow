@@ -2,6 +2,8 @@
 
 最新板上结果（2026-10-12 07:27/07:29 CST）：已在Alan成功抓取两段匹配ILA波形，核心持续退休，但困在BIOS的UART中断处理循环。波形和匹配生成RTL共同定位64位AXI-Lite→Wishbone→32位CSR读桥丢失地址bit2，enable读错子槽和数据位置；Linux启动未通过。具体PC、总线值及原始证据见 [板上抓取报告](BE2-single-debug-capture-20261012.md)。下文“未capture/正在构建”条目是此前阶段记录。
 
+源码复现：新增13项桥接/原生UART定向检查，Alan源0b4e18b实际7PASS/6FAIL、exit1。组合桥高半部读错、读strobe误打相邻CSR、BIOS服务不前进及满TXFIFO状态回读0均复现；单独两桥的明确半部/完整word对照PASS。生产代码未修复，golden不变，详见 [源码测试与分析](BE2-mmio-csr-analysis-20261012.md)。
+
 最终调试硬件已生成：源 `b8e62666de08752a96fd27b838a2fcd79536d3da`，Alan目录 `/home/chen/FUN/flow-runs/be2-single-debug-20261012/gateware/`，文件 `xilinx_kcu105.bit` 与匹配 `xilinx_kcu105.ltx`；本地副本为 `build/be2-products/single-debug-20261012/`。Vivado/build runner exit0，100MHz最终 WNS+0.064ns/WHS+0.004ns/WPWS+0.103ns，TNS/THS/TPWS与全部failed endpoints0，route errors0，SD内部IO预算PASS。ILA/debug hub另有4条bus-skew约束，全部通过、最小slack+9.326ns；未将这类独立检查遗漏在根时序表之外。尚未取得新bit的板上capture，核心是否正常运行仍未判断。
 
 bit SHA256=`1549f11d09986ccc6454162bc8c66f6de995a4afac84a4f0495c91ae46a20480`；ltx SHA256=`22ce77df65a82d95cbb8b454388cf3147912ab108ae36e515a29cd4bb835e866`。129项source-snapshot、BIOS与ROM初始化、功能配置相同、161probe/1896bit再次核对，完整binding和原报告在 `records/be2-single-debug-20261012/final/`。debug hub的`C_ENABLE_CLK_DIVIDER=false`，保留工具默认频率参数，不启用额外MMCM；实际ILA采样与sys_clk均100MHz，使用1MHz JTAG脚本。默认属性不替代实际clock/timing报告。

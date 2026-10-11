@@ -1,0 +1,174 @@
+{
+  "be2-csr-tests-0b4e18b-20261012/observations/test_axi_bridge_full_width_slave_both_lanes.json": {
+    "bytes": 255,
+    "sha256": "25c9df4bd13e7436cd1ebabce5daffd3c9a94b31bd73055d11dfd31caeec4181"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_lower_csr_read.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_lower_read_backpressure_no_duplicate_side_effect.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_upper_csr_read.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_upper_read_targets_only_requested_csr.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_upper_read_with_r_backpressure.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_writes_both_lanes_and_independent_aw_w.json": {
+    "bytes": 623,
+    "sha256": "fe7c9d59a12e1c812566e46925f6a66565df96cc1470ae30a4e90d7b50f8f573"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_composed_zero_write_strobes_have_no_csr_side_effect.json": {
+    "bytes": 103,
+    "sha256": "626de5bd6ca6229f6561344d4a8dbc0297f9c706be85fc66636c6e94abd552bf"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_direct_wishbone_csr_both_lanes.json": {
+    "bytes": 107,
+    "sha256": "f246b3ccac37c3111ecadad87b44e964ec2058e25a29009f47a22d3fa4a15989"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_native_uart_bios_service_clears_irq.json": {
+    "bytes": 907,
+    "sha256": "8914bfb87b6d5c79f2586cdb6c43b2c250799b67edce861a49b3f585c153941a"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_native_uart_full_tx_fifo_status_reads_one.json": {
+    "bytes": 262,
+    "sha256": "1ed34b280707cfef1d774287df875cdf6a15335d52b314ad3fcaa543ba26aa6f"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_native_uart_pending_and_enable_readback.json": {
+    "bytes": 311,
+    "sha256": "8f2f738d3a05a8e298a140b47fff5f78cfffb73af1191b2641e4158f2d5f5f83"
+  },
+  "be2-csr-tests-0b4e18b-20261012/observations/test_native_uart_txfull_read_does_not_pop_rx_fifo.json": {
+    "bytes": 280,
+    "sha256": "e05bfbf986948d3fd7ae35397e86447dfd65ef06d820e9ca8abddf3ead12c4fd"
+  },
+  "be2-csr-tests-0b4e18b-20261012/run.console": {
+    "bytes": 9507,
+    "sha256": "059d2de1fbd36e8333728cf56beff5bad28f96f51f8632332ea932c1a05ce95e"
+  },
+  "be2-csr-tests-0b4e18b-20261012/run.exit": {
+    "bytes": 2,
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_axi_bridge_full_width_slave_both_lanes.json": {
+    "bytes": 255,
+    "sha256": "25c9df4bd13e7436cd1ebabce5daffd3c9a94b31bd73055d11dfd31caeec4181"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_lower_csr_read.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_lower_read_backpressure_no_duplicate_side_effect.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_upper_csr_read.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_upper_read_targets_only_requested_csr.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_upper_read_with_r_backpressure.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_writes_both_lanes_and_independent_aw_w.json": {
+    "bytes": 623,
+    "sha256": "fe7c9d59a12e1c812566e46925f6a66565df96cc1470ae30a4e90d7b50f8f573"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_composed_zero_write_strobes_have_no_csr_side_effect.json": {
+    "bytes": 103,
+    "sha256": "626de5bd6ca6229f6561344d4a8dbc0297f9c706be85fc66636c6e94abd552bf"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_direct_wishbone_csr_both_lanes.json": {
+    "bytes": 107,
+    "sha256": "f246b3ccac37c3111ecadad87b44e964ec2058e25a29009f47a22d3fa4a15989"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_native_uart_bios_service_clears_irq.json": {
+    "bytes": 907,
+    "sha256": "8914bfb87b6d5c79f2586cdb6c43b2c250799b67edce861a49b3f585c153941a"
+  },
+  "be2-csr-tests-b5ab470-20261012/observations/test_native_uart_pending_and_enable_readback.json": {
+    "bytes": 311,
+    "sha256": "8f2f738d3a05a8e298a140b47fff5f78cfffb73af1191b2641e4158f2d5f5f83"
+  },
+  "be2-csr-tests-b5ab470-20261012/run.console": {
+    "bytes": 9225,
+    "sha256": "afba0d52226cc9ad87998145003d6946d8eb537a3dc4662b30cbaa4641eb46bc"
+  },
+  "be2-csr-tests-b5ab470-20261012/run.exit": {
+    "bytes": 2,
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_axi_bridge_full_width_slave_both_lanes.json": {
+    "bytes": 255,
+    "sha256": "25c9df4bd13e7436cd1ebabce5daffd3c9a94b31bd73055d11dfd31caeec4181"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_lower_csr_read.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_lower_read_backpressure_no_duplicate_side_effect.json": {
+    "bytes": 219,
+    "sha256": "690838b546fc7df292565fb5fc3bb719fbec238ccef9022244d49bdc39bf2062"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_upper_csr_read.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_upper_read_targets_only_requested_csr.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_upper_read_with_r_backpressure.json": {
+    "bytes": 212,
+    "sha256": "28060c536fa1ef4863d0f367f7ee91d3e18e5fc631380c3f5eba7c62b07fc979"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_writes_both_lanes_and_independent_aw_w.json": {
+    "bytes": 623,
+    "sha256": "fe7c9d59a12e1c812566e46925f6a66565df96cc1470ae30a4e90d7b50f8f573"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_composed_zero_write_strobes_have_no_csr_side_effect.json": {
+    "bytes": 103,
+    "sha256": "626de5bd6ca6229f6561344d4a8dbc0297f9c706be85fc66636c6e94abd552bf"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_direct_wishbone_csr_both_lanes.json": {
+    "bytes": 107,
+    "sha256": "f246b3ccac37c3111ecadad87b44e964ec2058e25a29009f47a22d3fa4a15989"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_native_uart_bios_service_clears_irq.json": {
+    "bytes": 907,
+    "sha256": "8914bfb87b6d5c79f2586cdb6c43b2c250799b67edce861a49b3f585c153941a"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_native_uart_pending_and_enable_readback.json": {
+    "bytes": 311,
+    "sha256": "8f2f738d3a05a8e298a140b47fff5f78cfffb73af1191b2641e4158f2d5f5f83"
+  },
+  "be2-csr-tests-db92471-20261012/observations/test_native_uart_txfull_read_does_not_pop_rx_fifo.json": {
+    "bytes": 280,
+    "sha256": "e05bfbf986948d3fd7ae35397e86447dfd65ef06d820e9ca8abddf3ead12c4fd"
+  },
+  "be2-csr-tests-db92471-20261012/run.console": {
+    "bytes": 8212,
+    "sha256": "a7ca02207deb46960caa878281cc52d02e33ad06b88671a4de2d3fdd5ac38ddd"
+  },
+  "be2-csr-tests-db92471-20261012/run.exit": {
+    "bytes": 2,
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  "metadata.json": {
+    "bytes": 4985,
+    "sha256": "a54c6d182c812a91de33945a041460b13e5363afe7b323c5babbb31cee3a916d"
+  }
+}

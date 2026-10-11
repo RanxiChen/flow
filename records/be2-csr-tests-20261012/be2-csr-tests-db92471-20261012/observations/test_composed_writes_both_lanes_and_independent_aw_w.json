@@ -1,0 +1,38 @@
+[
+  {
+    "write_addr": "0x12001010",
+    "value": "0xa004",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001014",
+    "value": "0xa005",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001010",
+    "value": "0xa008",
+    "separation": 4,
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001014",
+    "value": "0xa009",
+    "separation": 4,
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001010",
+    "value": "0xa000",
+    "separation": -4,
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001014",
+    "value": "0xa001",
+    "separation": -4,
+    "response": 0
+  }
+]

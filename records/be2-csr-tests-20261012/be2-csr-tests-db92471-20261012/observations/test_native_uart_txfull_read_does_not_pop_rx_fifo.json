@@ -1,0 +1,18 @@
+[
+  {
+    "read_addr": "0x12001004",
+    "axi_data": "0x52",
+    "lw_value": "0x0",
+    "response": 0
+  },
+  {
+    "txfull_read": 0,
+    "rxempty_after_status_read": 0
+  },
+  {
+    "read_addr": "0x12001000",
+    "axi_data": "0x52",
+    "lw_value": "0x52",
+    "response": 0
+  }
+]
