@@ -1,0 +1,88 @@
+assign dbg_mmio_r_valid = breezekcu105soc_breezetinydebugdma_mmio_bus_r_valid;
+assign dbg_mmio_r_ready = breezekcu105soc_breezetinydebugdma_mmio_bus_r_ready;
+assign dbg_mmio_r_data = breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_data;
+assign dbg_mmio_r_resp = breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_resp;
+assign dbg_mmio_b_valid = breezekcu105soc_breezetinydebugdma_mmio_bus_b_valid;
+assign dbg_mmio_b_ready = breezekcu105soc_breezetinydebugdma_mmio_bus_b_ready;
+assign dbg_mmio_b_resp = breezekcu105soc_breezetinydebugdma_mmio_bus_b_payload_resp;
+assign dbg_router_read_dram = breezekcu105soc_breezetinydebugdma_read_dram;
+assign dbg_router_write_dram = breezekcu105soc_breezetinydebugdma_write_dram;
+assign dbg_router_read_low = breezekcu105soc_breezetinydebugdma_read_low;
+assign dbg_router_write_low = breezekcu105soc_breezetinydebugdma_write_low;
+assign dbg_pll_locked = crg_locked;
+assign breezeaximonitor0_memory_monitor_accepted = breezeaximonitor0_sampled;
+assign breezeaximonitor0_memory_monitor_stalled = breezeaximonitor0_stalls;
+assign breezeaximonitor1_mmio_monitor_accepted = breezeaximonitor1_sampled;
+assign breezeaximonitor1_mmio_monitor_stalled = breezeaximonitor1_stalls;
+always @(*) begin
+    register = 1'd0;
+    register = 1'd0;
+    if ((interface0_sel[7:4] != 1'd0)) begin
+        register = 1'd1;
+    end
+    if ((interface0_sel[3:0] != 1'd0)) begin
+        register = 1'd0;
+    end
+end
+assign selected_alignment = (register >>> 1'd0);
+always @(*) begin
+    interface0_ack = 1'd0;
+    interface0_dat_r = 64'd0;
+    interface1_adr_subfragments_next_value2 = 14'd0;
+    interface1_adr_subfragments_next_value_ce2 = 1'd0;
+    interface1_dat_w_subfragments_next_value0 = 32'd0;
+    interface1_dat_w_subfragments_next_value_ce0 = 1'd0;
+    interface1_re_subfragments_next_value3 = 1'd0;
+    interface1_re_subfragments_next_value_ce3 = 1'd0;
+    interface1_we_subfragments_next_value4 = 1'd0;
+    interface1_we_subfragments_next_value_ce4 = 1'd0;
+    selected_r_subfragments_next_value1 = 1'd0;
+    selected_r_subfragments_next_value_ce1 = 1'd0;
+    subfragments_next_state = 2'd0;
+    subfragments_next_state = subfragments_state;
+    case (subfragments_state)
+        1'd1: begin
+            interface1_adr_subfragments_next_value2 = 1'd0;
+            interface1_adr_subfragments_next_value_ce2 = 1'd1;
+            interface1_re_subfragments_next_value3 = 1'd0;
+            interface1_re_subfragments_next_value_ce3 = 1'd1;
+            interface1_we_subfragments_next_value4 = 1'd0;
+            interface1_we_subfragments_next_value_ce4 = 1'd1;
+            subfragments_next_state = 2'd2;
+        end
+        2'd2: begin
+            interface0_ack = 1'd1;
+            interface0_dat_r = 1'd0;
+            case (selected_r)
+                1'd0: begin
+                    interface0_dat_r[31:0] = interface1_dat_r;
+                end
+                1'd1: begin
+                    interface0_dat_r[63:32] = interface1_dat_r;
+                end
+            endcase
+            subfragments_next_state = 1'd0;
+        end
+        default: begin
+            interface1_dat_w_subfragments_next_value0 = cases_self;
+            interface1_dat_w_subfragments_next_value_ce0 = 1'd1;
+            if ((interface0_cyc & interface0_stb)) begin
+                selected_r_subfragments_next_value1 = register;
+                selected_r_subfragments_next_value_ce1 = 1'd1;
+                interface1_adr_subfragments_next_value2 = {interface0_adr, selected_alignment};
+                interface1_adr_subfragments_next_value_ce2 = 1'd1;
+                interface1_re_subfragments_next_value3 = ((~interface0_we) & (interface0_sel != 1'd0));
+                interface1_re_subfragments_next_value_ce3 = 1'd1;
+                interface1_we_subfragments_next_value4 = (interface0_we & (interface0_sel != 1'd0));
+                interface1_we_subfragments_next_value_ce4 = 1'd1;
+                subfragments_next_state = 1'd1;
+            end
+        end
+    endcase
+end
+assign csr_bankarray_csrbank0_sel = (csr_bankarray_interface0_bank_bus_adr[13:10] == 1'd0);
+assign csr_bankarray_csrbank0_reset_r = csr_bankarray_interface0_bank_bus_dat_w[1:0];
+always @(*) begin
+    csr_bankarray_csrbank0_reset_re = 1'd0;
+    csr_bankarray_csrbank0_reset_we = 1'd0;
+    if ((csr_bankarray_csrbank0_sel & (csr_bankarray_interface0_bank_bus_adr[9:0] == 1'd0))) begin

@@ -1,0 +1,137 @@
+
+/home/chen/FUN/flow-runs/be2-single-debug-20261012/software/bios/bios.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000010010126 <isr>:
+    *((unsigned int *)PLIC_THRSHLD) = 0;
+}
+
+/* Interrupt Service Routine. */
+void isr(void)
+{
+    10010126:	715d                	addi	sp,sp,-80
+    10010128:	fc26                	sd	s1,56(sp)
+    unsigned int claim;
+
+    /* Claim and handle pending interrupts. */
+    while ((claim = *((unsigned int *)PLIC_CLAIM))) {
+    1001012a:	0c2004b7          	lui	s1,0xc200
+{
+    1001012e:	f84a                	sd	s2,48(sp)
+    10010130:	f44e                	sd	s3,40(sp)
+    10010132:	f052                	sd	s4,32(sp)
+    10010134:	ec56                	sd	s5,24(sp)
+    10010136:	e85a                	sd	s6,16(sp)
+    10010138:	e45e                	sd	s7,8(sp)
+    1001013a:	e062                	sd	s8,0(sp)
+    1001013c:	e486                	sd	ra,72(sp)
+    1001013e:	e0a2                	sd	s0,64(sp)
+    while ((claim = *((unsigned int *)PLIC_CLAIM))) {
+    10010140:	0491                	addi	s1,s1,4 # c200004 <_ftext-0x3e0fffc>
+        unsigned int irq = claim - PLIC_EXT_IRQ_BASE;
+        if (irq < CONFIG_CPU_INTERRUPTS && irq_table[irq].isr) {
+    10010142:	4909                	li	s2,2
+            irq_table[irq].isr();
+        } else {
+            /* Unhandled interrupt source, print diagnostic information. */
+            printf("## PLIC: Unhandled claim: %d\n", claim);
+    10010144:	00008997          	auipc	s3,0x8
+    10010148:	51498993          	addi	s3,s3,1300 # 10018658 <_frodata+0x1848>
+		csrc(mstatus, CSR_MSTATUS_MIE);
+}
+
+static inline unsigned int irq_getmask(void)
+{
+	return (*((volatile unsigned int *)PLIC_ENABLED) >> PLIC_EXT_IRQ_BASE) &
+    1001014c:	0c002a37          	lui	s4,0xc002
+            printf("# plic_enabled:    %08x\n", irq_getmask());
+    10010150:	00008a97          	auipc	s5,0x8
+    10010154:	528a8a93          	addi	s5,s5,1320 # 10018678 <_frodata+0x1868>
+		(mask & BREEZE_LITEX_IRQ_MASK) << PLIC_EXT_IRQ_BASE;
+}
+
+static inline unsigned int irq_pending(void)
+{
+	return (*((volatile unsigned int *)PLIC_PENDING) >> PLIC_EXT_IRQ_BASE) &
+    10010158:	0c001b37          	lui	s6,0xc001
+            printf("# plic_pending:    %08x\n", irq_pending());
+    1001015c:	00008b97          	auipc	s7,0x8
+    10010160:	53cb8b93          	addi	s7,s7,1340 # 10018698 <_frodata+0x1888>
+        if (irq < CONFIG_CPU_INTERRUPTS && irq_table[irq].isr) {
+    10010164:	00ff1c17          	auipc	s8,0xff1
+    10010168:	874c0c13          	addi	s8,s8,-1932 # 110009d8 <irq_table>
+    while ((claim = *((unsigned int *)PLIC_CLAIM))) {
+    1001016c:	4080                	lw	s0,0(s1)
+    1001016e:	ec09                	bnez	s0,10010188 <isr+0x62>
+            printf("###########################\n\n");
+        }
+        /* Acknowledge the interrupt. */
+        *((unsigned int *)PLIC_CLAIM) = claim;
+    }
+}
+    10010170:	60a6                	ld	ra,72(sp)
+    10010172:	6406                	ld	s0,64(sp)
+    10010174:	74e2                	ld	s1,56(sp)
+    10010176:	7942                	ld	s2,48(sp)
+    10010178:	79a2                	ld	s3,40(sp)
+    1001017a:	7a02                	ld	s4,32(sp)
+    1001017c:	6ae2                	ld	s5,24(sp)
+    1001017e:	6b42                	ld	s6,16(sp)
+    10010180:	6ba2                	ld	s7,8(sp)
+    10010182:	6c02                	ld	s8,0(sp)
+    10010184:	6161                	addi	sp,sp,80
+    10010186:	8082                	ret
+        unsigned int irq = claim - PLIC_EXT_IRQ_BASE;
+    10010188:	ff64079b          	addiw	a5,s0,-10
+    1001018c:	0007871b          	sext.w	a4,a5
+        if (irq < CONFIG_CPU_INTERRUPTS && irq_table[irq].isr) {
+    10010190:	00e96c63          	bltu	s2,a4,100101a8 <isr+0x82>
+    10010194:	02079713          	slli	a4,a5,0x20
+    10010198:	01d75793          	srli	a5,a4,0x1d
+    1001019c:	97e2                	add	a5,a5,s8
+    1001019e:	639c                	ld	a5,0(a5)
+    100101a0:	c781                	beqz	a5,100101a8 <isr+0x82>
+            irq_table[irq].isr();
+    100101a2:	9782                	jalr	a5
+        *((unsigned int *)PLIC_CLAIM) = claim;
+    100101a4:	c080                	sw	s0,0(s1)
+    100101a6:	b7d9                	j	1001016c <isr+0x46>
+            printf("## PLIC: Unhandled claim: %d\n", claim);
+    100101a8:	85a2                	mv	a1,s0
+    100101aa:	854e                	mv	a0,s3
+    100101ac:	4d6020ef          	jal	10012682 <printf>
+	return (*((volatile unsigned int *)PLIC_ENABLED) >> PLIC_EXT_IRQ_BASE) &
+    100101b0:	000a2583          	lw	a1,0(s4) # c002000 <_ftext-0x400e000>
+            printf("# plic_enabled:    %08x\n", irq_getmask());
+    100101b4:	8556                	mv	a0,s5
+    100101b6:	00a5d59b          	srliw	a1,a1,0xa
+    100101ba:	0ff5f593          	zext.b	a1,a1
+    100101be:	4c4020ef          	jal	10012682 <printf>
+	return (*((volatile unsigned int *)PLIC_PENDING) >> PLIC_EXT_IRQ_BASE) &
+    100101c2:	000b2583          	lw	a1,0(s6) # c001000 <_ftext-0x400f000>
+            printf("# plic_pending:    %08x\n", irq_pending());
+    100101c6:	855e                	mv	a0,s7
+    100101c8:	00a5d59b          	srliw	a1,a1,0xa
+    100101cc:	0ff5f593          	zext.b	a1,a1
+    100101d0:	4b2020ef          	jal	10012682 <printf>
+            printf("# mepc:    %016lx\n", csrr(mepc));
+    100101d4:	341025f3          	csrr	a1,mepc
+    100101d8:	00008517          	auipc	a0,0x8
+    100101dc:	4e050513          	addi	a0,a0,1248 # 100186b8 <_frodata+0x18a8>
+    100101e0:	4a2020ef          	jal	10012682 <printf>
+            printf("# mcause:  %016lx\n", csrr(mcause));
+    100101e4:	342025f3          	csrr	a1,mcause
+    100101e8:	00008517          	auipc	a0,0x8
+    100101ec:	4e850513          	addi	a0,a0,1256 # 100186d0 <_frodata+0x18c0>
+    100101f0:	492020ef          	jal	10012682 <printf>
+            printf("# mtval:   %016lx\n", csrr(mtval));
+    100101f4:	343025f3          	csrr	a1,mtval
+    100101f8:	00008517          	auipc	a0,0x8
+    100101fc:	4f050513          	addi	a0,a0,1264 # 100186e8 <_frodata+0x18d8>
+    10010200:	482020ef          	jal	10012682 <printf>
+            printf("# mie:     %016lx\n", csrr(mie));
+    10010204:	304025f3          	csrr	a1,mie
+    10010208:	00008517          	auipc	a0,0x8
+    1001020c:	4f850513          	addi	a0,a0,1272 # 10018700 <_frodata+0x18f0>

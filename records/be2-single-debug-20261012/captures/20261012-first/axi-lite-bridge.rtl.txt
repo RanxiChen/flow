@@ -1,0 +1,161 @@
+                        socbushandler0_axi2axilite_next_state = 2'd2;
+                    end
+                end
+            end
+        end
+    endcase
+end
+assign breezekcu105soc_axi_lite2wishbone_r_addr = (breezekcu105soc_ar_payload_addr - 1'd0);
+assign breezekcu105soc_axi_lite2wishbone_w_addr = (breezekcu105soc_aw_payload_addr - 1'd0);
+always @(*) begin
+    breezekcu105soc_ar_ready = 1'd0;
+    breezekcu105soc_aw_ready = 1'd0;
+    breezekcu105soc_axi_lite2wishbone_data_socbushandler_axilite2wishbone_next_value1 = 64'd0;
+    breezekcu105soc_axi_lite2wishbone_data_socbushandler_axilite2wishbone_next_value_ce1 = 1'd0;
+    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value0 = 1'd0;
+    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value_ce0 = 1'd0;
+    breezekcu105soc_b_payload_resp = 2'd0;
+    breezekcu105soc_b_valid = 1'd0;
+    breezekcu105soc_interface0_adapted_interface_adr = 29'd0;
+    breezekcu105soc_interface0_adapted_interface_cyc = 1'd0;
+    breezekcu105soc_interface0_adapted_interface_dat_w = 64'd0;
+    breezekcu105soc_interface0_adapted_interface_sel = 8'd0;
+    breezekcu105soc_interface0_adapted_interface_stb = 1'd0;
+    breezekcu105soc_interface0_adapted_interface_we = 1'd0;
+    breezekcu105soc_r_payload_data = 64'd0;
+    breezekcu105soc_r_payload_resp = 2'd0;
+    breezekcu105soc_r_valid = 1'd0;
+    breezekcu105soc_w_ready = 1'd0;
+    socbushandler0_axilite2wishbone_next_state = 3'd0;
+    socbushandler0_axilite2wishbone_next_state = socbushandler0_axilite2wishbone_state;
+    case (socbushandler0_axilite2wishbone_state)
+        1'd1: begin
+            breezekcu105soc_interface0_adapted_interface_stb = 1'd1;
+            breezekcu105soc_interface0_adapted_interface_cyc = 1'd1;
+            breezekcu105soc_interface0_adapted_interface_adr = breezekcu105soc_axi_lite2wishbone_r_addr[31:3];
+            breezekcu105soc_interface0_adapted_interface_sel = 8'hff;
+            if (breezekcu105soc_interface0_adapted_interface_ack) begin
+                breezekcu105soc_ar_ready = 1'd1;
+                breezekcu105soc_axi_lite2wishbone_data_socbushandler_axilite2wishbone_next_value1 = breezekcu105soc_interface0_adapted_interface_dat_r;
+                breezekcu105soc_axi_lite2wishbone_data_socbushandler_axilite2wishbone_next_value_ce1 = 1'd1;
+                socbushandler0_axilite2wishbone_next_state = 2'd2;
+            end
+        end
+        2'd2: begin
+            breezekcu105soc_r_valid = 1'd1;
+            breezekcu105soc_r_payload_resp = 1'd0;
+            breezekcu105soc_r_payload_data = breezekcu105soc_axi_lite2wishbone_data;
+            if (breezekcu105soc_r_ready) begin
+                socbushandler0_axilite2wishbone_next_state = 1'd0;
+            end
+        end
+        2'd3: begin
+            breezekcu105soc_interface0_adapted_interface_stb = breezekcu105soc_w_valid;
+            breezekcu105soc_interface0_adapted_interface_cyc = breezekcu105soc_w_valid;
+            breezekcu105soc_interface0_adapted_interface_we = 1'd1;
+            breezekcu105soc_interface0_adapted_interface_adr = breezekcu105soc_axi_lite2wishbone_w_addr[31:3];
+            breezekcu105soc_interface0_adapted_interface_sel = breezekcu105soc_w_payload_strb;
+            breezekcu105soc_interface0_adapted_interface_dat_w = breezekcu105soc_w_payload_data;
+            if (breezekcu105soc_interface0_adapted_interface_ack) begin
+                breezekcu105soc_aw_ready = 1'd1;
+                breezekcu105soc_w_ready = 1'd1;
+                socbushandler0_axilite2wishbone_next_state = 3'd4;
+            end
+        end
+        3'd4: begin
+            breezekcu105soc_b_valid = 1'd1;
+            breezekcu105soc_b_payload_resp = 1'd0;
+            if (breezekcu105soc_b_ready) begin
+                socbushandler0_axilite2wishbone_next_state = 1'd0;
+            end
+        end
+        default: begin
+            if ((breezekcu105soc_ar_valid & breezekcu105soc_aw_valid)) begin
+                if (breezekcu105soc_axi_lite2wishbone_last_ar_aw_n) begin
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value0 = 1'd0;
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value_ce0 = 1'd1;
+                    socbushandler0_axilite2wishbone_next_state = 2'd3;
+                end else begin
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value0 = 1'd1;
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value_ce0 = 1'd1;
+                    socbushandler0_axilite2wishbone_next_state = 1'd1;
+                end
+            end else begin
+                if (breezekcu105soc_ar_valid) begin
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value0 = 1'd1;
+                    breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value_ce0 = 1'd1;
+                    socbushandler0_axilite2wishbone_next_state = 1'd1;
+                end else begin
+                    if (breezekcu105soc_aw_valid) begin
+                        breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value0 = 1'd0;
+                        breezekcu105soc_axi_lite2wishbone_last_ar_aw_n_socbushandler_axilite2wishbone_next_value_ce0 = 1'd1;
+                        socbushandler0_axilite2wishbone_next_state = 2'd3;
+                    end
+                end
+            end
+        end
+    endcase
+end
+assign breezekcu105soc_r_addr = (breezekcu105soc_breezetinydebugdma_mmio_bus_ar_payload_addr - 1'd0);
+assign breezekcu105soc_w_addr = (breezekcu105soc_breezetinydebugdma_mmio_bus_aw_payload_addr - 1'd0);
+always @(*) begin
+    breezekcu105soc_breezetinydebugdma_mmio_bus_ar_ready = 1'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_aw_ready = 1'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_b_payload_resp = 2'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_b_valid = 1'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_data = 64'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_resp = 2'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_r_valid = 1'd0;
+    breezekcu105soc_breezetinydebugdma_mmio_bus_w_ready = 1'd0;
+    breezekcu105soc_data_socbushandler_next_value1 = 64'd0;
+    breezekcu105soc_data_socbushandler_next_value_ce1 = 1'd0;
+    breezekcu105soc_interface1_adapted_interface_adr = 29'd0;
+    breezekcu105soc_interface1_adapted_interface_cyc = 1'd0;
+    breezekcu105soc_interface1_adapted_interface_dat_w = 64'd0;
+    breezekcu105soc_interface1_adapted_interface_sel = 8'd0;
+    breezekcu105soc_interface1_adapted_interface_stb = 1'd0;
+    breezekcu105soc_interface1_adapted_interface_we = 1'd0;
+    breezekcu105soc_last_ar_aw_n_socbushandler_next_value0 = 1'd0;
+    breezekcu105soc_last_ar_aw_n_socbushandler_next_value_ce0 = 1'd0;
+    socbushandler0_next_state = 3'd0;
+    socbushandler0_next_state = socbushandler0_state;
+    case (socbushandler0_state)
+        1'd1: begin
+            breezekcu105soc_interface1_adapted_interface_stb = 1'd1;
+            breezekcu105soc_interface1_adapted_interface_cyc = 1'd1;
+            breezekcu105soc_interface1_adapted_interface_adr = breezekcu105soc_r_addr[31:3];
+            breezekcu105soc_interface1_adapted_interface_sel = 8'hff;
+            if (breezekcu105soc_interface1_adapted_interface_ack) begin
+                breezekcu105soc_breezetinydebugdma_mmio_bus_ar_ready = 1'd1;
+                breezekcu105soc_data_socbushandler_next_value1 = breezekcu105soc_interface1_adapted_interface_dat_r;
+                breezekcu105soc_data_socbushandler_next_value_ce1 = 1'd1;
+                socbushandler0_next_state = 2'd2;
+            end
+        end
+        2'd2: begin
+            breezekcu105soc_breezetinydebugdma_mmio_bus_r_valid = 1'd1;
+            breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_resp = 1'd0;
+            breezekcu105soc_breezetinydebugdma_mmio_bus_r_payload_data = breezekcu105soc_data;
+            if (breezekcu105soc_breezetinydebugdma_mmio_bus_r_ready) begin
+                socbushandler0_next_state = 1'd0;
+            end
+        end
+        2'd3: begin
+            breezekcu105soc_interface1_adapted_interface_stb = breezekcu105soc_breezetinydebugdma_mmio_bus_w_valid;
+            breezekcu105soc_interface1_adapted_interface_cyc = breezekcu105soc_breezetinydebugdma_mmio_bus_w_valid;
+            breezekcu105soc_interface1_adapted_interface_we = 1'd1;
+            breezekcu105soc_interface1_adapted_interface_adr = breezekcu105soc_w_addr[31:3];
+            breezekcu105soc_interface1_adapted_interface_sel = breezekcu105soc_breezetinydebugdma_mmio_bus_w_payload_strb;
+            breezekcu105soc_interface1_adapted_interface_dat_w = breezekcu105soc_breezetinydebugdma_mmio_bus_w_payload_data;
+            if (breezekcu105soc_interface1_adapted_interface_ack) begin
+                breezekcu105soc_breezetinydebugdma_mmio_bus_aw_ready = 1'd1;
+                breezekcu105soc_breezetinydebugdma_mmio_bus_w_ready = 1'd1;
+                socbushandler0_next_state = 3'd4;
+            end
+        end
+        3'd4: begin
+            breezekcu105soc_breezetinydebugdma_mmio_bus_b_valid = 1'd1;
+            breezekcu105soc_breezetinydebugdma_mmio_bus_b_payload_resp = 1'd0;
+            if (breezekcu105soc_breezetinydebugdma_mmio_bus_b_ready) begin
+                socbushandler0_next_state = 1'd0;
+            end

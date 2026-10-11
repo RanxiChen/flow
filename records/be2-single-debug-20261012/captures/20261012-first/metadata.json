@@ -1,0 +1,93 @@
+{
+  "host": "Alan",
+  "hardware_source_sha": "b8e62666de08752a96fd27b838a2fcd79536d3da",
+  "remote_cwd": "/home/chen/FUN/flow-runs/be2-single-debug-capture-20261012-second",
+  "target": "localhost:3121/xilinx_tcf/Digilent/210308A7B107",
+  "sample_clock_hz": 100000000,
+  "jtag_frequency_hz": 1000000,
+  "capture_times_cst": [
+    "2026-10-12 07:27:47",
+    "2026-10-12 07:29:12"
+  ],
+  "programming_evidence": "User reported programming, matching ILA detected; no bitstream readback",
+  "actions": [
+    "read-only ILA immediate trigger and upload",
+    "matching BIOS objdump and generated RTL read"
+  ],
+  "cpu_reset": false,
+  "program_device": false,
+  "files": {
+    "analysis.json": {
+      "bytes": 7367,
+      "sha256": "e897c2304b4141330f6fcfdc2092deb873af2faa602af0b35cfdcdf2dcf0d647"
+    },
+    "analyze.py": {
+      "bytes": 2822,
+      "sha256": "b3e8093bbd0e3b9f0c57887aef413f76790c2c7fe1518d94653e0a531b9743ae"
+    },
+    "axi-lite-bridge.rtl.txt": {
+      "bytes": 9553,
+      "sha256": "6292c95278f2949f08ae735c50a3e5f37bf140d3cd9526604afa83b24e7f8a2f"
+    },
+    "bios-isr.disasm": {
+      "bytes": 6300,
+      "sha256": "9837da8c275ea0233bf5f756ec2ca687a22ba8d4216afd5377c964ccbd1dd60c"
+    },
+    "bios-uart-isr.disasm": {
+      "bytes": 3546,
+      "sha256": "c2e4ef69f6ea513534f1dd5db5993ad9bac21c731c6fb88756f36fc6cd318b04"
+    },
+    "capture.console": {
+      "bytes": 3296,
+      "sha256": "3935ebbf6ec4419e3e37a6eb963a9a30dc239753959b8a92d825433e4b3138ca"
+    },
+    "capture.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "capture2.console": {
+      "bytes": 3296,
+      "sha256": "a6a84bfdd6f10823080673f7ea8a1bba60f09d5e3baf8a4dff495ba6f8a0fbf1"
+    },
+    "capture2.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "csr-bridge.rtl.txt": {
+      "bytes": 4381,
+      "sha256": "16d3e323b9e8689ebee8c0095023c4740a0ac24a3c372e32bcc5559ca01bd2d7"
+    },
+    "failed-launch.capture.console": {
+      "bytes": 915,
+      "sha256": "18e242025813429d4085c022f264a501a5987bb39e3c4784e55d412ad2275e5f"
+    },
+    "failed-launch.capture.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "snapshot1.csv.gz": {
+      "bytes": 63109,
+      "sha256": "226b3c60cc665bab80ecdd9070f2fd3195bcb556b11f846ff24c4434833ec0b6"
+    },
+    "snapshot1.ila": {
+      "bytes": 354225,
+      "sha256": "f80a89cf22d42fd2ebecdeaf4d1031e0d8f36bf2371d28a306cd48d1e0248778"
+    },
+    "snapshot1.vcd.gz": {
+      "bytes": 23291,
+      "sha256": "c514a304af401e1de065e5ee5d2767fa80dc89da5f887b9a7b92fe4cb9b62f48"
+    },
+    "snapshot2.csv.gz": {
+      "bytes": 63049,
+      "sha256": "2804068ac3a552e0c5d6afd4ce45e3327b1d6781cb1cc633b2e59e2cb4ccf7c5"
+    },
+    "snapshot2.ila": {
+      "bytes": 354219,
+      "sha256": "7221433f39b6728257e82f8f2e12d946674adce211d6297166b3279cc40996c9"
+    },
+    "snapshot2.vcd.gz": {
+      "bytes": 23298,
+      "sha256": "df7b9a270381ba9ab7358d2074852583cf6efec49767abf133f0c123e5a3bb8a"
+    }
+  }
+}

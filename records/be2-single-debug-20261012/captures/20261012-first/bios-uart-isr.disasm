@@ -1,0 +1,90 @@
+
+/home/chen/FUN/flow-runs/be2-single-debug-20261012/software/bios/bios.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000010013834 <uart_isr>:
+static inline unsigned long csr_read_simple(unsigned long a)
+{
+	unsigned long r;
+
+	csr_io_fence();
+	r = CSR_MMPTR(a);
+    10013834:	12001637          	lui	a2,0x12001
+    10013838:	120017b7          	lui	a5,0x12001
+    1001383c:	07d1                	addi	a5,a5,20 # 12001014 <_fstack+0xff1014>
+    1001383e:	4a18                	lw	a4,16(a2)
+    10013840:	439c                	lw	a5,0(a5)
+    10013842:	0641                	addi	a2,a2,16 # 12001010 <_fstack+0xff1010>
+void uart_isr(void)
+{
+	unsigned int stat, rx_produce_next;
+	char c;
+
+	stat = uart_ev_pending_read() & uart_ev_enable_read();
+    10013844:	8ff9                	and	a5,a5,a4
+
+	if(stat & UART_EV_RX) {
+    10013846:	0027f713          	andi	a4,a5,2
+    1001384a:	c70d                	beqz	a4,10013874 <uart_isr+0x40>
+    1001384c:	120015b7          	lui	a1,0x12001
+    10013850:	120018b7          	lui	a7,0x12001
+    10013854:	05a1                	addi	a1,a1,8 # 12001008 <_fstack+0xff1008>
+		while(!uart_rxempty_read()) {
+			c = uart_rxtx_read();
+			rx_produce_next = (rx_produce + 1) & UART_RINGBUFFER_MASK_RX;
+    10013856:	00fed517          	auipc	a0,0xfed
+    1001385a:	83650513          	addi	a0,a0,-1994 # 1100008c <rx_produce>
+			if(rx_produce_next != rx_consume) {
+    1001385e:	00fed317          	auipc	t1,0xfed
+    10013862:	82a30313          	addi	t1,t1,-2006 # 11000088 <rx_consume>
+				rx_buf[rx_produce] = c;
+    10013866:	00fede17          	auipc	t3,0xfed
+    1001386a:	0f2e0e13          	addi	t3,t3,242 # 11000958 <rx_buf>
+	CSR_MMPTR(a) = v;
+    1001386e:	4e89                	li	t4,2
+	r = CSR_MMPTR(a);
+    10013870:	4198                	lw	a4,0(a1)
+		while(!uart_rxempty_read()) {
+    10013872:	c331                	beqz	a4,100138b6 <uart_isr+0x82>
+				asm volatile("fence\n");
+			#endif
+		}
+	}
+
+	if(stat & UART_EV_TX) {
+    10013874:	8b85                	andi	a5,a5,1
+    10013876:	cf9d                	beqz	a5,100138b4 <uart_isr+0x80>
+    10013878:	120016b7          	lui	a3,0x12001
+		while((tx_consume != tx_produce) && !uart_txfull_read()) {
+    1001387c:	00fed797          	auipc	a5,0xfed
+    10013880:	80478793          	addi	a5,a5,-2044 # 11000080 <tx_consume>
+    10013884:	00fed597          	auipc	a1,0xfed
+    10013888:	80058593          	addi	a1,a1,-2048 # 11000084 <tx_produce>
+    1001388c:	12001537          	lui	a0,0x12001
+    10013890:	0691                	addi	a3,a3,4 # 12001004 <_fstack+0xff1004>
+			uart_rxtx_write(tx_buf[tx_consume]);
+    10013892:	00fed817          	auipc	a6,0xfed
+    10013896:	04680813          	addi	a6,a6,70 # 110008d8 <tx_buf>
+		while((tx_consume != tx_produce) && !uart_txfull_read()) {
+    1001389a:	4390                	lw	a2,0(a5)
+    1001389c:	4198                	lw	a4,0(a1)
+    1001389e:	00e60463          	beq	a2,a4,100138a6 <uart_isr+0x72>
+    100138a2:	4290                	lw	a2,0(a3)
+    100138a4:	ce15                	beqz	a2,100138e0 <uart_isr+0xac>
+			tx_consume = (tx_consume + 1) & UART_RINGBUFFER_MASK_TX;
+		}
+
+		if(tx_consume == tx_produce) {
+    100138a6:	439c                	lw	a5,0(a5)
+    100138a8:	00f71663          	bne	a4,a5,100138b4 <uart_isr+0x80>
+	CSR_MMPTR(a) = v;
+    100138ac:	120017b7          	lui	a5,0x12001
+    100138b0:	4709                	li	a4,2
+    100138b2:	cbd8                	sw	a4,20(a5)
+			uart_ev_enable_write(UART_EV_RX); /* Disable TX interrupt */
+		}
+	}
+}
+    100138b4:	8082                	ret
