@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# Build only. Never invoke a programmer or write an SD card.
-set -euo pipefail
+# Run on the selected, preflighted hardware host. Build only; no programmer/SD writes.
+set -Eeuo pipefail
 flow_root=$(cd -- "$(dirname -- "$0")/../.." && pwd)
-output=${1:?usage: build_sd.sh ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only]}
-mode=${2:---all}
+profile=${1:?usage: build_sd.sh four|single|single-rvv ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only]}
+output=${2:?absolute fresh output required}
+mode=${3:---all}
+case "$profile" in
+    four) rtl_profile=small; cpu=breeze;;
+    single) rtl_profile=single; cpu=breeze-tiny;;
+    single-rvv) rtl_profile=single-rvv; cpu=breeze-rvv;;
+    *) echo "Unknown product: $profile" >&2; exit 2;;
+esac
 case "$output" in /*) ;; *) echo 'Output must be absolute' >&2; exit 2;; esac
 case "$mode" in --all|--prepare-only|--vivado-only) ;; *) exit 2;; esac
-export PATH="/home/chen/miniforge3/envs/flow/bin:/home/chen/.sdkman/candidates/sbt/current/bin:/home/chen/RISCV/bin:$PATH"
-python=/home/chen/miniforge3/envs/flow/bin/python
 stage=prepare
 finish() {
     result=$?
@@ -24,39 +29,25 @@ if [[ "$mode" != --vivado-only ]]; then
     git -C "$flow_root" status --short > "$output/source-status.txt"
     git -C "$flow_root" diff --binary > "$output/source.patch"
     cp "$flow_root/config/breeze_mcu_platform.json" "$output/platform.json"
-    echo 'FLOW_STAGE directed hardware tests'
+    printf '%s\n' "$profile" > "$output/product-profile.txt"
     cd "$flow_root/design"
-    test_cache=${FLOW_TEST_CACHE:-}
-    if [[ -n "$test_cache" && -f "$test_cache/source-commit.txt" && ! -s "$test_cache/source-status.txt" ]] &&
-        rg -q '\[info\] All tests passed\.' "$test_cache/directed-tests.log" &&
-        git -C "$flow_root" diff --quiet "$(cat "$test_cache/source-commit.txt")" HEAD -- design config &&
-        git -C "$flow_root" diff --quiet HEAD -- design config; then
-        cp "$test_cache/directed-tests.log" "$output/directed-tests.log"
-        cp "$test_cache/source-commit.txt" "$output/directed-source-commit.txt"
-        echo "Reused passing hardware tests: identical tracked design/config, cache=$test_cache"
-    else
-        sbt 'testOnly flow.cache.BreezeCoherentDmaSpec flow.cache.BreezeL2HomeSpec flow.cache.BreezeL2HomeSmallSpec flow.cache.BreezeDCacheCoherentSpec flow.platform.BreezeLinuxPmaSpec' \
-            2>&1 | tee "$output/directed-tests.log"
-        cp "$output/source-commit.txt" "$output/directed-source-commit.txt"
-    fi
-    echo 'FLOW_STAGE generate single/coherent-dma FPGA RTL and BIOS'
+    "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile gshare linux coherent-dma" \
+        2>&1 | tee "$output/rtl-generation.log"
     cd "$flow_root"
-    "$python" fpga/kcu105/target.py --cpu-type breeze-tiny --debug --with-sdcard \
-        --sys-clk-freq 100000000 --output-dir "$output" 2>&1 | tee "$output/prepare.log"
-    cp design/build/rtl/cluster/single/gshare/linux/fpga-debug/coherent-dma/cluster-profile.txt "$output/cluster-profile.txt"
+    "${PYTHON:-python3}" fpga/kcu105/target.py --cpu-type "$cpu" --with-sdcard \
+        --sys-clk-freq 100000000 --vivado-threads "${VIVADO_THREADS:-4}" \
+        --output-dir "$output" 2>&1 | tee "$output/prepare.log"
+    cp "design/build/rtl/axi-cluster/$rtl_profile/gshare/linux/production/cpu/coherent-dma/cluster-profile.txt" \
+        "$output/cluster-profile.txt"
     touch "$output/prepared"
     echo 0 > "$output/prepare-exit-code.txt"
     [[ "$mode" == --prepare-only ]] && exit 0
 fi
 test -f "$output/prepared"
+test "$(cat "$output/product-profile.txt")" = "$profile"
 stage=vivado
 trap finish EXIT
-echo 'FLOW_STAGE Vivado synthesis, implementation and bitstream'
-set +u
-source /home/chen/Tool/FPGA/Vivado/2022.2/settings64.sh
-set -u
 cd "$output/gateware"
-bash build_xilinx_kcu105.sh
+bash build_xilinx_kcu105.sh 2>&1 | tee "$output/vivado.log"
 test -s xilinx_kcu105.bit
-test -s xilinx_kcu105.ltx
-sha256sum xilinx_kcu105.bit xilinx_kcu105.ltx > "$output/gateware-sha256.txt"
+sha256sum xilinx_kcu105.bit ../software/bios/bios.bin > "$output/product-sha256.txt"
