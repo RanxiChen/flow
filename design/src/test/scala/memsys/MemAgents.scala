@@ -53,6 +53,7 @@ object CoreOp {
 
 class CoreTxn(val id: Int, val op: CoreOp, var fired: Long) {
   val firstFired = fired
+  var solo = false
   var respCycle = -1L
   var kind = ""
   var value: BigInt = 0
@@ -191,13 +192,16 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else if(rawReplay) "Replay" else "Exc"
       if(replayNow) {
         replayAttempts += ((now,t.id,r.replayReason.peek().litValue.toInt))
-        val reissue=Vector(t) ++ inPipe.toVector ++ retries.toVector
+        // A dequeued-but-unaccepted retry is still the same logical item.
+        // Preserve it before the remaining retry queue; never clone it as
+        // a fresh CoreOp/history entry after another older Replay.
+        val reissue=Vector(t) ++ inPipe.toVector ++ presentingRetry.toVector ++ retries.toVector
         inPipe.clear(); retries.clear(); retries.enqueueAll(reissue)
-        if(presenting.nonEmpty) {
+        if(presenting.nonEmpty && presentingRetry.isEmpty) {
           val rest=pending.toVector
           pending.clear(); pending.enqueueAll(presenting.toVector ++ rest)
-          presenting=None; presentingRetry=None
         }
+        presenting=None; presentingRetry=None
         retryWake=true; armSolo=true
         // MMIO recognition itself needs no resource wake event.
         if(r.replayReason.peek().litValue == 4) retryWake=false
@@ -230,7 +234,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     if (fired) {
       val t = presentingRetry.getOrElse(new CoreTxn(nextId, presenting.get, now))
       if(presentingRetry.isEmpty) { nextId+=1; history+=t }
-      t.fired=now; inPipe.enqueue(t); presenting=None; presentingRetry=None
+      t.fired=now; t.solo=presentingSolo; inPipe.enqueue(t); presenting=None; presentingRetry=None
       if(presentingSolo) soloActive=true
       progress()
     }
@@ -240,7 +244,8 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       val t = awaitingLate.dequeue()
       t.lateCycle = now
       val err = core.late.bits.error.peek().litToBoolean
-      check(core.late.bits.rd.idx.peek().litValue == t.op.rd, s"late rd for $t")
+      val actualRd=core.late.bits.rd.idx.peek().litValue
+      check(actualRd == t.op.rd, s"late rd $actualRd expected ${t.op.rd} for $t")
       check(!core.late.bits.rd.isFp.peek().litToBoolean, s"late isFp for $t")
       if (t.op.refillError) check(err, s"$t: refill error not reported on late")
       else {
@@ -259,6 +264,14 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
 
   private def respond(t: CoreTxn, kind: String, data: BigInt, cause: BigInt, tval: BigInt): Unit = {
     t.kind = kind
+    if (t.solo && t.op.refillError) {
+      val expectedCause=if(enumIs(t.op.op,L1DOp.Load) || enumIs(t.op.op,L1DOp.LR)) 5 else 7
+      check(kind=="Exc", s"$t: solo refill error must be precise Exc, got $kind")
+      check(cause==expectedCause, s"$t: solo refill cause $cause expected $expectedCause")
+      check(tval==t.op.addr, s"$t: solo refill tval ${hex(tval)}")
+      t.done=true
+      return
+    }
     if (oracle.nonEmpty && t.op.expectExc.isEmpty && !t.op.device) return respondShared(oracle.get, t, kind, data)
     t.op.expectExc match {
       case Some(c) =>
