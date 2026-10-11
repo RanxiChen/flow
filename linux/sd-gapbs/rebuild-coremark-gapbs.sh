@@ -18,13 +18,15 @@ printf '%s  %s\n' 99c5a6d63af85a281b4e4d6ccb522c446653c435dfec9455ad73ef9e71f28b
 sha256sum "$archive" "$sdk/images/rootfs.cpio" "$sdk/images/fw_jump.bin" \
   "$kernel_base/kernel-config.txt" "$kernel_base/images/Image" > "$out/input-sha256.txt"
 tar -xzf "$archive" -C "$out"
-cc="$sdk/host/bin/riscv64-buildroot-linux-musl-gcc"
+cc=${COREMARK_CC:-$sdk/host/bin/riscv64-buildroot-linux-musl-gcc}
+readelf=${COREMARK_READELF:-$sdk/host/bin/riscv64-buildroot-linux-musl-readelf}
+link_flags=${COREMARK_LINK_FLAGS:--lrt}
 flags='-O3 -march=rv64imafdc -mabi=lp64d'
 "$cc" --version > "$out/coremark-build-info.txt"
-printf 'CoreMark=1.01\nPORT_DIR=linux64\nPORT_CFLAGS=%s\nRuntime=NOT_RUN\n' "$flags" >> "$out/coremark-build-info.txt"
+printf 'CoreMark=1.01\nCC=%s\nPORT_DIR=linux64\nPORT_CFLAGS=%s\nLFLAGS_END=%s\nRuntime=NOT_RUN\n' "$cc" "$flags" "$link_flags" >> "$out/coremark-build-info.txt"
 make -C "$out/coremark-1.01" -j"${JOBS:-2}" CC="$cc" \
-  PORT_CFLAGS="$flags" PORT_DIR=linux64 EXE= link
-"$sdk/host/bin/riscv64-buildroot-linux-musl-readelf" -h -A -l -d \
+  PORT_CFLAGS="$flags" LFLAGS_END="$link_flags" PORT_DIR=linux64 EXE= link
+"$readelf" -h -A -l -d \
   "$out/coremark-1.01/coremark" > "$out/coremark-elf.txt"
 python3 "$repo/linux/sd-gapbs/add-coremark-initramfs.py" \
   --base "$sdk/images/rootfs.cpio" --coremark "$out/coremark-1.01/coremark" \
