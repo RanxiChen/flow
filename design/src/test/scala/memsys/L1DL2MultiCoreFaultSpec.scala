@@ -629,11 +629,19 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
       for (_ <- 0 until opsPerCore / 16) l1is(c).pending += ClientReq.read(pick(shared), check = false)
       for (_ <- 0 until opsPerCore / 200) l1is(c).pending += ClientReq(ReqOp.Read, pick(errLines), expectError = true)
     }
-    script.perCycle = _ => for (c <- 0 until n) {
+    script.perCycle = cycle => {
+      if (cycle % 10000 == 0) {
+        println(s"FAULT_PROGRESS cycle=$cycle remaining=${feeders.map(_.remaining).mkString("/")} " +
+          s"unfinished=${cores.map(_.history.count(t => !t.done && !t.killed)).mkString("/")}")
+        cores.foreach(c => println(c.describe))
+        feeders.foreach(f => println(f.describe))
+      }
+      for (c <- 0 until n) {
       cores(c).trapClear = rng.nextInt(500) == 0
       if (rng.nextInt(100) == 0 && ptws(c).pending.size < 2) {
         if (rng.nextInt(10) == 0) ptws(c).read(pick(errLines) << 5, expectFault = true)
         else ptws(c).read(pick(words))
+      }
       }
     }
     mem.arReadyProb = 0.7; mem.awReadyProb = 0.7; mem.wReadyProb = 0.8; mem.rValidProb = 0.8
