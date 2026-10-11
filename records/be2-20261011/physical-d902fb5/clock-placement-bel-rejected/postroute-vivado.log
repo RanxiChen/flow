@@ -1,0 +1,104 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1692.434 ; gain = 0.000 ; free physical = 29208 ; free virtual = 53326
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.58 ; elapsed = 00:00:00.58 . Memory (MB): peak = 2569.016 ; gain = 0.000 ; free physical = 25598 ; free virtual = 51556
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 21 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.953 ; gain = 257.812 ; free physical = 23886 ; free virtual = 49845
+Restored from archive | CPU: 10.280000 secs | Memory: 252.983635 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.953 ; gain = 257.812 ; free physical = 23886 ; free virtual = 49845
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3711.547 ; gain = 0.000 ; free physical = 23760 ; free virtual = 49720
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 111a25d11
+----- Checksum: PlaceDB: 480a1ccd ShapeSum: 418bf1ed RouteDB: 880c4e57 
+open_checkpoint: Time (s): cpu = 00:00:55 ; elapsed = 00:00:56 . Memory (MB): peak = 3711.547 ; gain = 2019.113 ; free physical = 23366 ; free virtual = 49325
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:55 ; elapsed = 00:00:17 . Memory (MB): peak = 4256.113 ; gain = 544.566 ; free physical = 22506 ; free virtual = 48466
+# report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:29 ; elapsed = 00:00:12 . Memory (MB): peak = 4256.113 ; gain = 0.000 ; free physical = 22538 ; free virtual = 48498
+# set fast_cell [get_cells BUFGCE]
+# set slow_cell [get_cells BUFGCE_DIV]
+# if {[llength $fast_cell] != 1 || [llength $slow_cell] != 1} {error "DDR clock buffer selection incomplete"}
+# set fast_input [get_nets -of_objects [get_pins BUFGCE/I]]
+# set slow_input [get_nets -of_objects [get_pins BUFGCE_DIV/I]]
+# if {$fast_input ne $slow_input} {error "DDR buffers do not have the expected common source"}
+# set fast_net [get_nets -of_objects [get_pins BUFGCE/O]]
+# set slow_net [get_nets -of_objects [get_pins BUFGCE_DIV/O]]
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+# set fast_clock [get_clocks -of_objects [get_pins BUFGCE/O]]
+# if {[llength $fast_clock] != 1 || [get_property PERIOD $fast_clock] != 2.5} {error "Expected unchanged 400MHz DDR clock"}
+# set audit [open clock-routing-properties.txt w]
+# puts $audit "FAST_INPUT=$fast_input SLOW_INPUT=$slow_input FAST_NET=$fast_net SLOW_NET=$slow_net"
+# foreach cell [concat $fast_cell $slow_cell] {puts $audit "CELL=$cell LOC=[get_property LOC $cell]"}
+# foreach net [concat $fast_net $slow_net] {puts $audit "BEFORE NET=$net CLOCK_ROOT=[get_property CLOCK_ROOT $net] USER_CLOCK_ROOT=[get_property USER_CLOCK_ROOT $net] GROUP=[get_property CLOCK_DELAY_GROUP $net]"}
+# set common_root X1Y2
+# if {$common_root eq "" || [llength [get_clock_regions $common_root]] != 1} {error "Missing existing system clock root"}
+# puts $audit "COMMON_ROOT=$common_root measured in original default d902 clock audit (both clocks X1Y2); no frequency/waveform/skew relaxation"
+# set fixed_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != ""}]
+# if {[llength $fixed_cells] < 100000} {error "Unexpectedly incomplete primitive placement selection"}
+# set loc_before [get_property LOC $fixed_cells]
+# set bel_before [get_property BEL $fixed_cells]
+# set_property IS_LOC_FIXED true $fixed_cells
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+# set_property IS_BEL_FIXED true $fixed_cells
+ERROR: [Vivado 12-1405] Cannot mark the 'bel' location of instances fixed, 'Instance BreezeRvvAxi/cluster/backend/fpRegFile/content_ext/Memory_reg_r1_0_31_0_13 has conflicting location: (SLICE_X69Y237 FIXED, SLICEM.H5LUT FIXED) vs (SLICE_X69Y237 FIXED, SLICEM.A5LUT FIXED)'
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 00:34:13 2026...

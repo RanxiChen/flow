@@ -41,7 +41,7 @@ if 'CLOCK_DELAY_GROUP' in tcl.read_text():
  record['timing_constraints_unchanged']=True
  if 'place_design -directive Quick' in tcl.read_text():
   record['directives']=['freeze primitive LOC/BEL','unroute all','place unplace','place Quick no_psip no_bufg_opt','NoTimingRelaxation','tns_cleanup']
-  record['physical_cell_constraint']='existing primitive LOC/BEL fixed; actual equality and placed common clock roots required before routing'
+  record['physical_cell_constraint']=('all primitive LOC fixed, simple LUT/FF BEL fixed; RAM/SRL internal BEL packing allowed' if 'set bel_cells' in tcl.read_text() else 'all primitive LOC/BEL fixed') + '; actual equality and placed common clock roots required before routing'
 prior=original/'physical-candidate.json'
 if prior.is_file(): record['parent_candidate']=json.loads(prior.read_text())
 (dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')

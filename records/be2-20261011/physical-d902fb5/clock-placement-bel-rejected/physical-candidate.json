@@ -1,0 +1,71 @@
+{
+  "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd",
+  "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+  "input_checkpoint_sha256": "5ee1ae4fa82757f08d65be9316b29ad137bf61274c756723145fd79df67ec9d1",
+  "script_sha256": "365a8c6c32fcbd773a6d6c3743d0fd82f7a5537e6ceea8362ea230963dd0dd54",
+  "host": "Alan",
+  "clock_hz": 100000000,
+  "vivado": "2022.2",
+  "maxThreads": 4,
+  "affinity": "0-3",
+  "nice": 10,
+  "directives": [
+    "freeze primitive LOC/BEL",
+    "unroute all",
+    "place unplace",
+    "place Quick no_psip no_bufg_opt",
+    "NoTimingRelaxation",
+    "tns_cleanup"
+  ],
+  "constraints_unchanged": false,
+  "new_timing_exceptions": false,
+  "start_utc": "2026-10-11T16:32:06.877598+00:00",
+  "board": "NOT_RUN",
+  "physical_clock_routing_property": "CLOCK_DELAY_GROUP be2_ddr_serdes on BUFGCE/O and BUFGCE_DIV/O nets; USER_CLOCK_ROOT both outputs set to existing original default DCP measured common X1Y2 CLOCK_ROOT",
+  "timing_constraints_unchanged": true,
+  "physical_cell_constraint": "existing primitive LOC/BEL fixed; actual equality and placed common clock roots required before routing",
+  "parent_candidate": {
+    "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd",
+    "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+    "input_checkpoint_sha256": "76e7072593be3e0152959a1a626452ab8e0bd1b1ee4b776ec612278b07ce4a30",
+    "script_sha256": "b8de5cbaed04e7d9a43c25eac546cf20dc8271280ba06db1b60a969244459761",
+    "host": "Alan",
+    "clock_hz": 100000000,
+    "vivado": "2022.2",
+    "maxThreads": 4,
+    "affinity": "0-3",
+    "nice": 10,
+    "directives": [
+      "unroute preserving placement for pre-route replication",
+      "force_replication_on_nets on failing register startpoints",
+      "AggressiveExplore",
+      "NoTimingRelaxation"
+    ],
+    "constraints_unchanged": true,
+    "new_timing_exceptions": false,
+    "start_utc": "2026-10-11T15:34:37.461237+00:00",
+    "board": "NOT_RUN",
+    "netlist_attribute_change": "DONT_TOUCH cleared only on selected failing register drivers/nets",
+    "parent_candidate": {
+      "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-sd",
+      "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+      "input_checkpoint_sha256": "22c888da79de2c08a9fe52acb469de0e1aa8e6a77a836e66107fe3c68d11e778",
+      "script_sha256": "f2b4334097e1216700c99cbd875f745671fce8b1b6d78a4cedc8a1d7aa783578",
+      "host": "Alan",
+      "clock_hz": 100000000,
+      "vivado": "2022.2",
+      "maxThreads": 4,
+      "affinity": "0-3",
+      "nice": 10,
+      "directives": [
+        "AggressiveExplore",
+        "NoTimingRelaxation",
+        "tns_cleanup"
+      ],
+      "constraints_unchanged": true,
+      "new_timing_exceptions": false,
+      "start_utc": "2026-10-11T15:07:35.368347+00:00",
+      "board": "NOT_RUN"
+    }
+  }
+}
