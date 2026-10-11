@@ -1,0 +1,83 @@
+{
+  "source_sha": "b8e62666de08752a96fd27b838a2fcd79536d3da",
+  "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "source_dirty": false,
+  "source_worktree": "/home/chen/FUN/flow-be2-single-debug-20261012",
+  "host": "Alan",
+  "target": "xcku040-ffva1156-2-e",
+  "clock_hz": 100000000,
+  "profile": "single",
+  "tandem": true,
+  "debug": true,
+  "ILA": "Xilinx ila6.2; JTAG via native debug hub",
+  "ILA_width": 1896,
+  "ILA_probes": 161,
+  "source_snapshot_files_verified": 129,
+  "bios_matches_rom": true,
+  "functional_config_matches_single": true,
+  "golden_changed": false,
+  "new_user_timing_exceptions": false,
+  "vendor_debug_constraints": "Vivado ILA/debug hub generated IP constraints",
+  "stage": "COMPLETED",
+  "board": "NOT_CAPTURED",
+  "files": {
+    "ila-probes.json": {
+      "bytes": 15564,
+      "sha256": "8b625a5536567122e8277bd39634828b22644033464e7a00d4ea28722375b495"
+    },
+    "cluster-profile.txt": {
+      "bytes": 327,
+      "sha256": "a8451d853514137cd9e5e41d656be4c41134dba626d2b59d0f2be2cc989e69f4"
+    },
+    "csr.json": {
+      "bytes": 14827,
+      "sha256": "222155e34feab77ddf20a6c346fde704269409883485c1f9534312d4d87389a7"
+    },
+    "gateware/xilinx_kcu105.v": {
+      "bytes": 1764474,
+      "sha256": "3b5cf26a7b6637ce767ac8b226a377d1857cff11646672f80518a991b3a68754"
+    },
+    "gateware/xilinx_kcu105.tcl": {
+      "bytes": 42855,
+      "sha256": "b555c4bb1316b215e7cd42ab287a4a727a860178eefbf3907006e97c136792e1"
+    },
+    "gateware/xilinx_kcu105.xdc": {
+      "bytes": 33934,
+      "sha256": "41abd6e4f78d20dabcda6f1f65c6c9320d767639b9b46e27859867ee70c1558e"
+    },
+    "software/bios/bios.bin": {
+      "bytes": 40900,
+      "sha256": "95fecc2e1138e9879d9beeef572ac8c3fe016471ada8e7e052423571a0b0fa7e"
+    },
+    "gateware/xilinx_kcu105.bit": {
+      "bytes": 16007026,
+      "sha256": "1549f11d09986ccc6454162bc8c66f6de995a4afac84a4f0495c91ae46a20480"
+    },
+    "gateware/xilinx_kcu105.ltx": {
+      "bytes": 445790,
+      "sha256": "22ce77df65a82d95cbb8b454388cf3147912ab108ae36e515a29cd4bb835e866"
+    },
+    "gateware/ila-bus-skew.rpt": {
+      "bytes": 72534,
+      "sha256": "71ed9c6f52ac2302b4107200b529dbcc7b7767e1ecf9935cb448ada8a9bedb79"
+    }
+  },
+  "timing_ns": {
+    "WNS": 0.064,
+    "TNS": 0.0,
+    "setup_failures": 0.0,
+    "setup_endpoints": 172336.0,
+    "WHS": 0.004,
+    "THS": 0.0,
+    "hold_failures": 0.0,
+    "hold_endpoints": 172309.0,
+    "WPWS": 0.103,
+    "TPWS": 0.0,
+    "pulse_failures": 0.0,
+    "pulse_endpoints": 72730.0
+  },
+  "debug_bus_skew": {
+    "constraints": 4,
+    "minimum_slack_ns": 9.326
+  }
+}

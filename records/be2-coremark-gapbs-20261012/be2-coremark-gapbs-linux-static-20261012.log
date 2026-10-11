@@ -1,0 +1,101 @@
+/home/chen/FUN/flow-linux-work/buildroot/dl/coremark/coremark-1.01.tar.gz: OK
+make: Entering directory '/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/coremark-1.01'
+/usr/bin/riscv64-linux-gnu-gcc -O3 -march=rv64imafdc -mabi=lp64d -Ilinux64 -I. -DFLAGS_STR=\""-O3 -march=rv64imafdc -mabi=lp64d   -static -lrt"\" -DITERATIONS=0  core_list_join.c core_main.c core_matrix.c core_state.c core_util.c linux64/core_portme.c -o ./coremark -static -lrt
+core_main.c: In function ‘main’:
+core_main.c:287:41: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘unsigned int’ [-Wformat=]
+  287 |         ee_printf("CoreMark Size    : %lu\n",(ee_u32)results[0].size);
+      |                                       ~~^    ~~~~~~~~~~~~~~~~~~~~~~~
+      |                                         |    |
+      |                                         |    unsigned int
+      |                                         long unsigned int
+      |                                       %u
+core_main.c:288:41: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘unsigned int’ [-Wformat=]
+  288 |         ee_printf("Total ticks      : %lu\n",(ee_u32)total_time);
+      |                                       ~~^    ~~~~~~~~~~~~~~~~~~
+      |                                         |    |
+      |                                         |    unsigned int
+      |                                         long unsigned int
+      |                                       %u
+core_main.c:303:41: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘unsigned int’ [-Wformat=]
+  303 |         ee_printf("Iterations       : %lu\n",(ee_u32)default_num_contexts*results[0].iterations);
+      |                                       ~~^    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                         |                                |
+      |                                         long unsigned int                unsigned int
+      |                                       %u
+Link performed along with compile
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/coremark-1.01'
+{
+  "base_rootfs_sha256": "74ebde8cf79ce5caf0e418efdfc3a949d4272d73c769ac87e9d3be3f399b9282",
+  "new_rootfs_sha256": "e382ab7d23ce2fb21fe5f61fcc8416b0d9128e4f3f64eb333927edd1b3a2df6b",
+  "coremark_sha256": "f35d2eab5beafdcc2c7ad3ba4ab3189eaa1f3523ba29073df18165c179994be2",
+  "GAPBS_unchanged": {
+    "bc": "8dbc7ddc54cbe2f38c4deb3412f047569b13b367e480e090827a7abf1014e274",
+    "bfs": "7597fe74ff75328bd62b56c5419f7c15ac3051fabbc01080b5b4469e8c13c0c7",
+    "cc": "4713c763716ba5f7f9a94e2175abef0ed43c654074ddd2e7240499bc2a75db23",
+    "cc_sv": "91d7b08866721a9bd43e32261da59a923f7b56e2c96217c3a886ae7c3694fd39",
+    "pr": "d98712a73d4a06395112d8c1a7652be6a1348f3d8813c34ff63f2925b6708fc5",
+    "pr_spmv": "f783948c2502159e2d995ebce0e3430fbef7c057ea7a3fe36b4a00b650c7d6ec",
+    "sssp": "971cd9ba07d3c860b4d4013735a7e72e140d224e0da5ad7d2abcefb2bced1d9f",
+    "tc": "e9f874fdf552d887df4d05c9e0d19342832efaf723f6bc164863e8ef9ae9e44e",
+    "converter": "8f0ea99dc86db51a36e1c4ac5f9d09fbd0f6b2345123da457133e7bac5906595"
+  },
+  "existing_archive_entries_preserved": 1386,
+  "added_files": [
+    "usr/bin/coremark",
+    "usr/share/licenses/coremark/LICENSE.md",
+    "usr/share/coremark/build-info.txt"
+  ],
+  "target_runtime": "NOT_RUN"
+}
+make: Entering directory '/home/chen/FUN/flow-runs/be2-4e1f86d-linux/linux-6.18.7'
+make[1]: 进入目录“/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/kernel”
+  GEN     Makefile
+#
+# No change to .config
+#
+make[1]: 离开目录“/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/kernel”
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-4e1f86d-linux/linux-6.18.7'
+make: Entering directory '/home/chen/FUN/flow-runs/be2-4e1f86d-linux/linux-6.18.7'
+make[1]: 进入目录“/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/kernel”
+  SYNC    include/config/auto.conf.cmd
+  GEN     Makefile
+  GEN     Makefile
+  CALL    /home/chen/FUN/flow-runs/be2-4e1f86d-linux/linux-6.18.7/scripts/checksyscalls.sh
+  GZIP    usr/initramfs_inc_data
+  UPD     kernel/config_data
+  GZIP    kernel/config_data.gz
+  CC      kernel/configs.o
+  AR      kernel/built-in.a
+  AS      usr/initramfs_data.o
+  AR      usr/built-in.a
+  AR      built-in.a
+  AR      vmlinux.a
+  LD      vmlinux.o
+  MODPOST vmlinux.symvers
+  UPD     include/generated/utsversion.h
+  CC      init/version-timestamp.o
+  KSYMS   .tmp_vmlinux0.kallsyms.S
+  AS      .tmp_vmlinux0.kallsyms.o
+  LD      .tmp_vmlinux1
+  NM      .tmp_vmlinux1.syms
+  KSYMS   .tmp_vmlinux1.kallsyms.S
+  AS      .tmp_vmlinux1.kallsyms.o
+  LD      .tmp_vmlinux2
+  NM      .tmp_vmlinux2.syms
+  KSYMS   .tmp_vmlinux2.kallsyms.S
+  AS      .tmp_vmlinux2.kallsyms.o
+  LD      vmlinux.unstripped
+  NM      System.map
+  SORTTAB vmlinux.unstripped
+  OBJCOPY vmlinux
+  GEN     modules.builtin.modinfo
+  GEN     modules.builtin
+  OBJCOPY arch/riscv/boot/Image
+  Kernel: arch/riscv/boot/Image is ready
+make[1]: 离开目录“/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/kernel”
+make: Leaving directory '/home/chen/FUN/flow-runs/be2-4e1f86d-linux/linux-6.18.7'
+/home/chen/FUN/flow-linux-work/buildroot/dl/coremark/coremark-1.01.tar.gz: OK
+/home/chen/FUN/flow/build/sd-gapbs/output/images/rootfs.cpio: OK
+/home/chen/FUN/flow/build/sd-gapbs/output/images/fw_jump.bin: OK
+/home/chen/FUN/flow-runs/be2-4e1f86d-linux/kernel-config.txt: OK
+/home/chen/FUN/flow-runs/be2-4e1f86d-linux/images/Image: OK

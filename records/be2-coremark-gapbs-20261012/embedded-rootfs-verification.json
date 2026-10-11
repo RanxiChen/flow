@@ -1,0 +1,5 @@
+{
+  "embedded_archive_equals_new_rootfs": true,
+  "rootfs_sha256": "e382ab7d23ce2fb21fe5f61fcc8416b0d9128e4f3f64eb333927edd1b3a2df6b",
+  "Image_sha256": "524dfe764cef92e90dfe2634dbbd87e2e2c3ee71ca8052e92415cba7adb74cb7"
+}

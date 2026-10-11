@@ -72,6 +72,14 @@ for name in ('ila-probes.json', 'cluster-profile.txt', 'csr.json',
     binding['files'][name] = digest(hardware / name)
 if not args.prepared_only:
     binding['timing_ns'] = timing_summary(gateware / 'routed-generation-gate.rpt')
+    skew_report = (gateware / 'ila-bus-skew.rpt').read_text()
+    summary = skew_report.split('1. Bus Skew Report Summary\n', 1)[1].split(
+        '\n2. Bus Skew Report Per Constraint', 1)[0]
+    skew = re.findall(r'^\s*(?:Fast|Slow)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(-?\d+\.\d+)\s*$',
+                      summary, re.MULTILINE)
+    assert skew and min(float(row[2]) for row in skew) >= 0
+    binding['debug_bus_skew'] = {'constraints': len(skew),
+                                 'minimum_slack_ns': min(float(row[2]) for row in skew)}
     text = (gateware / 'xilinx_kcu105_route_status.rpt').read_text()
     match = re.search(r'# of nets with routing errors\.+\s*:\s*(\d+)', text)
     assert match and int(match[1]) == 0
@@ -80,6 +88,7 @@ if not args.prepared_only:
     for name in ('gateware/xilinx_kcu105.bit', 'gateware/xilinx_kcu105.ltx'):
         binding['files'][name] = digest(hardware / name)
         assert binding['files'][name]['bytes'] > 0
+    binding['files']['gateware/ila-bus-skew.rpt'] = digest(gateware / 'ila-bus-skew.rpt')
 out = hardware / ('prepared-audit.json' if args.prepared_only else 'debug-product-binding.json')
 out.write_text(json.dumps(binding, indent=2) + '\n')
 print(out)

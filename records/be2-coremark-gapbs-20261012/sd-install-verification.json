@@ -1,0 +1,46 @@
+{
+    "disk":  1,
+    "partition":  1,
+    "drive":  "E:",
+    "label":  "BREEZEBOOT",
+    "filesystem":  "FAT32",
+    "backup":  "E:\\BE2-backup-20261011-231240",
+    "backup_sha256":  {
+                          "Image":  "451bb0f3ac36fe77236475a14632365d34d77f06144b2a8a872afacec5c7bda1",
+                          "flow-kcu105-tiny-sd.dtb":  "bcb9447b5981937402bcacbac471d67eac7433454e6cd54614a751987703db0f",
+                          "boot.json":  "d7c05591444e9b110d0226e2deff88764afdc72d9a649b5e05d74524550e69b6",
+                          "fw_jump.bin":  "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41",
+                          "flow-kcu105-tiny.dtb":  "ac76fc3af12fa6552061cb6a895d9168bdff6616ab9ad5b25afb3177ce581db0",
+                          "serial-handoff.bin":  "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0"
+                      },
+    "files":  {
+                  "Image":  {
+                                "bytes":  44165632,
+                                "sha256":  "524dfe764cef92e90dfe2634dbbd87e2e2c3ee71ca8052e92415cba7adb74cb7",
+                                "crc32":  "39db0eeb"
+                            },
+                  "flow-be2-single.dtb":  {
+                                              "bytes":  2486,
+                                              "sha256":  "431c96287ff48ba0d9737dc6013068281abf4905a96075418465642de7e70d94",
+                                              "crc32":  "577ec503"
+                                          },
+                  "fw_jump.bin":  {
+                                      "bytes":  277856,
+                                      "sha256":  "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41",
+                                      "crc32":  "70d4b447"
+                                  },
+                  "serial-handoff.bin":  {
+                                             "bytes":  48,
+                                             "sha256":  "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0",
+                                             "crc32":  "fc5a5e71"
+                                         },
+                  "boot.json":  {
+                                    "bytes":  160,
+                                    "sha256":  "993fc36036b38b18c9018b1902c053ab24405207632949c4ce55624a0e795055",
+                                    "crc32":  "5d095d89"
+                                }
+              },
+    "sha256_errors":  0,
+    "block_formatting":  false,
+    "utc":  "2026-10-11T23:12:52.2270671Z"
+}

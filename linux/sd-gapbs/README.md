@@ -47,3 +47,10 @@ This verifies the pinned release archive, compiles the Linux binary, appends
 a newc archive to the unchanged GAPBS cpio, checks every original file's data
 and all nine GAPBS ELF hashes, then relinks a separate kernel build output.
 The three BE2 from-source Buildroot profiles also enable Flow CoreMark.
+
+The 2026-10-12 single-hart debug SD image preserves the old musl GAPBS binaries
+and adds a static GNU/Linux CoreMark because the old SDK's link objects/libraries
+were missing. Its exact rebuild uses `COREMARK_CC=/usr/bin/riscv64-linux-gnu-gcc`,
+`COREMARK_READELF=/usr/bin/riscv64-linux-gnu-readelf` and
+`COREMARK_LINK_FLAGS='-static -lrt'` with the command above. Kernel compilation
+still uses the SDK compiler. Record this compiler/libc difference in comparisons.

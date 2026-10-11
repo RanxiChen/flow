@@ -1,0 +1,11 @@
+riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+CoreMark=1.01
+CC=/usr/bin/riscv64-linux-gnu-gcc
+PORT_DIR=linux64
+PORT_CFLAGS=-O3 -march=rv64imafdc -mabi=lp64d
+LFLAGS_END=-static -lrt
+Runtime=NOT_RUN

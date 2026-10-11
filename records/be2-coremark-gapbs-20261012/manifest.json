@@ -1,0 +1,27 @@
+{
+  "Image": {
+    "bytes": 44165632,
+    "sha256": "524dfe764cef92e90dfe2634dbbd87e2e2c3ee71ca8052e92415cba7adb74cb7",
+    "crc32": "39db0eeb"
+  },
+  "flow-be2-single.dtb": {
+    "bytes": 2486,
+    "sha256": "431c96287ff48ba0d9737dc6013068281abf4905a96075418465642de7e70d94",
+    "crc32": "577ec503"
+  },
+  "fw_jump.bin": {
+    "bytes": 277856,
+    "sha256": "fa96fc4b7b7f56c2110f713c3268db62eb90951f0fec0f56e81b811007fefd41",
+    "crc32": "70d4b447"
+  },
+  "serial-handoff.bin": {
+    "bytes": 48,
+    "sha256": "f50cfa48ca202fb86d920476155c717d1971b5a490a29253cba0ac05a80f6ea0",
+    "crc32": "fc5a5e71"
+  },
+  "boot.json": {
+    "bytes": 160,
+    "sha256": "993fc36036b38b18c9018b1902c053ab24405207632949c4ce55624a0e795055",
+    "crc32": "5d095d89"
+  }
+}

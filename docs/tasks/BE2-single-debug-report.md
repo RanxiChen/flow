@@ -1,5 +1,9 @@
 # BE2 普通单核启动调试版
 
+最终调试硬件已生成：源 `b8e62666de08752a96fd27b838a2fcd79536d3da`，Alan目录 `/home/chen/FUN/flow-runs/be2-single-debug-20261012/gateware/`，文件 `xilinx_kcu105.bit` 与匹配 `xilinx_kcu105.ltx`；本地副本为 `build/be2-products/single-debug-20261012/`。Vivado/build runner exit0，100MHz最终 WNS+0.064ns/WHS+0.004ns/WPWS+0.103ns，TNS/THS/TPWS与全部failed endpoints0，route errors0，SD内部IO预算PASS。ILA/debug hub另有4条bus-skew约束，全部通过、最小slack+9.326ns；未将这类独立检查遗漏在根时序表之外。尚未取得新bit的板上capture，核心是否正常运行仍未判断。
+
+bit SHA256=`1549f11d09986ccc6454162bc8c66f6de995a4afac84a4f0495c91ae46a20480`；ltx SHA256=`22ce77df65a82d95cbb8b454388cf3147912ab108ae36e515a29cd4bb835e866`。129项source-snapshot、BIOS与ROM初始化、功能配置相同、161probe/1896bit再次核对，完整binding和原报告在 `records/be2-single-debug-20261012/final/`。debug hub的`C_ENABLE_CLK_DIVIDER=false`，保留工具默认频率参数，不启用额外MMCM；实际ILA采样与sys_clk均100MHz，使用1MHz JTAG脚本。默认属性不替代实际clock/timing报告。
+
 症状：用户加载单核 SD 产品后，串口只出现一个 `0`，没有后续 BIOS 信息。原产品单核源7f7f186、100MHz时序通过；此板上现象尚未定位，不能视为 Linux/SD 已启动。
 
 本次按用户要求保持同一普通单核配置、SD/BIOS接口，开启 `tandem` 与 `fpga-debug`，重新生成独立bitstream。JTAG使用Vivado原生ILA/debug hub；不包含标准RISC-V DMI/OpenOCD单步模块。现有三个交付产品保留。
@@ -38,3 +42,5 @@ BIOS/工程prepare成功，prepared-audit核对129个不可变源文件SHA、ROM
 综合完成：WNS+1.492ns（仅综合估计）、LUT74347/FF57881/BRAM264.5tiles/DSP23，0error/0critical warning。ILA容量可容纳，Vivado已进入place；最终routed timing另记，综合hold负值不是最终hold结果。主机上的Tandem/ILA marker与129项source-snapshot、BIOS ROM前缀已核对。原综合报告按阶段归档。
 
 另查旧板级记录和当前CP2105双接口：FPGA用户串口应选Standard通道（Alan现为ttyUSB1/if01），ttyUSB0/if00为Enhanced系统控制器通道。AMD文档亦说明该分工：https://docs.amd.com/r/en-US/pg235-v-hdmi-tx-ss/KCU105-Board-FMCH-VADJ-Adjustment 。此为“只打印0”的待核对候选，尚未收到用户所用串口确认，不宣称已定位原因。没有打开或写用户串口。
+
+本地实际bit/ltx逐项匹配最终binding SHA256，五文件CoreMark+原GAPBS软件包重新绑定实际bit/BIOS/CSR，下载及SD安装均校验通过。原四核/普通单核/RVV三个交付产品未覆盖；本次是额外的普通单核调试产品。Tandem为退休观测，波形未取得时不推断CPU健康。新增软件及SD审计见 [CoreMark/GAPBS报告](BE2-coremark-gapbs-sd-report.md)。

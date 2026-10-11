@@ -1,0 +1,23 @@
+{
+  "base_rootfs_sha256": "74ebde8cf79ce5caf0e418efdfc3a949d4272d73c769ac87e9d3be3f399b9282",
+  "new_rootfs_sha256": "e382ab7d23ce2fb21fe5f61fcc8416b0d9128e4f3f64eb333927edd1b3a2df6b",
+  "coremark_sha256": "f35d2eab5beafdcc2c7ad3ba4ab3189eaa1f3523ba29073df18165c179994be2",
+  "GAPBS_unchanged": {
+    "bc": "8dbc7ddc54cbe2f38c4deb3412f047569b13b367e480e090827a7abf1014e274",
+    "bfs": "7597fe74ff75328bd62b56c5419f7c15ac3051fabbc01080b5b4469e8c13c0c7",
+    "cc": "4713c763716ba5f7f9a94e2175abef0ed43c654074ddd2e7240499bc2a75db23",
+    "cc_sv": "91d7b08866721a9bd43e32261da59a923f7b56e2c96217c3a886ae7c3694fd39",
+    "pr": "d98712a73d4a06395112d8c1a7652be6a1348f3d8813c34ff63f2925b6708fc5",
+    "pr_spmv": "f783948c2502159e2d995ebce0e3430fbef7c057ea7a3fe36b4a00b650c7d6ec",
+    "sssp": "971cd9ba07d3c860b4d4013735a7e72e140d224e0da5ad7d2abcefb2bced1d9f",
+    "tc": "e9f874fdf552d887df4d05c9e0d19342832efaf723f6bc164863e8ef9ae9e44e",
+    "converter": "8f0ea99dc86db51a36e1c4ac5f9d09fbd0f6b2345123da457133e7bac5906595"
+  },
+  "existing_archive_entries_preserved": 1386,
+  "added_files": [
+    "usr/bin/coremark",
+    "usr/share/licenses/coremark/LICENSE.md",
+    "usr/share/coremark/build-info.txt"
+  ],
+  "target_runtime": "NOT_RUN"
+}
