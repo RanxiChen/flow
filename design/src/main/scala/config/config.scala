@@ -80,7 +80,7 @@ case class BackendConfig(
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
-    val coprocessorStub: Option[Int] = None
+    val coprocessorStub: Option[Int] = scala.None
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -116,7 +116,7 @@ case class BreezeCoreConfig(
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
-    val coprocessorStub: Option[Int] = None
+    val coprocessorStub: Option[Int] = scala.None
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -231,7 +231,7 @@ final case class BreezeClusterConfig(
     corePreset: CorePreset = CorePreset.Gshare,
     privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     loadUseBypass: Boolean = false,
-    coprocessorStub: Option[Int] = None
+    coprocessorStub: Option[Int] = scala.None
 ) {
     val nCores: Int = mem.nCores
 
