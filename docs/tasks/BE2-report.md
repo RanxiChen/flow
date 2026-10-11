@@ -142,3 +142,14 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 | trap_misc | 28079 | 28222 | 2092 | 0.509% | 通过 |
 | mmio_console | 47685 | 48511 | 4258 | 1.732% | 未通过 |
 | fibonacci | 15654 | 17886 | 1329 | 14.258% | 未通过 |
+
+
+## Admission 修正与首轮物理证据（进行中）
+
+7b885d6 的 single 默认 routed 完成，exit0，WNS=+0.030 ns、WHS=+0.028 ns、TNS/THS=0；sys_clk（100 MHz）WNS=+0.371 ns。全设计最差 setup 是 IDELAYCTRL reset 路径。原始报告及 Tcl 在 `records/be2-20261011/physical-7b885d6/single/`。这只证明该 SHA 的单核 routed，不代表新修正或四核已通过；未写 bitstream，未上板。
+
+同配置 exact2051dd0/7b885d6 的四核综合层次面积，扣除每个 fpUnit/impl 的 CVFPU 本体后，各后端 LUT 变化 +2.156/+2.142/+1.501/-0.984%，FF +7.003/+6.769/+6.769/+6.592%；各 L1D LUT -0.108/+0.830/+0.533/+1.000%。A1 对此源/配置/综合阶段通过。原始层次表和逐行 JSON 在 `physical-7b885d6/{baseline-synth,small-synth,area-synth.json}`。顶层综合 LUT=228169，占94.13%；baseline顶层226228。同级比较，未拿 routed 与 synth 混比。
+
+**自行裁定 18：EX admission 与取消分离。** 综合 checkpoint 用叶输出驱动作为 through 点，确证 S3 decision→EX 宽 payload CE 仍有1230端点、20条最差路径（旧版 query 的组合 from 点不足以作无路径证明，故保留失败查询并改正）。MEM/PERM 无该保持；执行单元及前端的初步无路径集合已有同方法 baseline 阳性，但完整查询仍在运行。原始残留来自 wbKill→L1D cpuKill→req.ready/TLB kill-ready→EX resourceWait。74c858e 增加 L1D/TLB canAccept，容量与实际 fire 分离：EX只读取消前的相同优先级 admission；实际 cache/TLB 请求仍在 kill 当拍不 fire、不留副作用。新增断言要求无 CPU kill 时 L1D canAccept==req.ready，新增定向例要求 older load精确13异常、年轻EX load不发请求/不提交/不写回，EX不被取消ready保持。1ce2b97 又排除 raw SFENCE 动作，TLB canAccept仅由 missValid/sfS1Valid寄存状态决定，req.ready仍抑制sfence.valid。SFENCE按R6到WB时EX已空且wbKill同时取消年轻CPU槽，因此不靠容量信号授权请求。MMU冻结文件的起点hash差异不重录掩盖；新侧带定义补入L1D接口表并只更新该文件授权hash。
+
+新增修正正在重跑相关最小门禁。首轮四核物理继续保留作真实对照；单核首轮时序和A1不能冒充最终修正版证据。

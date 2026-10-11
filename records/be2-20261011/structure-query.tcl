@@ -2,6 +2,7 @@
 set checkpoint [lindex $argv 0]
 set output [lindex $argv 1]
 file mkdir $output
+set_param general.maxThreads 2
 open_checkpoint $checkpoint
 set metadata [open [file join $output collections.txt] w]
 puts $metadata "checkpoint=$checkpoint"
@@ -9,7 +10,7 @@ puts $metadata "vivado=[version -short]"
 proc collect_nets {pattern label} {
     global metadata output
     set nets [get_nets -quiet -hierarchical -regexp $pattern]
-    set pins [get_pins -quiet -of_objects $nets -filter {DIRECTION == OUT}]
+    set pins [get_pins -quiet -leaf -of_objects $nets -filter {DIRECTION == OUT}]
     puts $metadata "$label nets=[llength $nets] drivers=[llength $pins]"
     set f [open [file join $output $label-sources.txt] w]
     puts $f "NETS\n[join $nets \n]\nDRIVERS\n[join $pins \n]"
@@ -40,9 +41,11 @@ proc query {label starts ends} {
     set f [open [file join $output $label-fanout.txt] w]
     puts $f "all_fanout -flat -from <sources> -endpoints_only\nHITS=[llength $hits]\n[join $hits \n]\nALL_ENDPOINTS\n[join $cone \n]"
     close $f
-    set paths [get_timing_paths -quiet -from $starts -to $ends -max_paths 20 -nworst 20]
+    set paths [get_timing_paths -quiet -through $starts -to $ends -max_paths 20 -nworst 20]
     puts $metadata "$label fanout_hits=[llength $hits] paths=[llength $paths]"
-    report_timing -from $starts -to $ends -max_paths 20 -nworst 20 -path_type full -file [file join $output $label-worst20.rpt]
+    flush $metadata
+    puts "BE2_QUERY $label hits=[llength $hits] paths=[llength $paths]"
+    report_timing -through $starts -to $ends -max_paths 20 -nworst 20 -path_type full -file [file join $output $label-worst20.rpt]
 }
 set decision [collect_nets {.*(l1d|backend).*(io_core_resp_valid|io_core_resp_bits_kind|io_l1d_resp_valid|io_l1d_resp_bits_kind).*} s3decision]
 set hold [collect_nets {.*l1d.*(cpuHold|io_core_s2Hold).*} cpuhold]

@@ -1,0 +1,130 @@
+[
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/backend",
+    "baseline": {
+      "LUT": 19203,
+      "FF": 7311
+    },
+    "candidate": {
+      "LUT": 19617,
+      "FF": 7823
+    },
+    "delta_percent": {
+      "LUT": 2.1559131385721075,
+      "FF": 7.003145944467248
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/backend_1",
+    "baseline": {
+      "LUT": 19326,
+      "FF": 7327
+    },
+    "candidate": {
+      "LUT": 19740,
+      "FF": 7823
+    },
+    "delta_percent": {
+      "LUT": 2.142191865880161,
+      "FF": 6.769482735089394
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/backend_2",
+    "baseline": {
+      "LUT": 19326,
+      "FF": 7327
+    },
+    "candidate": {
+      "LUT": 19616,
+      "FF": 7823
+    },
+    "delta_percent": {
+      "LUT": 1.5005691814136357,
+      "FF": 6.769482735089394
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/backend_3",
+    "baseline": {
+      "LUT": 19508,
+      "FF": 7327
+    },
+    "candidate": {
+      "LUT": 19316,
+      "FF": 7810
+    },
+    "delta_percent": {
+      "LUT": -0.9842116054951777,
+      "FF": 6.592056776306809
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/l1d",
+    "baseline": {
+      "LUT": 11157,
+      "FF": 6419
+    },
+    "candidate": {
+      "LUT": 11145,
+      "FF": 6398
+    },
+    "delta_percent": {
+      "LUT": -0.10755579456843689,
+      "FF": -0.32715376226826187
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/l1d_1",
+    "baseline": {
+      "LUT": 11085,
+      "FF": 6374
+    },
+    "candidate": {
+      "LUT": 11177,
+      "FF": 6398
+    },
+    "delta_percent": {
+      "LUT": 0.8299503834009903,
+      "FF": 0.3765296517100669
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/l1d_2",
+    "baseline": {
+      "LUT": 11079,
+      "FF": 6374
+    },
+    "candidate": {
+      "LUT": 11138,
+      "FF": 6398
+    },
+    "delta_percent": {
+      "LUT": 0.5325390378192907,
+      "FF": 0.3765296517100669
+    },
+    "pass": true
+  },
+  {
+    "module": "xilinx_kcu105/BreezeClusterAxi/cluster/l1d_3",
+    "baseline": {
+      "LUT": 11104,
+      "FF": 6372
+    },
+    "candidate": {
+      "LUT": 11215,
+      "FF": 6398
+    },
+    "delta_percent": {
+      "LUT": 0.9996397694524539,
+      "FF": 0.4080351537978588
+    },
+    "pass": true
+  }
+]
