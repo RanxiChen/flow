@@ -174,7 +174,6 @@ class MmioCsrBridgeTest(unittest.TestCase):
                 data = (yield dut.wb.dat_r)
                 observations.append({'slot': slot, 'raw': hex(data)})
                 self.assertEqual(word_from_axi(address, data), VALUES[slot])
-                yield
                 yield dut.wb.cyc.eq(0)
                 yield dut.wb.stb.eq(0)
                 yield
@@ -304,6 +303,28 @@ class MmioCsrBridgeTest(unittest.TestCase):
 
     def test_native_uart_bios_service_clears_irq(self):
         self.check_native_uart(handler=True)
+
+    def test_native_uart_txfull_read_does_not_pop_rx_fifo(self):
+        dut, observations = CsrPath(native_uart=True), []
+        driver = AxiDriver(dut.axil, observations)
+
+        def process():
+            yield dut.uart.sink.data.eq(ord('R'))
+            yield dut.uart.sink.valid.eq(1)
+            yield
+            yield
+            yield dut.uart.sink.valid.eq(0)
+            yield
+            self.assertEqual((yield dut.uart._rxempty.status), 0)
+            actual = yield from driver.read(UART_BASE + 4)
+            observations.append({'txfull_read': actual,
+                                  'rxempty_after_status_read': (yield dut.uart._rxempty.status)})
+            self.assertEqual(actual, 0, 'empty TX queue must report txfull=0')
+            self.assertEqual((yield dut.uart._rxempty.status), 0,
+                             'reading TXFULL must not consume the queued RX byte')
+            byte = yield from driver.read(UART_BASE)
+            self.assertEqual(byte, ord('R'))
+        self.simulate(dut, process(), observations)
 
 
 if __name__ == '__main__':
