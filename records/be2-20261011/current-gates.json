@@ -338,6 +338,25 @@
         "bit_generated": false,
         "clock_root": "X2Y2",
         "reports": "physical-d902fb5/clock-root-balanced"
+      },
+      "parallel_original_root_candidate": {
+        "remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-original-root-balanced-sd",
+        "affinity": "6-9",
+        "maxThreads": 4,
+        "root": "X1Y2",
+        "reason": "actual default DDR qualified root measured by read-only audit",
+        "status": "RUNNING"
+      },
+      "original_clock_audit": {
+        "exit": 1,
+        "root_properties_and_timing_completed": true,
+        "clock_roots": {
+          "sys_clk": "X1Y2",
+          "sys4x_clk": "X1Y2"
+        },
+        "DCP_sha256": "22c888da79de2c08a9fe52acb469de0e1aa8e6a77a836e66107fe3c68d11e778",
+        "uncompleted": "clock-expanded data path: D1 pin lookup wrong for vector D port; not a timing or functional failure",
+        "reports": "physical-d902fb5/original-clock-audit"
       }
     },
     "local_scalar_products_hash_verified": true
