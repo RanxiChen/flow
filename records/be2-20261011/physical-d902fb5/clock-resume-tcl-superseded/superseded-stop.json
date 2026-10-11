@@ -1,0 +1,8 @@
+{
+  "pid": 2455710,
+  "cwd": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-resume-audited-sd/gateware",
+  "cmd": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source postroute-closure.tcl -tclargs /home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd/gateware/clock-placed.dcp ",
+  "time": "2026-10-11T17:03:42.733840+00:00",
+  "signal": "SIGTERM",
+  "reason": "Slow Tcl per-cell dictionary comparison replaced by exact batch TSV/Python name/LOC/simple-BEL comparison; same scope and conditions, no route started"
+}

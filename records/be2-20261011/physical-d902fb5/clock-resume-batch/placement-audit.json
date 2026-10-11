@@ -1,0 +1,11 @@
+{
+  "persistent_data_LOC_checked": 213943,
+  "simple_LUT_FF_BEL_checked": 188287,
+  "errors": 0,
+  "first_errors": [],
+  "scope_excluded": "top-level IDELAYCTRL* calibration network recreated by placer",
+  "input_sha256": {
+    "original-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a",
+    "clock-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a"
+  }
+}

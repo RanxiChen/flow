@@ -56,11 +56,16 @@ if comparison:
  if comparison_binding['source_sha'] != binding['source_sha']: raise RuntimeError('Placement comparison source mismatch')
  record['placement_comparison_checkpoint']=str(comparison_path)
  record['placement_comparison_sha256']=sha(comparison_path)
+if 'compare-placed-cells.py' in script_text:
+ record['placement_auditor_sha256']=sha(tcl.parent/'compare-placed-cells.py')
 prior=original/'physical-candidate.json'
 if prior.is_file(): record['parent_candidate']=json.loads(prior.read_text())
 (dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
 cp "$script" "$output/gateware/postroute-closure.tcl"
+if [[ -f "$(dirname "$script")/compare-placed-cells.py" ]]; then
+ cp "$(dirname "$script")/compare-placed-cells.py" "$output/gateware/compare-placed-cells.py"
+fi
 cp "$(dirname "$script")/routed_timing_gate.tcl" "$output/gateware/routed_timing_gate.tcl"
 cd "$output/gateware"
 # A copied old bitstream must never survive a failing candidate gate.

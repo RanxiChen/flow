@@ -236,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "resuming saved placed checkpoint; compare persistent data NAME/LOC/simple BEL against pre-clock source, clock actual-root check and full route pending",
+      "status": "persistent data position comparison PASS; actual common X1Y2 clocks placed; complete routing in progress",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -284,7 +284,7 @@
       "default_setup_failures": 43,
       "default_route_errors": 0,
       "default_reports": "physical-d902fb5/default-routed",
-      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-resume-audited-sd",
+      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-resume-batch-sd",
       "candidate_maxThreads": 4,
       "candidate_affinity": "0-3",
       "candidate_RTL_config_constraints_unchanged": false,
@@ -317,7 +317,7 @@
         "reports": "physical-d902fb5/placed-replication"
       },
       "candidate_physical_clock_property": "all primitive LOC fixed; simple LUT/FF BEL fixed; Quick clock-resource placement require actual common X1Y2",
-      "candidate_status": "RUNNING",
+      "candidate_status": "ROUTING",
       "candidate_RTL_config_timing_requirements_unchanged": true,
       "clock_reroute_superseded": {
         "reason": "Route35-359 prerequisite: update_clock_routing before clock reroute; own candidate intentionally SIGTERM",
@@ -411,7 +411,23 @@
         "changed": "IDELAYCTRL_TOP_AND recreated with physical calibration replicas; persistent CPU/memory data audit not yet completed",
         "reports": "physical-d902fb5/clock-placement-calibration-rebuilt"
       },
-      "candidate_input_checkpoint": "clock-placed.dcp saved from previous exact-source candidate"
+      "candidate_input_checkpoint": "clock-placed.dcp saved from previous exact-source candidate",
+      "tcl_position_audit_superseded": {
+        "reason": "slow per-cell Tcl dictionary loop replaced by exact batch CSV/Python comparison; no route started",
+        "reports": "physical-d902fb5/clock-resume-tcl-superseded"
+      },
+      "actual_common_clock_roots": "sys_clk=X1Y2; sys4x_clk=X1Y2; both USER_CLOCK_ROOT and CLOCK_DELAY_GROUP verified",
+      "placement_audit": {
+        "persistent_data_LOC_checked": 213943,
+        "simple_LUT_FF_BEL_checked": 188287,
+        "errors": 0,
+        "first_errors": [],
+        "scope_excluded": "top-level IDELAYCTRL* calibration network recreated by placer",
+        "input_sha256": {
+          "original-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a",
+          "clock-data-placement.tsv": "9fe2db98a6f18d85513c04b16a84ea052e15419b93ed5c0bfd8b012fcd3f061a"
+        }
+      }
     },
     "local_scalar_products_hash_verified": true
   }

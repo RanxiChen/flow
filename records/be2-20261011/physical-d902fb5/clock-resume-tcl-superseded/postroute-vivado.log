@@ -1,0 +1,214 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd/gateware/clock-placed.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.469 ; gain = 0.000 ; free physical = 11846 ; free virtual = 39049
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.61 ; elapsed = 00:00:00.61 . Memory (MB): peak = 2569.051 ; gain = 0.000 ; free physical = 10165 ; free virtual = 37885
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 22 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 3681.074 ; gain = 261.914 ; free physical = 12325 ; free virtual = 40022
+Restored from archive | CPU: 8.100000 secs | Memory: 180.000648 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 3681.074 ; gain = 261.914 ; free physical = 12341 ; free virtual = 40038
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3724.793 ; gain = 0.000 ; free physical = 12569 ; free virtual = 40206
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 1a2fbede4
+----- Checksum: PlaceDB: a790f4c0 ShapeSum: 025c7e25 RouteDB: f90e7aff 
+open_checkpoint: Time (s): cpu = 00:00:53 ; elapsed = 00:00:55 . Memory (MB): peak = 3724.793 ; gain = 2031.324 ; free physical = 12573 ; free virtual = 40210
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:01:08 ; elapsed = 00:00:27 . Memory (MB): peak = 4777.594 ; gain = 1052.801 ; free physical = 11235 ; free virtual = 38872
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:32 ; elapsed = 00:00:13 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 11881 ; free virtual = 39509
+# set comparison_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp
+# close_design
+# open_checkpoint $comparison_checkpoint
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 13121 ; free virtual = 40750
+Netlist sorting complete. Time (s): cpu = 00:00:00.64 ; elapsed = 00:00:00.65 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12929 ; free virtual = 40557
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 22 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12242 ; free virtual = 39869
+Restored from archive | CPU: 10.740000 secs | Memory: 251.813263 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12242 ; free virtual = 39869
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12254 ; free virtual = 39882
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 111a25d11
+----- Checksum: PlaceDB: 480a1ccd ShapeSum: 418bf1ed RouteDB: 880c4e57 
+open_checkpoint: Time (s): cpu = 00:00:51 ; elapsed = 00:00:52 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12290 ; free virtual = 39919
+# set expected_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && NAME !~ IDELAYCTRL*}]
+# set loc_before [dict create]
+# foreach name [get_property NAME $expected_cells] loc [get_property LOC $expected_cells] {dict set loc_before $name $loc}
+# set expected_bels [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && NAME !~ IDELAYCTRL* && (REF_NAME =~ LUT? || REF_NAME =~ FD?E)}]
+# set bel_before [dict create]
+# foreach name [get_property NAME $expected_bels] bel [get_property BEL $expected_bels] {dict set bel_before $name $bel}
+# close_design
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd/gateware/clock-placed.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12357 ; free virtual = 39994
+Netlist sorting complete. Time (s): cpu = 00:00:00.65 ; elapsed = 00:00:00.66 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12210 ; free virtual = 39847
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 22 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 11999 ; free virtual = 39624
+Restored from archive | CPU: 8.010000 secs | Memory: 178.830276 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 11999 ; free virtual = 39624
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12053 ; free virtual = 39679
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 1a2fbede4
+----- Checksum: PlaceDB: a790f4c0 ShapeSum: 025c7e25 RouteDB: f90e7aff 
+open_checkpoint: Time (s): cpu = 00:00:47 ; elapsed = 00:00:47 . Memory (MB): peak = 4777.594 ; gain = 0.000 ; free physical = 12053 ; free virtual = 39679
+# set fresh_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && NAME !~ IDELAYCTRL*}]
+# set loc_after [dict create]
+# foreach name [get_property NAME $fresh_cells] loc [get_property LOC $fresh_cells] {dict set loc_after $name $loc}
+# dict for {name loc} $loc_before {
+#     if {![dict exists $loc_after $name] || [dict get $loc_after $name] ne $loc} {error "Persistent data primitive LOC changed: $name"}
+# }
+Terminated
