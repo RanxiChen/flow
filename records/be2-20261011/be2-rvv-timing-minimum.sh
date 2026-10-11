@@ -28,6 +28,9 @@ trap 'rc=$?; echo "$rc" > "$root/be2-$label-rvv-system.exit"' EXIT
  taskset -c 6-7 nice -n 10 riscv64-unknown-elf-gcc -march=rv64gcv_zicsr -mabi=lp64d \
   -DBE2_RVV_SV39 -nostdlib -nostartfiles -Wl,--no-relax -T tests/cluster/link.ld \
   tests/cluster/rvv_memory.S -o design/build/cluster-tests/rvv_memory_sv39
+ taskset -c 6-7 nice -n 10 riscv64-unknown-elf-gcc -march=rv64gcv_zicsr -mabi=lp64d \
+  -nostdlib -nostartfiles -Wl,--no-relax -T tests/cluster/link.ld \
+  tests/cluster/rvv_arithmetic.S -o design/build/cluster-tests/rvv_arithmetic
  cd design
  JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 taskset -c 6-7 nice -n 10 java -XX:ActiveProcessorCount=2 -Xmx6G \
   -jar "$root/be2-tools/sbt-launch-1.9.7.jar" 'set Test / parallelExecution := false' \

@@ -28,7 +28,7 @@ class RvvSystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
       "rv64uc-p-rvc", "rv64mi-p-csr", "rv64uf-p-ldst", "rv64uf-p-fadd",
       "rv64ud-p-ldst", "rv64ud-p-fadd")
     val files = names.map(n => ClusterSim.repoRoot.resolve(s"design/build/riscv-tests/$n")) ++
-      Seq("rvv_memory", "rvv_memory_sv39").map(n => ClusterSim.repoRoot.resolve(s"design/build/cluster-tests/$n"))
+      Seq("rvv_memory", "rvv_memory_sv39", "rvv_arithmetic").map(n => ClusterSim.repoRoot.resolve(s"design/build/cluster-tests/$n"))
     simulate(new BreezeRvvSystem(cfg, enableTandem = true)) { d =>
       for (file <- files) {
         val elf = Elf64.load(file); val tohost = elf.symbol("tohost")
@@ -79,6 +79,18 @@ class RvvSystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
           for (k <- 0 until 8) memory.read(output + k * 8, 8) mustBe BigInt(12)
           val context = elf.symbol("vector_context")
           for (k <- 0 until 512) memory.read(context + k, 1) mustBe BigInt(255)
+        }
+        if (file.getFileName.toString == "rvv_arithmetic") {
+          val mac64 = elf.symbol("vector_mac64_output")
+          val mac32 = elf.symbol("vector_mac32_output")
+          val dot = elf.symbol("vector_dot_output")
+          val product = ((BigInt("300000005",16) * BigInt("70000000b",16)) +
+            BigInt("d00000011",16)) & ((BigInt(1)<<64)-1)
+          for (k <- 0 until 8) memory.read(mac64 + k * 8, 8) mustBe product
+          for (k <- 0 until 16) {
+            memory.read(mac32 + k * 4, 4) mustBe BigInt(3*7+5)
+            memory.read(dot + k * 4, 4) mustBe BigInt(3+16*4*1*2)
+          }
         }
       }
     }
