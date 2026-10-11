@@ -44,7 +44,13 @@ class Writeback extends Module {
     val lateWriteError = Output(Bool())
   })
   val w2 = RegInit(0.U.asTypeOf(Valid(new OrdinaryResult)))
-  val lateReg = RegInit(0.U.asTypeOf(Valid(new L1DLate)))
+  // Two registered slots keep late.ready independent of the current grant.
+  // Non-flow/non-pipe preserves the first-return -> writeback one-edge delay.
+  val lateQueue = Module(new Queue(new L1DLate, 2, pipe = false, flow = false))
+  lateQueue.io.enq <> io.late
+  val lateReg = Wire(Valid(new L1DLate))
+  lateReg.valid := lateQueue.io.deq.valid
+  lateReg.bits := lateQueue.io.deq.bits
   // Consume W2 every cycle, even when the following WB is held or killed.
   // The caller supplies only new, non-exceptional ordinary WB commits.
   w2.valid := io.ordinary.valid && (io.ordinary.bits.rd.isFp || io.ordinary.bits.rd.idx =/= 0.U)
@@ -63,9 +69,7 @@ class Writeback extends Module {
   val selected = PriorityEncoderOH(eligible.asUInt)
   io.grant := selected
   val lateRegGrant = selected(0)
-  io.late.ready := !lateReg.valid || lateRegGrant
-  lateReg.valid := (lateReg.valid && !lateRegGrant) || io.late.fire
-  when(io.late.fire) { lateReg.bits := io.late.bits }
+  lateQueue.io.deq.ready := lateRegGrant
   io.div.ready := selected(1)
   io.mul.ready := selected(2)
   io.fp.ready := selected(3)

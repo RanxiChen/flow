@@ -31,10 +31,10 @@ class MulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
       init(d); d.io.result.ready.poke(true.B); d.clock.step(6); d.io.result.valid.expect(false.B)
     }
   }
-  "T05/T06/T09/T15: stopped uncommitted P4, oldest commit then kill, and committed hold" in {
+  "BE2 R4/T05/T06/T09/T15: full result capacity, oldest commit then kill, and committed hold" in {
     simulate(new MulUnit) { d =>
       init(d)
-      for (r <- 1 to 4) send(d, r, r, 11)
+      for (r <- 1 to 8) send(d, r, r, 11)
       d.io.req.ready.expect(false.B); d.io.result.valid.expect(false.B)
       d.clock.step(9); d.io.req.ready.expect(false.B)
       d.io.commit.poke(true.B); d.io.killUncommitted.poke(true.B)
@@ -45,9 +45,35 @@ class MulProtocolSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.killUncommitted.poke(false.B); d.io.result.ready.poke(true.B); d.clock.step(6)
       d.io.result.valid.expect(false.B)
       send(d, 4, 7, 9); d.clock.step(3)
-      d.io.result.valid.expect(false.B); d.io.req.ready.expect(false.B)
+      d.io.result.valid.expect(false.B); d.io.req.ready.expect(true.B)
       d.io.killUncommitted.poke(true.B); d.clock.step(); d.io.killUncommitted.poke(false.B)
       d.io.req.ready.expect(true.B); d.clock.step(5); d.io.result.valid.expect(false.B)
+    }
+  }
+  "BE2 N03: eight delayed-authorized products survive stopped grant and drain in order" in {
+    simulate(new MulUnit) { d =>
+      init(d)
+      for (cycle <- 0 until 12) {
+        d.io.req.valid.poke((cycle < 8).B)
+        d.io.req.bits.rd.poke((1 + math.min(cycle, 7)).U)
+        d.io.req.bits.a.poke((cycle + 1).S(65.W)); d.io.req.bits.b.poke(17.S(65.W))
+        // Matches WB E+3 followed by a registered authorization at E+4.
+        d.io.commit.poke((cycle >= 4 && cycle < 12).B)
+        d.io.req.ready.expect((cycle < 8).B)
+        d.clock.step()
+      }
+      d.io.req.valid.poke(false.B); d.io.commit.poke(false.B)
+      d.io.killUncommitted.poke(true.B); d.clock.step(8)
+      d.io.killUncommitted.poke(false.B)
+      d.io.req.ready.expect(false.B)
+      d.io.result.ready.poke(true.B)
+      for (rd <- 1 to 8) {
+        d.io.result.valid.expect(true.B)
+        d.io.result.bits.rd.expect(rd.U)
+        d.io.result.bits.data.expect((rd * 17).U)
+        d.clock.step()
+      }
+      d.io.result.valid.expect(false.B); d.io.req.ready.expect(true.B)
     }
   }
   "B/U01: all five operations agree with independent BigInt mathematics (seed 0x701, 500 requests)" in {

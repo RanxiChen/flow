@@ -28,7 +28,7 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
       d.io.div.valid.poke(true.B); d.io.mul.valid.poke(true.B); d.io.fp.valid.poke(true.B)
       d.io.grant.expect(0.U); d.io.conflict.expect(1.U)
       d.io.gprWrite.valid.expect(true.B); d.io.gprWrite.bits.idx.expect(5.U)
-      d.io.gprWrite.bits.data.expect(105.U); d.io.late.ready.expect(false.B)
+      d.io.gprWrite.bits.data.expect(105.U); d.io.late.ready.expect(true.B)
       d.io.clear.valid.expect(false.B)
       d.clock.step()
       val valid = Seq(d.io.div.valid, d.io.mul.valid, d.io.fp.valid)
@@ -83,14 +83,17 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
-  "SOC3b_lateReg_backpressure_and_same_edge_replace_use_old_payload" in {
+  "BE2_R4_late_two_registered_slots_preserve_order_and_do_not_reuse_current_grant" in {
     simulate(new Writeback) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
       d.io.late.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
       d.io.late.ready.expect(true.B); d.io.gprWrite.valid.expect(false.B)
       d.clock.step()
-      // A is buffered; B remains unchanged while ordinary W2 blocks A.
+      // A is buffered; the second registered slot accepts B despite W2.
       d.io.late.bits.rd.idx.poke(6.U); d.io.late.bits.data.poke(106.U)
+      d.io.late.ready.expect(true.B); d.clock.step()
+      // C waits unchanged while both slots are occupied.
+      d.io.late.bits.rd.idx.poke(7.U); d.io.late.bits.data.poke(107.U)
       for(_ <- 0 until 2) {
         d.io.late.ready.expect(false.B); d.io.gprWrite.bits.idx.expect(5.U)
         d.io.grant.expect(0.U); d.io.clear.valid.expect(false.B)
@@ -98,12 +101,16 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
       d.io.ordinary.valid.poke(false.B); d.io.late.ready.expect(false.B)
       d.clock.step()
-      d.io.late.ready.expect(true.B); d.io.grant.expect(1.U)
+      d.io.late.ready.expect(false.B); d.io.grant.expect(1.U)
       d.io.gprWrite.bits.idx.expect(1.U); d.io.gprWrite.bits.data.expect(101.U)
       d.io.clear.bits.idx.expect(1.U); d.io.lateWriteError.expect(false.B)
-      d.clock.step(); d.io.late.valid.poke(false.B)
+      d.clock.step()
+      d.io.late.ready.expect(true.B)
       d.io.gprWrite.bits.idx.expect(6.U); d.io.gprWrite.bits.data.expect(106.U)
       d.io.clear.bits.idx.expect(6.U); d.io.grant.expect(1.U)
+      d.clock.step(); d.io.late.valid.poke(false.B)
+      d.io.gprWrite.bits.idx.expect(7.U); d.io.gprWrite.bits.data.expect(107.U)
+      d.io.clear.bits.idx.expect(7.U); d.io.grant.expect(1.U)
       d.clock.step(); d.io.gprWrite.valid.expect(false.B); d.io.clear.valid.expect(false.B)
     }
   }
