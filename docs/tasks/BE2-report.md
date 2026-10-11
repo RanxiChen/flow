@@ -81,7 +81,7 @@ RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等�
 | wbCommit | WB valid/solo/exception/mem/copro；L1D S3 valid/kind；copro known/exception；Writeback fatal 与 stopped。构造 wbExc/wbReplay/downHold 后 AND wbCanLeave | 不读取 drained/mmuIdle/执行单元 ready/grant |
 | wbKill 的指令事件 | 上述 wbCanLeave、wbExc/wbReplay，WB fencei/sfence/mret/sret/CSR地址写属性/wfi | WB 本地事件 OR |
 | wbKill 的中断事件（例外） | CSR privilege/global enable/mie/mip/mideleg priority；EX/MEM/PERM/WB valid；L1D mmioBusy；fatal/stopped | 保留既有中断组合锥，需单独列出 timing |
-| 允许同拍端点 | busy set、CSR/trap/退休、W2 D、后端及 L1D CPU valid 清除、slowRedirect/HPM 事件寄存器 D | 与禁止的宽 payload CE/跨模块控制分组 |
+| 允许同拍端点 | busy set、CSR/trap/退休、W2 D、后端及 L1D CPU valid 清除、BTB 单位有效性/公开payload可见位 D、slowRedirect/HPM 事件寄存器 D | 与禁止的宽 payload CE/跨模块控制分组 |
 | 跨模块端点 | MUL/DIV/FPU/copro commitD/killD，frontend slow redirect | 寄存器后的控制；S2 必须用基线阳性对照验证 |
 
 ## 主机、同步与证据
@@ -190,3 +190,8 @@ c735fbd 的部署最小集最终 exit0：六 suites/20 Scala 用例，无失败/
 | fibonacci | 15654 | 17886 | 1329 | 14.258% | 未通过 |
 
 对应replay[0..6]/soloWB：lrsc 0/0/3/2/0/1/0及266；trap 0/0/5/2/0/0/0及67；MMIO 0/0/3/2/41/0/0及307；Fibonacci 0/0/4/0/120/0/0及724。新配置的single/small默认完整物理已同时启动，每项4CPU/maxThreads4，baseline仅综合2CPU，亲和性集合最多10CPU；Vivado2022.2/xcku040-ffva1156-2-e/100MHz/no新时序例外。原始最小日志在 `records/be2-20261011/minimum-c735fbd/`，精确命令在同目录上级的c735fbd脚本。
+
+
+22. **D5 重建层次选择器**：新几何 baseline/c735fbd 均完成 synth_design、写出原checkpoint后，旧 D5 因固定 `$home/data/*` 未命中而 exit1。原日志确证32个RAMB36E2数据阵列在 `cluster/data/ram/*`，RTL_RAM_BITS=1048576（128KiB），元数据/plru仍在L2Home。修正只在固定路径为空时检查唯一同级同名array/ram，并要求所有读/写地址 startpoint（除GND/VCC）均属于对应L2Home，且集合非空；三组数组仍必须有RAMB，LUT<100000不变，资源总量计入已验证搬出的阵列。基线和候选在各自原DCP上的正向验证/错误owner负向拒绝均exit0，源码/网表/clock未改。四核从原synth DCP恢复原Tcl的opt/place/route/phys_opt default尾部；原失败退出码和日志不覆盖。单核旧D5已通过且继续原完整流程。最终RTL证据仍绑定c735fbd，checker源码另绑定本修正提交，不将门禁选择器变化伪装成RTL重测。
+
+c735fbd 对 2051dd0+同几何配置补丁的 A1 综合比较通过：backend扣除CVFPU后，各hart LUT +1.877/+2.082/+1.466/-2.161%，FF +6.184/+5.923/+5.923/+5.746%；L1D LUT +0.080/-5.988/-6.488/+1.893%。顶层209547 LUT（86.447%）、108510 FF、107 RAMB36+1 RAMB18、92DSP。原始hierarchical_synth.rpt和逐行area-synth.json在`records/be2-20261011/physical-c735fbd/`。这只是同配置综合面积，不是routed timing通过。

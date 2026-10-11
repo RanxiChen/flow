@@ -70,7 +70,7 @@ set execution [endpoints execution_control {IS_SEQUENTIAL == 1 && (NAME =~ *back
 set frontend [endpoints frontend_control {IS_SEQUENTIAL == 1 && NAME =~ *cluster/frontend*/* && NAME !~ *frontendBoundary*} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
 set arithmetic [endpoints arithmetic_enable {(NAME =~ *backend*/mulUnit/* && (REF_NAME == DSP48E2 || NAME =~ *pipeline* || NAME =~ *s0_* || NAME =~ *s1_* || NAME =~ *s2_*)) || NAME =~ *backend*/fpUnit/impl/*} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
 set l1d [endpoints l1d_internal {IS_SEQUENTIAL == 1 && NAME =~ *cluster/l1d*/*} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
-set exceptions [endpoints local_exceptions {IS_SEQUENTIAL == 1 && ((NAME =~ *backend*/ex_valid* || NAME =~ *backend*/mem_valid* || NAME =~ *backend*/perm_valid* || NAME =~ *backend*/wb_valid*) || NAME =~ *backend*/writeback/w2_* || NAME =~ *backend*/scoreboard/* || NAME =~ *backend*/csrFile/* || NAME =~ *frontendBoundary/slowRedirect* || NAME =~ *l1d*/cpu*valid*)} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
+set exceptions [endpoints local_exceptions {IS_SEQUENTIAL == 1 && ((NAME =~ *backend*/ex_valid* || NAME =~ *backend*/mem_valid* || NAME =~ *backend*/perm_valid* || NAME =~ *backend*/wb_valid*) || NAME =~ *backend*/writeback/w2_* || NAME =~ *backend*/scoreboard/* || NAME =~ *backend*/csrFile/* || NAME =~ *backend*/btb_valid* || NAME =~ *backend*/btbPayloadVisible* || NAME =~ *frontendBoundary/slowRedirect* || NAME =~ *l1d*/cpu*valid*)} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
 foreach {label starts} [list decision $decision hold $hold] {
     query $label-payload $starts $payload
     query $label-btb $starts $btb
