@@ -4,12 +4,20 @@ import shutil
 import hashlib
 import json
 import re
+import subprocess
 
 from litex.soc.integration.builder import Builder
 
 
 class SnapshotBuilder(Builder):
     def build(self, *args, **kwargs):
+        if hasattr(self.soc, 'sdcard'):
+            self.prepare_sd_driver()
+            timing = Path(self.gateware_dir) / 'flow_sd_timing.tcl'
+            timing.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(Path(__file__).with_name('sd_timing.tcl'), timing)
+            self.soc.platform.toolchain.pre_optimize_commands.add(f'source {timing}')
+            self.soc.platform.toolchain.additional_commands.append('flow_report_sd_timing')
         self.freeze_sources()
         self.check_l2_sources()
         # Execute the mapping gate immediately after synthesis reports/checkpoint,
@@ -20,6 +28,30 @@ class SnapshotBuilder(Builder):
             'set_msg_config -id {{Synth 8-4767}} -limit 100000')
         self.soc.platform.toolchain.pre_optimize_commands.add(f'source {hook}')
         return super().build(*args, **kwargs)
+
+    def prepare_sd_driver(self):
+        """Use the reviewed GAPBS-product driver patch in this build only."""
+        patch_dir = Path(__file__).resolve().parent / 'patches'
+        lock = json.loads((patch_dir / 'litex-sdcard.json').read_text())
+        packages = []
+        found = False
+        for name, source in self.software_packages:
+            if name == 'liblitesdcard':
+                found = True
+                source = Path(source)
+                digest = hashlib.sha256((source / 'sdcard.c').read_bytes()).hexdigest()
+                if digest != lock['sdcard_sha256']:
+                    raise RuntimeError('LiteX SD driver changed; reviewed patch does not match')
+                dest = Path(self.output_dir) / 'software-source' / name
+                shutil.copytree(source, dest, dirs_exist_ok=True)
+                subprocess.run(['patch', '--batch', '--fuzz=0', '-p1', '-i',
+                                str(patch_dir / 'litex-sdcard.patch')], cwd=dest, check=True)
+                source = str(dest)
+                (dest.parent / 'sdcard-upstream.json').write_text(json.dumps(lock, indent=2) + '\n')
+            packages.append((name, source))
+        if not found:
+            raise RuntimeError('BIOS liblitesdcard package is missing')
+        self.software_packages = packages
 
     def check_l2_sources(self):
         l2_sources = [Path(s[0]) for s in self.soc.platform.sources

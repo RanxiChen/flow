@@ -11,7 +11,7 @@ import flow.util.SdpSram
 /** Shared L2 / Home. All array updates pass through the main pipeline;
   * slow transactions retain set ownership in slots until their response.
   */
-class L2Home(g: BreezeMemGeometry) extends Module {
+class L2Home(g: BreezeMemGeometry, reportDmaErrors: Boolean = false) extends Module {
   val p = CoherenceParams(g)
   val io = IO(new Bundle {
     val l1d = Vec(p.nCores, Flipped(new L1DCoherenceIO(p)))
@@ -472,7 +472,7 @@ class L2Home(g: BreezeMemGeometry) extends Module {
               rsp.op := MuxCase(RspDownOp.DataE, Seq(
                 (s2.e.req.op === ReqOp.Read) -> RspDownOp.ReadData,
                 (s2.e.req.op === ReqOp.MaskWrite) -> RspDownOp.WriteAck))
-              rsp.error := s2.e.req.op =/= ReqOp.MaskWrite
+              rsp.error := s2.e.req.op =/= ReqOp.MaskWrite || reportDmaErrors.B
               when(s2.e.req.op === ReqOp.MaskWrite) { printf(p"DMA refill error at ${s2.e.req.addr}\n") }
             }.otherwise {
               val installed = Wire(new L2MetaEntry(p))

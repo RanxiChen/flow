@@ -41,7 +41,7 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     val l1dEvents = Output(Vec(p.nCores, new L1DEvents))
     val l2Events = Output(new L2Events(p))
   })
-  val l2 = Module(new L2Home(mem))
+  val l2 = Module(new L2Home(mem, reportDmaErrors = cfg.coherentDma))
   io.l2Events := l2.io.events
   val mmio = Module(new Axi4LiteArbiter(p.nCores))
   io.mem <> l2.io.mem

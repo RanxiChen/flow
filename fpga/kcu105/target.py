@@ -11,11 +11,12 @@ from litex_boards.platforms import xilinx_kcu105
 from litex_boards.targets.xilinx_kcu105 import _CRG
 from litedram.modules import EDY4016A
 from litedram.phy import usddrphy
+from migen import Cat
 
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
-from flow.core import BreezeTinyDebug
+from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeTinyDebugDma
 from flow.axi_router import check_soc_regions, platform_regions, add_inactive_boot_rom
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
@@ -39,13 +40,17 @@ DEBUG_BUILD_DIR = TINY_BUILD_DIR + '-debug'
 CPUS['breeze'] = Breeze
 CPUS['breeze_tiny'] = BreezeTiny
 CPUS['breeze_tiny_debug'] = BreezeTinyDebug
+CPUS['breeze_dma'] = BreezeDma
+CPUS['breeze_tiny_dma'] = BreezeTinyDma
+CPUS['breeze_tiny_debug_dma'] = BreezeTinyDebugDma
 
 
 class BreezeKCU105SoC(SoCCore):
-    csr_map = {'ctrl': 0, 'uart': 1, 'timer0': 2, 'ddrphy': 3, 'identifier_mem': 4, 'sdram': 5}
-    irq_map = {'uart': UART_PLIC_SOURCE}
+    csr_map = {'ctrl': 0, 'uart': 1, 'timer0': 2, 'ddrphy': 3, 'identifier_mem': 4, 'sdram': 5,
+               'sdcard': 6}
+    irq_map = {'uart': UART_PLIC_SOURCE, 'sdcard': UART_PLIC_SOURCE + 1}
 
-    def __init__(self, cpu_type='breeze', debug=False, sys_clk_freq=SYS_CLK_FREQ):
+    def __init__(self, cpu_type='breeze', debug=False, sys_clk_freq=SYS_CLK_FREQ, with_sdcard=False):
         if cpu_type not in ('breeze', 'breeze-tiny'):
             raise ValueError(f'Unsupported KCU105 CPU: {cpu_type}')
         if debug and cpu_type != 'breeze-tiny':
@@ -54,9 +59,12 @@ class BreezeKCU105SoC(SoCCore):
             raise ValueError('v1 bring-up uses 100 MHz')
         platform = xilinx_kcu105.Platform()
         self.crg = _CRG(platform, sys_clk_freq)
+        cpu_key = 'breeze_tiny_debug' if debug else cpu_type.replace('-', '_')
+        if with_sdcard:
+            cpu_key += '_dma'
         super().__init__(platform, clk_freq=sys_clk_freq,
             ident='Breeze v1 AXI DDR4 SoC on KCU105',
-            cpu_type='breeze_tiny_debug' if debug else cpu_type.replace('-', '_'),
+            cpu_type=cpu_key,
             cpu_variant='standard', bus_standard='wishbone', bus_data_width=64,
             bus_address_width=32, bus_bursting=False, bus_interconnect='shared', bus_timeout=None,
             integrated_rom_size=ROM_SIZE, integrated_sram_size=SRAM_SIZE,
@@ -81,7 +89,15 @@ class BreezeKCU105SoC(SoCCore):
                                      num_sources=PLIC_NUM_SOURCES)
         self.bus.add_slave(name='plic', slave=self.plic.bus,
             region=SoCRegion(origin=PLIC_ORIGIN, size=PLIC_SIZE, cached=False))
-        self.comb += [self.plic.sources.eq(pack_plic_sources(self.uart.ev.irq,
+        if with_sdcard:
+            # add_cpu created a dedicated SoCDMABusHandler from cpu.dma_bus.
+            # LiteSDCard's two DMA masters bind to it, never the main bus.
+            if not hasattr(self, 'dma_bus'):
+                raise RuntimeError('SD requires the coherent CPU DMA bus')
+            self.add_sdcard(mode='read+write')
+            self.add_constant('BREEZE_SDCARD_PLIC_SOURCE', UART_PLIC_SOURCE + 1)
+        interrupt_sources = Cat(self.uart.ev.irq, self.sdcard.ev.irq) if with_sdcard else self.uart.ev.irq
+        self.comb += [self.plic.sources.eq(pack_plic_sources(interrupt_sources,
             first_source=UART_PLIC_SOURCE, num_sources=PLIC_NUM_SOURCES)),
             self.cpu.meip.eq(self.plic.meip), self.cpu.seip.eq(self.plic.seip)]
         for name, value in {'BREEZE_NUM_HARTS': self.cpu.num_harts, 'BREEZE_CLINT': CLINT_ORIGIN,
@@ -101,12 +117,14 @@ def main():
     parser.add_argument('--cpu-type', choices=('breeze', 'breeze-tiny'), default='breeze-tiny')
     parser.add_argument('--sys-clk-freq', type=int, choices=(SYS_CLK_FREQ,), default=SYS_CLK_FREQ)
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--with-sdcard', action='store_true',
+                        help='native SD, coherent DMA, BIOS SD software-image boot')
     parser.add_argument('--output-dir')
     parser.add_argument('--build', action='store_true', help='run Vivado after generating BIOS and gateware')
     args = parser.parse_args()
     if args.debug and args.cpu_type != 'breeze-tiny':
         parser.error('--debug requires --cpu-type breeze-tiny')
-    soc = BreezeKCU105SoC(args.cpu_type, args.debug, args.sys_clk_freq)
+    soc = BreezeKCU105SoC(args.cpu_type, args.debug, args.sys_clk_freq, args.with_sdcard)
     output = args.output_dir or (DEBUG_BUILD_DIR if args.debug else
                                TINY_BUILD_DIR if args.cpu_type == 'breeze-tiny' else BUILD_DIR)
     builder = SnapshotBuilder(soc, output_dir=output, csr_csv=os.path.join(output, 'csr.csv'),
@@ -119,10 +137,9 @@ def main():
         'report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt',
         'report_utilization -file soc-utilization.rpt',
     ]
-    builder.build(run=args.build, vivado_synth_directive='AreaOptimized_high',
-        vivado_opt_directive='ExploreArea', vivado_place_directive='AltSpreadLogic_high',
-        vivado_post_place_phys_opt_directive='AggressiveExplore',
-        vivado_route_directive='NoTimingRelaxation')
+    builder.build(run=args.build, vivado_synth_directive='default',
+        vivado_opt_directive='default', vivado_place_directive='default',
+        vivado_post_place_phys_opt_directive='default', vivado_route_directive='default')
 
 
 if __name__ == '__main__':

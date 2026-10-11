@@ -353,3 +353,9 @@ REPLAY 任务：重新读取命中路（不保存快照）；S2：
 本节对应用户批准的组合优化，并优先于上文 SOC-3d 和 v1 的旧级数、旧拍数及“不得新增级/输出缓存”限制。架构数值、异常、PMP/PMA 权限与副作用规则不变；本节明确列出的流水延迟是本轮批准的合同迁移，不能以此放宽 golden、种子、规模或 watchdog。实现与证据见 `tasks/SOC-3e-pipeline-report.md`，未取得的仿真/最终布线/上板证据不得沿用基线结论。
 
 L2MemEngine 增加深度 l2Slots 的无 flow/pipe AR dispatch 队列。readReq.fire 同拍预留 order 与 dispatch 两项资源，order 包含尚未发 AR 的已接受读；AR 从寄存队头发出，最早多一拍，ARready 不再决定 order 写使能。内存仍按 AR 顺序返回完整行，RID/beat/RLAST 检查与错误归并不变。一项 WB 优先于同拍新读；已有 dispatch 队头在离开 AR 前阻止新 WB，避免 AR 在背压期间受新写影响。已有 WB 同行读等 B，不同行读可推进；R 完成才释放 order 容量。不得漏发/重复 AR 或复用在途 slot。
+
+## 2026-10-11 SD 产品 DMA 错误扩展
+
+用户追加三个带SD的bitstream后，`BreezeClusterConfig.coherentDma=true`启用AXI顶层的64bit经典Wishbone DMA入口，经单事务桥映射到现有Read/MaskWrite，ACK只在Home响应后产生；PMA只允许可缓存、非device且具备对应读写权限的完整8字节。未启用时不增加端口/桥，默认集群原合同不变。
+
+仅该SD预设使`L2Home(reportDmaErrors=true)`：MaskWrite miss的合并读发生refill错误时，返回WriteAck/error=1、不安装/不合并，以Wishbone ERR终结，BIOS不得把失败读取或加载当成功。这是新增DMA产品的错误报告能力，不改变默认模式上文WriteAck/error=0的合同。DMA应答不等同于DDR写回完成；该模式仍经L2缓存保持一致性，FENCE.I/启动跳板负责新程序取指可见性。

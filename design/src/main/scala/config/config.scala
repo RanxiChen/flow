@@ -231,7 +231,8 @@ final case class BreezeClusterConfig(
     corePreset: CorePreset = CorePreset.Gshare,
     privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     loadUseBypass: Boolean = false,
-    coprocessorStub: Option[Int] = scala.None
+    coprocessorStub: Option[Int] = scala.None,
+    coherentDma: Boolean = false
 ) {
     val nCores: Int = mem.nCores
 

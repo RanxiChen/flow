@@ -35,6 +35,8 @@ class BreezeClusterAxi(cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     val supervisorExternalInterrupts = Input(Vec(p.nCores, Bool()))
     val mem = new Axi4MasterIO(Axi4Params(p.paddrBits, p.memDataBits, p.slotBits))
     val mmio = new Axi4LiteMasterIO(p.paddrBits, 64)
+    val dmaWishbone = if (cfg.coherentDma)
+      Some(Flipped(new LiteXWishboneMasterIO(LiteXWishboneParameters(p.paddrBits, 64)))) else None
     val hartFatal = Output(Vec(p.nCores, Bool()))
     val hartEStop = Output(Vec(p.nCores, Bool()))
     val debug = if (debugEnabled) Some(Output(new BreezeAxiDebug(p))) else None
@@ -45,9 +47,15 @@ class BreezeClusterAxi(cfg: BreezeClusterConfig, enableTandem: Boolean = false,
   cluster.io.externalInterrupts := io.externalInterrupts
   cluster.io.supervisorExternalInterrupts := io.supervisorExternalInterrupts
   io.mem <> cluster.io.mem; io.mmio <> cluster.io.mmio
-  cluster.io.dma.req.valid := false.B
-  cluster.io.dma.req.bits := 0.U.asTypeOf(cluster.io.dma.req.bits)
-  cluster.io.dma.rspDown.ready := true.B
+  if (cfg.coherentDma) {
+    val bridge = Module(new CoherentDmaWishbone(cfg.mem))
+    bridge.io.wishbone <> io.dmaWishbone.get
+    cluster.io.dma <> bridge.io.home
+  } else {
+    cluster.io.dma.req.valid := false.B
+    cluster.io.dma.req.bits := 0.U.asTypeOf(cluster.io.dma.req.bits)
+    cluster.io.dma.rspDown.ready := true.B
+  }
   io.hartFatal := cluster.io.hartFatal; io.hartEStop := cluster.io.hartEStop
   io.debug.foreach { d =>
     val monitor = Module(new BreezeHangMonitor(hangThresholdCycles, p.l2Slots))

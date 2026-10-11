@@ -4,7 +4,7 @@ import os
 
 from migen import Cat, ClockSignal, Constant, Instance, Record, ResetSignal, Signal
 from litex.soc.cores.cpu import CPU, CPU_GCC_TRIPLE_RISCV64
-from litex.soc.interconnect import axi
+from litex.soc.interconnect import axi, wishbone
 from .axi_router import BreezeAxiRouter, platform_regions
 
 RETIRE_LAYOUT = [
@@ -98,6 +98,7 @@ class _BreezeClusterCPU(CPU):
     expected_marker = {}
     debug_enabled = False
     tandem_enabled = False
+    coherent_dma = False
     io_regions = {0x02000000: 0x10000, 0x0c000000: 0x4000000, 0x12000000: 0x1000000}
 
     @property
@@ -122,6 +123,8 @@ class _BreezeClusterCPU(CPU):
         self.memory_buses = [self.axi_router.dram]
         self.periph_buses = [self.axi_router.low, self.mmio_bus]
         self.ibus, self.dbus = self.memory_bus, self.mmio_bus
+        if self.coherent_dma:
+            self.dma_bus = wishbone.Interface(data_width=64, address_width=32, addressing='word')
         self.interrupt = Signal(8)
         self.msip, self.mtip = Signal(self.num_harts), Signal(self.num_harts)
         self.time = Signal(64)
@@ -131,6 +134,11 @@ class _BreezeClusterCPU(CPU):
         self.retire = self.retires[0]
         self.cpu_params = dict(i_clock=ClockSignal("sys"), i_reset=ResetSignal("sys") | self.reset,
             i_io_resetAddr=Constant(self.reset_vector, 64), i_io_time=self.time)
+        if self.coherent_dma:
+            for name in ('cyc', 'stb', 'we', 'adr', 'dat_w', 'sel', 'cti', 'bte'):
+                self.cpu_params['i_io_dmaWishbone_' + name] = getattr(self.dma_bus, name)
+            for name in ('ack', 'err', 'dat_r'):
+                self.cpu_params['o_io_dmaWishbone_' + name] = getattr(self.dma_bus, name)
         for prefix, bus in (("mem", self.memory_bus), ("mmio", self.mmio_bus)):
             for channel in ("ar", "aw", "w", "r", "b"):
                 endpoint = getattr(bus, channel)
@@ -194,9 +202,10 @@ class _BreezeClusterCPU(CPU):
 
     @classmethod
     def rtl_dir(cls):
-        return os.path.join(cls.flow_root_dir(), "design", "build", "rtl", "axi-cluster",
+        path = os.path.join(cls.flow_root_dir(), "design", "build", "rtl", "axi-cluster",
             cls.cluster_profile, cls.core_preset, cls.privilege_profile,
             "tandem" if cls.tandem_enabled else "production", "fpga-debug" if cls.debug_enabled else "cpu")
+        return os.path.join(path, 'coherent-dma') if cls.coherent_dma else path
 
     @classmethod
     def _read_profile_marker(cls, marker_path):
@@ -220,6 +229,8 @@ class _BreezeClusterCPU(CPU):
                       for key, value in expected.items() if values.get(key) != value]
         if mismatches:
             raise RuntimeError("Breeze cluster profile mismatch: " + ", ".join(mismatches))
+        if values.get('coherentDma', 'false') != str(cls.coherent_dma).lower():
+            raise RuntimeError('Breeze coherent DMA profile mismatch')
         for key in ("idBits", "l2BytesPerCore", "l2Slots"):
             if int(values.get(key, "0")) <= 0:
                 raise RuntimeError(f"invalid cluster geometry marker: {key}")
@@ -234,7 +245,8 @@ class _BreezeClusterCPU(CPU):
         if not os.path.isfile(filelist) or not os.path.isfile(marker):
             raise FileNotFoundError("Breeze RTL missing; cd design && sbt 'runMain flow.top.GenerateBreezeCluster " +
                 f"{cls.cluster_profile} {cls.core_preset} {cls.privilege_profile}" +
-                (" tandem" if cls.tandem_enabled else "") + (" fpga-debug" if cls.debug_enabled else "") + "'")
+                (" tandem" if cls.tandem_enabled else "") + (" fpga-debug" if cls.debug_enabled else "") +
+                (" coherent-dma" if cls.coherent_dma else "") + "'")
         cls._validate_profile_marker(marker)
         with open(filelist, encoding="utf-8") as f:
             entries = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
@@ -287,3 +299,17 @@ class BreezeTinyDebug(BreezeTiny):
     rtl_mode = "fpga-debug"
     tandem_enabled = True
     debug_enabled = True
+
+
+class BreezeDma(Breeze):
+    coherent_dma = True
+    human_name = "Breeze RV64GC (4 harts, AXI, coherent SD DMA)"
+
+
+class BreezeTinyDma(BreezeTiny):
+    coherent_dma = True
+    human_name = "Breeze RV64GC (1 hart, AXI, coherent SD DMA)"
+
+
+class BreezeTinyDebugDma(BreezeTinyDebug):
+    coherent_dma = True

@@ -5,10 +5,10 @@ import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
 
 /** AXI SoC generator; optional debug is passive and enables retirement traces. */
 object GenerateBreezeCluster extends App {
-    require(args.length >= 3 && args.length <= 5,
-        "未支持的参数数量（DMA/FASE 未支持）；usage: GenerateBreezeCluster <single|small> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug]")
+    require(args.length >= 3 && args.length <= 6,
+        "usage: GenerateBreezeCluster <single|small> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug] [coherent-dma]")
     require(Set("single", "small").contains(args(0)), "未支持的 SoC profile")
-    require(args.drop(3).forall(Set("tandem", "fpga-debug")), "未支持：DMA/FASE 或未知选项")
+    require(args.drop(3).forall(Set("tandem", "fpga-debug", "coherent-dma")), "未支持：FASE 或未知选项")
     require(args.drop(3).distinct.length == args.drop(3).length, "duplicate optional feature")
     private val corePreset = CorePreset.fromName(args(1))
     private val privilegeProfile = PrivilegeProfile.fromName(args(2))
@@ -18,11 +18,13 @@ object GenerateBreezeCluster extends App {
     require(hangThreshold > 0, "BREEZE_HANG_CYCLES must be positive")
     private val enableTandem = args.drop(3).contains("tandem") || debug
     private val cfg = BreezeClusterPresets.fromName(args(0))
-        .copy(corePreset = corePreset, privilegeProfile = privilegeProfile)
+        .copy(corePreset = corePreset, privilegeProfile = privilegeProfile,
+          coherentDma = args.drop(3).contains("coherent-dma"))
     private val mem = cfg.mem
-    private val targetDir = os.pwd / "build" / "rtl" / "axi-cluster" /
+    private val baseDir = os.pwd / "build" / "rtl" / "axi-cluster" /
         args(0) / corePreset.name / privilegeProfile.name /
         (if(enableTandem) "tandem" else "production") / (if(debug) "fpga-debug" else "cpu")
+    private val targetDir = if (cfg.coherentDma) baseDir / "coherent-dma" else baseDir
     ChiselStage.emitSystemVerilogFile(
         new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
         Array("--target-dir", targetDir.toString),
@@ -68,4 +70,5 @@ object GenerateBreezeCluster extends App {
         .digest(platformBytes).map(b => f"${b & 0xff}%02x").mkString
     os.write.over(targetDir / "cluster-profile.txt",
         s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
+    os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\n")
 }
