@@ -211,6 +211,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       s1=s0Read; s0Read=newReq
       if(!soloHold) retryAt=None
     }
+    if(kill && replayPc.isEmpty) replayFetch.clear()
     replayPc.foreach { p =>
       val younger = fetched.toSeq.filter(_._1 >= p).sortBy(_._1)
       replayFetch.clear(); replayFetch.enqueueAll(younger)

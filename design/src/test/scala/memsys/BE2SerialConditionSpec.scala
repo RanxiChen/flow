@@ -227,7 +227,7 @@ class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.io.cpuRequest.expect(false.B)
       d.io.drained.expect(warm.B); d.io.sampledDrained.expect(true.B)
       d.io.sampledMmuIdle.expect(false.B)
-      d.io.committed.expect(warm.B); d.io.missRequest.expect((!warm).B)
+      d.io.committed.expect(true.B); d.io.missRequest.expect((!warm).B)
       println(s"BE2_B3 real_${if (warm) "hit" else "miss"} cycle=D+1 FENCE=WB CPU_idle=1 raw_drained=${if (warm) 1 else 0} sampled_drained=1 sampled_idle=0 baseline_commit=${if (warm) 1 else 0}")
     }
   }

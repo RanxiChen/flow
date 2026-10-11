@@ -51,7 +51,7 @@ object CoreOp {
     CoreOp(L1DOp.AMO, a, size, data = data, amoFunc = func)
 }
 
-class CoreTxn(val id: Int, val op: CoreOp, val fired: Long) {
+class CoreTxn(val id: Int, val op: CoreOp, var fired: Long) {
   var respCycle = -1L
   var kind = ""
   var value: BigInt = 0
@@ -100,6 +100,14 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   private var trapNow = false
   private var nextId = 0
   private var presenting: Option[CoreOp] = None
+  val replayAttempts = ArrayBuffer.empty[(Long,Int,Int)]
+  private val retries = mutable.Queue.empty[CoreTxn]
+  private var presentingRetry: Option[CoreTxn] = None
+  private var retryWake = false
+  private var armSolo = false
+  private var soloActive = false
+  private var presentingSolo = false
+  private var replayNow = false
   private var lateReady = true
   private var respValid = false
   private var s1Victim: Option[CoreTxn] = None
@@ -114,13 +122,24 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     trapNow = trapNext; trapNext = false
     lateReady = rng.nextDouble() < lateReadyProb
     core.late.ready.poke(lateReady.B)
-    if (presenting.isEmpty && pending.nonEmpty && rng.nextDouble() < issueProb) presenting = Some(pending.dequeue())
+    if (presenting.isEmpty && !soloActive && rng.nextDouble() < issueProb) {
+      if (retries.nonEmpty && (!retryWake || core.replayWake.peek().litToBoolean)) {
+        val t=retries.dequeue(); presentingRetry=Some(t); presenting=Some(t.op)
+        presentingSolo=armSolo; armSolo=false; retryWake=false
+      } else if(retries.isEmpty && pending.nonEmpty) {
+        presenting=Some(pending.dequeue()); presentingRetry=None
+        val o=presenting.get
+        presentingSolo=enumIs(o.op,L1DOp.AMO) ||
+          ((enumIs(o.op,L1DOp.LR) || enumIs(o.op,L1DOp.SC)) && (o.aq || o.rl))
+      }
+    }
     core.req.valid.poke(presenting.nonEmpty.B)
     presenting.foreach { o =>
       val b = core.req.bits
       b.op.poke(o.op); b.vaddr.poke(o.addr.U(64.W)); b.size.poke(o.size.U)
       b.signed.poke(o.signed.B); b.wdata.poke((o.data & mask(64)).U(64.W))
       b.rd.isFp.poke(false.B); b.rd.idx.poke(o.rd.U); b.isFlw.poke(o.isFlw.B)
+      b.solo.poke(presentingSolo.B)
       b.aq.poke(o.aq.B); b.rl.poke(o.rl.B); b.amoFunc.poke(o.amoFunc)
     }
     core.s1Kill.poke(false.B)
@@ -137,6 +156,8 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     excKillNow = killOnExc && respValid && !s2KillNow &&
       core.resp.bits.kind.peek().litValue == L1DRespKind.Exc.litValue
     if (excKillNow) s2KillNow = true
+    replayNow = respValid && core.resp.bits.kind.peek().litValue == L1DRespKind.Replay.litValue
+    if(replayNow) { check(!soloActive,"solo request replayed twice"); s2KillNow=true }
     core.s1Kill.poke(s1Victim.nonEmpty.B)
     core.s2Kill.poke(s2KillNow.B)
     core.trapClearRsv.poke((trapClear || trapNow || excKillNow).B)
@@ -156,17 +177,32 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       val r = core.resp.bits
       val k = r.kind.peek().litValue
       val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else "Exc"
-      if (s2KillNow && !excKillNow) {
+      if(replayNow) {
+        replayAttempts += ((now,t.id,r.replayReason.peek().litValue.toInt))
+        val reissue=Vector(t) ++ inPipe.toVector ++ retries.toVector
+        inPipe.clear(); retries.clear(); retries.enqueueAll(reissue)
+        if(presenting.nonEmpty) {
+          val rest=pending.toVector
+          pending.clear(); pending.enqueueAll(presenting.toVector ++ rest)
+          presenting=None; presentingRetry=None
+        }
+        retryWake=true; armSolo=true
+        // MMIO recognition itself needs no resource wake event.
+        if(r.replayReason.peek().litValue == 4) retryWake=false
+        presentingSolo=true; soloActive=false
+      } else if (s2KillNow && !excKillNow) {
         t.kind = kind; kill(t)
         inPipe.foreach(kill); inPipe.clear()
       } else {
         respond(t, kind, r.data.peek().litValue, r.excCause.peek().litValue, r.tval.peek().litValue)
         if (excKillNow) { inPipe.foreach(kill); inPipe.clear() }
       }
+      if(!replayNow && soloActive) soloActive=false
       if (t.done) onDone(t)
       progress()
     }
     if (s2KillNow && !respValid) {
+      soloActive=false
       check(inPipe.nonEmpty, "S2 cancellation without an outstanding request")
       inPipe.foreach(kill); inPipe.clear(); progress()
     }
@@ -175,8 +211,11 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
       progress()
     }
     if (fired) {
-      val t = new CoreTxn(nextId, presenting.get, now)
-      nextId += 1; inPipe.enqueue(t); history += t; presenting = None; progress()
+      val t = presentingRetry.getOrElse(new CoreTxn(nextId, presenting.get, now))
+      if(presentingRetry.isEmpty) { nextId+=1; history+=t }
+      t.fired=now; inPipe.enqueue(t); presenting=None; presentingRetry=None
+      if(presentingSolo) soloActive=true
+      progress()
     }
     val lateValid = core.late.valid.peek().litToBoolean
     if (lateValid) check(awaitingLate.nonEmpty, "late data without an outstanding load miss")
@@ -309,7 +348,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
 
   // A store miss responds before install/replay/PS have completed (§6.2).
   // The interface's drained indication, rather than a fixed delay, closes it.
-  def idle: Boolean = pending.isEmpty && presenting.isEmpty && inPipe.isEmpty && awaitingLate.isEmpty &&
+  def idle: Boolean = pending.isEmpty && retries.isEmpty && presenting.isEmpty && inPipe.isEmpty && awaitingLate.isEmpty &&
     drained && !core.mmioBusy.peek().litToBoolean
   override def describe: String =
     s"core: pending ${pending.size}, presenting $presenting, inPipe ${inPipe.mkString("; ")}, " +

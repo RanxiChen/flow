@@ -70,7 +70,7 @@ class FpUnit(val depth: Int = 32, val issueReservation: Boolean = false) extends
   val entrance = RegInit(0.U(2.W))
   val pending = RegInit(0.U(2.W))
   val reserveTag = (allocate + pending)(tagWidth - 1, 0)
-  io.reserveReady := entrance < 2.U && !killDrain && !entries(reserveTag).valid
+  io.reserveReady := (entrance < 2.U || input.io.deq.fire) && !killDrain && !entries(reserveTag).valid
   if (issueReservation) {
     val cancelPending = Mux(io.killUncommitted, pending, 0.U)
     entrance := entrance + io.reserve.asUInt - input.io.deq.fire.asUInt - cancelPending

@@ -61,7 +61,12 @@ class Writeback(val withCoprocessor: Boolean = false) extends Module {
   lateSource.bits.rd := lateReg.bits.rd
   lateSource.bits.data := lateReg.bits.data
   lateSource.bits.flags := 0.U
-  val sources = Seq(lateSource, io.div, io.mul, io.fp) ++ io.copro.toSeq
+  val latePort = Wire(new LongLatUnit)
+  latePort.reserve := io.late.fire; latePort.available := io.late.ready
+  latePort.commitD := false.B; latePort.killD := false.B
+  latePort.returned := lateSource.fire.asUInt; latePort.drained := !lateReg.valid
+  latePort.result <> lateSource
+  val sources = Seq(latePort.result, io.div, io.mul, io.fp) ++ io.copro.toSeq
   val valids = VecInit(sources.map(_.valid))
   val banks = VecInit(sources.map(_.bits.rd.isFp))
   val ordinaryWrite = w2.valid

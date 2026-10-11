@@ -742,4 +742,16 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
       }
     }
 
+  "BE2 N02 same-line replay reserves no second MSHR and reissues solo once" in withL1D(seed=0xbe2) { e =>
+    import e._
+    val a=ram(0x3c0)
+    preload(a,8,19); preload(a+8,8,23)
+    runOps(CoreOp.load(a,rd=1),CoreOp.load(a+8,rd=2))
+    core.history.size mustBe 2
+    core.history.map(_.done).toSeq mustBe Seq(true,true)
+    core.history.map(_.value).toSeq mustBe Seq(BigInt(19),BigInt(23))
+    core.replayAttempts.map(_._2).toSeq mustBe Seq(1)
+    l2.gets.size mustBe 1
+  }
+
 }
