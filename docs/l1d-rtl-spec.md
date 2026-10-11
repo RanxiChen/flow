@@ -47,6 +47,8 @@
 | `l2Slots` | 2 | ≥ 1 |
 | `paddrBits` | 32 | v1 锁定 32 |
 
+BE2 部署裁定（2026-10-11，用户要求四核优先及允许缩减资源）：`small` 使用 `l1Sets=64`、L1D/I 两路（各 4 KiB/core）、`l2Ways=4`、`l2BytesPerCore=32768`（四核 L2 总量 128 KiB）。`single` 由 `small` 拷贝，仅改 profileName/nCores，单核 L2 总量 32 KiB。上表的 `BreezeMemGeometry.default` 及原默认/压力测试几何保持原值；行宽、MSHR、L2 槽数、物理地址宽度保持不变。
+
 删除旧字段与类：`DefaultDCacheConfig`、`DefaultICacheConfig` 的几何部分、`BreezeCoreConfig.dcache*`、`L2CacheGeometry` 的 `numHarts × 2 × L1D` 公式、`txnIdWidth`；`numHarts` 改名 `nCores`。L1I/L1D 同路数的 `require` 删除。
 
 L1D 推导（`L1DParams(cfg)`）：

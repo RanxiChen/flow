@@ -694,6 +694,7 @@ class L1DL2MultiCoreFaultSpec extends AnyFreeSpec with Matchers with ChiselSim {
   }
 
   for ((name, g, ops, seeds) <- Seq(("two cores", two, 1000, Seq(91, 92)), ("four cores", four, 1000, Seq(91)),
+      ("four cores on the BE2 deployment geometry", flow.config.BreezeClusterPresets.small.mem, 1000, Seq(91)),
       ("two cores on the stress geometry", stress2, 2000, Seq(91, 92)),
       ("four cores on the stress geometry", BreezeMemGeometry.stress.copy(nCores = 4), 2000, Seq(91)));
       seed <- seeds)

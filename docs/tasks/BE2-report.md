@@ -2,7 +2,7 @@
 
 2026-10-11。按任务书 §10 BE2-P 和 §11 加速模式连续实施；本文供用户最终审核。起点 `2051dd0bb9a0c701bb95fd3f1e755ae175023093`；分支 `refactor/be2-backend-decoupling`，工作区 `/home/chen/leisure/flow-be2`。主工作区及其既有未跟踪记录未修改。
 
-当前生产源：`1ce2b97`（包含 `74c858e` 的 EX admission 修正）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
+当前生产源：`790c1f6` 加下述部署几何裁定（待绑定新 SHA；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
 
 ## 实现映射
 
@@ -164,3 +164,12 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 默认 XDC 中沿用 LiteX 的既有 reset synchronizer/mr_ff false_path；未新增 false_path、multicycle 或放宽 clock。原始 XDC 已归档，100 MHz 的 sys_clk 与 FPGA/default DDR 约束完整保留。
 
 首轮7b885d6 S2严格结果：decision→payload仍有1230端点（正在以1ce2b97修正）；decision→执行CE=0（baseline870）、hold→payloadCE=0（baseline2994）、hold→执行CE=0（baseline580），这些非空source/endpoint集合有同方法阳性对照。frontend两组在baseline和candidate都为0，表述为双方均已无此路径，不能称为BE2新消除的路径。candidate grant两组为0，但baseline selected/ready别名在重建网表中为空，grant阳性对照仍未解析；wbCommit/wbKill名字也被优化掉。相应项目保持UNRESOLVED，不以空source证明通过。首次接口pin尝试同样为空，原始查询保留。
+
+
+## 四核部署资源裁定与最终修正
+
+19. **同一 admission 仲裁**：1ce2b97 的双 PriorityEncoder 使四个 L1D 综合 LUT 相对同配置起点增加 4.634/5.783/5.334/5.881%，超过 A1 的 2%。237e1f2 只选一次取消前仲裁，CPU/recheck 实际 fire 另门控 cpuKill，维护优先级保持原值。原 admission assertion/精确 fault 用例和最小门禁通过。1ce2b97 的单/四核物理被新源替代，主动终止 exit143，不当作功能失败或 routed 证据。
+20. **BTB 宽 payload 捕获**：7b885d6 单核实际 routed 的 CPU 最差路径为 cpu3_paddr[7] 到 backend btb_pc 的 R，21 级逻辑。790c1f6 使宽 pc/target/predType/taken 无条件捕获，同边界一位 btbPayloadVisible=RegNext(train) 控制公开 payload 清零；用 train 而非 btb.valid 保持 train 且预测类型 NONE 时原公开字段。kill 同拍 train=false，公开 valid/字段仍按原契约。S13 精确字段清零检查、BE2R1/BE2R6/P09/P10 及 G2 1000 种子通过。
+21. **共享部署缓存缩减**：7b885d6 四核综合 LUT=228169/242400（94.13%），全局布线迭代0耗时48分24秒，迭代1仍始于38771冲突节点。按用户四核优先及允许删减资源的授权，small 改为 L1 64sets/两路、L2四路/32768字节每核；single仅改核数/profile，不能单独放大缓存。标准 BreezeMemGeometry.default 及原默认/压力测试保持原几何；保留100MHz、GShare、RV64IMAFDC/Linux、MSHR1、slots2、line32、paddr32和 BE2 credit 容量。新增准确部署几何的原 seed91/每核1000操作故障测试，golden/断言/看门狗不变。此裁定需要重跑两部署最小程序及匹配配置 baseline 综合；旧 A1/P1 数字只代表旧默认几何，不冒充新配置通过。
+
+790c1f6 的最新最小回归：config9、两配置20个原始 ISA ELF、6个原始四核系统程序、原 S1 kill/默认几何四核 fault seed91、真实 Sv39 PTW hit/miss，合计16个 Scala 用例，exit0。独立后端安全集及 G2 seed0–999 exit0，生产 single/small 生成 exit0。缓存裁定前的后端测试只在后端/执行单元源文件完全相同时复用，并明确配置范围；新增部署几何另作动态核验。

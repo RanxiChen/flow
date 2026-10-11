@@ -245,7 +245,11 @@ final case class BreezeClusterConfig(
   * geometries. Every preset defaults to the GShare branch predictor.
   */
 object BreezeClusterPresets {
-    val small: BreezeClusterConfig = BreezeClusterConfig("small", BreezeMemGeometry.default)
+    // Four-hart KCU105 deployment: reduce cache metadata/mux pressure after
+    // the full-size design used 94% LUTs. Architectural/test default is intact.
+    val small: BreezeClusterConfig = BreezeClusterConfig("small",
+        BreezeMemGeometry.default.copy(l1Sets = 64, l1dWays = 2, l1iWays = 2,
+            l2Ways = 4, l2BytesPerCore = 32768))
     // Deployment tuning is owned by the four-hart profile. A single hart
     // uses exactly the same parameters, changing only its name and hart count.
     val single: BreezeClusterConfig = small.copy(profileName = "single", mem = small.mem.copy(nCores = 1))
