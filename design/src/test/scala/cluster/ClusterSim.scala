@@ -30,12 +30,17 @@ final case class ClusterRunConfig(
     timerDivider: Int = 16,
     axiBackpressure: Boolean = false,
     seed: Int = 1,
-    traceLog: Boolean = false)
+    traceLog: Boolean = false,
+    tohostSymbol: String = "tohost",
+    passValue: BigInt = 1,
+    observeBackend: Boolean = false)
 
 final case class ClusterRunResult(cycles: Long, retired: Seq[Long], tohost: Seq[Option[BigInt]],
     console: String, passed: Boolean, reason: String,
     /** Accesses to MMIO addresses with no model (read 0 / write dropped). */
-    unmappedMmio: Seq[String] = Seq.empty)
+    unmappedMmio: Seq[String] = Seq.empty,
+    replayCounts: Seq[Long] = Seq.empty,
+    soloCycles: Long = 0L)
 
 // =============================================================================
 // ELF64 little-endian loader (PT_LOAD segments and the symbol table)
@@ -237,6 +242,7 @@ object ClusterSim extends PeekPokeAPI {
     val cfg = runs.head.cfg
     for (c <- runs) {
       require(c.cfg == cfg, "runMany: every run must use the same BreezeClusterConfig")
+      require(c.observeBackend == runs.head.observeBackend, "runMany: observation mode differs")
       require(c.harts >= 1 && c.harts <= cfg.nCores, s"harts ${c.harts} vs nCores ${cfg.nCores}")
     }
     val results = mutable.Map.empty[Int, ClusterRunResult]
@@ -250,7 +256,8 @@ object ClusterSim extends PeekPokeAPI {
       attempt += 1
       var started = false
       try {
-        Simulator.simulateRaw(new BreezeCluster(cfg, enableTandem = true)) { dut =>
+        Simulator.simulateRaw(new BreezeCluster(cfg, enableTandem = true,
+            enableBackendObservation = runs.head.observeBackend)) { dut =>
           started = true
           while (remaining.nonEmpty) {
             val k = remaining.head
@@ -322,8 +329,8 @@ object ClusterSim extends PeekPokeAPI {
     val image = try Elf64.load(c.elf) catch {
       case e: Exception => throw new ClusterRunFailure(s"cannot load ${c.elf}: ${e.getMessage}")
     }
-    val tohostAddr = image.symbols.getOrElse("tohost",
-      throw new ClusterRunFailure(s"${c.elf} has no 'tohost' symbol"))
+    val tohostAddr = image.symbols.getOrElse(c.tohostSymbol,
+      throw new ClusterRunFailure(s"${c.elf} has no '${c.tohostSymbol}' symbol"))
     val n = c.cfg.nCores
     val rng = new Random(c.seed)
     // Zero background: a real RAM is undefined, but programs may rely on
@@ -351,6 +358,8 @@ object ClusterSim extends PeekPokeAPI {
     dut.reset.poke(false.B)
 
     val retired = Array.fill(n)(0L)
+    val replayCounts = Array.fill(7)(0L)
+    var soloCycles = 0L
     val tohost = Array.fill[Option[BigInt]](n)(None)
     val ring = Array.fill(n)(mutable.Queue.empty[String])
     val lastPc = Array.fill[BigInt](n)(-1)
@@ -372,6 +381,13 @@ object ClusterSim extends PeekPokeAPI {
 
     try {
       while (verdict.isEmpty) {
+        dut.io.backendObservation.foreach { observations =>
+          for(h <- 0 until n) {
+            val o = observations(h)
+            if(o.replay.peek().litToBoolean) replayCounts(o.replayReason.peek().litValue.toInt) += 1
+            if(o.solo.peek().litToBoolean) soloCycles += 1
+          }
+        }
         agents.foreach(_.drivePhase(cycle))
         dut.io.time.poke(mmio.mtime.U(64.W))
         for (h <- 0 until n) { dut.io.msip(h).poke(mmio.msip(h).B); dut.io.mtip(h).poke(mmio.mtip(h).B) }
@@ -400,14 +416,14 @@ object ClusterSim extends PeekPokeAPI {
                 val v = ((e.memWData >> (8 * off)) & mask(8 * bytes)) << (8 * (addr - slot).toInt)
                 if (v != 0) {
                   tohost(h) = Some(v)
-                  if (v != 1) verdict = Some((false, report(s"hart $h wrote tohost ${hex(v)} (test ${v >> 1})")))
+                  if (v != c.passValue) verdict = Some((false, report(s"hart $h wrote tohost ${hex(v)} (test ${v >> 1})")))
                 }
               }
             }
           }
           if (dut.io.hartFatal(h).peek().litToBoolean) verdict = Some((false, report(s"hart $h hartFatal")))
         }
-        if (verdict.isEmpty && (0 until c.harts).forall(h => tohost(h).contains(BigInt(1))))
+        if (verdict.isEmpty && (0 until c.harts).forall(h => tohost(h).contains(c.passValue)))
           verdict = Some((true, s"${c.elf.getFileName}: all ${c.harts} hart(s) passed at cycle $cycle"))
 
         dut.clock.step()
@@ -425,6 +441,7 @@ object ClusterSim extends PeekPokeAPI {
         verdict = Some((false, report(s"harness check: ${a.getMessage}")))
     }
     val (ok, why) = verdict.get
-    ClusterRunResult(cycle, retired.toSeq, tohost.toSeq, mmio.console.toString, ok, why, mmio.unmapped.toSeq)
+    ClusterRunResult(cycle, retired.toSeq, tohost.toSeq, mmio.console.toString, ok, why,
+      mmio.unmapped.toSeq, replayCounts.toSeq, soloCycles)
   }
 }

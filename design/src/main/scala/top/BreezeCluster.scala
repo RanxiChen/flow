@@ -17,7 +17,8 @@ import flow.platform.BreezeMcuPlatform
 /** Native memory-system connection boundary. Cache miss/replay execution is
   * still the responsibility of the L1D/L2 implementations, not this shell.
   */
-class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false) extends Module {
+class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
+    enableBackendObservation: Boolean = false) extends Module {
   val mem = cfg.mem
   val coreCfg = cfg.coreCfg(enableTandem)
   require(!coreCfg.useFASE, "FASE backend/cluster contract remains unresolved")
@@ -35,6 +36,8 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false)
     val hartFatal = Output(Vec(p.nCores, Bool()))
     val hartEStop = Output(Vec(p.nCores, Bool()))
     val retire = Output(Vec(p.nCores, new TracePayload(64)))
+    val backendObservation = if(enableBackendObservation)
+      Some(Output(Vec(p.nCores, new flow.backend.BackendObservation))) else None
     val l1dEvents = Output(Vec(p.nCores, new L1DEvents))
     val l2Events = Output(new L2Events(p))
   })
@@ -47,6 +50,7 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false)
 
   for (h <- 0 until p.nCores) {
     val backend = Module(new BreezeBackend(coreCfg.backendCfg, hartId = h))
+    io.backendObservation.foreach(_(h) := backend.io.observe)
     val frontend = Module(new BreezeFrontend(coreCfg.frontendCfg, memGeometry = mem))
     val buffer = Module(new FetchBuffer(64, 6, coreCfg.backendCfg.ghrLength))
     val frontendBoundary = Module(new BreezeFrontendBoundary(coreCfg.backendCfg.ghrLength))
