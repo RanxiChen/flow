@@ -1,0 +1,4 @@
+config BR2_PACKAGE_FLOW_COREMARK
+	bool "Flow CoreMark"
+	help
+	  CoreMark 1.01 for Linux, compiled with -O3 for the scalar ISA.

@@ -1,6 +1,6 @@
 # Breeze SD-loaded GAPBS and Python
 
-This profile retains musl Buildroot, adds C++/OpenMP, GAPBS and basic Python 3,
+This profile retains musl Buildroot, adds CoreMark, C++/OpenMP, GAPBS and basic Python 3,
 and embeds the root filesystem in the Linux Image. LiteX BIOS reads the boot
 files from FAT; Linux does not need the SD controller to mount its root.
 
@@ -28,3 +28,22 @@ and unknown Rocket clock frequency limit direct hardware comparisons.
 
 All runtime files are in RAM. Save console output on the host; results disappear
 at power-off. No Python third-party packages or network support are added.
+
+CoreMark 1.01 is installed as `/usr/bin/coremark`, built with `-O3` for the
+scalar ISA. Run `coremark` manually after boot and preserve its validation,
+iterations, elapsed time and printed compiler flags. It is not run during boot.
+Its license is included in `/usr/share/licenses/coremark/`.
+
+To add CoreMark while preserving all existing GAPBS/rootfs file data, use an
+existing validated GAPBS SDK and kernel build in a fresh output directory:
+
+```sh
+JOBS=2 bash linux/sd-gapbs/rebuild-coremark-gapbs.sh \
+  /path/to/gapbs-sdk-output /path/to/coremark-1.01.tar.gz \
+  /path/to/validated-kernel-parent /absolute/fresh/output
+```
+
+This verifies the pinned release archive, compiles the Linux binary, appends
+a newc archive to the unchanged GAPBS cpio, checks every original file's data
+and all nine GAPBS ELF hashes, then relinks a separate kernel build output.
+The three BE2 from-source Buildroot profiles also enable Flow CoreMark.
