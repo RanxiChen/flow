@@ -7,7 +7,7 @@ import flow.config.{BackendConfig, BreezeMemGeometry, PrivilegeProfile}
 import flow.fpu.BreezeFpChiselSim
 import flow.interface.FrontendFetchBundle
 import flow.l1d.L1DCache
-import flow.mmu.sv39.{PtwMemIO, Sv39Mmu}
+import flow.mmu.sv39.{MmuCmd, Sv39Mmu, TlbPortIO}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
@@ -61,14 +61,18 @@ class BE2SerialBackendProbe extends BreezeBackend(BackendConfig(privilegeProfile
   fenceAtWb := wb.valid && wb.fencei
 }
 
-/** Production backend/L1D connection with the physical PTW service exposed
-  * as an environment port, as in the cache permission suites. No CPU memory
-  * request or coherence response is fabricated. PMP is configured by CSRW.
+/** Production backend/L1D/MMU/PTW connections. The fetch queue is stimulated
+  * independently of a younger iTLB request, as at the backend boundary.
+  * CSRW and MRET configure real PMP/Sv39/S-mode state before that request.
   */
 class BE2FencePtwHarness extends Module {
   val io = IO(new Bundle {
     val fetch = Flipped(Decoupled(new FrontendFetchBundle(64, 8)))
-    val ptw = Flipped(new PtwMemIO)
+    val itlb = new TlbPortIO(withPmpCandidate = true)
+    val ptwReady = Output(Bool())
+    val ptwAddress = Output(UInt(56.W))
+    val privilege = Output(UInt(2.W))
+    val satp = Output(UInt(64.W))
     val drained = Output(Bool())
     val sampledDrained = Output(Bool())
     val fenceAtWb = Output(Bool())
@@ -88,20 +92,22 @@ class BE2FencePtwHarness extends Module {
   backend.io.externalInterrupts := 0.U
   backend.io.supervisorExternalInterrupt := false.B
   backend.io.hpmEvents := 0.U.asTypeOf(backend.io.hpmEvents)
-  // The exposed PTW service may be active while FENCE.I waits. FENCE.I,
-  // unlike SFENCE.VMA, does not require the MMU to be idle.
-  backend.io.mmuIdle := false.B
-  cache.io.ptw <> io.ptw
+  backend.io.mmuIdle := dtlb.io.idle
+  cache.io.ptw <> dtlb.io.ptwMem
   cache.io.tlb <> dtlb.io.dtlb
-  dtlb.io.csr := 0.U.asTypeOf(dtlb.io.csr)
-  dtlb.io.csr.priv := 3.U
-  dtlb.io.itlb.req.valid := false.B
-  dtlb.io.itlb.req.bits := 0.U.asTypeOf(dtlb.io.itlb.req.bits)
-  dtlb.io.itlb.kill := false.B
-  dtlb.io.sfence := 0.U.asTypeOf(dtlb.io.sfence)
-  dtlb.io.ptwMem.req.ready := false.B
-  dtlb.io.ptwMem.resp.valid := false.B
-  dtlb.io.ptwMem.resp.bits := 0.U.asTypeOf(dtlb.io.ptwMem.resp.bits)
+  val context = backend.io.mmuContext
+  dtlb.io.csr.sv39 := context.satp(63, 60) === 8.U
+  dtlb.io.csr.asid := context.satp(59, 44)
+  dtlb.io.csr.rootPpn := context.satp(43, 0)
+  dtlb.io.csr.priv := context.privilege
+  dtlb.io.csr.mprv := context.mprv; dtlb.io.csr.mpp := context.mpp
+  dtlb.io.csr.sum := context.sum; dtlb.io.csr.mxr := context.mxr
+  dtlb.io.itlb <> io.itlb
+  dtlb.io.sfence.valid := backend.io.sfence.valid
+  dtlb.io.sfence.rs1Nz := backend.io.sfence.useVaddr
+  dtlb.io.sfence.rs2Nz := backend.io.sfence.useAsid
+  dtlb.io.sfence.vaddr := backend.io.sfence.vaddr
+  dtlb.io.sfence.asid := backend.io.sfence.asid
   cache.io.coh.req.ready := false.B
   cache.io.coh.rspUp.ready := true.B
   cache.io.coh.snp.valid := false.B
@@ -121,14 +127,19 @@ class BE2FencePtwHarness extends Module {
   io.committed := backend.io.observe.commit
   io.cpuRequest := cache.io.core.req.valid
   io.missRequest := cache.io.coh.req.valid
+  io.ptwReady := dtlb.io.ptwMem.req.valid && dtlb.io.ptwMem.req.ready
+  io.ptwAddress := dtlb.io.ptwMem.req.bits.paddr
+  io.privilege := context.privilege
+  io.satp := context.satp
 }
 
 class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   "B3 audit: FENCE.I reaches WB exactly when an older accepted PTW makes sampled drained stale" in {
     simulate(new BE2FencePtwHarness) { d =>
       d.io.fetch.valid.poke(false.B)
-      d.io.ptw.req.valid.poke(false.B)
-      d.io.ptw.req.bits.paddr.poke(BigInt("80000000", 16).U)
+      d.io.itlb.req.valid.poke(false.B); d.io.itlb.kill.poke(false.B)
+      d.io.itlb.req.bits.vaddr.poke(BigInt("40000000", 16).U)
+      d.io.itlb.req.bits.cmd.poke(MmuCmd.Fetch)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B); d.clock.step(140)
       var pc = BigInt(0x400)
       def offer(inst: BigInt): Unit = {
@@ -154,14 +165,34 @@ class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       send(BigInt("01f00093", 16)) // addi x1,x0,31
       send((BigInt(0x3a0) << 20) | (BigInt(1) << 15) | (BigInt(1) << 12) | 0x73)
       d.clock.step(8)
+      def csrw(addr: Int, rs: Int = 1): Unit = {
+        send((BigInt(addr) << 20) | (BigInt(rs) << 15) | (BigInt(1) << 12) | 0x73)
+        d.clock.step(8)
+      }
+      def shift(rd: Int, amount: Int): BigInt =
+        (BigInt(amount) << 20) | (BigInt(rd) << 15) | (BigInt(1) << 12) | (BigInt(rd) << 7) | 0x13
+      send(BigInt("00100093", 16)); send(shift(1, 19)) // root PPN = 0x80000
+      send(BigInt("00100113", 16)); send(shift(2, 63)) // Sv39 mode = 8
+      send(BigInt("0020e0b3", 16)); csrw(0x180) // or x1,x1,x2; csrw satp
+      send(BigInt("00100093", 16)); send(shift(1, 11)); csrw(0x300) // MPP=S
+      send(BigInt("60000093", 16)); csrw(0x341) // mepc=0x600
+      send(BigInt("30200073", 16)); d.clock.step(8); pc = 0x600 // MRET
+      d.io.privilege.expect(1.U)
+      d.io.satp.expect(BigInt("8000000000080000", 16).U)
       d.io.drained.expect(true.B)
+      // A real iTLB miss owns a real Sv39Ptw request for root PTE[1].
+      d.io.itlb.req.valid.poke(true.B); d.io.itlb.req.ready.expect(true.B)
+      d.clock.step(); d.io.itlb.req.valid.poke(false.B)
+      var waited = 0
+      while (!d.io.ptwReady.peek().litToBoolean && waited < 20) { d.clock.step(); waited += 1 }
+      waited must be < 20
+      d.io.ptwAddress.expect(BigInt("80000008", 16).U)
       // PTW S0 and FENCE.I ID are accepted at the same edge. The PTW is
       // accepted before the serial owner reaches WB, so a later S0 gate
       // cannot cancel it (accepted PTW survives CPU kill).
       offer(BigInt(0x100f))
       d.io.fetch.ready.expect(true.B)
-      d.io.ptw.req.valid.poke(true.B); d.io.ptw.req.ready.expect(true.B)
-      d.clock.step(); d.io.fetch.valid.poke(false.B); d.io.ptw.req.valid.poke(false.B)
+      d.clock.step(); d.io.fetch.valid.poke(false.B)
       d.clock.step(2)
       d.io.drained.expect(true.B); d.io.sampledDrained.expect(true.B)
       d.io.fenceAtWb.expect(false.B); d.io.cpuRequest.expect(false.B)
