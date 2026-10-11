@@ -46,11 +46,26 @@ python3 fpga/kcu105/prepare_sd_boot.py --profile four \
   --output /fresh/fat-files
 ```
 
-将 `Image`、`fw_jump.bin`、匹配 `.dtb`、`serial-handoff.bin`、`boot.json` 放在 FAT 分区根目录。用户加载 `.bit` 后，BIOS 在 DDR training 后自动尝试 SD 软件启动；hart0 初始化，辅助 hart 等待发布入口，然后每核保留自己的 hart ID 进入 OpenSBI。Linux 使用内嵌 initramfs，继续执行既有 `gapbs-smoke`，不要求 SD 根文件系统。镜像加载地址见生成的 `boot.json`。
+将 `Image`、`fw_jump.bin`、匹配 `.dtb`、`serial-handoff.bin`、`boot.json` 放在 FAT 分区根目录。用户加载 `.bit` 后，BIOS 在 DDR training 后自动尝试 SD 软件启动；hart0 初始化，辅助 hart 等待发布入口，然后每核保留自己的 hart ID 进入 OpenSBI。Linux 使用内嵌 initramfs；启动后可执行既有 `gapbs-smoke`，不要求 SD 根文件系统。镜像加载地址见生成的 `boot.json`。
 
 三个硬件工程完成后，先用对应的最终硬件目录重新打包各自 FAT 文件，再运行 `collect_sd_products.py` 收集交付目录。参数是 `--four`、`--single`、`--single-rvv` 三个硬件目录，相应的三个 `--*-software` 目录，以及准确的 `--source-sha` 和不存在的 `--output`。收集器要求实际 bitstream、非负 setup/hold/pulse 余量、零路由错误、匹配 BIOS/CSR/bitstream 哈希，并比较三份配置；不接受旧硬件绑定的软件包。交付目录按产品包含 `.bit`、`bios.bin`、CSR、配置、时序和 SD 路径报告、`sd/` 启动文件以及逐文件 SHA256。
 
 若 RVV 在标量配置冻结后修复独有 RTL，可额外给 `--rvv-source-sha`；RVV 的 build-binding 必须记录与 `--source-sha` 相同的 `scalar_base_source_sha`。当前 d902fb5 对 7f7f186 的生产 RTL/config 差异仅 RvvLoadStore、RvvAxiArbiter、RvvRegisterFile、RvvAluPipeline 四个 RVV 文件，生成时另检查准确差异清单及 immutable snapshot hashes，普通单/四核的证据仍绑定 7f7f186。收集器先检查全部报告和完整五文件 SD manifest，再创建交付目录。
+
+## 上板后的最小使用检查与软件更新
+
+串口为115200 baud。加载对应 `.bit` 前插入准备好的SD卡；FAT根目录的五个文件必须来自同一个产品的 `sd/`，避免混用DTB。BIOS内置于bitstream，独立 `bios.bin` 供核对和后续构建。硬件接口兼容时，可独立重编软件并替换这些SD文件。
+
+Linux控制台先核对 `cat /sys/devices/system/cpu/online`：四核应为 `0-3`，两种单核为 `0`；再核对SD/MMC枚举及串口加载日志。新板上结果尚未执行，不能将下面的使用命令当作通过证据。
+
+```sh
+gapbs-smoke
+# 四核额外运行同一小图与verification；既有smoke保持单线程基线。
+cd /opt/gapbs
+OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE ./bfs -g 10 -n 1 -v
+```
+
+普通应用及GAPBS使用标量RV64IMAFDC工具链选项。RVV版只提供R04已实现整数/unit-stride子集；当前Buildroot应用保持标量编译，不启用完整V ISA自动向量化。需要向量加速的程序应使用已实现的指令及对应定向样例，未实现的编码会精确陷入非法指令。Linux启用了用户向量上下文保存/恢复，关闭内核抢占式向量路径，并将向量usercopy阈值设为INT_MAX；这不构成完整V扩展兼容声明。
 
 ## 证据范围
 
