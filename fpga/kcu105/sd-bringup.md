@@ -50,6 +50,8 @@ python3 fpga/kcu105/prepare_sd_boot.py --profile four \
 
 三个硬件工程完成后，先用对应的最终硬件目录重新打包各自 FAT 文件，再运行 `collect_sd_products.py` 收集交付目录。参数是 `--four`、`--single`、`--single-rvv` 三个硬件目录，相应的三个 `--*-software` 目录，以及准确的 `--source-sha` 和不存在的 `--output`。收集器要求实际 bitstream、非负 setup/hold/pulse 余量、零路由错误、匹配 BIOS/CSR/bitstream 哈希，并比较三份配置；不接受旧硬件绑定的软件包。交付目录按产品包含 `.bit`、`bios.bin`、CSR、配置、时序和 SD 路径报告、`sd/` 启动文件以及逐文件 SHA256。
 
+若 RVV 在标量配置冻结后修复独有 RTL，可额外给 `--rvv-source-sha`；RVV 的 build-binding 必须记录与 `--source-sha` 相同的 `scalar_base_source_sha`。本次 8a76570 对 7f7f186 的生产 RTL/config 差异仅 RvvLoadStore，生成时另检查准确差异清单及 immutable snapshot hashes，普通单/四核的证据仍绑定 7f7f186。收集器先检查全部报告和完整五文件 SD manifest，再创建交付目录。
+
 ## 证据范围
 
 最新构建、时序及测试状态以 [BE2 报告](../../docs/tasks/BE2-report.md) 和逐工程 manifest 为准，历史29ee514/b2a895b板上 GAPBS 成功不能替代新产品的板上证明。未上板时，报告必须保留 `BOARD_NOT_RUN`。

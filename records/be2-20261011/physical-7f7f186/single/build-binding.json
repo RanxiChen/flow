@@ -1,0 +1,14 @@
+{
+  "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "host": "Alan",
+  "hostname": "chen-System-Product-Name",
+  "cwd": "/home/chen/FUN/flow-be2-1a4deba",
+  "profile": "single",
+  "clock_hz": 100000000,
+  "target": "xcku040-ffva1156-2-e",
+  "vivado": "2022.2",
+  "source_dirty": false,
+  "golden_changed": false,
+  "board": "NOT_RUN",
+  "new_timing_exceptions": false
+}

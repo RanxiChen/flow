@@ -9,6 +9,9 @@ import shutil
 
 
 PROFILES = ('four', 'single', 'single-rvv')
+REPORTS = ('xilinx_kcu105_timing.rpt', 'xilinx_kcu105_route_status.rpt',
+           'xilinx_kcu105_drc.rpt', 'soc-utilization.rpt', 'soc-worst-10.rpt',
+           'sd_input_paths.rpt', 'sd_output_paths.rpt', 'sd_output_min_paths.rpt')
 
 
 def digest(path):
@@ -47,12 +50,16 @@ def main():
         parser.add_argument('--' + profile, required=True, type=Path)
         parser.add_argument('--' + profile + '-software', required=True, type=Path)
     parser.add_argument('--source-sha', required=True)
+    parser.add_argument('--rvv-source-sha',
+                        help='RVV-only revision whose scalar base is the supplied source SHA')
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit('Refusing to reuse the release directory')
     if not re.fullmatch('[0-9a-f]{40}', args.source_sha):
         raise SystemExit('A complete exact source SHA is required')
+    if args.rvv_source_sha and not re.fullmatch('[0-9a-f]{40}', args.rvv_source_sha):
+        raise SystemExit('A complete exact RVV source SHA is required')
     products = {}
     configs = {}
     # Validate every input before creating a release directory.
@@ -60,11 +67,17 @@ def main():
         hardware = getattr(args, profile.replace('-', '_'))
         software = getattr(args, profile.replace('-', '_') + '_software')
         binding = json.loads((hardware / 'build-binding.json').read_text())
-        if binding['source_sha'] != args.source_sha or binding['source_dirty']:
+        expected_source = args.rvv_source_sha if profile == 'single-rvv' and args.rvv_source_sha else args.source_sha
+        if binding['source_sha'] != expected_source or binding['source_dirty']:
             raise ValueError(f'{profile}: source identity mismatch')
+        if expected_source != args.source_sha and binding.get('scalar_base_source_sha') != args.source_sha:
+            raise ValueError(f'{profile}: RVV revision lacks the matching scalar base identity')
         if binding['clock_hz'] != 100000000 or binding['target'] != 'xcku040-ffva1156-2-e':
             raise ValueError(f'{profile}: target/clock mismatch')
         gateware = hardware / 'gateware'
+        for name in REPORTS:
+            if not (gateware / name).is_file() or (gateware / name).stat().st_size == 0:
+                raise ValueError(f'{profile}: missing final report: {name}')
         bit = gateware / 'xilinx_kcu105.bit'
         checkpoint = gateware / 'xilinx_kcu105_route.dcp'
         if not bit.is_file() or bit.stat().st_size == 0 or not checkpoint.is_file():
@@ -89,12 +102,18 @@ def main():
         for name in ('csr.json', 'software/bios/bios.bin', 'gateware/xilinx_kcu105.bit'):
             if boot_binding['hardware'].get(name) != digest(hardware / name):
                 raise ValueError(f'{profile}: software was not bound to this final {name}')
-        for name, expected in json.loads((software / 'manifest.json').read_text()).items():
+        software_manifest = json.loads((software / 'manifest.json').read_text())
+        dtb = 'flow-be2-quad.dtb' if profile == 'four' else f'flow-be2-{profile}.dtb'
+        required_boot = {'Image', 'fw_jump.bin', 'serial-handoff.bin', dtb, 'boot.json'}
+        if set(software_manifest) != required_boot:
+            raise ValueError(f'{profile}: incomplete or unexpected SD boot manifest')
+        for name, expected in software_manifest.items():
             actual = digest(software / name)
             if actual['bytes'] != expected['bytes'] or actual['sha256'] != expected['sha256']:
                 raise ValueError(f'{profile}: boot image changed: {name}')
         configs[profile] = profile_config(hardware / 'cluster-profile.txt')
-        products[profile] = {'source_sha': args.source_sha, 'hardware_input': str(hardware.resolve()),
+        products[profile] = {'source_sha': expected_source, 'scalar_base_source_sha': args.source_sha,
+                             'hardware_input': str(hardware.resolve()),
                              'software_input': str(software.resolve()), 'build': binding,
                              'routed_timing_ns': timing, 'route_errors': 0,
                              'routed_checkpoint': digest(checkpoint), 'config': configs[profile],
@@ -109,9 +128,6 @@ def main():
         if key not in rvv_changes and configs['single'].get(key) != configs['single-rvv'].get(key):
             raise ValueError(f'RVV changed an unapproved base configuration: {key}')
     args.output.mkdir(parents=True)
-    reports = ('xilinx_kcu105_timing.rpt', 'xilinx_kcu105_route_status.rpt',
-               'xilinx_kcu105_drc.rpt', 'soc-utilization.rpt', 'soc-worst-10.rpt',
-               'sd_input_paths.rpt', 'sd_output_paths.rpt', 'sd_output_min_paths.rpt')
     for profile in PROFILES:
         hardware = getattr(args, profile.replace('-', '_'))
         software = getattr(args, profile.replace('-', '_') + '_software')
@@ -123,7 +139,7 @@ def main():
         for name in ('csr.json', 'cluster-profile.txt', 'build-binding.json', 'platform.json'):
             shutil.copy2(hardware / name, destination / name)
         shutil.copytree(software, destination / 'sd')
-        for name in reports:
+        for name in REPORTS:
             shutil.copy2(hardware / 'gateware' / name, destination / name)
         products[profile]['files'] = {str(p.relative_to(destination)): digest(p)
                                      for p in sorted(destination.rglob('*')) if p.is_file()}

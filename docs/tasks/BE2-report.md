@@ -253,3 +253,9 @@ c735fbd四核旧最终route_status还明确有37个routing resource conflict，�
 27. **RVV请求准备寄存边界**：7f7f186的保存place DCP最差requestDesc_length_1[0]→responses_14[8]，−1.556ns，32级，11.169ns数据中logic3.376/estimated routing7.793。独立读取原DCP的worst20还列出scoreboard→VRF bank EN、ALU→accumulator cache等路径，后者不以本修正宣称已闭合。将提交后的单个访存请求游标划为segment/PA准备、突发packet准备、AXI接收三个边界；packet保留同一个current slot，AR/AW fire前不预扣返回credit、不改position、不产生外部副作用。接受后只更新一次position；AR仍预留全部返回beat，R仍无条件接收，credit仍直到VRF实际消费才归还。store仍等绑定/全部Inv完成才AW，已提交指令不会因kill被撤销。新增packet所有权/正向有界进展/容量断言；长度先证明≤burstBeats再缩窄credit加法输入。请求准备最多增加两拍及burst之间准备气泡，默认每四beat最多三个请求准备拍，名义供给仍≥64B/clk；实际LiteX单在途约束仍保留，不宣称板上带宽。该修正只改RvvLoadStore，不改变已通过最小集的普通单/四核RTL与配置。
 
 相应最小向量程序把512B context缓冲置于4KiB边界前24字节，覆盖两段翻译、部分首beat、跨行gather，并独立核对512个物理字节均255；原VSOff精确陷入、8输出值12、14原ISA签名、seed/watchdog/总上限保持。新修正目前未运行，测试与物理结果后续另按准确SHA绑定。
+
+21:21 CST：第一个实际SD bitstream已完成，7f7f186普通单核single-parallel，Vivado/process exit0，WNS+0.127ns/WHS+0.030ns/WPWS+0.103ns、TNS/THS0、route errors0；16007026字节.bit、BIOS及原报告已归档。SD定向IO预算检查通过，外部SD/card/mux及新Linux启动仍BOARD_NOT_RUN。四核仍在布线，不能用此单核结果替代四核通过。
+
+8a76570的RVV请求准备最小整机exit0：14原ISA ELF全部tohost=1，Bare2836cycles/107retired、非恒等Sv393190cycles/129retired；两者8输出均12、跨4KiB上下文512物理字节均255，VSOff精确mepc/mtval仍检查。Scalar路径与7f7f186的RTL差异精确仅RvvLoadStore（普通单/四核不会实例化此模块），缓存/后端/配置不变；后续只重建RVV，不能把普通单/四核证据的原SHA改写为新SHA。7f RVV保存参考继续在CPU4–5完成布线，新RVV最小模块/production/SD完整物理在CPU8–9，四核仍CPU0–3，亲和性并集8CPU。检查到store在AW后position已到末尾而generating须保持到Wlast，8a修正禁止准备空的后继packet，保留正向进展断言；此为准备与数据所有权区分，不改store完成边界。
+
+21:38 CST：8a76570模块最低集13/13全部通过（failed/canceled/ignored/pending均0），随后production/BIOS生成并进入综合时序优化。源树clean、对标量基准7f的生产RTL/config差异精确仅RvvLoadStore、生成source-snapshot逐项hash、BIOS与64-bit little-endian ROM前缀均再次核对；脚本bind-rvv-product.py和原JSON保留。最终7f普通单核的五文件FAT包已重新编译trampoline并绑定实际.bit/BIOS/CSR，exit0，不写SD卡。四核仍在routing，旧RVV参考仍在post-route phys_opt，均未宣称最终通过。收集器允许独有RVV后续源SHA但要求记录相同scalar_base，且拒绝缺报告或缺任一启动文件的交付输入。

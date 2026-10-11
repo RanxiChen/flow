@@ -1,0 +1,299 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 21:18:25 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -delay_type min -from [get_cells -of_objects [all_fanin -flat -startpoints_only -to [get_ports {sdcard_clk sdcard_cmd {sdcard_data[*]}}]] -filter IS_SEQUENTIAL] -to [get_ports {sdcard_clk sdcard_cmd {sdcard_data[*]}}] -max_paths 30 -file sd_output_min_paths.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack:                    inf
+  Source:                 FDCE_19/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[3]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        0.926ns  (logic 0.501ns (54.122%)  route 0.425ns (45.878%))
+  Logic Levels:           1  (OBUFT=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.221ns (routing 0.368ns, distribution 0.853ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.221     2.677    sys_clk
+    SLICE_X49Y42         FDCE                                         r  FDCE_19/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X49Y42         FDCE (Prop_EFF2_SLICEL_C_Q)
+                                                      0.048     2.725 f  FDCE_19/Q
+                         net (fo=2, routed)           0.425     3.150    IOBUF_68/T
+    AH8                  OBUFT (TriStatE_OUTBUF_HRIO_T_O)
+                                                      0.453     3.603 r  IOBUF_68/OBUFT/O
+                         net (fo=1, unset)            0.000     3.603    sdcard_data[3]
+    AH8                                                               r  sdcard_data[3] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+Slack:                    inf
+  Source:                 FDCE_16/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[0]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        0.962ns  (logic 0.538ns (55.944%)  route 0.424ns (44.056%))
+  Logic Levels:           1  (OBUFT=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.224ns (routing 0.368ns, distribution 0.856ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.224     2.680    sys_clk
+    SLICE_X49Y49         FDCE                                         r  FDCE_16/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X49Y49         FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.049     2.729 f  FDCE_16/Q
+                         net (fo=2, routed)           0.424     3.153    IOBUF_65/T
+    AP9                  OBUFT (TriStatE_OUTBUF_HRIO_T_O)
+                                                      0.489     3.642 r  IOBUF_65/OBUFT/O
+                         net (fo=1, unset)            0.000     3.642    sdcard_data[0]
+    AP9                                                               r  sdcard_data[0] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+Slack:                    inf
+  Source:                 FDCE_18/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[2]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        0.982ns  (logic 0.494ns (50.325%)  route 0.488ns (49.675%))
+  Logic Levels:           1  (OBUFT=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.221ns (routing 0.368ns, distribution 0.853ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.221     2.677    sys_clk
+    SLICE_X49Y42         FDCE                                         r  FDCE_18/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X49Y42         FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.049     2.726 f  FDCE_18/Q
+                         net (fo=2, routed)           0.488     3.214    IOBUF_67/T
+    AH9                  OBUFT (TriStatE_OUTBUF_HRIO_T_O)
+                                                      0.445     3.659 r  IOBUF_67/OBUFT/O
+                         net (fo=1, unset)            0.000     3.659    sdcard_data[2]
+    AH9                                                               r  sdcard_data[2] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+Slack:                    inf
+  Source:                 FDCE_17/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[1]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        1.005ns  (logic 0.541ns (53.811%)  route 0.464ns (46.189%))
+  Logic Levels:           1  (OBUFT=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.224ns (routing 0.368ns, distribution 0.856ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.224     2.680    sys_clk
+    SLICE_X49Y48         FDCE                                         r  FDCE_17/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X49Y48         FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.049     2.729 f  FDCE_17/Q
+                         net (fo=2, routed)           0.464     3.193    IOBUF_66/T
+    AN9                  OBUFT (TriStatE_OUTBUF_HRIO_T_O)
+                                                      0.492     3.684 r  IOBUF_66/OBUFT/O
+                         net (fo=1, unset)            0.000     3.684    sdcard_data[1]
+    AN9                                                               r  sdcard_data[1] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+Slack:                    inf
+  Source:                 FDCE_8/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_clk
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        1.411ns  (logic 0.577ns (40.879%)  route 0.834ns (59.121%))
+  Logic Levels:           1  (OBUF=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.097ns (routing 0.368ns, distribution 0.729ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.097     2.553    sys_clk
+    SLICE_X46Y51         FDCE                                         r  FDCE_8/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X46Y51         FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.049     2.602 r  FDCE_8/Q
+                         net (fo=1, routed)           0.834     3.436    sdcard_clk_OBUF
+    AL10                 OBUF (Prop_OUTBUF_HRIO_I_O)
+                                                      0.528     3.964 r  sdcard_clk_OBUF_inst/O
+                         net (fo=0)                   0.000     3.964    sdcard_clk
+    AL10                                                              r  sdcard_clk (OUT)
+  -------------------------------------------------------------------    -------------------
+
+Slack:                    inf
+  Source:                 FDCE_10/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_cmd
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        1.817ns  (logic 0.475ns (26.149%)  route 1.342ns (73.851%))
+  Logic Levels:           1  (OBUFT=1)
+  Clock Uncertainty:      0.298ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.222ns
+  Clock Net Delay (Source):      1.059ns (routing 0.368ns, distribution 0.691ns)
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.001     0.001    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.202     0.203 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, routed)           0.028     0.231    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.231 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.350     0.581    IBUFDS_n_0_BUFG_inst_n_0
+    BUFGCE_X1Y48         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.027     0.608 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, routed)           0.404     1.012    clkin_signal
+    MMCME3_ADV_X1Y2      MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.270     1.282 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, routed)           0.154     1.436    clkout0
+    BUFGCE_DIV_X1Y8      BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.020     1.456 r  BUFGCE_DIV/O
+    X1Y2 (CLOCK_ROOT)    net (fo=44983, routed)       1.059     2.515    sys_clk
+    SLICE_X45Y160        FDCE                                         r  FDCE_10/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X45Y160        FDCE (Prop_DFF_SLICEM_C_Q)
+                                                      0.049     2.564 f  FDCE_10/Q
+                         net (fo=2, routed)           1.342     3.906    IOBUF_64/T
+    AD9                  OBUFT (TriStatE_OUTBUF_HRIO_T_O)
+                                                      0.426     4.332 r  IOBUF_64/OBUFT/O
+                         net (fo=1, unset)            0.000     4.332    sdcard_cmd
+    AD9                                                               r  sdcard_cmd (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+

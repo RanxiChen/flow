@@ -105,7 +105,7 @@
       "remote_evidence": "/home/chen/FUN/flow-runs/be2-4e1f86d-linux"
     },
     "board": "not run",
-    "published_bitstreams": 0,
+    "published_bitstreams": 1,
     "scalar_early_cancel_minimum": {
       "source": "a367267976d3e3a664ad482e01c45da489e2d20e",
       "host": "Alan",
@@ -122,10 +122,13 @@
       "log": "minimum-a367267/be2-a367267-cluster-minimum.log",
       "P1_original_budget": "same cycles as c735fbd; 3 of 4 still fail +1%"
     },
-    "active_physical_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "active_physical_source": {
+      "scalar": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "single-rvv": "8a76570a6f9f4d108301cb807b561f796315966d"
+    },
     "four_current": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "synthesizing",
+      "status": "routing; final timing and route error gate pending",
       "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-breeze-sd",
       "host": "Alan",
       "cores": "0-3",
@@ -133,18 +136,42 @@
     },
     "single_current": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "parallel physical synthesis from identical prepared project",
+      "status": "bitstream generated, routed timing/SD IO transport pass, board not run",
       "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-single-parallel-sd",
       "host": "Alan",
       "inherited_four_configuration": true,
       "cores": "4-7",
-      "maxThreads": 4
+      "maxThreads": 4,
+      "process_exit": 0,
+      "WNS_ns": 0.127,
+      "WHS_ns": 0.03,
+      "WPWS_ns": 0.103,
+      "TNS_ns": 0,
+      "THS_ns": 0,
+      "route_errors": 0,
+      "bitstream_bytes": 16007026,
+      "software_binding": "Final actual-bitstream/BIOS/CSR bound FAT package built exit0; be2-final-7f7f186-sd-single"
     },
-    "single_rvv_current": {
+    "rvv_request_pipeline": {
+      "source": "8a76570a6f9f4d108301cb807b561f796315966d",
+      "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "only_RTL_change": "design/src/main/scala/rvv/RvvLoadStore.scala",
+      "whole_system_exit": 0,
+      "original_ISA_ELFs": 14,
+      "RVV_ELFs": 2,
+      "vector_Bare_cycles": 2836,
+      "vector_Sv39_cycles": 3190,
+      "context_physical_bytes_checked": 512,
+      "watchdog": 20000,
+      "max_cycles": 2000000,
+      "seed": 91,
+      "module_minimum_tests": 13
+    },
+    "single_rvv_reference": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "synthesis passed; placement in progress; synthesis timing estimate not final",
+      "status": "7f7f186 historical routing reference; post-route physical optimization, no final timing claim",
       "host": "Alan",
-      "cores": "8-9",
+      "cores": "4-5",
       "maxThreads": 2,
       "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-rvv-sd",
       "whole_system_minimum": {
@@ -168,6 +195,23 @@
       "synth_BRAM_tiles": 242.5,
       "synth_DSP": 177,
       "VRF_RAMB36": 192
+    },
+    "single_rvv_current": {
+      "source": "8a76570a6f9f4d108301cb807b561f796315966d",
+      "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "status": "module minimum13/13 passed, production/SD BIOS generated, synthesis timing optimization",
+      "host": "Alan",
+      "cores": "8-9",
+      "maxThreads": 2,
+      "remote": "/home/chen/FUN/flow-runs/be2-8a76570-rvv-sd",
+      "module_minimum": {
+        "tests": 13,
+        "failed": 0,
+        "canceled": 0,
+        "ignored": 0
+      },
+      "bios_rom_prefix_matches": true,
+      "source_snapshot_hashes_verified": true
     }
   }
 }

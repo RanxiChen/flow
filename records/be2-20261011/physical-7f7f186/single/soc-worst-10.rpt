@@ -1,0 +1,819 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 21:18:24 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.127ns  (required time - arrival time)
+  Source:                 idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0_15/RST
+                            (recovery check against rising-edge clock clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (clkout1 rise@5.000ns - clkout1 rise@0.000ns)
+  Data Path Delay:        4.022ns  (logic 0.117ns (2.909%)  route 3.905ns (97.091%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.132ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.255ns = ( 10.255 - 5.000 ) 
+    Source Clock Delay      (SCD):    5.422ns
+    Clock Pessimism Removal (CPR):    0.036ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clkout1 rise edge)    0.000     0.000 r  
+                         clock source latency         2.224     2.224    
+                         propagated clock network latency
+                                                      3.198     5.422    
+    SLICE_X0Y72          FDRE                         0.000     5.422 r  idelayctrl_ic_reset_reg/C
+    SLICE_X0Y72          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.539 f  idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          3.905     9.444    idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y23
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0_15/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clkout1 rise edge)    5.000     5.000 r  
+                         clock source latency         2.358     7.358    
+                         propagated clock network latency
+                                                      2.897    10.255    
+                         clock pessimism              0.036    10.290    
+                         clock uncertainty           -0.086    10.204    
+    BITSLICE_CONTROL_X0Y23
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.633     9.571    IDELAYCTRL_REPLICATED_0_15
+  -------------------------------------------------------------------
+                         required time                          9.571    
+                         arrival time                          -9.444    
+  -------------------------------------------------------------------
+                         slack                                  0.127    
+
+Slack (MET) :             0.454ns  (required time - arrival time)
+  Source:                 idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0_12/RST
+                            (recovery check against rising-edge clock clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (clkout1 rise@5.000ns - clkout1 rise@0.000ns)
+  Data Path Delay:        3.689ns  (logic 0.117ns (3.172%)  route 3.572ns (96.828%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.138ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.249ns = ( 10.249 - 5.000 ) 
+    Source Clock Delay      (SCD):    5.422ns
+    Clock Pessimism Removal (CPR):    0.036ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clkout1 rise edge)    0.000     0.000 r  
+                         clock source latency         2.224     2.224    
+                         propagated clock network latency
+                                                      3.198     5.422    
+    SLICE_X0Y72          FDRE                         0.000     5.422 r  idelayctrl_ic_reset_reg/C
+    SLICE_X0Y72          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.539 f  idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          3.572     9.111    idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y21
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0_12/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clkout1 rise edge)    5.000     5.000 r  
+                         clock source latency         2.358     7.358    
+                         propagated clock network latency
+                                                      2.891    10.249    
+                         clock pessimism              0.036    10.284    
+                         clock uncertainty           -0.086    10.198    
+    BITSLICE_CONTROL_X0Y21
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.633     9.565    IDELAYCTRL_REPLICATED_0_12
+  -------------------------------------------------------------------
+                         required time                          9.565    
+                         arrival time                          -9.111    
+  -------------------------------------------------------------------
+                         slack                                  0.454    
+
+Slack (MET) :             0.477ns  (required time - arrival time)
+  Source:                 idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0_14/RST
+                            (recovery check against rising-edge clock clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (clkout1 rise@5.000ns - clkout1 rise@0.000ns)
+  Data Path Delay:        3.805ns  (logic 0.117ns (3.075%)  route 3.688ns (96.925%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.132ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.255ns = ( 10.255 - 5.000 ) 
+    Source Clock Delay      (SCD):    5.422ns
+    Clock Pessimism Removal (CPR):    0.036ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clkout1 rise edge)    0.000     0.000 r  
+                         clock source latency         2.224     2.224    
+                         propagated clock network latency
+                                                      3.198     5.422    
+    SLICE_X0Y72          FDRE                         0.000     5.422 r  idelayctrl_ic_reset_reg/C
+    SLICE_X0Y72          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.539 f  idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          3.688     9.227    idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y22
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0_14/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clkout1 rise edge)    5.000     5.000 r  
+                         clock source latency         2.358     7.358    
+                         propagated clock network latency
+                                                      2.897    10.255    
+                         clock pessimism              0.036    10.290    
+                         clock uncertainty           -0.086    10.204    
+    BITSLICE_CONTROL_X0Y22
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.500     9.704    IDELAYCTRL_REPLICATED_0_14
+  -------------------------------------------------------------------
+                         required time                          9.704    
+                         arrival time                          -9.227    
+  -------------------------------------------------------------------
+                         slack                                  0.477    
+
+Slack (MET) :             0.512ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[2]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.950ns  (logic 2.376ns (26.547%)  route 6.574ns (73.453%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.376ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.411ns = ( 15.411 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.466    14.773    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y178        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[2]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.473    15.411    
+                         clock pessimism              0.037    15.447    
+                         clock uncertainty           -0.079    15.368    
+    SLICE_X69Y178        FDRE (Setup_EFF_SLICEM_C_R)
+                                                     -0.083    15.285    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[2]
+  -------------------------------------------------------------------
+                         required time                         15.285    
+                         arrival time                         -14.773    
+  -------------------------------------------------------------------
+                         slack                                  0.512    
+
+Slack (MET) :             0.512ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[4]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.950ns  (logic 2.376ns (26.547%)  route 6.574ns (73.453%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.376ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.411ns = ( 15.411 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.466    14.773    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y178        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[4]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.473    15.411    
+                         clock pessimism              0.037    15.447    
+                         clock uncertainty           -0.079    15.368    
+    SLICE_X69Y178        FDRE (Setup_EFF2_SLICEM_C_R)
+                                                     -0.083    15.285    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[4]
+  -------------------------------------------------------------------
+                         required time                         15.285    
+                         arrival time                         -14.773    
+  -------------------------------------------------------------------
+                         slack                                  0.512    
+
+Slack (MET) :             0.563ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.902ns  (logic 2.376ns (26.691%)  route 6.526ns (73.309%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.373ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.414ns = ( 15.414 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.418    14.725    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X67Y172        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.476    15.414    
+                         clock pessimism              0.037    15.450    
+                         clock uncertainty           -0.079    15.371    
+    SLICE_X67Y172        FDRE (Setup_EFF_SLICEM_C_R)
+                                                     -0.083    15.288    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]
+  -------------------------------------------------------------------
+                         required time                         15.288    
+                         arrival time                         -14.725    
+  -------------------------------------------------------------------
+                         slack                                  0.563    
+
+Slack (MET) :             0.576ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[10]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.898ns  (logic 2.376ns (26.703%)  route 6.522ns (73.297%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.363ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.424ns = ( 15.424 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.414    14.721    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y177        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[10]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.486    15.424    
+                         clock pessimism              0.037    15.460    
+                         clock uncertainty           -0.079    15.381    
+    SLICE_X69Y177        FDRE (Setup_AFF_SLICEM_C_R)
+                                                     -0.084    15.297    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[10]
+  -------------------------------------------------------------------
+                         required time                         15.297    
+                         arrival time                         -14.721    
+  -------------------------------------------------------------------
+                         slack                                  0.576    
+
+Slack (MET) :             0.576ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[12]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.898ns  (logic 2.376ns (26.703%)  route 6.522ns (73.297%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.363ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.424ns = ( 15.424 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.414    14.721    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y177        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[12]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.486    15.424    
+                         clock pessimism              0.037    15.460    
+                         clock uncertainty           -0.079    15.381    
+    SLICE_X69Y177        FDRE (Setup_BFF_SLICEM_C_R)
+                                                     -0.084    15.297    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[12]
+  -------------------------------------------------------------------
+                         required time                         15.297    
+                         arrival time                         -14.721    
+  -------------------------------------------------------------------
+                         slack                                  0.576    
+
+Slack (MET) :             0.576ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[21]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.898ns  (logic 2.376ns (26.703%)  route 6.522ns (73.297%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.363ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.424ns = ( 15.424 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.414    14.721    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y177        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[21]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.486    15.424    
+                         clock pessimism              0.037    15.460    
+                         clock uncertainty           -0.079    15.381    
+    SLICE_X69Y177        FDRE (Setup_CFF_SLICEM_C_R)
+                                                     -0.084    15.297    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[21]
+  -------------------------------------------------------------------
+                         required time                         15.297    
+                         arrival time                         -14.721    
+  -------------------------------------------------------------------
+                         slack                                  0.576    
+
+Slack (MET) :             0.576ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[28]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        8.898ns  (logic 2.376ns (26.703%)  route 6.522ns (73.297%))
+  Logic Levels:           16  (CARRY8=4 LUT2=1 LUT3=1 LUT4=3 LUT5=3 LUT6=4)
+  Clock Path Skew:        -0.363ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.424ns = ( 15.424 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.823ns
+    Clock Pessimism Removal (CPR):    0.037ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         2.913     2.913    
+                         propagated clock network latency
+                                                      2.910     5.823    
+    SLICE_X86Y222        FDRE                         0.000     5.823 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/C
+    SLICE_X86Y222        FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     5.940 r  BreezeClusterAxi/cluster/backend/ex_rs1_addr_reg[1]/Q
+                         net (fo=6, routed)           0.388     6.328    BreezeClusterAxi/cluster/backend/writeback/ex_rs1_addr[1]
+    SLICE_X85Y225        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.188     6.516 f  BreezeClusterAxi/cluster/backend/writeback/dsp_i_107/O
+                         net (fo=1, routed)           0.287     6.803    BreezeClusterAxi/cluster/backend/writeback/dsp_i_107_n_0
+    SLICE_X85Y225        LUT5 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.132     6.935 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_101/O
+                         net (fo=2, routed)           0.065     7.000    BreezeClusterAxi/cluster/backend/writeback/dsp_i_101_n_0
+    SLICE_X85Y225        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.069     7.069 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_93/O
+                         net (fo=64, routed)          0.695     7.764    BreezeClusterAxi/cluster/backend/writeback/exR1_fromW2
+    SLICE_X88Y228        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.185     7.949 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_69/O
+                         net (fo=2, routed)           0.522     8.471    BreezeClusterAxi/cluster/backend/writeback/dsp_i_69_n_0
+    SLICE_X85Y229        LUT5 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     8.512 r  BreezeClusterAxi/cluster/backend/writeback/dsp_i_25/O
+                         net (fo=32, routed)          0.482     8.994    BreezeClusterAxi/cluster/backend/jau/ex_rs1_data[16]
+    SLICE_X81Y239        LUT4 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.132     9.126 r  BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9/O
+                         net (fo=1, routed)           0.000     9.126    BreezeClusterAxi/cluster/backend/jau/btb_target[23]_i_9_n_0
+    SLICE_X81Y239        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     9.530 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     9.557    BreezeClusterAxi/cluster/backend/jau/btb_target_reg[23]_i_1_n_0
+    SLICE_X81Y240        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.147     9.704 r  BreezeClusterAxi/cluster/backend/jau/btb_target_reg[31]_i_1/O[3]
+                         net (fo=4, routed)           0.732    10.436    BreezeClusterAxi/cluster/backend/jau/io_jmp_addr[26]
+    SLICE_X85Y239        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    10.568 r  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17/O
+                         net (fo=1, routed)           0.000    10.568    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_i_17_n_0
+    SLICE_X85Y239        CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.327    10.895 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027    10.922    BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_3_n_0
+    SLICE_X85Y240        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[5])
+                                                      0.114    11.036 f  BreezeClusterAxi/cluster/backend/jau/mem_predictionMiss_reg_i_2/CO[5]
+                         net (fo=4, routed)           0.447    11.483    BreezeClusterAxi/cluster/backend/jau/CO[0]
+    SLICE_X82Y232        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.072    11.555 f  BreezeClusterAxi/cluster/backend/jau/state[0]_i_3__0/O
+                         net (fo=65, routed)          0.255    11.810    BreezeClusterAxi/cluster/frontend/realigner/_frontendBoundary_io_applied_valid
+    SLICE_X80Y231        LUT3 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.115    11.925 f  BreezeClusterAxi/cluster/frontend/realigner/state[0]_i_2__1/O
+                         net (fo=69, routed)          0.429    12.354    BreezeClusterAxi/cluster/frontend/realigner/p_5_in
+    SLICE_X78Y223        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043    12.397 f  BreezeClusterAxi/cluster/frontend/realigner/captureEarly_i_3/O
+                         net (fo=41, routed)          1.017    13.414    BreezeClusterAxi/cluster/frontend/realigner/cancelFetch
+    SLICE_X76Y178        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.117    13.531 r  BreezeClusterAxi/cluster/frontend/realigner/wordBufAddr[63]_i_1/O
+                         net (fo=98, routed)          0.735    14.266    BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufAddr
+    SLICE_X68Y175        LUT4 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041    14.307 r  BreezeClusterAxi/cluster/frontend/fetchTranslator/wordBufData[31]_i_1/O
+                         net (fo=32, routed)          0.414    14.721    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[0]_0
+    SLICE_X69Y177        FDRE                                         r  BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[28]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         2.938    12.938    
+                         propagated clock network latency
+                                                      2.486    15.424    
+                         clock pessimism              0.037    15.460    
+                         clock uncertainty           -0.079    15.381    
+    SLICE_X69Y177        FDRE (Setup_DFF_SLICEM_C_R)
+                                                     -0.084    15.297    BreezeClusterAxi/cluster/frontend/realigner/wordBufData_reg[28]
+  -------------------------------------------------------------------
+                         required time                         15.297    
+                         arrival time                         -14.721    
+  -------------------------------------------------------------------
+                         slack                                  0.576    
+
+
+
+
