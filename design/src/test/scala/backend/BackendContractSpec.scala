@@ -263,6 +263,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   def writes(r: Int, fp: Boolean = false): Seq[Event] = events.filter(e=>e.kind==(if(fp) "fpr" else "gpr") && e.rd==r).toSeq
   def written(r: Int, fp: Boolean = false): Int = { require(writes(r,fp).size==1,s"writes $r = ${writes(r,fp)}"); writes(r,fp).head.cycle }
   def all(k: String): Seq[Int] = events.filter(_.kind==k).map(_.cycle).toSeq
+  def acceptedProgram: Seq[(BigInt,BigInt)] = fetched.toSeq.sortBy(_._1)
   def enableFp(): Unit = {
     issue(addi(30,0,1)); issue((BigInt(13)<<20)|(BigInt(30)<<15)|(BigInt(1)<<12)|(BigInt(30)<<7)|0x13)
     issue(csr(0,0x300,30)); for(_ <- 0 until 5) issue(nop)

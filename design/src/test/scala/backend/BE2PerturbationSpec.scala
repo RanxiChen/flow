@@ -73,6 +73,20 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           sets.distinct mustBe sets
           d.io.observe.memAdvance.expect(true.B); d.io.observe.permAdvance.expect(true.B)
           d.io.observe.gprBusy.expect(0.U)
+          sys.env.get("BE2_LEDGER_DIR").foreach { directory =>
+            val root = os.Path(directory); os.makeDir.all(root)
+            val memory = Seq(0x100,0x108,0x140,0x180,0x200,0x208,0x300,0x12001000)
+            val ledger = ujson.Obj("seed" -> seed,
+              "program" -> ujson.Arr.from(m.acceptedProgram.map { case (pc,inst) =>
+                ujson.Obj("pc" -> pc.toString, "inst" -> inst.toString) }),
+              "commits" -> ujson.Arr.from(m.events.filter(_.kind=="commit").map(_.pc.toString)),
+              "writes" -> ujson.Arr.from(m.events.filter(e =>
+                e.kind=="fpr" || (e.kind=="gpr" && e.rd!=31)).map(e =>
+                ujson.Obj("bank" -> e.kind, "rd" -> e.rd, "data" -> e.data.toString))),
+              "memory" -> ujson.Arr.from(memory.map(a =>
+                ujson.Obj("address" -> a.toString, "data" -> m.values(BigInt(a)).toString))))
+            os.write.over(root / s"seed-$seed.json", ujson.write(ledger))
+          }
           // Timer perturbation at an empty precise boundary, with real CSR
           // masking/trap logic. The committed instruction ledger above is final.
           m.issue(addi(23,0,128)); m.issue(csr(0,0x304,23,1))
