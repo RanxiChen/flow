@@ -3,6 +3,7 @@ package flow.memsys
 import chisel3._
 import chisel3.util._
 import flow.backend.BreezeBackend
+import flow.coherence.RspDownOp
 import flow.config.{BackendConfig, BreezeMemGeometry, PrivilegeProfile}
 import flow.fpu.BreezeFpChiselSim
 import flow.interface.FrontendFetchBundle
@@ -71,6 +72,9 @@ class BE2FencePtwHarness extends Module {
     val itlb = new TlbPortIO(withPmpCandidate = true)
     val ptwReady = Output(Bool())
     val ptwAddress = Output(UInt(56.W))
+    val grant = Input(Bool())
+    val grantData = Input(UInt(256.W))
+    val sampledMmuIdle = Output(Bool())
     val privilege = Output(UInt(2.W))
     val satp = Output(UInt(64.W))
     val drained = Output(Bool())
@@ -108,12 +112,16 @@ class BE2FencePtwHarness extends Module {
   dtlb.io.sfence.rs2Nz := backend.io.sfence.useAsid
   dtlb.io.sfence.vaddr := backend.io.sfence.vaddr
   dtlb.io.sfence.asid := backend.io.sfence.asid
-  cache.io.coh.req.ready := false.B
+  cache.io.coh.req.ready := true.B
   cache.io.coh.rspUp.ready := true.B
   cache.io.coh.snp.valid := false.B
   cache.io.coh.snp.bits := 0.U.asTypeOf(cache.io.coh.snp.bits)
-  cache.io.coh.rspDown.valid := false.B
+  val responseId = RegEnable(cache.io.coh.req.bits.id, cache.io.coh.req.fire)
+  cache.io.coh.rspDown.valid := io.grant
   cache.io.coh.rspDown.bits := 0.U.asTypeOf(cache.io.coh.rspDown.bits)
+  cache.io.coh.rspDown.bits.op := RspDownOp.DataE
+  cache.io.coh.rspDown.bits.id := responseId
+  cache.io.coh.rspDown.bits.data := io.grantData
   cache.io.mmio.ar.ready := true.B
   cache.io.mmio.aw.ready := true.B
   cache.io.mmio.w.ready := true.B
@@ -131,15 +139,18 @@ class BE2FencePtwHarness extends Module {
   io.ptwAddress := dtlb.io.ptwMem.req.bits.paddr
   io.privilege := context.privilege
   io.satp := context.satp
+  io.sampledMmuIdle := RegNext(dtlb.io.idle, false.B)
 }
 
 class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
-  "B3 audit: FENCE.I reaches WB exactly when an older accepted PTW makes sampled drained stale" in {
+  for (warm <- Seq(false, true)) {
+  s"B3 audit: real Sv39 PTW ${if (warm) "hit" else "miss"} has identical sampled WB conditions" in {
     simulate(new BE2FencePtwHarness) { d =>
       d.io.fetch.valid.poke(false.B)
       d.io.itlb.req.valid.poke(false.B); d.io.itlb.kill.poke(false.B)
       d.io.itlb.req.bits.vaddr.poke(BigInt("40000000", 16).U)
       d.io.itlb.req.bits.cmd.poke(MmuCmd.Fetch)
+      d.io.grant.poke(false.B); d.io.grantData.poke(0.U)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B); d.clock.step(140)
       var pc = BigInt(0x400)
       def offer(inst: BigInt): Unit = {
@@ -171,6 +182,19 @@ class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       }
       def shift(rd: Int, amount: Int): BigInt =
         (BigInt(amount) << 20) | (BigInt(rd) << 15) | (BigInt(1) << 12) | (BigInt(rd) << 7) | 0x13
+      if (warm) {
+        // Warm the root-PTE line by a real CPU load and coherent refill.
+        send(BigInt("00100a13", 16)); send(shift(20, 31)) // x20=0x80000000
+        send((BigInt(8) << 20) | (BigInt(20) << 15) | (BigInt(3) << 12) | (BigInt(21) << 7) | 3)
+        var waited = 0
+        while (!d.io.missRequest.peek().litToBoolean && waited < 40) { d.clock.step(); waited += 1 }
+        waited must be < 40
+        d.clock.step() // coherent Get accepted; the MSHR now waits
+        val leaf = (BigInt(0x80000) << 10) | 0xcf // aligned 1 GiB RWXAD leaf
+        d.io.grantData.poke((leaf << 64).U); d.io.grant.poke(true.B)
+        d.clock.step(); d.io.grant.poke(false.B); d.clock.step(20)
+        d.io.drained.expect(true.B)
+      }
       send(BigInt("00100093", 16)); send(shift(1, 19)) // root PPN = 0x80000
       send(BigInt("00100113", 16)); send(shift(2, 63)) // Sv39 mode = 8
       send(BigInt("0020e0b3", 16)); csrw(0x180) // or x1,x1,x2; csrw satp
@@ -196,13 +220,16 @@ class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       d.clock.step(2)
       d.io.drained.expect(true.B); d.io.sampledDrained.expect(true.B)
       d.io.fenceAtWb.expect(false.B); d.io.cpuRequest.expect(false.B)
-      println("BE2_B3 integrated cycle=D FENCE=PERM PTW=S3 raw_drained=1")
+      d.io.sampledMmuIdle.expect(false.B)
+      println(s"BE2_B3 real_${if (warm) "hit" else "miss"} cycle=D FENCE=PERM PTW=S3 raw_drained=1 sampled_idle=0")
       d.clock.step()
       d.io.fenceAtWb.expect(true.B)
       d.io.cpuRequest.expect(false.B)
-      d.io.drained.expect(false.B); d.io.sampledDrained.expect(true.B)
-      d.io.committed.expect(false.B); d.io.missRequest.expect(true.B)
-      println("BE2_B3 integrated cycle=D+1 FENCE=WB CPU_idle=1 raw_drained=0 sampled_drained=1 baseline_commit=0")
+      d.io.drained.expect(warm.B); d.io.sampledDrained.expect(true.B)
+      d.io.sampledMmuIdle.expect(false.B)
+      d.io.committed.expect(warm.B); d.io.missRequest.expect((!warm).B)
+      println(s"BE2_B3 real_${if (warm) "hit" else "miss"} cycle=D+1 FENCE=WB CPU_idle=1 raw_drained=${if (warm) 1 else 0} sampled_drained=1 sampled_idle=0 baseline_commit=${if (warm) 1 else 0}")
     }
+  }
   }
 }
