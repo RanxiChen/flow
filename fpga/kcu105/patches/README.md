@@ -25,14 +25,21 @@ interface timing and Linux boot require separate verification.
 
 ## Boot files
 
-`prepare_sd_boot.py --images EXISTING_IMAGES --output FRESH_DIRECTORY` verifies
-known Image/OpenSBI hashes, builds the existing handoff trampoline and emits an
-explicit-entry boot.json. It updates the copied DTB memory size to 2 GiB to
-match the current target/PMA, leaving the original images untouched. Copy
-boot.json and its four referenced files into a FAT partition only when ready.
-In BIOS use `sdcard_init`, `sdcard_read 0`, then `sdcardboot`.
-The kernel still uses its embedded rootfs; the baseline has MMC_LITEX disabled
-and this DTB has no MMC node. Linux SD mounting is a separate pending step.
+`prepare_sd_boot.py --images EXISTING_IMAGES --output FRESH_DIRECTORY
+--profile four|single|single-rvv --hardware-dir FINAL_HARDWARE` builds the
+matching BE2 DTB and existing handoff trampoline, checks actual CSR/hart ABI,
+and emits explicit-entry boot.json plus file and hardware hashes. Historical
+Image/OpenSBI hash enforcement is available only with `--verified-legacy`;
+new software images are recorded under their own hashes. Copy boot.json and
+its four referenced files to the FAT partition root. BIOS automatically tries
+SD software boot after DDR initialization; manual `sdcard_init`,
+`sdcard_read 0`, and `sdcardboot` remain available.
+
+The BE2 kernel enables MMC_LITEX, SMP4 and the configured user vector context
+support; matching DTBs include the actual SD controller. Linux uses its
+embedded rootfs. New SD/MMC enumeration and boot are still BOARD_NOT_RUN.
+See [the three-product instructions](../sd-bringup.md) for independent
+software rebuilds and the RVV subset limit.
 
 The SD debug successor adds storage qualification and 8192-point ILA. Use
 `capture_sd.tcl` with the matching LTX and an unused output prefix, then run
