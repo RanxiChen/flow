@@ -1,0 +1,229 @@
+chen-System-Product-Name
+a3fecd7e810b56907ef41e35ee5f10f5027d2fc8
+2026-10-11T22:23:09Z
++ taskset -c 6-9 nice -n 10 python3 -m unittest discover -s sim/litex -p test_breeze_axi_monitor.py -v
+test_axi_and_axilite_events_completion_errors_and_backpressure (test_breeze_axi_monitor.BreezeAxiMonitorTest) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+OK
++ taskset -c 6-9 nice -n 10 python3 -m unittest discover -s sim/litex -p test_breeze_ila.py -v
+test_invalid_cpu_is_rejected_before_ip_creation (test_breeze_ila.BreezeILATest) ... ok
+test_retained_chisel_debug_and_axi_probes_are_passive_and_map_matches (test_breeze_ila.BreezeILATest) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.022s
+
+OK
++ cd design
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4
++ taskset -c 6-9 nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.memsys.BreezeHangMonitorSpec' 'runMain flow.top.GenerateBreezeCluster single gshare linux tandem fpga-debug coherent-dma'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-single-debug-20261012/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-single-debug-20261012/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-single-debug-20261012/design/)
+[info] compiling 125 Scala sources to /home/chen/FUN/flow-be2-single-debug-20261012/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 101 Scala sources to /home/chen/FUN/flow-be2-single-debug-20261012/design/target/scala-2.13/test-classes ...
+[warn] /home/chen/FUN/flow-be2-single-debug-20261012/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BreezeHangMonitorSpec:
+[info] - no retirement triggers exactly at threshold and stays sticky after progress
+[info] - each stalled channel independently triggers without changing traffic inputs
+[info] - each accepted request without response times out
+[info] - completing an older read retains the younger read age
+[info] - normal traffic and short stalls never trigger
+[info] Run completed in 10 seconds, 475 milliseconds.
+[info] Total number of tests run: 5
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 5, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 48 s, completed Oct 12, 2026, 6:24:03 AM
+[info] running flow.top.GenerateBreezeCluster single gshare linux tandem fpga-debug coherent-dma
+Exception in thread "sbt-bg-threads-1" java.lang.ExceptionInInitializerError
+	at flow.fpu.FlowFpnewBlackBox.<init>(BreezeFp.scala:320)
+	at flow.fpu.FpUnit.$anonfun$impl$2(FpUnit.scala:47)
+	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+	at chisel3.Module$.do_apply(Module.scala:32)
+	at flow.fpu.FpUnit.$anonfun$impl$1(FpUnit.scala:47)
+	at chisel3.package$.withName(package.scala:493)
+	at flow.fpu.FpUnit.<init>(FpUnit.scala:47)
+	at flow.backend.BreezeBackend.$anonfun$fpUnit$2(BreezeBackend.scala:107)
+	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+	at chisel3.Module$.do_apply(Module.scala:32)
+	at flow.backend.BreezeBackend.$anonfun$fpUnit$1(BreezeBackend.scala:107)
+	at chisel3.package$.withName(package.scala:493)
+	at flow.backend.BreezeBackend.<init>(BreezeBackend.scala:107)
+	at flow.top.BreezeCluster.$anonfun$new$8(BreezeCluster.scala:52)
+	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+	at chisel3.Module$.do_apply(Module.scala:32)
+	at flow.top.BreezeCluster.$anonfun$new$7(BreezeCluster.scala:52)
+	at chisel3.package$.withName(package.scala:493)
+	at flow.top.BreezeCluster.$anonfun$new$6(BreezeCluster.scala:52)
+	at scala.collection.immutable.Range.foreach$mVc$sp(Range.scala:192)
+	at flow.top.BreezeCluster.<init>(BreezeCluster.scala:51)
+	at flow.top.BreezeClusterAxi.$anonfun$cluster$2(BreezeClusterAxi.scala:44)
+	at chisel3.Module$Intf.do_apply(ModuleIntf.scala:22)
+	at chisel3.Module$Intf.do_apply$(ModuleIntf.scala:22)
+	at chisel3.Module$.do_apply(Module.scala:32)
+	at flow.top.BreezeClusterAxi.$anonfun$cluster$1(BreezeClusterAxi.scala:44)
+	at chisel3.package$.withName(package.scala:493)
+	at flow.top.BreezeClusterAxi.<init>(BreezeClusterAxi.scala:44)
+	at flow.top.GenerateBreezeCluster$.$anonfun$new$6(GenerateBreezeCluster.scala:30)
+	at chisel3.stage.phases.Elaborate.$anonfun$transform$2(Elaborate.scala:60)
+	at chisel3.internal.Builder$.$anonfun$buildImpl$1(Builder.scala:1052)
+	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+	at chisel3.internal.Builder$.buildImpl(Builder.scala:1040)
+	at chisel3.internal.Builder$.$anonfun$build$1(Builder.scala:1032)
+	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+	at logger.Logger$.makeScope(Logger.scala:149)
+	at logger.Logger$.makeScope(Logger.scala:136)
+	at chisel3.stage.phases.Elaborate.$anonfun$transform$1(Elaborate.scala:60)
+	at scala.collection.immutable.List.flatMap(List.scala:294)
+	at scala.collection.immutable.List.flatMap(List.scala:79)
+	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:38)
+	at chisel3.stage.phases.Elaborate.transform(Elaborate.scala:28)
+	at firrtl.options.DependencyManager.$anonfun$transform$5(DependencyManager.scala:279)
+	at firrtl.Utils$.time(Utils.scala:54)
+	at firrtl.options.DependencyManager.$anonfun$transform$3(DependencyManager.scala:279)
+	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+	at scala.collection.immutable.List.foldLeft(List.scala:79)
+	at firrtl.options.DependencyManager.transform(DependencyManager.scala:269)
+	at firrtl.options.DependencyManager.transform$(DependencyManager.scala:255)
+	at firrtl.options.PhaseManager.transform(DependencyManager.scala:442)
+	at circt.stage.ChiselStage.run(ChiselStage.scala:47)
+	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+	at firrtl.options.Stage$$anon$1.transform(Stage.scala:43)
+	at firrtl.options.Stage.$anonfun$transform$3(Stage.scala:46)
+	at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+	at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+	at scala.collection.immutable.List.foldLeft(List.scala:79)
+	at firrtl.options.Stage.$anonfun$transform$2(Stage.scala:46)
+	at logger.Logger$.$anonfun$makeScope$4(Logger.scala:151)
+	at scala.util.DynamicVariable.withValue(DynamicVariable.scala:59)
+	at logger.Logger$.makeScope(Logger.scala:149)
+	at logger.Logger$.makeScope(Logger.scala:128)
+	at firrtl.options.Stage.transform(Stage.scala:46)
+	at firrtl.options.Stage.execute(Stage.scala:57)
+	at circt.stage.ChiselStage$.emitSystemVerilogFile(ChiselStage.scala:226)
+	at flow.top.GenerateBreezeCluster$.delayedEndpoint$flow$top$GenerateBreezeCluster$1(GenerateBreezeCluster.scala:32)
+	at flow.top.GenerateBreezeCluster$delayedInit$body.apply(GenerateBreezeCluster.scala:7)
+	at scala.Function0.apply$mcV$sp(Function0.scala:42)
+	at scala.Function0.apply$mcV$sp$(Function0.scala:42)
+	at scala.runtime.AbstractFunction0.apply$mcV$sp(AbstractFunction0.scala:17)
+	at scala.App.$anonfun$main$1(App.scala:98)
+	at scala.App.$anonfun$main$1$adapted(App.scala:98)
+	at scala.collection.IterableOnceOps.foreach(IterableOnce.scala:619)
+	at scala.collection.IterableOnceOps.foreach$(IterableOnce.scala:617)
+	at scala.collection.AbstractIterable.foreach(Iterable.scala:935)
+	at scala.App.main(App.scala:98)
+	at scala.App.main$(App.scala:96)
+	at flow.top.GenerateBreezeCluster$.main(GenerateBreezeCluster.scala:7)
+	at flow.top.GenerateBreezeCluster.main(GenerateBreezeCluster.scala)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at sbt.Run.invokeMain(Run.scala:144)
+	at sbt.Run.execute$1(Run.scala:94)
+	at sbt.Run.$anonfun$runWithLoader$5(Run.scala:121)
+	at sbt.Run$.executeSuccess(Run.scala:187)
+	at sbt.Run.runWithLoader(Run.scala:121)
+	at sbt.Defaults$.$anonfun$bgRunMainTask$7(Defaults.scala:1956)
+	at sbt.Defaults$.$anonfun$termWrapper$2(Defaults.scala:1927)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:23)
+	at scala.util.Try$.apply(Try.scala:213)
+	at sbt.internal.BackgroundThreadPool$BackgroundRunnable.run(DefaultBackgroundJobService.scala:367)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+Caused by: java.lang.IllegalArgumentException: requirement failed: CVFPU include directory is missing: /home/chen/FUN/flow-be2-single-debug-20261012/third_party/cvfpu/src/common_cells/include
+	at scala.Predef$.require(Predef.scala:337)
+	at flow.fpu.BreezeFpSources$.<clinit>(BreezeFp.scala:285)
+	... 101 more
+[success] Total time: 2 s, completed Oct 12, 2026, 6:24:04 AM
++ stage=prepare
++ cd /home/chen/FUN/flow-be2-single-debug-20261012
++ test '!' -e /home/chen/FUN/flow-runs/be2-single-debug-20261012
++ taskset -c 6-9 nice -n 10 python3 fpga/kcu105/target.py --cpu-type breeze-tiny --debug --with-sdcard --sys-clk-freq 100000000 --vivado-threads 4 --output-dir /home/chen/FUN/flow-runs/be2-single-debug-20261012
+INFO:SoC:        __   _ __      _  __  
+INFO:SoC:       / /  (_) /____ | |/_/  
+INFO:SoC:      / /__/ / __/ -_)>  <    
+INFO:SoC:     /____/_/\__/\__/_/|_|  
+INFO:SoC:  Build your hardware, easily!
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Creating SoC... (2026-10-12 06:24:05)
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:FPGA device : xcku040-ffva1156-2-e.
+INFO:SoC:System clock: 100.000MHz.
+INFO:SoCBusHandler:Creating Bus Handler...
+INFO:SoCBusHandler:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoCBusHandler:Adding reserved Bus Regions...
+INFO:SoCBusHandler:Bus Handler created.
+INFO:SoCCSRHandler:Creating CSR Handler...
+INFO:SoCCSRHandler:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+INFO:SoCCSRHandler:Adding reserved CSRs...
+INFO:SoCCSRHandler:ctrl CSR added at Location 0.
+INFO:SoCCSRHandler:uart CSR added at Location 1.
+INFO:SoCCSRHandler:timer0 CSR added at Location 2.
+INFO:SoCCSRHandler:ddrphy CSR added at Location 3.
+INFO:SoCCSRHandler:identifier_mem CSR added at Location 4.
+INFO:SoCCSRHandler:sdram CSR added at Location 5.
+INFO:SoCCSRHandler:sdcard CSR added at Location 6.
+INFO:SoCCSRHandler:CSR Handler created.
+INFO:SoCIRQHandler:Creating IRQ Handler...
+INFO:SoCIRQHandler:IRQ Handler (up to 32 Locations).
+INFO:SoCIRQHandler:Adding reserved IRQs...
+INFO:SoCIRQHandler:IRQ Handler created.
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Initial SoC:
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:64-bit wishbone Bus, 4.0GiB Address Space.
+INFO:SoC:32-bit CSR Bus, 32-bit Aligned, 16.0KiB Address Space, 4096B Paging, big Ordering (Up to 16 Locations).
+CSR Locations: (7)
+- ctrl           : 0
+- uart           : 1
+- timer0         : 2
+- ddrphy         : 3
+- identifier_mem : 4
+- sdram          : 5
+- sdcard         : 6
+INFO:SoC:IRQ Handler (up to 32 Locations).
+INFO:SoC:--------------------------------------------------------------------------------
+INFO:SoC:Controller ctrl added.
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/fpga/kcu105/target.py", line 164, in <module>
+    main()
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/fpga/kcu105/target.py", line 132, in main
+    soc = BreezeKCU105SoC(args.cpu_type, args.debug, args.sys_clk_freq, args.with_sdcard)
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/fpga/kcu105/target.py", line 68, in __init__
+    super().__init__(platform, clk_freq=sys_clk_freq,
+  File "/home/chen/FUN/flow_litex/litex/litex/soc/integration/soc.py", line 3909, in __init__
+    self.add_cpu(name=cpu_type,
+  File "/home/chen/FUN/flow_litex/litex/litex/soc/integration/soc.py", line 1769, in add_cpu
+    self.cpu = cpu_cls(self.platform, variant)
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/litex_wrapper/flow/core.py", line 114, in __init__
+    self.add_sources(platform)
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/litex_wrapper/flow/core.py", line 247, in add_sources
+    raise FileNotFoundError("Breeze RTL missing; cd design && sbt 'runMain flow.top.GenerateBreezeCluster " +
+FileNotFoundError: Breeze RTL missing; cd design && sbt 'runMain flow.top.GenerateBreezeCluster single gshare linux tandem fpga-debug coherent-dma'
++ status=1
++ printf '%s\n' 1
++ printf 'STAGE=%s EXIT=%s\n' prepare 1
+STAGE=prepare EXIT=1

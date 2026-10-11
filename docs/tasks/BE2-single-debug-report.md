@@ -20,3 +20,13 @@
 构建脚本 `records/be2-single-debug-20261012/build.sh`：新增monitor与原ILA连接测试、既有BreezeHangMonitorSpec、准确源独立RTL生成、BIOS/项目准备、Vivado实现、完整时序门禁后生成bit/ltx。保持100MHz/原时序例外；增加调试探针会改变资源和物理结果，不能复用普通单核旧时序。
 
 实际运行结果、源SHA、主机、exit、bit/ltx路径后续按原始报告补充。此时状态为准备，尚未生成调试bit，也没有上板抓取结果。
+
+2026-10-12 06:27 CST：b8e62666de08752a96fd27b838a2fcd79536d3da 在Alan独立worktree `/home/chen/FUN/flow-be2-single-debug-20261012` 执行；每次启动重读共享配置，首选cloud_chen均5秒SSH timeout255，Alan预检Java11.0.32.1/Verilator5.028/GCC13.2.0、磁盘19GiB及内存可用后回退。运行CPU6–9/nice10/maxThreads4；同步用本地反向HTTP代理，无bundle。
+
+新增monitor测试同时覆盖AXI4/AXI-Lite两种接口、RLAST、W早于AW、同拍请求/响应、双响应错误、反压不计接受和无总线驱动；1项含两subtest PASS。原ILA检查2/2 PASS，原BreezeHangMonitorSpec5/5 PASS，fail/cancel/ignore/pending均0。普通标量生产RTL/config对原7f差异为空（仅4个RVV文件不同，此配置不实例化），debug/Tandem使用原可选路径。
+
+第一次19af09f检查捕获AXI-Lite兼容`last`字段导致read计数不归零，原期待值保留，a3fecd7按接口类型修复；失败日志/exit1归档。随后a3fecd7最小全部通过，但新worktree的CVFPU嵌套依赖未初始化，生成报include directory missing；sbt后台runMain异常虽打印success，后续missing-file门禁正确拒绝prepare。补齐准确common_cells=6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea/fpu_div_sqrt_mvp=86e1f558b3c95e91577c41b2fc452c86b04e85ac，b8e6266改fork传播异常并立即检查生成manifest，重新生成exit0；这次不是RTL/golden失败，也没有换主机掩盖失败。
+
+BIOS/工程prepare成功，prepared-audit核对129个不可变源文件SHA、ROM内BIOS前缀、单核所有功能参数与原产品一致（仅tandem/debug打开）。ILA6.2共161probe/1896bit、深度4096、输入流水2拍，正在Vivado默认100MHz实现，未有最终timing/bit结论。报告和原始记录见 `records/be2-single-debug-20261012/prepared/`。
+
+用户确认JTAG连接Alan；06:24只读Vivado/hw_server discovery未发现目标，USB列表只识别CP2105串口桥，尚无波形或CPU工作状态证明。后续以实际target与capture为准；这不阻塞bit构建，不烧写Flash。

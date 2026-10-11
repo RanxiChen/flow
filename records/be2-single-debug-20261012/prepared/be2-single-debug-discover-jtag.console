@@ -1,0 +1,39 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source be2-single-debug-discover-jtag.tcl
+# set_param general.maxThreads 2
+# puts [help run_hw_ila]
+The command 'run_hw_ila' is auto loaded by Tcl. To explicitly load the command type 'load_features labtools'.
+# puts [help upload_hw_ila_data]
+The command 'upload_hw_ila_data' is auto loaded by Tcl. To explicitly load the command type 'load_features labtools'.
+# puts [help write_hw_ila_data]
+The command 'write_hw_ila_data' is auto loaded by Tcl. To explicitly load the command type 'load_features labtools'.
+# open_hw_manager
+# connect_hw_server -url localhost:3121
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2022.2.0
+  ****** Build date   : Oct 05 2022-07:25:37
+    **** Build number : 2022.2.1664925937
+      ** Copyright 2017-2026 Xilinx, Inc. All Rights Reserved.
+
+
+
+ERROR: [Labtoolstcl 44-199] No matching targets found on connected servers: localhost
+Resolution: If needed connect the desired target to a server and use command refresh_hw_server. Then rerun the get_hw_targets command.
+ERROR: [Common 17-39] 'get_hw_targets' failed due to earlier errors.
+
+    while executing
+"get_hw_targets"
+    invoked from within
+"set targets [get_hw_targets]"
+    (file "be2-single-debug-discover-jtag.tcl" line 7)
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 06:24:14 2026...

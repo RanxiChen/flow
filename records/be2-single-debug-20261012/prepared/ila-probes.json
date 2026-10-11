@@ -1,0 +1,815 @@
+{
+  "clock": "sys",
+  "clock_hz": 100000000,
+  "depth": 4096,
+  "input_pipe_stages": 2,
+  "storage_qualifier": false,
+  "total_width": 1896,
+  "probes": [
+    {
+      "port": "probe0",
+      "signal": "dbg_reset",
+      "width": 1
+    },
+    {
+      "port": "probe1",
+      "signal": "dbg_retire_valid",
+      "width": 1
+    },
+    {
+      "port": "probe2",
+      "signal": "dbg_retire_pc",
+      "width": 64
+    },
+    {
+      "port": "probe3",
+      "signal": "dbg_retire_inst",
+      "width": 32
+    },
+    {
+      "port": "probe4",
+      "signal": "dbg_retire_next_pc",
+      "width": 64
+    },
+    {
+      "port": "probe5",
+      "signal": "dbg_retire_estop",
+      "width": 1
+    },
+    {
+      "port": "probe6",
+      "signal": "dbg_retire_rd_write_en",
+      "width": 1
+    },
+    {
+      "port": "probe7",
+      "signal": "dbg_retire_rd_addr",
+      "width": 5
+    },
+    {
+      "port": "probe8",
+      "signal": "dbg_retire_rd_data",
+      "width": 64
+    },
+    {
+      "port": "probe9",
+      "signal": "dbg_retire_mem_en",
+      "width": 1
+    },
+    {
+      "port": "probe10",
+      "signal": "dbg_retire_mem_is_write",
+      "width": 1
+    },
+    {
+      "port": "probe11",
+      "signal": "dbg_retire_mem_addr",
+      "width": 64
+    },
+    {
+      "port": "probe12",
+      "signal": "dbg_retire_mem_aligned_addr",
+      "width": 64
+    },
+    {
+      "port": "probe13",
+      "signal": "dbg_retire_mem_rdata",
+      "width": 64
+    },
+    {
+      "port": "probe14",
+      "signal": "dbg_retire_mem_wdata",
+      "width": 64
+    },
+    {
+      "port": "probe15",
+      "signal": "dbg_retire_mem_wmask",
+      "width": 8
+    },
+    {
+      "port": "probe16",
+      "signal": "dbg_retire_rd_pending",
+      "width": 1
+    },
+    {
+      "port": "probe17",
+      "signal": "dbg_retire_rd_is_fp",
+      "width": 1
+    },
+    {
+      "port": "probe18",
+      "signal": "dbg_retire_late_write_valid",
+      "width": 1
+    },
+    {
+      "port": "probe19",
+      "signal": "dbg_retire_late_write_is_fp",
+      "width": 1
+    },
+    {
+      "port": "probe20",
+      "signal": "dbg_retire_late_write_error",
+      "width": 1
+    },
+    {
+      "port": "probe21",
+      "signal": "dbg_retire_late_write_rd",
+      "width": 5
+    },
+    {
+      "port": "probe22",
+      "signal": "dbg_retire_late_write_data",
+      "width": 64
+    },
+    {
+      "port": "probe23",
+      "signal": "dbg_last_retire_pc",
+      "width": 64
+    },
+    {
+      "port": "probe24",
+      "signal": "dbg_last_retire_inst",
+      "width": 32
+    },
+    {
+      "port": "probe25",
+      "signal": "dbg_seen_retire",
+      "width": 1
+    },
+    {
+      "port": "probe26",
+      "signal": "dbg_no_retire_cycles",
+      "width": 32
+    },
+    {
+      "port": "probe27",
+      "signal": "dbg_hang",
+      "width": 1
+    },
+    {
+      "port": "probe28",
+      "signal": "dbg_hang_reasons",
+      "width": 15
+    },
+    {
+      "port": "probe29",
+      "signal": "dbg_hart_fatal",
+      "width": 1
+    },
+    {
+      "port": "probe30",
+      "signal": "dbg_hart_estop",
+      "width": 1
+    },
+    {
+      "port": "probe31",
+      "signal": "dbg_mtime_low",
+      "width": 32
+    },
+    {
+      "port": "probe32",
+      "signal": "dbg_l1d_load_access",
+      "width": 1
+    },
+    {
+      "port": "probe33",
+      "signal": "dbg_l1d_load_miss",
+      "width": 1
+    },
+    {
+      "port": "probe34",
+      "signal": "dbg_l1d_store_access",
+      "width": 1
+    },
+    {
+      "port": "probe35",
+      "signal": "dbg_l1d_store_miss",
+      "width": 1
+    },
+    {
+      "port": "probe36",
+      "signal": "dbg_l1d_upgrade",
+      "width": 1
+    },
+    {
+      "port": "probe37",
+      "signal": "dbg_l1d_ptw_access",
+      "width": 1
+    },
+    {
+      "port": "probe38",
+      "signal": "dbg_l1d_ptw_miss",
+      "width": 1
+    },
+    {
+      "port": "probe39",
+      "signal": "dbg_l1d_hit_under_miss",
+      "width": 1
+    },
+    {
+      "port": "probe40",
+      "signal": "dbg_l1d_mshr_busy_cycles",
+      "width": 1
+    },
+    {
+      "port": "probe41",
+      "signal": "dbg_l1d_mshr_full_stall",
+      "width": 1
+    },
+    {
+      "port": "probe42",
+      "signal": "dbg_l1d_same_line_stall",
+      "width": 1
+    },
+    {
+      "port": "probe43",
+      "signal": "dbg_l1d_s0_conflict_stall",
+      "width": 1
+    },
+    {
+      "port": "probe44",
+      "signal": "dbg_l1d_writeback_dirty",
+      "width": 1
+    },
+    {
+      "port": "probe45",
+      "signal": "dbg_l1d_writeback_clean",
+      "width": 1
+    },
+    {
+      "port": "probe46",
+      "signal": "dbg_l1d_probe_received",
+      "width": 1
+    },
+    {
+      "port": "probe47",
+      "signal": "dbg_l1d_probe_held_cycles",
+      "width": 1
+    },
+    {
+      "port": "probe48",
+      "signal": "dbg_l1d_lr_count",
+      "width": 1
+    },
+    {
+      "port": "probe49",
+      "signal": "dbg_l1d_sc_fail",
+      "width": 1
+    },
+    {
+      "port": "probe50",
+      "signal": "dbg_l1d_mmio_read",
+      "width": 1
+    },
+    {
+      "port": "probe51",
+      "signal": "dbg_l1d_mmio_write",
+      "width": 1
+    },
+    {
+      "port": "probe52",
+      "signal": "dbg_l1d_mmio_cycles",
+      "width": 1
+    },
+    {
+      "port": "probe53",
+      "signal": "dbg_l2_req_0",
+      "width": 1
+    },
+    {
+      "port": "probe54",
+      "signal": "dbg_l2_req_1",
+      "width": 1
+    },
+    {
+      "port": "probe55",
+      "signal": "dbg_l2_req_2",
+      "width": 1
+    },
+    {
+      "port": "probe56",
+      "signal": "dbg_l2_hit_0",
+      "width": 1
+    },
+    {
+      "port": "probe57",
+      "signal": "dbg_l2_hit_1",
+      "width": 1
+    },
+    {
+      "port": "probe58",
+      "signal": "dbg_l2_hit_2",
+      "width": 1
+    },
+    {
+      "port": "probe59",
+      "signal": "dbg_l2_needProbe_0",
+      "width": 1
+    },
+    {
+      "port": "probe60",
+      "signal": "dbg_l2_needProbe_1",
+      "width": 1
+    },
+    {
+      "port": "probe61",
+      "signal": "dbg_l2_needProbe_2",
+      "width": 1
+    },
+    {
+      "port": "probe62",
+      "signal": "dbg_l2_miss_0",
+      "width": 1
+    },
+    {
+      "port": "probe63",
+      "signal": "dbg_l2_miss_1",
+      "width": 1
+    },
+    {
+      "port": "probe64",
+      "signal": "dbg_l2_miss_2",
+      "width": 1
+    },
+    {
+      "port": "probe65",
+      "signal": "dbg_l2_slotFullStall_0",
+      "width": 1
+    },
+    {
+      "port": "probe66",
+      "signal": "dbg_l2_slotFullStall_1",
+      "width": 1
+    },
+    {
+      "port": "probe67",
+      "signal": "dbg_l2_slotFullStall_2",
+      "width": 1
+    },
+    {
+      "port": "probe68",
+      "signal": "dbg_l2_setWait_0",
+      "width": 1
+    },
+    {
+      "port": "probe69",
+      "signal": "dbg_l2_setWait_1",
+      "width": 1
+    },
+    {
+      "port": "probe70",
+      "signal": "dbg_l2_setWait_2",
+      "width": 1
+    },
+    {
+      "port": "probe71",
+      "signal": "dbg_l2_put_0",
+      "width": 1
+    },
+    {
+      "port": "probe72",
+      "signal": "dbg_l2_probeSent_0",
+      "width": 1
+    },
+    {
+      "port": "probe73",
+      "signal": "dbg_l2_probeCycles",
+      "width": 1
+    },
+    {
+      "port": "probe74",
+      "signal": "dbg_l2_memRead",
+      "width": 1
+    },
+    {
+      "port": "probe75",
+      "signal": "dbg_l2_memReadsInFlight",
+      "width": 2
+    },
+    {
+      "port": "probe76",
+      "signal": "dbg_l2_memTwoInflight",
+      "width": 1
+    },
+    {
+      "port": "probe77",
+      "signal": "dbg_l2_memWrite",
+      "width": 1
+    },
+    {
+      "port": "probe78",
+      "signal": "dbg_memory_monitor_ar_count",
+      "width": 32
+    },
+    {
+      "port": "probe79",
+      "signal": "dbg_memory_monitor_aw_count",
+      "width": 32
+    },
+    {
+      "port": "probe80",
+      "signal": "dbg_memory_monitor_w_count",
+      "width": 32
+    },
+    {
+      "port": "probe81",
+      "signal": "dbg_memory_monitor_r_count",
+      "width": 32
+    },
+    {
+      "port": "probe82",
+      "signal": "dbg_memory_monitor_b_count",
+      "width": 32
+    },
+    {
+      "port": "probe83",
+      "signal": "dbg_memory_monitor_accepted",
+      "width": 5
+    },
+    {
+      "port": "probe84",
+      "signal": "dbg_memory_monitor_stalled",
+      "width": 5
+    },
+    {
+      "port": "probe85",
+      "signal": "dbg_memory_monitor_last_ar_addr",
+      "width": 32
+    },
+    {
+      "port": "probe86",
+      "signal": "dbg_memory_monitor_last_aw_addr",
+      "width": 32
+    },
+    {
+      "port": "probe87",
+      "signal": "dbg_memory_monitor_last_r_resp",
+      "width": 2
+    },
+    {
+      "port": "probe88",
+      "signal": "dbg_memory_monitor_last_b_resp",
+      "width": 2
+    },
+    {
+      "port": "probe89",
+      "signal": "dbg_memory_monitor_error_count",
+      "width": 32
+    },
+    {
+      "port": "probe90",
+      "signal": "dbg_memory_monitor_error_seen",
+      "width": 1
+    },
+    {
+      "port": "probe91",
+      "signal": "dbg_memory_monitor_accounting_fault",
+      "width": 1
+    },
+    {
+      "port": "probe92",
+      "signal": "dbg_memory_monitor_reads_pending",
+      "width": 8
+    },
+    {
+      "port": "probe93",
+      "signal": "dbg_memory_monitor_writes_pending",
+      "width": 8
+    },
+    {
+      "port": "probe94",
+      "signal": "dbg_memory_monitor_write_active",
+      "width": 1
+    },
+    {
+      "port": "probe95",
+      "signal": "dbg_memory_monitor_stall_cycles",
+      "width": 32
+    },
+    {
+      "port": "probe96",
+      "signal": "dbg_memory_ar_valid",
+      "width": 1
+    },
+    {
+      "port": "probe97",
+      "signal": "dbg_memory_ar_ready",
+      "width": 1
+    },
+    {
+      "port": "probe98",
+      "signal": "dbg_memory_ar_addr",
+      "width": 32
+    },
+    {
+      "port": "probe99",
+      "signal": "dbg_memory_ar_id",
+      "width": 1
+    },
+    {
+      "port": "probe100",
+      "signal": "dbg_memory_ar_len",
+      "width": 8
+    },
+    {
+      "port": "probe101",
+      "signal": "dbg_memory_aw_valid",
+      "width": 1
+    },
+    {
+      "port": "probe102",
+      "signal": "dbg_memory_aw_ready",
+      "width": 1
+    },
+    {
+      "port": "probe103",
+      "signal": "dbg_memory_aw_addr",
+      "width": 32
+    },
+    {
+      "port": "probe104",
+      "signal": "dbg_memory_aw_id",
+      "width": 1
+    },
+    {
+      "port": "probe105",
+      "signal": "dbg_memory_aw_len",
+      "width": 8
+    },
+    {
+      "port": "probe106",
+      "signal": "dbg_memory_w_valid",
+      "width": 1
+    },
+    {
+      "port": "probe107",
+      "signal": "dbg_memory_w_ready",
+      "width": 1
+    },
+    {
+      "port": "probe108",
+      "signal": "dbg_memory_w_data",
+      "width": 64
+    },
+    {
+      "port": "probe109",
+      "signal": "dbg_memory_w_strb",
+      "width": 8
+    },
+    {
+      "port": "probe110",
+      "signal": "dbg_memory_w_last",
+      "width": 1
+    },
+    {
+      "port": "probe111",
+      "signal": "dbg_memory_r_valid",
+      "width": 1
+    },
+    {
+      "port": "probe112",
+      "signal": "dbg_memory_r_ready",
+      "width": 1
+    },
+    {
+      "port": "probe113",
+      "signal": "dbg_memory_r_data",
+      "width": 64
+    },
+    {
+      "port": "probe114",
+      "signal": "dbg_memory_r_resp",
+      "width": 2
+    },
+    {
+      "port": "probe115",
+      "signal": "dbg_memory_r_id",
+      "width": 1
+    },
+    {
+      "port": "probe116",
+      "signal": "dbg_memory_r_last",
+      "width": 1
+    },
+    {
+      "port": "probe117",
+      "signal": "dbg_memory_b_valid",
+      "width": 1
+    },
+    {
+      "port": "probe118",
+      "signal": "dbg_memory_b_ready",
+      "width": 1
+    },
+    {
+      "port": "probe119",
+      "signal": "dbg_memory_b_resp",
+      "width": 2
+    },
+    {
+      "port": "probe120",
+      "signal": "dbg_memory_b_id",
+      "width": 1
+    },
+    {
+      "port": "probe121",
+      "signal": "dbg_mmio_monitor_ar_count",
+      "width": 32
+    },
+    {
+      "port": "probe122",
+      "signal": "dbg_mmio_monitor_aw_count",
+      "width": 32
+    },
+    {
+      "port": "probe123",
+      "signal": "dbg_mmio_monitor_w_count",
+      "width": 32
+    },
+    {
+      "port": "probe124",
+      "signal": "dbg_mmio_monitor_r_count",
+      "width": 32
+    },
+    {
+      "port": "probe125",
+      "signal": "dbg_mmio_monitor_b_count",
+      "width": 32
+    },
+    {
+      "port": "probe126",
+      "signal": "dbg_mmio_monitor_accepted",
+      "width": 5
+    },
+    {
+      "port": "probe127",
+      "signal": "dbg_mmio_monitor_stalled",
+      "width": 5
+    },
+    {
+      "port": "probe128",
+      "signal": "dbg_mmio_monitor_last_ar_addr",
+      "width": 32
+    },
+    {
+      "port": "probe129",
+      "signal": "dbg_mmio_monitor_last_aw_addr",
+      "width": 32
+    },
+    {
+      "port": "probe130",
+      "signal": "dbg_mmio_monitor_last_r_resp",
+      "width": 2
+    },
+    {
+      "port": "probe131",
+      "signal": "dbg_mmio_monitor_last_b_resp",
+      "width": 2
+    },
+    {
+      "port": "probe132",
+      "signal": "dbg_mmio_monitor_error_count",
+      "width": 32
+    },
+    {
+      "port": "probe133",
+      "signal": "dbg_mmio_monitor_error_seen",
+      "width": 1
+    },
+    {
+      "port": "probe134",
+      "signal": "dbg_mmio_monitor_accounting_fault",
+      "width": 1
+    },
+    {
+      "port": "probe135",
+      "signal": "dbg_mmio_monitor_reads_pending",
+      "width": 8
+    },
+    {
+      "port": "probe136",
+      "signal": "dbg_mmio_monitor_writes_pending",
+      "width": 8
+    },
+    {
+      "port": "probe137",
+      "signal": "dbg_mmio_monitor_write_active",
+      "width": 1
+    },
+    {
+      "port": "probe138",
+      "signal": "dbg_mmio_monitor_stall_cycles",
+      "width": 32
+    },
+    {
+      "port": "probe139",
+      "signal": "dbg_mmio_ar_valid",
+      "width": 1
+    },
+    {
+      "port": "probe140",
+      "signal": "dbg_mmio_ar_ready",
+      "width": 1
+    },
+    {
+      "port": "probe141",
+      "signal": "dbg_mmio_ar_addr",
+      "width": 32
+    },
+    {
+      "port": "probe142",
+      "signal": "dbg_mmio_aw_valid",
+      "width": 1
+    },
+    {
+      "port": "probe143",
+      "signal": "dbg_mmio_aw_ready",
+      "width": 1
+    },
+    {
+      "port": "probe144",
+      "signal": "dbg_mmio_aw_addr",
+      "width": 32
+    },
+    {
+      "port": "probe145",
+      "signal": "dbg_mmio_w_valid",
+      "width": 1
+    },
+    {
+      "port": "probe146",
+      "signal": "dbg_mmio_w_ready",
+      "width": 1
+    },
+    {
+      "port": "probe147",
+      "signal": "dbg_mmio_w_data",
+      "width": 64
+    },
+    {
+      "port": "probe148",
+      "signal": "dbg_mmio_w_strb",
+      "width": 8
+    },
+    {
+      "port": "probe149",
+      "signal": "dbg_mmio_r_valid",
+      "width": 1
+    },
+    {
+      "port": "probe150",
+      "signal": "dbg_mmio_r_ready",
+      "width": 1
+    },
+    {
+      "port": "probe151",
+      "signal": "dbg_mmio_r_data",
+      "width": 64
+    },
+    {
+      "port": "probe152",
+      "signal": "dbg_mmio_r_resp",
+      "width": 2
+    },
+    {
+      "port": "probe153",
+      "signal": "dbg_mmio_b_valid",
+      "width": 1
+    },
+    {
+      "port": "probe154",
+      "signal": "dbg_mmio_b_ready",
+      "width": 1
+    },
+    {
+      "port": "probe155",
+      "signal": "dbg_mmio_b_resp",
+      "width": 2
+    },
+    {
+      "port": "probe156",
+      "signal": "dbg_router_read_dram",
+      "width": 1
+    },
+    {
+      "port": "probe157",
+      "signal": "dbg_router_write_dram",
+      "width": 1
+    },
+    {
+      "port": "probe158",
+      "signal": "dbg_router_read_low",
+      "width": 1
+    },
+    {
+      "port": "probe159",
+      "signal": "dbg_router_write_low",
+      "width": 1
+    },
+    {
+      "port": "probe160",
+      "signal": "dbg_pll_locked",
+      "width": 1
+    }
+  ]
+}

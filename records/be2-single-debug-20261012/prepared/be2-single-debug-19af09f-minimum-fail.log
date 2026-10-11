@@ -1,0 +1,29 @@
+chen-System-Product-Name
+19af09f73195902a46c73b79110fdbb388d82ff6
+2026-10-11T22:21:48Z
++ taskset -c 6-9 nice -n 10 python3 -m unittest discover -s sim/litex -p test_breeze_axi_monitor.py -v
+test_axi_and_axilite_events_completion_errors_and_backpressure (test_breeze_axi_monitor.BreezeAxiMonitorTest) ... 
+======================================================================
+FAIL: test_axi_and_axilite_events_completion_errors_and_backpressure (test_breeze_axi_monitor.BreezeAxiMonitorTest) (axi4=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/sim/litex/test_breeze_axi_monitor.py", line 76, in test_axi_and_axilite_events_completion_errors_and_backpressure
+    run_simulation(dut, stimulus())
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 414, in run_simulation
+    s.run()
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 403, in run
+    self._process_generators(cd)
+  File "/home/chen/FUN/flow_litex/migen/migen/sim/core.py", line 357, in _process_generators
+    request = generator.send(reply)
+  File "/home/chen/FUN/flow-be2-single-debug-20261012/sim/litex/test_breeze_axi_monitor.py", line 44, in stimulus
+    self.assertEqual((yield dut.reads_pending), 0)
+AssertionError: 1 != 0
+
+----------------------------------------------------------------------
+Ran 1 test in 0.011s
+
+FAILED (failures=1)
++ status=1
++ printf '%s\n' 1
++ printf 'STAGE=%s EXIT=%s\n' minimum 1
+STAGE=minimum EXIT=1
