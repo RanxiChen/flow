@@ -1,0 +1,6 @@
+interface:
+  display_name: "vivado-synth"
+  short_description: "Hardware workflow: vivado-synth"
+  default_prompt: "Use $vivado-synth for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

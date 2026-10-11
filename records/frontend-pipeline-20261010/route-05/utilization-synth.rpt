@@ -1,0 +1,88 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Sat Oct 10 23:42:10 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_utilization -hierarchical -file utilization-synth.rpt
+| Design       : BreezeFrontendTimingHarness
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Synthesized
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++---------------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+|             Instance            |           Module           | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
++---------------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+| BreezeFrontendTimingHarness     |                      (top) |      22220 |      20244 |    1976 |    0 | 11013 |     16 |      0 |    0 |          0 |
+|   (BreezeFrontendTimingHarness) |                      (top) |        601 |        237 |     364 |    0 |  1714 |      0 |      0 |    0 |          0 |
+|   frontend                      |     BreezeFrontendPipeline |      21189 |      19577 |    1612 |    0 |  8049 |     16 |      0 |    0 |          0 |
+|     (frontend)                  |     BreezeFrontendPipeline |         29 |         29 |       0 |    0 |  1218 |      0 |      0 |    0 |          0 |
+|     cache                       |           BreezeViptICache |       7237 |       6593 |     644 |    0 |  1304 |     16 |      0 |    0 |          0 |
+|       (cache)                   |           BreezeViptICache |        750 |        750 |       0 |    0 |  1200 |      0 |      0 |    0 |          0 |
+|       data_0_ext                |               data_128x256 |        158 |        158 |       0 |    0 |     0 |      4 |      0 |    0 |          0 |
+|       data_1_ext                |            data_128x256_18 |        155 |        155 |       0 |    0 |     0 |      4 |      0 |    0 |          0 |
+|       data_2_ext                |            data_128x256_19 |        148 |        148 |       0 |    0 |     0 |      4 |      0 |    0 |          0 |
+|       data_3_ext                |            data_128x256_20 |        149 |        149 |       0 |    0 |     0 |      4 |      0 |    0 |          0 |
+|       pmp                       |             BreezeFetchPmp |        453 |        453 |       0 |    0 |    73 |      0 |      0 |    0 |          0 |
+|       returns                   | Queue2_PipelineFetchWindow |       4758 |       4594 |     164 |    0 |     3 |      0 |      0 |    0 |          0 |
+|         (returns)               | Queue2_PipelineFetchWindow |         14 |         14 |       0 |    0 |     3 |      0 |      0 |    0 |          0 |
+|         ram_ext                 |                  ram_2x282 |       4744 |       4580 |     164 |    0 |     0 |      0 |      0 |    0 |          0 |
+|       tags_0_ext                |                tags_128x52 |        166 |         46 |     120 |    0 |     7 |      0 |      0 |    0 |          0 |
+|       tags_1_ext                |             tags_128x52_21 |        166 |         46 |     120 |    0 |     7 |      0 |      0 |    0 |          0 |
+|       tags_2_ext                |             tags_128x52_22 |        166 |         46 |     120 |    0 |     7 |      0 |      0 |    0 |          0 |
+|       tags_3_ext                |             tags_128x52_23 |        168 |         48 |     120 |    0 |     7 |      0 |      0 |    0 |          0 |
+|     decoder_1                   |    BreezeCompressedDecoder |         98 |         98 |       0 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     mmu                         |                    Sv39Mmu |       9766 |       8870 |     896 |    0 |  1684 |      0 |      0 |    0 |          0 |
+|       (mmu)                     |                    Sv39Mmu |          1 |          1 |       0 |    0 |     0 |      0 |      0 |    0 |          0 |
+|       dtlb                      |                  Sv39Tlb_1 |          1 |          1 |       0 |    0 |     1 |      0 |      0 |    0 |          0 |
+|       itlb                      |                    Sv39Tlb |       8927 |       8031 |     896 |    0 |   580 |      0 |      0 |    0 |          0 |
+|         (itlb)                  |                    Sv39Tlb |       3879 |       3879 |       0 |    0 |   574 |      0 |      0 |    0 |          0 |
+|         mem_0_0_ext             |                   mem_2x91 |         70 |         14 |      56 |    0 |     6 |      0 |      0 |    0 |          0 |
+|         mem_0_1_ext             |                 mem_2x91_3 |         70 |         14 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_0_2_ext             |                 mem_2x91_4 |         70 |         14 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_0_3_ext             |                 mem_2x91_5 |         70 |         14 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_1_0_ext             |                 mem_2x91_6 |        884 |        828 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_1_1_ext             |                 mem_2x91_7 |        352 |        296 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_1_2_ext             |                 mem_2x91_8 |        560 |        504 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_1_3_ext             |                 mem_2x91_9 |        552 |        496 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_2_0_ext             |                mem_2x91_10 |        401 |        345 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_2_1_ext             |                mem_2x91_11 |        756 |        700 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_2_2_ext             |                mem_2x91_12 |        541 |        485 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_2_3_ext             |                mem_2x91_13 |        526 |        470 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_3_0_ext             |                mem_2x91_14 |         56 |          0 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_3_1_ext             |                mem_2x91_15 |         56 |          0 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_3_2_ext             |                mem_2x91_16 |         56 |          0 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|         mem_3_3_ext             |                mem_2x91_17 |         56 |          0 |      56 |    0 |     0 |      0 |      0 |    0 |          0 |
+|       ptw                       |                    Sv39Ptw |        268 |        268 |       0 |    0 |   190 |      0 |      0 |    0 |          0 |
+|       wcMiddle                  |            Sv39WalkCache_1 |        378 |        378 |       0 |    0 |   630 |      0 |      0 |    0 |          0 |
+|       wcUpper                   |              Sv39WalkCache |        191 |        191 |       0 |    0 |   283 |      0 |      0 |    0 |          0 |
+|     predictor                   |    BreezePipelinePredictor |       3268 |       3196 |      72 |    0 |  1561 |      0 |      0 |    0 |          0 |
+|       (predictor)               |    BreezePipelinePredictor |          1 |          1 |       0 |    0 |    34 |      0 |      0 |    0 |          0 |
+|       btb                       |            BreezeBankedBtb |        952 |        952 |       0 |    0 |   373 |      0 |      0 |    0 |          0 |
+|         (btb)                   |            BreezeBankedBtb |        946 |        946 |       0 |    0 |   368 |      0 |      0 |    0 |          0 |
+|         writes                  |   Queue4_PipelineBtbUpdate |          6 |          6 |       0 |    0 |     5 |      0 |      0 |    0 |          0 |
+|       pht                       |            BreezeBankedPht |       2315 |       2243 |      72 |    0 |  1154 |      0 |      0 |    0 |          0 |
+|         (pht)                   |            BreezeBankedPht |       1916 |       1916 |       0 |    0 |  1117 |      0 |      0 |    0 |          0 |
+|         ram_0_ext               |                  ram_256x2 |         17 |          1 |      16 |    0 |     8 |      0 |      0 |    0 |          0 |
+|         ram_1_ext               |                ram_256x2_0 |         28 |         12 |      16 |    0 |     8 |      0 |      0 |    0 |          0 |
+|         ram_2_ext               |                ram_256x2_1 |         17 |          1 |      16 |    0 |     8 |      0 |      0 |    0 |          0 |
+|         ram_3_ext               |                ram_256x2_2 |         19 |          3 |      16 |    0 |     8 |      0 |      0 |    0 |          0 |
+|         updates                 |   Queue4_PipelinePhtUpdate |        318 |        310 |       8 |    0 |     5 |      0 |      0 |    0 |          0 |
+|           (updates)             |   Queue4_PipelinePhtUpdate |          4 |          4 |       0 |    0 |     5 |      0 |      0 |    0 |          0 |
+|           ram_ext               |                   ram_4x11 |        314 |        306 |       8 |    0 |     0 |      0 |      0 |    0 |          0 |
+|     queue                       |   PipelineInstructionQueue |        791 |        791 |       0 |    0 |  2282 |      0 |      0 |    0 |          0 |
+|   instructions                  |    FrontendBoundaryQueue_1 |        147 |        147 |       0 |    0 |   571 |      0 |      0 |    0 |          0 |
+|   resolutions                   |      FrontendBoundaryQueue |        252 |        252 |       0 |    0 |   570 |      0 |      0 |    0 |          0 |
+|   walks                         |    FrontendBoundaryQueue_2 |         31 |         31 |       0 |    0 |   109 |      0 |      0 |    0 |          0 |
++---------------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+
+

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="700" viewBox="0 0 1320 700">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#566579"/></marker></defs>
+<rect width="1320" height="700" fill="#ffffff"/>
+<text x="40" y="62" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="30" fill="#243247" font-weight="700" text-anchor="start">Breeze 前端｜F0–F2 拍级工作图</text>
+<text x="40" y="107" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="19" fill="#64748b" font-weight="400" text-anchor="start">当前讨论方案：每个文本框表示两个寄存边界之间的一拍</text>
+<line x1="41" y1="152" x2="41" y2="554" stroke="#8895a7" stroke-width="2"/>
+<text x="41" y="143" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="14" fill="#64748b" font-weight="400" text-anchor="middle">寄存边界</text>
+<line x1="456" y1="152" x2="456" y2="554" stroke="#8895a7" stroke-width="2"/>
+<text x="456" y="143" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="14" fill="#64748b" font-weight="400" text-anchor="middle">寄存边界</text>
+<line x1="871" y1="152" x2="871" y2="554" stroke="#8895a7" stroke-width="2"/>
+<text x="871" y="143" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="14" fill="#64748b" font-weight="400" text-anchor="middle">寄存边界</text>
+<line x1="1281" y1="152" x2="1281" y2="554" stroke="#8895a7" stroke-width="2"/>
+<text x="1281" y="143" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="14" fill="#64748b" font-weight="400" text-anchor="middle">寄存边界</text>
+<rect x="70" y="170" width="350" height="355" fill="#edf4ff" stroke="#5178b3" stroke-width="2"/>
+<text x="88" y="210" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="22" fill="#243247" font-weight="700" text-anchor="start">F0｜第 1 拍：并行查询</text>
+<text x="90" y="255" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">取指</text>
+<text x="90" y="281" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">ICache Tag/Data 索引读取</text>
+<text x="90" y="307" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">iTLB 查询</text>
+<text x="90" y="359" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">预测：PC、PC+2 两个位置</text>
+<text x="90" y="385" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">访问两个 BTB bank</text>
+<text x="90" y="411" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">启动 GShare 查询</text>
+<rect x="485" y="170" width="350" height="355" fill="#eef8f2" stroke="#4b8967" stroke-width="2"/>
+<text x="503" y="210" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="22" fill="#243247" font-weight="700" text-anchor="start">F1｜第 2 拍：结果与选择</text>
+<text x="505" y="255" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">取指</text>
+<text x="505" y="281" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">接收 iTLB 与 ICache 结果</text>
+<text x="505" y="307" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">PA tag / 页权限检查、命中选路</text>
+<text x="505" y="333" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">得到 32 位取指数据</text>
+<text x="505" y="385" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">预测</text>
+<text x="505" y="411" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">BTB 命中与 GShare 方向结果</text>
+<text x="505" y="437" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">按程序顺序选择控制流目标</text>
+<text x="505" y="463" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">形成预测 NPC</text>
+<rect x="900" y="170" width="350" height="355" fill="#fff5e9" stroke="#b18146" stroke-width="2"/>
+<text x="918" y="210" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="22" fill="#243247" font-weight="700" text-anchor="start">F2｜第 3 拍：重组与校正</text>
+<text x="920" y="255" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">指令处理</text>
+<text x="920" y="281" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">确认 16 / 32 位指令边界</text>
+<text x="920" y="307" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">跨字拼接、RVC 展开</text>
+<text x="920" y="333" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">生成 0–2 条完整指令</text>
+<text x="920" y="385" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="600" text-anchor="start">预测校正</text>
+<text x="920" y="411" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">校验分支信息，识别 call / ret</text>
+<text x="920" y="437" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">RAS 返回预测及维护</text>
+<text x="920" y="463" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">必要时校正 NPC、冲刷年轻请求</text>
+<text x="920" y="489" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#243247" font-weight="400" text-anchor="start">拍末送入指令缓冲</text>
+<line x1="420" y1="348" x2="481" y2="348" stroke="#566579" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="835" y1="348" x2="896" y2="348" stroke="#566579" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="70" y="609" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="18" fill="#9a651c" font-weight="400" text-anchor="start">待定：取指窗口对齐｜组内 GHR 查询与更新｜F1 → F0 的反馈边界</text>
+<text x="70" y="654" font-family="Microsoft YaHei, WenQuanYi Micro Hei, Arial, sans-serif" font-size="17" fill="#64748b" font-weight="400" text-anchor="start">同一请求依次经过 F0 → F1 → F2；不同请求可以同时占据这三个级。</text>
+</svg>

@@ -1,0 +1,1618 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Sun Oct 11 00:09:08 2026
+# Process ID: 925851
+# Current directory: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06
+# Command line: vivado -mode batch -notrace -source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/implement.tcl -tclargs /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc
+# Log file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/vivado.log
+# Journal file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/vivado.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4701.868 MHz, CPU Physical cores: 12, Host memory: 67150 MB
+#-----------------------------------------------------------
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/implement.tcl -notrace
+Command: synth_design -top BreezeFrontendTimingHarness -mode out_of_context -part xcku040-ffva1156-2-e -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcku040'
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 925860
+INFO: [Synth 8-11241] undeclared symbol 'REGCCE', assumed default net type 'wire' [/home/chen/Tool/FPGA/Vivado/2022.2/data/verilog/src/unimacro/BRAM_SINGLE_MACRO.v:2170]
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2697.801 ; gain = 373.699 ; free physical = 25053 ; free virtual = 44360
+Synthesis current peak Physical Memory [PSS] (MB): peak = 1945.206; parent = 1797.336; children = 147.870
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 3692.758; parent = 2704.742; children = 988.016
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'BreezeFrontendTimingHarness' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFrontendTimingHarness.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'FrontendGlobalClock' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendGlobalClock.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'BUFGCE' [/home/chen/Tool/FPGA/Vivado/2022.2/scripts/rt/data/unisim_comp.v:1092]
+INFO: [Synth 8-6155] done synthesizing module 'BUFGCE' (0#1) [/home/chen/Tool/FPGA/Vivado/2022.2/scripts/rt/data/unisim_comp.v:1092]
+INFO: [Synth 8-6155] done synthesizing module 'FrontendGlobalClock' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendGlobalClock.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'BreezeFrontendPipeline' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFrontendPipeline.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39Mmu' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Mmu.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39Tlb' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'mem_2x91' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'mem_2x91' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39Tlb' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39Tlb_1' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb_1.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39Tlb_1' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb_1.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39WalkCache' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39WalkCache.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39WalkCache' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39WalkCache.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39WalkCache_1' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39WalkCache_1.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39WalkCache_1' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39WalkCache_1.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'Sv39Ptw' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Ptw.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39Ptw' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Ptw.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'Sv39Mmu' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Mmu.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'BreezeViptICache' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeViptICache.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'tags_128x52' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/tags_128x52.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'tags_128x52' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/tags_128x52.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'data_128x256' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/data_128x256.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'data_128x256' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/data_128x256.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'Queue2_PipelineFetchWindow' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue2_PipelineFetchWindow.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'ram_2x282' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_2x282.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'ram_2x282' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_2x282.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'Queue2_PipelineFetchWindow' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue2_PipelineFetchWindow.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'BreezeFetchPmp' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFetchPmp.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeFetchPmp' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFetchPmp.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeViptICache' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeViptICache.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'BreezePipelinePredictor' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezePipelinePredictor.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'BreezeBankedPht' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedPht.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'ram_256x2' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_256x2.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'ram_256x2' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_256x2.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'Queue4_PipelinePhtUpdate' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue4_PipelinePhtUpdate.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'ram_4x11' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_4x11.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'ram_4x11' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_4x11.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'Queue4_PipelinePhtUpdate' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue4_PipelinePhtUpdate.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeBankedPht' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedPht.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'BreezeBankedBtb' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedBtb.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'ram_32x123' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_32x123.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'ram_32x123' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_32x123.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'Queue4_PipelineBtbUpdate' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue4_PipelineBtbUpdate.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'ram_4x131' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_4x131.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'ram_4x131' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_4x131.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'Queue4_PipelineBtbUpdate' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Queue4_PipelineBtbUpdate.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeBankedBtb' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedBtb.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'BreezePipelinePredictor' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezePipelinePredictor.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'PipelineInstructionQueue' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/PipelineInstructionQueue.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'PipelineInstructionQueue' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/PipelineInstructionQueue.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'BreezeCompressedDecoder' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeCompressedDecoder.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeCompressedDecoder' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeCompressedDecoder.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeFrontendPipeline' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFrontendPipeline.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'FrontendBoundaryQueue' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'FrontendBoundaryQueue' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'FrontendBoundaryQueue_1' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue_1.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'FrontendBoundaryQueue_1' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue_1.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'FrontendBoundaryQueue_2' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue_2.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'FrontendBoundaryQueue_2' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/FrontendBoundaryQueue_2.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'BreezeFrontendTimingHarness' (0#1) [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeFrontendTimingHarness.sv:2]
+WARNING: [Synth 8-6014] Unused sequential element _R0_en_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:18]
+WARNING: [Synth 8-6014] Unused sequential element previousSfence_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb.sv:659]
+WARNING: [Synth 8-6014] Unused sequential element previousSfence_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb_1.sv:84]
+WARNING: [Synth 8-6014] Unused sequential element stalled_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Ptw.sv:148]
+WARNING: [Synth 8-6014] Unused sequential element previousAddress_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Ptw.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element _RW0_ren_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/tags_128x52.sv:18]
+WARNING: [Synth 8-6014] Unused sequential element _RW0_rmode_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/tags_128x52.sv:19]
+WARNING: [Synth 8-6014] Unused sequential element _RW0_ren_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/data_128x256.sv:18]
+WARNING: [Synth 8-6014] Unused sequential element _RW0_rmode_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/data_128x256.sv:19]
+WARNING: [Synth 8-6014] Unused sequential element _R0_en_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_256x2.sv:18]
+WARNING: [Synth 8-6014] Unused sequential element _R0_en_d0_reg was removed.  [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_32x123.sv:18]
+WARNING: [Synth 8-7129] Port R0_en in module ram_4x131 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port R0_clk in module ram_4x131 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port R0_en in module ram_32x123 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port R0_en in module ram_4x11 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port R0_clk in module ram_4x11 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port R0_en in module ram_256x2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port reset in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[63] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[62] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[61] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[60] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[59] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[58] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[57] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[56] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[55] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[54] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[53] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[52] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[51] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[50] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[49] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[48] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[47] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[46] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[45] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[44] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[43] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[42] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[41] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[40] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[39] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[38] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[37] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[36] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[35] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[34] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[33] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[32] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[31] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[30] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[29] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[28] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[27] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[26] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[25] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[24] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[23] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[22] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[21] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[20] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[19] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[18] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[17] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[16] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[15] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[14] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[13] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_vaddr[12] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_0[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_1[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_2[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_3[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_4[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[1] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_5[0] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_6[6] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_6[5] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_6[4] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_6[3] in module BreezeFetchPmp is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_context_pmpcfg_6[1] in module BreezeFetchPmp is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 3046.254 ; gain = 722.152 ; free physical = 24756 ; free virtual = 44115
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2086.395; parent = 1938.524; children = 147.870
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4034.273; parent = 3046.258; children = 988.016
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 3046.254 ; gain = 722.152 ; free physical = 24734 ; free virtual = 44021
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2086.906; parent = 1939.036; children = 147.870
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4034.273; parent = 3046.258; children = 988.016
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 3046.254 ; gain = 722.152 ; free physical = 24734 ; free virtual = 44021
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2086.906; parent = 1939.036; children = 147.870
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4034.273; parent = 3046.258; children = 988.016
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 3142.254 ; gain = 24.000 ; free physical = 24823 ; free virtual = 44192
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc]
+Finished Parsing XDC File [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/BreezeFrontendTimingHarness_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/BreezeFrontendTimingHarness_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4116.059 ; gain = 0.000 ; free physical = 23992 ; free virtual = 43361
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 4116.059 ; gain = 0.000 ; free physical = 23991 ; free virtual = 43360
+INFO: [Synth 8-11241] undeclared symbol 'REGCCE', assumed default net type 'wire' [/home/chen/Tool/FPGA/Vivado/2022.2/data/verilog/src/unimacro/BRAM_SINGLE_MACRO.v:2170]
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:17 ; elapsed = 00:00:18 . Memory (MB): peak = 4116.059 ; gain = 1791.957 ; free physical = 25242 ; free virtual = 44612
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2285.051; parent = 2137.181; children = 147.870
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 5104.078; parent = 4116.062; children = 988.016
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcku040-ffva1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:17 ; elapsed = 00:00:18 . Memory (MB): peak = 4119.977 ; gain = 1795.875 ; free physical = 25249 ; free virtual = 44618
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2285.051; parent = 2137.181; children = 147.873
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 5116.000; parent = 4119.980; children = 996.020
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:17 ; elapsed = 00:00:18 . Memory (MB): peak = 4119.977 ; gain = 1795.875 ; free physical = 25275 ; free virtual = 44644
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2285.051; parent = 2137.181; children = 148.615
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 5141.758; parent = 4119.980; children = 1021.777
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3936] Found unconnected internal register 'sfVaddr_reg' and it is trimmed from '64' to '39' bits. [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Tlb.sv:731]
+WARNING: [Synth 8-3936] Found unconnected internal register 'wPte_reg' and it is trimmed from '64' to '54' bits. [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/Sv39Ptw.sv:191]
+WARNING: [Synth 8-3936] Found unconnected internal register 'index_2_reg' and it is trimmed from '10' to '2' bits. [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedPht.sv:4249]
+WARNING: [Synth 8-3936] Found unconnected internal register 'index_1_reg' and it is trimmed from '10' to '2' bits. [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedPht.sv:4247]
+WARNING: [Synth 8-3936] Found unconnected internal register 'index_reg' and it is trimmed from '10' to '2' bits. [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/BreezeBankedPht.sv:4245]
+INFO: [Synth 8-6904] The RAM "mem_2x91:/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "tags_128x52:/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "ram_256x2:/Memory_reg" of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "ram_32x123:/Memory_reg" of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:20 ; elapsed = 00:00:22 . Memory (MB): peak = 4119.977 ; gain = 1795.875 ; free physical = 24519 ; free virtual = 43895
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2924.983; parent = 2137.181; children = 1069.474
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 7872.883; parent = 4119.980; children = 3752.902
+---------------------------------------------------------------------------------
+RAM Pipeline Warning: Read Address Register Found For RAM Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   64 Bit       Adders := 15    
+	   2 Input   12 Bit       Adders := 1     
+	   2 Input   11 Bit       Adders := 1     
+	   2 Input    7 Bit       Adders := 1     
+	   4 Input    4 Bit       Adders := 1     
+	   3 Input    4 Bit       Adders := 5     
+	   2 Input    3 Bit       Adders := 3     
+	   4 Input    3 Bit       Adders := 2     
+	   3 Input    3 Bit       Adders := 2     
+	   2 Input    2 Bit       Adders := 13    
+	   3 Input    2 Bit       Adders := 1     
+	   4 Input    2 Bit       Adders := 1     
+	   2 Input    1 Bit       Adders := 3     
++---XORs : 
+	   2 Input     10 Bit         XORs := 5     
+	   2 Input      1 Bit         XORs := 6     
++---Registers : 
+	              256 Bit    Registers := 2     
+	               65 Bit    Registers := 16    
+	               64 Bit    Registers := 71    
+	               56 Bit    Registers := 2     
+	               54 Bit    Registers := 1     
+	               44 Bit    Registers := 19    
+	               39 Bit    Registers := 1     
+	               32 Bit    Registers := 20    
+	               27 Bit    Registers := 6     
+	               17 Bit    Registers := 8     
+	               16 Bit    Registers := 21    
+	               10 Bit    Registers := 38    
+	                9 Bit    Registers := 4     
+	                8 Bit    Registers := 12    
+	                7 Bit    Registers := 9     
+	                5 Bit    Registers := 4     
+	                4 Bit    Registers := 132   
+	                3 Bit    Registers := 27    
+	                2 Bit    Registers := 227   
+	                1 Bit    Registers := 1419  
++---RAMs : 
+	              32K Bit	(128 X 256 bit)          RAMs := 4     
+	               6K Bit	(128 X 52 bit)          RAMs := 4     
+	               3K Bit	(32 X 123 bit)          RAMs := 4     
+	              512 Bit	(256 X 2 bit)          RAMs := 4     
+	              182 Bit	(2 X 91 bit)          RAMs := 16    
++---Muxes : 
+	   2 Input   64 Bit        Muxes := 80    
+	   2 Input   63 Bit        Muxes := 4     
+	   2 Input   57 Bit        Muxes := 6     
+	   2 Input   56 Bit        Muxes := 9     
+	   4 Input   44 Bit        Muxes := 4     
+	   2 Input   44 Bit        Muxes := 17    
+	   2 Input   32 Bit        Muxes := 46    
+	   3 Input   32 Bit        Muxes := 2     
+	   2 Input   27 Bit        Muxes := 1     
+	   4 Input   24 Bit        Muxes := 4     
+	   2 Input   22 Bit        Muxes := 2     
+	   2 Input   16 Bit        Muxes := 6     
+	   4 Input   16 Bit        Muxes := 5     
+	   2 Input   15 Bit        Muxes := 1     
+	   2 Input   13 Bit        Muxes := 1     
+	   2 Input   12 Bit        Muxes := 1     
+	   2 Input   11 Bit        Muxes := 1     
+	   2 Input   10 Bit        Muxes := 54    
+	   2 Input    9 Bit        Muxes := 3     
+	   2 Input    8 Bit        Muxes := 5     
+	   2 Input    7 Bit        Muxes := 5     
+	   2 Input    6 Bit        Muxes := 1     
+	   2 Input    5 Bit        Muxes := 5     
+	   2 Input    4 Bit        Muxes := 3     
+	   2 Input    3 Bit        Muxes := 49    
+	   5 Input    3 Bit        Muxes := 1     
+	   3 Input    3 Bit        Muxes := 1     
+	   4 Input    3 Bit        Muxes := 1     
+	   4 Input    2 Bit        Muxes := 6     
+	   5 Input    2 Bit        Muxes := 1     
+	   2 Input    2 Bit        Muxes := 173   
+	   2 Input    1 Bit        Muxes := 222   
+	   6 Input    1 Bit        Muxes := 1     
+	   3 Input    1 Bit        Muxes := 2     
+	   4 Input    1 Bit        Muxes := 6     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1920 (col length:120)
+BRAMs: 1200 (col length: RAMB18 120 RAMB36 60)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_0_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_1_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_2_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_3_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM data_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_0_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_1_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_2_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendTimingHarness/tags_3_ext/Memory_reg" of size (depth=128 x width=52) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM data_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM data_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM tags_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_7_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_6_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_5_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_4_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_3_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_2_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_1_length_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (queue/\storage_0_length_reg[0] )
+INFO: [Synth 8-3886] merging instance 'queue/storage_7_compressed_reg' (FDE) to 'queue/storage_7_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_6_compressed_reg' (FDE) to 'queue/storage_6_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_5_compressed_reg' (FDE) to 'queue/storage_5_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_4_compressed_reg' (FDE) to 'queue/storage_4_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_3_compressed_reg' (FDE) to 'queue/storage_3_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_2_compressed_reg' (FDE) to 'queue/storage_2_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_1_compressed_reg' (FDE) to 'queue/storage_1_length_reg[1]'
+INFO: [Synth 8-3886] merging instance 'queue/storage_0_compressed_reg' (FDE) to 'queue/storage_0_length_reg[1]'
+INFO: [Synth 8-6904] The RAM "\predictor/pht/updates/ram_ext/Memory_reg " of size (depth=4 x width=11) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_1_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_2_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_3_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_0_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-4471] merging register 'ram_0_1_ext/_R0_addr_d0_reg[4:0]' into 'ram_0_0_ext/_R0_addr_d0_reg[4:0]' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_32x123.sv:19]
+INFO: [Synth 8-4471] merging register 'ram_1_1_ext/_R0_addr_d0_reg[4:0]' into 'ram_1_0_ext/_R0_addr_d0_reg[4:0]' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/ram_32x123.sv:19]
+INFO: [Synth 8-6904] The RAM "\predictor/btb/writes/ram_ext/Memory_reg " of size (depth=4 x width=131) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/btb/ram_0_0_ext/Memory_reg " of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/btb/ram_0_1_ext/Memory_reg " of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/btb/ram_1_0_ext/Memory_reg " of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/btb/ram_1_1_ext/Memory_reg " of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/updates/ram_ext/Memory_reg " of size (depth=4 x width=11) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_1_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_2_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_3_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "\predictor/pht/ram_0_ext/Memory_reg " of size (depth=256 x width=2) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendPipeline__GCB1/predictor/btb/writes/ram_ext/Memory_reg" of size (depth=4 x width=131) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendPipeline__GCB1/predictor/btb/ram_0_0_ext/Memory_reg" of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendPipeline__GCB1/predictor/btb/ram_0_1_ext/Memory_reg" of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendPipeline__GCB1/predictor/btb/ram_1_0_ext/Memory_reg" of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-6904] The RAM "BreezeFrontendPipeline__GCB1/predictor/btb/ram_1_1_ext/Memory_reg" of size (depth=32 x width=123) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_2_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_3_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM ram_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_0_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_0_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+RAM Pipeline Warning: Read Address Register Found For RAM predictor/btb/ram_1_1_ext/Memory_reg. We will not be able to pipeline it. This may degrade performance. 
+INFO: [Synth 8-4471] merging register 'mem_0_1_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_0_2_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_0_3_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_1_0_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_1_1_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_1_2_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_1_3_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_2_0_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_2_1_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_2_2_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_2_3_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_3_0_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_3_1_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_3_2_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-4471] merging register 'mem_3_3_ext/_R0_addr_d0_reg' into 'mem_0_0_ext/_R0_addr_d0_reg' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl/mem_2x91.sv:19]
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_3_3_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_0_0_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_0_1_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_0_2_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_0_3_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_1_0_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_1_1_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_1_2_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_1_3_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_2_0_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_2_1_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_2_2_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_2_3_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_3_0_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_3_1_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "mmu/itlb/mem_3_2_ext/Memory_reg" of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-6904] The RAM "\mmu/itlb/mem_3_3_ext/Memory_reg " of size (depth=2 x width=91) is automatically implemented using LUTRAM. BRAM implementation would be inefficient 
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\mmu/ptw/wSide_reg )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\mmu/dtlb/pendingFault_reg )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:40 ; elapsed = 00:00:53 . Memory (MB): peak = 4119.980 ; gain = 1795.879 ; free physical = 27137 ; free virtual = 46731
+Synthesis current peak Physical Memory [PSS] (MB): peak = 9629.894; parent = 2137.181; children = 7708.212
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 16589.422; parent = 4119.980; children = 12473.359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Preliminary Mapping Report (see note below)
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name                 | RTL Object            | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|BreezeFrontendTimingHarness | data_0_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_1_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_2_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_3_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
+
+Distributed RAM: Preliminary Mapping Report (see note below)
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+|Module Name                  | RTL Object                              | Inference | Size (Depth x Width) | Primitives     | 
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+|BreezeFrontendTimingHarness  | returns/ram_ext/Memory_reg              | Implied   | 2 x 282              | RAM32M16 x 21  | 
+|BreezeFrontendTimingHarness  | tags_0_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_1_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_2_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_3_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|\predictor/pht               | updates/ram_ext/Memory_reg              | Implied   | 4 x 11               | RAM32M16 x 1   | 
+|\predictor/pht               | ram_1_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_2_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_3_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_0_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/writes/ram_ext/Memory_reg | Implied   | 4 x 131              | RAM32M16 x 10  | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_0_0_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_0_1_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_1_0_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_1_1_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|\mmu/itlb                    | mem_3_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+
+Note: The table above is a preliminary report that shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:44 ; elapsed = 00:00:57 . Memory (MB): peak = 4126.660 ; gain = 1802.559 ; free physical = 26862 ; free virtual = 46575
+Synthesis current peak Physical Memory [PSS] (MB): peak = 9660.178; parent = 2137.181; children = 7708.212
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 16600.023; parent = 4126.664; children = 12473.359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:51 ; elapsed = 00:02:06 . Memory (MB): peak = 4126.660 ; gain = 1802.559 ; free physical = 29756 ; free virtual = 48739
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10171.520; parent = 2572.060; children = 7708.212
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 16600.023; parent = 4126.664; children = 12473.359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Final Mapping Report
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name                 | RTL Object            | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|BreezeFrontendTimingHarness | data_0_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_2_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_3_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
+|BreezeFrontendTimingHarness | data_1_ext/Memory_reg | 128 x 256(WRITE_FIRST) | W | R |                        |   |   | Port A           | 0      | 4      |                 | 
++----------------------------+-----------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+
+Distributed RAM: Final Mapping Report
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+|Module Name                  | RTL Object                              | Inference | Size (Depth x Width) | Primitives     | 
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+|BreezeFrontendTimingHarness  | returns/ram_ext/Memory_reg              | Implied   | 2 x 282              | RAM32M16 x 21  | 
+|BreezeFrontendTimingHarness  | tags_0_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_1_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_2_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendTimingHarness  | tags_3_ext/Memory_reg                   | Implied   | 128 x 52             | RAM64M8 x 16   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/writes/ram_ext/Memory_reg | Implied   | 4 x 131              | RAM32M16 x 10  | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_0_0_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_0_1_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_1_0_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|BreezeFrontendPipeline__GCB1 | predictor/btb/ram_1_1_ext/Memory_reg    | Implied   | 32 x 123             | RAM32M16 x 9   | 
+|\mmu/itlb                    | mem_3_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_0_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_1_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_2_3_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_0_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_1_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\mmu/itlb                    | mem_3_2_ext/Memory_reg                  | Implied   | 2 x 91               | RAM32M16 x 7   | 
+|\predictor/pht               | updates/ram_ext/Memory_reg              | Implied   | 4 x 11               | RAM32M16 x 1   | 
+|\predictor/pht               | ram_1_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_2_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_3_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
+|\predictor/pht               | ram_0_ext/Memory_reg                    | Implied   | 256 x 2              | RAM256X1D x 2  | 
++-----------------------------+-----------------------------------------+-----------+----------------------+----------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_6/frontend/cache/data_1_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[9]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[9]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[8]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[8]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[12]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[12]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[11]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[11]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[10]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[10]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[15]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[15]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[14]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[14]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[13]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[13]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[18]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[18]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[17]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[17]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[16]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[16]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[21]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[21]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[20]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[20]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[19]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[19]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[23]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[23]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[22]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[22]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[24]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[24]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[25]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[25]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[26]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[26]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[27]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[27]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[28]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[28]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[29]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[29]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[30]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[30]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[46]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[46]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[47]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[47]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[42]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[42]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[43]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[43]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[44]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[44]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[45]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[45]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[39]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[39]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[41]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[41]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[40]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[40]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[31]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[31]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[33]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[33]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[34]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[34]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[32]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[32]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[35]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[35]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[37]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[37]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[36]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[36]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[38]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[38]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[48]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[48]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[49]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[49]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[50]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[50]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[51]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[51]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[52]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[52]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[53]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[53]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[54]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[54]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[55]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[55]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[56]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[56]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[57]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[57]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[58]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[58]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[59]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[59]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[60]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[60]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[61]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[61]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[62]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[62]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[63]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[63]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[0]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[0]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[1]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[1]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[2]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[2]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[3]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[3]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[4]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[4]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[5]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[5]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[6]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[6]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[7]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[7]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[8]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[8]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_history_reg[9]' (FDE) to 'frontendi_5/frontend/predictor/io_result_history_r_reg[9]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[0]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[0]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[2]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[2]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[3]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[3]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[4]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[4]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[5]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[5]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[6]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[6]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/predictor/btb/queryPc_reg[7]' (FDE) to 'frontendi_5/frontend/cache/q_pc_reg[7]'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/mmu/dtlb/sfS1Valid_reg' (FDR) to 'frontendi_5/frontend/mmu/itlb/sfS1Valid_reg'
+INFO: [Synth 8-3886] merging instance 'frontendi_5/frontend/cache/q_pc_reg[1]' (FDE) to 'frontendi_5/frontend/predictor/btb/queryPc_reg[1]'
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_0_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_2_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontendi_5/frontend/cache/data_3_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:58 ; elapsed = 00:02:16 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29341 ; free virtual = 48327
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_0_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_2_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_3_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance frontend/cache/data_1_ext/Memory_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:02:02 ; elapsed = 00:02:20 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29302 ; free virtual = 48393
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:02:02 ; elapsed = 00:02:20 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29302 ; free virtual = 48392
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:02:04 ; elapsed = 00:02:22 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29321 ; free virtual = 48412
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:02:04 ; elapsed = 00:02:22 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29321 ; free virtual = 48412
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:02:04 ; elapsed = 00:02:23 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29330 ; free virtual = 48420
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:02:04 ; elapsed = 00:02:23 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29330 ; free virtual = 48420
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+----------+------+
+|      |Cell      |Count |
++------+----------+------+
+|1     |BUFGCE    |     1|
+|2     |CARRY8    |  1198|
+|3     |LUT1      |     9|
+|4     |LUT2      |   972|
+|5     |LUT3      |  3277|
+|6     |LUT4      |  9009|
+|7     |LUT5      |  3198|
+|8     |LUT6      |  9179|
+|9     |MUXF7     |  1038|
+|10    |MUXF8     |   318|
+|11    |RAM256X1D |     8|
+|12    |RAM32M    |     1|
+|13    |RAM32M16  |   178|
+|14    |RAM32X1D  |     2|
+|15    |RAM64M    |     8|
+|16    |RAM64M8   |    56|
+|17    |RAMB36E2  |    16|
+|18    |FDRE      | 11262|
+|19    |FDSE      |     1|
++------+----------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:02:04 ; elapsed = 00:02:23 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 29330 ; free virtual = 48420
+Synthesis current peak Physical Memory [PSS] (MB): peak = 10617.068; parent = 2572.060; children = 8196.634
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 17417.035; parent = 4134.672; children = 13282.367
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 1892 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:57 ; elapsed = 00:02:15 . Memory (MB): peak = 4138.586 ; gain = 744.680 ; free physical = 37172 ; free virtual = 56263
+Synthesis Optimization Complete : Time (s): cpu = 00:02:06 ; elapsed = 00:02:24 . Memory (MB): peak = 4138.586 ; gain = 1814.484 ; free physical = 37188 ; free virtual = 56270
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.19 ; elapsed = 00:00:00.19 . Memory (MB): peak = 4138.586 ; gain = 0.000 ; free physical = 37190 ; free virtual = 56272
+INFO: [Netlist 29-17] Analyzing 2807 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc]
+Finished Parsing XDC File [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_0_ext/Memory_reg_0 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_0_ext/Memory_reg_1 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_0_ext/Memory_reg_2 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_0_ext/Memory_reg_3 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_1_ext/Memory_reg_0 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_1_ext/Memory_reg_1 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_1_ext/Memory_reg_2 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_1_ext/Memory_reg_3 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_2_ext/Memory_reg_0 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_2_ext/Memory_reg_1 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_2_ext/Memory_reg_2 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_2_ext/Memory_reg_3 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_3_ext/Memory_reg_0 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_3_ext/Memory_reg_1 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_3_ext/Memory_reg_2 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell frontend/cache/data_3_ext/Memory_reg_3 has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4142.668 ; gain = 0.000 ; free physical = 37209 ; free virtual = 56290
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 253 instances were transformed.
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 178 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 8 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 56 instances
+
+Synth Design complete, checksum: 2f919345
+INFO: [Common 17-83] Releasing license: Synthesis
+320 Infos, 116 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:02:12 ; elapsed = 00:02:30 . Memory (MB): peak = 4142.668 ; gain = 2436.711 ; free physical = 37417 ; free virtual = 56499
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/synth.dcp' has been generated.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:12 ; elapsed = 00:00:11 . Memory (MB): peak = 4590.414 ; gain = 335.691 ; free physical = 36923 ; free virtual = 56036
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.56 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36929 ; free virtual = 56042
+
+Starting Cache Timing Information Task
+Ending Cache Timing Information Task | Checksum: cca965e1
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36929 ; free virtual = 56042
+
+Starting Logic Optimization Task
+
+Phase 1 Retarget
+INFO: [Opt 31-1287] Pulled Inverter frontend/cache/returns/ram_ext/Memory_reg_0_1_0_13_i_3 into driver instance frontend/cache/pmp/Memory_reg_0_1_0_13_i_19__0, which resulted in an inversion of 2 pins
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 1 Retarget | Checksum: 16e012c51
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.68 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36921 ; free virtual = 56034
+INFO: [Opt 31-389] Phase Retarget created 1 cells and removed 2 cells
+
+Phase 2 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 2 Constant propagation | Checksum: 12466403c
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.84 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36914 ; free virtual = 56026
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 3 Sweep
+Phase 3 Sweep | Checksum: 12edac4ca
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36852 ; free virtual = 55965
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+
+Phase 4 BUFG optimization
+INFO: [Opt 31-1077] Phase BUFG optimization inserted 0 global clock buffer(s) for CLOCK_LOW_FANOUT.
+Phase 4 BUFG optimization | Checksum: 12edac4ca
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:01 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36850 ; free virtual = 55963
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 5 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 5 Shift Register Optimization | Checksum: 12edac4ca
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:01 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36850 ; free virtual = 55963
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 6 Post Processing Netlist
+Phase 6 Post Processing Netlist | Checksum: 12edac4ca
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:01 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36851 ; free virtual = 55963
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               1  |               2  |                                              0  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              0  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36848 ; free virtual = 55961
+Ending Logic Optimization Task | Checksum: e0006447
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 4590.414 ; gain = 0.000 ; free physical = 36848 ; free virtual = 55961
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+INFO: [Pwropt 34-9] Applying IDT optimizations ...
+INFO: [Pwropt 34-10] Applying ODC optimizations ...
+
+
+Starting PowerOpt Patch Enables Task
+INFO: [Pwropt 34-162] WRITE_MODE attribute of 0 BRAM(s) out of a total of 16 has been updated to save power. Run report_power_opt to get a complete listing of the BRAMs updated.
+INFO: [Pwropt 34-201] Structural ODC has moved 0 WE to EN ports
+Number of BRAM Ports augmented: 0 newly gated: 0 Total Ports: 32
+Ending PowerOpt Patch Enables Task | Checksum: e0006447
+
+Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.09 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36252 ; free virtual = 55364
+Ending Power Optimization Task | Checksum: e0006447
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:02 . Memory (MB): peak = 4638.492 ; gain = 48.078 ; free physical = 36252 ; free virtual = 55364
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: e0006447
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36252 ; free virtual = 55364
+
+Starting Netlist Obfuscation Task
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36252 ; free virtual = 55364
+Ending Netlist Obfuscation Task | Checksum: e0006447
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36252 ; free virtual = 55364
+INFO: [Common 17-83] Releasing license: Implementation
+349 Infos, 116 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:12 ; elapsed = 00:00:06 . Memory (MB): peak = 4638.492 ; gain = 48.078 ; free physical = 36252 ; free virtual = 55364
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+Command: place_design
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 4 CPUs
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36216 ; free virtual = 55329
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: c7bb08ec
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36216 ; free virtual = 55329
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36216 ; free virtual = 55329
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: c242d0fc
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 36211 ; free virtual = 55324
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 16d5dfc01
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:04 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35539 ; free virtual = 55172
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 16d5dfc01
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:04 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35545 ; free virtual = 55177
+Phase 1 Placer Initialization | Checksum: 16d5dfc01
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:04 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35451 ; free virtual = 55084
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 198d42b06
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:05 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35197 ; free virtual = 54829
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 1a7021a19
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:05 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35147 ; free virtual = 54779
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 1a7021a19
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:05 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 35146 ; free virtual = 54779
+
+Phase 2.4 Global Placement Core
+
+Phase 2.4.1 UpdateTiming Before Physical Synthesis
+Phase 2.4.1 UpdateTiming Before Physical Synthesis | Checksum: 1185a4753
+
+Time (s): cpu = 00:00:39 ; elapsed = 00:00:18 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34336 ; free virtual = 53969
+
+Phase 2.4.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 367 LUTNM shape to break, 178 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 246, two critical 121, total 367, new lutff created 2
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 440 nets or LUTs. Breaked 367 LUTs, combined 73 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-1132] Very high fanout net 'frontend/mmu/ptw/_ptw_io_done_bits_refill_vpn[0]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 1806 to 127 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 127.
+INFO: [Physopt 32-65] No nets found for high-fanout optimization.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-456] No candidate cells for DSP register optimization found in the design.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1123] No candidate cells found for Shift Register to Pipeline optimization
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-677] No candidate cells for Shift Register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-526] No candidate cells for BRAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34351 ; free virtual = 53983
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |          367  |             73  |                   440  |           0  |           1  |  00:00:00  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  DSP Register                                     |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |          367  |             73  |                   440  |           0  |           9  |  00:00:00  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.4.2 Physical Synthesis In Placer | Checksum: 19a7cd1e2
+
+Time (s): cpu = 00:00:41 ; elapsed = 00:00:19 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34363 ; free virtual = 53996
+Phase 2.4 Global Placement Core | Checksum: 1c3b9d5ff
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:00:20 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34239 ; free virtual = 53872
+Phase 2 Global Placement | Checksum: 1c3b9d5ff
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:00:20 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34235 ; free virtual = 53868
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 1e9993d8e
+
+Time (s): cpu = 00:00:44 ; elapsed = 00:00:21 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34169 ; free virtual = 53802
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 27b2fb0d7
+
+Time (s): cpu = 00:00:47 ; elapsed = 00:00:22 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33864 ; free virtual = 53497
+
+Phase 3.3 Small Shape DP
+
+Phase 3.3.1 Small Shape Clustering
+Phase 3.3.1 Small Shape Clustering | Checksum: 2a5a3049e
+
+Time (s): cpu = 00:00:54 ; elapsed = 00:00:26 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33756 ; free virtual = 53389
+
+Phase 3.3.2 DP Optimization
+Phase 3.3.2 DP Optimization | Checksum: 2a3d9d342
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:00:29 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33982 ; free virtual = 53615
+
+Phase 3.3.3 Flow Legalize Slice Clusters
+Phase 3.3.3 Flow Legalize Slice Clusters | Checksum: 24a0db884
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:00:29 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34040 ; free virtual = 53673
+
+Phase 3.3.4 Slice Area Swap
+
+Phase 3.3.4.1 Slice Area Swap Initial
+Phase 3.3.4.1 Slice Area Swap Initial | Checksum: 1c6a3c55e
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:30 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34250 ; free virtual = 53883
+Phase 3.3.4 Slice Area Swap | Checksum: 1c6a3c55e
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:30 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34242 ; free virtual = 53875
+Phase 3.3 Small Shape DP | Checksum: 203616b4c
+
+Time (s): cpu = 00:01:06 ; elapsed = 00:00:31 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 34076 ; free virtual = 53709
+
+Phase 3.4 Re-assign LUT pins
+Phase 3.4 Re-assign LUT pins | Checksum: 266f6a920
+
+Time (s): cpu = 00:01:07 ; elapsed = 00:00:32 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33464 ; free virtual = 53097
+
+Phase 3.5 Pipeline Register Optimization
+Phase 3.5 Pipeline Register Optimization | Checksum: 1b362b503
+
+Time (s): cpu = 00:01:07 ; elapsed = 00:00:33 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33463 ; free virtual = 53096
+
+Phase 3.6 Fast Optimization
+Phase 3.6 Fast Optimization | Checksum: 1d1ceecca
+
+Time (s): cpu = 00:01:14 ; elapsed = 00:00:36 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32836 ; free virtual = 52469
+Phase 3 Detail Placement | Checksum: 1d1ceecca
+
+Time (s): cpu = 00:01:14 ; elapsed = 00:00:36 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32829 ; free virtual = 52462
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 104b5f8f9
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.483 | TNS=-94.387 |
+Phase 1 Physical Synthesis Initialization | Checksum: 5c1c52c6
+
+Time (s): cpu = 00:00:00.64 ; elapsed = 00:00:00.22 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 31779 ; free virtual = 51932
+INFO: [Place 46-56] BUFG insertion identified 0 candidate nets. Inserted BUFG: 0, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 0, Skipped due to Timing Degradation: 0, Skipped due to Illegal Netlist: 0.
+Ending Physical Synthesis Task | Checksum: fba90c66
+
+Time (s): cpu = 00:00:00.89 ; elapsed = 00:00:00.41 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 31732 ; free virtual = 51885
+Phase 4.1.1.1 BUFG Insertion | Checksum: 104b5f8f9
+
+Time (s): cpu = 00:01:22 ; elapsed = 00:00:40 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 31681 ; free virtual = 51845
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=0.305. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: 137e3e423
+
+Time (s): cpu = 00:01:33 ; elapsed = 00:00:49 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30894 ; free virtual = 51048
+
+Time (s): cpu = 00:01:33 ; elapsed = 00:00:49 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30894 ; free virtual = 51048
+Phase 4.1 Post Commit Optimization | Checksum: 137e3e423
+
+Time (s): cpu = 00:01:33 ; elapsed = 00:00:49 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30848 ; free virtual = 51002
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30792 ; free virtual = 50946
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 16b07bda1
+
+Time (s): cpu = 00:01:34 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30746 ; free virtual = 50900
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|                4x4|              16x16|
+|___________|___________________|___________________|
+|      South|                4x4|                8x8|
+|___________|___________________|___________________|
+|       East|                2x2|              16x16|
+|___________|___________________|___________________|
+|       West|                4x4|              16x16|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 16b07bda1
+
+Time (s): cpu = 00:01:34 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30736 ; free virtual = 50890
+Phase 4.3 Placer Reporting | Checksum: 16b07bda1
+
+Time (s): cpu = 00:01:34 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30713 ; free virtual = 50867
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30713 ; free virtual = 50868
+
+Time (s): cpu = 00:01:34 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30713 ; free virtual = 50868
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 1ea49f25b
+
+Time (s): cpu = 00:01:35 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30713 ; free virtual = 50868
+Ending Placer Task | Checksum: f94285b8
+
+Time (s): cpu = 00:01:35 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30603 ; free virtual = 50757
+INFO: [Common 17-83] Releasing license: Implementation
+385 Infos, 116 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:01:37 ; elapsed = 00:00:51 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30678 ; free virtual = 50832
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+Command: phys_opt_design -directive AggressiveExplore
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-137] Directive used for phys_opt_design is: AggressiveExplore
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:03 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30151 ; free virtual = 50306
+INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. Skipping all physical synthesis optimizations.
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 6.24s |  WALL: 2.68s
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30151 ; free virtual = 50306
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=0.298 | TNS=0.000 |
+Phase 1 Physical Synthesis Initialization | Checksum: e846755e
+
+Time (s): cpu = 00:00:00.38 ; elapsed = 00:00:00.31 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30091 ; free virtual = 50247
+
+Phase 2 Hold Fix Optimization
+INFO: [Physopt 32-668] Estimated Timing Summary | WNS=0.298 | TNS=0.000 | WHS=-3.099 | THS=-16815.289 |
+INFO: [Physopt 32-45] Identified 89 candidate nets for hold slack optimization.
+INFO: [Physopt 32-234] Optimized 74 nets. Inserted 0 new ZHOLD_DELAYs. Calibrated 0 existing ZHOLD_DELAYs. Inserted 65 buffers.
+
+INFO: [Physopt 32-668] Estimated Timing Summary | WNS=0.298 | TNS=0.000 | WHS=-3.099 | THS=-14930.297 |
+Phase 2 Hold Fix Optimization | Checksum: e846755e
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30071 ; free virtual = 50228
+Netlist sorting complete. Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.07 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30063 ; free virtual = 50219
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=0.298 | TNS=0.000 | WHS=-3.099 | THS=-14930.297 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization            |  WNS Gain (ns)  |  TNS Gain (ns)  |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Fanout                  |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Single Cell Placement   |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Multi Cell Placement    |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Rewire                  |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Critical Cell           |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  SLR Crossing            |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  DSP Register            |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  BRAM Register           |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  URAM Register           |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Shift Register          |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Critical Pin            |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Very High Fanout        |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Total                   |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Summary of Hold Fix Optimizations
+=================================
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization               |  WHS Gain (ns)  |  THS Gain (ns)  |  Added LUTs  |  Added FFs  |  Optimized Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT1 and ZHOLD Insertion   |          0.000  |       1884.992  |          65  |          0  |              74  |           0  |           1  |  00:00:01  |
+|  Total                      |          0.000  |       1884.992  |          65  |          0  |              74  |           0  |           1  |  00:00:01  |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30049 ; free virtual = 50205
+Ending Physical Synthesis Task | Checksum: 135c9aab0
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 30019 ; free virtual = 50175
+INFO: [Common 17-83] Releasing license: Implementation
+398 Infos, 116 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 29842 ; free virtual = 50043
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/place.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:08 ; elapsed = 00:00:05 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 29705 ; free virtual = 49897
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_committedBranch_valid'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_context_adue'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_mpp[0]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_mpp[1]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_context_mprv'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_context_mxr'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_context_pmpRangesValid'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[0]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[10]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[11]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[12]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[13]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[14]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[15]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[16]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[17]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[18]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[19]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[1]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[20]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[21]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[22]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[23]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[24]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[25]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[26]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[27]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[28]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[29]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[2]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[30]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[31]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[32]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[33]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[34]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[35]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[36]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[37]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[38]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[39]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[3]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[40]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[41]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[42]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[43]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[44]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[45]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[46]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[47]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[48]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[49]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[4]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[50]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[51]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[52]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[53]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[54]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[55]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[56]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[57]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[5]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[6]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[7]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_lowerBlockPrevious[8]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from io_context_pmpRanges_0_nonempty'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[0]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[10]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[11]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[12]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[13]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[14]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[15]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[16]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[17]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[18]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[19]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[1]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[20]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[21]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[22]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[23]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[24]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[25]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[26]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[27]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[28]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[29]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[2]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[30]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[31]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[32]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[33]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[34]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[35]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[36]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[37]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[38]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[39]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[3]}'.
+WARNING: [Vivado 12-830] No fanout objects found for 'all_fanout -flat -endpoints_only -from {io_context_pmpRanges_0_upperBlockPrevious[40]}'.
+INFO: [Common 17-14] Message 'Vivado 12-830' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to io_instruction_bits_illegal'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_instruction_bits_instruction[19]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_instruction_bits_kind[1]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to io_instruction_valid'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_ptwMem_req_bits_paddr[19]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_ptwMem_req_bits_paddr[29]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to io_redirect_valid'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_refillReq_paddr[19]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_refillReq_paddr[29]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_refillReq_paddr[39]}'.
+WARNING: [Vivado 12-829] No fanin objects found for 'all_fanin -flat -startpoints_only -to {io_refillReq_paddr[49]}'.
+OOC_CONTEXT anchored=2332 constant_outputs=11 disconnected_inputs=1950 INT_tiles=666
+Command: route_design -directive NoTimingRelaxation
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 9005b9c3 ConstDB: 0 ShapeSum: 6592ce0b RouteDB: 3323d97e
+WARNING: [Route 35-197] Clock port "clock" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+Post Restoration Checksum: NetGraph: c37e55b0 NumContArr: fa1d8bfd Constraints: 1845d4cd Timing: 0
+Phase 1 Build RT Design | Checksum: 1d5e1b67a
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:00:48 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33074 ; free virtual = 52755
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 1d5e1b67a
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:00:49 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33039 ; free virtual = 52721
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 1d5e1b67a
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:00:49 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 33040 ; free virtual = 52721
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: a1725f2b
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:00:50 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32991 ; free virtual = 52673
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 172a42acb
+
+Time (s): cpu = 00:01:06 ; elapsed = 00:00:52 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32933 ; free virtual = 52615
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.830  | TNS=0.000  | WHS=-1.381 | THS=-3768.197|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 29706
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 20783
+  Number of Partially Routed Nets     = 8923
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: fc5fda8e
+
+Time (s): cpu = 00:01:13 ; elapsed = 00:00:55 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32904 ; free virtual = 52586
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: fc5fda8e
+
+Time (s): cpu = 00:01:13 ; elapsed = 00:00:55 . Memory (MB): peak = 4638.492 ; gain = 0.000 ; free physical = 32915 ; free virtual = 52597
+Phase 3 Initial Routing | Checksum: 271559ca2
+
+Time (s): cpu = 00:40:47 ; elapsed = 00:12:29 . Memory (MB): peak = 5527.781 ; gain = 889.289 ; free physical = 22641 ; free virtual = 42675
+
+INFO: [Route 35-449] Initial Estimated Congestion
+ ________________________________________________________________________
+|           | Global Congestion | Long Congestion   | Short Congestion  |
+|           |___________________|___________________|___________________|
+| Direction | Size   | % Tiles  | Size   | % Tiles  | Size   | % Tiles  |
+|___________|________|__________|________|__________|________|__________|
+|      NORTH|     4x4|      0.36|     2x2|      0.08|   16x16|      1.48|
+|___________|________|__________|________|__________|________|__________|
+|      SOUTH|     4x4|      0.27|     2x2|      0.11|     8x8|      1.33|
+|___________|________|__________|________|__________|________|__________|
+|       EAST|     8x8|      0.41|     2x2|      0.13|   16x16|      1.70|
+|___________|________|__________|________|__________|________|__________|
+|       WEST|     2x2|      0.16|     2x2|      0.04|     8x8|      1.54|
+|___________|________|__________|________|__________|________|__________|
+Congestion Report
+SHORT Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+NORTH
+	INT_X8Y196->INT_X15Y211 (CLE_M_X8Y196->DSP_X15Y210)
+	INT_X8Y204->INT_X15Y211 (CLE_M_X8Y204->DSP_X15Y210)
+	INT_X8Y196->INT_X15Y203 (CLE_M_X8Y196->DSP_X15Y200)
+EAST
+	INT_X4Y176->INT_X15Y215 (CLE_M_X4Y176->DSP_X15Y215)
+	INT_X8Y212->INT_X15Y219 (CLE_M_X8Y212->DSP_X15Y215)
+	INT_X8Y204->INT_X15Y211 (CLE_M_X8Y204->DSP_X15Y210)
+	INT_X8Y196->INT_X15Y203 (CLE_M_X8Y196->DSP_X15Y200)
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0

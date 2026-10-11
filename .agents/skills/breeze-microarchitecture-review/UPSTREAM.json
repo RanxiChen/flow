@@ -1,0 +1,11 @@
+{
+  "skill": "breeze-microarchitecture-review",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "origin": "Project-authored",
+  "description": "Review Breeze CPU and memory mechanisms for concurrent flow, hazards, recovery, commit boundaries, resource ownership and timing tradeoffs before RTL changes.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

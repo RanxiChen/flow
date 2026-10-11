@@ -1,6 +1,6 @@
 # SOC-3c：S2 fanout 执行报告
 
-状态（2026-10-08 21:50，Asia/Shanghai）：**`14b198b` 必需功能门槛 228/228 通过，另有 LiteX 50/50；单核与四核整 SoC 综合完成，布局作业已因新增 LiteX 环境失败按守卫规则取消**。该环境已修复并重跑通过。Cluster OOC exit 0，post-synth WNS -2.932 ns；发现 Queue(flow=true) 仍把 S2 经 backend ready 接到 skid 存储写使能，正在以保持两项容量/空直通/清空拍数的实现修复。尚无本任务 routed 100 MHz 或有效 bitstream/上板证据；FPGA 未连接，继续至镜像后通知用户。以下 §0–§8 为之前停止时的历史记录；最新记录见 §9，当前结果以本段及 §9.8 为准。
+状态（2026-10-08 23:05，Asia/Shanghai）：**`d364bac` 必需功能门槛全部通过，229 个独立用例、236 次执行；LiteX 另有 50/50。单核完成布线并生成 bitstream，但 100 MHz routed WNS=-1.798 ns，未达标；四核布线阶段达到 1h timeout，exit 124，无 bitstream。** 单核最差路径是 dTLB→L1D S1 PMP 结果寄存器，触发任务 §2 的明确停止边界，未修改该项 RTL；检查点、镜像及原始报告保留，见 §9.11–§9.12。FPGA 未连接，无上板证据。之前 `14b198b` 的功能和物理报告仍按旧版本保留。以下 §0–§8 为之前停止时的历史记录，当前结果以本段及 §9 末尾为准。
 
 ## 0. SOC-3b 提交与本轮版本
 
@@ -241,3 +241,57 @@ SOC-3b 验证快照 `21e3b18` 的 Cluster OOC post-synth WNS −4.244 ns、最�
 - 从 Alan 相同 LiteX 工具快照补齐 `litex/build`，确认两边 `litex/__init__.py` 和 `soc/interconnect/axi/axi_common.py` 散列一致，再做依赖 import 预检。`pytest-litex-r2` 于 21:46 exit 0，50/50，3.668 s。工程 RTL 未为环境问题修改。
 - OOC r2 完成全部原始报告查询，exit 0，1163.795 s，post-synth WNS/TNS -2.932/-17896.375 ns，WHS +0.083 ns。S2→CVFPU 与 S2→frontend 均未找到路径；S2→boundary 仍有 31 级到 `skid/ram_ext/*/WE`，最差 -1.223 ns。HPM counter 查询当前匹配 0 个对象，属于查询名字未覆盖真实 `csrFile/performance` 层次，不能宣称结构通过，后续修正只读查询。原始 [OOC 报告](../../records/soc3c-14b198b/alan/cluster-ooc-r2) 全部保留。
 - skid 根因是 Chisel `Queue(flow=true)` 在空且下游 ready 时抑制 RAM 写入，把 backend ready 带到 payload 存储 WE；这是 C2 的实现残留。改为两项寄存器槽位，前端入队就写槽位（含当拍直通消费），读写指针和 occupancy 在 D 端处理消费/清空。容量仍为 2，满时仍无 pipe，空时仍直通，kill 及其延迟清空边界不变。新增独立 400 拍 FIFO 参考模型，覆盖连续绕回、空直通、满反压、同时入出及重叠快慢清空；既有真实 skid/backend 和 FENCE.I/SFENCE 用例保留。该修复尚待动态验证与新 SHA 的物理结果。
+
+### 9.9 `d364bac` 新一轮验证和物理构建
+
+修复提交 `d364bacb959da13ea58178f919547c56aafda0e0`。每次启动前重新读取共享主机配置，cloud SSH/环境可用，预检新增 LiteX dependency import；cloud 约 15 GiB 磁盘、29 GiB 可用内存。Alan 约 112 GiB 磁盘、58 GiB 可用内存、Vivado 2022.2。Alan 下载代理再次中断后，改用受 exec session 管理的持久转发（session 85706），下载修复不改工程源码或工具版本。
+
+- 复用三个已结束旧批次的独立 cloud checkout，均从 GitHub fetch 并 detach 到准确新 SHA，runner 核对 clean tree；目录名仍含 `14b198b`，不据目录名推断执行版本。
+- `skid-backend` 实际命令为 `sbt "testOnly flow.backend.BackendSoc3cSpec flow.frontend.BreezeFrontendSoc3cSpec"`，11/11（4+7），exit 0，129.648 s，包含新增独立模型。[证据](../../records/soc3c-d364bac/cloud/skid-backend)。完整 backend/frontend、memory、cluster 门槛正在另外三组/顺序批次运行，不转记旧版本通过；frontend 定向的 7 项会在完整前端批次中重复执行，汇总须避免把它们算作新增独立用例。
+- 同 SHA `pytest sim/litex -q` exit 0，50/50，3.670 s。环境依赖修复已验证，旧 collection 失败不计通过。
+- single/small RTL 生成 exit 0，16.605 s；manifest 打包分别 117/123 source。归档散列 single `73bab97f88618cce3c2eff691f7e06f8854a4fb8aff38c28db0f8437a70ae045`，small `68d9faa26c2a532e8298eacfe03c9308570d2fe42623bf413c0fe2e86650c382`。Alan 解包逐文件核验，对旧生成 filelist 目录改名保留，不覆盖旧 source snapshot、报告或 DCP。
+- 新物理证据根 `/home/chen/FUN/flow-runs/soc3c-d364bac`；于 21:57:30 并行启动 tiny/small 整 SoC 与 Cluster OOC，各原策略、100 MHz、4 threads、1h timeout。启动核验三项存活且无 ERROR：[原始记录](../../records/soc3c-d364bac/vivado-startup-2158.json)。下一次常规 Vivado 轮询约 22:17。
+- 失败守卫 session 5947 持续每 30 s 检查新 SHA 的四个门槛，已核验实时 state 和 JVM；取消脚本仍只操作新证据根对应的、核对出生时间/SHA/PGID 的 owned process groups。HPM 只读查询修正为真实 `csrFile/performance/counters*`，若仍匹配 0 个对象则直接报查询失败。
+
+### 9.10 22:17 轮询与结构复查
+
+`d364bac` 完整 backend/frontend 104/104，exit 0，924.315 s；ClusterIsa/WbSplitSmoke/Program 13/13，exit 0，710.911 s，均无失败/错误/跳过。memory-gates 仍在运行，不计通过。[完成批次与元数据](../../records/soc3c-d364bac/cloud)、[尚未全部通过的机器汇总](../../records/soc3c-d364bac/static/gate-summary-in-progress.json)。已完成 128 次用例执行，其中 frontend 的 7 项重复，独立用例为 121；LiteX 50 项另列。
+
+[22:17 原始轮询](../../records/soc3c-d364bac/vivado-poll-20261008-2217.json)：OOC exit 0，1128.123 s，WNS/TNS -2.932/-22541.469 ns，WHS +0.083 ns；tiny/small 整 SoC 均在 Global Placement，无 ERROR、无 bitstream。post-synth SoC WNS 仍为 -3.121 ns；tiny 57302 LUT、48975 FF、76 BRAM tile、23 DSP；small 196396 LUT、165781 FF、199 BRAM tile、92 DSP。L2 D5 映射门槛仍通过。下一次常规轮询约 22:38，两个整 SoC 原 1h timeout 到期约 22:57。
+
+原始 OOC 结构报告：S2 starts 为 1365 个寄存器；S2→CVFPU（2636 端点）、S2→frontend（5834 端点）未找到路径。S2→boundary worst-20 的端点为 count/readIndex 状态和 slowRedirect target；count 的同步清空被综合为 FDRE R 端，属于清空状态逻辑，不能把物理报告全部写作 D 端。最差为 count[0]/D，-0.724 ns；旧 payload RAM WE 端点已不出现在该 worst-20 中。
+
+另从同一 `post-synth.dcp` 做只读精确 payload 查询，匹配 420 个 slots 寄存器，S2→payload **0 条路径**，查询作业 exit 0，41.942 s：[TSV/原始报告/元数据](../../records/soc3c-d364bac/alan/skid-payload-query)。未修改源 RTL、时钟、例外或实现策略。此项支持存储写使能残留已切断，不把只有 worst-20 的缺席当作全量结构证明。
+
+修正名字后的 HPM 查询匹配 512 个 counters 寄存器，**确实存在 S2→counter D 路径**，最差 +0.621 ns、33 级；原始 [结构 TSV](../../records/soc3c-d364bac/alan/cluster-ooc/soc3c-structural.tsv) 和 [路径](../../records/soc3c-d364bac/alan/cluster-ooc/S2-to-HPM-count.rpt) 保留。依据 RTL fanin 推断为同拍软件覆盖资格：rawEvents、selector/inhibit、pending 都已寄存，WB CSR 写的 `performance.io.write` 是当前 S2 经 wbCommit 进入 counters 数据更新的入口；报告末段存在覆盖选择之后的 64 位 carry 链。C4 的原始事件寄存边界保持，不宣称 HPM 全部无 S2 路径；等待 routed 结果判断其物理影响。
+
+### 9.11 当前源版本的必需功能门槛全部通过
+
+`d364bacb959da13ea58178f919547c56aafda0e0` 的四个门槛批次均 exit 0，XML 无失败、错误、跳过或缺失 suite：[机器汇总](../../records/soc3c-d364bac/static/gate-summary.json)。skid/backend 11 次、backend/frontend 104 次、memory 108 次、cluster 13 次，合计 236 次执行；前端 7 项在定向及完整前端批次中重复执行，因此为 **229 个独立用例**。memory 批次用时 2777.955 s，包含 MultiCore 21、Litmus 14、MultiCoreFault 20。LiteX pytest 另列 50/50，exit 0，3.670 s。未运行全量 `sbt test` 和 single SoC smoke，不转称全量回归或板级通过。
+
+失败守卫于 22:40:07 观察到所有必需批次通过并正常退出，完成状态已同步 Alan。此次物理流程未因功能失败取消。
+
+### 9.12 22:58 轮询：单核镜像生成但时序失败，四核超时
+
+[原始轮询](../../records/soc3c-d364bac/vivado-poll-20261008-2258.json)绑定同一准确源码 SHA、Alan、原器件/策略及 10 ns sys 时钟。单核 `soc-tiny-job` 于 22:56:19 exit 0，用时 3528.187 s；四核 `soc-small-job` 于 22:57:30 exit 124，用时 3600.008 s。两项均已结束，无在运行的构建。单核工具退出成功与时序达标是不同结论。
+
+| 配置 | routed setup | routed hold / pulse-width | 镜像 / 阶段 |
+| --- | --- | --- | --- |
+| tiny / single / gshare / linux | WNS -1.798 ns，TNS -21010.410 ns，25800/142024 端点失败 | WHS +0.028 ns、0 hold 失败；WPWS +0.103 ns、0 pulse-width 失败 | 已生成 bitstream；**100 MHz 未通过** |
+| small / 4 cores / gshare / linux | 未完成，无 routed 验收结果；先前 post-place 估计 WNS -5.244 ns 不能代替 routed | 未完成 | route Phase 4.2 Global Iteration 1 时超时，无 bitstream |
+
+单核 route status 为 102723/102723 routable nets 已完整布线，routing errors=0。routed 利用率为 LUT 58375/242400（24.08%）、FF 48990、BRAM tile 76、DSP 23。现有约束报告还有 66 个无 input delay 的输入、107 个无 output delay 的输出，未为掩盖失败添加例外或修改约束。四核 synth/place DCP、阶段日志及退出码保留；没有擅自延长 1h 或原样重试。
+
+单核镜像（仅构建产物，不作为达标镜像）：
+
+- Alan `/home/chen/FUN/flow-runs/soc3c-d364bac/tiny/gateware/xilinx_kcu105.bit`，16007026 bytes，SHA256 `f4178d687f5cd681d0c78259851658752c5b7bf5febad153ad5fb4497013dcf8`。
+- route DCP SHA256 `bc766581c7516ca5b3c4855871916b9a23e6bccad7151116209aaed0c0d5b7d8`；约束 SHA256 `a9dd70dcfba5908dcb23f186fa863d75278420a70efe00ad36b25ffce07348f5`。
+- [文件清单与散列](../../records/soc3c-d364bac/alan/final-physical-files.jsonl)、[原始 routed worst-10](../../records/soc3c-d364bac/alan/tiny-routed-worst-10.rpt)、[报告/镜像/退出码归档](../../records/soc3c-d364bac/alan/physical-final-artifacts.tgz)。DCP 继续保留在 Alan，未删除或覆盖。
+
+**停止项与下一轮范围建议：**任务 §2 原文“TLB→S1 若进入最差路径族，停下报告”。实际最差路径为 `mmu/dtlb/mem_ext/_R0_addr_d0_reg[2]/C` → `l1d/internal2_pmpAllowed_reg/D`：slack -1.798 ns，34 级，数据路径 11.453 ns（logic 2.906 ns、route 8.547 ns）。同族到 `cpu2_pmpAllowed/D` 为 -1.779 ns；iTLB 到 `fetchTlb/result_accessFault/D` 为 -1.785 ns。此外 S2 tag→tags RAM CE 为 -1.775 ns，CVFPU FMA 操作数→内部 sum 为 -1.761 ns，不能假设只改 PMP 就能全部收敛。
+
+源码与报告共同表明 TLB 读出/命中/权限和物理地址选择串接 S1 PMP 地址选择、访问末地址计算、边界比较与 first-match 结果。候选范围是保留当前 TLB/S0/S1/S2 拍数与接口，在既有级内并行化地址范围判断、前移 CSR 边界预解码及缩短地址选择扇出；必须保持全部 PMP（含非对齐、跨边界、优先命中）语义、上下文更新/影子断言和测试期望。该方案尚未实现，不宣称已修复。需明确将此已触发的 TLB→S1 族纳入允许修复范围；四核还需裁定 1h 超时后允许继续的实施方式，例如保存阶段检查点后分阶段运行，不能将无授权的原样重试冒充推进。
+
+只读 routed DCP 补查 exit 0，用时 65.706 s：[原始报告与查询元数据](../../records/soc3c-d364bac/alan/routed-inspection.tgz)。S2 starts 1372，S2→CVFPU（2636）、→frontend（5834）、→skid payload（420）均 0 路径；S2→boundary 最差 -1.028 ns；S2→HPM counters（512）最差 +0.009 ns。后者为已报告的软件覆盖资格路径，不能称完全切断。`mulUnit` 全部 **12/12 DSP 的 AREG/BREG/MREG/PREG 均为 1**，满足 SOC-3 M2 routed 结构门槛；FP DSP 不属于该门槛。首个分组脚本会同时去除层级索引，已另做只删除终点寄存器位下标的分组查询，保留格式/流水/通道实例索引，不改源码、实现、时钟或约束。
+
+修正分组的只读查询 exit 0，71.086 s，保存 20 个寄存器组与逐组完整路径：[归档](../../records/soc3c-d364bac/alan/routed-inspection-v2.tgz)、[TSV](../../records/soc3c-d364bac/alan/final/routed-inspection-v2/worst-20-grouped-registers.tsv)。首次在查询尚未退出时打包误包含正在清理的 `.Xil`，tar exit 1；该不完整归档单独保留，不计成功证据。确认查询退出后排除 `.Xil` 重新归档，exit 0。最终机器状态和归档散列见 [physical-outcome.json](../../records/soc3c-d364bac/static/physical-outcome.json)；单核与四核 `accepted_100mhz` 都为 false。

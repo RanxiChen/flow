@@ -1,0 +1,32 @@
+[
+  {
+    "path": "tests-13-red/checkpoints.json",
+    "bytes": 3,
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  {
+    "path": "tests-13-red/command.json",
+    "bytes": 679,
+    "sha256": "9d2ac5bd93c52df3682e419e830b552e27c1663cda475cfba5be7d568ccb7ed2"
+  },
+  {
+    "path": "tests-13-red/log.txt",
+    "bytes": 1222,
+    "sha256": "22853741d8186d7f52507a1152a8005ff7db2bb3410119be2da680939747e33e"
+  },
+  {
+    "path": "tests-13-red/result.json",
+    "bytes": 786,
+    "sha256": "a6753f3bf1718d0e05dffe8914157fcb710b7274ab69af99e727781f81e2a730"
+  },
+  {
+    "path": "tests-13-red/source-manifest.json",
+    "bytes": 37483,
+    "sha256": "528b207c885f8fcb73d2161b5f243ede350931a253949447eff8d475558c3f9d"
+  },
+  {
+    "path": "tests-13-red/test-reports/TEST-flow.frontend.BreezeFrontendPipelineSpec.xml",
+    "bytes": 10793,
+    "sha256": "4ff7e76dedfac211f9f02734da589e2ebd6ca2b96f505e5f77a883ba39cd0f22"
+  }
+]

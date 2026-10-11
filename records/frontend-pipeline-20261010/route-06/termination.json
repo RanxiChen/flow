@@ -1,0 +1,16 @@
+{
+  "pid": 925851,
+  "argv": [
+    "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado",
+    "-mode",
+    "batch",
+    "-notrace",
+    "-source",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/implement.tcl",
+    "-tclargs",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/rtl",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-06/frontend.xdc"
+  ],
+  "utc": "2026-10-10T16:25:50.334992+00:00",
+  "reason": "Superseded by route-07: final tested BTB observed-prefix repair, same full physical-context flow. Preserve completed synthesis/place and logs; no route-06 closure claim."
+}

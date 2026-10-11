@@ -1,0 +1,21 @@
+{
+  "policy": "docs/cross-project/simulation-host.md",
+  "date_local": "2026-10-11",
+  "preferred": "cloud_chen@47.96.71.231:22",
+  "preferred_result": "SSH ConnectTimeout=8: connection timed out; exit=255",
+  "selected_host": "Alan",
+  "ssh_target": "chen@localhost",
+  "ssh_port": 2286,
+  "jump": "clawbot",
+  "activation": "source /home/chen/miniforge3/bin/activate flow",
+  "checks": {
+    "java": "20.0.2-internal",
+    "sbt": "1.9.7 cached launcher",
+    "firtool": "1.128.0",
+    "verilator": "5.028",
+    "disk_available_gb": 64,
+    "memory_available_gib": 46
+  },
+  "vivado": "Alan, 2022.2 SW Build 3671981",
+  "note": "Recorded from actual preflight responses preceding tests-11 and rtl-06. No local RTL generation or simulation."
+}

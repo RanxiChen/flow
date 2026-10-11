@@ -1,0 +1,150 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="breeze-system">
+    <mxGraphModel page="1" pageWidth="1440" pageHeight="880">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="BREEZE / KCU105 Linux platform" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=32;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="34" width="1344" height="58" />
+        </mxCell>
+        <mxCell id="sub" value="Validated baseline  ·  1 hart @ 100 MHz  ·  SD-loaded initramfs  ·  FASE enabled / no ILA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="98" width="1344" height="32" />
+        </mxCell>
+        <mxCell id="pc" value="Host workstation&#10;JTAG / UART console" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="185" width="230" height="110" />
+        </mxCell>
+        <mxCell id="fase" value="FASE controller&#10;Flight recorder" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ede9fe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="360" y="185" width="260" height="110" />
+        </mxCell>
+        <mxCell id="cpu" value="Breeze RV64GC&#10;L1 I-cache + D-cache" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="720" y="185" width="290" height="110" />
+        </mxCell>
+        <mxCell id="home" value="Coherence home / L2&#10;16 KiB · coherent DMA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="720" y="380" width="290" height="100" />
+        </mxCell>
+        <mxCell id="ddr" value="LiteDRAM → DDR4&#10;2 GiB main memory" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1100" y="380" width="280" height="100" />
+        </mxCell>
+        <mxCell id="sd" value="LiteSDCard controller&#10;SD boot files / DMA" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="360" y="380" width="260" height="100" />
+        </mxCell>
+        <mxCell id="irq" value="CLINT / PLIC&#10;Timers &amp; interrupts" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1100" y="185" width="280" height="110" />
+        </mxCell>
+        <mxCell id="uart" value="LiteUART&#10;Linux terminal" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#dbeafe;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="380" width="230" height="100" />
+        </mxCell>
+        <mxCell id="band" value="BOOT FLOW / SD is used by BIOS; Linux runs from RAM" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=none;fontColor=#0f172a;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="538" width="1344" height="44" />
+        </mxCell>
+        <mxCell id="sdboot" value="SD FAT partition&#10;Image + firmware + DTB" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="635" width="220" height="110" />
+        </mxCell>
+        <mxCell id="bios" value="LiteX BIOS&#10;sdcardboot" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="335" y="635" width="220" height="110" />
+        </mxCell>
+        <mxCell id="sbi" value="OpenSBI&#10;M-mode firmware" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="610" y="635" width="220" height="110" />
+        </mxCell>
+        <mxCell id="linux" value="Linux 6.18.7&#10;Embedded initramfs" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="885" y="635" width="220" height="110" />
+        </mxCell>
+        <mxCell id="apps" value="Buildroot musl&#10;GAPBS + Python 3" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#cbd5e1;fontColor=#0f172a;fontSize=17;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1160" y="635" width="220" height="110" />
+        </mxCell>
+        <mxCell id="note" value="Runtime files live in RAM. Linux SD root and networking are not part of this validated baseline." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=none;fontColor=#0f172a;fontSize=15;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="805" width="1344" height="48" />
+        </mxCell>
+        <mxCell id="edge0" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="290" y="220" />
+            <mxPoint as="targetPoint" x="360" y="220" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge1" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="620" y="240" />
+            <mxPoint as="targetPoint" x="720" y="240" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="865" y="295" />
+            <mxPoint as="targetPoint" x="865" y="380" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1010" y="430" />
+            <mxPoint as="targetPoint" x="1100" y="430" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="620" y="430" />
+            <mxPoint as="targetPoint" x="720" y="430" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge5" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1100" y="240" />
+            <mxPoint as="targetPoint" x="1010" y="240" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="175" y="295" />
+            <mxPoint as="targetPoint" x="175" y="380" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="720" y="275" />
+            <mxPoint as="targetPoint" x="175" y="380" />
+            <Array as="points">
+              <mxPoint x="670" y="275" />
+              <mxPoint x="670" y="335" />
+              <mxPoint x="175" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge8" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="280" y="690" />
+            <mxPoint as="targetPoint" x="335" y="690" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge9" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="555" y="690" />
+            <mxPoint as="targetPoint" x="610" y="690" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge10" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="830" y="690" />
+            <mxPoint as="targetPoint" x="885" y="690" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge11" style="endArrow=block;strokeColor=#64748b;strokeWidth=2;dashed=0;" edge="1" parent="1">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="sourcePoint" x="1105" y="690" />
+            <mxPoint as="targetPoint" x="1160" y="690" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

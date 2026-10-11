@@ -1,0 +1,18 @@
+{
+  "skill": "drawio",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/jgraph/drawio-mcp",
+  "commit": "eebe7def96409a15511a51fda958f4a620c2300a",
+  "path": "plugins/codex/drawio/skills/drawio",
+  "upstream_entry_sha256": "5e1d5460fc6a2da7da98ad851841ec174670f42c0b7339835cc709957b9328f7",
+  "description": "Create native editable Draw.io architecture, pipeline or interface diagrams and optional SVG/PNG/PDF exports.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ],
+  "added_shared_references": [
+    "references/xml-reference.md",
+    "references/mermaid-reference.md"
+  ]
+}

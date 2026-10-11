@@ -28,7 +28,7 @@
 
 - [`docs/dcache-pipeline-design.md`](docs/dcache-pipeline-design.md)：L1D（单 MSHR hit-under-miss、S2 判定即提交、阻塞式 MMIO）、L2/Home、自有四链路一致性协议、AXI 集群边界与 LiteX 外壳、KCU105 参数。
 - [`docs/backend-pipeline-design.md`](docs/backend-pipeline-design.md)：4 级顺序单发射后端、记分板、长延迟写口仲裁、MDU 改造。
-- [`docs/frontend-prediction-design.md`](docs/frontend-prediction-design.md)：BTB、全局历史、RAS、S1 返回预测、L1I 下一行预取。
+- [`docs/frontend-pipeline-design.md`](docs/frontend-pipeline-design.md)：2026-10-10 定案的新版独立前端，真实 VIPT F0/F1、拆分 PMP、RVC F2、双 bank BTB/三查询 GShare、历史与 RAS 恢复。旧 [`docs/frontend-prediction-design.md`](docs/frontend-prediction-design.md) 留作历史资料；本次不连接尚待重构的后端。
 - [`docs/observability-design.md`](docs/observability-design.md)：性能计数器、JTAG 读取与调试记录。
 
 ## 硬件辅助 skills

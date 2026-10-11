@@ -1,0 +1,15 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/test-classes ...
+[info] done compiling
+[info] BreezeFrontendPipelineSpec:
+[info] - two RVC branches select NT-shifted history and discard the younger slot after T
+[info] Run completed in 10 seconds, 963 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 15 s, completed Oct 10, 2026, 11:10:58 PM

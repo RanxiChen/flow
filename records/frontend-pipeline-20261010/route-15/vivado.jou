@@ -1,0 +1,13 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Sun Oct 11 02:31:57 2026
+# Process ID: 1344408
+# Current directory: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15
+# Command line: vivado -mode batch -notrace -source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-eco.tcl
+# Log file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/vivado.log
+# Journal file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/vivado.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4903.361 MHz, CPU Physical cores: 12, Host memory: 67150 MB
+#-----------------------------------------------------------
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-eco.tcl -notrace

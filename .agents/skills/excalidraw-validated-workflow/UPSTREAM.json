@@ -1,0 +1,12 @@
+{
+  "skill": "excalidraw-validated-workflow",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "local_source": "/home/chen/.omp/agent/skills/excalidraw-validated-workflow",
+  "upstream_entry_sha256": "d59b326c4b3d84c94ab2ab963d82b912ab0b05c2461f8ff0e89bc26f0f9374ea",
+  "description": "Create editable Excalidraw whiteboard diagrams, check bindings/content contracts and render locally for visual review.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

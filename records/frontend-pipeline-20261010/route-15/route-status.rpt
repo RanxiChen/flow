@@ -1,0 +1,93 @@
+Design Route Status
+                                               :      # nets :
+   ------------------------------------------- : ----------- :
+   # of logical nets.......................... :       50450 :
+       # of nets not needing routing.......... :       16879 :
+           # of internally routed nets........ :       16269 :
+           # of nets with no loads............ :         609 :
+           # of implicitly routed ports....... :           1 :
+       # of routable nets..................... :       33571 :
+           # of unrouted nets................. :         534 :
+           # of fully routed nets............. :       33032 :
+       # of nets with routing errors.......... :           5 :
+           # of nets with some unrouted pins.. :           4 :
+           # of nets with resource conflicts.. :           5 :
+   ------------------------------------------- : ----------- :
+
+
+Nets with Routing Errors:
+  GLOBAL_LOGIC1
+    Conflicts with Site Pins -- only the first 10 are listed, use -show_all to get the full list:
+      2x    INT_X13Y71/CTRL_W_B0 (SLICE_X20Y71/CKEN_B1)
+      2x    INT_X13Y71/CTRL_W_B1 (SLICE_X20Y71/CKEN_B2)
+      3x    INT_X13Y71/CTRL_W_B2 (SLICE_X20Y71/CKEN_B3)
+      3x    INT_X13Y71/CTRL_W_B3 (SLICE_X20Y71/CKEN_B4)
+      16x   INT_X13Y71/CTRL_W_B9 (SLICE_X20Y71/WCKEN_B)
+      4x    INT_X15Y75/CTRL_W_B0 (SLICE_X23Y75/CKEN_B1)
+      4x    INT_X15Y75/CTRL_W_B1 (SLICE_X23Y75/CKEN_B2)
+      3x    INT_X15Y75/CTRL_W_B2 (SLICE_X23Y75/CKEN_B3)
+      3x    INT_X15Y75/CTRL_W_B3 (SLICE_X23Y75/CKEN_B4)
+      16x   INT_X15Y75/CTRL_W_B9 (SLICE_X23Y75/WCKEN_B)
+  frontend/cache/returns/ram_ext/do_enq
+    Unrouted Pins -- only the first 10 are listed, use -show_all to get the full list:
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMA/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMA_D1/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMB/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMB_D1/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMC/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMC_D1/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMD/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMD_D1/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAME/WE
+      frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_0_13/RAME_D1/WE
+    Conflicts with Site Pins:
+      16x   INT_X13Y71/CTRL_W_B9 (SLICE_X20Y71/WCKEN_B)
+      16x   INT_X15Y75/CTRL_W_B9 (SLICE_X23Y75/WCKEN_B)
+      16x   INT_X15Y76/CTRL_W_B9 (SLICE_X23Y76/WCKEN_B)
+      16x   INT_X16Y66/CTRL_W_B9 (SLICE_X24Y66/WCKEN_B)
+      16x   INT_X16Y68/CTRL_W_B9 (SLICE_X24Y68/WCKEN_B)
+      16x   INT_X16Y71/CTRL_W_B9 (SLICE_X24Y71/WCKEN_B)
+      16x   INT_X17Y71/CTRL_W_B9 (SLICE_X26Y71/WCKEN_B)
+      16x   INT_X17Y72/CTRL_W_B9 (SLICE_X26Y72/WCKEN_B)
+      16x   INT_X17Y75/CTRL_W_B9 (SLICE_X26Y75/WCKEN_B)
+      8x    INT_X17Y76/CTRL_W_B9 (SLICE_X26Y76/WCKEN_B)
+  frontend/predictor/btb/writes/deq_ptr_value0
+    Unrouted Pins -- only the first 10 are listed, use -show_all to get the full list:
+      frontend/predictor/btb/update_kind_reg[0]/CE
+      frontend/predictor/btb/update_kind_reg[1]/CE
+      frontend/predictor/btb/update_pc_reg[10]/CE
+      frontend/predictor/btb/update_pc_reg[11]/CE
+      frontend/predictor/btb/update_pc_reg[12]/CE
+      frontend/predictor/btb/update_pc_reg[13]/CE
+      frontend/predictor/btb/update_pc_reg[14]/CE
+      frontend/predictor/btb/update_pc_reg[15]/CE
+      frontend/predictor/btb/update_pc_reg[16]/CE
+      frontend/predictor/btb/update_pc_reg[17]/CE
+    Conflicts with Site Pins -- only the first 10 are listed, use -show_all to get the full list:
+      2x    INT_X13Y71/CTRL_W_B0 (SLICE_X20Y71/CKEN_B1)
+      2x    INT_X13Y71/CTRL_W_B1 (SLICE_X20Y71/CKEN_B2)
+      3x    INT_X13Y71/CTRL_W_B2 (SLICE_X20Y71/CKEN_B3)
+      3x    INT_X13Y71/CTRL_W_B3 (SLICE_X20Y71/CKEN_B4)
+      4x    INT_X15Y75/CTRL_W_B0 (SLICE_X23Y75/CKEN_B1)
+      4x    INT_X15Y75/CTRL_W_B1 (SLICE_X23Y75/CKEN_B2)
+      3x    INT_X15Y75/CTRL_W_B2 (SLICE_X23Y75/CKEN_B3)
+      3x    INT_X15Y75/CTRL_W_B3 (SLICE_X23Y75/CKEN_B4)
+      4x    INT_X15Y76/CTRL_W_B0 (SLICE_X23Y76/CKEN_B1)
+      4x    INT_X15Y76/CTRL_W_B1 (SLICE_X23Y76/CKEN_B2)
+  frontend/predictor/pht/updates/E[0]
+    Unrouted Pin: frontend/predictor/pht/training_taken_reg/CE
+    Conflicts with Site Pins: INT_X21Y103/CTRL_W_B1 (SLICE_X32Y103/CKEN_B2)
+  resolutions/do_enq
+    Unrouted Pins -- only the first 10 are listed, use -show_all to get the full list:
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMA/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMA_D1/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMB/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMB_D1/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMC/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMC_D1/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMD/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAMD_D1/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAME/WE
+      frontend/predictor/pht/updates/ram_ext/Memory_reg_0_3_0_10/RAME_D1/WE
+    Conflicts with Site Pins: 16x   INT_X21Y103/CTRL_W_B9 (SLICE_X32Y103/WCKEN_B)
+

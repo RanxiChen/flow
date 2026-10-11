@@ -1,0 +1,37 @@
+{
+  "host": "Alan",
+  "cwd": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-10",
+  "argv": [
+    "/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado",
+    "-mode",
+    "batch",
+    "-notrace",
+    "-source",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-10/hold-candidate.tcl"
+  ],
+  "source_digest": "778553faff6ff7c72e3f7304c6278ffea8f01be383a5aa6e7bedd28bab91a6fc",
+  "started_utc": "2026-10-10T17:36:13.540344+00:00",
+  "upstream": {
+    "parent": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09",
+    "checkpoint": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/place.dcp",
+    "checkpoint_sha256": "1ce2a3f382d1186be67b65486db8c2ffbaa8af4e08aaab6fe07b513f7451bbaf",
+    "parent_command": {
+      "host": "Alan",
+      "cwd": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09",
+      "argv": [
+        "/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado",
+        "-mode",
+        "batch",
+        "-notrace",
+        "-source",
+        "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/implement.tcl",
+        "-tclargs",
+        "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/rtl",
+        "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/frontend.xdc"
+      ],
+      "source_digest": "778553faff6ff7c72e3f7304c6278ffea8f01be383a5aa6e7bedd28bab91a6fc",
+      "started_utc": "2026-10-10T17:25:34.403912+00:00"
+    },
+    "change": "Explicit phys_opt_design -aggressive_hold_fix before routing; RTL/XDC unchanged"
+  }
+}

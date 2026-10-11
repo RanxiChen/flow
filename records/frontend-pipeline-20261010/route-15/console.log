@@ -1,0 +1,781 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-eco.tcl -notrace
+Command: open_checkpoint input-route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 1696.059 ; gain = 0.000 ; free physical = 27639 ; free virtual = 54119
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.12 . Memory (MB): peak = 2350.273 ; gain = 0.000 ; free physical = 26832 ; free virtual = 53493
+INFO: [Netlist 29-17] Analyzing 2627 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2826.078 ; gain = 73.688 ; free physical = 26465 ; free virtual = 53127
+Restored from archive | CPU: 1.510000 secs | Memory: 50.652702 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2826.078 ; gain = 73.688 ; free physical = 26465 ; free virtual = 53127
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2933.977 ; gain = 0.000 ; free physical = 26358 ; free virtual = 53019
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 253 instances were transformed.
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 178 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 8 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 56 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 151030898
+----- Checksum: PlaceDB: 2a399d8c ShapeSum: 88b3d712 RouteDB: 9e1593fa 
+open_checkpoint: Time (s): cpu = 00:00:12 ; elapsed = 00:00:13 . Memory (MB): peak = 2933.977 ; gain = 1237.918 ; free physical = 26358 ; free virtual = 53019
+get_timing_paths: Time (s): cpu = 00:00:15 ; elapsed = 00:00:12 . Memory (MB): peak = 4007.691 ; gain = 842.762 ; free physical = 25448 ; free virtual = 52110
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD233 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_14_27. Element SLICE_X24Y68.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD234 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_28_41. Element SLICE_X24Y66.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD238 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_84_97. Element SLICE_X26Y72.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create RAM32M16_HD239 shape for instance frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_98_111. Element SLICE_X23Y75.FFMUXA1 is not routable.
+INFO: [Common 17-14] Message 'Shape Builder 18-119' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+IDENTITY_HOLD_FIX added=124 unchanged_cycles=true
+Command: place_design -directive Quick
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+INFO: [Place 46-5] The placer was invoked with the 'Quick' directive.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 4 CPUs
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25731 ; free virtual = 52392
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 7fab9a62
+
+Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.17 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25731 ; free virtual = 52392
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25823 ; free virtual = 52484
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 96d22025
+
+Time (s): cpu = 00:00:03 ; elapsed = 00:00:02 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25816 ; free virtual = 52478
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+Phase 1 Placer Initialization | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 17c31e27c
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 4047.711 ; gain = 0.000 ; free physical = 25832 ; free virtual = 52493
+
+Phase 2.4 Global Placement Core
+Phase 2.4 Global Placement Core | Checksum: 128425de5
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:04 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25784 ; free virtual = 52445
+Phase 2 Global Placement | Checksum: 128425de5
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:05 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25784 ; free virtual = 52445
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 128425de5
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:05 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25784 ; free virtual = 52445
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 128425de5
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:05 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25784 ; free virtual = 52445
+
+Phase 3.3 Small Shape DP
+
+Phase 3.3.1 Small Shape Clustering
+Phase 3.3.1 Small Shape Clustering | Checksum: 15ca81056
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:05 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25788 ; free virtual = 52449
+
+Phase 3.3.2 DP Optimization
+Phase 3.3.2 DP Optimization | Checksum: 15ca81056
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25783 ; free virtual = 52444
+
+Phase 3.3.3 Flow Legalize Slice Clusters
+Phase 3.3.3 Flow Legalize Slice Clusters | Checksum: 15ce8c4d9
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25783 ; free virtual = 52445
+
+Phase 3.3.4 Slice Area Swap
+
+Phase 3.3.4.1 Slice Area Swap Initial
+Phase 3.3.4.1 Slice Area Swap Initial | Checksum: b5802aa4
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:06 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25783 ; free virtual = 52445
+Phase 3.3.4 Slice Area Swap | Checksum: b5802aa4
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:06 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25783 ; free virtual = 52445
+Phase 3.3 Small Shape DP | Checksum: 17d2dd147
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:07 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25787 ; free virtual = 52448
+
+Phase 3.4 Re-assign LUT pins
+Phase 3.4 Re-assign LUT pins | Checksum: 17d2dd147
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:07 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25787 ; free virtual = 52448
+
+Phase 3.5 Pipeline Register Optimization
+Phase 3.5 Pipeline Register Optimization | Checksum: 17d2dd147
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:07 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25787 ; free virtual = 52448
+Phase 3 Detail Placement | Checksum: 17d2dd147
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:07 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25787 ; free virtual = 52448
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+Phase 4.1 Post Commit Optimization | Checksum: 17d2dd147
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:07 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25787 ; free virtual = 52448
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4087.730 ; gain = 0.000 ; free physical = 25803 ; free virtual = 52464
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 21b436541
+
+Time (s): cpu = 00:00:14 ; elapsed = 00:00:09 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25812 ; free virtual = 52473
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|                4x4|              16x16|
+|___________|___________________|___________________|
+|      South|                8x8|              32x32|
+|___________|___________________|___________________|
+|       East|                4x4|              32x32|
+|___________|___________________|___________________|
+|       West|                4x4|              32x32|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 21b436541
+
+Time (s): cpu = 00:00:14 ; elapsed = 00:00:10 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25827 ; free virtual = 52488
+Phase 4.3 Placer Reporting | Checksum: 21b436541
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:10 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25824 ; free virtual = 52485
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4087.730 ; gain = 0.000 ; free physical = 25824 ; free virtual = 52485
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:10 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25824 ; free virtual = 52485
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 21b436541
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:10 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25827 ; free virtual = 52489
+Ending Placer Task | Checksum: 1f91d05af
+
+Time (s): cpu = 00:00:16 ; elapsed = 00:00:11 . Memory (MB): peak = 4087.730 ; gain = 40.020 ; free physical = 25841 ; free virtual = 52502
+INFO: [Common 17-83] Releasing license: Implementation
+25 Infos, 0 Warnings, 100 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:00:19 ; elapsed = 00:00:13 . Memory (MB): peak = 4087.730 ; gain = 80.039 ; free physical = 25945 ; free virtual = 52606
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 4119.746 ; gain = 32.016 ; free physical = 25896 ; free virtual = 52619
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-place.dcp' has been generated.
+Command: route_design -directive NoTimingRelaxation
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: ee6eef1c ConstDB: 0 ShapeSum: 6c988299 RouteDB: 9e1593fa
+WARNING: [Route 35-197] Clock port "clock" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMA/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOA0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_56_69/RAMG/O at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_56_69/DOG0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_56_69/RAMG_D1/O at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_56_69/DOG1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMA_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOA1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMB_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOB1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMB/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOB0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[48]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[41].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[38]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[31].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[32]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[25].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[30]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[23].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[26]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[19].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[27]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[20].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[29]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[22].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[35]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[28].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[36]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[29].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[33]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[26].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[11]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[4].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[12]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[5].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[13]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[6].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[14]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[7].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[15]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[8].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[16]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[9].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[17]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[10].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[18]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[11].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[19]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[12].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[20]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[13].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[21]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[14].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[22]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[15].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[23]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[16].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[24]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[17].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[25]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[18].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[28]/Q at site SLICE_X26Y72. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[21].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[31]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[24].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[34]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[27].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[37]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[30].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[39]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[32].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[40]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[33].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[41]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[34].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[42]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[35].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[43]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[36].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[44]/Q at site SLICE_X23Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[37].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[45]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[38].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[46]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[39].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[47]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[40].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[49]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[42].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[50]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[43].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[51]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[44].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[52]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[45].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[53]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[46].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[54]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[47].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[55]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[48].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[56]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[49].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[57]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[50].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[58]/Q at site SLICE_X23Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[51].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[59]/Q at site SLICE_X26Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[52].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[60]/Q at site SLICE_X26Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[53].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[61]/Q at site SLICE_X26Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[54].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[62]/Q at site SLICE_X26Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[55].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[63]/Q at site SLICE_X26Y76. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[56].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[8]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[1].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[10]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[3].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[7]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[0].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_pc_reg[9]/Q at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/value_tag[2].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[54]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[54].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[55]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[55].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[56]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[56].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[57]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[57].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[58]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[58].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[59]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[59].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[60]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[60].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[61]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[61].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[62]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[62].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[63]/Q at site SLICE_X24Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[63].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMG_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOG1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMC_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOC1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMG/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOG0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAME/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOE0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[26]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[26].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[27]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[27].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[28]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[28].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[29]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[29].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[30]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[30].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[31]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[31].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[32]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[32].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[33]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[33].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[34]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[34].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[35]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[35].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[36]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[36].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[37]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[37].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[38]/Q at site SLICE_X24Y66. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[38].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[39]/Q at site SLICE_X26Y75. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[39].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMF_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOF1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMD_D1/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOD1.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMC/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOC0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/RAMD/O at site SLICE_X20Y71. Design will fail DRC and router will skip routing of net frontend/predictor/btb/writes/ram_ext/Memory_reg_0_3_70_83/DOD0.
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[12]/Q at site SLICE_X24Y68. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[12].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[13]/Q at site SLICE_X24Y68. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[13].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[14]/Q at site SLICE_X24Y68. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[14].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[15]/Q at site SLICE_X24Y68. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[15].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+CRITICAL WARNING: [Route 35-19] Pin mapping failure, cannot reach driver pin: frontend/predictor/btb/update_target_reg[16]/Q at site SLICE_X24Y68. Design will fail DRC and router will skip routing of net frontend/predictor/btb/update_target[16].
+Resolution: For technical support on this issue, please visit http://www.xilinx.com/support
+INFO: [Common 17-14] Message 'Route 35-19' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+Post Restoration Checksum: NetGraph: 16c060a9 NumContArr: ba175bcc Constraints: 0 Timing: 0
+Phase 1 Build RT Design | Checksum: d0d7bc75
+
+Time (s): cpu = 00:00:54 ; elapsed = 00:00:44 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25686 ; free virtual = 52388
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: d0d7bc75
+
+Time (s): cpu = 00:00:55 ; elapsed = 00:00:45 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25656 ; free virtual = 52357
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 1a26bbdb9
+
+Time (s): cpu = 00:00:55 ; elapsed = 00:00:45 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25655 ; free virtual = 52357
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 1aef37b67
+
+Time (s): cpu = 00:00:56 ; elapsed = 00:00:46 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25575 ; free virtual = 52276
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 2777cbe24
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:48 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25582 ; free virtual = 52283
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.041  | TNS=0.000  | WHS=-0.110 | THS=-94.679|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 3.59363 %
+  Global Horizontal Routing Utilization  = 3.35969 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 10
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 2
+  Number of Partially Routed Nets     = 8
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 1dafc50e8
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:00:51 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25547 ; free virtual = 52248
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: 1dafc50e8
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:00:52 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25547 ; free virtual = 52248
+Phase 3 Initial Routing | Checksum: 1c4ed3123
+
+Time (s): cpu = 00:01:11 ; elapsed = 00:00:52 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25533 ; free virtual = 52234
+INFO: [Route 35-580] Design has 2 pins with tight setup and hold constraints.
+
+The top 5 pins with tight setup and hold constraints:
+
++====================+===================+=======================+
+| Launch Setup Clock | Launch Hold Clock | Pin                   |
++====================+===================+=======================+
+| frontend_clk       | frontend_clk      | frontend/pc_reg[25]/D |
+| frontend_clk       | frontend_clk      | frontend/pc_reg[53]/D |
++--------------------+-------------------+-----------------------+
+
+File with complete list of pins: tight_setup_hold_pins.txt
+
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 934
+ Number of Nodes with overlaps = 381
+ Number of Nodes with overlaps = 166
+ Number of Nodes with overlaps = 86
+ Number of Nodes with overlaps = 61
+ Number of Nodes with overlaps = 41
+ Number of Nodes with overlaps = 33
+ Number of Nodes with overlaps = 27
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 15
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 3
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_100_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.052  | TNS=0.000  | WHS=-0.077 | THS=-6.079 |
+
+Phase 4.1 Global Iteration 0 | Checksum: 1ae479206
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:23 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25556 ; free virtual = 52256
+
+Phase 4.2 Additional Iteration for Hold
+Phase 4.2 Additional Iteration for Hold | Checksum: 1588b5bae
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:23 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25558 ; free virtual = 52258
+Phase 4 Rip-up And Reroute | Checksum: 1588b5bae
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:23 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25558 ; free virtual = 52258
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 Delay CleanUp
+
+Phase 5.1.1 Update Timing
+Phase 5.1.1 Update Timing | Checksum: 211ff869e
+
+Time (s): cpu = 00:01:53 ; elapsed = 00:01:24 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25562 ; free virtual = 52263
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.052  | TNS=0.000  | WHS=-0.077 | THS=-6.047 |
+
+Phase 5.1 Delay CleanUp | Checksum: 211ff869e
+
+Time (s): cpu = 00:01:53 ; elapsed = 00:01:24 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25562 ; free virtual = 52263
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 211ff869e
+
+Time (s): cpu = 00:01:53 ; elapsed = 00:01:24 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25562 ; free virtual = 52263
+Phase 5 Delay and Skew Optimization | Checksum: 211ff869e
+
+Time (s): cpu = 00:01:54 ; elapsed = 00:01:24 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25562 ; free virtual = 52263
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 2195667cc
+
+Time (s): cpu = 00:01:57 ; elapsed = 00:01:26 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25568 ; free virtual = 52269
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.052  | TNS=0.000  | WHS=-0.077 | THS=-6.047 |
+
+Phase 6.1 Hold Fix Iter | Checksum: 1f1b6bbd4
+
+Time (s): cpu = 00:01:57 ; elapsed = 00:01:26 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25568 ; free virtual = 52269
+Phase 6 Post Hold Fix | Checksum: 23164d88a
+
+Time (s): cpu = 00:01:57 ; elapsed = 00:01:26 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25568 ; free virtual = 52269
+
+Phase 7 Timing Verification
+
+Phase 7.1 Update Timing
+Phase 7.1 Update Timing | Checksum: 1791e970d
+
+Time (s): cpu = 00:02:02 ; elapsed = 00:01:28 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25578 ; free virtual = 52279
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.052  | TNS=0.000  | WHS=-0.077 | THS=-6.047 |
+
+Phase 7 Timing Verification | Checksum: 1791e970d
+
+Time (s): cpu = 00:02:02 ; elapsed = 00:01:28 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25578 ; free virtual = 52279
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 3.59185 %
+  Global Horizontal Routing Utilization  = 3.36527 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 8 Route finalize | Checksum: c597d103
+
+Time (s): cpu = 00:02:03 ; elapsed = 00:01:29 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25558 ; free virtual = 52259
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: c597d103
+
+Time (s): cpu = 00:02:03 ; elapsed = 00:01:29 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25558 ; free virtual = 52259
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: c597d103
+
+Time (s): cpu = 00:02:05 ; elapsed = 00:01:31 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25565 ; free virtual = 52266
+
+Phase 11 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=0.100  | TNS=0.000  | WHS=-0.077 | THS=-6.047 |
+
+Phase 11 Post Router Timing | Checksum: 1974173bc
+
+Time (s): cpu = 00:02:13 ; elapsed = 00:01:33 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25562 ; free virtual = 52263
+CRITICAL WARNING: [Route 35-39] The design did not meet timing requirements. Please run report_timing_summary for detailed reports. Note: this situation might be resolved in the second pass of route design.
+Resolution: Verify that the timing was met or had small violations at all previous steps (synthesis, placement, power_opt, and phys_opt). Run report_timing_summary and analyze individual timing paths.
+INFO: [Route 35-253] TNS is the sum of the worst slack violation on every endpoint in the design. Review the paths with the biggest WNS violations in the timing reports and modify your constraints or your design to improve both WNS and TNS.
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:02:13 ; elapsed = 00:01:33 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25811 ; free virtual = 52512
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+46 Infos, 1 Warnings, 201 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:02:16 ; elapsed = 00:01:34 . Memory (MB): peak = 4119.746 ; gain = 0.000 ; free physical = 25811 ; free virtual = 52512
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 4125.770 ; gain = 6.023 ; free physical = 25766 ; free virtual = 52528
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 4125.770 ; gain = 6.023 ; free physical = 25816 ; free virtual = 52557
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type min -sort_by slack.
+Command: report_drc -file drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/drc.rpt.
+report_drc completed successfully
+frontend 100 MHz timing failed: WNS=0.100 WHS=-0.077
+    while executing
+"error "frontend 100 MHz timing failed: WNS=$wns WHS=$whs" "
+    invoked from within
+"if {$wns < 0 || $whs < 0} { error "frontend 100 MHz timing failed: WNS=$wns WHS=$whs" }"
+    (file "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-eco.tcl" line 55)
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 02:34:43 2026...

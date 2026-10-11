@@ -105,6 +105,7 @@ object MmuCmd extends ChiselEnum { val Fetch, Load, Store = Value }
 | `resp.bits.paddr` | Out, 64 | 仅 `hit` 时有意义 |
 | `kill` | In | 请求方冲刷：丢弃该侧所有未完成的请求 |
 | `candidatePaddr` | 可选 Out, 64 | SOC-3d 内部时序旁带：与 resp 同拍的 PA 候选；不经过页权限/fault 资格。只供下游并行计算 PMP/PMA，不授权访问。 |
+| `fetchPaddrs` / `fetchSelect` | 新前端可选 Out | 2026-10-10 VIPT 前端内部旁带：各基础页 way、超页项、Bare 的 F1 候选 PA 和原始一热选择。供 PMP 高位比较与 TLB tag 比较并行展开；公共响应和权限优先级不变，只有 `resp.hit` 可授权使用。dTLB 不启用。具体接收/取消规则见 `frontend-pipeline-design.md`。 |
 
 `resp.valid` 时 `hit / miss / pageFault / accessFault` 恰好一个为 1（断言）。异常码由请求方根据自己的 `cmd` 映射（取指、load、store/AMO 三类）。
 
@@ -233,6 +234,8 @@ PA 拼接：
 ```text
 req.ready = !missValid && !sfence.valid && !sfS1Valid && !kill
 ```
+
+上述方程是默认模式。2026-10-10 新独立前端显式启用仅用于 iTLB 的 `pipelinedFetchKill=true`：`req.ready` 不含 `!kill`，允许取消沿采样年轻阵列查询，但 `kill` 同沿清除 `s1Valid`，禁止该查询返回或建立 miss，清除 pendingFault。已授予 PTW 的请求仍按原协议排空；默认旧客户端及 dTLB 不启用此模式。该变化用于切断 F2 预解码取消到 F0 阵列使能的长路径，具体流水与验证边界见 [前端流水规格](frontend-pipeline-design.md)。
 
 - `pendingFault` 有效时 `ready = 1`，请求方重新发出的请求在 N+1 得到 fault（断言其 VPN 等于 `missVpn`）。
 - refill 发生在 `missValid == 1` 期间，此时 `ready == 0`，所以 refill 写入和读不会同拍。`missValid` 在 refill 当拍清零，下一拍 `ready` 恢复，请求方重新发出的请求会读到新写入的项。

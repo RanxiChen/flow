@@ -1,0 +1,1562 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 02:26:53 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -delay_type max -max_paths 20 -path_type full_clock_expanded -file worst-setup.rpt
+| Design            : BreezeFrontendTimingHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.085ns  (required time - arrival time)
+  Source:                 physical_input_capture_1135/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            instructions/head_reg/D
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.731ns  (logic 0.457ns (9.660%)  route 4.274ns (90.340%))
+  Logic Levels:           2  (LUT1=1 LUT4=1)
+  Clock Path Skew:        -0.108ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.623ns = ( 12.623 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.913ns = ( 7.913 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.182ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.830ns (routing 1.380ns, distribution 1.450ns)
+  Clock Net Delay (Destination): 2.548ns (routing 1.264ns, distribution 1.284ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.830     7.913    _globalClock_out
+    SLICE_X34Y46         FDRE                                         r  physical_input_capture_1135/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X34Y46         FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     8.027 r  physical_input_capture_1135/Q
+                         net (fo=2, routed)           0.340     8.367    instructions/physical_input_capture_1135_q
+    SLICE_X35Y46         LUT4 (Prop_B6LUT_SLICEM_I3_O)
+                                                      0.191     8.558 r  instructions/head_i_1__0/O
+                         net (fo=1, routed)           1.797    10.355    instructions/head0
+    SLICE_X0Y123         LUT1 (Prop_A5LUT_SLICEL_I0_O)
+                                                      0.152    10.507 r  instructions/head0_hold_fix/O
+                         net (fo=1, routed)           2.137    12.644    instructions/head0_hold_fix_1
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.548    12.623    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+                         clock pessimism              0.182    12.805    
+                         clock uncertainty           -0.135    12.669    
+    SLICE_X35Y46         FDRE (Setup_EFF_SLICEM_C_D)
+                                                      0.060    12.729    instructions/head_reg
+  -------------------------------------------------------------------
+                         required time                         12.729    
+                         arrival time                         -12.644    
+  -------------------------------------------------------------------
+                         slack                                  0.085    
+
+Slack (MET) :             0.100ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/pc_reg[56]/D
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.648ns  (logic 0.350ns (7.530%)  route 4.298ns (92.470%))
+  Logic Levels:           3  (LUT1=1 LUT3=1 MUXF7=1)
+  Clock Path Skew:        -0.176ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.691ns = ( 12.691 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.616ns (routing 1.264ns, distribution 1.352ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 f  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         1.834     9.939    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X1Y162         LUT3 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.040     9.979 r  resolutions/pc[62]_i_2/O
+                         net (fo=1, routed)           0.064    10.043    resolutions/reset_1
+    SLICE_X1Y162         LUT1 (Prop_B5LUT_SLICEM_I0_O)
+                                                      0.101    10.144 r  resolutions/reset_1_hold_fix/O
+                         net (fo=56, routed)          1.874    12.018    resolutions/reset_1_hold_fix_1
+    SLICE_X23Y71         MUXF7 (Prop_F7MUX_CD_SLICEM_S_O)
+                                                      0.095    12.113 r  resolutions/pc_reg[56]_i_1/O
+                         net (fo=1, routed)           0.526    12.639    frontend/pc_reg[62]_0[23]
+    SLICE_X20Y73         FDRE                                         r  frontend/pc_reg[56]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.616    12.691    frontend/_globalClock_out
+    SLICE_X20Y73         FDRE                                         r  frontend/pc_reg[56]/C
+                         clock pessimism              0.124    12.815    
+                         clock uncertainty           -0.135    12.680    
+    SLICE_X20Y73         FDRE (Setup_DFF_SLICEM_C_D)
+                                                      0.059    12.739    frontend/pc_reg[56]
+  -------------------------------------------------------------------
+                         required time                         12.739    
+                         arrival time                         -12.639    
+  -------------------------------------------------------------------
+                         slack                                  0.100    
+
+Slack (MET) :             0.120ns  (required time - arrival time)
+  Source:                 instructions/head_reg/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_instruction_bits_eventPc[41]
+                            (output port clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        4.811ns  (logic 0.230ns (4.781%)  route 4.581ns (95.219%))
+  Logic Levels:           1  (LUT3=1)
+  Output Delay:           2.000ns
+  Clock Path Skew:        -2.934ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.000ns = ( 10.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.934ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.380ns, distribution 1.471ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.851     2.934    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X35Y46         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     3.048 r  instructions/head_reg/Q
+                         net (fo=291, routed)         3.234     6.282    instructions/head
+    SLICE_X22Y124        LUT3 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.116     6.398 r  instructions/io_instruction_bits_eventPc[41]_INST_0/O
+                         net (fo=0)                   1.347     7.745    io_instruction_bits_eventPc[41]
+                                                                      r  io_instruction_bits_eventPc[41] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.135     9.865    
+                         output delay                -2.000     7.865    
+  -------------------------------------------------------------------
+                         required time                          7.865    
+                         arrival time                          -7.745    
+  -------------------------------------------------------------------
+                         slack                                  0.120    
+
+Slack (MET) :             0.124ns  (required time - arrival time)
+  Source:                 instructions/head_reg/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_instruction_bits_eventPc[42]
+                            (output port clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        4.807ns  (logic 0.258ns (5.367%)  route 4.549ns (94.633%))
+  Logic Levels:           1  (LUT3=1)
+  Output Delay:           2.000ns
+  Clock Path Skew:        -2.934ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.000ns = ( 10.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.934ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.380ns, distribution 1.471ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.851     2.934    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X35Y46         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     3.048 r  instructions/head_reg/Q
+                         net (fo=291, routed)         3.234     6.282    instructions/head
+    SLICE_X22Y124        LUT3 (Prop_B5LUT_SLICEL_I2_O)
+                                                      0.144     6.426 r  instructions/io_instruction_bits_eventPc[42]_INST_0/O
+                         net (fo=0)                   1.315     7.741    io_instruction_bits_eventPc[42]
+                                                                      r  io_instruction_bits_eventPc[42] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.135     9.865    
+                         output delay                -2.000     7.865    
+  -------------------------------------------------------------------
+                         required time                          7.865    
+                         arrival time                          -7.741    
+  -------------------------------------------------------------------
+                         slack                                  0.124    
+
+Slack (MET) :             0.131ns  (required time - arrival time)
+  Source:                 instructions/head_reg/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_instruction_bits_pc[52]
+                            (output port clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        4.800ns  (logic 0.246ns (5.125%)  route 4.554ns (94.875%))
+  Logic Levels:           1  (LUT3=1)
+  Output Delay:           2.000ns
+  Clock Path Skew:        -2.934ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.000ns = ( 10.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.934ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.380ns, distribution 1.471ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.851     2.934    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X35Y46         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     3.048 r  instructions/head_reg/Q
+                         net (fo=291, routed)         3.522     6.570    instructions/head
+    SLICE_X37Y114        LUT3 (Prop_B6LUT_SLICEL_I2_O)
+                                                      0.132     6.702 r  instructions/io_instruction_bits_pc[52]_INST_0/O
+                         net (fo=0)                   1.032     7.734    io_instruction_bits_pc[52]
+                                                                      r  io_instruction_bits_pc[52] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.135     9.865    
+                         output delay                -2.000     7.865    
+  -------------------------------------------------------------------
+                         required time                          7.865    
+                         arrival time                          -7.734    
+  -------------------------------------------------------------------
+                         slack                                  0.131    
+
+Slack (MET) :             0.132ns  (required time - arrival time)
+  Source:                 instructions/head_reg/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_instruction_bits_pc[53]
+                            (output port clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        4.799ns  (logic 0.274ns (5.710%)  route 4.525ns (94.290%))
+  Logic Levels:           1  (LUT3=1)
+  Output Delay:           2.000ns
+  Clock Path Skew:        -2.934ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.000ns = ( 10.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.934ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.380ns, distribution 1.471ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.851     2.934    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X35Y46         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     3.048 r  instructions/head_reg/Q
+                         net (fo=291, routed)         3.522     6.570    instructions/head
+    SLICE_X37Y114        LUT3 (Prop_B5LUT_SLICEL_I2_O)
+                                                      0.160     6.730 r  instructions/io_instruction_bits_pc[53]_INST_0/O
+                         net (fo=0)                   1.003     7.733    io_instruction_bits_pc[53]
+                                                                      r  io_instruction_bits_pc[53] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.135     9.865    
+                         output delay                -2.000     7.865    
+  -------------------------------------------------------------------
+                         required time                          7.865    
+                         arrival time                          -7.733    
+  -------------------------------------------------------------------
+                         slack                                  0.132    
+
+Slack (MET) :             0.150ns  (required time - arrival time)
+  Source:                 instructions/head_reg/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            io_instruction_bits_eventPc[46]
+                            (output port clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        4.781ns  (logic 0.328ns (6.860%)  route 4.453ns (93.140%))
+  Logic Levels:           1  (LUT3=1)
+  Output Delay:           2.000ns
+  Clock Path Skew:        -2.934ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.000ns = ( 10.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.934ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.380ns, distribution 1.471ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.851     2.934    instructions/_globalClock_out
+    SLICE_X35Y46         FDRE                                         r  instructions/head_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X35Y46         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     3.048 r  instructions/head_reg/Q
+                         net (fo=291, routed)         3.157     6.205    instructions/head
+    SLICE_X28Y129        LUT3 (Prop_B5LUT_SLICEL_I2_O)
+                                                      0.214     6.419 r  instructions/io_instruction_bits_eventPc[46]_INST_0/O
+                         net (fo=0)                   1.296     7.715    io_instruction_bits_eventPc[46]
+                                                                      r  io_instruction_bits_eventPc[46] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.135     9.865    
+                         output delay                -2.000     7.865    
+  -------------------------------------------------------------------
+                         required time                          7.865    
+                         arrival time                          -7.715    
+  -------------------------------------------------------------------
+                         slack                                  0.150    
+
+Slack (MET) :             0.169ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            resolutions/head_reg_rep__0/R
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.435ns  (logic 0.425ns (9.583%)  route 4.010ns (90.417%))
+  Logic Levels:           2  (LUT1=1 LUT2=1)
+  Clock Path Skew:        -0.179ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.631ns = ( 12.631 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.556ns (routing 1.264ns, distribution 1.292ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 r  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         0.510     8.615    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X22Y46         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     8.788 r  resolutions/tail_i_1/O
+                         net (fo=1, routed)           1.303    10.091    resolutions/_GEN
+    SLICE_X0Y102         LUT1 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.138    10.229 r  resolutions/_GEN_hold_fix/O
+                         net (fo=12, routed)          2.197    12.426    resolutions/_GEN_hold_fix_1
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__0/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.556    12.631    resolutions/_globalClock_out
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__0/C
+                         clock pessimism              0.181    12.812    
+                         clock uncertainty           -0.135    12.677    
+    SLICE_X45Y38         FDRE (Setup_AFF2_SLICEM_C_R)
+                                                     -0.082    12.595    resolutions/head_reg_rep__0
+  -------------------------------------------------------------------
+                         required time                         12.595    
+                         arrival time                         -12.426    
+  -------------------------------------------------------------------
+                         slack                                  0.169    
+
+Slack (MET) :             0.169ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            resolutions/head_reg_rep__4/R
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.435ns  (logic 0.425ns (9.583%)  route 4.010ns (90.417%))
+  Logic Levels:           2  (LUT1=1 LUT2=1)
+  Clock Path Skew:        -0.179ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.631ns = ( 12.631 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.556ns (routing 1.264ns, distribution 1.292ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 r  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         0.510     8.615    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X22Y46         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     8.788 r  resolutions/tail_i_1/O
+                         net (fo=1, routed)           1.303    10.091    resolutions/_GEN
+    SLICE_X0Y102         LUT1 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.138    10.229 r  resolutions/_GEN_hold_fix/O
+                         net (fo=12, routed)          2.197    12.426    resolutions/_GEN_hold_fix_1
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__4/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.556    12.631    resolutions/_globalClock_out
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__4/C
+                         clock pessimism              0.181    12.812    
+                         clock uncertainty           -0.135    12.677    
+    SLICE_X45Y38         FDRE (Setup_BFF2_SLICEM_C_R)
+                                                     -0.082    12.595    resolutions/head_reg_rep__4
+  -------------------------------------------------------------------
+                         required time                         12.595    
+                         arrival time                         -12.426    
+  -------------------------------------------------------------------
+                         slack                                  0.169    
+
+Slack (MET) :             0.173ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            resolutions/head_reg/R
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.429ns  (logic 0.425ns (9.596%)  route 4.004ns (90.404%))
+  Logic Levels:           2  (LUT1=1 LUT2=1)
+  Clock Path Skew:        -0.180ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.630ns = ( 12.630 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.555ns (routing 1.264ns, distribution 1.291ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 r  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         0.510     8.615    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X22Y46         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     8.788 r  resolutions/tail_i_1/O
+                         net (fo=1, routed)           1.303    10.091    resolutions/_GEN
+    SLICE_X0Y102         LUT1 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.138    10.229 r  resolutions/_GEN_hold_fix/O
+                         net (fo=12, routed)          2.191    12.420    resolutions/_GEN_hold_fix_1
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.555    12.630    resolutions/_globalClock_out
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg/C
+                         clock pessimism              0.181    12.811    
+                         clock uncertainty           -0.135    12.676    
+    SLICE_X45Y38         FDRE (Setup_EFF_SLICEM_C_R)
+                                                     -0.083    12.593    resolutions/head_reg
+  -------------------------------------------------------------------
+                         required time                         12.593    
+                         arrival time                         -12.420    
+  -------------------------------------------------------------------
+                         slack                                  0.173    
+
+Slack (MET) :             0.173ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            resolutions/head_reg_rep__2/R
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.429ns  (logic 0.425ns (9.596%)  route 4.004ns (90.404%))
+  Logic Levels:           2  (LUT1=1 LUT2=1)
+  Clock Path Skew:        -0.180ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.630ns = ( 12.630 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.555ns (routing 1.264ns, distribution 1.291ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 r  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         0.510     8.615    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X22Y46         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     8.788 r  resolutions/tail_i_1/O
+                         net (fo=1, routed)           1.303    10.091    resolutions/_GEN
+    SLICE_X0Y102         LUT1 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.138    10.229 r  resolutions/_GEN_hold_fix/O
+                         net (fo=12, routed)          2.191    12.420    resolutions/_GEN_hold_fix_1
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__2/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.555    12.630    resolutions/_globalClock_out
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__2/C
+                         clock pessimism              0.181    12.811    
+                         clock uncertainty           -0.135    12.676    
+    SLICE_X45Y38         FDRE (Setup_EFF2_SLICEM_C_R)
+                                                     -0.083    12.593    resolutions/head_reg_rep__2
+  -------------------------------------------------------------------
+                         required time                         12.593    
+                         arrival time                         -12.420    
+  -------------------------------------------------------------------
+                         slack                                  0.173    
+
+Slack (MET) :             0.173ns  (required time - arrival time)
+  Source:                 physical_input_capture_1917_replica/C
+                            (falling edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            resolutions/head_reg_rep__3/R
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (frontend_clk rise@10.000ns - frontend_clk fall@5.000ns)
+  Data Path Delay:        4.429ns  (logic 0.425ns (9.596%)  route 4.004ns (90.404%))
+  Logic Levels:           2  (LUT1=1 LUT2=1)
+  Clock Path Skew:        -0.180ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.630ns = ( 12.630 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.991ns = ( 7.991 - 5.000 ) 
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.908ns (routing 1.380ns, distribution 1.528ns)
+  Clock Net Delay (Destination): 2.555ns (routing 1.264ns, distribution 1.291ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk fall edge)
+                                                      5.000     5.000 f  
+                                                      0.000     5.000 f  clock (IN)
+                         net (fo=0)                   0.000     5.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     5.083 f  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.908     7.991    _globalClock_out
+    SLICE_X21Y50         FDRE                                         r  physical_input_capture_1917_replica/C  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y50         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     8.105 r  physical_input_capture_1917_replica/Q
+                         net (fo=170, routed)         0.510     8.615    resolutions/physical_input_capture_1917_q_repN_alias
+    SLICE_X22Y46         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     8.788 r  resolutions/tail_i_1/O
+                         net (fo=1, routed)           1.303    10.091    resolutions/_GEN
+    SLICE_X0Y102         LUT1 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.138    10.229 r  resolutions/_GEN_hold_fix/O
+                         net (fo=12, routed)          2.191    12.420    resolutions/_GEN_hold_fix_1
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__3/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.555    12.630    resolutions/_globalClock_out
+    SLICE_X45Y38         FDRE                                         r  resolutions/head_reg_rep__3/C
+                         clock pessimism              0.181    12.811    
+                         clock uncertainty           -0.135    12.676    
+    SLICE_X45Y38         FDRE (Setup_FFF_SLICEM_C_R)
+                                                     -0.083    12.593    resolutions/head_reg_rep__3
+  -------------------------------------------------------------------
+                         required time                         12.593    
+                         arrival time                         -12.420    
+  -------------------------------------------------------------------
+                         slack                                  0.173    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_A5LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA_D1/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA_D1/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA_D1/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_A6LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMA_D1
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_B5LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB_D1/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB_D1/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB_D1/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_B6LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMB_D1
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_C5LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC_D1/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC_D1/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC_D1/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_C6LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMC_D1
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_D5LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+Slack (MET) :             0.199ns  (required time - arrival time)
+  Source:                 frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+                            (rising edge-triggered cell FDRE clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD_D1/WE
+                            (rising edge-triggered cell RAMD32 clocked by frontend_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             frontend_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (frontend_clk rise@10.000ns - frontend_clk rise@0.000ns)
+  Data Path Delay:        8.945ns  (logic 1.932ns (21.599%)  route 7.013ns (78.401%))
+  Logic Levels:           15  (CARRY8=1 LUT2=1 LUT4=2 LUT5=2 LUT6=8 RAMD32=1)
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.621ns = ( 12.621 - 10.000 ) 
+    Source Clock Delay      (SCD):    3.062ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.979ns (routing 1.380ns, distribution 1.599ns)
+  Clock Net Delay (Destination): 2.546ns (routing 1.264ns, distribution 1.282ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock frontend_clk rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clock (IN)
+                         net (fo=0)                   0.000     0.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083     0.083 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.979     3.062    frontend/mmu/itlb/mem_0_0_ext/_globalClock_out
+    SLICE_X6Y87          FDRE                                         r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     3.179 r  frontend/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__0/Q
+                         net (fo=224, routed)         0.223     3.402    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/ADDRE0
+    SLICE_X7Y87          RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.213     3.615 r  frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13/RAME/O
+                         net (fo=1, routed)           0.504     4.119    frontend/mmu/itlb/mem_2_0_ext/Memory_reg_0_1_0_13_n_9
+    SLICE_X12Y86         LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.132     4.251 r  frontend/mmu/itlb/mem_2_0_ext/baseValid_0_0_i_73/O
+                         net (fo=1, routed)           0.215     4.466    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_2
+    SLICE_X11Y85         LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.191     4.657 r  frontend/mmu/itlb/mem_1_0_ext/baseValid_0_0_i_41/O
+                         net (fo=2, routed)           0.477     5.134    frontend/mmu/itlb/mem_1_0_ext/_GEN_9[8]
+    SLICE_X8Y81          LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.040     5.174 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85/O
+                         net (fo=1, routed)           0.000     5.174    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_85_n_0
+    SLICE_X8Y81          CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.353     5.527 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG_reg[11]_i_35/CO[7]
+                         net (fo=1, routed)           0.299     5.826    frontend/mmu/itlb/mem_1_0_ext/baseHit_010_in
+    SLICE_X9Y81          LUT4 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.041     5.867 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11/O
+                         net (fo=1, routed)           0.331     6.198    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_11_n_0
+    SLICE_X14Y83         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.041     6.239 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_paddr_REG[11]_i_4/O
+                         net (fo=67, routed)          0.473     6.712    frontend/mmu/itlb/mem_1_0_ext/baseHit_0
+    SLICE_X14Y99         LUT2 (Prop_F6LUT_SLICEL_I1_O)
+                                                      0.041     6.753 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_188/O
+                         net (fo=35, routed)          0.933     7.686    frontend/mmu/itlb/mem_1_0_ext/_mmu_io_itlb_fetchSelect[0]
+    SLICE_X3Y118         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.130     7.816 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_376/O
+                         net (fo=1, routed)           0.835     8.651    frontend/mmu/itlb/mem_1_0_ext/cache/pmp/loLt_071939_out
+    SLICE_X18Y99         LUT6 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.135     8.786 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_168_181_i_113/O
+                         net (fo=4, routed)           0.570     9.356    frontend/cache/pmp/p_2109_in
+    SLICE_X21Y85         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.040     9.396 r  frontend/cache/pmp/io_refillReq_req_REG_i_111/O
+                         net (fo=1, routed)           0.350     9.746    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14_11
+    SLICE_X22Y86         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     9.934 r  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40/O
+                         net (fo=1, routed)           0.121    10.055    frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_40_n_0
+    SLICE_X22Y86         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.115    10.170 f  frontend/mmu/itlb/mem_1_0_ext/io_refillReq_req_REG_i_14/O
+                         net (fo=2, routed)           0.482    10.652    frontend/mmu/itlb/mem_1_0_ext/cache/_pmp_io_allowed_0
+    SLICE_X22Y61         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.115    10.767 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0/O
+                         net (fo=1, routed)           0.472    11.239    frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_18__0_n_0
+    SLICE_X28Y58         LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.040    11.279 r  frontend/mmu/itlb/mem_1_0_ext/Memory_reg_0_1_0_13_i_1/O
+                         net (fo=330, routed)         0.728    12.007    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WE
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD_D1/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock frontend_clk rise edge)
+                                                     10.000    10.000 r  
+                                                      0.000    10.000 r  clock (IN)
+                         net (fo=0)                   0.000    10.000    globalClock/clock
+    BUFGCE_X0Y96         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.075    10.075 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=16597, routed)       2.546    12.621    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/WCLK
+    SLICE_X35Y51         RAMD32                                       r  frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD_D1/CLK
+                         clock pessimism              0.124    12.745    
+                         clock uncertainty           -0.135    12.610    
+    SLICE_X35Y51         RAMD32 (Setup_D6LUT_SLICEM_CLK_WE)
+                                                     -0.404    12.206    frontend/cache/returns/ram_ext/Memory_reg_0_1_196_209/RAMD_D1
+  -------------------------------------------------------------------
+                         required time                         12.206    
+                         arrival time                         -12.007    
+  -------------------------------------------------------------------
+                         slack                                  0.199    
+
+
+
+

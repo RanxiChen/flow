@@ -1,0 +1,388 @@
+{
+  "source": "docs/dcache-pipeline-design.md sections 2.1, 2.2, 2.8",
+  "kind": "illustrative microarchitecture, not RTL simulation",
+  "cycle_convention": "T interval before ending active edge; stage transfer/write at right edge; next stage visible in T+1",
+  "assumptions": [
+    "TLB/cache hit",
+    "permissions pass",
+    "no probe/refill/kill",
+    "read/write ports can overlap",
+    "result holding capacity available",
+    "retry keeps younger CPU requests from completing ahead of the blocked request; exact ready timing is not frozen"
+  ],
+  "pages": [
+    "pipeline",
+    "mixed-cadence",
+    "same-word-cadence",
+    "gap-cadence"
+  ],
+  "preview_backend": "SVG from same scene model as native Draw.io; no Desktop Draw.io export",
+  "timing_backend": "official WaveDrom browser scripts, rendered locally",
+  "cycle_tables": {
+    "mixed": [
+      [
+        "Store X",
+        [
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "W 写入",
+            "orange"
+          ],
+          [
+            "完成就绪",
+            "green"
+          ],
+          null,
+          null,
+          null
+        ]
+      ],
+      [
+        "Load Y",
+        [
+          null,
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "结果就绪",
+            "green"
+          ],
+          null,
+          null,
+          null
+        ]
+      ],
+      [
+        "Store Z",
+        [
+          null,
+          null,
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "W 写入",
+            "orange"
+          ],
+          [
+            "完成就绪",
+            "green"
+          ],
+          null
+        ]
+      ],
+      [
+        "Load V",
+        [
+          null,
+          null,
+          null,
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "结果就绪",
+            "green"
+          ],
+          null
+        ]
+      ],
+      [
+        "每拍接收",
+        [
+          [
+            "SX",
+            "orange"
+          ],
+          [
+            "LY",
+            "blue"
+          ],
+          [
+            "SZ",
+            "orange"
+          ],
+          [
+            "LV",
+            "blue"
+          ],
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    ],
+    "same_word": [
+      [
+        "Store X",
+        [
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "W 写 42",
+            "orange"
+          ],
+          [
+            "完成就绪",
+            "green"
+          ],
+          null,
+          null,
+          null
+        ]
+      ],
+      [
+        "Load X",
+        [
+          null,
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1：旧7",
+            "blue"
+          ],
+          [
+            "S2 冲突",
+            "red"
+          ],
+          [
+            "S0 重查",
+            "blue"
+          ],
+          [
+            "S1：新42",
+            "blue"
+          ],
+          [
+            "S2 通过",
+            "purple"
+          ],
+          [
+            "返回42",
+            "green"
+          ]
+        ]
+      ],
+      [
+        "SRAM[X]",
+        [
+          [
+            "7",
+            "gray"
+          ],
+          [
+            "7",
+            "gray"
+          ],
+          [
+            "7",
+            "gray"
+          ],
+          [
+            "7 → 42",
+            "orange"
+          ],
+          [
+            "42",
+            "green"
+          ],
+          [
+            "42",
+            "green"
+          ],
+          [
+            "42",
+            "green"
+          ],
+          [
+            "42",
+            "green"
+          ]
+        ]
+      ],
+      [
+        "Load 结果",
+        [
+          null,
+          null,
+          null,
+          [
+            "禁止旧值",
+            "red"
+          ],
+          null,
+          null,
+          null,
+          [
+            "42 就绪",
+            "green"
+          ]
+        ]
+      ]
+    ],
+    "gap": [
+      [
+        "Store X",
+        [
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1",
+            "blue"
+          ],
+          [
+            "S2",
+            "purple"
+          ],
+          [
+            "W 写 42",
+            "orange"
+          ],
+          [
+            "完成就绪",
+            "green"
+          ],
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      [
+        "Load X",
+        [
+          null,
+          null,
+          [
+            "S0",
+            "blue"
+          ],
+          [
+            "S1：旧7",
+            "red"
+          ],
+          [
+            "S2：失效",
+            "red"
+          ],
+          [
+            "S0 重查",
+            "blue"
+          ],
+          [
+            "S1：新42",
+            "blue"
+          ],
+          [
+            "S2 通过",
+            "purple"
+          ],
+          [
+            "返回42",
+            "green"
+          ]
+        ]
+      ],
+      [
+        "pending",
+        [
+          null,
+          null,
+          null,
+          [
+            "SX 有效",
+            "orange"
+          ],
+          [
+            "已清空",
+            "gray"
+          ],
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      [
+        "旧快照",
+        [
+          null,
+          null,
+          [
+            "读出7",
+            "blue"
+          ],
+          [
+            "标失效",
+            "red"
+          ],
+          [
+            "仍失效",
+            "red"
+          ],
+          [
+            "丢弃重读",
+            "blue"
+          ],
+          null,
+          null,
+          null
+        ]
+      ]
+    ]
+  }
+}

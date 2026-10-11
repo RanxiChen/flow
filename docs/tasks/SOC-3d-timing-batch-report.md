@@ -158,3 +158,59 @@ Alan 的 ptrace 策略不允许直接修改既有 `timeout` 进程内部定时�
 | 单核真实集群：原子、异常、MMIO | 复用 `ClusterWbSplitSmokeSpec`：Linux single、seed=1、无 AXI 随机反压，三个 ELF 与既有 tohost/console 期望不变。 | `cluster` 1/1；`lrsc_amo_single` 14410 cycles/1127 retired，`trap_misc` 25587/2092，`mmio_console` 43389/4258，console 精确匹配。 |
 
 这些结果覆盖控制链重构的选定功能风险和有限集群联动，不是完整回归、形式等价证明或多核随机压力；也未单独统计所有 S2 内部 Boolean 分支的覆盖率。PS 安全性由所选并发场景中的原容量/所有权断言与 golden 检查约束，不声称穷举 PS-full 组合。此次没有新启、停止或重启 Vivado，没有综合/布局布线/bitstream/上板证据；第一批物理构建结果仍只对应 `d276f8b`。
+
+## 控制链候选完整回归与并行物理构建（2026-10-09，进行中）
+
+用户授权完整回归及 Alan 上单核/四核同时执行 LiteX → Vivado。固定主仓 `30f4b0e02eba45887678bf19a26ee249497bdb01`、CVFPU `3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9`；509 个 RTL/测试/配置输入与前述定向测试快照逐文件匹配。三个独立 checkout 均 clean；详情见 [versions.json](../../records/soc3d-30f4b0e-20261009/versions.json) 与各 `*-source-check.json`。
+
+- cloud_chen：`/home/cloud_chen/work/flow-soc3d-30f4b0e`，evidence `/home/cloud_chen/evidence/soc3d-30f4b0e`。生产 single/small RTL 同次生成 exit 0，wall 12.064 秒。完整回归开始北京时间 **13:05:17**，依次构建全部集群/ISA 程序、`sbt -batch test`、`python -m pytest sim/litex -q`；尚未完成。111 个 ISA 程序编译成功，原工具链不支持的三个 Zacas 程序按既有规则记录 NOT_BUILT，未新增豁免。
+- Alan：独立仓 `/home/chen/FUN/flow-soc3d-30f4b0e-{tiny,small}`，evidence `/home/chen/FUN/flow-runs/soc3d-30f4b0e`。两个作业均 **13:05:37** 启动；通过 LiteX 生产 target，single/small gshare linux，100 MHz、`xcku040-ffva1156-2-e`、Vivado 2022.2、maxThreads=4，原约束/directives 不变。无 timeout，后台记录真实 UTC 起止、monotonic wall time、exit、PID/start_ticks；启动证据 [launched.json](../../records/soc3d-30f4b0e-20261009/launched.json)。
+- Alan 的旧 `d276f8b` 四核及其他项目 Vivado 未终止或改输入，并发负载影响本轮 wall time，不将 wall 差异全部解释为 RTL 改动。旧单核最终 WNS **−0.674 ns**、TNS **−2584.971 ns**、WHS **+0.030 ns**，exit 0、wall **4727.376 秒**，只作旧候选基线，仍未实现 100 MHz closure。
+
+当前状态只是启动/生成证据；完整功能、最终资源及 routed setup/hold 结论等待对应作业结果，没有上板证据。
+
+### 13:53 状态检查与 cloud_chen 重启恢复
+
+主仓与 CVFPU 输入保持不变。Alan 两项 LiteX/Vivado 作业仍存活，均无 ERROR，正在 post-place `phys_opt_design -directive AggressiveExplore`，截至 13:53 已运行约 47 分钟；尚无最终 routed 报告。13:50 日志中间估计 tiny WNS −1.833 ns、small WNS −3.646 ns，不能与旧单核最终 WNS −0.674 ns 直接比较或作为 closure 结论。
+
+cloud_chen 原完整回归的日志已出现 178 项通过，随后机器 **13:40 shutdown、13:45 reboot**（`last -x` 与前一 boot journal 结束 13:40:03）；回归 driver 已不存在，没有终态 result/exit，不能编造完整 wall time。FE-001 被标为 FAILED 的直接原因是仿真器 C++ 编译 `make ... Terminated` / `...pch.h.fast.gch ... Hangup`，测试未进入执行，分类为基础设施中断，不是 spec/golden/RTL 失配。中断 boot `39582c367c9245d9be5a41b144f772f7`，恢复 boot `13b17127-dad2-4517-8853-bf66b4a15d30`；见 [regression-interruption.json](../../records/soc3d-30f4b0e-20261009/regression-interruption.json)。
+
+恢复 SSH 反向代理、环境预检（HTTP 200、工具通过、60 GiB 磁盘、29 GiB available memory），509 个测试输入重新逐文件匹配；完整回归 **13:51:30** 在相同 source SHA 重启，隔离 evidence `retry-after-reboot/`，原日志与 JUnit 已保存。截至 13:53 重启批次 8 项通过、无失败，不与中断批次相加作为完整通过数。
+
+另外使用独立 clean checkout `/home/cloud_chen/work/flow-soc3d-30f4b0e-fe001` 对 FE-001 原样复验：`sbt -batch 'testOnly flow.frontend.BreezeFrontendFE001Spec'`，**1/1 PASS、exit 0、13.335 秒**，北京时间 **13:52:07–13:52:20**。没有修改 RTL、spec、测试期望或断言。证据 [result.json](../../records/soc3d-30f4b0e-20261009/fe001-recheck/result.json)。中断日志、原 JUnit、FE-001 与恢复元数据归档 [interruption-and-fe001.tgz](../../records/soc3d-30f4b0e-20261009/interruption-and-fe001.tgz)，SHA256 `31cbb39cd93f16216e2b078f00d4f896e3f80af68f1b42b83e594c67c747c2d6`。
+
+### 13:57 中间时序与当前可用路径报告
+
+当前两项仍在 post-place phys_opt，尚未执行 route_design。tiny 从 post-place −2.123 ns 到 Phase 15 −1.677 ns，small 从 −3.896 ns 到 Phase 12 −3.182 ns。这些为布局/物理优化估计，无法保证后续布线消除违约。上一候选 tiny post-place phys_opt 最终 −1.036 ns，经 route 与 post-route phys_opt 最终 −0.674 ns；改善存在，但不可把历史改善量套用新候选。
+
+本轮已输出的完整时序路径只有 synthesis；当前 live post-place 完整路径尚未落盘，不能用 synthesis 路径指认 −1.677 ns 的实际路径。两个 synthesis 报告 `sys_clk` 最差均为 FP32 FMA：`mid_pipe_sum_q_reg[1][47]` → 前导零/归一化 → 舍入与 OF/UF/NX 逻辑 → `out_pipe_status_q_reg[1][NX]`，slack −0.495 ns，requirement 10 ns，data delay 10.330 ns（逻辑 2.782 ns、unplaced net estimate 7.548 ns），33 logic levels（5 CARRY8 + 28 LUT）。23 位 mantissa 与 parallel_slices[0] 以及 RTL 对应 FP32，不能误称 FP64。FP32 目前增加的是 pre-adder 边界，normalization/rounding 边界只在 FP64 配置启用，FP32 此段仍跨归一化与舍入。见 [tiny synthesis 路径](../../records/soc3d-30f4b0e-20261009/synth-paths/tiny.rpt)、[small synthesis 路径](../../records/soc3d-30f4b0e-20261009/synth-paths/small.rpt)。
+
+LiteX Tcl 在当前 phys_opt 结束后输出无详细路径的 placement timing 摘要与 place DCP，随后继续 route；完整布局路径需要另行只读打开 DCP 查询，不需停止或重跑原作业。
+
+
+### 14:26 新增布局 checkpoint 完整违约路径（原两项作业继续布线）
+
+原两个 `30f4b0e02eba45887678bf19a26ee249497bdb01` / CVFPU `3cbca77e2bab5546ac75edfbe6f056c0a14d7fc9` 作业保持原输入、启动时间和运行进程，未停止或重跑。Alan 上分别只读 `tiny/gateware/xilinx_kcu105_place.dcp` 与 `small/gateware/xilinx_kcu105_place.dcp`，执行 `open_checkpoint`、`report_timing_summary` 与 setup/hold 分组 `report_timing`；没有再次执行 synthesis/place/phys_opt/route，没有修改时序约束。现有 DCP 查询前后 SHA256 相同，具体源、checkpoint、Tcl 摘要与 argv/cwd/exit 见各查询目录 `input.json`、`command.json`、`result.json` 和归档校验 JSON。
+
+| 配置 | 已完成布局/物理优化 checkpoint | 14:26:31 布线中间值 | 查询 wall time / exit |
+| --- | --- | --- | --- |
+| 单核 tiny | WNS −1.088 ns；TNS −7161.187 ns；13448/148039 setup endpoints 违约 | WNS −0.846 ns；TNS −539.118 ns；WHS −0.135 ns | 北京时间 14:21:10.973957–14:22:25.221499；74.247246 秒；exit 0 |
+| 四核 small | WNS −2.791 ns；TNS −235022.141 ns；176795/537434 setup endpoints 违约 | WNS −2.611 ns；TNS −117451.717 ns；WHS −0.106 ns | 北京时间 14:15:46.122875–14:18:44.031097；177.907911 秒；exit 0 |
+
+两个生产作业仍执行 `route_design -directive NoTimingRelaxation`，尚无完整最终 routed timing 报告。表中路径只能解释布局 checkpoint 的违约，不能断言它们就是布线中间 WNS 对应的实际路径。四核日志的 post-physopt TNS −235022.133 ns 与 checkpoint 重查询报告 −235022.141 ns 有 0.008 ns 差异，分开保留，未改写原日志。
+
+| 配置 / 路径类别 | checkpoint 具体起终点（省略共同层级） | Slack | 数据延迟 / 逻辑级数 |
+| --- | --- | --- | --- |
+| 单核全局最差 | `l1d/internal2_valid_reg_rep__1_replica/C` → `l1d/tags_ext/Memory_reg[33][86]/CE` | −1.088 ns | 10.458 ns = logic 1.654 + estimated net 8.804；24 级 |
+| 单核浮点控制 | CVFPU `i_noncomp/.../inp_pipe_valid_q_reg[1]/C` → `fpUnit/entries_20_valid_reg/D` | −1.047 ns | 10.896 ns = logic 1.631 + estimated net 9.265；23 级 |
+| 四核全局最差 | CVFPU DIV/SQRT `out_pipe_valid_q_reg[1]/C` → `backend/ex_pc_reg[6]/CE` | −2.791 ns | 12.460 ns = logic 2.063 + estimated net 10.397；22 级 |
+| 四核中断控制 | `backend_1/csrFile/stimecmp_reg[35]/C` → `l1d_1/tags_ext/Memory_reg[46][70]/R` | −2.791 ns | 12.615 ns = logic 1.717 + estimated net 10.898；19 级 |
+| 四核提交/取消控制 | `backend/fpUnit/entries_13_committed_reg/C` → `l1d/tags_ext/Memory_reg[94][65]/R` | −2.790 ns | 12.302 ns = logic 1.571 + estimated net 10.731；24 级 |
+| 四核 L1D tag 判定 | `l1d_2/internal2_tagVec_3_tag_reg[17]/C` → `l1d_2/tags_ext/Memory_reg[89][72]/R` | −2.786 ns | 12.687 ns = logic 2.365 + estimated net 10.322；27 级 |
+| 四核 L1D → 性能事件 | `l1d/internal2_valid_reg/C` → `backend/csrFile/performance/rawEvents_divSourceStall_reg/D` | −2.079 ns | 11.765 ns = logic 1.787 + estimated net 9.978；27 级 |
+
+以上同属 `sys_clk`，requirement 10.000 ns。四核最差有效位路径经 FPU 仲裁、tag/committed 选择、out-ready/请求 ready 及后端 `idLeave` 到 EX 寄存器使能；`idLeave` 报告扇出 332。定时器路径经中断判断、`frontendSlowRedirect_valid`（扇出 130）与 L1D 内部控制到 tag 阵列；浮点 committed 路径也进入异常/取消与 L1D 控制。终点 `/R` 是此网表 FDRE 的同步控制引脚，不能仅凭引脚名归因全局复位。
+
+这些布局路径的 estimated net delay 占比约 81%–87%，同时含 19–27 级逻辑；应将跨模块 valid/ready、提交/取消控制及 tag 阵列控制的扇出和物理分布作为下一步评审重点。布局报告尚使用估计线延迟，不能把该占比当成最终 routed 实测结果。此前综合 FP32 normalization/rounding 算术链不是当前布局 checkpoint 的最差路径；独立 `56c121e` FP32 新候选仍有其综合瓶颈依据，但该算术加级不直接切断这里观察到的控制链。单核 L1D→CSR 分组最差为 +0.142 ns，不能沿用旧候选 PMP 更新路径作为本轮最差判断。
+
+证据：[单核完整最差路径](../../records/soc3d-30f4b0e-20261009/tiny-place-inspection/worst-20.rpt)、[单核浮点路径](../../records/soc3d-30f4b0e-20261009/tiny-place-inspection/fpu-origin-5.rpt)、[四核完整最差路径](../../records/soc3d-30f4b0e-20261009/small-place-inspection/worst-20.rpt)、各目录 `timing-summary.rpt` 与 `paths-summary.json`。单核归档 SHA256 `69f53c5e766820044e754ad62c54eba35d28dc41d14051e695cde7cb9b4929d8`，四核 `8e61ba3a442a17cd901cc14d648cbd39212e6465ca2e1a3dcae0f6889450a885`，下载后核对一致。查询 wall time 与正在运行的生产构建 wall time 分别记录，未拿查询耗时替代生产构建耗时。

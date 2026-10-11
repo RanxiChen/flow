@@ -1,0 +1,811 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-16/move-hold.tcl -notrace
+Command: open_checkpoint input-route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1694.668 ; gain = 0.000 ; free physical = 27516 ; free virtual = 54116
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 2349.914 ; gain = 0.000 ; free physical = 26524 ; free virtual = 53305
+INFO: [Netlist 29-17] Analyzing 2627 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2825.766 ; gain = 73.688 ; free physical = 26247 ; free virtual = 53028
+Restored from archive | CPU: 1.520000 secs | Memory: 50.652702 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2825.766 ; gain = 73.688 ; free physical = 26247 ; free virtual = 53028
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2933.664 ; gain = 0.000 ; free physical = 26148 ; free virtual = 52928
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 253 instances were transformed.
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 178 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 8 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 56 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 151030898
+----- Checksum: PlaceDB: 2a399d8c ShapeSum: 88b3d712 RouteDB: 9e1593fa 
+open_checkpoint: Time (s): cpu = 00:00:12 ; elapsed = 00:00:13 . Memory (MB): peak = 2933.664 ; gain = 1238.996 ; free physical = 26140 ; free virtual = 52921
+get_timing_paths: Time (s): cpu = 00:00:15 ; elapsed = 00:00:12 . Memory (MB): peak = 3839.988 ; gain = 906.324 ; free physical = 25321 ; free virtual = 52101
+Command: route_design -unroute
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Updating clock trees with placer guidance...
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3880.008 ; gain = 0.000 ; free physical = 25324 ; free virtual = 52105
+Time taken for updating clock routing (in secs): 1.33
+INFO: [Route 35-163] All nets in the design were unrouted.
+INFO: [Common 17-83] Releasing license: Implementation
+14 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+PLACEMENT_HOLD_FIX moved=124; netlist/state/constraints unchanged
+Command: route_design -directive NoTimingRelaxation
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 80b985bf ConstDB: 0 ShapeSum: 3da41c4d RouteDB: ac04d372
+WARNING: [Route 35-197] Clock port "clock" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_kind_reg[0]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_kind_reg[1]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[10]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[11]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[12]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[13]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[14]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[15]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[16]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[17]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[18]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[19]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[20]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[21]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[22]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[23]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[24]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[25]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[26]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[27]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[28]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[29]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[30]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[31]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[32]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[33]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[34]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[35]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[36]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[37]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[38]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[39]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[40]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[41]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[42]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[43]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[44]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[45]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[46]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[47]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[48]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[49]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[50]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[51]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[52]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[53]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[54]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[55]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[56]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[57]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[58]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[59]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[60]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[61]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[62]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[63]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[7]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[8]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_pc_reg[9]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[0]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[10]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[11]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[12]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[13]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[14]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[15]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[16]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[17]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[18]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[19]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[1]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[20]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[21]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[22]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[23]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[24]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[25]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[26]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[27]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[28]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[29]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[2]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[30]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[31]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[32]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[33]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[34]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[35]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[36]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[37]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[38]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[39]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[3]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[40]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[41]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[42]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[43]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[44]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[45]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[46]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[47]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[48]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[49]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[4]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[50]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[51]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[52]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[53]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[54]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[55]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[56]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[57]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[58]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[59]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[5]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[60]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[61]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[62]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[63]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[6]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[7]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[8]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/btb/update_target_reg[9]/C
+Clock net globalClock/_globalClock_out does not have complete placer guidance tree. for inst term: frontend/predictor/pht/training_taken_reg/C
+Post Restoration Checksum: NetGraph: 3863af04 NumContArr: b674d9c3 Constraints: a91d8801 Timing: 0
+Phase 1 Build RT Design | Checksum: 197f610c8
+
+Time (s): cpu = 00:00:52 ; elapsed = 00:00:43 . Memory (MB): peak = 3925.918 ; gain = 21.898 ; free physical = 25398 ; free virtual = 52179
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3999.160 ; gain = 0.000 ; free physical = 25291 ; free virtual = 52072
+Phase 2.1 Fix Topology Constraints | Checksum: 132f17eba
+
+Time (s): cpu = 00:00:54 ; elapsed = 00:00:45 . Memory (MB): peak = 3999.160 ; gain = 95.141 ; free physical = 25291 ; free virtual = 52072
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: de9f1dc3
+
+Time (s): cpu = 00:00:54 ; elapsed = 00:00:45 . Memory (MB): peak = 3999.160 ; gain = 95.141 ; free physical = 25293 ; free virtual = 52074
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: d8e7f80b
+
+Time (s): cpu = 00:00:55 ; elapsed = 00:00:45 . Memory (MB): peak = 4003.160 ; gain = 99.141 ; free physical = 25269 ; free virtual = 52050
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 1c5ef0c86
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:00:48 . Memory (MB): peak = 4003.160 ; gain = 99.141 ; free physical = 25274 ; free virtual = 52055
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.162  | TNS=0.000  | WHS=-0.131 | THS=-93.547|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 33446
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 23401
+  Number of Partially Routed Nets     = 10045
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 17533e214
+
+Time (s): cpu = 00:01:07 ; elapsed = 00:00:51 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25271 ; free virtual = 52052
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: 17533e214
+
+Time (s): cpu = 00:01:07 ; elapsed = 00:00:51 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25271 ; free virtual = 52052
+Phase 3 Initial Routing | Checksum: 1c1b57c0b
+
+Time (s): cpu = 00:01:16 ; elapsed = 00:00:55 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25249 ; free virtual = 52030
+
+INFO: [Route 35-449] Initial Estimated Congestion
+ ________________________________________________________________________
+|           | Global Congestion | Long Congestion   | Short Congestion  |
+|           |___________________|___________________|___________________|
+| Direction | Size   | % Tiles  | Size   | % Tiles  | Size   | % Tiles  |
+|___________|________|__________|________|__________|________|__________|
+|      NORTH|     2x2|      0.12|     2x2|      0.02|     8x8|      1.11|
+|___________|________|__________|________|__________|________|__________|
+|      SOUTH|     8x8|      0.68|     8x8|      0.37|   16x16|      1.79|
+|___________|________|__________|________|__________|________|__________|
+|       EAST|     2x2|      0.18|     1x1|      0.01|   16x16|      1.29|
+|___________|________|__________|________|__________|________|__________|
+|       WEST|     8x8|      0.33|     4x4|      0.18|   16x16|      1.40|
+|___________|________|__________|________|__________|________|__________|
+Congestion Report
+SHORT Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+SOUTH
+	INT_X8Y100->INT_X15Y123 (CLE_M_X8Y100->DSP_X15Y120)
+	INT_X8Y116->INT_X15Y123 (CLE_M_X8Y116->DSP_X15Y120)
+	INT_X8Y108->INT_X15Y115 (CLE_M_X8Y108->DSP_X15Y115)
+	INT_X16Y60->INT_X23Y67 (CLE_M_X16Y60->DSP_X23Y65)
+EAST
+	INT_X8Y52->INT_X15Y75 (CLE_M_X8Y52->DSP_X15Y75)
+	INT_X8Y68->INT_X15Y75 (CLE_M_X8Y68->DSP_X15Y75)
+WEST
+	INT_X8Y52->INT_X23Y67 (CLE_M_X8Y52->DSP_X23Y65)
+	INT_X8Y60->INT_X15Y67 (CLE_M_X8Y60->DSP_X15Y65)
+	INT_X16Y60->INT_X23Y67 (CLE_M_X16Y60->DSP_X23Y65)
+	INT_X16Y52->INT_X23Y59 (CLE_M_X16Y52->DSP_X23Y55)
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 10524
+ Number of Nodes with overlaps = 1257
+ Number of Nodes with overlaps = 329
+ Number of Nodes with overlaps = 112
+ Number of Nodes with overlaps = 57
+ Number of Nodes with overlaps = 34
+ Number of Nodes with overlaps = 17
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 9
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_100_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_110_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-1.659 | TNS=-1501.756| WHS=-0.034 | THS=-0.230 |
+
+Phase 4.1 Global Iteration 0 | Checksum: 217af4e79
+
+Time (s): cpu = 00:02:37 ; elapsed = 00:01:47 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25242 ; free virtual = 52024
+
+Phase 4.2 Global Iteration 1
+ Number of Nodes with overlaps = 228
+ Number of Nodes with overlaps = 87
+ Number of Nodes with overlaps = 56
+ Number of Nodes with overlaps = 30
+ Number of Nodes with overlaps = 16
+ Number of Nodes with overlaps = 13
+ Number of Nodes with overlaps = 9
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.641 | TNS=-392.255| WHS=N/A    | THS=N/A    |
+
+Phase 4.2 Global Iteration 1 | Checksum: 1009f3b12
+
+Time (s): cpu = 00:02:57 ; elapsed = 00:02:04 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25417 ; free virtual = 52199
+
+Phase 4.3 Global Iteration 2
+ Number of Nodes with overlaps = 437
+ Number of Nodes with overlaps = 140
+ Number of Nodes with overlaps = 65
+ Number of Nodes with overlaps = 40
+ Number of Nodes with overlaps = 27
+ Number of Nodes with overlaps = 21
+ Number of Nodes with overlaps = 18
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+Phase 4.3 Global Iteration 2 | Checksum: fca7d278
+
+Time (s): cpu = 00:03:27 ; elapsed = 00:02:30 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25472 ; free virtual = 52253
+Phase 4 Rip-up And Reroute | Checksum: fca7d278
+
+Time (s): cpu = 00:03:27 ; elapsed = 00:02:30 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25472 ; free virtual = 52253
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 Delay CleanUp
+
+Phase 5.1.1 Update Timing
+Phase 5.1.1 Update Timing | Checksum: 15c3b669d
+
+Time (s): cpu = 00:03:30 ; elapsed = 00:02:32 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25480 ; free virtual = 52261
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.641 | TNS=-392.255| WHS=0.030  | THS=0.000  |
+
+ Number of Nodes with overlaps = 0
+Phase 5.1 Delay CleanUp | Checksum: 21bd47585
+
+Time (s): cpu = 00:03:33 ; elapsed = 00:02:33 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25413 ; free virtual = 52195
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 21bd47585
+
+Time (s): cpu = 00:03:33 ; elapsed = 00:02:33 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25413 ; free virtual = 52195
+Phase 5 Delay and Skew Optimization | Checksum: 21bd47585
+
+Time (s): cpu = 00:03:33 ; elapsed = 00:02:33 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25413 ; free virtual = 52195
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 1f0b04235
+
+Time (s): cpu = 00:03:36 ; elapsed = 00:02:35 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25407 ; free virtual = 52188
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.638 | TNS=-381.453| WHS=0.030  | THS=0.000  |
+
+Phase 6.1 Hold Fix Iter | Checksum: 253556acf
+
+Time (s): cpu = 00:03:36 ; elapsed = 00:02:35 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25407 ; free virtual = 52188
+Phase 6 Post Hold Fix | Checksum: 253556acf
+
+Time (s): cpu = 00:03:36 ; elapsed = 00:02:35 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25407 ; free virtual = 52188
+
+Phase 7 Timing Verification
+
+Phase 7.1 Update Timing
+Phase 7.1 Update Timing | Checksum: 21542a1e0
+
+Time (s): cpu = 00:03:40 ; elapsed = 00:02:37 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25406 ; free virtual = 52187
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.638 | TNS=-381.453| WHS=0.030  | THS=0.000  |
+
+Phase 7 Timing Verification | Checksum: 21542a1e0
+
+Time (s): cpu = 00:03:41 ; elapsed = 00:02:37 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25407 ; free virtual = 52189
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 3.61527 %
+  Global Horizontal Routing Utilization  = 3.40508 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Congestion Report
+North Dir 1x1 Area, Max Cong = 75.8475%, No Congested Regions.
+South Dir 1x1 Area, Max Cong = 85.654%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X17Y65 -> INT_X17Y65
+East Dir 1x1 Area, Max Cong = 81.25%, No Congested Regions.
+West Dir 1x1 Area, Max Cong = 97.1154%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X14Y64 -> INT_X14Y64
+   INT_X17Y64 -> INT_X17Y64
+   INT_X14Y61 -> INT_X14Y61
+   INT_X14Y59 -> INT_X14Y59
+   INT_X14Y55 -> INT_X14Y55
+
+------------------------------
+Reporting congestion hotspots
+------------------------------
+Direction: North
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: South
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 1
+Direction: East
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: West
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 0.25 Sparse Ratio: 1
+
+Phase 8 Route finalize | Checksum: 165b1357e
+
+Time (s): cpu = 00:03:42 ; elapsed = 00:02:38 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25385 ; free virtual = 52166
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 165b1357e
+
+Time (s): cpu = 00:03:42 ; elapsed = 00:02:38 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25373 ; free virtual = 52155
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 165b1357e
+
+Time (s): cpu = 00:03:44 ; elapsed = 00:02:40 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25381 ; free virtual = 52162
+
+Phase 11 Incr Placement Change
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4053.020 ; gain = 0.000 ; free physical = 25436 ; free virtual = 52217
+INFO: [Place 30-746] Post Placement Timing Summary WNS=0.158. For the most accurate timing information please run report_timing.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4053.020 ; gain = 0.000 ; free physical = 25405 ; free virtual = 52187
+Ending IncrPlace Task | Checksum: 7f4e1f31
+
+Time (s): cpu = 00:00:24 ; elapsed = 00:00:19 . Memory (MB): peak = 4053.020 ; gain = 0.000 ; free physical = 25436 ; free virtual = 52218
+Phase 11 Incr Placement Change | Checksum: 165b1357e
+
+Time (s): cpu = 00:04:09 ; elapsed = 00:02:59 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25436 ; free virtual = 52218
+
+Phase 12 Build RT Design
+Checksum: PlaceDB: 19f2136a ConstDB: 0 ShapeSum: 655c0bc7 RouteDB: ac0d581f
+WARNING: [Route 35-197] Clock port "clock" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+Post Restoration Checksum: NetGraph: cb08fb63 NumContArr: dd74f012 Constraints: ae6f6332 Timing: 0
+Phase 12 Build RT Design | Checksum: 256ed4ea7
+
+Time (s): cpu = 00:04:17 ; elapsed = 00:03:02 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25393 ; free virtual = 52175
+
+Phase 13 Router Initialization
+
+Phase 13.1 Fix Topology Constraints
+Phase 13.1 Fix Topology Constraints | Checksum: 256ed4ea7
+
+Time (s): cpu = 00:04:18 ; elapsed = 00:03:03 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25378 ; free virtual = 52160
+
+Phase 13.2 Pre Route Cleanup
+Phase 13.2 Pre Route Cleanup | Checksum: 2104e304a
+
+Time (s): cpu = 00:04:18 ; elapsed = 00:03:03 . Memory (MB): peak = 4053.020 ; gain = 149.000 ; free physical = 25378 ; free virtual = 52159
+
+Phase 13.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 13.3 Global Clock Net Routing | Checksum: 196d0feaf
+
+Time (s): cpu = 00:04:20 ; elapsed = 00:03:04 . Memory (MB): peak = 4092.945 ; gain = 188.926 ; free physical = 25299 ; free virtual = 52080
+
+Phase 13.4 Update Timing
+Phase 13.4 Update Timing | Checksum: 1ab9e06a5
+
+Time (s): cpu = 00:04:25 ; elapsed = 00:03:06 . Memory (MB): peak = 4092.945 ; gain = 188.926 ; free physical = 25304 ; free virtual = 52085
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.172  | TNS=0.000  | WHS=-0.110 | THS=-90.995|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 3.58693 %
+  Global Horizontal Routing Utilization  = 3.36101 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 1326
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 223
+  Number of Partially Routed Nets     = 1103
+  Number of Node Overlaps             = 0
+
+Phase 13 Router Initialization | Checksum: 294966273
+
+Time (s): cpu = 00:04:32 ; elapsed = 00:03:10 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25246 ; free virtual = 52027
+
+Phase 14 Initial Routing
+
+Phase 14.1 Global Routing
+Phase 14.1 Global Routing | Checksum: 294966273
+
+Time (s): cpu = 00:04:32 ; elapsed = 00:03:10 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25251 ; free virtual = 52033
+Phase 14 Initial Routing | Checksum: 250907946
+
+Time (s): cpu = 00:04:35 ; elapsed = 00:03:11 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25232 ; free virtual = 52014
+INFO: [Route 35-580] Design has 4 pins with tight setup and hold constraints.
+
+The top 5 pins with tight setup and hold constraints:
+
++====================+===================+=======================+
+| Launch Setup Clock | Launch Hold Clock | Pin                   |
++====================+===================+=======================+
+| frontend_clk       | frontend_clk      | frontend/pc_reg[53]/D |
+| frontend_clk       | frontend_clk      | frontend/pc_reg[25]/D |
+| frontend_clk       | frontend_clk      | frontend/pc_reg[16]/D |
+| frontend_clk       | frontend_clk      | frontend/pc_reg[46]/D |
++--------------------+-------------------+-----------------------+
+
+File with complete list of pins: tight_setup_hold_pins.txt
+
+
+Phase 15 Rip-up And Reroute
+
+Phase 15.1 Global Iteration 0
+ Number of Nodes with overlaps = 4209
+ Number of Nodes with overlaps = 1127
+ Number of Nodes with overlaps = 442
+ Number of Nodes with overlaps = 206
+ Number of Nodes with overlaps = 120
+ Number of Nodes with overlaps = 76
+ Number of Nodes with overlaps = 54
+ Number of Nodes with overlaps = 36
+ Number of Nodes with overlaps = 30
+ Number of Nodes with overlaps = 35
+ Number of Nodes with overlaps = 25
+ Number of Nodes with overlaps = 24
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 16
+ Number of Nodes with overlaps = 14
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 9
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 5
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_100_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 3
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_110_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.560 | TNS=-259.526| WHS=-0.055 | THS=-0.785 |
+
+Phase 15.1 Global Iteration 0 | Checksum: 21dbc0ee6
+
+Time (s): cpu = 00:06:59 ; elapsed = 00:05:12 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25238 ; free virtual = 52019
+
+Phase 15.2 Global Iteration 1
+ Number of Nodes with overlaps = 425
+ Number of Nodes with overlaps = 101
+ Number of Nodes with overlaps = 64
+ Number of Nodes with overlaps = 51
+ Number of Nodes with overlaps = 24
+ Number of Nodes with overlaps = 18
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.157 | TNS=-5.660 | WHS=N/A    | THS=N/A    |
+
+Phase 15.2 Global Iteration 1 | Checksum: 27a676038
+
+Time (s): cpu = 00:07:23 ; elapsed = 00:05:32 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25258 ; free virtual = 52039
+
+Phase 15.3 Global Iteration 2
+ Number of Nodes with overlaps = 3446
+ Number of Nodes with overlaps = 1170
+ Number of Nodes with overlaps = 378
+ Number of Nodes with overlaps = 192
+ Number of Nodes with overlaps = 98
+ Number of Nodes with overlaps = 63
+ Number of Nodes with overlaps = 38
+ Number of Nodes with overlaps = 22
+ Number of Nodes with overlaps = 15
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.066  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 15.3 Global Iteration 2 | Checksum: 1d4ff31d0
+
+Time (s): cpu = 00:08:14 ; elapsed = 00:06:10 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25164 ; free virtual = 51946
+Phase 15 Rip-up And Reroute | Checksum: 1d4ff31d0
+
+Time (s): cpu = 00:08:14 ; elapsed = 00:06:10 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25164 ; free virtual = 51946
+
+Phase 16 Delay and Skew Optimization
+
+Phase 16.1 Delay CleanUp
+
+Phase 16.1.1 Update Timing
+Phase 16.1.1 Update Timing | Checksum: 264f3b802
+
+Time (s): cpu = 00:08:17 ; elapsed = 00:06:12 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25173 ; free virtual = 51955
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.066  | TNS=0.000  | WHS=0.028  | THS=0.000  |
+
+Phase 16.1 Delay CleanUp | Checksum: 264f3b802
+
+Time (s): cpu = 00:08:18 ; elapsed = 00:06:12 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25175 ; free virtual = 51957
+
+Phase 16.2 Clock Skew Optimization
+Phase 16.2 Clock Skew Optimization | Checksum: 264f3b802
+
+Time (s): cpu = 00:08:18 ; elapsed = 00:06:12 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25175 ; free virtual = 51957
+Phase 16 Delay and Skew Optimization | Checksum: 264f3b802
+
+Time (s): cpu = 00:08:18 ; elapsed = 00:06:12 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25175 ; free virtual = 51957
+
+Phase 17 Post Hold Fix
+
+Phase 17.1 Hold Fix Iter
+
+Phase 17.1.1 Update Timing
+Phase 17.1.1 Update Timing | Checksum: 20b535695
+
+Time (s): cpu = 00:08:21 ; elapsed = 00:06:14 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25178 ; free virtual = 51960
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.066  | TNS=0.000  | WHS=0.028  | THS=0.000  |
+
+Phase 17.1 Hold Fix Iter | Checksum: 213f819ca
+
+Time (s): cpu = 00:08:21 ; elapsed = 00:06:14 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25179 ; free virtual = 51961
+Phase 17 Post Hold Fix | Checksum: 213f819ca
+
+Time (s): cpu = 00:08:21 ; elapsed = 00:06:14 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25179 ; free virtual = 51961
+
+Phase 18 Timing Verification
+
+Phase 18.1 Update Timing
+Phase 18.1 Update Timing | Checksum: 2034908b2
+
+Time (s): cpu = 00:08:25 ; elapsed = 00:06:16 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25185 ; free virtual = 51967
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.066  | TNS=0.000  | WHS=0.028  | THS=0.000  |
+
+Phase 18 Timing Verification | Checksum: 2034908b2
+
+Time (s): cpu = 00:08:25 ; elapsed = 00:06:16 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25185 ; free virtual = 51967
+
+Phase 19 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 3.76031 %
+  Global Horizontal Routing Utilization  = 3.56027 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 19 Route finalize | Checksum: 1ac16e0a8
+
+Time (s): cpu = 00:08:27 ; elapsed = 00:06:17 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25160 ; free virtual = 51942
+
+Phase 20 Verifying routed nets
+
+ Verification completed successfully
+Phase 20 Verifying routed nets | Checksum: 1ac16e0a8
+
+Time (s): cpu = 00:08:27 ; elapsed = 00:06:17 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25160 ; free virtual = 51942
+
+Phase 21 Depositing Routes
+Phase 21 Depositing Routes | Checksum: 1ac16e0a8
+
+Time (s): cpu = 00:08:29 ; elapsed = 00:06:19 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25164 ; free virtual = 51946
+
+Phase 22 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=0.143  | TNS=0.000  | WHS=0.028  | THS=0.000  |
+
+Phase 22 Post Router Timing | Checksum: 24edce71f
+
+Time (s): cpu = 00:08:37 ; elapsed = 00:06:21 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25197 ; free virtual = 51979
+INFO: [Route 35-61] The design met the timing requirement.
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:08:37 ; elapsed = 00:06:21 . Memory (MB): peak = 4142.805 ; gain = 238.785 ; free physical = 25449 ; free virtual = 52231
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+45 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:08:39 ; elapsed = 00:06:23 . Memory (MB): peak = 4142.805 ; gain = 262.797 ; free physical = 25449 ; free virtual = 52231
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 4190.828 ; gain = 40.020 ; free physical = 25386 ; free virtual = 52225
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-16/route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 4190.828 ; gain = 48.023 ; free physical = 25406 ; free virtual = 52226
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type min -sort_by slack.
+Command: report_drc -file drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-16/drc.rpt.
+report_drc completed successfully
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 02:46:14 2026...

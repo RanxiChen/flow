@@ -1,0 +1,20 @@
+{
+  "host": "Alan",
+  "cwd": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09",
+  "argv": [
+    "/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado",
+    "-mode",
+    "batch",
+    "-notrace",
+    "-source",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/implement.tcl",
+    "-tclargs",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/rtl",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-09/frontend.xdc"
+  ],
+  "source_digest": "778553faff6ff7c72e3f7304c6278ffea8f01be383a5aa6e7bedd28bab91a6fc",
+  "started_utc": "2026-10-10T17:25:34.403912+00:00",
+  "exit_code": 1,
+  "wall_seconds": 2759.604452991014,
+  "ended_utc": "2026-10-10T18:11:34.008427+00:00"
+}

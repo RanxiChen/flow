@@ -1,0 +1,33 @@
+{
+  "authority": "docs/dcache-pipeline-design.md sections 2.1 and 2.2; docs/breeze-mmu-rtl-spec.md",
+  "scope": "ordinary Load/Store cache hits; block diagram, not frozen RTL interface",
+  "assumptions": [
+    "SRAM R/W are logical ports; simultaneous service conditional on chosen port organization",
+    "S1 has MMU PA, S2 uses registered PA",
+    "request op and Store payload travel with corresponding transaction",
+    "no data forwarding to Load; pending PA provides control comparison only"
+  ],
+  "required_nodes": [
+    "r01",
+    "r12pa",
+    "r12tags",
+    "r12data",
+    "r12store",
+    "tag",
+    "data",
+    "dtlb",
+    "pmp",
+    "compare",
+    "mux",
+    "pending",
+    "hazard"
+  ],
+  "required_edges": [
+    "store-to-pending",
+    "write-back",
+    "pending-hazard",
+    "pa-hazard",
+    "hazard-retry"
+  ],
+  "rendering": "SVG and native Draw.io use the same scene model; SVG is not a Desktop Draw.io export"
+}

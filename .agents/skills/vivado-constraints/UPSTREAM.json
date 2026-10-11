@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-constraints",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-constraints",
+  "upstream_entry_sha256": "7c8d60eccab8eae7eb938497e191f0ce4ef21e21977c9034b8c6614241b97ff2",
+  "description": "Review or author Vivado XDC for clocks, I/O timing, CDC and justified timing exceptions tied to interface contracts.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

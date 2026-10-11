@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-timing-closure",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-timing-closure",
+  "upstream_entry_sha256": "b9f2a84c561cf8ba43d4aa3ad49e3a63580590833a4d80fc863192bf8e42fc42",
+  "description": "Optimize Vivado timing within fixed design constraints, compare implementation candidates and preserve the best measured result.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

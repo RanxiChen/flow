@@ -14,13 +14,17 @@ class TlbResp extends Bundle {
   val hit = Bool(); val miss = Bool(); val pageFault = Bool(); val accessFault = Bool()
   val paddr = UInt(64.W)
 }
-class TlbPortIO(val withPmpCandidate: Boolean = false) extends Bundle {
+class TlbPortIO(val withPmpCandidate: Boolean = false, val fetchCandidates: Int = 0) extends Bundle {
   val req = Flipped(Decoupled(new TlbReq))
   val resp = Valid(new TlbResp)
   val kill = Input(Bool())
   // Internal timing sideband only. It has the same response cycle, is not
   // permission-qualified, and must never authorize an access by itself.
   val candidatePaddr = if (withPmpCandidate) Some(Output(UInt(64.W))) else None
+  // F1 raw candidates let fetch compare PMP high bits concurrently with TLB
+  // tag matching. The last candidate is Bare. Only resp.hit authorizes use.
+  val fetchPaddrs = if (fetchCandidates > 0) Some(Output(Vec(fetchCandidates, UInt(64.W)))) else None
+  val fetchSelect = if (fetchCandidates > 0) Some(Output(UInt(fetchCandidates.W))) else None
 }
 class SfenceIO extends Bundle {
   val valid = Bool(); val rs1Nz = Bool(); val rs2Nz = Bool()

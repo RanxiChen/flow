@@ -1,0 +1,27 @@
+[
+  {
+    "path": "rtl-05/checkpoints.json",
+    "bytes": 3,
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  {
+    "path": "rtl-05/command.json",
+    "bytes": 680,
+    "sha256": "e4dbd23a5ffaf5c0b95e03b0dd12e61a50d106ff3f6cc9c1cd1e539442cf0087"
+  },
+  {
+    "path": "rtl-05/log.txt",
+    "bytes": 542,
+    "sha256": "db181a7f565550e27abfb2feaba763d556b2452942d2a4a36fce7cfcd7705120"
+  },
+  {
+    "path": "rtl-05/result.json",
+    "bytes": 785,
+    "sha256": "039b363cc31ff84232dc80c2ba1f828fd17fc7a0c475aac593b32c2aa5e2bb4a"
+  },
+  {
+    "path": "rtl-05/source-manifest.json",
+    "bytes": 37483,
+    "sha256": "26004b742792d0eb5d6ecf55b632a3533e50060100236406abb0dd6009db9d52"
+  }
+]

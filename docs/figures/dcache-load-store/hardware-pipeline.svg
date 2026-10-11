@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1820" height="1250" viewBox="0 0 1820 1250">
+<rect width="100%" height="100%" fill="white"/>
+<defs>
+<marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#0284c7"/></marker>
+<marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#7c3aed"/></marker>
+<marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#ea580c"/></marker>
+<marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#16a34a"/></marker>
+<marker id="arrow-red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#dc2626"/></marker>
+<marker id="arrow-gray" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#cbd5e1"/></marker>
+</defs>
+<text x="910.0" y="40.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="28" font-weight="600" fill="#0f172a">L1D Load / Store：共用查询硬件，Store 延迟一拍写回 SRAM</text>
+<text x="910.0" y="84.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="400" fill="#0f172a">普通命中路径结构；蓝=共同查询，橙=Store 写数据，绿=Load 结果，红=冲突控制。窄框为级间寄存器。</text>
+<rect x="20" y="120" width="385" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="212.5" y="145.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="22" font-weight="600" fill="#0f172a">S0 / T：启动查询</text>
+<rect x="510" y="120" width="355" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="687.5" y="145.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="22" font-weight="600" fill="#0f172a">S1 / T+1：取结果</text>
+<rect x="1000" y="120" width="395" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="1197.5" y="145.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="22" font-weight="600" fill="#0f172a">S2 / T+2：最终判定</text>
+<rect x="1445" y="120" width="345" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="1617.5" y="145.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="22" font-weight="600" fill="#0f172a">W / T+3：Store 写入</text>
+<rect x="20" y="205" width="165" height="150" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="102.5" y="240.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">LSU 请求</text>
+<text x="102.5" y="266.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Load 或 Store</text>
+<text x="102.5" y="293.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">VA / size</text>
+<text x="102.5" y="319.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store 数据 + mask</text>
+<rect x="210" y="210" width="180" height="125" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="300.0" y="247.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">入口仲裁 / 索引</text>
+<text x="300.0" y="272.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">VA[10:5] → set</text>
+<text x="300.0" y="297.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">VA[4:3] → word</text>
+<rect x="410" y="210" width="90" height="125" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="455.0" y="247.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">R01</text>
+<text x="455.0" y="272.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">请求</text>
+<text x="455.0" y="297.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">寄存器</text>
+<rect x="550" y="210" width="280" height="125" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="690.0" y="245.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">请求信息随流水</text>
+<text x="690.0" y="272.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">op / VA / size / 年龄</text>
+<text x="690.0" y="299.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store 数据另路携带</text>
+<rect x="890" y="210" width="95" height="125" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="937.5" y="250.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16" font-weight="600" fill="#0f172a">R12</text>
+<text x="937.5" y="272.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16" font-weight="600" fill="#0f172a">PA / 请求</text>
+<text x="937.5" y="294.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16" font-weight="600" fill="#0f172a">权限 / 有效性</text>
+<rect x="1040" y="205" width="270" height="130" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="1175.0" y="230.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">op 解码 / 完成控制</text>
+<text x="1175.0" y="256.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">检查异常、年龄、资源</text>
+<text x="1175.0" y="283.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Load → 允许结果</text>
+<text x="1175.0" y="309.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store → 允许待写</text>
+<rect x="1480" y="220" width="255" height="175" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="1607.5" y="267.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">pending-store 寄存器</text>
+<text x="1607.5" y="294.20000000000005" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">已选 way / set / word</text>
+<text x="1607.5" y="320.8" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">PA / 写数据 / byte mask</text>
+<text x="1607.5" y="347.40000000000003" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">S2 拍末进入，本拍待写</text>
+<rect x="210" y="380" width="180" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="300.0" y="407.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">dTLB 查询入口</text>
+<text x="300.0" y="432.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">VA + Load/Store 类</text>
+<text x="300.0" y="457.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">MMU 内部查询流水</text>
+<rect x="550" y="380" width="280" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="690.0" y="405.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">翻译结果</text>
+<text x="690.0" y="432.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">PA / 页权限 / hit-fault</text>
+<text x="690.0" y="459.09999999999997" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">TLB miss 转等待路径</text>
+<rect x="1040" y="380" width="270" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="1175.0" y="405.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">PMP / PMA</text>
+<text x="1175.0" y="432.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">使用已寄存 PA</text>
+<text x="1175.0" y="459.09999999999997" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">与命中数据选择并行</text>
+<rect x="210" y="525" width="180" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="300.0" y="552.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">Tag / 状态 SRAM</text>
+<text x="300.0" y="577.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">4 路，共同读端口</text>
+<text x="300.0" y="602.6999999999999" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">Store 也必须查命中</text>
+<rect x="550" y="525" width="280" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="690.0" y="550.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">四路 Tag / 状态</text>
+<text x="690.0" y="577.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">同步读输出</text>
+<text x="690.0" y="604.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">在 S1 保存</text>
+<rect x="890" y="525" width="95" height="105" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="937.5" y="553.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">R12</text>
+<text x="937.5" y="577.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">四路 Tag</text>
+<text x="937.5" y="601.3000000000001" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">和状态</text>
+<rect x="1040" y="525" width="270" height="105" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="1175.0" y="550.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">四路 PA tag 比较</text>
+<text x="1175.0" y="577.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">检查可读 / 可写权限</text>
+<text x="1175.0" y="604.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">产生 hit-way</text>
+<rect x="210" y="665" width="180" height="115" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="300.0" y="697.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">Data SRAM：4 路</text>
+<text x="300.0" y="722.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">读口 R：发查询</text>
+<text x="300.0" y="747.6999999999999" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">写口 W：字节写使能</text>
+<rect x="550" y="665" width="280" height="115" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="690.0" y="695.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">各路按 word 预选 8B</text>
+<text x="690.0" y="722.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">4 × 64 bit 数据</text>
+<text x="690.0" y="749.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store 不用旧值合并</text>
+<rect x="890" y="665" width="95" height="115" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="937.5" y="698.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">R12</text>
+<text x="937.5" y="722.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">4 路</text>
+<text x="937.5" y="746.3000000000001" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">8B 数据</text>
+<rect x="1040" y="665" width="270" height="115" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.4"/>
+<text x="1175.0" y="695.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Load 命中路 MUX</text>
+<text x="1175.0" y="722.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">hit-way 选出 64 bit</text>
+<text x="1175.0" y="749.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">按 size 提取 / 扩展</text>
+<rect x="1330" y="665" width="85" height="115" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.4"/>
+<text x="1372.5" y="698.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">Load</text>
+<text x="1372.5" y="722.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">结果</text>
+<text x="1372.5" y="746.3000000000001" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">寄存器</text>
+<rect x="1480" y="680" width="255" height="100" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.4"/>
+<text x="1607.5" y="703.4" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Load 结果可见</text>
+<text x="1607.5" y="730.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">S2 拍末进入结果寄存</text>
+<text x="1607.5" y="756.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">T+3 起可见</text>
+<rect x="30" y="830" width="360" height="90" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="210.0" y="848.4" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">写数据 + byte mask</text>
+<text x="210.0" y="875.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">由 LSU 产生</text>
+<text x="210.0" y="901.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">普通 Store 不读改写</text>
+<rect x="410" y="830" width="90" height="90" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="455.0" y="851.2" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">R01</text>
+<text x="455.0" y="875.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">写数据</text>
+<text x="455.0" y="898.8000000000001" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">mask</text>
+<rect x="550" y="830" width="280" height="90" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="690.0" y="848.4" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store 数据直传</text>
+<text x="690.0" y="875.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">与对应 op / 地址同行</text>
+<text x="690.0" y="901.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Load 时此路无效</text>
+<rect x="890" y="830" width="95" height="90" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="937.5" y="851.2" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">R12</text>
+<text x="937.5" y="875.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">写数据</text>
+<text x="937.5" y="898.8000000000001" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="600" fill="#0f172a">mask</text>
+<rect x="1480" y="505" width="255" height="105" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="1607.5" y="530.9" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Data 写口控制</text>
+<text x="1607.5" y="557.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">按 mask 写，不读改写</text>
+<text x="1607.5" y="584.1" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">写入后更新 M 状态</text>
+<rect x="1480" y="850" width="255" height="100" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.4"/>
+<text x="1607.5" y="873.4" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">Store 完成寄存</text>
+<text x="1607.5" y="900.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">实际写入后就绪</text>
+<text x="1607.5" y="926.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="600" fill="#0f172a">本例 T+4 起可见</text>
+<rect x="1040" y="965" width="280" height="105" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="1.4"/>
+<text x="1180.0" y="992.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">冲突比较（控制通路）</text>
+<text x="1180.0" y="1017.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">Load PA 字 == 老 pending PA 字</text>
+<text x="1180.0" y="1042.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="600" fill="#0f172a">或旧查询快照已失效</text>
+<text x="920.0" y="1176.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="19" font-weight="400" fill="#0f172a">R / W 为逻辑读写口；具体 SRAM 端口方案待定，端口冲突时停顿。</text>
+<text x="910.0" y="1221.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="18" font-weight="400" fill="#0f172a">图中 R01 / R12 为教学标记，不冻结 RTL 命名。Store 的查 Tag / 权限是共同路径，旧 Data 不用于普通写入。</text>
+<polyline points="185,268 210,268" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="390,268 410,268" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="500,268 550,268" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="830,268 890,268" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="985,268 1040,268" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="300,335 300,380" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="210,310 195,310 195,555 210,555" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="210,300 187,300 187,695 210,695" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="390,432 550,432" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<text x="467" y="420" text-anchor="middle" fill="#0284c7" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">次拍结果</text>
+<polyline points="830,432 860,432 860,305 890,305" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="390,577 550,577" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="830,577 890,577" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="985,577 1040,577" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="390,722 550,722" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="830,722 890,722" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="985,722 1040,722" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+<polyline points="985,290 1015,290 1015,420 1040,420" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="985,310 1005,310 1005,550 1040,550" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="1175,380 1175,335" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="1310,565 1375,565 1375,310 1310,310" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<polyline points="1175,630 1175,665" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+<text x="1240" y="653" text-anchor="middle" fill="#16a34a" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">hit-way</text>
+<polyline points="1310,722 1330,722" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+<polyline points="1415,722 1480,722" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+<polyline points="1310,285 1395,285 1395,645 1372,645 1372,665" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-green)"/>
+<text x="1377" y="628" text-anchor="middle" fill="#16a34a" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">允许 Load 结果</text>
+<polyline points="100,355 100,830" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<polyline points="390,875 410,875" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<polyline points="500,875 550,875" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<polyline points="830,875 890,875" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<polyline points="985,875 1438,875 1438,365 1480,365" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<text x="1200" y="860" text-anchor="middle" fill="#ea580c" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">Store 写数据 / mask</text>
+<polyline points="1310,247 1480,247" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<text x="1396" y="194" text-anchor="middle" fill="#ea580c" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">Store：PA / hit-way / 允许写</text>
+<polyline points="1607,395 1607,505" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<polyline points="1735,557 1755,557 1755,1128 395,1128 395,798 300,798 300,780" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<text x="750" y="1120" text-anchor="middle" fill="#ea580c" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">写回 Data：地址 + 数据 + byte-enable</text>
+<polyline points="1480,575 1462,575 1462,900 1480,900" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+<polyline points="985,330 997,330 997,1015 1040,1015" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-red)"/>
+<polyline points="1735,300 1785,300 1785,1018 1320,1018" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-red)"/>
+<text x="1570" y="1003" text-anchor="middle" fill="#dc2626" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">老 pending 的 PA 字</text>
+<polyline points="1320,992 1322,992 1322,326 1310,326" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-red)"/>
+<polyline points="1040,1042 1024,1042 1024,1080 12,1080 12,365 200,365 200,325 210,325" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-red)"/>
+<text x="600" y="1065" text-anchor="middle" fill="#dc2626" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">冲突：保留请求 / 作废旧快照 / 回 S0 重查</text>
+</svg>

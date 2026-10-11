@@ -1,0 +1,646 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" compressed="false">
+  <diagram id="pipeline" name="pipeline">
+    <mxGraphModel page="1" pageWidth="1200" pageHeight="650" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" vertex="1" value="L1D：Load / Store 共用查询流水，Store 多一拍写入" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=28;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="18" width="1140" height="44" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" vertex="1" value="普通 cache/TLB hit 路径；pending-store 是一项待写寄存器；无数据 forwarding" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=17;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="30" y="67" width="1140" height="35" />
+        </mxCell>
+        <mxCell id="s0" parent="1" vertex="1" value="S0&#10;VA index 读 Tag/Data&#10;同时发 dTLB 查询" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="40" y="230" width="225" height="130" />
+        </mxCell>
+        <mxCell id="s1" parent="1" vertex="1" value="S1&#10;拿到 PA / 页权限&#10;保存各路 8B 数据" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="330" y="230" width="225" height="130" />
+        </mxCell>
+        <mxCell id="s2" parent="1" vertex="1" value="S2&#10;PA tag + PMP/PMA&#10;选命中路 / 判冲突" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="620" y="230" width="225" height="130" />
+        </mxCell>
+        <mxCell id="pending" parent="1" vertex="1" value="pending-store / W&#10;保存 PA、数据、mask&#10;下一拍写 Data" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="920" y="230" width="240" height="130" />
+        </mxCell>
+        <mxCell id="tlb" parent="1" vertex="1" value="dTLB：VA → PA" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="65" y="125" width="190" height="60" />
+        </mxCell>
+        <mxCell id="arrays" parent="1" vertex="1" value="Tag / Data SRAM&#10;S0 发读；S1 取结果" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="330" y="115" width="225" height="75" />
+        </mxCell>
+        <mxCell id="load" parent="1" vertex="1" value="Load 成功结果&#10;S2 拍末锁存" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="620" y="455" width="225" height="80" />
+        </mxCell>
+        <mxCell id="write" parent="1" vertex="1" value="Store 写入&#10;字节写使能；无读改写" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=20;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="920" y="455" width="240" height="80" />
+        </mxCell>
+        <mxCell id="hazard" parent="1" vertex="1" value="冲突判定&#10;Load PA 字 == pending PA 字&#10;或读快照已失效" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="325" y="425" width="255" height="110" />
+        </mxCell>
+        <mxCell id="older" parent="1" vertex="1" value="更老 Store 的物理地址" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=16;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="790" y="370" width="355" height="35" />
+        </mxCell>
+        <mxCell id="legend" parent="1" vertex="1" value="蓝：查询　紫：最终判定　橙：实际写入　红：丢弃旧快照并重查　绿：结果" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="40" y="592" width="1120" height="40" />
+        </mxCell>
+        <mxCell id="s01" parent="1" edge="1" source="s0" target="s1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#0284c7;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="265" y="295" />
+            <mxPoint as="targetPoint" x="330" y="295" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s12" parent="1" edge="1" source="s1" target="s2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#0284c7;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="555" y="295" />
+            <mxPoint as="targetPoint" x="620" y="295" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s2p" parent="1" edge="1" source="s2" target="pending" value="Store" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#ea580c;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="845" y="275" />
+            <mxPoint as="targetPoint" x="920" y="275" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s2l" parent="1" edge="1" source="s2" target="load" value="Load" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#16a34a;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="732" y="360" />
+            <mxPoint as="targetPoint" x="732" y="455" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pw" parent="1" edge="1" source="pending" target="write" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#ea580c;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="1040" y="360" />
+            <mxPoint as="targetPoint" x="1040" y="455" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s0tlb" parent="1" edge="1" source="s0" target="tlb" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#0284c7;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="153" y="230" />
+            <mxPoint as="targetPoint" x="153" y="185" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tlbs1" parent="1" edge="1" source="tlb" target="s1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#0284c7;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="290" y="155" />
+              <mxPoint x="290" y="208" />
+              <mxPoint x="443" y="208" />
+            </Array>
+            <mxPoint as="sourcePoint" x="255" y="155" />
+            <mxPoint as="targetPoint" x="443" y="230" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrs1" parent="1" edge="1" source="arrays" target="s1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#0284c7;fontFamily=WenQuanYi Micro Hei;fontSize=16;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+            <mxPoint as="sourcePoint" x="443" y="190" />
+            <mxPoint as="targetPoint" x="443" y="230" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pendhaz" parent="1" edge="1" source="pending" target="hazard" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#dc2626;fontFamily=WenQuanYi Micro Hei;fontSize=16;dashed=1;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="945" y="413" />
+              <mxPoint x="565" y="413" />
+            </Array>
+            <mxPoint as="sourcePoint" x="945" y="360" />
+            <mxPoint as="targetPoint" x="565" y="425" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hazs2" parent="1" edge="1" source="hazard" target="s2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#dc2626;fontFamily=WenQuanYi Micro Hei;fontSize=16;dashed=1;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="592" y="460" />
+              <mxPoint x="592" y="337" />
+            </Array>
+            <mxPoint as="sourcePoint" x="580" y="460" />
+            <mxPoint as="targetPoint" x="620" y="337" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="retry" parent="1" edge="1" source="hazard" target="s0" value="冲突：保留请求，回 S0 重读" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeWidth=2;strokeColor=#dc2626;fontFamily=WenQuanYi Micro Hei;fontSize=16;dashed=1;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="152" y="480" />
+            </Array>
+            <mxPoint as="sourcePoint" x="325" y="480" />
+            <mxPoint as="targetPoint" x="152" y="360" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="mixed-cadence" name="mixed-cadence">
+    <mxGraphModel page="1" pageWidth="1200" pageHeight="600" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" vertex="1" value="① 不同物理字：Load / Store 可以连续混合" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=28;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="18" width="1140" height="44" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" vertex="1" value="SX：PA 0x1000；LY：0x1008；SZ：0x2000；LV：0x3000。全部已命中。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=17;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="30" y="67" width="1140" height="35" />
+        </mxCell>
+        <mxCell id="rowhead" parent="1" vertex="1" value="请求 / 事件" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="114" width="150" height="40" />
+        </mxCell>
+        <mxCell id="col0" parent="1" vertex="1" value="T" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="192.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col1" parent="1" vertex="1" value="T+1" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="313.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col2" parent="1" vertex="1" value="T+2" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="434.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col3" parent="1" vertex="1" value="T+3" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="555.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col4" parent="1" vertex="1" value="T+4" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="676.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col5" parent="1" vertex="1" value="T+5" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="797.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col6" parent="1" vertex="1" value="T+6" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="918.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col7" parent="1" vertex="1" value="T+7" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="1039.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="row0" parent="1" vertex="1" value="Store X" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="165" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r0c0" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c1" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c2" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c3" parent="1" vertex="1" value="W 写入" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c4" parent="1" vertex="1" value="完成就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row1" parent="1" vertex="1" value="Load Y" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="229" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r1c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c1" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c2" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c3" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c4" parent="1" vertex="1" value="结果就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row2" parent="1" vertex="1" value="Store Z" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="293" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r2c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c2" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c3" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c4" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c5" parent="1" vertex="1" value="W 写入" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c6" parent="1" vertex="1" value="完成就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row3" parent="1" vertex="1" value="Load V" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="357" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r3c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c2" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c3" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c4" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c5" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c6" parent="1" vertex="1" value="结果就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row4" parent="1" vertex="1" value="每拍接收" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="421" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r4c0" parent="1" vertex="1" value="SX" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c1" parent="1" vertex="1" value="LY" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c2" parent="1" vertex="1" value="SZ" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c3" parent="1" vertex="1" value="LV" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c4" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r4c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="421" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="note0" parent="1" vertex="1" value="T+3 同拍：SX 在 W 写 Data，LY 在 S2 判断，LV 在 S0 发读。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="500" width="1150" height="35" />
+        </mxCell>
+        <mxCell id="note1" parent="1" vertex="1" value="假设读/写端口可重叠、响应保存容量充足；同拍两笔“就绪”不承诺双响应端口。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="535" width="1150" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="same-word-cadence" name="same-word-cadence">
+    <mxGraphModel page="1" pageWidth="1200" pageHeight="536" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" vertex="1" value="② 同一物理 8B 字：不旁路，写完再重读" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=28;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="18" width="1140" height="44" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" vertex="1" value="初值 X=7；Store X=42；随后 Load X。X 的物理字地址相同。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=17;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="30" y="67" width="1140" height="35" />
+        </mxCell>
+        <mxCell id="rowhead" parent="1" vertex="1" value="请求 / 事件" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="114" width="150" height="40" />
+        </mxCell>
+        <mxCell id="col0" parent="1" vertex="1" value="T" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="192.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col1" parent="1" vertex="1" value="T+1" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="313.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col2" parent="1" vertex="1" value="T+2" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="434.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col3" parent="1" vertex="1" value="T+3" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="555.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col4" parent="1" vertex="1" value="T+4" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="676.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col5" parent="1" vertex="1" value="T+5" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="797.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col6" parent="1" vertex="1" value="T+6" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="918.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="col7" parent="1" vertex="1" value="T+7" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="1039.0" y="114" width="121.0" height="40" />
+        </mxCell>
+        <mxCell id="row0" parent="1" vertex="1" value="Store X" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="165" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r0c0" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c1" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c2" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c3" parent="1" vertex="1" value="W 写 42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c4" parent="1" vertex="1" value="完成就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r0c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="165" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row1" parent="1" vertex="1" value="Load X" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="229" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r1c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c1" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c2" parent="1" vertex="1" value="S1：旧7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c3" parent="1" vertex="1" value="S2 冲突" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c4" parent="1" vertex="1" value="S0 重查" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c5" parent="1" vertex="1" value="S1：新42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c6" parent="1" vertex="1" value="S2 通过" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r1c7" parent="1" vertex="1" value="返回42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="229" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row2" parent="1" vertex="1" value="SRAM[X]" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="293" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r2c0" parent="1" vertex="1" value="7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c1" parent="1" vertex="1" value="7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c2" parent="1" vertex="1" value="7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c3" parent="1" vertex="1" value="7 → 42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c4" parent="1" vertex="1" value="42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c5" parent="1" vertex="1" value="42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c6" parent="1" vertex="1" value="42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r2c7" parent="1" vertex="1" value="42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="293" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="row3" parent="1" vertex="1" value="Load 结果" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="357" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r3c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="316.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c2" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="437.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c3" parent="1" vertex="1" value="禁止旧值" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="558.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c4" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="679.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="800.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="921.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="r3c7" parent="1" vertex="1" value="42 就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="1042.0" y="357" width="115.0" height="53" />
+        </mxCell>
+        <mxCell id="note0" parent="1" vertex="1" value="T+3：pending-store 仍在，S2 的 Load PA 与它相撞；旧 7 不得返回。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="436" width="1150" height="35" />
+        </mxCell>
+        <mxCell id="note1" parent="1" vertex="1" value="T+3 拍末写入 42；T+4 回 S0 重查；T+7 才有有效 Load 结果。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="471" width="1150" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="gap-cadence" name="gap-cadence">
+    <mxGraphModel page="1" pageWidth="1200" pageHeight="536" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" vertex="1" value="③ 隔一拍：pending 已清空，旧快照仍需重查" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=28;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="18" width="1140" height="44" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" vertex="1" value="Store 在 T 接收，Load 在 T+2 接收。不能只看 Load S2 当拍的 pending.valid。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=17;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="30" y="67" width="1140" height="35" />
+        </mxCell>
+        <mxCell id="rowhead" parent="1" vertex="1" value="请求 / 事件" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="30" y="114" width="150" height="40" />
+        </mxCell>
+        <mxCell id="col0" parent="1" vertex="1" value="T" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="192.0" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col1" parent="1" vertex="1" value="T+1" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="299.55555555555554" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col2" parent="1" vertex="1" value="T+2" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="407.1111111111111" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col3" parent="1" vertex="1" value="T+3" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="514.6666666666667" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col4" parent="1" vertex="1" value="T+4" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="622.2222222222222" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col5" parent="1" vertex="1" value="T+5" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="729.7777777777778" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col6" parent="1" vertex="1" value="T+6" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="837.3333333333334" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col7" parent="1" vertex="1" value="T+7" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="944.8888888888889" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="col8" parent="1" vertex="1" value="T+8" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=19;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="1052.4444444444443" y="114" width="107.55555555555556" height="40" />
+        </mxCell>
+        <mxCell id="row0" parent="1" vertex="1" value="Store X" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="165" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r0c0" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c1" parent="1" vertex="1" value="S1" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="302.55555555555554" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c2" parent="1" vertex="1" value="S2" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="410.1111111111111" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c3" parent="1" vertex="1" value="W 写 42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="517.6666666666667" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c4" parent="1" vertex="1" value="完成就绪" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="625.2222222222222" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="732.7777777777778" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="840.3333333333334" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="947.8888888888889" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r0c8" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1055.4444444444443" y="165" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="row1" parent="1" vertex="1" value="Load X" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="229" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r1c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="302.55555555555554" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c2" parent="1" vertex="1" value="S0" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="410.1111111111111" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c3" parent="1" vertex="1" value="S1：旧7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="517.6666666666667" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c4" parent="1" vertex="1" value="S2：失效" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="625.2222222222222" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c5" parent="1" vertex="1" value="S0 重查" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="732.7777777777778" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c6" parent="1" vertex="1" value="S1：新42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="840.3333333333334" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c7" parent="1" vertex="1" value="S2 通过" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ede9fe;strokeColor=#7c3aed;fontStyle=1;">
+          <mxGeometry as="geometry" x="947.8888888888889" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r1c8" parent="1" vertex="1" value="返回42" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;">
+          <mxGeometry as="geometry" x="1055.4444444444443" y="229" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="row2" parent="1" vertex="1" value="pending" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="293" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r2c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="302.55555555555554" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c2" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="410.1111111111111" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c3" parent="1" vertex="1" value="SX 有效" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;">
+          <mxGeometry as="geometry" x="517.6666666666667" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c4" parent="1" vertex="1" value="已清空" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="625.2222222222222" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c5" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="732.7777777777778" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="840.3333333333334" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="947.8888888888889" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r2c8" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1055.4444444444443" y="293" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="row3" parent="1" vertex="1" value="旧快照" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontStyle=1;">
+          <mxGeometry as="geometry" x="22" y="357" width="165" height="53" />
+        </mxCell>
+        <mxCell id="r3c0" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="195.0" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c1" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="302.55555555555554" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c2" parent="1" vertex="1" value="读出7" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="410.1111111111111" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c3" parent="1" vertex="1" value="标失效" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="517.6666666666667" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c4" parent="1" vertex="1" value="仍失效" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#fee2e2;strokeColor=#dc2626;fontStyle=1;">
+          <mxGeometry as="geometry" x="625.2222222222222" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c5" parent="1" vertex="1" value="丢弃重读" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;">
+          <mxGeometry as="geometry" x="732.7777777777778" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c6" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="840.3333333333334" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c7" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="947.8888888888889" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="r3c8" parent="1" vertex="1" value="—" style="whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;rounded=1;fillColor=#f1f5f9;strokeColor=#cbd5e1;fontStyle=1;">
+          <mxGeometry as="geometry" x="1055.4444444444443" y="357" width="101.55555555555556" height="53" />
+        </mxCell>
+        <mxCell id="note0" parent="1" vertex="1" value="T+3：Load 的 S1 快照与更老 Store 写入重叠，失效随请求保存。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="436" width="1150" height="35" />
+        </mxCell>
+        <mxCell id="note1" parent="1" vertex="1" value="T+4：即使 pending 已清空，S2 也不能使用旧 7；T+5 开始重新读取。" style="text;whiteSpace=wrap;html=0;fontFamily=WenQuanYi Micro Hei;fontSize=18;fontColor=#0f172a;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;">
+          <mxGeometry as="geometry" x="25" y="471" width="1150" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

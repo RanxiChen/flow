@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="640" viewBox="0 0 1420 640">
+<rect width="100%" height="100%" fill="white"/>
+<defs>
+<marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#0284c7"/></marker>
+<marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#7c3aed"/></marker>
+<marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#ea580c"/></marker>
+<marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#16a34a"/></marker>
+<marker id="arrow-red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#dc2626"/></marker>
+<marker id="arrow-gray" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#cbd5e1"/></marker>
+</defs>
+<text x="710.0" y="40.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="28" font-weight="600" fill="#0f172a">同一套硬件，在 T+3 拍同时服务四条不同年龄的请求</text>
+<text x="710.0" y="84.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="17" font-weight="400" fill="#0f172a">四条请求都命中，且物理字不同；假设阵列读写口允许重叠。</text>
+<rect x="35" y="130" width="240" height="55" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="155.0" y="157.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="23" font-weight="600" fill="#0f172a">S0</text>
+<rect x="360" y="130" width="240" height="55" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="480.0" y="157.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="23" font-weight="600" fill="#0f172a">S1</text>
+<rect x="685" y="130" width="240" height="55" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="805.0" y="157.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="23" font-weight="600" fill="#0f172a">S2</text>
+<rect x="1010" y="130" width="340" height="55" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="1180.0" y="157.5" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="23" font-weight="600" fill="#0f172a">pending-store / W</text>
+<rect x="35" y="225" width="240" height="140" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="155.0" y="280.3" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">Load V</text>
+<text x="155.0" y="309.7" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">新请求：启动数组读</text>
+<rect x="360" y="225" width="240" height="140" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="480.0" y="265.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">Store Z</text>
+<text x="480.0" y="295.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">翻译 / Tag 结果</text>
+<text x="480.0" y="324.40000000000003" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">携带自己的写数据</text>
+<rect x="685" y="225" width="240" height="140" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4"/>
+<text x="805.0" y="265.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">Load Y</text>
+<text x="805.0" y="295.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">判断命中 / 权限</text>
+<text x="805.0" y="324.40000000000003" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">与 pending PA 比较</text>
+<rect x="1010" y="225" width="340" height="140" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4"/>
+<text x="1180.0" y="265.6" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">Store X</text>
+<text x="1180.0" y="295.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">更老的一笔 Store</text>
+<text x="1180.0" y="324.40000000000003" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="600" fill="#0f172a">本拍末写入 Data</text>
+<polyline points="275,157 360,157" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<text x="318" y="118" text-anchor="middle" fill="#0284c7" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">R01</text>
+<polyline points="600,157 685,157" fill="none" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<text x="644" y="118" text-anchor="middle" fill="#0284c7" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">R12</text>
+<polyline points="925,157 1010,157" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<text x="968" y="118" text-anchor="middle" fill="#ea580c" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="16">Store 分支</text>
+<text x="695.0" y="482.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="400" fill="#0f172a">每个阶段每拍处理一笔；各阶段可以同时处理不同请求。op 随请求寄存，没有整条流水的 Load/Store 模式切换。</text>
+<text x="695.0" y="567.0" text-anchor="middle" dominant-baseline="middle" font-family="WenQuanYi Micro Hei,Arial,sans-serif" font-size="21" font-weight="400" fill="#0f172a">下个边沿：V 进入 S1，Z 进入 S2，Y 形成 Load 结果，X 完成写入；空出的级可接续后续请求。</text>
+</svg>

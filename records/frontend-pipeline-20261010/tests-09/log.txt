@@ -1,0 +1,12 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/classes ...
+[error] /home/chen/FUN/flow-frontend-pipeline-20261010/design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala:63:7: private class FrontendGlobalClock escapes its defining scope as part of type flow.frontend.FrontendGlobalClock
+[error]   val globalClock = Module(new FrontendGlobalClock)
+[error]       ^
+[error] one error found
+[error] (Compile / compileIncremental) Compilation failed
+[error] Total time: 2 s, completed Oct 10, 2026, 11:56:56 PM

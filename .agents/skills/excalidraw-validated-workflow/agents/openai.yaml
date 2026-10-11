@@ -1,0 +1,6 @@
+interface:
+  display_name: "excalidraw-validated-workflow"
+  short_description: "Hardware workflow: excalidraw-validated-workflow"
+  default_prompt: "Use $excalidraw-validated-workflow for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,14 @@
+{
+  "skill": "gf-cocotb",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/codejunkie99/Gateflow-Plugin",
+  "commit": "bf7e94c002eab8ce8ea76365a7490daaaba3b102",
+  "path": "plugins/gateflow/skills/gf-cocotb",
+  "upstream_entry_sha256": "8df92c25b21603d0c3052bfd48650fa163ab290356f610e440b938f8544261cf",
+  "description": "Build self-checking Cocotb tests for emitted RTL with protocol drivers, randomized backpressure, reference models and reproducible failures.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

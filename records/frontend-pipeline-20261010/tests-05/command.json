@@ -1,0 +1,17 @@
+{
+  "host": "Alan",
+  "base_sha": "9747dfebf61930c1f4a9934b2a8aab6425ae72ff",
+  "source_digest": "73f6b39654a93d101954a932c990a0ec88aff347d9b8c3aa0f50b6d58c9c339c",
+  "cwd": "/home/chen/FUN/flow-frontend-pipeline-20261010/design",
+  "argv": [
+    "/home/chen/miniforge3/pkgs/openjdk-20.0.2-haa376d0_2/lib/jvm/bin/java",
+    "-Xmx8g",
+    "-XX:ActiveProcessorCount=4",
+    "-Dsbt.supershell=false",
+    "-Dsbt.server.autostart=false",
+    "-jar",
+    "/home/chen/miniforge3/pkgs/sbt-1.9.7-hd8ed1ab_0/share/sbt/bin/sbt-launch.jar",
+    "testOnly flow.frontend.BreezeFrontendPipelineSpec -- -z \"two RVC branches\""
+  ],
+  "started_utc": "2026-10-10T15:10:41.150952+00:00"
+}

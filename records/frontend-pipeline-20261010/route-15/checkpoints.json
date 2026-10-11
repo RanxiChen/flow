@@ -1,0 +1,17 @@
+[
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/hold-place.dcp",
+    "bytes": 41126219,
+    "sha256": "c279a004659db1f6827cecd25debf8b0178dda452451493997a4a02dc1a71e54"
+  },
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/input-route.dcp",
+    "bytes": 40439098,
+    "sha256": "2baba7412cb85a1ef86a54c65085655ac344c8ac508e8b47c63487606fa21a69"
+  },
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-15/route.dcp",
+    "bytes": 41065452,
+    "sha256": "3698c7c80ba00dbfbdba50c77a022605d53807b1f44fb052f6c168e75c1c0ddd"
+  }
+]

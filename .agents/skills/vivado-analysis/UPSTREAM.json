@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-analysis",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-analysis",
+  "upstream_entry_sha256": "ab1dde031ca2b20ca62c9fd45bfd1c1c2cbfe9ede99d11ec815e06f354a75801",
+  "description": "Interpret Vivado timing, utilization, congestion, CDC and methodology reports; diagnose critical paths from existing evidence.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

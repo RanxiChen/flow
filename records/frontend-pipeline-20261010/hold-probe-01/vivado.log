@@ -1,0 +1,119 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Sun Oct 11 02:14:02 2026
+# Process ID: 1337413
+# Current directory: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01
+# Command line: vivado -mode batch -notrace -source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/hold-probe.tcl
+# Log file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/vivado.log
+# Journal file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/vivado.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4700.000 MHz, CPU Physical cores: 12, Host memory: 67150 MB
+#-----------------------------------------------------------
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/hold-probe.tcl -notrace
+Command: open_checkpoint input-route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.602 ; gain = 0.000 ; free physical = 26674 ; free virtual = 51261
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.12 ; elapsed = 00:00:00.12 . Memory (MB): peak = 2349.816 ; gain = 0.000 ; free physical = 25756 ; free virtual = 50525
+INFO: [Netlist 29-17] Analyzing 2627 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2824.684 ; gain = 72.688 ; free physical = 25364 ; free virtual = 50132
+Restored from archive | CPU: 1.540000 secs | Memory: 49.127403 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2824.684 ; gain = 72.688 ; free physical = 25364 ; free virtual = 50132
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2931.582 ; gain = 0.000 ; free physical = 25238 ; free virtual = 50006
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 253 instances were transformed.
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 178 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 8 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 56 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 2025583be
+----- Checksum: PlaceDB: b85530b8 ShapeSum: 70c6e480 RouteDB: d9396e86 
+open_checkpoint: Time (s): cpu = 00:00:12 ; elapsed = 00:00:13 . Memory (MB): peak = 2931.582 ; gain = 1237.980 ; free physical = 25237 ; free virtual = 50005
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:16 ; elapsed = 00:00:13 . Memory (MB): peak = 3834.906 ; gain = 903.324 ; free physical = 24555 ; free virtual = 49323
+Command: phys_opt_design -insert_negative_edge_ffs
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-241] Physical synthesis in post route mode ( 100.0% nets are fully routed)
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 1.08s |  WALL: 0.64s
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3842.910 ; gain = 0.000 ; free physical = 24536 ; free virtual = 49305
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.029 | TNS=0.000 | WHS=-2.973 | THS=-11746.299 |
+Phase 1 Physical Synthesis Initialization | Checksum: 2ea02d485
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:02 . Memory (MB): peak = 3898.938 ; gain = 56.027 ; free physical = 24540 ; free virtual = 49309
+
+Phase 2 Critical Path Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.029 | TNS=0.000 | WHS=-2.973 | THS=-11746.299 |
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.029 | TNS=0.000 | WHS=-2.973 | THS=-11746.299 |
+Phase 2 Critical Path Optimization | Checksum: 2ea02d485
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:03 . Memory (MB): peak = 3898.938 ; gain = 56.027 ; free physical = 24551 ; free virtual = 49320
+INFO: [Physopt 32-715] Performed route finalization on the design.
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3901.949 ; gain = 0.000 ; free physical = 23630 ; free virtual = 48398
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=0.029 | TNS=0.000 | WHS=-2.973 | THS=-11746.299 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization   |  WNS Gain (ns)  |  TNS Gain (ns)  |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Critical Path  |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Summary of Hold Fix Optimizations
+=================================
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization  |  WHS Gain (ns)  |  THS Gain (ns)  |  Added LUTs  |  Added FFs  |  Optimized Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+|  Total         |          0.000  |          0.000  |           0  |          0  |               0  |           0  |           0  |  00:00:00  |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3901.949 ; gain = 0.000 ; free physical = 23628 ; free virtual = 48397
+Ending Physical Synthesis Task | Checksum: 2ea02d485
+
+Time (s): cpu = 00:00:59 ; elapsed = 00:00:49 . Memory (MB): peak = 3901.949 ; gain = 59.039 ; free physical = 23613 ; free virtual = 48382
+INFO: [Common 17-83] Releasing license: Implementation
+23 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:01:00 ; elapsed = 00:00:49 . Memory (MB): peak = 3901.949 ; gain = 67.043 ; free physical = 23830 ; free virtual = 48599
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 3949.973 ; gain = 40.020 ; free physical = 22950 ; free virtual = 48295
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/after.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 3949.973 ; gain = 48.023 ; free physical = 22590 ; free virtual = 47915
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 02:15:26 2026...

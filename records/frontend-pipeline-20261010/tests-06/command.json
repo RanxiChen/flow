@@ -1,0 +1,17 @@
+{
+  "host": "Alan",
+  "base_sha": "9747dfebf61930c1f4a9934b2a8aab6425ae72ff",
+  "source_digest": "31173b3d330ed14335210ea08b93fff6aeec7183a9d5c2a3156f2f4a00894de7",
+  "cwd": "/home/chen/FUN/flow-frontend-pipeline-20261010/design",
+  "argv": [
+    "/home/chen/miniforge3/pkgs/openjdk-20.0.2-haa376d0_2/lib/jvm/bin/java",
+    "-Xmx8g",
+    "-XX:ActiveProcessorCount=4",
+    "-Dsbt.supershell=false",
+    "-Dsbt.server.autostart=false",
+    "-jar",
+    "/home/chen/miniforge3/pkgs/sbt-1.9.7-hd8ed1ab_0/share/sbt/bin/sbt-launch.jar",
+    "testOnly flow.frontend.BreezeFrontendPipelineSpec flow.frontend.BreezePipelinePredictorSpec flow.mmu.sv39.Sv39MmuSpec flow.mmu.sv39.Sv39StructuresSpec flow.mmu.sv39.Sv39PmpCandidateSpec"
+  ],
+  "started_utc": "2026-10-10T15:20:21.187105+00:00"
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breeze 前端讨论图</title>
+<style>
+  body { margin:0; background:#f4f6f8; color:#26364a; font-family:system-ui,sans-serif; }
+  header { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:14px 24px; background:white; border-bottom:1px solid #dce2e9; }
+  header strong { font-size:18px; }
+  #status { color:#64748b; font-size:14px; }
+  a { color:#245fac; }
+  main { padding:24px; }
+  #diagram { display:block; width:100%; max-width:1600px; height:auto; margin:auto; background:white; box-shadow:0 2px 12px #26364a12; }
+</style>
+<header>
+  <strong>Breeze 前端讨论图</strong>
+  <span id="status" role="status">正在读取图…</span>
+  <a href="breeze-frontend-f0-f2.drawio" download>下载 Draw.io 源文件</a>
+  <a href="breeze-frontend-f0-f2.svg" target="_blank" rel="noopener">打开 SVG</a>
+</header>
+<main><img id="diagram" alt="Breeze 前端 F0–F2 流水线"></main>
+<script>
+  const diagram = document.getElementById('diagram');
+  const status = document.getElementById('status');
+  let current = '';
+  let currentUrl = '';
+  async function update() {
+    try {
+      const response = await fetch('breeze-frontend-f0-f2.svg', {cache:'no-store'});
+      if (!response.ok) throw new Error(response.status);
+      const next = await response.text();
+      if (next !== current) {
+        const url = URL.createObjectURL(new Blob([next], {type:'image/svg+xml'}));
+        await new Promise((resolve, reject) => {
+          const probe = new Image();
+          probe.onload = resolve;
+          probe.onerror = reject;
+          probe.src = url;
+        });
+        diagram.src = url;
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        currentUrl = url;
+        current = next;
+      }
+      status.textContent = '已显示最新图 · 自动同步';
+    } catch (_) {
+      status.textContent = '连接中断，正在重试…';
+    } finally {
+      setTimeout(update, 2000);
+    }
+  }
+  update();
+</script>
+</html>

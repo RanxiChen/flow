@@ -1,0 +1,6 @@
+interface:
+  display_name: "breeze-timing-evidence"
+  short_description: "Hardware workflow: breeze-timing-evidence"
+  default_prompt: "Use $breeze-timing-evidence for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

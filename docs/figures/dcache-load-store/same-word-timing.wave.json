@@ -1,0 +1,110 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "P......."
+    },
+    {
+      "name": "cycle",
+      "wave": "========",
+      "data": [
+        "T",
+        "T+1",
+        "T+2",
+        "T+3",
+        "T+4",
+        "T+5",
+        "T+6",
+        "T+7"
+      ]
+    },
+    {
+      "name": "CPU req.valid",
+      "wave": "11000000"
+    },
+    {
+      "name": "CPU req.ready",
+      "wave": "11xxxxxx"
+    },
+    {
+      "name": "CPU req.fire",
+      "wave": "11000000"
+    },
+    {
+      "name": "S0 / 内部重查",
+      "wave": "==xx=xxx",
+      "data": [
+        "SX",
+        "LX",
+        "LX retry"
+      ]
+    },
+    {
+      "name": "S1：PA/数据",
+      "wave": "x==xx=xx",
+      "data": [
+        "SX",
+        "LX old=7",
+        "LX new=42"
+      ]
+    },
+    {
+      "name": "S2：判定",
+      "wave": "xx==xx=x",
+      "data": [
+        "SX",
+        "LX conflict",
+        "LX pass"
+      ]
+    },
+    {
+      "name": "pending / W",
+      "wave": "xxx=xxxx",
+      "data": [
+        "SX=42"
+      ]
+    },
+    {
+      "name": "Data write enable",
+      "wave": "00010000"
+    },
+    {
+      "name": "S2 PA conflict",
+      "wave": "00010000"
+    },
+    {
+      "name": "SRAM[X]",
+      "wave": "========",
+      "data": [
+        "7",
+        "7",
+        "7",
+        "7",
+        "42",
+        "42",
+        "42",
+        "42"
+      ]
+    },
+    {
+      "name": "Load 结果有效",
+      "wave": "00000001"
+    },
+    {
+      "name": "Load 返回值",
+      "wave": "xxxxxxx=",
+      "data": [
+        "42"
+      ]
+    }
+  ],
+  "config": {
+    "hscale": 2
+  },
+  "head": {
+    "text": "② 同字冲突：等待写入，回 S0 重读"
+  },
+  "foot": {
+    "text": "T+4 是内部重查，无 CPU fire。ready 的后续开闭未定，用 x 表示。"
+  }
+}

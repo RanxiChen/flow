@@ -1,0 +1,93 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "P......."
+    },
+    {
+      "name": "cycle",
+      "wave": "========",
+      "data": [
+        "T",
+        "T+1",
+        "T+2",
+        "T+3",
+        "T+4",
+        "T+5",
+        "T+6",
+        "T+7"
+      ]
+    },
+    {
+      "name": "CPU req.valid",
+      "wave": "11110000"
+    },
+    {
+      "name": "CPU req.ready",
+      "wave": "11111111"
+    },
+    {
+      "name": "CPU req.fire",
+      "wave": "11110000"
+    },
+    {
+      "name": "S0：读/接收",
+      "wave": "====xxxx",
+      "data": [
+        "SX",
+        "LY",
+        "SZ",
+        "LV"
+      ]
+    },
+    {
+      "name": "S1：PA/数据",
+      "wave": "x====xxx",
+      "data": [
+        "SX",
+        "LY",
+        "SZ",
+        "LV"
+      ]
+    },
+    {
+      "name": "S2：判定",
+      "wave": "xx====xx",
+      "data": [
+        "SX",
+        "LY",
+        "SZ",
+        "LV"
+      ]
+    },
+    {
+      "name": "pending / W",
+      "wave": "xxx=x=xx",
+      "data": [
+        "SX",
+        "SZ"
+      ]
+    },
+    {
+      "name": "Data write enable",
+      "wave": "00010100"
+    },
+    {
+      "name": "结果已就绪",
+      "wave": "xxxx=x=x",
+      "data": [
+        "SX + LY",
+        "SZ + LV"
+      ]
+    }
+  ],
+  "config": {
+    "hscale": 2
+  },
+  "head": {
+    "text": "① 不同字混合流水"
+  },
+  "foot": {
+    "text": "每列为一拍；事件在右边沿生效。结果就绪不等于 CPU 同拍接收两笔。"
+  }
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "mermaid-diagram"
+  short_description: "Hardware workflow: mermaid-diagram"
+  default_prompt: "Use $mermaid-diagram for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

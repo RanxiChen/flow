@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-tcl",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-tcl",
+  "upstream_entry_sha256": "10b561de680f2e4470e75be0595db241281789873a48e97e56bfc10755c30517",
+  "description": "Generate, review or execute scoped Vivado Tcl automation with explicit inputs, checkpoints and verifiable outputs.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

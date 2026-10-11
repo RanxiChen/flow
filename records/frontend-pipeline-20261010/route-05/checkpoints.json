@@ -1,0 +1,17 @@
+[
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-05/place.dcp",
+    "bytes": 30546630,
+    "sha256": "a0e1a33a9a5b01b5c28e97fcf330fe18135b3cfd85e8c024b5223af7d669dab0"
+  },
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-05/route.dcp",
+    "bytes": 34131924,
+    "sha256": "52901eb691753e7421f2881fa7c1213e29e4d6dead1a60601362346399825b65"
+  },
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-05/synth.dcp",
+    "bytes": 27021971,
+    "sha256": "7213bd24a6204acb6e9b5be524a722e45dd0b9e6b9915e54bf7a94eea2e08954"
+  }
+]

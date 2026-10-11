@@ -1,0 +1,52 @@
+[
+  {
+    "path": "tests-08/checkpoints.json",
+    "bytes": 3,
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  {
+    "path": "tests-08/command.json",
+    "bytes": 781,
+    "sha256": "a9732c2d0f92a6af7fed1051c442aec96753fc99df881fa034255617b83ebf1a"
+  },
+  {
+    "path": "tests-08/log.txt",
+    "bytes": 5893,
+    "sha256": "2c434c1d887f40514484fd8a734e4b9acf951ba42dd9734bdccd60b7df0a813d"
+  },
+  {
+    "path": "tests-08/result.json",
+    "bytes": 887,
+    "sha256": "9c2822b70e8a9153c66b0748fff2ab966a9046595fb080fb8776946fc0bef66f"
+  },
+  {
+    "path": "tests-08/source-manifest.json",
+    "bytes": 37483,
+    "sha256": "554ed13ac8cb97ceea6748faf57700e7786b694b111a87c59a09ee58246af745"
+  },
+  {
+    "path": "tests-08/test-reports/TEST-flow.frontend.BreezeFrontendPipelineSpec.xml",
+    "bytes": 9228,
+    "sha256": "acd070e7265ab3d76db194b81b591d5a7303e04fc85358d0aaf3bf43f3dcd629"
+  },
+  {
+    "path": "tests-08/test-reports/TEST-flow.frontend.BreezePipelinePredictorSpec.xml",
+    "bytes": 4784,
+    "sha256": "f5708fbcf7ee22025e78eaca6b8ea6af366950c7c4ec226f34bdc6609f09b868"
+  },
+  {
+    "path": "tests-08/test-reports/TEST-flow.mmu.sv39.Sv39MmuSpec.xml",
+    "bytes": 7685,
+    "sha256": "d74eb53729323fa858a9927fe0a3d5ba0386355e5556b142d204c448fa824f3b"
+  },
+  {
+    "path": "tests-08/test-reports/TEST-flow.mmu.sv39.Sv39PmpCandidateSpec.xml",
+    "bytes": 4534,
+    "sha256": "ebd7ccdd6cdcd004f4bc3f321d92f6a23fd0371d96019ffc72e858f5bdea1967"
+  },
+  {
+    "path": "tests-08/test-reports/TEST-flow.mmu.sv39.Sv39StructuresSpec.xml",
+    "bytes": 7261,
+    "sha256": "960780115a44432b9bc0739a77d9cde2869dbf6f9e7c2b40cebd091a78d1815e"
+  }
+]

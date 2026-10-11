@@ -1,0 +1,5 @@
+{
+  "utc": "2026-10-10T15:41:21.411567+00:00",
+  "pid": 794837,
+  "reason": "Obsolete baseline: negative synthesis/place and routed console timing; stop prolonged post-route optimization while preserving logs, inputs and existing checkpoints. Final candidate is route-05."
+}

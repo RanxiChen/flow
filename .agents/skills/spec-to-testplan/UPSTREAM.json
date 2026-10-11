@@ -1,0 +1,14 @@
+{
+  "skill": "spec-to-testplan",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/IC-Design-Verify/wujian100_uvm",
+  "commit": "38e67250aff41b501816cbf997d77b3073694001",
+  "path": ".claude/skills/spec-to-testplan",
+  "upstream_entry_sha256": "68722cd6179ef718a57e756e293cefac5a6ba8195622c824f810f1f0b5e9b69e",
+  "description": "Turn a hardware specification and available RTL or Chisel interfaces into traceable verification scenarios and a requirement coverage plan.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

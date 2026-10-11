@@ -1,0 +1,11 @@
+{
+  "skill": "breeze-timing-evidence",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "origin": "Project-authored",
+  "description": "Bind Breeze timing and resource claims to matching source/config/tool reports and evaluate pipeline changes from measured critical paths.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

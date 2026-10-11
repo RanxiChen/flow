@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-sim",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-sim",
+  "upstream_entry_sha256": "6ab6ca723b54c586466055d282067b4ea0a53337d4a14b68294c614dcf47bcb9",
+  "description": "Choose and debug Vivado behavioral, netlist or timing simulation and activity capture for an existing hardware design.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "host": "Alan",
+  "cwd": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/phase-interface-02",
+  "compile_argv": [
+    "/usr/local/bin/verilator",
+    "--binary",
+    "--timing",
+    "-Wno-fatal",
+    "--top-module",
+    "phase_interface_test",
+    "--Mdir",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/phase-interface-02/obj",
+    "-j",
+    "4",
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/phase-interface-02/phase-interface.sv"
+  ],
+  "source_digest": "778553faff6ff7c72e3f7304c6278ffea8f01be383a5aa6e7bedd28bab91a6fc",
+  "test_sha256": "b3850f807a9f06a74741f4f53a9257baa1db2a5d6dc9e32be186d7933cc90d5f",
+  "host_selection": {
+    "cloud_chen": "finite 8s SSH connection timeout; exit 255",
+    "Alan": "flow activated; 57 GB free disk; 47 GB available memory"
+  },
+  "verilator": "Verilator 5.028 2024-08-21 rev v5.028",
+  "started_utc": "2026-10-10T18:21:42.233641+00:00",
+  "compile_exit_code": 0,
+  "run_argv": [
+    "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/phase-interface-02/obj/Vphase_interface_test"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 111.9388011849951,
+  "ended_utc": "2026-10-10T18:23:34.172652+00:00"
+}

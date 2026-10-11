@@ -1,0 +1,6 @@
+interface:
+  display_name: "spec-to-testplan"
+  short_description: "Hardware workflow: spec-to-testplan"
+  default_prompt: "Use $spec-to-testplan for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

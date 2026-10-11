@@ -2,7 +2,7 @@
 
 状态：第一批 RTL 已完成；2026-10-09 已在 cloud_chen 完成编译、测试所需 RTL 生成及 42 项定向功能子集，全部通过，含三个短集群程序和浮点边界加验。未运行完整回归。用户随后授权单核/四核 Vivado 并行启动；两项已于北京时间 11:02:34 通过 LiteX 在 Alan 启动，当前运行中。主仓 d276f8b、CVFPU 3cbca77 及实际起止/wall time 记录在 `records/soc3d-vivado-20261009/`。起点 `d364bac`；-1.798 ns 和四核超时均为起点历史证据，不代表本批结果。结果、覆盖与复现入口见 [SOC-3d-timing-batch-report.md](SOC-3d-timing-batch-report.md)。
 
-2026-10-09 用户根据当前综合路径与控制边界审阅授权先改 RTL、随后授权补必要测试。新候选已完成 CSR/PMP 候选解码与最终提交许可分离，以及 L1D S2 局部 Boolean 决策重构；新增 4 项测试，cloud_chen 编译、生成测试 RTL 并运行选定 39 项，全部通过，含三个短集群程序，未跑完整回归。源码仍未提交，证据在 `records/soc3d-control-tests-20261009/`。本次不增加流水级；第一批 Vivado 保持原固定输入。新候选无综合或 routed 证据，不能把第一批物理结果用于此候选。
+2026-10-09 用户根据当前综合路径与控制边界审阅授权先改 RTL、随后授权补必要测试。新候选已完成 CSR/PMP 候选解码与最终提交许可分离，以及 L1D S2 局部 Boolean 决策重构；新增 4 项测试，cloud_chen 编译、生成测试 RTL 并运行选定 39 项，全部通过，含三个短集群程序，未跑完整回归。定向测试证据在 `records/soc3d-control-tests-20261009/`。随后固定为 `30f4b0e02eba45887678bf19a26ee249497bdb01`，用户授权 cloud_chen 完整回归、Alan 单核/四核并行 LiteX → Vivado，已于 13:05 启动，无 timeout；记录在 `records/soc3d-30f4b0e-20261009/`。本次不增加流水级；第一批 Vivado 保持原固定输入。新候选尚无完整回归或最终 routed 结果，不能把第一批物理结果用于此候选。
 
 ## 第一批：一起修改，一次验证，一次单核布线
 
@@ -31,4 +31,4 @@
 
 固定 100 MHz、器件和现有约束；不用时序例外掩盖失败。原顺序为单核完成布线、setup/hold 通过并生成 bitstream，再跑四核；2026-10-09 用户明确授权两项并行启动，本轮按最新指令执行，各自记录 routed setup/hold 与 bitstream 边界。本轮用户随后于 11:37 明确要求解除两项现有作业时限且不重跑，已停用外层 timeout，保留原 Vivado 与 wall time 起点。每批保留准确 SHA、功能结果、routed WNS/TNS、失败端点和各关键路径；两批仍失败，再依据剩余路径决定下一批。
 
-仿真、编译和 RTL 生成前重新读取共享主机配置，先校验 cloud_chen，不可用再用 Alan；Vivado 使用 Alan。沿用现有作业超时与证据保留规则。
+仿真、编译和 RTL 生成前重新读取共享主机配置，先校验 cloud_chen，不可用再用 Alan；Vivado 使用 Alan。按用户要求，本轮 Vivado 无时间限制；保留真实起止时间、monotonic wall time 和独立结果证据。

@@ -1,0 +1,64 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-13/hold-eco.tcl -notrace
+Command: open_checkpoint input-route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.602 ; gain = 0.000 ; free physical = 29697 ; free virtual = 56095
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.12 . Memory (MB): peak = 2350.816 ; gain = 0.000 ; free physical = 28240 ; free virtual = 54819
+INFO: [Netlist 29-17] Analyzing 2627 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2826.730 ; gain = 74.688 ; free physical = 27709 ; free virtual = 54288
+Restored from archive | CPU: 1.520000 secs | Memory: 50.652702 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2826.730 ; gain = 74.688 ; free physical = 27709 ; free virtual = 54289
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2933.629 ; gain = 0.000 ; free physical = 27576 ; free virtual = 54156
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 253 instances were transformed.
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 178 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 8 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 56 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 151030898
+----- Checksum: PlaceDB: 2a399d8c ShapeSum: 88b3d712 RouteDB: 9e1593fa 
+open_checkpoint: Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2933.629 ; gain = 1240.027 ; free physical = 27576 ; free virtual = 54156
+Locking other logic
+Locking Netlist...
+Locking Placement...
+WARNING: [Constraints 18-4434] Global Clock Buffer 'globalClock/clock_buffer' is LOCed to site 'BUFGCE_X0Y96'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+get_timing_paths: Time (s): cpu = 00:00:15 ; elapsed = 00:00:12 . Memory (MB): peak = 3865.328 ; gain = 931.699 ; free physical = 26597 ; free virtual = 53177
+WARNING: [Netlist 29-48] Cannot modify dont-touch net 'frontend/predictor/btb/io_deq_bits_target[12]'.
+WARNING: [Netlist 29-48] Cannot modify dont-touch net 'frontend/predictor/btb/io_deq_bits_target[12]'.
+ERROR: [Coretcl 2-1653] could not connect net 'frontend/predictor/btb/io_deq_bits_target[12]' to requested pins.
+ERROR: [Common 17-39] 'connect_net' failed due to earlier errors.
+
+    while executing
+"connect_net -hier -net $net -objects [get_pins $name/I0]"
+    ("foreach" body line 15)
+    invoked from within
+"foreach path $paths {
+    set pin [get_property ENDPOINT_PIN $path]
+    if {[dict exists $endpoints $pin]} { continue }
+    dict set endpoints $pin 1
+..."
+    (file "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-13/hold-eco.tcl" line 13)
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 02:29:47 2026...

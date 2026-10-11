@@ -1,0 +1,15 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[warn] sbt-1.9.7.jar no longer exists at /home/chen/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/sbt/1.9.7/sbt-1.9.7.jar
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] compiling 104 Scala sources to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 84 Scala sources to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/test-classes ...
+[error] /home/chen/FUN/flow-frontend-pipeline-20261010/design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala:133:32: value =/= is not a member of Int
+[error]         val compressed = i % 3 =/= 1
+[error]                                ^
+[error] one error found
+[error] (Test / compileIncremental) Compilation failed
+[error] Total time: 31 s, completed Oct 10, 2026, 10:40:37 PM

@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-debug",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-debug",
+  "upstream_entry_sha256": "3168c0d74161edfabc44fd2a9e94c2f0f1e0a8d59dffe3eedade02764077f429",
+  "description": "Plan or use Vivado ILA, VIO and hardware-debug captures for a specified FPGA failure and trigger hypothesis.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

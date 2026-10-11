@@ -1,0 +1,37 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/test-classes ...
+[info] done compiling
+[info] BreezeFrontendPipelineSpec:
+[info] - VIPT streams mixed RVC/RV32 through line boundaries and random consumer stalls
+[info] - cross-page RV32 reassembles after two real Sv39 walks
+[info] - PMP allows a final RVC but faults the second parcel of a straddling RV32
+[info] - redirect drains a killed refill and same-address reuse returns fresh data
+[info] - F2 direct call and return use instruction length and speculative RAS
+[info] - F2 repairs missing NT branch history and global cancellation restores committed history
+[info] - split PMP matches integer first-overlap rules on page and region boundaries
+[info] - warm RV32 hits accept a new fetch window every cycle
+[info] - missing second page faults the original straddling instruction precisely
+[info] - resolution overrides younger decode and restores before-history plus actual direction
+[info] - stale BTB at a RV32 head is invalidated without losing its second parcel
+[info] - RAS recovery includes the resolving call before a new return uses it
+[info] - sfence remapping preserves VIPT index but compares the new physical tag
+[info] - 2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons
+[info] - taken prediction on a missed group discards its deferred sequential request
+[info] - instruction output remains stable while stalled and resumes in order
+[info] - permission CSR restart drops all previously authorized queued instructions
+[info] - refill errors return a precise fault and do not install an executable line
+[info] BreezePipelinePredictorSpec:
+[info] - PHT broadcasts identical indices, reports bank conflicts and trains current counters
+[info] - BTB PC+2 crosses bank and set, updates are associative and invalidation preserves its neighbor
+[info] Run completed in 1 minute, 45 seconds.
+[info] Total number of tests run: 20
+[info] Suites: completed 2, aborted 0
+[info] Tests: succeeded 20, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 113 s (01:53), completed Oct 10, 2026, 11:03:13 PM

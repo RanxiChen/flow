@@ -1,0 +1,14 @@
+[
+  {
+    "path": "hold-probe.tcl",
+    "sha256": "2ab54591b0e2540e50ac2c6416bfd47d342da423a2a5b63cfcbf7dce95e513d5"
+  },
+  {
+    "path": "input-route.dcp",
+    "sha256": "e28baa64b0ccc33e897f66012da7f63812ef6ddbe5033b4f8d56e8ea3d12c02c"
+  },
+  {
+    "path": "source-manifest.json",
+    "sha256": "da16a78b5aee3d668d245e2ab9d40bf58b33181d3eb85cfecd71eda2b18fe1aa"
+  }
+]

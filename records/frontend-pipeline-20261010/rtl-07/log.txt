@@ -1,0 +1,7 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] running flow.frontend.GenerateBreezeFrontendTimingHarness --target-dir ../rtl-timing
+[success] Total time: 3 s, completed Oct 11, 2026, 12:40:28 AM

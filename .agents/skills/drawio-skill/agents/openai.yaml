@@ -1,0 +1,7 @@
+interface:
+  display_name: "drawio-skill"
+  short_description: "Hardware workflow: drawio-skill"
+  brand_color: "#1A73E8"
+  default_prompt: "Use $drawio-skill for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

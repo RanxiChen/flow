@@ -1,0 +1,78 @@
+[info] welcome to sbt 1.9.7 (N/A Java 20.0.2-internal)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-frontend-pipeline-20261010/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-frontend-pipeline-20261010/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /home/chen/FUN/flow-frontend-pipeline-20261010/design/target/scala-2.13/test-classes ...
+[info] done compiling
+[info] BreezeFrontendPipelineSpec:
+[info] - VIPT streams mixed RVC/RV32 through line boundaries and random consumer stalls
+[info] - cross-page RV32 reassembles after two real Sv39 walks
+[info] - PMP allows a final RVC but faults the second parcel of a straddling RV32
+[info] - redirect drains a killed refill and same-address reuse returns fresh data
+[info] - F2 direct call and return use instruction length and speculative RAS
+[info] - F2 repairs missing NT branch history and global cancellation restores committed history
+[info] - split PMP matches integer first-overlap rules on page and region boundaries
+[info] - warm RV32 hits accept a new fetch window every cycle
+[info] - missing second page faults the original straddling instruction precisely
+[info] - resolution overrides younger decode and restores before-history plus actual direction
+[info] - stale BTB at a RV32 head is invalidated without losing its second parcel
+[info] - RAS recovery includes the resolving call before a new return uses it
+[info] - sfence remapping preserves VIPT index but compares the new physical tag
+[info] - 2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons
+[info] - taken prediction on a missed group discards its deferred sequential request
+[info] - instruction output remains stable while stalled and resumes in order
+[info] - permission CSR restart drops all previously authorized queued instructions
+[info] - refill errors return a precise fault and do not install an executable line
+[info] - two RVC branches select NT-shifted history and discard the younger slot after T
+[info] - compressed JALR, JR and J predecode alongside expansion and preserve return length
+[info] - registered timing-boundary FIFO preserves ordering under stalls and cancellation
+[info] - pipelined iTLB kill discards a sampled query without feeding kill into request ready
+[info] - refill acceptance handles same-edge kill, later cancellation and fence during installation
+[info] BreezePipelinePredictorSpec:
+[info] - PHT broadcasts identical indices, reports bank conflicts and trains current counters
+[info] - BTB PC+2 crosses bank and set, updates are associative and invalidation preserves its neighbor
+[info] Sv39MmuSpec:
+[info] - T1 Bare, M and MPRV bypass preserve all 64 address bits
+[info] - T2 noncanonical positive and negative addresses fault without a walk
+[info] - T3-T5 latency 1: exact three-level timing and both walk-cache shortcuts
+[info] - T3-T5 latency 5: exact three-level timing and both walk-cache shortcuts
+[info] - T6 2 MiB and 1 GiB leaves translate every offset directly, including negative canonical VA
+[info] - T7 malformed PTEs fault, do not refill or cache faults, and nonleaf U/A/D are ignored
+[info] - T8 access faults at each walk level take precedence over invalid PTE data
+[info] - T9 exhaustive dynamic permission matrix for valid leaf PTEs
+[info] - T10 ASID isolation, global leaf sharing, and nonleaf G is not inherited
+[info] - T11 all sfence forms, ASID filtering, global preservation, superpage ranges, and walk-cache flush
+[info] - T12 simultaneous misses service D before I
+[info] - T13 kills before, with and after grant; killed walks refill but never deliver faults
+[info] - T14 back-to-back hit then miss drops the simultaneously accepted younger request
+[info] - T15 invalid ways are used first and tree PLRU chooses the next base and superpage victims
+[info] - T16 random PTW backpressure preserves address and results with latency 1 and 5
+[info] - T17 seeded random sparse page tables and accesses agree with the independent Sv39 walker
+[info] - T18 a lookup held in S1 keeps the MMU busy until kill retires it
+[info] Sv39StructuresSpec:
+[info] - parameters reject non-powers of two and non-16-bit ASIDs
+[info] - tree PLRU 1 ways agrees with a software tree after random touches
+[info] - tree PLRU 2 ways agrees with a software tree after random touches
+[info] - tree PLRU 4 ways agrees with a software tree after random touches
+[info] - tree PLRU 8 ways agrees with a software tree after random touches
+[info] - tree PLRU 16 ways agrees with a software tree after random touches
+[info] - walk-cache 1 sets, 1 ways: ASID, invalid-first replacement and flush
+[info] - walk-cache 2 sets, 1 ways: ASID, invalid-first replacement and flush
+[info] - walk-cache 1 sets, 2 ways: ASID, invalid-first replacement and flush
+[info] - walk-cache 2 sets, 4 ways: ASID, invalid-first replacement and flush
+[info] - walk-cache 4 sets, 8 ways: ASID, invalid-first replacement and flush
+[info] - MMU supports one set and 1 ways including zero-width PLRU
+[info] - MMU supports one set and 2 ways including zero-width PLRU
+[info] - MMU supports one set and 8 ways including zero-width PLRU
+[info] - SOC3d local TLB ports preserve every set way and targeted SFENCE across bank switches
+[info] Sv39PmpCandidateSpec:
+[info] - SOC3d candidate PA matches all leaf sizes while page faults retain zero public PA
+[info] Run completed in 3 minutes, 3 seconds.
+[info] Total number of tests run: 58
+[info] Suites: completed 5, aborted 0
+[info] Tests: succeeded 58, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 190 s (03:10), completed Oct 10, 2026, 11:51:25 PM

@@ -1,0 +1,17 @@
+{
+  "host": "Alan",
+  "base_sha": "9747dfebf61930c1f4a9934b2a8aab6425ae72ff",
+  "source_digest": "58f55000f3f1013538d0744d02461340d26d205f8ec8c154954952961b27ffdc",
+  "cwd": "/home/chen/FUN/flow-frontend-pipeline-20261010/design",
+  "argv": [
+    "/home/chen/miniforge3/pkgs/openjdk-20.0.2-haa376d0_2/lib/jvm/bin/java",
+    "-Xmx8g",
+    "-XX:ActiveProcessorCount=4",
+    "-Dsbt.supershell=false",
+    "-Dsbt.server.autostart=false",
+    "-jar",
+    "/home/chen/miniforge3/pkgs/sbt-1.9.7-hd8ed1ab_0/share/sbt/bin/sbt-launch.jar",
+    "runMain flow.frontend.GenerateBreezeFrontendTimingHarness --target-dir ../rtl-timing"
+  ],
+  "started_utc": "2026-10-10T16:06:55.392179+00:00"
+}

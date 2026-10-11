@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-synth",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-synth",
+  "upstream_entry_sha256": "fc1f24c1136a5ceea38fd014fdcd77dddec55ef66c8a06434e487653ac93b6a4",
+  "description": "Analyze Vivado synthesis and resource inference, including RAM modes, byte enables, DSPs, FSMs and hierarchy.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "skill": "breeze-spec-verification",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "origin": "Project-authored",
+  "description": "Map Breeze architecture and RTL requirements to tests, assertions, reference-model behavior and separately scoped validation evidence.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

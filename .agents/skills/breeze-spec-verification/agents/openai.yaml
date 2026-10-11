@@ -1,0 +1,6 @@
+interface:
+  display_name: "breeze-spec-verification"
+  short_description: "Hardware workflow: breeze-spec-verification"
+  default_prompt: "Use $breeze-spec-verification for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

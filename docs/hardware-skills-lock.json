@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "installed_on": "2026-10-04",
+  "scope": "Flow project .agents/skills",
+  "skills": [
+    {
+      "skill": "gf-plan",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/codejunkie99/Gateflow-Plugin",
+      "commit": "bf7e94c002eab8ce8ea76365a7490daaaba3b102",
+      "path": "plugins/gateflow/skills/gf-plan",
+      "upstream_entry_sha256": "09454fcccb0718f51480cbe36cb1eab8a4f13fa58ab959dbdc6b07df5939da8e",
+      "description": "Plan hardware modules, interfaces, pipelines, FSMs and verification before implementation; use for architecture or RTL planning requests.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "gf-formal",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/codejunkie99/Gateflow-Plugin",
+      "commit": "bf7e94c002eab8ce8ea76365a7490daaaba3b102",
+      "path": "plugins/gateflow/skills/gf-formal",
+      "upstream_entry_sha256": "436aa877fde1af0bbd06e183aa82854781efa78496472d33a00e7e17fc8afa5b",
+      "description": "Specify and check local RTL safety, bounded behavior and liveness properties with SymbiYosys; explain assumptions, proof scope and counterexamples.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "gf-cocotb",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/codejunkie99/Gateflow-Plugin",
+      "commit": "bf7e94c002eab8ce8ea76365a7490daaaba3b102",
+      "path": "plugins/gateflow/skills/gf-cocotb",
+      "upstream_entry_sha256": "8df92c25b21603d0c3052bfd48650fa163ab290356f610e440b938f8544261cf",
+      "description": "Build self-checking Cocotb tests for emitted RTL with protocol drivers, randomized backpressure, reference models and reproducible failures.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "spec-to-testplan",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/IC-Design-Verify/wujian100_uvm",
+      "commit": "38e67250aff41b501816cbf997d77b3073694001",
+      "path": ".claude/skills/spec-to-testplan",
+      "upstream_entry_sha256": "68722cd6179ef718a57e756e293cefac5a6ba8195622c824f810f1f0b5e9b69e",
+      "description": "Turn a hardware specification and available RTL or Chisel interfaces into traceable verification scenarios and a requirement coverage plan.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-analysis",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-analysis",
+      "upstream_entry_sha256": "ab1dde031ca2b20ca62c9fd45bfd1c1c2cbfe9ede99d11ec815e06f354a75801",
+      "description": "Interpret Vivado timing, utilization, congestion, CDC and methodology reports; diagnose critical paths from existing evidence.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-timing-closure",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-timing-closure",
+      "upstream_entry_sha256": "b9f2a84c561cf8ba43d4aa3ad49e3a63580590833a4d80fc863192bf8e42fc42",
+      "description": "Optimize Vivado timing within fixed design constraints, compare implementation candidates and preserve the best measured result.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-constraints",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-constraints",
+      "upstream_entry_sha256": "7c8d60eccab8eae7eb938497e191f0ce4ef21e21977c9034b8c6614241b97ff2",
+      "description": "Review or author Vivado XDC for clocks, I/O timing, CDC and justified timing exceptions tied to interface contracts.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-synth",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-synth",
+      "upstream_entry_sha256": "fc1f24c1136a5ceea38fd014fdcd77dddec55ef66c8a06434e487653ac93b6a4",
+      "description": "Analyze Vivado synthesis and resource inference, including RAM modes, byte enables, DSPs, FSMs and hierarchy.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-impl",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-impl",
+      "upstream_entry_sha256": "bf376935a0a2df5fec769db7183044d1be9b0f0074e147d72b9cd00614ffa69a",
+      "description": "Plan or run Vivado placement, routing and physical optimization with checkpoints, congestion diagnosis and candidate comparisons.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-debug",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-debug",
+      "upstream_entry_sha256": "3168c0d74161edfabc44fd2a9e94c2f0f1e0a8d59dffe3eedade02764077f429",
+      "description": "Plan or use Vivado ILA, VIO and hardware-debug captures for a specified FPGA failure and trigger hypothesis.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-sim",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-sim",
+      "upstream_entry_sha256": "6ab6ca723b54c586466055d282067b4ea0a53337d4a14b68294c614dcf47bcb9",
+      "description": "Choose and debug Vivado behavioral, netlist or timing simulation and activity capture for an existing hardware design.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vivado-tcl",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vivado-tcl",
+      "upstream_entry_sha256": "10b561de680f2e4470e75be0595db241281789873a48e97e56bfc10755c30517",
+      "description": "Generate, review or execute scoped Vivado Tcl automation with explicit inputs, checkpoints and verifiable outputs.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "vitis-hls-synthesis",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+      "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+      "path": "vitis-hls-synthesis",
+      "upstream_entry_sha256": "5da357e21e9849ae47792e5e812423157403b82d04cd33ce90b17485955e771d",
+      "description": "Analyze or synthesize C/C++ HLS kernels with Vitis, including pipeline initiation interval, interfaces, memory ports and co-simulation.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "drawio",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/jgraph/drawio-mcp",
+      "commit": "eebe7def96409a15511a51fda958f4a620c2300a",
+      "path": "plugins/codex/drawio/skills/drawio",
+      "upstream_entry_sha256": "5e1d5460fc6a2da7da98ad851841ec174670f42c0b7339835cc709957b9328f7",
+      "description": "Create native editable Draw.io architecture, pipeline or interface diagrams and optional SVG/PNG/PDF exports.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ],
+      "added_shared_references": [
+        "references/xml-reference.md",
+        "references/mermaid-reference.md"
+      ]
+    },
+    {
+      "skill": "mermaid-diagram",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/trikitrok/mod-mermaid-diagram-skill",
+      "commit": "29c2e1f80385acb03cccbac5034771f6a812e9a8",
+      "path": "skills/mermaid-diagram",
+      "license_note": "No root license file found at pinned revision; do not infer a license.",
+      "upstream_entry_sha256": "eece73b0d3979358e6c4aff6ad573fd03249017c2150c232a03e7f67883b2968",
+      "description": "Create source-grounded Mermaid FSM, sequence, dependency and architecture diagrams for repository documents, then render and inspect them.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "drawio-skill",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "repository": "https://github.com/Agents365-ai/drawio-skill",
+      "commit": "88fd9236bc532aac4c25cb008a8bd59bc650b904",
+      "path": "skills/drawio-skill",
+      "upstream_entry_sha256": "2a510dea53b7b261ed0272165666ddc819e7659cece2103ff42449e2b570bd33",
+      "description": "Maintain editable Draw.io models with structural validation, source provenance, incremental layout-preserving updates and optional semantic queries.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "drawio-validated-workflow",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "local_source": "/home/chen/.omp/agent/skills/drawio-validated-workflow",
+      "upstream_entry_sha256": "d9b971f24f4659ab68628fb7bc226cec19b521b4a4d9cb26ba8c98c2c9de1d02",
+      "description": "Create and review native Draw.io files against explicit content/connection contracts, structural checks and rendered previews.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml",
+        "scripts/render_drawio.sh",
+        "scripts/render_drawio.py"
+      ]
+    },
+    {
+      "skill": "excalidraw-validated-workflow",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "local_source": "/home/chen/.omp/agent/skills/excalidraw-validated-workflow",
+      "upstream_entry_sha256": "d59b326c4b3d84c94ab2ab963d82b912ab0b05c2461f8ff0e89bc26f0f9374ea",
+      "description": "Create editable Excalidraw whiteboard diagrams, check bindings/content contracts and render locally for visual review.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "hardware-wavedrom",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "origin": "Project-authored",
+      "description": "Describe and render cycle-accurate hardware scenarios using WaveJSON, including valid/ready, pipeline occupancy, stalls, replay and side effects.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "breeze-microarchitecture-review",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "origin": "Project-authored",
+      "description": "Review Breeze CPU and memory mechanisms for concurrent flow, hazards, recovery, commit boundaries, resource ownership and timing tradeoffs before RTL changes.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "breeze-spec-verification",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "origin": "Project-authored",
+      "description": "Map Breeze architecture and RTL requirements to tests, assertions, reference-model behavior and separately scoped validation evidence.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    },
+    {
+      "skill": "breeze-timing-evidence",
+      "adapted_on": "2026-10-04",
+      "adapter": "Flow/Breeze project",
+      "origin": "Project-authored",
+      "description": "Bind Breeze timing and resource claims to matching source/config/tool reports and evaluate pipeline changes from measured critical paths.",
+      "adapted_files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    }
+  ],
+  "installation_checks": {
+    "skill_entries": {
+      "result": "PASS",
+      "count": 22
+    },
+    "active_resource_links": "PASS",
+    "python_syntax": {
+      "result": "PASS",
+      "files": 91
+    },
+    "drawing_helpers": {
+      "drawio_valid_and_dangling_edge": "PASS",
+      "excalidraw_native_structure_and_local_svg": "PASS",
+      "drawio_export_wrapper": "PASS with mock CLI; path-with-spaces and refusal to overwrite checked",
+      "drawio_desktop_export": "NOT RUN"
+    },
+    "hardware_tool_execution": "NOT RUN",
+    "third_party_examples_execution": "NOT RUN"
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "path": "phase-interface-02/checkpoints.json",
+    "bytes": 3,
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  {
+    "path": "phase-interface-02/command.json",
+    "bytes": 912,
+    "sha256": "f3a904122e601bb01f1e2511ef89f787358e151ca63e4f64b67ba5c6159f59c4"
+  },
+  {
+    "path": "phase-interface-02/console.log",
+    "bytes": 4555,
+    "sha256": "4e886b2319445ac1b533d98963f086b72fd892cf4979ed37f9a9b31defccdb68"
+  },
+  {
+    "path": "phase-interface-02/phase-interface.sv",
+    "bytes": 2104,
+    "sha256": "b3850f807a9f06a74741f4f53a9257baa1db2a5d6dc9e32be186d7933cc90d5f"
+  },
+  {
+    "path": "phase-interface-02/result.json",
+    "bytes": 1168,
+    "sha256": "1e7f6e5c2696a987067bcb46422c9f5679d1aa13c31e7edd03d7662dcde5e1ea"
+  },
+  {
+    "path": "phase-interface-02/source-manifest.json",
+    "bytes": 37483,
+    "sha256": "da16a78b5aee3d668d245e2ab9d40bf58b33181d3eb85cfecd71eda2b18fe1aa"
+  }
+]

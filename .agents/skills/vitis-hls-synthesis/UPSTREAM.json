@@ -1,0 +1,14 @@
+{
+  "skill": "vitis-hls-synthesis",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vitis-hls-synthesis",
+  "upstream_entry_sha256": "5da357e21e9849ae47792e5e812423157403b82d04cd33ce90b17485955e771d",
+  "description": "Analyze or synthesize C/C++ HLS kernels with Vitis, including pipeline initiation interval, interfaces, memory ports and co-simulation.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

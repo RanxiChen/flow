@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="880" viewBox="0 0 1440 880"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#64748b"/></marker></defs><rect width="1440" height="880" fill="#f8fafc"/>
+<rect x="48" y="34" width="1344" height="58" rx="12" fill="#f8fafc" stroke="#f8fafc"/>
+<text x="720.0" y="63.0" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="32" font-weight="600">BREEZE / KCU105 Linux platform</text>
+<rect x="48" y="98" width="1344" height="32" rx="12" fill="#f8fafc" stroke="#f8fafc"/>
+<text x="720.0" y="114.0" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="16" font-weight="600">Validated baseline  ·  1 hart @ 100 MHz  ·  SD-loaded initramfs  ·  FASE enabled / no ILA</text>
+<rect x="60" y="185" width="230" height="110" rx="12" fill="#dbeafe" stroke="#cbd5e1"/>
+<text x="175.0" y="227.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">Host workstation</text>
+<text x="175.0" y="252.6" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">JTAG / UART console</text>
+<rect x="360" y="185" width="260" height="110" rx="12" fill="#ede9fe" stroke="#cbd5e1"/>
+<text x="490.0" y="227.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">FASE controller</text>
+<text x="490.0" y="252.6" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">Flight recorder</text>
+<rect x="720" y="185" width="290" height="110" rx="12" fill="#dcfce7" stroke="#cbd5e1"/>
+<text x="865.0" y="227.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">Breeze RV64GC</text>
+<text x="865.0" y="252.6" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">L1 I-cache + D-cache</text>
+<polyline points="290,220 360,220" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<polyline points="620,240 720,240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)" stroke-dasharray="7 5"/>
+<rect x="720" y="380" width="290" height="100" rx="12" fill="#dcfce7" stroke="#cbd5e1"/>
+<text x="865.0" y="417.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">Coherence home / L2</text>
+<text x="865.0" y="442.59999999999997" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">16 KiB · coherent DMA</text>
+<polyline points="865,295 865,380" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<rect x="1100" y="380" width="280" height="100" rx="12" fill="#fef3c7" stroke="#cbd5e1"/>
+<text x="1240.0" y="417.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">LiteDRAM → DDR4</text>
+<text x="1240.0" y="442.59999999999997" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">2 GiB main memory</text>
+<polyline points="1010,430 1100,430" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<rect x="360" y="380" width="260" height="100" rx="12" fill="#dbeafe" stroke="#cbd5e1"/>
+<text x="490.0" y="417.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">LiteSDCard controller</text>
+<text x="490.0" y="442.59999999999997" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">SD boot files / DMA</text>
+<polyline points="620,430 720,430" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<rect x="1100" y="185" width="280" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="1240.0" y="227.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">CLINT / PLIC</text>
+<text x="1240.0" y="252.6" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">Timers &amp; interrupts</text>
+<polyline points="1100,240 1010,240" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)" stroke-dasharray="7 5"/>
+<rect x="60" y="380" width="230" height="100" rx="12" fill="#dbeafe" stroke="#cbd5e1"/>
+<text x="175.0" y="417.4" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">LiteUART</text>
+<text x="175.0" y="442.59999999999997" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="400">Linux terminal</text>
+<polyline points="175,295 175,380" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<polyline points="720,275 670,275 670,335 175,335 175,380" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)" stroke-dasharray="7 5"/>
+<rect x="48" y="538" width="1344" height="44" rx="12" fill="#e2e8f0" stroke="#e2e8f0"/>
+<text x="720.0" y="560.0" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="18" font-weight="600">BOOT FLOW / SD is used by BIOS; Linux runs from RAM</text>
+<rect x="60" y="635" width="220" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="170.0" y="678.1" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600">SD FAT partition</text>
+<text x="170.0" y="701.9" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="400">Image + firmware + DTB</text>
+<rect x="335" y="635" width="220" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="445.0" y="678.1" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600">LiteX BIOS</text>
+<text x="445.0" y="701.9" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="400">sdcardboot</text>
+<rect x="610" y="635" width="220" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="720.0" y="678.1" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600">OpenSBI</text>
+<text x="720.0" y="701.9" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="400">M-mode firmware</text>
+<rect x="885" y="635" width="220" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="995.0" y="678.1" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600">Linux 6.18.7</text>
+<text x="995.0" y="701.9" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="400">Embedded initramfs</text>
+<rect x="1160" y="635" width="220" height="110" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="1270.0" y="678.1" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="600">Buildroot musl</text>
+<text x="1270.0" y="701.9" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="17" font-weight="400">GAPBS + Python 3</text>
+<polyline points="280,690 335,690" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<polyline points="555,690 610,690" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<polyline points="830,690 885,690" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<polyline points="1105,690 1160,690" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#a)"/>
+<rect x="48" y="805" width="1344" height="48" rx="12" fill="#f8fafc" stroke="#f8fafc"/>
+<text x="720.0" y="829.0" text-anchor="middle" dominant-baseline="middle" fill="#0f172a" font-family="DejaVu Sans,Arial,sans-serif" font-size="15" font-weight="600">Runtime files live in RAM. Linux SD root and networking are not part of this validated baseline.</text>
+</svg>

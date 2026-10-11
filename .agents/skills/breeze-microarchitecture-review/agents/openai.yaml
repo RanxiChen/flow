@@ -1,0 +1,6 @@
+interface:
+  display_name: "breeze-microarchitecture-review"
+  short_description: "Hardware workflow: breeze-microarchitecture-review"
+  default_prompt: "Use $breeze-microarchitecture-review for the requested hardware task, following the Flow project rules."
+policy:
+  allow_implicit_invocation: true

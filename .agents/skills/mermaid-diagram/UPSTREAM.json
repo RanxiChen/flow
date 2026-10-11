@@ -1,0 +1,15 @@
+{
+  "skill": "mermaid-diagram",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/trikitrok/mod-mermaid-diagram-skill",
+  "commit": "29c2e1f80385acb03cccbac5034771f6a812e9a8",
+  "path": "skills/mermaid-diagram",
+  "license_note": "No root license file found at pinned revision; do not infer a license.",
+  "upstream_entry_sha256": "eece73b0d3979358e6c4aff6ad573fd03249017c2150c232a03e7f67883b2968",
+  "description": "Create source-grounded Mermaid FSM, sequence, dependency and architecture diagrams for repository documents, then render and inspect them.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

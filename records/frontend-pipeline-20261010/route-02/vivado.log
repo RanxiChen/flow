@@ -1,0 +1,47 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Sat Oct 10 22:58:45 2026
+# Process ID: 741934
+# Current directory: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02
+# Command line: vivado -mode batch -notrace -source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/implement.tcl -tclargs /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/frontend.xdc
+# Log file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/vivado.log
+# Journal file: /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/vivado.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4720.661 MHz, CPU Physical cores: 12, Host memory: 67150 MB
+#-----------------------------------------------------------
+source /home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/implement.tcl -notrace
+Command: synth_design -top BreezeFrontendTimingHarness -mode out_of_context -part xcku040-ffva1156-2-e -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcku040'
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 751765
+INFO: [Synth 8-11241] undeclared symbol 'REGCCE', assumed default net type 'wire' [/home/chen/Tool/FPGA/Vivado/2022.2/data/verilog/src/unimacro/BRAM_SINGLE_MACRO.v:2170]
+ERROR: [Synth 8-2716] syntax error near 'global' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:224]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'global' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:224]
+ERROR: [Synth 8-2716] syntax error near 'global' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:225]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'global' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:225]
+ERROR: [Synth 8-2716] syntax error near 'global' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:599]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'global' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:599]
+ERROR: [Synth 8-2716] syntax error near 'else' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:601]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'else' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:601]
+ERROR: [Synth 8-2716] syntax error near 'global' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:674]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'global' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:674]
+ERROR: [Synth 8-2716] syntax error near 'global' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:675]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'global' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:675]
+ERROR: [Synth 8-2716] syntax error near 'else' [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:685]
+ERROR: [Synth 8-10307] SystemVerilog keyword 'else' used in incorrect context [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:685]
+ERROR: [Synth 8-36] 'olderCancel' is not declared [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:225]
+ERROR: [Synth 8-36] 'olderCancel' is not declared [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:280]
+ERROR: [Synth 8-36] 'olderCancel' is not declared [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:492]
+ERROR: [Synth 8-36] '_GEN_21' is not declared [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:721]
+ERROR: [Synth 8-36] '_GEN_21' is not declared [/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv:722]
+Failed to read verilog '/home/chen/FUN/flow-runs/frontend-pipeline-20261010/route-02/rtl/BreezeFrontendPipeline.sv'
+INFO: [Common 17-83] Releasing license: Synthesis
+7 Infos, 0 Warnings, 0 Critical Warnings and 20 Errors encountered.
+synth_design failed
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details
+INFO: [Common 17-206] Exiting Vivado at Sat Oct 10 22:58:55 2026...

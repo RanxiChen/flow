@@ -1,0 +1,14 @@
+{
+  "skill": "vivado-impl",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Shinei-Nouzen-Arch/FPGA-Agent",
+  "commit": "b60a52ea4d7498cd7e63ba72715c6eb3cf15ec66",
+  "path": "vivado-impl",
+  "upstream_entry_sha256": "bf376935a0a2df5fec769db7183044d1be9b0f0074e147d72b9cd00614ffa69a",
+  "description": "Plan or run Vivado placement, routing and physical optimization with checkpoints, congestion diagnosis and candidate comparisons.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

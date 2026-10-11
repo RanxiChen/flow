@@ -3,13 +3,16 @@ package flow.mmu.sv39
 import chisel3._
 
 class Sv39Mmu(p: Sv39MmuParams = Sv39MmuParams(),
-              withPmpCandidate: Boolean = false) extends Module {
+              withPmpCandidate: Boolean = false, withFetchCandidates: Boolean = false,
+              pipelinedFetchKill: Boolean = false) extends Module {
   val io = IO(new Bundle {
-    val itlb = new TlbPortIO(withPmpCandidate); val dtlb = new TlbPortIO(withPmpCandidate)
+    val itlb = new TlbPortIO(withPmpCandidate, if (withFetchCandidates) p.itlb.ways + p.itlb.superpages + 1 else 0)
+    val dtlb = new TlbPortIO(withPmpCandidate)
     val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
     val ptwMem = new PtwMemIO; val idle = Output(Bool())
   })
-  val itlb = Module(new Sv39Tlb(p.itlb, instruction = true, withPmpCandidate = withPmpCandidate))
+  val itlb = Module(new Sv39Tlb(p.itlb, instruction = true, withPmpCandidate = withPmpCandidate,
+    withFetchCandidates = withFetchCandidates, pipelinedFetchKill = pipelinedFetchKill))
   val dtlb = Module(new Sv39Tlb(p.dtlb, instruction = false, withPmpCandidate = withPmpCandidate))
   val wcUpper = Module(new Sv39WalkCache(p.wcUpperSets, p.wcUpperWays, 9))
   val wcMiddle = Module(new Sv39WalkCache(p.wcMiddleSets, p.wcMiddleWays, 18))

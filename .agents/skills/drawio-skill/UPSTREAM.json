@@ -1,0 +1,14 @@
+{
+  "skill": "drawio-skill",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/Agents365-ai/drawio-skill",
+  "commit": "88fd9236bc532aac4c25cb008a8bd59bc650b904",
+  "path": "skills/drawio-skill",
+  "upstream_entry_sha256": "2a510dea53b7b261ed0272165666ddc819e7659cece2103ff42449e2b570bd33",
+  "description": "Maintain editable Draw.io models with structural validation, source provenance, incremental layout-preserving updates and optional semantic queries.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

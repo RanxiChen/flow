@@ -1,0 +1,27 @@
+[
+  {
+    "path": "tests-09/checkpoints.json",
+    "bytes": 3,
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  {
+    "path": "tests-09/command.json",
+    "bytes": 781,
+    "sha256": "ef15906d25b25599c13f51da525aa634c3d3b89495d67ee04f7877e9367d615a"
+  },
+  {
+    "path": "tests-09/log.txt",
+    "bytes": 962,
+    "sha256": "a8d24f082381e6b973f7112d5e67f0d38ff14d94833b08a5528d5d5411a7bd3e"
+  },
+  {
+    "path": "tests-09/result.json",
+    "bytes": 888,
+    "sha256": "6ef228f0dc32e7b2611e3234b94047ee1cbed7e8c61f0314eadbee737800adcd"
+  },
+  {
+    "path": "tests-09/source-manifest.json",
+    "bytes": 37483,
+    "sha256": "134f57dfcd78aa212979961f17f4cf31fc1ddfdf73f1a176d798c4c16d7ae0f2"
+  }
+]

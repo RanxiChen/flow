@@ -1,0 +1,11 @@
+{
+  "skill": "hardware-wavedrom",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "origin": "Project-authored",
+  "description": "Describe and render cycle-accurate hardware scenarios using WaveJSON, including valid/ready, pipeline occupancy, stalls, replay and side effects.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

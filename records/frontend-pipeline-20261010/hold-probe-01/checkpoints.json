@@ -1,0 +1,12 @@
+[
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/after.dcp",
+    "bytes": 39997018,
+    "sha256": "140ee2e77dda35ecac3a1ef8c2b0297515e5022027db1f66398acdef7010b273"
+  },
+  {
+    "path": "/home/chen/FUN/flow-runs/frontend-pipeline-20261010/hold-probe-01/input-route.dcp",
+    "bytes": 40037190,
+    "sha256": "e28baa64b0ccc33e897f66012da7f63812ef6ddbe5033b4f8d56e8ea3d12c02c"
+  }
+]

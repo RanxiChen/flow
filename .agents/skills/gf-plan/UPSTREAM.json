@@ -1,0 +1,14 @@
+{
+  "skill": "gf-plan",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "repository": "https://github.com/codejunkie99/Gateflow-Plugin",
+  "commit": "bf7e94c002eab8ce8ea76365a7490daaaba3b102",
+  "path": "plugins/gateflow/skills/gf-plan",
+  "upstream_entry_sha256": "09454fcccb0718f51480cbe36cb1eab8a4f13fa58ab959dbdc6b07df5939da8e",
+  "description": "Plan hardware modules, interfaces, pipelines, FSMs and verification before implementation; use for architecture or RTL planning requests.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "skill": "drawio-validated-workflow",
+  "adapted_on": "2026-10-04",
+  "adapter": "Flow/Breeze project",
+  "local_source": "/home/chen/.omp/agent/skills/drawio-validated-workflow",
+  "upstream_entry_sha256": "d9b971f24f4659ab68628fb7bc226cec19b521b4a4d9cb26ba8c98c2c9de1d02",
+  "description": "Create and review native Draw.io files against explicit content/connection contracts, structural checks and rendered previews.",
+  "adapted_files": [
+    "SKILL.md",
+    "agents/openai.yaml",
+    "scripts/render_drawio.sh",
+    "scripts/render_drawio.py"
+  ]
+}

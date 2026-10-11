@@ -46,11 +46,37 @@
 - `design/src/test/scala/backend/BreezeBackendGShareSpec.scala`：GShare backend should keep a correct JALR target without retraining。删除理由：旧适配依赖和旧脉冲时序；有效架构语义移到直接 L1D 接口测试，具体覆盖及缺项见最终验证节。
 - `design/src/test/scala/backend/BreezeBackendDivSpec.scala`：RV64 divider executes all eight operations, fast paths, and completion bypass。删除理由：旧适配依赖和旧脉冲时序；有效架构语义移到直接 L1D 接口测试，具体覆盖及缺项见最终验证节。
 
-## 收尾状态（2026-10-06，Claude 按用户指示代为提交）
+## 当时收尾状态（2026-10-06，保留历史）
 
 - 第 0、1、2、5、6 项已完成；1、2 及命名类提交的 Alan 验证见下方各节记录。
-- 第 3–4 项（`BreezeCluster`、`BreezeClusterWishbone`、`Axi4WishboneBridge`、`Axi4LiteArbiter`、`DmaWishboneClient`，删除旧 D-cache/L2/集群及其测试）是 codex 暂存的最终改动，由 Claude 原样提交。**本提交在 Alan 上的全量 `sbt test` 与 `MemSkeletonElabSpec` 未运行**，结果待下一轮 Alan 验证。
+- 第 3–4 项（`BreezeCluster`、`BreezeClusterWishbone`、`Axi4WishboneBridge`、`Axi4LiteArbiter`、`DmaWishboneClient`，删除旧 D-cache/L2/集群及其测试）是 codex 暂存的最终改动，由 Claude 原样提交。**本提交在 Alan 上的全量 `sbt test` 与 `MemSkeletonElabSpec` 未运行**，该条记录为 2026-10-06 提交时状态；2026-10-08 补验收见下方。
 - 后续：L1D/L2 内部 `TODO` 由 Claude 实现；codex 只按指定 SHA 在 Alan 运行测试并原样贴输出。
+
+## 接口提交验收补记（2026-10-08）
+
+接口最终提交是 `71f49884cf779b8ad6672b960ef4b634edb0bd94`。该提交的整个 `design/` 树与 2026-10-06 Alan 候选 `15a0b36e396669153cbee5afbb905d9430d6aa63` 完全一致（`git diff 15a0b36 71f4988 -- design` 无输出）。候选的 `09-atomic.log` 已实际通过 MemSkeletonElabSpec **37/37**、原子请求地址/CSR→SC **4/4**、高地址取指回归 **1/1**，exit 0。此前报告遗漏了这些结果，本次补齐。新顶层、桥与客户端均包含在该 37 项 elaborate 内。
+
+服务恢复时当前分支已经前进到 `fbc7e6e`。本次只补接口任务的历史证据和报告，不倒退分支、不修改后续 L1D/L2 内部实现、SoC、几何配置或冻结文件。当前分支的新版顶层/36 项 elaborate 与原接口提交的 Wishbone 顶层/37 项测试分别记证据。当前分支 `fbc7e6e` 的报告提交前门槛在 Alan 独立 `report-gate/design` 目录执行 `sbt "testOnly flow.memsys.MemSkeletonElabSpec"`，已通过 **36/36**、exit 0，证据 `11-report-elab.{sha,frozen,log,exit}`；该分支冻结为 OK (8 files)，这是后续任务调整后的清单，不替代接口提交的 9-file 冻结证据。后续内部实现与板级合同状态以各自任务报告为准，本报告正文的 TODO/迁移表仍表示接口提交时的边界。
+
+本次执行前重新读取 `docs/cross-project/simulation-host.md`，首选 cloud_chen `47.111.104.2:22` 用 BatchMode/ConnectTimeout=8 预检，SSH exit 255、Connection timed out；沙箱外复核仍同样超时。按配置回退 Alan `chen@localhost:2286`，经 clawbot 跳转。Alan 环境 flow、Java 11.0.32.1、Verilator 5.028、sbt 项目 1.9.7（launcher 1.11.2）；firtool 在既有 llvm-firtool 缓存中。预检约 58 GiB available memory、2.9 GiB 可用磁盘，已有独立目录复用编译缓存。远端 18897 原无监听，建立 `127.0.0.1:18897 → 本地 127.0.0.1:7897` SSH 反向转发后 GitHub HTTP 200；通过该代理 fetch 后精确 checkout `71f4988`。
+
+| 全量阶段 | SHA | 成功 / 总数 | 失败 | exit | 日志 |
+| --- | --- | --- | --- | --- | --- |
+| 起点 | `ae3d7ac` | 311/351 | 40 | 1 | `00-baseline.log` |
+| 后端改名 | `9fa1263` | 311/351 | 40 | 1 | `01-backend.log` |
+| MUL 改名 | `3ec9230` | 311/351 | 40 | 1 | `02-mul.log` |
+| DIV 改名 | `e232725` | 311/351 | 40 | 1 | `03-div.log` |
+| FPU 改名/旧包装删除 | `b21a139` | 309/349 | 40 | 1 | `04-fp.log` |
+| PLRU 统一 | `874a62f` | 309/349 | 40 | 1 | `05-plru.log` |
+| 旧适配层删除初版 | `1839634` | 未运行测试 | 编译失败 | 1 | `06-native.log` |
+| 原生测试修正及 L1I 改名 | `73d07f2` | 330/357 | 27 | 1 | `08-l1i-full.log` |
+| 接口最终提交 | `71f4988` | **302/302** | **0** | **0** | `10-final-full.log` |
+
+从 L1I 阶段到接口最终阶段：357 项删除旧缓存/FASE 相关 80 项，新增 25 项（elaborate 16、桥 3、权限反馈 1、原生后端行为 5），所以最终 302 项；80 项中 65 项原通过、15 项原 FASE 入口失败，均已逐项列删除理由。通过数为 330−65+25+12=302，剩余 12 个旧程序/测试入口问题修正后全部通过；没有用减少有效接口检查获得通过。
+
+所有表中全量确为 `sbt test`，不是 testOnly。基线已有 40 失败；后端/MUL/DIV 通过数保持 311；FPU 减少的 2 项正是上面逐项列出的旧阻塞包装测试，PLRU 未减少实际测试。L1I 改名后的通过数升为 330；这些历史全量日志的结构化计数保存在同一证据根 `rename-results.json`。`1839634` 曾引用不存在的 csrMtval 导致编译失败，`017491c` 已修正；初版不作为通过门槛，不隐藏该失败。旧测试删除清单已将 timer 的 multiply/divide/floating add、probe 的 grant/install、FASE command decode/JTAG mailbox 循环展开为每个实际测试。
+
+最终全量命令是 `source /home/chen/miniforge3/bin/activate flow; cd /home/chen/FUN/flow-runs/20261006-mem-interfaces/final/design; /home/chen/.local/share/coursier/bin/sbt test`。证据根沿用 Alan `/home/chen/FUN/flow-runs/20261006-mem-interfaces/`；`10-final-full.{sha,host,start,end,exit,log,status-before,status-after,frozen-before,frozen-after}` 绑定实际源码/主机/时间/结果。最终于 2026-10-08 00:43:37（UTC+8）结束，56 suites，302/302 通过；failed/aborted/canceled/ignored/pending 均为 0，exit 0，sbt 耗时 1297 s。`10-final-full-results.json` 的 56 个 suite/302 个测试与日志一致；`10-final-full-reports/` 仅归档本次开始时间之后产生的 XML，0 failures/errors/skipped。源 SHA 前后均为 `71f4988`，tracked 状态前后均为空，冻结前后均 **OK (9 files)**；该提交 `git grep -nE "\bV1[A-Z]|Committed[A-Z]" -- design/` 无输出（exit 1）。接口提交相对 `ae3d7ac` 的 `config.scala`、`interface/L1DCoreIO.scala` 和 frozen.json 均无变更。运行中共享磁盘余量下降，仅将本任务已完成的 BackendContractSpec、BackendBehaviorSpec、SignedMul65x65Spec 生成物移至 `/dev/shm/flow-mem-interfaces-20261008/` 并压缩到持久证据根 `10-backend-contract-artifacts.tgz`、`10-backend-behavior-artifacts.tgz`、`10-multiplier-artifacts.tgz`；归档目录列表及 SHA256 分别保存为 `.list`、`.sha256`，未移动活跃 suite、删源或修改测试输入/范围。
 
 ## 验证记录
 

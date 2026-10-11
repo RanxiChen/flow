@@ -4,9 +4,13 @@ import chisel3._
 import chisel3.util._
 
 class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
-              withPmpCandidate: Boolean = false) extends Module {
+              withPmpCandidate: Boolean = false, withFetchCandidates: Boolean = false,
+              pipelinedFetchKill: Boolean = false) extends Module {
+  require(!withFetchCandidates || instruction)
+  require(!pipelinedFetchKill || instruction)
   val io = IO(new Bundle {
-    val port = new TlbPortIO(withPmpCandidate); val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
+    val port = new TlbPortIO(withPmpCandidate, if (withFetchCandidates) p.ways + p.superpages + 1 else 0)
+    val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
     val miss = Output(new TlbMiss); val grant = Input(Bool())
     val done = Flipped(Valid(new PtwDone)); val idle = Output(Bool())
   })
@@ -34,7 +38,11 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   val pendingFault = RegInit(false.B); val pendingFaultIsAccess = Reg(Bool())
   val sfS1Valid = RegInit(false.B)
   val sfVaddr = Reg(UInt(64.W)); val sfRs2Nz = Reg(Bool()); val sfAsid = Reg(UInt(16.W))
-  io.port.req.ready := !missValid && !io.sfence.valid && !sfS1Valid && !io.port.kill
+  // A pipelined fetch may sample an array query on the cancellation edge;
+  // kill clears its valid ownership. Keep kill out of the array enable path.
+  // Existing clients retain the original no-fire-on-kill contract.
+  io.port.req.ready := !missValid && !io.sfence.valid && !sfS1Valid &&
+    (if (pipelinedFetchKill) true.B else !io.port.kill)
   io.idle := !missValid && !pendingFault && !sfS1Valid && !s1Valid
   io.miss.valid := missValid; io.miss.granted := missGranted
   io.miss.vpn := missVpn; io.miss.asid := missAsid; io.miss.rootPpn := missRootPpn
@@ -71,6 +79,8 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   val superPa = sp.toSeq.map(e => Mux(e.level === 2.U,
     Cat(e.ppn(43, 18), s1Vaddr(29, 0)), Cat(e.ppn(43, 9), s1Vaddr(20, 0))).pad(64))
   val pa = Mux1H(hits, basePa ++ superPa)
+  io.port.fetchPaddrs.foreach(_ := VecInit(basePa ++ superPa :+ s1Vaddr))
+  io.port.fetchSelect.foreach(_ := Cat(!translate, VecInit(hits.map(_ && translate)).asUInt))
   // PMP can compare this candidate in parallel with permFail. The public
   // hit/miss/fault/paddr response below keeps its existing priority and zeros.
   io.port.candidatePaddr.foreach(_ := Mux(translate, pa, s1Vaddr))
@@ -89,7 +99,7 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   when(io.port.req.fire) {
     s1Vaddr := io.port.req.bits.vaddr; s1Cmd := io.port.req.bits.cmd
     s1FromFault := pendingFault; s1FaultIsAccess := pendingFaultIsAccess
-    when(pendingFault) {
+    when(pendingFault && !io.port.kill) {
       assert(io.port.req.bits.vaddr(38, 12) === missVpn, "fault retry VPN changed"); pendingFault := false.B
     }
     if (instruction) assert(io.port.req.bits.cmd === MmuCmd.Fetch, "iTLB requires Fetch")
@@ -105,6 +115,7 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   }
   when(io.grant) { missGranted := true.B }
   when(io.port.kill) {
+    if (pipelinedFetchKill) { s1Valid := false.B }
     pendingFault := false.B
     when(missValid) {
       when(missGranted || io.grant) { missKilled := true.B }.otherwise { missValid := false.B }
