@@ -106,7 +106,7 @@ class WriteThroughHomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     s"write-through $bits-bit Home orders stores, AMO, SC, byte masks, failures and external invalidation" in {
       simulate(new WriteThroughHomeHarness(bits)) { d =>
         val rng = new Random(91); val arch = new GoldenMem(91); val dram = new GoldenMem(91)
-        val device = new AxiLiteDevice(d.io.mmio, rng)
+        val device = new AxiLiteDevice(d.io.mmio, rng, 91)
         val cpu = new CoreDriver(d.io.core, arch, Some(device), rng)
         val mem = new MaskedAxiMemory(d.io.mem, dram, rng)
         val bench = new Bench(d.clock, Seq(cpu, device, mem))
