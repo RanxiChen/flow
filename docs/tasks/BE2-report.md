@@ -2,7 +2,7 @@
 
 2026-10-11。按任务书 §10 BE2-P 和 §11 加速模式连续实施；本文供用户最终审核。起点 `2051dd0bb9a0c701bb95fd3f1e755ae175023093`；分支 `refactor/be2-backend-decoupling`，工作区 `/home/chen/leisure/flow-be2`。主工作区及其既有未跟踪记录未修改。
 
-生产源：`7b885d6`；后续 `2f247ca`/`8df9ec9` 仅测试驱动/诊断更改，生产 RTL 未变。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
+当前生产源：`1ce2b97`（包含 `74c858e` 的 EX admission 修正）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
 
 ## 实现映射
 
@@ -74,7 +74,7 @@
 
 ## WB 判定输入清单
 
-RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等于 Vivado LUT/carry 级数，后者必须由实际网表取得。
+RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等于 Vivado LUT/carry 级数，后者必须由实际网表取得。以每个多输入 AND/OR/EQ 各一层、NOT 不另计，从列出的 WB/S3/队首输入起：wbResponse=1，wbMemExc=2，wbExc=4，wbReplay=3，downHold=3，wbCanLeave=4，wbCommit 最深5，指令事件 wbKill 最深7。CSR 中断优先级锥是另列的例外，不纳入这个5/7层数；这些不是物理LUT层数。
 
 | 输出 | 直接输入及中间判定 | 结构范围 |
 |---|---|---|
@@ -157,6 +157,10 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 
 74c858e admission 定向7/7（R1取消、R6三项、S13 kill、P09/P10），G2 0–999全部通过，整个进程exit0；实际1000份ledger再经Spike独立比对1000/1000、exit0，脚本/fixture/golden不变。参考脚本首次路径错误exit2不作为测试失败或主机失败，改用明确scp后的be2-spike-ledger.py，成功日志用-v2单独保留。1ce2b97的Backend生产代码与74c858e相同，差异仅为TLB容量中排除SFENCE动作及协议注释。
 
-1ce2b97最低集：配置9/9、单核和四核ISA各10/10 ELF、原始四核系统程序6/6 ELF、S1双槽取消及四核fault seed91共2/2、行为PTW drain反例1/1，五suites15tests，exit0。六个四核程序cycles/各hart退休数与7b885d6完全一致，证明确实保留正常执行行为。原每核1000操作、精确异常cause/tval和tohost不变。日志在`records/be2-20261011/minimum-admission/`；真实Sv39串行PTW的两项关键用例另外正在补验。
+1ce2b97最低集：配置9/9、单核和四核ISA各10/10 ELF、原始四核系统程序6/6 ELF、S1双槽取消及四核fault seed91共2/2、行为PTW drain反例1/1，五suites15tests，exit0。六个四核程序cycles/各hart退休数与7b885d6完全一致，证明确实保留正常执行行为。原每核1000操作、精确异常cause/tval和tohost不变。日志在`records/be2-20261011/minimum-admission/`；真实Sv39串行PTW的两项关键用例 BE2FencePtwSpec 2/2 通过，exit0。
 
 1ce2b97生产single/small由B工作树生成，exit0，复制准确production目录至同SHA的C工作树后由SnapshotBuilder冻结，未重新用本地或旧源生成。该SHA四核默认物理已启动（CPU0–3/maxThreads4），单核同参数默认物理并行启动（CPU8–9/maxThreads2）；线程数是运行资源上限，不改变硬件参数或实现指令。首轮7b885d6四核仍在布线，保留其源和工程作对照，没有把中间负WNS当作最终指标。
+
+默认 XDC 中沿用 LiteX 的既有 reset synchronizer/mr_ff false_path；未新增 false_path、multicycle 或放宽 clock。原始 XDC 已归档，100 MHz 的 sys_clk 与 FPGA/default DDR 约束完整保留。
+
+首轮7b885d6 S2严格结果：decision→payload仍有1230端点（正在以1ce2b97修正）；decision→执行CE=0（baseline870）、hold→payloadCE=0（baseline2994）、hold→执行CE=0（baseline580），这些非空source/endpoint集合有同方法阳性对照。frontend两组在baseline和candidate都为0，表述为双方均已无此路径，不能称为BE2新消除的路径。candidate grant两组为0，但baseline selected/ready别名在重建网表中为空，grant阳性对照仍未解析；wbCommit/wbKill名字也被优化掉。相应项目保持UNRESOLVED，不以空source证明通过。首次接口pin尝试同样为空，原始查询保留。

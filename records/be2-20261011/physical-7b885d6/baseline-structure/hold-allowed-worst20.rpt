@@ -1,0 +1,1817 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 17:23:57 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -through [get_pins -quiet -leaf -of_objects [get_nets -quiet -hierarchical -regexp .*l1d.*(cpuHold|io_core_s2Hold).*] -filter {DIRECTION == OUT}] -to [get_pins -quiet -of_objects [get_cells -quiet -hierarchical -filter {IS_SEQUENTIAL == 1 && ((NAME =~ *backend*/ex_valid* || NAME =~ *backend*/mem_valid* || NAME =~ *backend*/perm_valid* || NAME =~ *backend*/wb_valid*) || NAME =~ *backend*/writeback/w2_* || NAME =~ *backend*/scoreboard/* || NAME =~ *backend*/csrFile/* || NAME =~ *frontendBoundary/slowRedirect* || NAME =~ *l1d*/cpu*valid*)}] -filter {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}] -max_paths 20 -nworst 20 -path_type full -file /home/chen/FUN/flow-runs/be2-2051dd0-small-structure-synth-v3/hold-allowed-worst20.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             2.083ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.752ns  (logic 1.312ns (16.925%)  route 6.440ns (83.075%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_1/probe/m_way[1]_i_39/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_1/miss/plru_12[2]_i_11_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 r  BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 f  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 r  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.060 f  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.349 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.598    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.638 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.938    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.978 r  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.255    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.295 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.566    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.606 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.906    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.977 r  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.313    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.353 r  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.602    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.642 r  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.891    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.931 r  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.180    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.220 r  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.567    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.607 f  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.878    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.918 r  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.167    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.207 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.584    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.624 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.873    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.913 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.936    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.936    
+  -------------------------------------------------------------------
+                         slack                                  2.083    
+
+Slack (MET) :             2.083ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.752ns  (logic 1.312ns (16.925%)  route 6.440ns (83.075%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_1/probe/m_way[1]_i_39/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_1/miss/plru_12[2]_i_11_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 f  BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 r  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 f  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.060 r  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.349 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.598    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.638 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.938    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.978 f  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.255    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.295 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.566    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.606 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.906    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.977 f  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.313    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.353 f  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.602    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.642 f  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.891    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.931 f  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.180    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.220 f  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.567    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.607 r  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.878    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.918 f  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.167    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.207 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.584    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.624 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.873    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.913 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.936    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.936    
+  -------------------------------------------------------------------
+                         slack                                  2.083    
+
+Slack (MET) :             2.083ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.752ns  (logic 1.312ns (16.925%)  route 6.440ns (83.075%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_2/probe/m_way[1]_i_39__0/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_2/miss/plru_12[2]_i_11__0_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 r  BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 f  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 r  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.060 f  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.349 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.598    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.638 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.938    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.978 r  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.255    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.295 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.566    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.606 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.906    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.977 r  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.313    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.353 r  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.602    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.642 r  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.891    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.931 r  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.180    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.220 r  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.567    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.607 f  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.878    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.918 r  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.167    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.207 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.584    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.624 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.873    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.913 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.936    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.936    
+  -------------------------------------------------------------------
+                         slack                                  2.083    
+
+Slack (MET) :             2.083ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.752ns  (logic 1.312ns (16.925%)  route 6.440ns (83.075%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_2/probe/m_way[1]_i_39__0/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_2/miss/plru_12[2]_i_11__0_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 f  BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 r  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 f  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.060 r  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.349 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.598    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.638 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.938    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.978 f  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.255    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.295 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.566    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.606 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.906    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.977 f  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.313    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.353 f  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.602    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.642 f  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.891    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.931 f  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.180    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.220 f  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.567    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.607 r  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.878    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.918 f  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.167    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.207 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.584    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.624 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.873    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.913 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.936    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.936    
+  -------------------------------------------------------------------
+                         slack                                  2.083    
+
+Slack (MET) :             2.085ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.750ns  (logic 1.343ns (17.329%)  route 6.407ns (82.671%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=5 LUT6=14)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_1/probe/m_way[1]_i_39/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_1/miss/plru_12[2]_i_11_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 f  BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 r  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 f  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.060 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8/O
+                         net (fo=1, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.349 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=2, unplaced)         0.216    10.565    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.636 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.936    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.976 r  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.253    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.293 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.564    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.604 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.904    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.975 r  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.311    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.351 r  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.600    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.640 r  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.889    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.929 r  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.178    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.218 r  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.565    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.605 f  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.876    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.916 r  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.165    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.205 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.582    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.622 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.871    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.911 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.934    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.934    
+  -------------------------------------------------------------------
+                         slack                                  2.085    
+
+Slack (MET) :             2.085ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.750ns  (logic 1.343ns (17.329%)  route 6.407ns (82.671%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=5 LUT6=14)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_1/probe/m_way[1]_i_39/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_1/miss/plru_12[2]_i_11_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_1/miss/m_way[1]_i_25_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 r  BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_1/miss/way[0]_i_2_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_12_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 f  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 r  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.060 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8/O
+                         net (fo=1, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.349 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=2, unplaced)         0.216    10.565    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.636 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.936    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.976 f  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.253    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.293 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.564    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.604 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.904    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.975 f  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.311    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.351 f  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.600    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.640 f  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.889    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.929 f  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.178    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.218 f  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.565    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.605 r  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.876    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.916 f  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.165    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.205 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.582    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.622 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.871    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.911 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.934    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.934    
+  -------------------------------------------------------------------
+                         slack                                  2.085    
+
+Slack (MET) :             2.085ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.750ns  (logic 1.343ns (17.329%)  route 6.407ns (82.671%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=5 LUT6=14)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_2/probe/m_way[1]_i_39__0/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_2/miss/plru_12[2]_i_11__0_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 f  BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 r  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 f  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.060 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0/O
+                         net (fo=1, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.349 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0/O
+                         net (fo=2, unplaced)         0.216    10.565    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.636 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.936    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.976 r  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.253    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.293 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.564    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.604 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.904    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.975 r  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.311    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.351 r  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.600    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.640 r  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.889    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.929 r  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.178    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.218 r  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.565    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.605 f  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.876    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.916 r  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.165    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.205 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.582    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.622 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.871    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.911 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.934    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.934    
+  -------------------------------------------------------------------
+                         slack                                  2.085    
+
+Slack (MET) :             2.085ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.750ns  (logic 1.343ns (17.329%)  route 6.407ns (82.671%))
+  Logic Levels:           23  (LUT3=2 LUT4=2 LUT5=5 LUT6=14)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/probe/line_3_reg[63]_1[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_2/probe/m_way[1]_i_39__0/O
+                         net (fo=1, unplaced)         0.216     7.971    BreezeClusterAxi/cluster/l1d_2/miss/plru_12[2]_i_11__0_1
+                         LUT6 (Prop_LUT6_I4_O)        0.071     8.042 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0/O
+                         net (fo=8, unplaced)         0.244     8.286    BreezeClusterAxi/cluster/l1d_2/miss/m_way[1]_i_25__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071     8.357 r  BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0/O
+                         net (fo=14, unplaced)        0.290     8.647    BreezeClusterAxi/cluster/l1d_2/miss/way[0]_i_2__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040     8.687 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0/O
+                         net (fo=3, unplaced)         0.257     8.944    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_12__0_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.132     9.076 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.399    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.439 f  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.688    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.728 r  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.020    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.060 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0/O
+                         net (fo=1, unplaced)         0.249    10.309    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.349 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0/O
+                         net (fo=2, unplaced)         0.216    10.565    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.636 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.936    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.976 f  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.253    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.293 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.564    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.604 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.904    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.975 f  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.311    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.351 f  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.600    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.640 f  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.889    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.929 f  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.178    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.218 f  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.565    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.605 r  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.876    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.916 f  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.165    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.205 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.582    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.622 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.871    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.911 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.934    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.934    
+  -------------------------------------------------------------------
+                         slack                                  2.085    
+
+Slack (MET) :             2.091ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.744ns  (logic 1.158ns (14.954%)  route 6.586ns (85.047%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_1/m_isGetM_i_4/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 f  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 f  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 r  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.052 f  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.341 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.590    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.630 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.930    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.970 r  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.247    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.287 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.558    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.598 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.898    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.969 r  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.305    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.345 r  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.594    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.634 r  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.883    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.923 r  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.172    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.212 r  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.559    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.599 f  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.870    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.910 r  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.159    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.199 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.576    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.616 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.865    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.905 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.928    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.928    
+  -------------------------------------------------------------------
+                         slack                                  2.091    
+
+Slack (MET) :             2.091ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.744ns  (logic 1.158ns (14.954%)  route 6.586ns (85.047%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_1/m_isGetM_i_4/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 r  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 r  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 f  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.052 r  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.341 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.590    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.630 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.930    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.970 f  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.247    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.287 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.558    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.598 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.898    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.969 f  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.305    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.345 f  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.594    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.634 f  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.883    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.923 f  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.172    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.212 f  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.559    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.599 r  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.870    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.910 f  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.159    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.199 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.576    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.616 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.865    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.905 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.928    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.928    
+  -------------------------------------------------------------------
+                         slack                                  2.091    
+
+Slack (MET) :             2.091ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.744ns  (logic 1.158ns (14.954%)  route 6.586ns (85.047%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_2/m_isGetM_i_4__0/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 f  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 f  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 r  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.052 f  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.341 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.590    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.630 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.930    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.970 r  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.247    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.287 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.558    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.598 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.898    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.969 r  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.305    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.345 r  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.594    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.634 r  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.883    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.923 r  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.172    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.212 r  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.559    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.599 f  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.870    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.910 r  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.159    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.199 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.576    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.616 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.865    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.905 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.928    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.928    
+  -------------------------------------------------------------------
+                         slack                                  2.091    
+
+Slack (MET) :             2.091ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.744ns  (logic 1.158ns (14.954%)  route 6.586ns (85.047%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_2/m_isGetM_i_4__0/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 r  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 r  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 f  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.052 r  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.341 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.590    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.630 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.930    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.970 f  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.247    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.287 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.558    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.598 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.898    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.969 f  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.305    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.345 f  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.594    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.634 f  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.883    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.923 f  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.172    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.212 f  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.559    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.599 r  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.870    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.910 f  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.159    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.199 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.576    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.616 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.865    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.905 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.928    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.928    
+  -------------------------------------------------------------------
+                         slack                                  2.091    
+
+Slack (MET) :             2.092ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.743ns  (logic 1.189ns (15.356%)  route 6.554ns (84.644%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_3/O
+                         net (fo=78, unplaced)        0.296     8.682    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/internal3_req_core_op_reg[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.071     8.753 f  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.027    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.067 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.390    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.430 f  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.679    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.719 r  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.011    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.051 f  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.300    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.340 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.589    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.629 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.929    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.969 r  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.246    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.286 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.557    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.597 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.897    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.968 r  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.304    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.344 r  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.593    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.633 r  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.882    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.922 r  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.171    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.211 r  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.558    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.598 f  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.869    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.909 r  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.158    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.198 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.575    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.615 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.864    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.904 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.927    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.927    
+  -------------------------------------------------------------------
+                         slack                                  2.092    
+
+Slack (MET) :             2.092ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.743ns  (logic 1.189ns (15.356%)  route 6.554ns (84.644%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_3/O
+                         net (fo=78, unplaced)        0.296     8.682    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/internal3_req_core_op_reg[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.071     8.753 r  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.027    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.067 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.390    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.430 r  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.679    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.719 f  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.011    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.051 r  BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2/O
+                         net (fo=2, unplaced)         0.249    10.300    BreezeClusterAxi/cluster/l1d_1/miss/atomicWait_i_2_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.340 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4/O
+                         net (fo=1, unplaced)         0.249    10.589    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_4_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.629 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.929    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.969 f  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.246    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.286 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.557    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.597 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.897    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.968 f  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.304    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.344 f  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.593    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.633 f  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.882    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.922 f  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.171    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.211 f  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.558    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.598 r  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.869    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.909 f  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.158    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.198 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.575    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.615 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.864    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.904 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.927    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.927    
+  -------------------------------------------------------------------
+                         slack                                  2.092    
+
+Slack (MET) :             2.092ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.743ns  (logic 1.189ns (15.356%)  route 6.554ns (84.644%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_3__0/O
+                         net (fo=78, unplaced)        0.296     8.682    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/internal3_req_core_op_reg[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.071     8.753 f  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.027    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.067 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.390    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.430 f  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.679    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.719 r  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.011    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.051 f  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.300    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.340 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.589    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.629 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.929    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.969 r  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.246    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.286 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.557    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.597 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.897    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.968 r  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.304    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.344 r  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.593    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.633 r  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.882    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.922 r  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.171    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.211 r  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.558    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.598 f  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.869    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.909 r  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.158    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.198 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.575    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.615 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.864    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.904 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.927    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.927    
+  -------------------------------------------------------------------
+                         slack                                  2.092    
+
+Slack (MET) :             2.092ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.743ns  (logic 1.189ns (15.356%)  route 6.554ns (84.644%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=7 LUT6=12)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_3__0/O
+                         net (fo=78, unplaced)        0.296     8.682    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/internal3_req_core_op_reg[0]
+                         LUT3 (Prop_LUT3_I1_O)        0.071     8.753 r  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.027    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.067 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.390    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.430 r  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.679    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.719 f  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.011    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.051 r  BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0/O
+                         net (fo=2, unplaced)         0.249    10.300    BreezeClusterAxi/cluster/l1d_2/miss/atomicWait_i_2__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    10.340 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0/O
+                         net (fo=1, unplaced)         0.249    10.589    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_4__0_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.040    10.629 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.929    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.969 f  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.246    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.286 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.557    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.597 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.897    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.968 f  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.304    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.344 f  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.593    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.633 f  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.882    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.922 f  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.171    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.211 f  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.558    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.598 r  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.869    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.909 f  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.158    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.198 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.575    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.615 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.864    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.904 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.927    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.927    
+  -------------------------------------------------------------------
+                         slack                                  2.092    
+
+Slack (MET) :             2.093ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.742ns  (logic 1.189ns (15.358%)  route 6.553ns (84.642%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_1/m_isGetM_i_4/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 r  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 f  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 r  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 f  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.052 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8/O
+                         net (fo=1, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.341 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=2, unplaced)         0.216    10.557    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.628 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.928    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.968 r  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.245    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.285 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.556    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.596 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.896    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.967 r  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.303    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.343 r  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.592    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.632 r  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.881    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.921 r  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.170    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.210 r  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.557    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.597 f  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.868    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.908 r  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.157    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.197 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.574    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.614 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.863    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.903 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.926    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.926    
+  -------------------------------------------------------------------
+                         slack                                  2.093    
+
+Slack (MET) :             2.093ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.742ns  (logic 1.189ns (15.358%)  route 6.553ns (84.642%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_1/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_1/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_2/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_1/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_1/mmio/m_src_i_1/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_1/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_1/m_isGetM_i_4/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 f  BreezeClusterAxi/cluster/l1d_1/tags_2_2_ext/m_isGetM_i_1/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_1/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 r  BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_1/miss/m_way[0]_i_5_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 f  BreezeClusterAxi/cluster/l1d_1/miss/beat[1]_i_9/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_1/probe/cpu3_sameWbLine_i_3__0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 r  BreezeClusterAxi/cluster/l1d_1/probe/beat[1]_i_7/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_1/miss/backend_io_hpmEvents_REG_1_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.052 f  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8/O
+                         net (fo=1, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_8_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.341 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=2, unplaced)         0.216    10.557    BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_2_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.628 r  BreezeClusterAxi/cluster/l1d_1/miss/rawEvents_memStallCycle_i_1/O
+                         net (fo=22, unplaced)        0.300    10.928    BreezeClusterAxi/cluster/backend_1/scoreboard/_l1d_1_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.968 f  BreezeClusterAxi/cluster/backend_1/scoreboard/ex_ctrl_mul_valid_i_3/O
+                         net (fo=8, unplaced)         0.277    11.245    BreezeClusterAxi/cluster/backend_1/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.285 r  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4/O
+                         net (fo=6, unplaced)         0.271    11.556    BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_4_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.596 f  BreezeClusterAxi/cluster/backend_1/writeback/coreinst[0]_i_1/O
+                         net (fo=91, unplaced)        0.300    11.896    BreezeClusterAxi/cluster/backend_1/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.967 f  BreezeClusterAxi/cluster/backend_1/writeback/i___64_i_1__1/O
+                         net (fo=108, unplaced)       0.336    12.303    BreezeClusterAxi/cluster/l1d_1/mmio/_backend_1_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.343 f  BreezeClusterAxi/cluster/l1d_1/mmio/cpu1_req_core_op[2]_i_7/O
+                         net (fo=1, unplaced)         0.249    12.592    BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_3_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.632 f  BreezeClusterAxi/cluster/l1d_1/probe/cpu1_req_core_op[2]_i_4/O
+                         net (fo=2, unplaced)         0.249    12.881    BreezeClusterAxi/cluster/l1d_1/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.921 f  BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3/O
+                         net (fo=2, unplaced)         0.249    13.170    BreezeClusterAxi/cluster/l1d_1/miss/cpu1_req_core_op[2]_i_3_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.210 f  BreezeClusterAxi/cluster/l1d_1/miss/Memory_reg_i_120/O
+                         net (fo=175, unplaced)       0.347    13.557    BreezeClusterAxi/cluster/backend_1/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.597 r  BreezeClusterAxi/cluster/backend_1/cpuFresh_i_1/O
+                         net (fo=6, unplaced)         0.271    13.868    BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.908 f  BreezeClusterAxi/cluster/backend_1/divUnit/ex_ctrl_mul_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.157    BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.197 r  BreezeClusterAxi/cluster/backend_1/writeback/ex_ctrl_mul_valid_i_1/O
+                         net (fo=658, unplaced)       0.377    14.574    BreezeClusterAxi/cluster/backend_1/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.614 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5/O
+                         net (fo=1, unplaced)         0.249    14.863    BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_5_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.903 f  BreezeClusterAxi/cluster/backend_1/writeback/ex_valid_i_1__1/O
+                         net (fo=1, unplaced)         0.023    14.926    BreezeClusterAxi/cluster/backend_1/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_1/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_1/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.926    
+  -------------------------------------------------------------------
+                         slack                                  2.093    
+
+Slack (MET) :             2.093ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.742ns  (logic 1.189ns (15.358%)  route 6.553ns (84.642%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 f  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 r  BreezeClusterAxi/cluster/l1d_2/m_isGetM_i_4__0/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 r  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 f  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 r  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 f  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.052 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0/O
+                         net (fo=1, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.341 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0/O
+                         net (fo=2, unplaced)         0.216    10.557    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.628 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.928    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.968 r  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.245    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.285 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.556    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.596 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.896    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.967 r  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.303    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.343 r  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.592    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.632 r  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.881    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.921 r  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.170    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.210 r  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.557    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.597 f  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.868    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.908 r  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.157    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.197 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.574    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.614 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.863    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.903 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.926    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         r  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.926    
+  -------------------------------------------------------------------
+                         slack                                  2.093    
+
+Slack (MET) :             2.093ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        7.742ns  (logic 1.189ns (15.358%)  route 6.553ns (84.642%))
+  Logic Levels:           23  (LUT3=3 LUT4=1 LUT5=6 LUT6=13)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.325     4.325    
+                         propagated clock network latency
+                                                      2.859     7.184    
+                         FDRE                         0.000     7.184 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/C
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 r  BreezeClusterAxi/cluster/l1d_2/internal3_req_src_reg[2]/Q
+                         net (fo=40, unplaced)        0.324     7.623    BreezeClusterAxi/cluster/l1d_2/mmio/m_src_reg_0[2]
+                         LUT5 (Prop_LUT5_I1_O)        0.132     7.755 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_2__0/O
+                         net (fo=3, unplaced)         0.255     8.010    BreezeClusterAxi/cluster/l1d_2/mmio/cpu3_req_src_reg[2]
+                         LUT5 (Prop_LUT5_I4_O)        0.040     8.050 r  BreezeClusterAxi/cluster/l1d_2/mmio/m_src_i_1__0/O
+                         net (fo=18, unplaced)        0.296     8.346    BreezeClusterAxi/cluster/l1d_2/p_98_in
+                         LUT5 (Prop_LUT5_I0_O)        0.040     8.386 f  BreezeClusterAxi/cluster/l1d_2/m_isGetM_i_4__0/O
+                         net (fo=73, unplaced)        0.328     8.714    BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_reg_3
+                         LUT3 (Prop_LUT3_I2_O)        0.040     8.754 f  BreezeClusterAxi/cluster/l1d_2/tags_2_2_ext/m_isGetM_i_1__0/O
+                         net (fo=7, unplaced)         0.274     9.028    BreezeClusterAxi/cluster/l1d_2/miss/miss_io_alloc_bits_isGetM
+                         LUT6 (Prop_LUT6_I5_O)        0.040     9.068 r  BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0/O
+                         net (fo=61, unplaced)        0.323     9.391    BreezeClusterAxi/cluster/l1d_2/miss/m_way[0]_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.431 f  BreezeClusterAxi/cluster/l1d_2/miss/beat[1]_i_9__0/O
+                         net (fo=1, unplaced)         0.249     9.680    BreezeClusterAxi/cluster/l1d_2/probe/cpu3_sameWbLine_i_3__1
+                         LUT6 (Prop_LUT6_I0_O)        0.040     9.720 r  BreezeClusterAxi/cluster/l1d_2/probe/beat[1]_i_7__0/O
+                         net (fo=15, unplaced)        0.292    10.012    BreezeClusterAxi/cluster/l1d_2/miss/backend_io_hpmEvents_REG_2_dcacheMiss_reg
+                         LUT6 (Prop_LUT6_I0_O)        0.040    10.052 f  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0/O
+                         net (fo=1, unplaced)         0.249    10.301    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_8__0_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.040    10.341 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0/O
+                         net (fo=2, unplaced)         0.216    10.557    BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_2__0_n_0
+                         LUT5 (Prop_LUT5_I0_O)        0.071    10.628 r  BreezeClusterAxi/cluster/l1d_2/miss/rawEvents_memStallCycle_i_1__0/O
+                         net (fo=22, unplaced)        0.300    10.928    BreezeClusterAxi/cluster/backend_2/scoreboard/_l1d_2_io_core_s2Hold
+                         LUT5 (Prop_LUT5_I4_O)        0.040    10.968 f  BreezeClusterAxi/cluster/backend_2/scoreboard/ex_ctrl_mul_valid_i_3__0/O
+                         net (fo=8, unplaced)         0.277    11.245    BreezeClusterAxi/cluster/backend_2/writeback/mem_valid_reg
+                         LUT6 (Prop_LUT6_I5_O)        0.040    11.285 r  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0/O
+                         net (fo=6, unplaced)         0.271    11.556    BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_4__0_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.040    11.596 f  BreezeClusterAxi/cluster/backend_2/writeback/coreinst[0]_i_1__0/O
+                         net (fo=91, unplaced)        0.300    11.896    BreezeClusterAxi/cluster/backend_2/writeback/p_142_in
+                         LUT6 (Prop_LUT6_I0_O)        0.071    11.967 f  BreezeClusterAxi/cluster/backend_2/writeback/i___64_i_1__4/O
+                         net (fo=108, unplaced)       0.336    12.303    BreezeClusterAxi/cluster/l1d_2/mmio/_backend_2_io_l1d_s2Kill
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.343 f  BreezeClusterAxi/cluster/l1d_2/mmio/cpu1_req_core_op[2]_i_7__0/O
+                         net (fo=1, unplaced)         0.249    12.592    BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_3__0_0
+                         LUT6 (Prop_LUT6_I3_O)        0.040    12.632 f  BreezeClusterAxi/cluster/l1d_2/probe/cpu1_req_core_op[2]_i_4__0/O
+                         net (fo=2, unplaced)         0.249    12.881    BreezeClusterAxi/cluster/l1d_2/miss/internal1_req_core_op_reg[0]
+                         LUT6 (Prop_LUT6_I5_O)        0.040    12.921 f  BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0/O
+                         net (fo=2, unplaced)         0.249    13.170    BreezeClusterAxi/cluster/l1d_2/miss/cpu1_req_core_op[2]_i_3__0_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.040    13.210 f  BreezeClusterAxi/cluster/l1d_2/miss/Memory_reg_i_120__0/O
+                         net (fo=175, unplaced)       0.347    13.557    BreezeClusterAxi/cluster/backend_2/cpu1_req_hasPaddr_reg
+                         LUT6 (Prop_LUT6_I4_O)        0.040    13.597 r  BreezeClusterAxi/cluster/backend_2/cpuFresh_i_1__0/O
+                         net (fo=6, unplaced)         0.271    13.868    BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_sel_alu2_reg[0]
+                         LUT5 (Prop_LUT5_I0_O)        0.040    13.908 f  BreezeClusterAxi/cluster/backend_2/divUnit/ex_ctrl_mul_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.157    BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_sel_alu2_reg[0]_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.197 r  BreezeClusterAxi/cluster/backend_2/writeback/ex_ctrl_mul_valid_i_1__0/O
+                         net (fo=658, unplaced)       0.377    14.574    BreezeClusterAxi/cluster/backend_2/writeback/wb_exception_reg_1[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.040    14.614 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0/O
+                         net (fo=1, unplaced)         0.249    14.863    BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_5__0_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.040    14.903 f  BreezeClusterAxi/cluster/backend_2/writeback/ex_valid_i_1__2/O
+                         net (fo=1, unplaced)         0.023    14.926    BreezeClusterAxi/cluster/backend_2/ex_valid0
+                         FDRE                                         f  BreezeClusterAxi/cluster/backend_2/ex_valid_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.315    14.315    
+                         propagated clock network latency
+                                                      2.714    17.029    
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_D)        0.059    17.019    BreezeClusterAxi/cluster/backend_2/ex_valid_reg
+  -------------------------------------------------------------------
+                         required time                         17.019    
+                         arrival time                         -14.926    
+  -------------------------------------------------------------------
+                         slack                                  2.093    
+
+
+
+

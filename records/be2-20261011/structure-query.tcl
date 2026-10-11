@@ -27,6 +27,17 @@ proc endpoints {label filter pinfilter} {
     close $f
     return $pins
 }
+proc collect_ports {pattern label} {
+    global metadata output
+    set ports [get_pins -quiet -hierarchical -regexp $pattern]
+    set nets [get_nets -quiet -of_objects $ports]
+    set pins [get_pins -quiet -leaf -of_objects $nets -filter {DIRECTION == OUT}]
+    puts $metadata "$label ports=[llength $ports] nets=[llength $nets] drivers=[llength $pins]"
+    set f [open [file join $output $label-sources.txt] w]
+    puts $f "PORTS\n[join $ports \n]\nNETS\n[join $nets \n]\nDRIVERS\n[join $pins \n]"
+    close $f
+    return $pins
+}
 proc query {label starts ends} {
     global metadata output
     if {![llength $starts] || ![llength $ends]} {
@@ -49,7 +60,10 @@ proc query {label starts ends} {
 }
 set decision [collect_nets {.*(l1d|backend).*(io_core_resp_valid|io_core_resp_bits_kind|io_l1d_resp_valid|io_l1d_resp_bits_kind).*} s3decision]
 set hold [collect_nets {.*l1d.*(cpuHold|io_core_s2Hold).*} cpuhold]
-set grant [collect_nets {.*writeback.*(io_grant|selected).*} grant]
+set grant [collect_ports {.*backend.*/(writeback/io_(mul|div|fp)_ready|mulUnit/io_result_ready|divUnit/io_result_ready|fpUnit/io_result_ready)} grant_ports]
+if {![llength $grant]} {
+    set grant [collect_nets {.*writeback.*(io_grant|selected).*} grant]
+}
 set payload [endpoints payload_enable {IS_SEQUENTIAL == 1 && (NAME =~ *backend*/ex_* || NAME =~ *backend*/mem_* || NAME =~ *backend*/perm_*) && NAME !~ *valid* && NAME !~ *Sent* && NAME !~ *Issued*} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
 set execution [endpoints execution_control {IS_SEQUENTIAL == 1 && (NAME =~ *backend*/mulUnit/* || NAME =~ *backend*/divUnit/* || NAME =~ *backend*/fpUnit/*)} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
 set frontend [endpoints frontend_control {IS_SEQUENTIAL == 1 && NAME =~ *cluster/frontend*/* && NAME !~ *frontendBoundary*} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]

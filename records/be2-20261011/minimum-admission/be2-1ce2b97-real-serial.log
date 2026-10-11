@@ -1,0 +1,34 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] BE2FencePtwSpec:
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+BE2_B3 real_miss cycle=D FENCE=PERM PTW=S3 raw_drained=1 sampled_idle=0
+BE2_B3 real_miss cycle=D+1 FENCE=WB CPU_idle=1 raw_drained=0 sampled_drained=1 sampled_idle=0 baseline_commit=0
+[info] - B3 audit: real Sv39 PTW miss has identical sampled WB conditions
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+BE2_B3 real_hit cycle=D FENCE=PERM PTW=S3 raw_drained=1 sampled_idle=0
+BE2_B3 real_hit cycle=D+1 FENCE=WB CPU_idle=1 raw_drained=1 sampled_drained=1 sampled_idle=0 baseline_commit=1
+[info] - B3 audit: real Sv39 PTW hit has identical sampled WB conditions
+[info] Run completed in 1 minute, 26 seconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 2, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 89 s (01:29), completed Oct 11, 2026, 5:22:45 PM
