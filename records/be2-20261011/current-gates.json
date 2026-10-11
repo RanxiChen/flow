@@ -236,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "Quick clock-resource place rerun with name/value snapshots and fresh post-place collections; RUNNING",
+      "status": "resuming saved placed checkpoint; compare persistent data NAME/LOC/simple BEL against pre-clock source, clock actual-root check and full route pending",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -284,7 +284,7 @@
       "default_setup_failures": 43,
       "default_route_errors": 0,
       "default_reports": "physical-d902fb5/default-routed",
-      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd",
+      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-resume-audited-sd",
       "candidate_maxThreads": 4,
       "candidate_affinity": "0-3",
       "candidate_RTL_config_constraints_unchanged": false,
@@ -402,7 +402,16 @@
         "before_route": true,
         "reason": "Vivado17-70 stale primitive collection after place_design recreated netlist objects; audit property call failed",
         "reports": "physical-d902fb5/clock-placement-handle-rejected"
-      }
+      },
+      "placed_calibration_aux_changed": {
+        "exit": 1,
+        "place_command_success": true,
+        "clock_placed_DCP_saved": true,
+        "before_route": true,
+        "changed": "IDELAYCTRL_TOP_AND recreated with physical calibration replicas; persistent CPU/memory data audit not yet completed",
+        "reports": "physical-d902fb5/clock-placement-calibration-rebuilt"
+      },
+      "candidate_input_checkpoint": "clock-placed.dcp saved from previous exact-source candidate"
     },
     "local_scalar_products_hash_verified": true
   }

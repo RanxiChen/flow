@@ -127,9 +127,13 @@ def main():
                     candidate['new_timing_exceptions'] or not candidate.get(
                         'timing_constraints_unchanged', candidate.get('constraints_unchanged', False))):
                 raise ValueError(f'{profile}: physical candidate changed source/timing requirements')
+            if candidate.get('input_checkpoint_filename', 'xilinx_kcu105_route.dcp') not in (
+                    'xilinx_kcu105_route.dcp', 'clock-placed.dcp'):
+                raise ValueError(f'{profile}: unexpected physical input checkpoint stage')
             original = Path(candidate['original'])
             if (json.loads((original / 'build-binding.json').read_text())['source_sha'] != expected_source or
-                    digest(original / 'gateware/xilinx_kcu105_route.dcp')['sha256'] !=
+                    digest(original / 'gateware' / candidate.get(
+                        'input_checkpoint_filename', 'xilinx_kcu105_route.dcp'))['sha256'] !=
                     candidate['input_checkpoint_sha256']):
                 raise ValueError(f'{profile}: physical candidate input identity mismatch')
             products[profile]['physical_candidate'] = candidate

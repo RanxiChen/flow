@@ -1,0 +1,360 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 1693.535 ; gain = 0.000 ; free physical = 24797 ; free virtual = 50125
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:00.56 . Memory (MB): peak = 2569.117 ; gain = 0.000 ; free physical = 22684 ; free virtual = 48525
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 21 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.945 ; gain = 257.812 ; free physical = 21486 ; free virtual = 47388
+Restored from archive | CPU: 10.060000 secs | Memory: 252.983635 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.945 ; gain = 257.812 ; free physical = 21486 ; free virtual = 47388
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3711.539 ; gain = 0.000 ; free physical = 21317 ; free virtual = 47219
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 111a25d11
+----- Checksum: PlaceDB: 480a1ccd ShapeSum: 418bf1ed RouteDB: 880c4e57 
+open_checkpoint: Time (s): cpu = 00:00:55 ; elapsed = 00:00:56 . Memory (MB): peak = 3711.539 ; gain = 2018.004 ; free physical = 20856 ; free virtual = 46758
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:56 ; elapsed = 00:00:17 . Memory (MB): peak = 4256.074 ; gain = 544.535 ; free physical = 23038 ; free virtual = 48939
+# report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:29 ; elapsed = 00:00:11 . Memory (MB): peak = 4256.074 ; gain = 0.000 ; free physical = 20961 ; free virtual = 46995
+# set fast_cell [get_cells BUFGCE]
+# set slow_cell [get_cells BUFGCE_DIV]
+# if {[llength $fast_cell] != 1 || [llength $slow_cell] != 1} {error "DDR clock buffer selection incomplete"}
+# set fast_input [get_nets -of_objects [get_pins BUFGCE/I]]
+# set slow_input [get_nets -of_objects [get_pins BUFGCE_DIV/I]]
+# if {$fast_input ne $slow_input} {error "DDR buffers do not have the expected common source"}
+# set fast_net [get_nets -of_objects [get_pins BUFGCE/O]]
+# set slow_net [get_nets -of_objects [get_pins BUFGCE_DIV/O]]
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+# set fast_clock [get_clocks -of_objects [get_pins BUFGCE/O]]
+# if {[llength $fast_clock] != 1 || [get_property PERIOD $fast_clock] != 2.5} {error "Expected unchanged 400MHz DDR clock"}
+# set audit [open clock-routing-properties.txt w]
+# puts $audit "FAST_INPUT=$fast_input SLOW_INPUT=$slow_input FAST_NET=$fast_net SLOW_NET=$slow_net"
+# foreach cell [concat $fast_cell $slow_cell] {puts $audit "CELL=$cell LOC=[get_property LOC $cell]"}
+# foreach net [concat $fast_net $slow_net] {puts $audit "BEFORE NET=$net CLOCK_ROOT=[get_property CLOCK_ROOT $net] USER_CLOCK_ROOT=[get_property USER_CLOCK_ROOT $net] GROUP=[get_property CLOCK_DELAY_GROUP $net]"}
+# set common_root X1Y2
+# if {$common_root eq "" || [llength [get_clock_regions $common_root]] != 1} {error "Missing existing system clock root"}
+# puts $audit "COMMON_ROOT=$common_root measured in original default d902 clock audit (both clocks X1Y2); no frequency/waveform/skew relaxation"
+# set fixed_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != ""}]
+# if {[llength $fixed_cells] < 100000} {error "Unexpectedly incomplete primitive placement selection"}
+# set audit_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && REF_NAME != IDELAYCTRL}]
+# set loc_before [dict create]
+# foreach name [get_property NAME $audit_cells] loc [get_property LOC $audit_cells] {dict set loc_before $name $loc}
+# set bel_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && (REF_NAME =~ LUT? || REF_NAME =~ FD?E)}]
+# set bel_before [dict create]
+# foreach name [get_property NAME $bel_cells] bel [get_property BEL $bel_cells] {dict set bel_before $name $bel}
+# set_property IS_LOC_FIXED true $fixed_cells
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFG' is LOCed to site 'BUFGCE_X1Y50'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE' is LOCed to site 'BUFGCE_X1Y49'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BUFGCE_DIV' is LOCed to site 'BUFGCE_DIV_X1Y8'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'IBUFDS_n_0_BUFG_inst' is LOCed to site 'BUFGCE_X1Y48'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'sys_rst_reg_bufg_place' is LOCed to site 'BUFGCE_X0Y92'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/backend/csrFile/performance/vxrm[1]_i_1_bufg_place' is LOCed to site 'BUFGCE_X0Y80'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+WARNING: [Constraints 18-4434] Global Clock Buffer 'BreezeRvvAxi/cluster/l1d/internal2_physicalAddress[63]_i_1_bufg_place' is LOCed to site 'BUFGCE_X1Y110'. Using a LOC constraint to assign the placement of a Global Clock Buffer can result in sub-optimal placement results.
+Resolution: Remove the LOC constraint and use the CLOCK_REGION constraint to assign a Global Clock Buffer to a CLOCK_REGION.
+# set_property IS_BEL_FIXED true $bel_cells
+# puts $audit "FIXED_LOC_PRIMITIVES=[llength $fixed_cells] FIXED_SIMPLE_LUT_FF_BELS=[llength $bel_cells] RAM_INTERNAL_BEL_PACKING_ALLOWED=1"
+# flush $audit
+# route_design -unroute
+Command: route_design -unroute
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Updating clock trees with placer guidance...
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 6332.812 ; gain = 0.000 ; free physical = 13925 ; free virtual = 39889
+Time taken for updating clock routing (in secs): 16.58
+INFO: [Route 35-163] All nets in the design were unrouted.
+INFO: [Common 17-83] Releasing license: Implementation
+3 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 6332.812 ; gain = 364.695 ; free physical = 14187 ; free virtual = 40152
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# set_property USER_CLOCK_ROOT $common_root [concat $fast_net $slow_net]
+WARNING: [Vivado 12-4792] Clock net 'sys4x_clk' must be fully unrouted before moving its clock root, otherwise it may result in sub-optimal clock routing and unnecessary clock skew.
+Resolution: Before running any commands that update the clock routing, run this command to fully unroute the clock: route_design -unroute -nets [get_nets sys4x_clk]
+WARNING: [Vivado 12-4792] Clock net 'sys_clk' must be fully unrouted before moving its clock root, otherwise it may result in sub-optimal clock routing and unnecessary clock skew.
+Resolution: Before running any commands that update the clock routing, run this command to fully unroute the clock: route_design -unroute -nets [get_nets sys_clk]
+# set_property CLOCK_DELAY_GROUP be2_ddr_serdes [concat $fast_net $slow_net]
+# place_design -unplace
+Command: place_design -unplace
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-83] Releasing license: Implementation
+2 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+# place_design -directive Quick -no_psip -no_bufg_opt
+Command: place_design -directive Quick -no_psip -no_bufg_opt
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+INFO: [Place 46-5] The placer was invoked with the 'Quick' directive.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 4 CPUs
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 14838 ; free virtual = 40803
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 52e1fcf9
+
+Time (s): cpu = 00:00:00.87 ; elapsed = 00:00:00.9 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 14837 ; free virtual = 40802
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 15165 ; free virtual = 41129
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_2 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_3 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_4 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_5 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_6 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_7 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_8 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_9 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_10 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_11 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_12 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_13 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_14 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_15 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_16 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_17 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_18 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_19 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_20 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_21 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 5de47a39
+
+Time (s): cpu = 00:01:51 ; elapsed = 00:01:44 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13996 ; free virtual = 39961
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 167b60a6e
+
+Time (s): cpu = 00:01:57 ; elapsed = 00:01:50 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13830 ; free virtual = 39795
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 167b60a6e
+
+Time (s): cpu = 00:01:58 ; elapsed = 00:01:51 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13831 ; free virtual = 39796
+Phase 1 Placer Initialization | Checksum: 167b60a6e
+
+Time (s): cpu = 00:01:58 ; elapsed = 00:01:51 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13830 ; free virtual = 39795
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 167b60a6e
+
+Time (s): cpu = 00:01:59 ; elapsed = 00:01:52 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13829 ; free virtual = 39794
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 167b60a6e
+
+Time (s): cpu = 00:02:00 ; elapsed = 00:01:53 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13828 ; free virtual = 39794
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 167b60a6e
+
+Time (s): cpu = 00:02:00 ; elapsed = 00:01:53 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13826 ; free virtual = 39791
+
+Phase 2.4 Global Placement Core
+Phase 2.4 Global Placement Core | Checksum: 2321b9a7a
+
+Time (s): cpu = 00:02:11 ; elapsed = 00:01:59 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13616 ; free virtual = 39582
+Phase 2 Global Placement | Checksum: 2321b9a7a
+
+Time (s): cpu = 00:02:11 ; elapsed = 00:01:59 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13636 ; free virtual = 39602
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 2321b9a7a
+
+Time (s): cpu = 00:02:13 ; elapsed = 00:02:00 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13650 ; free virtual = 39615
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 2321b9a7a
+
+Time (s): cpu = 00:02:13 ; elapsed = 00:02:01 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13653 ; free virtual = 39618
+
+Phase 3.3 Small Shape DP
+
+Phase 3.3.1 Small Shape Clustering
+Phase 3.3.1 Small Shape Clustering | Checksum: 1bab5d7a5
+
+Time (s): cpu = 00:02:17 ; elapsed = 00:02:03 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13662 ; free virtual = 39628
+
+Phase 3.3.2 DP Optimization
+Phase 3.3.2 DP Optimization | Checksum: 1bab5d7a5
+
+Time (s): cpu = 00:02:29 ; elapsed = 00:02:07 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13615 ; free virtual = 39580
+
+Phase 3.3.3 Flow Legalize Slice Clusters
+Phase 3.3.3 Flow Legalize Slice Clusters | Checksum: 15403b535
+
+Time (s): cpu = 00:02:31 ; elapsed = 00:02:09 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13611 ; free virtual = 39576
+
+Phase 3.3.4 Slice Area Swap
+
+Phase 3.3.4.1 Slice Area Swap Initial
+Phase 3.3.4.1 Slice Area Swap Initial | Checksum: 1753ebd1b
+
+Time (s): cpu = 00:02:32 ; elapsed = 00:02:10 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13591 ; free virtual = 39557
+Phase 3.3.4 Slice Area Swap | Checksum: 1753ebd1b
+
+Time (s): cpu = 00:02:32 ; elapsed = 00:02:10 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13584 ; free virtual = 39550
+Phase 3.3 Small Shape DP | Checksum: 288114a78
+
+Time (s): cpu = 00:02:35 ; elapsed = 00:02:12 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13599 ; free virtual = 39565
+
+Phase 3.4 Re-assign LUT pins
+Phase 3.4 Re-assign LUT pins | Checksum: 288114a78
+
+Time (s): cpu = 00:02:36 ; elapsed = 00:02:12 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13596 ; free virtual = 39561
+
+Phase 3.5 Pipeline Register Optimization
+Phase 3.5 Pipeline Register Optimization | Checksum: 288114a78
+
+Time (s): cpu = 00:02:36 ; elapsed = 00:02:13 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13597 ; free virtual = 39563
+Phase 3 Detail Placement | Checksum: 288114a78
+
+Time (s): cpu = 00:02:37 ; elapsed = 00:02:13 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13599 ; free virtual = 39564
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+Phase 4.1 Post Commit Optimization | Checksum: 288114a78
+
+Time (s): cpu = 00:02:39 ; elapsed = 00:02:14 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13598 ; free virtual = 39564
+WARNING: [Place 46-14] The placer has determined that this design is highly congested and may have difficulty routing. Run report_design_analysis -congestion for a detailed report.
+Netlist sorting complete. Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.04 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13599 ; free virtual = 39564
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 3811fc577
+
+Time (s): cpu = 00:02:41 ; elapsed = 00:02:16 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13594 ; free virtual = 39560
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|              64x64|              32x32|
+|___________|___________________|___________________|
+|      South|              32x32|              16x16|
+|___________|___________________|___________________|
+|       East|              32x32|              32x32|
+|___________|___________________|___________________|
+|       West|              16x16|              32x32|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 3811fc577
+
+Time (s): cpu = 00:02:42 ; elapsed = 00:02:17 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13591 ; free virtual = 39557
+Phase 4.3 Placer Reporting | Checksum: 3811fc577
+
+Time (s): cpu = 00:02:42 ; elapsed = 00:02:17 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13590 ; free virtual = 39556
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13590 ; free virtual = 39556
+
+Time (s): cpu = 00:02:42 ; elapsed = 00:02:17 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13590 ; free virtual = 39556
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 297177ff6
+
+Time (s): cpu = 00:02:43 ; elapsed = 00:02:18 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13581 ; free virtual = 39546
+Ending Placer Task | Checksum: 1a2fbede4
+
+Time (s): cpu = 00:02:43 ; elapsed = 00:02:19 . Memory (MB): peak = 6356.824 ; gain = 0.000 ; free physical = 13644 ; free virtual = 39609
+INFO: [Common 17-83] Releasing license: Implementation
+31 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:02:59 ; elapsed = 00:02:24 . Memory (MB): peak = 6356.824 ; gain = 24.012 ; free physical = 13984 ; free virtual = 39950
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# set fast_net [get_nets -of_objects [get_pins BUFGCE/O]]
+# set slow_net [get_nets -of_objects [get_pins BUFGCE_DIV/O]]
+# write_checkpoint -force clock-placed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:21 ; elapsed = 00:00:09 . Memory (MB): peak = 6404.848 ; gain = 40.020 ; free physical = 13486 ; free virtual = 39709
+report_design_analysis: Time (s): cpu = 00:00:12 ; elapsed = 00:00:06 . Memory (MB): peak = 6404.848 ; gain = 0.000 ; free physical = 13532 ; free virtual = 39757
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd/gateware/clock-placed.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:46 ; elapsed = 00:00:28 . Memory (MB): peak = 6404.848 ; gain = 48.023 ; free physical = 14252 ; free virtual = 40360
+# set fresh_cells [get_cells -hierarchical -filter {IS_PRIMITIVE == 1 && LOC != "" && BEL != "" && REF_NAME != IDELAYCTRL}]
+# set loc_after [dict create]
+# foreach name [get_property NAME $fresh_cells] loc [get_property LOC $fresh_cells] {dict set loc_after $name $loc}
+# dict for {name loc} $loc_before {
+#     if {![dict exists $loc_after $name] || [dict get $loc_after $name] ne $loc} {error "Persistent primitive LOC changed: $name"}
+# }
+Persistent primitive LOC changed: IDELAYCTRL_TOP_AND
+    while executing
+"error "Persistent primitive LOC changed: $name""
+    invoked from within
+"if {![dict exists $loc_after $name] || [dict get $loc_after $name] ne $loc} {error "Persistent primitive LOC changed: $name"}"
+    ("dict for" body line 2)
+    invoked from within
+"dict for {name loc} $loc_before {
+    if {![dict exists $loc_after $name] || [dict get $loc_after $name] ne $loc} {error "Persistent primitive LOC cha..."
+    (file "postroute-closure.tcl" line 59)
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 00:49:57 2026...
