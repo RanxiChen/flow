@@ -24,14 +24,14 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           val pcs = Vector(m.issue(addi(20,0,a)), m.issue(addi(21,0,b)))
           for(_ <- 0 until 6) m.step()
           m.returnDelay = 1 + rng.nextInt(40)
-          m.misses += 0x100; m.misses += 0x140
+          m.misses += 0x100; m.misses += 0x140; m.misses += 0x180
           m.tlbMisses += 0x300; m.tlbDelay=5+rng.nextInt(20)
           m.mmioAddresses += 0x12001000; m.mmioDelay=1+rng.nextInt(25)
           m.issue((BigInt(0x12001)<<12)|(BigInt(22)<<7)|0x37)
           for(_ <- 0 until 6) m.step()
           m.values(0x200)=BigInt("3ff0000000000000",16)
           m.values(0x208)=BigInt("4000000000000000",16)
-          val program = Vector(ld(10,0x100),ld(17,0x140),ld(14,0x108),ld(18,0x300),
+          val program = Vector(ld(10,0x100),ld(14,0x108),ld(17,0x140),ld(16,0x180),ld(18,0x300),
             (BigInt(22)<<15)|(BigInt(3)<<12)|(BigInt(19)<<7)|3) ++ (1 to 8).map(rd => mdu(rd,20,21)) ++
             Vector(mdu(11,20,21,div=true), BigInt(0x0b), ld(1,0x200,fp=true), ld(2,0x208,fp=true),
               fp(3,1,2), addi(12,1,7), addi(13,10,1))
@@ -53,9 +53,9 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           for(rd <- 1 to 8) m.writes(rd).map(_.data).toVector mustBe Vector(BigInt(a*b))
           m.writes(10).map(_.data).toVector mustBe Vector(BigInt(0x1234))
           m.writes(14).map(_.data).toVector mustBe Vector(BigInt(0x1234))
-          for(rd <- Seq(17,18,19)) m.writes(rd).map(_.data).toVector mustBe Vector(BigInt(0x1234))
+          for(rd <- Seq(16,17,18,19)) m.writes(rd).map(_.data).toVector mustBe Vector(BigInt(0x1234))
           m.events.count(_.kind=="mmioStart") mustBe 1
-          m.events.filter(_.kind=="replay").map(_.data).toSet must contain allElementsOf Set(BigInt(1),BigInt(3),BigInt(4),BigInt(6))
+          m.events.filter(_.kind=="replay").map(_.data).toSet must contain allElementsOf Set(BigInt(1),BigInt(2),BigInt(3),BigInt(4),BigInt(6))
           m.writes(11).map(_.data).toVector mustBe Vector(BigInt(a/b))
           m.writes(12).map(_.data).toVector mustBe Vector(BigInt(a*b+7))
           m.writes(13).map(_.data).toVector mustBe Vector(BigInt(0x1235))

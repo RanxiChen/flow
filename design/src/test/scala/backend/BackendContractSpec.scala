@@ -543,7 +543,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.d.io.observe.gprBusy.expect(0.U)
   }}
 
-  "SOC3b_held_EX_captures_MEM_WB_W2_and_youngest_value" in {
+  "BE2_ID_DIV_credit_wait_preserves_youngest_ordinary_value" in {
     // Reuse one elaboration; a second DIV waits in EX while its ordinary
     // producer traverses MEM/WB/W2 and disappears. Vary their separation.
     simulate(new BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux), enabledebug=true)) { d =>
@@ -553,7 +553,8 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
         val p=m.run(Seq(mdu(5,10,11,true),addi(12,0,10),addi(12,0,21)) ++
           Seq.fill(gap)(nop) ++ Seq(mdu(6,12,11,true)),85)
         withClue(s"producer gap=$gap: ") {
-          m.at("divIn",p.last) must be > m.at("id",p.last)+3
+          m.at("divIn",p.last) mustBe m.at("id",p.last)+1
+          m.at("id",p.last) mustBe m.written(5)
           m.writes(12).map(_.data).toSeq mustBe Seq(BigInt(10),BigInt(21))
           m.writes(6).map(_.data).toSeq mustBe Seq(BigInt(21))
           m.writes(5).map(_.data).toSeq mustBe Seq(mask)
@@ -582,26 +583,27 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.issue(ld(1,0)); val branch=m.issue(BigInt(0x463))
     for(_ <- 0 until 12) m.step()
     m.all("btb") mustBe Seq(3); m.all("pht") mustBe Seq(3); m.all("ghr") mustBe Seq(3)
-    m.all("redirect").last mustBe 8
+    m.all("redirect").last mustBe m.holdUntil+5
+    m.events.count(_.kind=="replay") mustBe 1
     m.events.filter(e => e.kind=="commit" && e.pc==branch) mustBe empty
     m.events.filter(e => e.kind=="gpr" && e.rd!=0) mustBe empty
     m.d.io.observe.gprBusy.expect(0.U)
   }}
 
   "S13_WB_kill_at_EX_release_produces_no_training" in { check() { m =>
-    m.holdUntil=8; m.faults += BigInt(0)
+    m.faults += BigInt(0)
     // PERM supplies an additional younger slot before the older load holds WB.
     // Fill MEM/PERM so the branch remains in EX on the fault release edge.
     m.issue(ld(1,0)); m.issue(nop); m.issue(nop); val branch=m.issue(BigInt(0x463))
-    while(m.cycle<8) m.step()
+    m.cycle mustBe 4
     // The branch is still in EX when the older WB fault releases S2.
     // This is the potential decision edge: kill must suppress its advance.
     m.d.io.debug.get.idExeValid.expect(true.B)
     m.d.io.debug.get.idExePc.expect(branch.U)
     m.step()
     for(_ <- 0 until 12) m.step()
-    m.all("redirect").last mustBe 8
-    m.all("ex").filter(_>=8) mustBe empty
+    m.all("redirect").last mustBe 4
+    m.all("ex").filter(_>4) mustBe empty
     for(kind <- Seq("btb", "pht", "ghr")) m.all(kind) mustBe empty
     m.events.filter(e => e.kind=="commit" && e.pc==branch) mustBe empty
     m.events.filter(e => e.kind=="gpr" && e.rd!=0) mustBe empty
