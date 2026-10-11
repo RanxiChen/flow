@@ -75,7 +75,7 @@ object RvvDecode {
     val x = i.instruction
     val f6 = x(31,26); val f3 = x(14,12)
     d.vd := x(11,7); d.vs1 := x(19,15); d.vs2 := x(24,20)
-    d.masked := !x(25); d.scalarOperand := f3 === 4.U || f3 === 6.U
+    d.masked := !x(25); d.scalarOperand := f3 === 4.U || f3 === 6.U || f3 === 3.U
     d.sew := i.vtype(4,3)
     d.eew := Mux(f3 === 0.U, 0.U, f3 - 4.U)
     d.memory := x(6,0) === "h07".U || x(6,0) === "h27".U
@@ -92,7 +92,7 @@ object RvvDecode {
       when(f6 === 2.U && f3 === 0.U) { d.op := RvvOp.sub.U; d.supported := true.B }
       when(f6 === 9.U && f3 === 4.U) { d.op := RvvOp.and.U; d.supported := true.B }
       when(f6 === 40.U && f3 === 4.U) { d.op := RvvOp.shift.U; d.supported := true.B }
-      when(f6 === 23.U && x(25) && x(24,20) === 0.U && (f3 === 0.U || f3 === 4.U)) {
+      when(f6 === 23.U && x(25) && x(24,20) === 0.U && (f3 === 0.U || f3 === 3.U || f3 === 4.U)) {
         d.op := RvvOp.move.U; d.supported := true.B
       }
       when(f6 === 45.U && f3 === 2.U) { d.unit := 2.U; d.op := RvvOp.macc.U; d.supported := true.B }

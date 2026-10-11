@@ -31,6 +31,26 @@ fault_pc:
   vle64.v v3, (a3)
   vmv.x.s t0, v3
   bne t0, t1, fail
+  /* Linux 6.18 context discard uses immediate broadcast, including LMUL=8. */
+  vsetvli t0, zero, e8, m8, ta, ma
+  li t1, 512
+  bne t0, t1, fail
+  vmv.v.i v8, -1
+  vmv.x.s t0, v8
+  li t1, -1
+  bne t0, t1, fail
+  la a4, vector_context
+  vse8.v v8, (a4)
+  vmv.v.i v8, 0
+  vle8.v v8, (a4)
+  vmv.x.s t0, v15
+  bne t0, t1, fail
+  csrr t0, vlenb
+  li t1, 64
+  bne t0, t1, fail
+  li a0, 8
+  vsetvli a1, a0, e64, m1, ta, ma
+  li t1, 12
   li t2, 8
 check:
   ld t0, 0(a3)
@@ -65,6 +85,8 @@ trap:
 .balign 64
 .globl vector_output
 vector_output: .zero 64
+.balign 64
+vector_context: .zero 512
 .balign 64
 .globl tohost
 tohost: .dword 0

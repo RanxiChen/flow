@@ -604,7 +604,10 @@ class BreezeBackend(
       !io.fetchBuffer.bits.instructionAccessFault && !io.fetchBuffer.bits.instructionPageFault
     v.io.issue.valid := exVector && allowEx
     v.io.issue.bits := 0.U.asTypeOf(v.io.issue.bits)
-    v.io.issue.bits.instruction := ex.inst; v.io.issue.bits.rs1 := exR1; v.io.issue.bits.rs2 := exR2
+    v.io.issue.bits.instruction := ex.inst
+    v.io.issue.bits.rs1 := Mux(ex.inst(6,0) === "h57".U && ex.inst(14,12) === 3.U,
+      ex.inst(19,15).asSInt.pad(64).asUInt, exR1)
+    v.io.issue.bits.rs2 := exR2
     v.io.issue.bits.rd := ex.rd_addr
     val state = csrFile.io.vectorState.get
     v.io.issue.bits.vl := state.vl; v.io.issue.bits.vtype := state.vtype
