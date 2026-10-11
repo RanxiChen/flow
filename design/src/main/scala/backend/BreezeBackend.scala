@@ -148,8 +148,13 @@ class BreezeBackend(
   val idAtomic = ctrl.mem_op === BreezeMemOp.Lr || ctrl.mem_op === BreezeMemOp.Sc ||
     ctrl.mem_op === BreezeMemOp.Amo
   val idSolo = soloArm || ctrl.mem_op === BreezeMemOp.Amo || (idAtomic && (ctrl.amo_aq || ctrl.amo_rl))
-  val cpuDrainedD = RegNext(io.l1d.cpuDrained, false.B)
-  val mmuIdleD = RegNext(io.mmuIdle, false.B)
+  // A retiring CPU S3 can create PS/MSHR ownership at this edge. Sampling
+  // only after the older pipeline is empty closes that obligation handoff.
+  val cpuDrainedD = RegNext(io.l1d.cpuDrained && olderEmpty, false.B)
+  // The first SFENCE ID edge blocks new translation. Its idle observation
+  // becomes eligible only after that blocked edge and after older CPU work.
+  val sfenceAtId = io.fetchBuffer.valid && ctrl.is_sfence_vma
+  val mmuIdleD = RegNext(io.mmuIdle && olderEmpty && sfenceAtId, false.B)
   val scalarDrained = !(scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.committedFlagsOnly)
   // Busy and flags ownership are already registers (T17 raw-busy contract).
   val scalarDrainedD = scalarDrained
@@ -787,6 +792,12 @@ class BreezeBackend(
     assert(!wbReplay || !wb.solo, "[N02] solo instruction replayed twice")
     assert(!killD || !(mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire),
       "[R2] new unit request during delayed kill")
+    when(io.fetchBuffer.valid && olderEmpty && cpuDrainedD && (ctrl.fencei || ctrl.is_sfence_vma)) {
+      assert(io.l1d.cpuDrained, "[R6] CPU obligation reappeared after eligible drain sample")
+    }
+    when(sfenceAtId && olderEmpty && mmuIdleD) {
+      assert(io.mmuIdle, "[R6] MMU work reappeared after blocked idle sample")
+    }
     when(idLeave && idSerial) {
       assert(olderEmpty, "[R6] serial issued before older WB drained")
       assert(!ctrl.fencei || io.l1d.cpuDrained, "[R6] sampled CPU drain fell before FENCE.I issue")

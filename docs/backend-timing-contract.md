@@ -36,13 +36,13 @@
 | T11 ※ | Load miss 迟到数据（RSP↓ DataE 在拍 R fire，`late.ready` 恒可得） | `l1d.late.fire = R+7`（R+1…R+4 安装 4 拍，R+5 回放 S0，R+7 回放 S2），当拍进入后端 `lateReg`；`gprWrite(x1) = R+8`；依赖指令 `idLeave = R+8`（SOC-3b：由 R+7 改为 R+8） |
 | T12 ※b | late 首次 valid 与普通 GPR 指令 WB 提交同拍 N，N+1 的 WB 不写 GPR | 普通指令 `commit=N`、`gprWrite=N+1`；`l1d.late.fire=N`、迟到目的 `gprWrite=N+2`；ID/EX/MEM/WB 不因写口保持；`wb_port_conflict` 仅 N+1 计 1 |
 | T13 | 写口优先级：lateReg、DIV、MUL、FPU→GPR 四个写口来源在 N 同拍 valid，N…N+3 的 W2 无普通 GPR 写 | 连续 4 拍 N…N+3 依次写入，顺序 lateReg > DIV > MUL > FPU；未选者保留未完成结果。测试 L1D late 在 N−1 接收：现有刺激 `returnDelay=26` 改为 25，原物理写回期望 N…N+3 不变；FPU 反压遵循 v1 RTL spec 的 tag/fire 合同 |
-| T14 | FPU 请求接受与计算发射 | SOC-3d 合并控制链候选（2026-10-09 用户授权）：EX 拍 E 在 FpUnit 入口有容量时接受请求并分配 tag；两项无 flow/pipe 请求缓冲使原始 CVFPU 最早 E+1 fire。入口 ready 只依赖寄存容量/tag 可分配，不能组合读取 CVFPU ready。无停顿 II=1；容量在 ID 预留，满时保持 ID；离开 ID 的请求在 EX 必然被接受一次。预留同时覆盖两项入口、tag 和 killDrain，不新增 FIFO。 |
+| T14 | FPU 请求接受与计算发射 | EX 拍 E 消费 ID 预留并分配 tag；两项无 flow/pipe 请求缓冲使原始 CVFPU 最早 E+1 fire。EX 不读 ready。无停顿 II=1；容量在 ID 预留，满时保持 ID；离开 ID 的请求在 EX 必然被接受一次。预留同时覆盖两项入口、tag 和 killDrain，不新增 FIFO。BE2 §11 自行裁定：允许入口实际出队当拍归还 ID credit，保留 CVFPU ready→入口 deq.fire→ID 资格的组合路径；不允许写口 grant 反压计算流水。 |
 | T15 | FPU 写回附加拍 | `fpu.out_valid&&out_ready` 的拍 = `fprWrite`（或 `gprWrite`，FP→整数类）的拍；在途表查 tag 不加拍。仅在被更高优先级来源或 W2 普通写占口时延后 |
 | T16 | FP 依赖：`fadd.d f1,..; fadd.d f2,f1,..` | `idLeave(第二条) = fprWrite(f1)`；`fprWrite(f1) − ex(第一条)` 等于 1 + CVFPU FP64 ADDMUL 的实际延迟（测试台从原始 `in fire`→`out fire` 测得），对应本批一拍输入边界；输出不加拍 |
 | T17 | CSR 等空：`fdiv.d f1,..; csrr x5,fflags` | `idLeave(csrr) = fprWrite(f1) + 1`（A07 用 `busy==0`，不用 effectiveBusy）；读到的 fflags 含 fdiv 的标志 |
-| T18 | FENCE.I 在 ID，寄存 `cpuDrained=1` | 更老项离开 WB 后下一拍离开 ID；ID 拍 I，EX=I+1，WB/redirect/cacheFlush=I+4；WB 不等待 |
+| T18 | FENCE.I 在 ID，寄存 `cpuDrained=1` | 旧流水已空且原始 cpuDrained 为 1 的拍 D 才采样，D+1 离开 ID；若最后旧 WB 在 W 拍无后续义务，则最早 W+2。PS/MSHR 交接产生的义务必须先排空；ID 拍 I，EX=I+1，WB/redirect/cacheFlush=I+4；WB 不等待 |
 | T19 | FENCE.I 在 ID，`cpuDrained` 在拍 D 变 1，老流水已空 | D+1 离开 ID，EX=D+2，WB/commit/redirect/cacheFlush=D+5；期间不发年轻指令。采样到发射期间 raw cpuDrained 不回落 |
-| T20 | SFENCE.VMA 在 ID，原始 `cpuDrained && mmuIdle` 在 D 满足，老流水已空 | 停止前端新翻译；D+1 离开 ID，EX=D+2，WB/commit/sfence/redirect=D+5。MMU 在 sfence S0/S1 内部拒绝查询，无 WB 第二阶段等待。raw 条件从采样到发射稳定 |
+| T20 | SFENCE.VMA 在 ID，原始 `cpuDrained && mmuIdle` 在 D 满足，老流水已空 | 停止前端新翻译；采样要求 ID SFENCE 阻塞已生效且旧流水已空，禁止使用阻塞前的 idle；合格 D+1 离开 ID，EX=D+2，WB/commit/sfence/redirect=D+5。MMU 在 sfence S0/S1 内部拒绝查询，无 WB 第二阶段等待。raw 条件从采样到发射稳定 |
 | T21 ※b | 写口饥饿保护：`late.valid` 首拍为 c，普通独立 ALU 流已稳定，除保护气泡外持续提交，不读 late 的 rd | `l1d.late.fire=c`；迟到目的 `gprWrite=c+8`；只有 c+4 一拍没有指令离开 ID，其余各拍照常离开；`wb_port_conflict` 在 c+1…c+7 各计 1，共 7 |
 | T22 ※b | B01 反例：Load A 已提交 miss；B 为 `add`（写 GPR）、C 为紧随的命中 `ld`（不同字）、其后为 `nop`；A 的 `late.valid` 首拍 = B 的 WB 拍 N | `commit(B)=N`、`gprWrite(B)=N+1`；C 的 `l1d.resp.valid`（Done）=`commit(C)=N+1`、`gprWrite(C)=N+2`；`l1d.late.fire=N`、`gprWrite(A)=N+3`；后端无保持，resp 与 WB 始终同拍；冲突 N+1、N+2，共 2 |
 
@@ -115,6 +115,8 @@ L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列�
 
 本节覆盖上文 SOC-3b/c/d/e 的旧保持和令牌条文。MEM/PERM 无条件推进，kill 仅清 valid；WB 仅对 solo 阻塞项自保持，EX/MEM/PERM 必须为空。EX 唯一等待源为 L1D S0 接收。串行操作在 ID 使用寄存 cpuDrained/mmuIdle/标量 drain 等待；WFI 正常流水提交。T07 的第二条 DIV 在 ID 等 credit，接受仍在前一条物理写回后一拍。
 
+§11 自行裁定的 R7 例外：保留 P09 的外部中断观察拍，CSR 原 interruptPending/cause 的 masking/priority 判定不额外打一拍；WB interrupt 条件仍检查四级 valid、mmioBusy、fatal 和 stopped。该既有组合锥须单独取证，不能称为寄存判定源。FPU 入口当拍 credit 归还的 R3 例外见 T14；两项均在 BE2-report 中交最终审核，不改变其它 T/P golden。
+
 WB 本地架构动作和 L1D CPU valid 作废保留同拍，执行单元 commitD/killD 延后一拍；输出允许寄存 commitD 当拍授权最老项。MUL 八项总预留覆盖流水与八槽结果，晚返回使用两项无 flow/pipe 队列；FPU 两项入口预留与 tag 容量分开。写口输入统一为 rd/bank/data/flags 的寄存结果，授权只做出队、busy clear、credit return。优先级和阈值 3 保留。桩默认关闭；加速桩只支持 custom-0 的 Ok/Exc 随机判定，Serial/标量结果推迟到 R05'。
 
 | 新合同 | 检查 |
@@ -125,3 +127,5 @@ WB 本地架构动作和 L1D CPU valid 作废保留同拍，执行单元 commitD
 | N04 | commitD/killD 延后一拍；T04/T05/T16/P02/P08/P10 的原数值与副作用要求不放宽 |
 
 上文“s2Hold→各级保持”已删除为结构允许项。允许的例外仅 WB 本地 busy/CSR/退休/W2 捕获与 CPU/后端 valid 作废；串行 drained/idle 不进入 WB 判定。MMU 原 C4 的 sfence 两阶段后端等待在本任务范围内替换为 ID 采样和 MMU 自身 S0/S1 接收阻塞；不修改原 MMU 冻结文件或起点已有哈希差异。
+
+串行 drain 采样资格修订（§11）：cpuDrainedD 只采样 `olderEmpty && cpuDrained`；mmuIdleD 只采样 `olderEmpty && ID.valid && ID.sfence && mmuIdle`。这是 PS/MSHR 在最后旧 WB 边沿建立义务及前端最后一次翻译的交接屏障，不使用 raw 条件旁路寄存器。合格采样后 ID 等待期间保持无新 CPU 请求及翻译请求；raw 条件回落由 RTL 断言拒绝。T18 最早增加一拍；已持续等待的 T19/T20 的 D+1/D+5 不变。

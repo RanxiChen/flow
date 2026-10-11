@@ -430,6 +430,16 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.events.filter(e=>e.kind=="id" && e.pc!=p && e.cycle<=d+5) mustBe empty
     m.all("req").filter(_<=d+5) mustBe empty
   }}
+  "BE2 R6 SFENCE rejects an idle sample preceding its first translation-block edge" in { check() { m =>
+    m.step(); m.mmuIdle=false
+    val p=m.pc
+    m.step(Some(p->BigInt(0x12000073))) mustBe false
+    m.step(Some(p->BigInt(0x12000073))) mustBe false
+    val d=m.cycle; m.mmuIdle=true
+    m.issue(BigInt(0x12000073)); m.run(Seq(nop),8)
+    m.at("id",p) mustBe d+1
+    m.all("sfence") mustBe Seq(d+5)
+  }}
   "T20_SFENCE_ID_registered_idle_then_WB_pulse_and_redirect" in { check() { m =>
     m.mmuIdle=false; val p=m.pc
     for(_ <- 0 until 7) m.step(Some(p->BigInt(0x12000073))) mustBe false
