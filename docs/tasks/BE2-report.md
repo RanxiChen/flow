@@ -153,3 +153,10 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 **自行裁定 18：EX admission 与取消分离。** 综合 checkpoint 用叶输出驱动作为 through 点，确证 S3 decision→EX 宽 payload CE 仍有1230端点、20条最差路径（旧版 query 的组合 from 点不足以作无路径证明，故保留失败查询并改正）。MEM/PERM 无该保持；执行单元及前端的初步无路径集合已有同方法 baseline 阳性，但完整查询仍在运行。原始残留来自 wbKill→L1D cpuKill→req.ready/TLB kill-ready→EX resourceWait。74c858e 增加 L1D/TLB canAccept，容量与实际 fire 分离：EX只读取消前的相同优先级 admission；实际 cache/TLB 请求仍在 kill 当拍不 fire、不留副作用。新增断言要求无 CPU kill 时 L1D canAccept==req.ready，新增定向例要求 older load精确13异常、年轻EX load不发请求/不提交/不写回，EX不被取消ready保持。1ce2b97 又排除 raw SFENCE 动作，TLB canAccept仅由 missValid/sfS1Valid寄存状态决定，req.ready仍抑制sfence.valid。SFENCE按R6到WB时EX已空且wbKill同时取消年轻CPU槽，因此不靠容量信号授权请求。MMU冻结文件的起点hash差异不重录掩盖；新侧带定义补入L1D接口表并只更新该文件授权hash。
 
 新增修正正在重跑相关最小门禁。首轮四核物理继续保留作真实对照；单核首轮时序和A1不能冒充最终修正版证据。
+
+
+74c858e admission 定向7/7（R1取消、R6三项、S13 kill、P09/P10），G2 0–999全部通过，整个进程exit0；实际1000份ledger再经Spike独立比对1000/1000、exit0，脚本/fixture/golden不变。参考脚本首次路径错误exit2不作为测试失败或主机失败，改用明确scp后的be2-spike-ledger.py，成功日志用-v2单独保留。1ce2b97的Backend生产代码与74c858e相同，差异仅为TLB容量中排除SFENCE动作及协议注释。
+
+1ce2b97最低集：配置9/9、单核和四核ISA各10/10 ELF、原始四核系统程序6/6 ELF、S1双槽取消及四核fault seed91共2/2、行为PTW drain反例1/1，五suites15tests，exit0。六个四核程序cycles/各hart退休数与7b885d6完全一致，证明确实保留正常执行行为。原每核1000操作、精确异常cause/tval和tohost不变。日志在`records/be2-20261011/minimum-admission/`；真实Sv39串行PTW的两项关键用例另外正在补验。
+
+1ce2b97生产single/small由B工作树生成，exit0，复制准确production目录至同SHA的C工作树后由SnapshotBuilder冻结，未重新用本地或旧源生成。该SHA四核默认物理已启动（CPU0–3/maxThreads4），单核同参数默认物理并行启动（CPU8–9/maxThreads2）；线程数是运行资源上限，不改变硬件参数或实现指令。首轮7b885d6四核仍在布线，保留其源和工程作对照，没有把中间负WNS当作最终指标。

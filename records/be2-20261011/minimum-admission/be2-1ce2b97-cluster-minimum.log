@@ -1,0 +1,203 @@
+1ce2b97a59a922ba37f841602a1b026195a69739
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-b3-8ea5db5/design
++ BE2_FIB_ELF=/home/chen/FUN/flow-runs/be2-fibonacci-64k.elf
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4
++ taskset -c 0-3 nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.config.BreezeCoreConfigSpec' 'testOnly flow.cluster.BE2MinimumSpec' 'testOnly flow.cluster.ClusterProgramSpec -- -t "multi-hart programs, small (4 harts), Linux profile"' 'testOnly flow.memsys.L1DL2MultiCoreFaultSpec -- -z "BE2 S1 kill" -z "four cores, seed 91"' 'testOnly flow.memsys.BE2SerialConditionSpec -- -z "B3 audit"'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] compiling 5 Scala sources to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BreezeCoreConfigSpec:
+[info] - single deployment inherits the four-hart configuration except profile and hart count
+[info] - privilege profiles should keep MCU as default and enable Linux Bare mode explicitly
+[info] - BreezeCoreConfig should derive baseline frontend and backend branch predictor settings when requested
+[info] - BreezeCoreConfig should derive gshare frontend and backend branch predictor settings
+[info] - parameterless defaults select GShare at every Scala layer
+[info] - cluster presets carry the memory geometry as the single entry point
+[info] - default geometry derives the l1d-rtl-spec §0.2 constants
+[info] - cluster presets keep explicit baseline without changing geometry
+[info] - geometry outside the v1 constraints is rejected at construction
+[info] Run completed in 731 milliseconds.
+[info] Total number of tests run: 9
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 9, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 16 s, completed Oct 11, 2026, 5:11:58 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2MinimumSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - minimum RV64I M A C and CSR programs retain their original pass signatures (single)
+[info]   + rv64ui-p-add passed=true cycles=7089 retired=509 
+[info]   + rv64ui-p-lw passed=true cycles=4664 retired=322 
+[info]   + rv64ui-p-sw passed=true cycles=7627 retired=553 
+[info]   + rv64ui-p-beq passed=true cycles=4783 retired=330 
+[info]   + rv64um-p-mul passed=true cycles=6955 retired=499 
+[info]   + rv64um-p-div passed=true cycles=2420 retired=148 
+[info]   + rv64ua-p-amoadd_d passed=true cycles=1884 retired=108 
+[info]   + rv64ua-p-lrsc passed=true cycles=69903 retired=6282 
+[info]   + rv64uc-p-rvc passed=true cycles=4182 retired=299 
+[info]   + rv64mi-p-csr passed=true cycles=4180 retired=278 
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - minimum RV64I M A C and CSR programs retain their original pass signatures (small)
+[info]   + rv64ui-p-add passed=true cycles=7862 retired=509/1591/1590/1590 
+[info]   + rv64ui-p-lw passed=true cycles=5420 retired=322/981/980/979 
+[info]   + rv64ui-p-sw passed=true cycles=8400 retired=553/1726/1725/1724 
+[info]   + rv64ui-p-beq passed=true cycles=5560 retired=330/1016/1015/1014 
+[info]   + rv64um-p-mul passed=true cycles=7732 retired=499/1559/1558/1557 
+[info]   + rv64um-p-div passed=true cycles=3194 retired=148/424/423/423 
+[info]   + rv64ua-p-amoadd_d passed=true cycles=2648 retired=108/288/287/286 
+[info]   + rv64ua-p-lrsc passed=true cycles=70674 retired=6282/17294/17293/17293 
+[info]   + rv64uc-p-rvc passed=true cycles=4930 retired=299/858/857/857 
+[info]   + rv64mi-p-csr passed=true cycles=4939 retired=278/859/858/858 
+[info] Run completed in 2 minutes, 54 seconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 2, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 175 s (02:55), completed Oct 11, 2026, 5:14:53 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ClusterProgramSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - multi-hart programs, small (4 harts), Linux profile
+[info]   + mh_amo_lock_4: PASS cycles=116780 retired=8939/7886/6442/7177 h0=pass h1=pass h2=pass h3=pass mh_amo_lock_4.elf: all 4 hart(s) passed at cycle 116779
+[info] mh_lrsc_counter_4: PASS cycles=27904 retired=1290/1284/1280/1276 h0=pass h1=pass h2=pass h3=pass mh_lrsc_counter_4.elf: all 4 hart(s) passed at cycle 27903
+[info] mh_message_pass_4: PASS cycles=29660 retired=2239/2407/2395/2379 h0=pass h1=pass h2=pass h3=pass mh_message_pass_4.elf: all 4 hart(s) passed at cycle 29659
+[info] mh_ipi_4: PASS cycles=19417 retired=1532/550/550/545 h0=pass h1=pass h2=pass h3=pass mh_ipi_4.elf: all 4 hart(s) passed at cycle 19416
+[info] mh_sv39_4: PASS cycles=10185 retired=545/526/534/541 h0=pass h1=pass h2=pass h3=pass mh_sv39_4.elf: all 4 hart(s) passed at cycle 10184
+[info] mh_fencei_4: PASS cycles=5262 retired=271/283/283/275 h0=pass h1=pass h2=pass h3=pass mh_fencei_4.elf: all 4 hart(s) passed at cycle 5261 
+[info] Run completed in 2 minutes, 31 seconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 151 s (02:31), completed Oct 11, 2026, 5:17:24 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] L1DL2MultiCoreFaultSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - BE2 S1 kill cancels both young permission slots and preserves the older response
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+FAULT_PROGRESS cycle=0 remaining=1000/1000/1000/1000 unfinished=0/0/0/0
+core: pending 0, presenting None, inPipe , awaiting late , drained true
+core: pending 0, presenting None, inPipe , awaiting late , drained true
+core: pending 0, presenting None, inPipe , awaiting late , drained true
+core: pending 0, presenting None, inPipe , awaiting late , drained true
+program0: remaining 1000, waiting LR false, waiting SC false, SC ok 0 fail 0
+program1: remaining 1000, waiting LR false, waiting SC false, SC ok 0 fail 0
+program2: remaining 1000, waiting LR false, waiting SC false, SC ok 0 fail 0
+program3: remaining 1000, waiting LR false, waiting SC false, SC ok 0 fail 0
+FAULT_PROGRESS cycle=10000 remaining=815/825/802/813 unfinished=3/1/1/0
+core: pending 2, presenting None, inPipe #195 Load(0x80002000, size 3) fired 9980 resp -1  late -1, awaiting late , drained false
+core: pending 0, presenting None, inPipe #186 op2(0x8000a020, size 3) fired 9965 resp -1  late -1, awaiting late , drained false
+core: pending 2, presenting None, inPipe #209 op4(0x80318000, size 2) fired 9991 resp -1  late -1, awaiting late , drained false
+core: pending 2, presenting Some(op4(0x80002000, size 3)), inPipe , awaiting late , drained false
+program0: remaining 815, waiting LR true, waiting SC false, SC ok 13 fail 2
+program1: remaining 825, waiting LR true, waiting SC false, SC ok 10 fail 2
+program2: remaining 802, waiting LR false, waiting SC false, SC ok 10 fail 4
+program3: remaining 813, waiting LR false, waiting SC false, SC ok 12 fail 0
+FAULT_PROGRESS cycle=20000 remaining=596/578/596/576 unfinished=0/1/0/3
+core: pending 2, presenting Some(op4(0x80108010, size 3)), inPipe , awaiting late , drained false
+core: pending 2, presenting Some(op4(0x80220034, size 2)), inPipe , awaiting late #449 Load(0x80002000, size 3) fired 19981 resp 19984 Mshr late -1, drained false
+core: pending 2, presenting Some(op4(0x80320018, size 2)), inPipe , awaiting late , drained false
+core: pending 2, presenting None, inPipe #446 Store(0x8000a008, size 3, data 0x400000000009c5a) fired 19988 resp -1  late -1, awaiting late , drained false
+program0: remaining 596, waiting LR false, waiting SC false, SC ok 23 fail 4
+program1: remaining 578, waiting LR false, waiting SC false, SC ok 29 fail 2
+program2: remaining 596, waiting LR true, waiting SC false, SC ok 17 fail 8
+program3: remaining 576, waiting LR false, waiting SC false, SC ok 23 fail 3
+FAULT_PROGRESS cycle=30000 remaining=388/362/395/361 unfinished=2/1/2/1
+core: pending 2, presenting None, inPipe #648 Load(0x80110018, size 3) fired 29961 resp -1  late -1, awaiting late , drained false
+core: pending 3, presenting None, inPipe , awaiting late , drained false
+core: pending 1, presenting None, inPipe #640 Store(0x8000203c, size 2, data 0xd289e13692c29c25) fired 29935 resp -1  late -1, awaiting late , drained false
+core: pending 2, presenting None, inPipe #673 op4(0x80420038, size 3) fired 29990 resp -1  late -1, awaiting late , drained true
+program0: remaining 388, waiting LR false, waiting SC false, SC ok 36 fail 4
+program1: remaining 362, waiting LR true, waiting SC false, SC ok 42 fail 4
+program2: remaining 395, waiting LR true, waiting SC false, SC ok 28 fail 9
+program3: remaining 361, waiting LR false, waiting SC false, SC ok 32 fail 4
+FAULT_PROGRESS cycle=40000 remaining=175/145/145/146 unfinished=1/1/1/1
+core: pending 0, presenting None, inPipe #879 op2(0x8000a020, size 3) fired 39933 resp -1  late -1, awaiting late , drained false
+core: pending 2, presenting None, inPipe #918 op4(0x80218038, size 3) fired 39972 resp -1  late -1, awaiting late , drained false
+core: pending 2, presenting None, inPipe #912 op4(0x80002020, size 3) fired 39992 resp -1  late -1, awaiting late , drained false
+core: pending 3, presenting None, inPipe #901 Load(0x80318018, size 2) fired 39950 resp -1  late -1, awaiting late , drained false
+program0: remaining 175, waiting LR true, waiting SC false, SC ok 47 fail 5
+program1: remaining 145, waiting LR false, waiting SC false, SC ok 60 fail 5
+program2: remaining 145, waiting LR false, waiting SC false, SC ok 45 fail 12
+program3: remaining 146, waiting LR false, waiting SC false, SC ok 42 fail 6
+[info] - random traffic with kills, traps, page faults, refill errors and PTW reads, four cores, seed 91
+[info]   + oracle counts (amo,720), (load,3471), (lr,243), (scFail,32), (scOk,226), (store,670); killed 426 (LR 25, SC 10); exceptions 171; refill errors 31 (grants 235); PTW 1752 (faults 166); probes Inv 1821 Down 913; Puts 1325 
+[info] Run completed in 1 minute, 33 seconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 2, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 94 s (01:34), completed Oct 11, 2026, 5:18:58 PM
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BE2SerialConditionSpec:
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 200:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+BE2_B3 cycle=D CPU_idle=1 PTW=S3 raw_drained=1 sampled_drained=1
+BE2_B3 cycle=D+1 CPU_idle=1 PTW=MSHR raw_drained=0 sampled_drained=1
+[info] - B3 audit: a previously accepted PTW miss invalidates sampled drained with no CPU requests
+[info] Run completed in 13 seconds, 529 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 14 s, completed Oct 11, 2026, 5:19:12 PM
