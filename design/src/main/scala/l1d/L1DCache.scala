@@ -450,6 +450,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val isSc = !ptw && s2.req.core.op === L1DOp.SC
   val isAmo = !ptw && s2.req.core.op === L1DOp.AMO
   val blockingAtomic = isLr || isAmo
+  val blockingRequest = blockingAtomic || (!ptw && s2.req.core.solo)
   val scSuccess = rsvValid && rsvLine === line(s2.paddr)
   val upgrade = sharedHit && (isStore || isLr)
   val allocWay = Mux(upgrade, hitWay, victimWay)
@@ -530,7 +531,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
 
   // Replay errors win over AMO setup; a failed Store replay does not wait
   // for PS and must not capture a store. PTW replay retains its own response.
-  val replayFault = blockingAtomic && atomicWait && s2.req.replayError
+  val replayFault = blockingRequest && atomicWait && s2.req.replayError
   val replayAmo = !replayFault && isAmo && atomicWait
   val replayWait = !replayFault && !replayAmo && !s2.req.replayError &&
     s2.req.core.op === L1DOp.Store && !psRoom
@@ -580,12 +581,13 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
       s2.highAddress === (s2.physicalAddress >> p.paddrBits).orR,
       "[SOC3 M1] S2 permission snapshot differs from current context")
   }
-  val undecided = s2Wait || s2Recheck || s2Mmio || s2Amo || (blockingAtomic && s2Miss)
+  val undecided = s2Wait || s2Recheck || s2Mmio || s2Amo || (blockingRequest && s2Miss)
   // Admission reserves the single internal result's capacity. In particular,
   // PTW is accepted only with free miss resources, and replay waits for PS.
   // An internal wait here would prevent that same lane finishing the miss.
   internalHold := internalRefresh
-  val atomicReplayResp = replay && atomicWait && (isLr || s2.req.replayError)
+  val atomicReplayResp = replay && atomicWait && (isLr ||
+    (s2.req.core.solo && !isAmo) || s2.req.replayError)
   // Speculative attempts leave S3 in one cycle. Only an isolated request
   // owns a waiting S3 slot; CPU S1/S2 keep advancing independently.
   val speculativeReplay = cpu3.valid && !cpu3.req.core.solo &&
@@ -607,7 +609,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   amoAlu.io.oldOperand := hitWord >> (s2.paddr(2, 0) ## 0.U(3.W))
   amoAlu.io.rs2 := s2.req.core.wdata
   val cpuDecided = atomicReplayResp || (cpu3.valid && !fromInternal &&
-    (s2Done || (s2Miss && !blockingAtomic) || s2Fault))
+    (s2Done || (s2Miss && !blockingRequest) || s2Fault))
   io.core.resp.valid := cpuDecided || speculativeReplay
   io.core.resp.bits.kind := MuxCase(L1DRespKind.Done, Seq(
     speculativeReplay -> L1DRespKind.Replay,
@@ -620,7 +622,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   io.core.resp.bits.replayReason := MuxCase(0.U, Seq(
     cpu3.translationMiss -> 1.U, (sameMshr || sameWb) -> 2.U,
     (!miss.io.status.canAllocate && cacheNeedsMiss) -> 3.U,
-    mmioDecision -> 4.U, (blockingAtomic && s2Miss) -> 5.U))
+    mmioDecision -> 4.U, (blockingRequest && s2Miss) -> 5.U))
   io.core.replayWake := RegNext(io.tlb.req.ready && resourcesClear && !wholeBusy && !ps.valid, false.B)
 
   val allocates = s2.valid && s2Miss && (ptw || (!io.core.s2Kill && !speculativeReplay))
@@ -638,15 +640,15 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   miss.io.alloc.bits.victimLineAddr := victimAddress
   miss.io.alloc.bits.victimDirty := victimEntry.state === L1State.M
   val replayFinishes = replay && !internalHold
-  when(allocates && blockingAtomic) { atomicWait := true.B }
-  when(replayFinishes && blockingAtomic) { atomicWait := false.B }
+  when(allocates && blockingRequest) { atomicWait := true.B }
+  when(replayFinishes && blockingRequest) { atomicWait := false.B }
   when(cpuDecided && (isAmo || ((isLr || isSc) && s2.req.core.aq))) { acquireBusy := false.B }
   when(cpuDecided) { amoRmw := false.B }
   when(io.core.s2Kill || (io.core.s1Kill && cpu1.valid &&
     (cpu1.req.core.op === L1DOp.AMO || cpu1.req.core.aq))) { acquireBusy := false.B }
   when(io.core.s2Kill) { atomicWait := false.B; amoRmw := false.B }
   miss.io.replayDone := replayFinishes
-  miss.io.replayLoad.valid := replayFinishes && !ptw && s2.req.core.op === L1DOp.Load
+  miss.io.replayLoad.valid := replayFinishes && !ptw && !s2.req.core.solo && s2.req.core.op === L1DOp.Load
   miss.io.replayLoad.bits.rd := s2.req.core.rd
   miss.io.replayLoad.bits.data := loadData
   miss.io.replayLoad.bits.error := s2.req.replayError
