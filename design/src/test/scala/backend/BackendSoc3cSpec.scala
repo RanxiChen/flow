@@ -27,51 +27,44 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
     simulate(new BreezeBackend(BackendConfig(privilegeProfile = PrivilegeProfile.Linux), enabledebug = true)) { d =>
       val m = new Environment(d); m.reset(); f(m)
     }
-  "D1 held EX branch survives its early redirect and advances correct-path instructions once" in { check { m =>
-    m.holdUntil = 10; m.misses += BigInt(0)
-    m.issue(ld(1, 0)); m.issue(nop); val branch = m.issue(BigInt(0x463))
-    val wrong = branch + 4; val correct = branch + 8
-    m.step(Some(wrong -> addi(9, 0, 99))) mustBe false
-    m.all("redirect").size mustBe 1
-    while (m.cycle < 10) {
-      m.d.io.debug.get.idExeValid.expect(true.B)
-      m.d.io.debug.get.idExePc.expect(branch.U)
-      m.step(Some(correct -> addi(5, 0, 55))) mustBe false
-    }
-    m.step(Some(correct -> addi(5, 0, 55))) mustBe true
+  "D1 branch advances and redirects once while an older committed miss is outstanding" in { check { m =>
+    m.returnDelay=40; m.misses += BigInt(0)
+    m.issue(ld(1,0)); m.issue(nop); val branch=m.issue(BigInt(0x463))
+    val wrong=branch+4; val correct=branch+8
+    m.step(Some(wrong->addi(9,0,99))) mustBe false
+    m.pc=correct; m.issue(addi(5,0,55))
     for (_ <- 0 until 65) m.step()
     m.all("redirect").size mustBe 1
-    m.events.find(_.kind == "redirect").get.data mustBe correct
-    m.at("ex", branch) mustBe 10
-    m.at("ex", correct) mustBe 11
-    m.events.count(e => e.kind == "commit" && e.pc == branch) mustBe 1
+    m.events.find(_.kind=="redirect").get.data mustBe correct
+    m.at("ex",branch) mustBe 3
+    m.at("ex",correct) mustBe 5
+    m.events.count(e=>e.kind=="commit" && e.pc==branch) mustBe 1
     m.writes(9) mustBe empty
     m.writes(5).map(_.data).toSeq mustBe Seq(BigInt(55))
+    m.writes(1).map(_.data).toSeq mustBe Seq(BigInt(0x1234))
   }}
-  "D1 older WB fault overrides an early EX redirect without committing the branch" in { check { m =>
-    m.holdUntil = 10; m.faults += BigInt(0)
-    m.issue(ld(1, 0)); m.issue(nop); val branch = m.issue(BigInt(0x463))
+  "D1 older WB fault overrides an earlier EX redirect without committing the branch" in { check { m =>
+    m.faults += BigInt(0)
+    m.issue(ld(1,0)); m.issue(nop); val branch=m.issue(BigInt(0x463))
     for (_ <- 0 until 18) m.step()
-    m.all("redirect") mustBe Seq(3, 10)
-    // Linux CSRFile initializes mtvec to 0x200; this case does not write it.
-    m.events.filter(_.kind == "redirect").map(_.data).toSeq mustBe Seq(branch + 8, BigInt(0x200))
-    m.events.filter(e => e.kind == "commit" && e.pc == branch) mustBe empty
-    m.all("btb") mustBe empty
+    m.all("redirect") mustBe Seq(3,4)
+    m.events.filter(_.kind=="redirect").map(_.data).toSeq mustBe Seq(branch+8,BigInt(0x200))
+    m.events.filter(e=>e.kind=="commit" && e.pc==branch) mustBe empty
+    // D3 permits the earlier legal EX training; the WB kill edge trains none.
+    m.all("btb") mustBe Seq(3)
     m.d.io.observe.gprBusy.expect(0.U)
   }}
-  "C1 held EX FP request fires only once before older memory releases" in { check { m =>
-    m.enableFp()
-    m.holdUntil = m.cycle + 12
-    val release = m.holdUntil
-    m.issue(ld(1, 0)); m.issue(nop); val fpPc = m.issue(fp(2))
-    for (_ <- 0 until 30) m.step()
-    m.events.filter(e => e.kind == "fpIn" && e.pc == fpPc).size mustBe 1
-    m.at("fpIn", fpPc) must be < release
-    m.at("ex", fpPc) mustBe release
-    m.writes(2, true).size mustBe 1
+  "C1 FP request fires once and advances while an older committed miss is outstanding" in { check { m =>
+    m.enableFp(); m.returnDelay=30; m.misses += BigInt(0)
+    m.issue(ld(1,0)); m.issue(nop); val fpPc=m.issue(fp(2))
+    for (_ <- 0 until 65) m.step()
+    m.events.filter(e=>e.kind=="fpIn" && e.pc==fpPc).size mustBe 1
+    m.at("fpIn",fpPc) mustBe m.at("ex",fpPc)
+    m.at("ex",fpPc) must be < m.all("late").head
+    m.writes(2,true).size mustBe 1
   }}
 
-  "D1 production skid retains corrected instructions while the backend holds EX" in {
+  "D1 production skid retains corrected instructions while L1D S0 holds EX" in {
     simulate(new Soc3cSkidBackendFixture) { d =>
       d.io.resetAddr.poke(0x400.U)
       d.io.machineTimerInterrupt.poke(false.B); d.io.machineSoftwareInterrupt.poke(false.B)
@@ -111,11 +104,14 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
           b.pred.predType.poke(if((inst & 0x7f)==0x63) FrontendPredType.BR else FrontendPredType.NONE)
           b.pred.predTaken.poke(false.B); b.pred.predPc.poke((pc+4).U); b.pred.phtIdx.poke(0.U)
         }
-        // Load accepted at E=1 reaches S2 at 3, holds through 9,
-        // allocates the miss at 10 and returns independently at 30.
-        val held=cycle>=3 && cycle<10
-        d.io.l1d.s2Hold.poke(held.B); d.io.l1d.req.ready.poke((!held).B)
-        d.io.l1d.resp.valid.poke((cycle==10).B)
+        // The older load is a committed miss at WB=4; it returns at 30.
+        // The corrected load waits only for S0 in EX=5..9, accepts at 10,
+        // and completes at WB=13. Both following corrected ALUs use the skid.
+        val held=cycle>=5 && cycle<10
+        d.io.l1d.s2Hold.poke(false.B); d.io.l1d.req.ready.poke((!held).B)
+        d.io.l1d.resp.valid.poke((cycle==4 || cycle==13).B)
+        d.io.l1d.resp.bits.kind.poke(if(cycle==13) L1DRespKind.Done else L1DRespKind.Mshr)
+        d.io.l1d.resp.bits.data.poke(55.U)
         d.io.l1d.late.valid.poke((cycle==30).B)
         val accepted=instruction.nonEmpty && d.io.fetchBuffer.ready.peek().litToBoolean
         val o=d.io.observe
@@ -129,20 +125,22 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
       step(Some(BigInt(0x404)->nop)) mustBe true
       step(Some(BigInt(0x408)->BigInt(0x463))) mustBe true
       step(Some(BigInt(0x40c)->addi(9,0,99))) // Wrong path is flushed at the fast redirect edge.
-      step(Some(BigInt(0x410)->addi(5,0,55))) mustBe true
+      step(Some(BigInt(0x410)->ld(5,8))) mustBe true
       step(Some(BigInt(0x414)->addi(6,0,66))) mustBe true
+      step(Some(BigInt(0x418)->addi(7,0,77))) mustBe true
       d.io.fetchBuffer.ready.expect(false.B)
       while(cycle<10) {
-        d.io.debug.get.idExeValid.expect(true.B); d.io.debug.get.idExePc.expect(0x408.U)
+        d.io.debug.get.idExeValid.expect(true.B); d.io.debug.get.idExePc.expect(0x410.U)
         step()
       }
       while(cycle<45) step()
       redirects.toSeq mustBe Seq(BigInt(0x410))
-      exPcs.toSeq mustBe Seq(0x400,0x404,0x408,0x410,0x414).map(BigInt(_))
-      commits.toSeq mustBe Seq(0x400,0x404,0x408,0x410,0x414).map(BigInt(_))
+      exPcs.toSeq mustBe Seq(0x400,0x404,0x408,0x410,0x414,0x418).map(BigInt(_))
+      commits.toSeq mustBe Seq(0x400,0x404,0x408,0x410,0x414,0x418).map(BigInt(_))
       writes.filter(_._1==9) mustBe empty
       writes.filter(_._1==5).toSeq mustBe Seq(5->BigInt(55))
       writes.filter(_._1==6).toSeq mustBe Seq(6->BigInt(66))
+      writes.filter(_._1==7).toSeq mustBe Seq(7->BigInt(77))
       writes.filter(_._1==1).toSeq mustBe Seq(1->BigInt(0x1234))
       d.io.observe.gprBusy.expect(0.U)
     }
