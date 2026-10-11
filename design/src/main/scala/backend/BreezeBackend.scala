@@ -783,6 +783,7 @@ class BreezeBackend(
       "[R7] interrupt sample no longer has an empty reversible boundary")
     assert(!downHold || (wb.solo && !ex.valid && !mem.valid && !perm.valid),
       "[N01] WB self-hold without empty younger stages")
+    assert(!(wb.valid && wb.solo && wb.mem && wbMiss), "[R6] solo memory committed before actual result")
     assert(!wbReplay || !wb.solo, "[N02] solo instruction replayed twice")
     assert(!killD || !(mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire),
       "[R2] new unit request during delayed kill")

@@ -53,6 +53,13 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var holdUntil = 0
   var randomHold = false
   var lateError = false
+  val tlbMisses = mutable.Set.empty[BigInt]
+  val mmioAddresses = mutable.Set.empty[BigInt]
+  var tlbDelay = 12
+  var mmioDelay = 8
+  private val tlbDone = mutable.Map.empty[BigInt,Int]
+  private var soloPending: Option[(Request,Int)] = None
+  private var mmioDone: Option[Int] = None
   var faultCause = 13
   var softwareInterrupt = false
   var timerInterrupt = false
@@ -129,19 +136,31 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val retry = s2.nonEmpty && retryAt.exists(cycle < _)
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
-    val hold = blockedLine || retry || full || fence || (s2.nonEmpty && cycle < holdUntil) || (randomHold && s2.nonEmpty && rng.nextInt(4)==0)
+    val tlbBlocked=s2.exists(q=>tlbDone.get(q.addr).exists(cycle < _))
+    val device=s2.exists(q=>mmioAddresses(q.addr))
+    if(device && s2.exists(_.solo) && mmioDone.isEmpty) {
+      mmioDone=Some(cycle+mmioDelay); record("mmioStart",r=s2.get.rd)
+    }
+    val soloMiss=s2.exists(q=>q.solo && misses(q.addr) && pending.isEmpty && !faults(q.addr))
+    if(soloMiss && soloPending.isEmpty) {
+      soloPending=s2.map(q=>q->(cycle+returnDelay+8)); record("soloRefill",r=s2.get.rd)
+    }
+    val waitingSolo=soloPending.exists(cycle < _._2)
+    val hold = blockedLine || retry || full || fence || tlbBlocked || waitingSolo ||
+      (device && (!s2.exists(_.solo) || mmioDone.exists(cycle < _))) ||
+      (s2.nonEmpty && cycle < holdUntil) || (randomHold && s2.nonEmpty && rng.nextInt(4)==0)
     val replay = hold && s2.exists(q => !q.solo)
     val soloHold = hold && s2.exists(_.solo)
     d.io.l1d.s2Hold.poke(soloHold.B)
     d.io.l1d.cpuDrained.poke((drained && pending.isEmpty && ps.isEmpty).B)
-    val nextWake = pending.isEmpty && cycle >= holdUntil
+    val nextWake = pending.isEmpty && cycle >= holdUntil && tlbDone.values.forall(cycle >= _)
     d.io.l1d.replayWake.poke(wakeD.B)
-    d.io.l1d.resp.bits.replayReason.poke((if(blockedLine) 2 else if(full) 3 else 0).U)
+    d.io.l1d.resp.bits.replayReason.poke((if(tlbBlocked) 1 else if(blockedLine) 2 else if(full) 3 else if(device) 4 else 0).U)
     d.io.l1d.drained.poke((drained && pending.isEmpty && ps.isEmpty).B)
     d.io.l1d.resp.valid.poke((s2.nonEmpty && !soloHold).B)
     var allocated: Option[(Request,Int)] = None
     s2.foreach { q =>
-      val miss = misses(q.addr) && pending.isEmpty && !faults(q.addr)
+      val miss = misses(q.addr) && pending.isEmpty && !faults(q.addr) && !q.solo
       d.io.l1d.resp.bits.kind.poke(if(replay) L1DRespKind.Replay else if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
       d.io.l1d.resp.bits.data.poke(values(q.addr).U)
       d.io.l1d.resp.bits.excCause.poke(faultCause.U); d.io.l1d.resp.bits.tval.poke(q.addr.U)
@@ -196,7 +215,10 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val fired = bool(d.io.l1d.req.valid) && bool(d.io.l1d.req.ready)
     val newReq = if(fired) Some(Request(reqAddr,uint(d.io.l1d.req.bits.rd.idx).toInt,
       bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op).toInt,uint(d.io.l1d.req.bits.wdata),bool(d.io.l1d.req.bits.solo))) else None
-    if(fired) record("req",uint(o.exPc))
+    if(fired) {
+      record("req",uint(o.exPc))
+      if(tlbMisses(reqAddr) && !tlbDone.contains(reqAddr)) tlbDone(reqAddr)=cycle+tlbDelay
+    }
     if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind))
     val lateFire = lateValid && bool(d.io.l1d.late.ready)
     if(lateFire) record("late",r=pending.get._1.rd)
@@ -217,6 +239,10 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       replayFetch.clear(); replayFetch.enqueueAll(younger)
     }
     if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false; lateData=None }
+    if(soloPending.exists(cycle >= _._2) && !soloHold) {
+      misses -= soloPending.get._1.addr; soloPending=None
+    }
+    if(!soloHold && device) mmioDone=None
     if(allocated.nonEmpty && !kill) { pending=allocated; misses -= allocated.get._1.addr }
     wakeD = nextWake
     cycle += 1
