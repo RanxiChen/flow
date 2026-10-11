@@ -1,0 +1,40 @@
+Design Route Status
+                                               :      # nets :
+   ------------------------------------------- : ----------- :
+   # of logical nets.......................... :      480645 :
+       # of nets not needing routing.......... :      175547 :
+           # of internally routed nets........ :      159866 :
+           # of nets with no loads............ :       15681 :
+       # of routable nets..................... :      305098 :
+           # of fully routed nets............. :      305061 :
+       # of nets with routing errors.......... :          37 :
+           # of nets with resource conflicts.. :          37 :
+   ------------------------------------------- : ----------- :
+
+
+Nets with Routing Errors: (only the first 10 nets are listed)
+  BreezeClusterAxi/cluster/backend_1/ex_pred_predPc[12]
+    Conflicting Routing Nodes:
+      INT_X45Y47/INT_NODE_IMUX_124_INT_OUT
+      INT_X46Y47/WW2_W_BEG1
+  BreezeClusterAxi/cluster/backend_1/jau/D[10]
+    Conflicting Routing Nodes: INT_X46Y47/WW2_W_BEG1
+  BreezeClusterAxi/cluster/backend_1/jau/D[22]
+    Conflicting Routing Nodes: INT_X45Y47/INT_NODE_IMUX_124_INT_OUT
+  BreezeClusterAxi/cluster/backend_2/mulUnit/tiles_9_1/operandB_2_reg[64]__0_rep_0
+    Conflicting Routing Nodes: INT_X15Y222/INT_NODE_IMUX_103_INT_OUT
+  BreezeClusterAxi/cluster/backend_2/mulUnit/tiles_9_1/results_7_data[17]_i_67__0_n_0
+    Conflicting Routing Nodes: INT_X15Y222/INT_NODE_IMUX_103_INT_OUT
+  BreezeClusterAxi/cluster/frontend/btb/entries_0_pcKey[34]
+    Conflicting Routing Nodes: INT_X50Y149/SS1_W_BEG2
+  BreezeClusterAxi/cluster/frontend/btb/entries_0_pcKey[44]
+    Conflicting Routing Nodes:
+      INT_X50Y148/INT_NODE_IMUX_124_INT_OUT
+      INT_X50Y149/SS1_W_BEG2
+  BreezeClusterAxi/cluster/frontend/btb/entries_0_pcKey_reg[62]_0[18]
+    Conflicting Routing Nodes: INT_X50Y148/INT_NODE_IMUX_124_INT_OUT
+  BreezeClusterAxi/cluster/frontend/btb/entries_10_pcKey_reg[62]_0[20]
+    Conflicting Routing Nodes: INT_X54Y149/INODE_2_E_28_FTN
+  BreezeClusterAxi/cluster/frontend/btb/entries_4_pcKey[10]
+    Conflicting Routing Nodes: INT_X54Y145/INT_NODE_IMUX_79_INT_OUT
+
