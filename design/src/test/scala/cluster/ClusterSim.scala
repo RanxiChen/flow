@@ -381,6 +381,12 @@ object ClusterSim extends PeekPokeAPI {
 
     try {
       while (verdict.isEmpty) {
+        agents.foreach(_.drivePhase(cycle))
+        dut.io.time.poke(mmio.mtime.U(64.W))
+        for (h <- 0 until n) { dut.io.msip(h).poke(mmio.msip(h).B); dut.io.mtip(h).poke(mmio.mtip(h).B) }
+        agents.foreach(_.decide())
+        agents.foreach(_.sample())
+
         dut.io.backendObservation.foreach { observations =>
           for(h <- 0 until n) {
             val o = observations(h)
@@ -388,11 +394,6 @@ object ClusterSim extends PeekPokeAPI {
             if(o.solo.peek().litToBoolean) soloCycles += 1
           }
         }
-        agents.foreach(_.drivePhase(cycle))
-        dut.io.time.poke(mmio.mtime.U(64.W))
-        for (h <- 0 until n) { dut.io.msip(h).poke(mmio.msip(h).B); dut.io.mtip(h).poke(mmio.mtip(h).B) }
-        agents.foreach(_.decide())
-        agents.foreach(_.sample())
 
         for (h <- 0 until n) {
           val t = dut.io.retire(h)
