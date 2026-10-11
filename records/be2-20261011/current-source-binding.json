@@ -29,5 +29,13 @@
     ],
     "scope": "D5 owner-verified BRAM array selection after Vivado rebuild hoisting; does not change RTL/netlist/XDC/clock or implementation directives",
     "positive_and_wrong_owner_negative_checks_exit": 0
+  },
+  "scope": "preserved c735fbd scalar stage; not a binding for current SD/RVV RTL",
+  "current_source_same_as_scalar_tested": false,
+  "sd_product_sources": {
+    "scalar_physical": "5ab7e64",
+    "rvv_intermediate_physical": "4ae968a",
+    "kernel": "4e1f86d",
+    "new_cancel_and_busFailure_rtl": "a367267"
   }
 }

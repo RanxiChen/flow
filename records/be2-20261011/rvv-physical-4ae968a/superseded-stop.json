@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-11T12:28:15.890050+00:00",
+  "reason": "superseded by a367267 cache cancellation and busFailure RTL; preserve synth evidence; do not claim routed success",
+  "targets": [
+    {
+      "pid": 2276968,
+      "cwd": "/home/chen/FUN/flow-runs/be2-4ae968a-rvv-sd/gateware",
+      "cmd": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source xilinx_kcu105.tcl "
+    }
+  ]
+}

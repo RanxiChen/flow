@@ -42,7 +42,16 @@
   "G1_full": "deferred by user, unchanged original golden and test scales",
   "physical": {
     "source": "c735fbd",
-    "small": "running default opt/place/route resumed from unchanged synth checkpoint after corrected D5 selector",
+    "small": {
+      "process_exit": 0,
+      "timing_pass": false,
+      "WNS_ns": -1.842,
+      "WHS_ns": -0.042,
+      "TNS_ns": -12403.845,
+      "THS_ns": -0.088,
+      "failing_setup_endpoints": 19057,
+      "reports": "physical-c735fbd/small"
+    },
     "single": {
       "exit": 0,
       "WNS_ns": 0.412,
@@ -68,5 +77,49 @@
     "max_backend_FF_percent": 6.184156519359685,
     "max_L1D_LUT_percent": 1.893,
     "raw": "physical-c735fbd/area-synth.json"
+  },
+  "scope": "legacy scalar c735fbd; SD/RVV evidence is separately source-bound",
+  "sd_products": {
+    "four": {
+      "source": "5ab7e64",
+      "status": "routing"
+    },
+    "single": {
+      "source": "5ab7e64",
+      "status": "BIOS/project ready; physical queued behind four"
+    },
+    "single-rvv": {
+      "source": "4ae968a",
+      "status": "synthesis passed, stopped as superseded after synthesis DCP saved; no routed timing claim",
+      "whole_system_minimum": "10 original scalar ELF and vector/m8 context smoke passed; tohost unchanged",
+      "module_minimum_tests": 13,
+      "synth_LUT": 117214,
+      "synth_BRAM_tiles": 242.5,
+      "synth_DSP": 177,
+      "VRF_RAMB36": 192
+    },
+    "kernel": {
+      "source": "4e1f86d",
+      "status": "compiled Image; MMC_LITEX/SMP4/V context enabled",
+      "remote_evidence": "/home/chen/FUN/flow-runs/be2-4e1f86d-linux"
+    },
+    "board": "not run",
+    "published_bitstreams": 0,
+    "scalar_early_cancel_minimum": {
+      "source": "a367267976d3e3a664ad482e01c45da489e2d20e",
+      "host": "Alan",
+      "exit": 0,
+      "suites": 6,
+      "tests": 20,
+      "failed": 0,
+      "canceled": 0,
+      "ignored": 0,
+      "isa_elfs": 20,
+      "four_hart_system_elfs": 6,
+      "fault_seed": 91,
+      "fault_traffic_ops_per_hart": 1000,
+      "log": "minimum-a367267/be2-a367267-cluster-minimum.log",
+      "P1_original_budget": "same cycles as c735fbd; 3 of 4 still fail +1%"
+    }
   }
 }

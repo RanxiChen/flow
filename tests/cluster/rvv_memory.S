@@ -12,6 +12,22 @@ fault_pc:
   bne s3, t0, fail
   li t0, 0x200
   csrs mstatus, t0
+#ifdef BE2_RVV_SV39
+  li t0, -1
+  csrw pmpaddr0, t0
+  li t0, 0xf
+  csrw pmpcfg0, t0
+  la t0, root_table
+  srli t0, t0, 12
+  li t1, 0x8000000000000000
+  or t0, t0, t1
+  csrw satp, t0
+  sfence.vma
+  li t0, 0x1800
+  csrc mstatus, t0
+  li t0, 0x20800 /* MPRV=1, MPP=S; instruction fetch stays in M. */
+  csrs mstatus, t0
+#endif
   li a0, 8
   vsetvli a1, a0, e64, m1, ta, ma
   bne a0, a1, fail
@@ -22,6 +38,10 @@ fault_pc:
   li a2, 7
   vadd.vx v2, v1, a2
   la a3, vector_output
+#ifdef BE2_RVV_SV39
+  li t0, 0x40000000
+  add a3, a3, t0 /* Non-identity VA alias to the same physical output. */
+#endif
   /* Populate the scalar L1D before the vector store invalidates it. */
   ld t0, 0(a3)
   vse64.v v2, (a3)
@@ -40,6 +60,10 @@ fault_pc:
   li t1, -1
   bne t0, t1, fail
   la a4, vector_context
+#ifdef BE2_RVV_SV39
+  li t0, 0x40000000
+  add a4, a4, t0
+#endif
   vse8.v v8, (a4)
   vmv.v.i v8, 0
   vle8.v v8, (a4)
@@ -90,3 +114,9 @@ vector_context: .zero 512
 .balign 64
 .globl tohost
 tohost: .dword 0
+#ifdef BE2_RVV_SV39
+.balign 4096
+root_table:
+  .quad 0, 0, 0x200000cf, 0x200000cf
+  .zero 4096-32
+#endif

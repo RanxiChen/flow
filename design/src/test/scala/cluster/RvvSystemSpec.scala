@@ -25,9 +25,10 @@ class RvvSystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val cfg = BreezeClusterPresets.singleRvv.copy(privilegeProfile = PrivilegeProfile.Linux)
     val names = Seq("rv64ui-p-add", "rv64ui-p-lw", "rv64ui-p-sw", "rv64ui-p-beq",
       "rv64um-p-mul", "rv64um-p-div", "rv64ua-p-amoadd_d", "rv64ua-p-lrsc",
-      "rv64uc-p-rvc", "rv64mi-p-csr")
-    val files = names.map(n => ClusterSim.repoRoot.resolve(s"design/build/riscv-tests/$n")) :+
-      ClusterSim.repoRoot.resolve("design/build/cluster-tests/rvv_memory")
+      "rv64uc-p-rvc", "rv64mi-p-csr", "rv64uf-p-ldst", "rv64uf-p-fadd",
+      "rv64ud-p-ldst", "rv64ud-p-fadd")
+    val files = names.map(n => ClusterSim.repoRoot.resolve(s"design/build/riscv-tests/$n")) ++
+      Seq("rvv_memory", "rvv_memory_sv39").map(n => ClusterSim.repoRoot.resolve(s"design/build/cluster-tests/$n"))
     simulate(new BreezeRvvSystem(cfg, enableTandem = true)) { d =>
       for (file <- files) {
         val elf = Elf64.load(file); val tohost = elf.symbol("tohost")
@@ -73,7 +74,7 @@ class RvvSystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
         info(s"${file.getFileName}: tohost=$signature cycles=$cycle retired=$retired")
         withClue(s"$file\n${ring.mkString("\n")}") { signature mustBe BigInt(1) }
-        if (file.getFileName.toString == "rvv_memory") {
+        if (file.getFileName.toString.startsWith("rvv_memory")) {
           val output = elf.symbol("vector_output")
           for (k <- 0 until 8) memory.read(output + k * 8, 8) mustBe BigInt(12)
         }

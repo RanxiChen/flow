@@ -11,7 +11,7 @@
 | 部署最小功能集 | c735fbd，20/20 Scala 用例、单/四核各10个ISA ELF、6个原四核系统程序，以及两几何fault/真实PTW，exit0 |
 | 后端安全/G2 | 790c1f6，安全9/9；G2及独立Spike各1000/1000。c735fbd复用相同后端源，部署几何另外验证 |
 | 单核 routed/S1 | c735fbd，100MHz/default，exit0，WNS +0.412ns/WHS +0.031ns |
-| 四核 routed/X1 | c735fbd，综合完成、正在默认布线，尚无最终setup/hold报告。综合LUT209547/242400（86.447%） |
+| 四核 routed/X1 | c735fbd 最终未通过：WNS −1.842ns、WHS −0.042ns；process exit0只表示报告流程完成，不是时序通过 |
 | A1 | c735fbd vs 2051dd0+同部署配置补丁，同阶段综合比较通过 |
 | P1 | 同配置/ELF/退休数，原+1%门槛保留，4项中3项未通过；详细数值见末尾 |
 | S2 | 精确同配置checkpoint查询进行中；无阳性对照或空source组保留未解析，不宣称整体通过 |
@@ -210,7 +210,7 @@ c735fbd 的部署最小集最终 exit0：六 suites/20 Scala 用例，无失败/
 c735fbd 对 2051dd0+同几何配置补丁的 A1 综合比较通过：backend扣除CVFPU后，各hart LUT +1.877/+2.082/+1.466/-2.161%，FF +6.184/+5.923/+5.923/+5.746%；L1D LUT +0.080/-5.988/-6.488/+1.893%。顶层209547 LUT（86.447%）、108510 FF、107 RAMB36+1 RAMB18、92DSP。原始hierarchical_synth.rpt和逐行area-synth.json在`records/be2-20261011/physical-c735fbd/`。这只是同配置综合面积，不是routed timing通过。
 
 
-c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=0，100MHz sys_clk WNS=+0.559ns。LUT59167、FF34563、BRAM52tiles（51RAMB36+2RAMB18）、DSP23。报告/Tcl/XDC/源文件hash清单在`physical-c735fbd/single/`。布局/布线使用default，无新例外，无bitstream/板上证据。单核仅改核数/profile；其四核配对结果仍待完成。
+c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=0，100MHz sys_clk WNS=+0.559ns。LUT59167、FF34563、BRAM52tiles（51RAMB36+2RAMB18）、DSP23。报告/Tcl/XDC/源文件hash清单在`physical-c735fbd/single/`。布局/布线使用default，无新例外，无bitstream/板上证据。单核仅改核数/profile；其四核配对最终时序失败，见下方准确数值。
 
 23. **追加单核RVV及SD自动启动交付**：用户明确要求三种产品：四核基础版、同配置普通单核版、在普通单核上挂载RVV的版本，以及对应BIOS和可后期独立编译更新的SD软件。已核对flow-rvv/cc0be2f现有R05任务书及设计文档未提交补充，原工作树修改保留；接入采用BE2 §7落点。继承四核基础参数不意味着强迫RVV保留写回L2：该预设按已有方案启用写直通L1D、dataless home及宽AXI，标量/向量/SD DMA排序与作废一并覆盖；其余两个产品保留原缓存策略。
 
@@ -233,3 +233,9 @@ c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=
 26. **SD软件接口核对**：5ab生成CSR实际PHY/core/reader/writer/IRQ偏移与DTB/两个MMC驱动补丁一致；打包器进一步核对块偏移、CSR宽度和hart数，仅页base相同不足以说明匹配。SD/card/mux外部时序和新板上启动均为OPEN/BOARD_NOT_RUN，不借用旧29ee514的GAPBS板级结果。
 
 主机规则本阶段每次重新读取共享配置并预检；cloud_chen有限5秒SSH连续timeout255，按当前配置回退Alan，记录工具Java11.0.32.1/Verilator5.028/Vivado2022.2及实际cwd/SHA。本地反向HTTP代理18897可用，所有新源通过精确提交fetch/ff或隔离worktree同步，未使用bundle。MMU原冻结hash差异仍保留，新增后端/L1D/Home合同仅按用户授权范围更新。
+
+20:18 CST：c735fbd四核最终报告process exit0，但timing FAIL，WNS−1.842ns/WHS−0.042ns/TNS−12403.845ns/THS−0.088ns，19057个setup失败端点。最差20级probe address→WB cancel反馈→L1D tag WE，11.276ns数据延迟中8.737ns为routing。a367267加入early/local side-effect cancel分离及精确无副作用断言，当前最小回归进行中。4e1f86d Linux Image编译exit0；三套FAT文件已经打包并验证实际CSR ABI和hart数，当前绑定先前硬件快照，最终硬件确定后重新绑定。尚无三bitstream/新板上证据。
+
+20:33 CST：a367267 的 early/local cancel 修正最小回归最终 exit0，六 suites/20 Scala 用例，无失败/cancel/ignore。两配置20原 ISA ELF、六四核程序、原 S1 kill/默认及部署 seed91 每核1000故障、四个真实Sv39 PTW、原P1均保留；P1四程序cycles/retired与c735fbd相同，原+1%预算仍三项不通过。新标量SD工程在隔离工作树生成，避免与RVV sbt输出冲突。RVV最小集增加独立非恒等Sv39数据映射、原rv64uf/ud的ldst/fadd共四个ELF，原期望tohost=1/20k进展watchdog/2M总上限不变。
+
+4ae968a RVV综合完成：LUT117214/242400、FF56664、BRAM242.5tiles、DSP177；VRF为192 RAMB36（24bank×8），映射门禁通过，无L2持久数据、real dataless Home。该物理快照未含a367267修正，已在完整synth DCP及报告保存后按精确PID/cwd主动终止，exit1由SIGTERM产生，不作为时序失败或成功；停止审计在rvv-physical-4ae968a/superseded-stop.json。旧SD四核5ab7e64也已route完成但仍为被替代源；中间WNS−1.688ns不冒充最终报告。
