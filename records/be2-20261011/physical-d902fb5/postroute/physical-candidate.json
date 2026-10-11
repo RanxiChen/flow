@@ -1,0 +1,21 @@
+{
+  "original": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-sd",
+  "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+  "input_checkpoint_sha256": "22c888da79de2c08a9fe52acb469de0e1aa8e6a77a836e66107fe3c68d11e778",
+  "script_sha256": "f2b4334097e1216700c99cbd875f745671fce8b1b6d78a4cedc8a1d7aa783578",
+  "host": "Alan",
+  "clock_hz": 100000000,
+  "vivado": "2022.2",
+  "maxThreads": 4,
+  "affinity": "0-3",
+  "nice": 10,
+  "directives": [
+    "AggressiveExplore",
+    "NoTimingRelaxation",
+    "tns_cleanup"
+  ],
+  "constraints_unchanged": true,
+  "new_timing_exceptions": false,
+  "start_utc": "2026-10-11T15:07:35.368347+00:00",
+  "board": "NOT_RUN"
+}

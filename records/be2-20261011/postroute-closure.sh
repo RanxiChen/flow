@@ -8,6 +8,7 @@ case "$input:$output:$script" in /*:/*:/*) ;; *) exit 2;; esac
 test -s "$input/gateware/xilinx_kcu105_route.dcp"
 test ! -e "$output"
 cp -a --reflink=auto "$input" "$output"
+rm -f "$output/postroute-exit-code.txt"
 trap 'rc=$?; echo "$rc" > "$output/postroute-exit-code.txt"' EXIT
 python3 - "$input" "$output" "$script" <<'PY'
 import datetime,hashlib,json,pathlib,sys
@@ -21,6 +22,11 @@ record=dict(original=str(original),source_sha=binding['source_sha'],
  directives=['AggressiveExplore','NoTimingRelaxation','tns_cleanup'],
  constraints_unchanged=True,new_timing_exceptions=False,
  start_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),board='NOT_RUN')
+if 'force_replication_on_nets' in tcl.read_text():
+ record['directives'].insert(0,'force_replication_on_nets on failing register startpoints')
+ record['netlist_attribute_change']='DONT_TOUCH cleared only on selected failing register drivers/nets'
+prior=original/'physical-candidate.json'
+if prior.is_file(): record['parent_candidate']=json.loads(prior.read_text())
 (dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
 cp "$script" "$output/gateware/postroute-closure.tcl"

@@ -119,6 +119,19 @@ def main():
                              'routed_checkpoint': digest(checkpoint), 'config': configs[profile],
                              'bios_matches_rom_init': True,
                              'board': 'NOT_RUN', 'sd_external_timing': 'OPEN; see sd-timing.md'}
+        candidate_path = hardware / 'physical-candidate.json'
+        if candidate_path.is_file():
+            candidate = json.loads(candidate_path.read_text())
+            if (candidate['source_sha'] != expected_source or
+                    candidate['clock_hz'] != binding['clock_hz'] or
+                    candidate['new_timing_exceptions'] or not candidate['constraints_unchanged']):
+                raise ValueError(f'{profile}: physical candidate changed source/constraints')
+            original = Path(candidate['original'])
+            if (json.loads((original / 'build-binding.json').read_text())['source_sha'] != expected_source or
+                    digest(original / 'gateware/xilinx_kcu105_route.dcp')['sha256'] !=
+                    candidate['input_checkpoint_sha256']):
+                raise ValueError(f'{profile}: physical candidate input identity mismatch')
+            products[profile]['physical_candidate'] = candidate
     scalar_derived = {'profile', 'nCores', 'idBits'}
     rvv_changes = {'profile', 'idBits', 'rvv', 'memoryBits'}
     for key in configs['four'].keys() | configs['single'].keys():
@@ -138,6 +151,8 @@ def main():
         shutil.copy2(hardware / 'gateware/xilinx_kcu105_rom.init', destination / 'bios-rom.init')
         for name in ('csr.json', 'cluster-profile.txt', 'build-binding.json', 'platform.json'):
             shutil.copy2(hardware / name, destination / name)
+        if (hardware / 'physical-candidate.json').is_file():
+            shutil.copy2(hardware / 'physical-candidate.json', destination / 'physical-candidate.json')
         shutil.copytree(software, destination / 'sd')
         for name in REPORTS:
             shutil.copy2(hardware / 'gateware' / name, destination / name)

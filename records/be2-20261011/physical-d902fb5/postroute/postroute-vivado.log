@@ -1,0 +1,472 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1692.461 ; gain = 0.000 ; free physical = 23289 ; free virtual = 42088
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:00.56 . Memory (MB): peak = 2568.043 ; gain = 0.000 ; free physical = 21832 ; free virtual = 41144
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 21 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3657.949 ; gain = 261.812 ; free physical = 19331 ; free virtual = 38657
+Restored from archive | CPU: 10.120000 secs | Memory: 252.540787 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3657.949 ; gain = 261.812 ; free physical = 19331 ; free virtual = 38657
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3709.574 ; gain = 0.000 ; free physical = 19270 ; free virtual = 38597
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: fe8d1054
+----- Checksum: PlaceDB: 05f8810f ShapeSum: 383b7991 RouteDB: c05915b4 
+open_checkpoint: Time (s): cpu = 00:00:55 ; elapsed = 00:00:56 . Memory (MB): peak = 3709.574 ; gain = 2017.113 ; free physical = 19068 ; free virtual = 38394
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:55 ; elapsed = 00:00:16 . Memory (MB): peak = 4237.109 ; gain = 527.535 ; free physical = 18510 ; free virtual = 37837
+# report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:28 ; elapsed = 00:00:11 . Memory (MB): peak = 4237.109 ; gain = 0.000 ; free physical = 18588 ; free virtual = 37914
+# phys_opt_design -directive AggressiveExplore
+Command: phys_opt_design -directive AggressiveExplore
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-241] Physical synthesis in post route mode ( 100.0% nets are fully routed)
+INFO: [Vivado_Tcl 4-137] Directive used for phys_opt_design is: AggressiveExplore
+
+Starting Initial Update Timing Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Time (s): cpu = 00:00:28 ; elapsed = 00:00:12 . Memory (MB): peak = 4245.113 ; gain = 0.000 ; free physical = 18751 ; free virtual = 38078
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 30.90s |  WALL: 14.82s
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4245.113 ; gain = 0.000 ; free physical = 18751 ; free virtual = 38078
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.095 | TNS=-1.610 | WHS=0.030 | THS=0.000 |
+Phase 1 Physical Synthesis Initialization | Checksum: 12b6fcf97
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 5002.535 ; gain = 757.422 ; free physical = 17366 ; free virtual = 36676
+
+Phase 2 Critical Path Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.095 | TNS=-1.610 | WHS=0.030 | THS=0.000 |
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5018.543 ; gain = 0.000 ; free physical = 17517 ; free virtual = 36845
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/reserved__0[2].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/_GEN_2[8].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/active_reg_2.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/active_reg_2. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/row[5]_i_2__0_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.085. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/io_blocked0__0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/home/state_reg[1]_0[0].
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 5778.145 ; gain = 0.000 ; free physical = 19504 ; free virtual = 38811
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_1[1].  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_length_1_reg[1]
+INFO: [Physopt 32-952] Improved path group WNS = -0.085. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_1[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_10[16].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/desc_1_slot[1].
+INFO: [Physopt 32-952] Improved path group WNS = -0.084. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/valid_104.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/fetchTlb/_fetchTlb_io_response_bits_accessFault.
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 5840.145 ; gain = 0.000 ; free physical = 19598 ; free virtual = 38827
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/mmu/itlb/mem_0_0_ext/_R0_addr_d0_reg_rep__1_0[0]_repN.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/mmu/itlb/mem_1_0_ext/result_accessFault0. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/mmu/itlb/mem_1_0_ext/result_accessFault_i_1_comp_1.
+INFO: [Physopt 32-952] Improved path group WNS = -0.083. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/mmu/itlb/mem_1_0_ext/fetchTlb/_pmp_io_allowed.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/R0_data0[356].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[3]_repN.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/ld_age_reg[7].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_6_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/d_decoded_vd_reg[0]_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/io_blocked00_out_repN_3.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/io_blocked00_out_repN_3. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/io_blocked0_inferred__0/i__comp_8.
+INFO: [Physopt 32-952] Improved path group WNS = -0.069. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/io_waw_30.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/cacheData_ext/Memory_reg_0_31_252_253/DOH1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/tokens_3_desc_decoded_op[3]_repN.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/cacheData_ext/Memory_reg_0_31_252_253_i_1_n_0. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/cacheData_ext/Memory_reg_0_31_252_253_i_1_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.067. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/cacheData_ext/D[253].
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 5845.145 ; gain = 0.000 ; free physical = 19815 ; free virtual = 39097
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_1[0].  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_length_1_reg[0]
+INFO: [Physopt 32-952] Improved path group WNS = -0.066. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_1[0].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/writeSlot_reg[3]_0[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_8_n_0.
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/out__0/ram_ext/maybe_full_reg_2.  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/out__0/ram_ext/piece[5]_i_24
+INFO: [Physopt 32-952] Improved path group WNS = -0.066. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/out__0/ram_ext/maybe_full_reg_2.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0.
+INFO: [Physopt 32-952] Improved path group WNS = -0.064. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/d_decoded_vd_reg[0]_2.
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 5848.145 ; gain = 0.000 ; free physical = 19514 ; free virtual = 38796
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_0[9].  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_length_0_reg[9]
+INFO: [Physopt 32-952] Improved path group WNS = -0.060. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_ordering_length_0[9].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/vrf/banks_2_3/readData[224].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/memory_reg_0_i_4__3_n_0.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/memory_reg_0_i_4__3_n_0. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/memory_reg_0_i_4__3_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.045. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/d_age_reg[7]_0.
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 5854.145 ; gain = 0.000 ; free physical = 19056 ; free virtual = 38338
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/row_reg[1].  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/row_reg[1]
+INFO: [Physopt 32-952] Improved path group WNS = -0.044. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/row_reg[1].
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5854.145 ; gain = 0.000 ; free physical = 19375 ; free virtual = 38657
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_pa_1_reg[31]_1[0].  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_pa_1_reg[0]
+INFO: [Physopt 32-952] Improved path group WNS = -0.043. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_pa_1_reg[31]_1[0].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_15_reg_n_0_[21].
+INFO: [Physopt 32-952] Improved path group WNS = -0.043. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/valid_154.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/vrf/banks_2_2/readData[224].
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/row_reg[3]_0[1]. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/memory_reg_2_i_1_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.043. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/d_age_reg[7]_1.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_8_n_0. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_8_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.040. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_25_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/out__0/ram_ext/maybe_full_reg_2.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/ld_decoded_vd_reg[1]_3.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mem/ld_decoded_vd_reg[1]_3. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/mem/physicalValid_3_i_5_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.040. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_write_valid.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_5_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 6 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.039. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_17_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_10[23].
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_10[23]_i_1_n_0. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_10[23]_i_1_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.038. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/valid_104.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/memory_reg_0_i_5__3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/d_age_reg[7]_0.
+INFO: [Physopt 32-663] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/d_age_reg[7]_1.  Re-placed instance BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/row[5]_i_4
+INFO: [Physopt 32-952] Improved path group WNS = -0.035. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/d_age_reg[7]_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/d_age_reg[7]_1.
+INFO: [Physopt 32-710] Processed net BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/d_age_reg[7]_1. Critical path length was reduced through logic transformation on cell BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/row[5]_i_4_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.035. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/active_reg_3.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/writes_15_reg_n_0_[21].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/desc_1_slot[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/valid_154.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/sb/valid_151098_out.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/_mem_io_progress_0_bits_slot[2].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/dataDone_0_i_14_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/p_425_in.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/_sb_io_raw_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/storePending_i_5_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 32 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.033. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/storePending_i_22_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/R0_data0[356].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved__0[3]_repN.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mem/returnBuffer/ram_ext/piece_reg[5].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/ld_age_reg[7].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/out__0/ram_ext/piece[5]_i_7_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/d_decoded_vd_reg[0]_2.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/io_blocked00_out_repN_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/io_waw_30.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_36_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_185_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_688_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 36 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.030. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_1374_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 12 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.027. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/sb/i__i_31_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_7[34].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_localEnable/enable_q.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.027 | TNS=-0.389 | WHS=0.030 | THS=0.000 |
+Phase 2 Critical Path Optimization | Checksum: 1a28c1c0f
+
+Time (s): cpu = 00:12:24 ; elapsed = 00:09:12 . Memory (MB): peak = 5873.145 ; gain = 1628.031 ; free physical = 18919 ; free virtual = 38201
+
+Phase 3 Hold Fix Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.027 | TNS=-0.389 | WHS=0.030 | THS=0.000 |
+INFO: [Physopt 32-66] No high hold slack nets found for hold slack optimization.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.027 | TNS=-0.389 | WHS=0.030 | THS=0.000 |
+Phase 3 Hold Fix Optimization | Checksum: 1a28c1c0f
+
+Time (s): cpu = 00:12:29 ; elapsed = 00:09:16 . Memory (MB): peak = 5873.145 ; gain = 1628.031 ; free physical = 18932 ; free virtual = 38215
+INFO: [Physopt 32-715] Performed route finalization on the design.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5873.145 ; gain = 0.000 ; free physical = 18870 ; free virtual = 38152
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=-0.027 | TNS=-0.394 | WHS=0.030 | THS=0.000 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization   |  WNS Gain (ns)  |  TNS Gain (ns)  |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Critical Path  |          0.068  |          1.221  |            0  |              0  |                    24  |           0  |           1  |  00:08:41  |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Summary of Hold Fix Optimizations
+=================================
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization               |  WHS Gain (ns)  |  THS Gain (ns)  |  Added LUTs  |  Added FFs  |  Optimized Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT1 and ZHOLD Insertion   |          0.000  |          0.000  |           0  |          0  |               0  |           0  |           0  |  00:00:00  |
+|  Total                      |          0.000  |          0.000  |           0  |          0  |               0  |           0  |           0  |  00:00:00  |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5873.145 ; gain = 0.000 ; free physical = 18869 ; free virtual = 38151
+Ending Physical Synthesis Task | Checksum: 1ef7e882d
+
+Time (s): cpu = 00:12:38 ; elapsed = 00:09:24 . Memory (MB): peak = 5873.145 ; gain = 1628.031 ; free physical = 18881 ; free virtual = 38164
+INFO: [Common 17-83] Releasing license: Implementation
+113 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:13:09 ; elapsed = 00:09:39 . Memory (MB): peak = 5873.145 ; gain = 1636.035 ; free physical = 19312 ; free virtual = 38594
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# route_design -directive NoTimingRelaxation -tns_cleanup
+Command: route_design -directive NoTimingRelaxation -tns_cleanup
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 3d7aadcb ConstDB: 0 ShapeSum: 383b7991 RouteDB: f24c5fa0
+Post Restoration Checksum: NetGraph: bac05d96 NumContArr: 33035a05 Constraints: 0 Timing: 0
+Phase 1 Build RT Design | Checksum: edc3b79b
+
+Time (s): cpu = 00:01:48 ; elapsed = 00:01:03 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 18903 ; free virtual = 38185
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: edc3b79b
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:04 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 18873 ; free virtual = 38155
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: edc3b79b
+
+Time (s): cpu = 00:01:50 ; elapsed = 00:01:05 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 18865 ; free virtual = 38147
+Phase 2 Router Initialization | Checksum: edc3b79b
+
+Time (s): cpu = 00:01:56 ; elapsed = 00:01:07 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 18719 ; free virtual = 38002
+INFO: [Route 35-558] -tns_cleanup is called on fully routed design. This will optimize the tns and all other options are ignored.
+
+Phase 3 TNS Cleanup
+
+Phase 3.1 Timing Verification
+
+Phase 3.1.1 Update Timing
+Phase 3.1.1 Update Timing | Checksum: 18de260c3
+
+Time (s): cpu = 00:02:38 ; elapsed = 00:01:23 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19817 ; free virtual = 39073
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.030 | TNS=-0.479 | WHS=0.030  | THS=0.000  |
+
+Phase 3.1 Timing Verification | Checksum: 18de260c3
+
+Time (s): cpu = 00:02:39 ; elapsed = 00:01:23 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19817 ; free virtual = 39074
+
+Phase 3.2 Delay CleanUp
+
+Phase 3.2.1 Update Timing
+Phase 3.2.1 Update Timing | Checksum: 1b0888a8d
+
+Time (s): cpu = 00:03:10 ; elapsed = 00:01:37 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19736 ; free virtual = 39074
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.030 | TNS=-0.479 | WHS=0.030  | THS=0.000  |
+
+ Number of Nodes with overlaps = 0
+
+Phase 3.2.2 Update Timing
+Phase 3.2.2 Update Timing | Checksum: 1a68b5a1b
+
+Time (s): cpu = 00:03:46 ; elapsed = 00:01:50 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19669 ; free virtual = 38931
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.029 | TNS=-0.468 | WHS=N/A    | THS=N/A    |
+
+Phase 3.2 Delay CleanUp | Checksum: 190e54cb4
+
+Time (s): cpu = 00:03:50 ; elapsed = 00:01:52 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19715 ; free virtual = 38978
+
+Phase 3.3 Timing Verification
+
+Phase 3.3.1 Update Timing
+Phase 3.3.1 Update Timing | Checksum: 20288e991
+
+Time (s): cpu = 00:05:02 ; elapsed = 00:02:15 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19707 ; free virtual = 39085
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.030 | TNS=-0.479 | WHS=0.030  | THS=0.000  |
+
+Phase 3.3 Timing Verification | Checksum: 20288e991
+
+Time (s): cpu = 00:05:03 ; elapsed = 00:02:16 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19629 ; free virtual = 39073
+
+Phase 3.4 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 21.1589 %
+  Global Horizontal Routing Utilization  = 19.9295 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Congestion Report
+North Dir 2x2 Area, Max Cong = 88.0297%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X28Y126 -> INT_X29Y127
+   INT_X8Y82 -> INT_X9Y83
+South Dir 1x1 Area, Max Cong = 96.2025%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X30Y178 -> INT_X30Y178
+   INT_X28Y126 -> INT_X28Y126
+   INT_X32Y125 -> INT_X32Y125
+   INT_X30Y123 -> INT_X30Y123
+   INT_X26Y122 -> INT_X26Y122
+East Dir 4x4 Area, Max Cong = 85.0962%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X24Y112 -> INT_X27Y115
+West Dir 1x1 Area, Max Cong = 94.2308%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X19Y293 -> INT_X19Y293
+   INT_X30Y100 -> INT_X30Y100
+   INT_X8Y82 -> INT_X8Y82
+   INT_X8Y81 -> INT_X8Y81
+   INT_X8Y80 -> INT_X8Y80
+
+------------------------------
+Reporting congestion hotspots
+------------------------------
+Direction: North
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 0.4 Sparse Ratio: 1.5
+Direction: South
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 2 Aspect Ratio: 1 Sparse Ratio: 0.625
+Direction: East
+----------------
+Congested clusters found at Level 1
+Effective congestion level: 3 Aspect Ratio: 0.8 Sparse Ratio: 0.625
+Direction: West
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 0.333333 Sparse Ratio: 0.75
+
+Phase 3.4 Route finalize | Checksum: 20288e991
+
+Time (s): cpu = 00:05:10 ; elapsed = 00:02:20 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19212 ; free virtual = 38952
+
+Phase 3.5 Verifying routed nets
+
+ Verification completed successfully
+Phase 3.5 Verifying routed nets | Checksum: 20288e991
+
+Time (s): cpu = 00:05:11 ; elapsed = 00:02:21 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 19000 ; free virtual = 38740
+
+Phase 3.6 Depositing Routes
+Phase 3.6 Depositing Routes | Checksum: 20288e991
+
+Time (s): cpu = 00:05:21 ; elapsed = 00:02:28 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 17161 ; free virtual = 36798
+Phase 3 TNS Cleanup | Checksum: 20288e991
+
+Time (s): cpu = 00:05:22 ; elapsed = 00:02:28 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 17156 ; free virtual = 36792
+
+Phase 4 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=-0.027 | TNS=-0.394 | WHS=0.030  | THS=0.000  |
+
+Phase 4 Post Router Timing | Checksum: 130dcc53e
+
+Time (s): cpu = 00:06:32 ; elapsed = 00:02:51 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 17110 ; free virtual = 36645
+CRITICAL WARNING: [Route 35-39] The design did not meet timing requirements. Please run report_timing_summary for detailed reports. Note: this situation might be resolved in the second pass of route design.
+Resolution: Verify that the timing was met or had small violations at all previous steps (synthesis, placement, power_opt, and phys_opt). Run report_timing_summary and analyze individual timing paths.
+INFO: [Route 35-253] TNS is the sum of the worst slack violation on every endpoint in the design. Review the paths with the biggest WNS violations in the timing reports and modify your constraints or your design to improve both WNS and TNS.
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:06:32 ; elapsed = 00:02:51 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 17199 ; free virtual = 36735
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+18 Infos, 0 Warnings, 1 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:06:46 ; elapsed = 00:02:59 . Memory (MB): peak = 5876.156 ; gain = 3.012 ; free physical = 17197 ; free virtual = 36733
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# write_checkpoint -force xilinx_kcu105_route.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:22 ; elapsed = 00:00:11 . Memory (MB): peak = 5924.180 ; gain = 40.020 ; free physical = 16949 ; free virtual = 36727
+report_design_analysis: Time (s): cpu = 00:00:16 ; elapsed = 00:00:10 . Memory (MB): peak = 5924.180 ; gain = 0.000 ; free physical = 16984 ; free virtual = 36740
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd/gateware/xilinx_kcu105_route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:49 ; elapsed = 00:00:32 . Memory (MB): peak = 5924.180 ; gain = 48.023 ; free physical = 17434 ; free virtual = 36848
+# report_timing_summary -delay_type min_max -report_unconstrained -file xilinx_kcu105_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+# report_route_status -file xilinx_kcu105_route_status.rpt
+# report_drc -file xilinx_kcu105_drc.rpt
+Command: report_drc -file xilinx_kcu105_drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd/gateware/xilinx_kcu105_drc.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:18 ; elapsed = 00:00:07 . Memory (MB): peak = 5924.180 ; gain = 0.000 ; free physical = 17136 ; free virtual = 36702
+# report_exceptions -file final-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:28 ; elapsed = 00:00:11 . Memory (MB): peak = 5924.180 ; gain = 0.000 ; free physical = 17359 ; free virtual = 36924
+# report_utilization -file soc-utilization.rpt
+# report_timing -max_paths 10 -path_type full -file soc-worst-10.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 10 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:23 ; elapsed = 00:00:10 . Memory (MB): peak = 5924.180 ; gain = 0.000 ; free physical = 17276 ; free virtual = 36842
+# set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]
+# set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]
+# if {![llength $setup_path] || ![llength $hold_path]} {error "Missing routed timing paths"}
+# if {[get_property SLACK $setup_path] < 0 || [get_property SLACK $hold_path] < 0} {
+#     error "Routed setup/hold failed; bitstream withheld"
+# }
+Routed setup/hold failed; bitstream withheld
+    while executing
+"error "Routed setup/hold failed; bitstream withheld""
+    invoked from within
+"if {[get_property SLACK $setup_path] < 0 || [get_property SLACK $hold_path] < 0} {
+    error "Routed setup/hold failed; bitstream withheld"
+}"
+    (file "postroute-closure.tcl" line 22)
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 23:22:49 2026...
