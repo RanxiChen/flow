@@ -271,3 +271,7 @@ c735fbd四核旧最终route_status还明确有37个routing resource conflict，�
 22:00 CST：d902fb5最低集完成exit0：地址队列1项、VRF256/512两项、ALU192种ADD/SUB组合1项，共4项无fail/cancel/ignore；整机原14ISA+2RVV ELF全部tohost=1，Bare2852/Sv393215cycles，retired107/129、原8结果12/跨页512字节255/VSOff精确mepc/mtval不变。前一c129501同整机周期也通过，3f24863地址队列后同周期通过；原始日志各按准确SHA归档，不把相同周期当作新源证据。新production/SD BIOS/source-snapshot生成并开始Vivado CPU8–9/maxThreads2/default；4个RVV独有生产文件为对7f的全部RTL/config差异，普通单/四核仍7f，不重写旧证据。新BIOS ROM前缀及每个immutable source hash核对通过。
 
 8a在保存synth/place DCP后按PID2347934和准确cwd/cmd主动停止为SIGTERM，wrapper exit1由Vivado进程终止引起；不是新的routed失败。只读place审计exit0，WNS−1.133/WHS−0.097ns，最差仍为scoreboard→VRF EN；另有legacy e64 MAC slow乘法、ALU cache、返回RAM地址等路径，后续按新源实际报告裁定。四核目前仍routing，−0.161ns只为中间估计；仍需最终setup/hold和route gate。
+
+22:08 CST：99df4a1仅增加验证、不改d902fb5生产RTL/config；17ELF（原14标量、原2向量访存、增1向量算术）全部tohost=1、exit0。新增程序验证8个64位大操作数MAC低64结果、16个e32 MAC和16条连续signed packed-byte DOT的16个结果；外部GoldenMem以独立BigInt乘加和整数dot求期望，原内存/context签名仍逐项保持。MAC/DOT4259cycles/275retired，两个原RVV仍2852/3215cycles。日志sd-minimum-99df4a1。用于正在物理运行的d902fb5时明确标记相同生产RTL验证，bit源SHA保持d902fb5。
+
+准备postroute-closure.tcl作四核默认后处理若失败的备选：输入保存的准确route DCP，独立复制的工程和输出，不覆盖baseline；AggressiveExplore物理优化后NoTimingRelaxation/tns_cleanup路由，仍明确100MHz、原全量约束、SD同10ns传输预算，检查setup/hold/route errors再write_bitstream。Vivado2022.2本机help明确支持相应directive与post-route使用；没有应用retime或新clock/false_path/multicycle参数。当前只为准备，未运行该候选，四核默认仍在优化；不能把候选脚本本身当作结果。
