@@ -1,0 +1,461 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Sun Oct 11 18:27:33 2026
+# Process ID: 2220757
+# Current directory: /home/chen
+# Command line: vivado -mode batch -source /home/chen/FUN/flow-runs/d5-discovery.tcl -tclargs /home/chen/FUN/flow-runs/be2-baseline-deployment-small/gateware/xilinx_kcu105_synth.dcp -log /home/chen/FUN/flow-runs/be2-baseline-d5-discovery.log -journal /home/chen/FUN/flow-runs/be2-baseline-d5-discovery.jou
+# Log file: /home/chen/vivado.log
+# Journal file: /home/chen/vivado.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4480.785 MHz, CPU Physical cores: 1, Host memory: 67150 MB
+#-----------------------------------------------------------
+source /home/chen/FUN/flow-runs/d5-discovery.tcl
+# set_param general.maxThreads 2
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-baseline-deployment-small/gateware/xilinx_kcu105_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1686.438 ; gain = 0.000 ; free physical = 22865 ; free virtual = 38129
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2716.762 ; gain = 1.000 ; free physical = 21496 ; free virtual = 37295
+INFO: [Netlist 29-17] Analyzing 12242 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 15 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3755.629 ; gain = 0.000 ; free physical = 20713 ; free virtual = 36415
+Restored from archive | CPU: 0.070000 secs | Memory: 1.805168 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3755.629 ; gain = 0.000 ; free physical = 20713 ; free virtual = 36415
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3787.473 ; gain = 0.000 ; free physical = 20711 ; free virtual = 36414
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1802 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 92 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 64 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 9 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 1559 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 64 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 6e9daca2
+----- Checksum: PlaceDB: 1ae8c24a ShapeSum: 53b4ea58 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:41 ; elapsed = 00:00:42 . Memory (MB): peak = 3787.473 ; gain = 2101.035 ; free physical = 20711 ; free virtual = 36414
+# set cells [get_cells -hierarchical -filter {NAME =~ *cluster/data/* && REF_NAME =~ RAMB*}]
+# puts "D5_DISCOVERY_DATA [llength $cells]"
+D5_DISCOVERY_DATA 32
+# if {[llength $cells]} {report_property -all [lindex $cells 0]}
+Property                                    Type     Read-only  Value
+ADDER_THRESHOLD                             int      false      
+ADV_USEFUL_SKEW                             bool     false      
+AIE.COLOCATED_MEMORIES                      string*  false      
+AIE.COLOCATED_NODES                         string*  false      
+AIE.NOT_COLOCATED_MEMORIES                  string*  false      
+AIE.NOT_COLOCATED_NODES                     string*  false      
+AIE.RESERVED_MEMORY.BANK                    int      false      
+AIE.RESERVED_MEMORY.COLUMN                  int      false      
+AIE.RESERVED_MEMORY.OFFSET                  int      false      
+AIE.RESERVED_MEMORY.ROW                     int      false      
+AIE.RUNTIME                                 double   false      
+AIE.TILE.COLUMN                             string   false      
+AIE.TILE.NAME                               string   false      
+AIE.TILE.ROW                                string   false      
+ASYNC_REG                                   bool     false      
+AUTOPIPELINE_MODULE                         bool     false      
+BEL                                         string   false      
+BLI                                         enum     false      
+BLKNM                                       string   true       
+BLOCK_SYNTH.ADDER_THRESHOLD                 int      false      
+BLOCK_SYNTH.COMPARATOR_THRESHOLD            int      false      
+BLOCK_SYNTH.CONTROL_SET_THRESHOLD           int      false      
+BLOCK_SYNTH.EXTRACT_PARTITION               int      false      
+BLOCK_SYNTH.FLATTEN_HIERARCHY               enum     false      
+BLOCK_SYNTH.FLATTEN_INSIDE_PARTITION        int      false      
+BLOCK_SYNTH.FSM_EXTRACTION                  enum     false      
+BLOCK_SYNTH.KEEP_EQUIVALENT_REGISTER        int      false      
+BLOCK_SYNTH.LOGIC_COMPACTION                bool     false      
+BLOCK_SYNTH.LUT_COMBINING                   int      false      
+BLOCK_SYNTH.MAX_LUT_INPUT                   int      false      
+BLOCK_SYNTH.MUXF_MAPPING                    int      false      
+BLOCK_SYNTH.POST_MAP_CONTROL_SET_THRESHOLD  int      false      
+BLOCK_SYNTH.PRESERVE_BOUNDARY               int      false      
+BLOCK_SYNTH.RETIMING                        int      false      
+BLOCK_SYNTH.ROM_MAPPING                     int      false      
+BLOCK_SYNTH.SHREG_MIN_SIZE                  int      false      
+BLOCK_SYNTH.SRL_STYLE                       enum     false      
+BLOCK_SYNTH.STRATEGY                        enum     false      
+BLOCK_SYNTH.USER_PROVIDED                   string   false      
+BOX_TYPE                                    string   false      
+BUFG                                        enum     true       
+CAPACITANCE                                 string   false      
+CARRY_REMAP                                 int      false      
+CASCADE_HEIGHT                              int      false      
+CASCADE_ORDER_A                             string   false      NONE
+CASCADE_ORDER_B                             string   false      NONE
+CELL_BLOAT_FACTOR                           enum     false      
+CLASS                                       string   true       cell
+CLOCK_DOMAINS                               string   false      COMMON
+CLOCK_LOW_FANOUT                            bool     false      
+CLOCK_REGION                                string   false      
+COMPARATOR_THRESHOLD                        int      false      
+CONTROL_SET_REMAP                           enum     false      
+CONVERT_BRAM8                               bool     true       
+DCI_VALUE                                   int      false      
+DELAY_BYPASS                                bool     false      
+DOA_REG                                     int      false      0
+DOB_REG                                     int      false      0
+DONT_PARTITION                              bool     false      
+DONT_TOUCH                                  bool     false      
+DSP_FOLDING                                 bool     false      
+DSP_REG_OPT                                 enum     false      
+ENADDRENA                                   string   false      FALSE
+ENADDRENB                                   string   false      FALSE
+EN_ECC_PIPE                                 string   false      FALSE
+EN_ECC_READ                                 string   false      FALSE
+EN_ECC_WRITE                                string   false      FALSE
+EQUIVALENT_DRIVER_OPT                       string   false      
+ESSENTIAL_CLASSIFICATION_VALUE              int      false      
+EXTRACT_ENABLE                              bool     false      
+EXTRACT_RESET                               bool     false      
+FILE_NAME                                   string   true       /home/chen/FUN/flow-runs/be2-baseline-deployment-small/source-snapshot/source-102/SdpSramBlackBox.sv
+FORCE_MAX_FANOUT                            string   false      
+FSM_ENCODED_STATES                          string   false      
+FSM_ENCODING                                enum     false      
+FSM_SAFE_STATE                              enum     false      
+HBLKNM                                      string   true       
+HD.ISOLATED                                 bool     false      
+HD.ISOLATED_EXEMPT                          bool     false      
+HD.PLATFORM_WRAPPER                         bool     false      
+HD.RECONFIGURABLE                           bool     false      
+HD.RECONFIG_PLATFORM                        bool     false      
+HD.TANDEM                                   int      false      
+HLUTNM                                      string   false      
+H_SET                                       string   true       
+IBUF_DELAY_VALUE                            string   false      
+IFD_DELAY_VALUE                             string   false      
+IMR                                         enum     false      
+INITP_0C                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_0E                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_00                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_0A                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_0B                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_0D                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_0F                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_01                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_02                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_03                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_04                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_05                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_06                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_07                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_08                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INITP_09                                    hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_00                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_0B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_1F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_01                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_02                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_2F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_03                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_3F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_04                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_4F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_05                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_5F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_06                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_6F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7A                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_07                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7B                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7C                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7D                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7E                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_7F                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_08                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_09                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_10                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_11                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_12                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_13                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_14                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_15                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_16                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_17                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_18                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_19                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_20                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_21                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_22                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_23                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_24                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_25                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_26                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_27                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_28                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_29                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_30                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_31                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_32                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_33                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_34                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_35                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_36                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_37                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_38                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_39                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_40                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_41                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_42                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_43                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_44                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_45                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_46                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_47                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_48                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_49                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_50                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_51                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_52                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_53                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_54                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_55                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_56                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_57                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_58                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_59                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_60                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_61                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_62                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_63                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_64                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_65                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_66                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_67                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_68                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_69                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_70                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_71                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_72                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_73                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_74                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_75                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_76                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_77                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_78                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_79                                     hex      false      256'h0000000000000000000000000000000000000000000000000000000000000000
+INIT_A                                      hex      false      36'h000000000
+INIT_B                                      hex      false      36'h000000000
+INIT_FILE                                   string   false      NONE
+INIT_VAL                                    string   true       
+IOB                                         enum     false      
+IOBDELAY                                    enum     false      
+IOB_TRI_REG                                 bool     false      
+IODELAY_GROUP                               string   false      
+IPROGRAMMING                                string   false      
+IS_BEL_FIXED                                bool     false      
+IS_BLACKBOX                                 bool     true       0
+IS_BOUNDARY_INST                            bool     true       0
+IS_CLKARDCLK_INVERTED                       binary   false      
+IS_CLKBWRCLK_INVERTED                       binary   false      
+IS_CLOCK_GATED                              bool     true       
+IS_DEBUGGABLE                               bool     true       1
+IS_ENARDEN_INVERTED                         binary   false      
+IS_ENBWREN_INVERTED                         binary   false      
+IS_LOC_FIXED                                bool     false      
+IS_MATCHED                                  bool     true       1
+IS_ORIG_CELL                                bool     true       1
+IS_PRIMITIVE                                bool     true       1
+IS_REUSED                                   bool     true       0
+IS_RSTRAMARSTRAM_INVERTED                   binary   false      
+IS_RSTRAMB_INVERTED                         binary   false      
+IS_RSTREGARSTREG_INVERTED                   binary   false      
+IS_RSTREGB_INVERTED                         binary   false      
+IS_SEQUENTIAL                               bool     true       1
+KEEP                                        string   false      
+KEEP_HIERARCHY                              enum     false      
+KEEP_PRSHELL_DISCONNECT                     bool     true       
+LINE_NUMBER                                 int      true       19
+LOC                                         string   false      
+LOCK_PINS                                   string*  false      
+LOOKAHEAD8_REMAP                            int      false      
+LOPT_BUFG_MISC                              bool     true       
+LUTNM                                       string   false      
+LUT_DECOMPOSE                               bool     false      
+LUT_REMAP                                   bool     false      
+MACRO_NAME                                  string   true       
+MAX_FANOUT                                  string   false      
+MAX_FANOUT_MODE                             enum     false      
+MEM.ADDRESS_BEGIN                           int      false      
+MEM.ADDRESS_END                             int      false      
+MEM.ADDRESS_SPACE                           bool     false      
+MEM.ADDRESS_SPACE_BEGIN                     int      false      
+MEM.ADDRESS_SPACE_DATA_LSB                  int      false      
+MEM.ADDRESS_SPACE_DATA_MSB                  int      false      
+MEM.ADDRESS_SPACE_DATA_WIDTH                int      false      
+MEM.ADDRESS_SPACE_END                       int      false      
+MEM.ADDRESS_SPACE_WORD_WIDTH                int      false      
+MEM.CORE_MEMORY_WIDTH                       int      false      
+MEM.DATA_LSB                                int      false      
+MEM.DATA_MSB                                int      false      
+MEM.ENDIANNESS                              string   false      
+MEM.PORTA.ADDRESS_BEGIN                     int      false      
+MEM.PORTA.ADDRESS_END                       int      false      
+MEM.PORTA.DATA_BIT_LAYOUT                   string   false      p0_d8
+MEM.PORTA.DATA_LSB                          int      false      
+MEM.PORTA.DATA_MSB                          int      false      
+MEM.PORTB.ADDRESS_BEGIN                     int      false      
+MEM.PORTB.ADDRESS_END                       int      false      
+MEM.PORTB.DATA_BIT_LAYOUT                   string   false      p0_d8
+MEM.PORTB.DATA_LSB                          int      false      
+MEM.PORTB.DATA_MSB                          int      false      
+METHODOLOGY_DRC_VIOS                        string   false      {SYNTH-6 {cell *THIS*}}
+MIG_FLOORPLAN_MODE                          enum     false      
+MUXF_REMAP                                  bool     false      
+NAME                                        string   true       BreezeClusterAxi/cluster/data/ram/mem_reg_0
+NODELAY                                     bool     true       
+OPROGRAMMING                                string   false      
+OPT_MODIFIED                                string   true       
+ORIG_CELL_NAME                              string   false      
+ORIG_REF_NAME                               string   true       RAMB36E2
+PARENT                                      cell     true       BreezeClusterAxi/cluster
+PBLOCK                                      string   true       
+PHASESHIFT_MODE                             enum     false      
+PHYS_OPT_MODIFIED                           string   true       
+PHYS_OPT_SKIPPED                            string   true       
+PHYS_SRL2PIPELINE                           bool     false      
+POWER_OPTED_CE                              string   true       
+PRIMITIVE_COUNT                             int      true       1
+PRIMITIVE_GROUP                             enum     true       BLOCKRAM
+PRIMITIVE_LEVEL                             enum     true       LEAF
+PRIMITIVE_SUBGROUP                          enum     true       BRAM
+PRIMITIVE_TYPE                              enum     true       BLOCKRAM.BRAM.RAMB36E2
+PRSHELL_OK_FOR_IMPL                         bool     true       
+PRSHELL_SKIP_IP                             bool     true       
+PSIP_RETIMING_BACKWARD                      bool     false      
+PSIP_RETIMING_FORWARD                       bool     false      
+PWR_MODE                                    enum     true       
+RAM_DECOMP                                  enum     false      
+RAM_STYLE                                   enum     false      
+RDADDRCHANGEA                               string   false      FALSE
+RDADDRCHANGEB                               string   false      FALSE
+READ_WIDTH_A                                int      false      9
+READ_WIDTH_B                                int      false      9
+REF_NAME                                    string   true       RAMB36E2
+REG_TO_SRL                                  bool     false      
+RETIMING_BACKWARD                           int      false      
+RETIMING_FORWARD                            int      false      
+REUSE_STATUS                                enum     true       
+RLOC                                        string   true       
+ROM_STYLE                                   enum     false      
+RPM                                         string   true       
+RPM_GRID                                    enum     true       
+RSTREG_PRIORITY_A                           string   false      RSTREG
+RSTREG_PRIORITY_B                           string   false      RSTREG
+RTL_RAM_BITS                                int      false      1048576
+RTL_RAM_NAME                                string   false      BreezeClusterAxi/cluster/data/ram/mem_reg_0
+RTL_RAM_TYPE                                string   false      RAM_SDP
+RW_ADDR_COLLISION                           bool     false      
+SDX_FEATURE_ROM                             bool     false      
+SETUP_SLACK                                 double   false      
+SEU_PROTECTED                               long     false      
+SHREG_EXTRACT                               enum     false      
+SIM_COLLISION_CHECK                         string   false      ALL
+SLEEP_ASYNC                                 string   false      FALSE
+SLR                                         string   false      
+SLR_INDEX                                   int      true       
+SOFT_HLUTNM                                 string   false      
+SOFT_MACRO.CLUSTER                          string   false      
+SOFT_MACRO.COORDINATE                       string   false      
+SRL_STAGES_TO_REG_INPUT                     int      false      
+SRL_STAGES_TO_REG_OUTPUT                    int      false      
+SRL_STYLE                                   enum     false      
+SRL_TO_REG                                  bool     false      
+SRVAL_A                                     hex      false      36'h000000000
+SRVAL_B                                     hex      false      36'h000000000
+STATUS                                      enum     true       UNPLACED
+TDM_COUNTER_CELL                            int      true       
+TDM_GROUP_CELL                              int      true       
+TDM_KEEP                                    bool     true       
+TRANSIENT_FILTER                            enum     false      
+USER_CLUSTER                                string   false      
+USER_LAGUNA                                 bool     false      
+USER_RAM_AVERAGE_ACTIVITY                   int      false      
+USER_SKIP_OBFUSCATION                       bool     false      
+USER_SLL_REG                                bool     false      
+USER_SLR_ASSIGNMENT                         string   false      
+USE_DSP                                     enum     false      
+USE_DSP48                                   enum     false      
+USE_LUTNM                                   bool     false      
+USE_RLOC                                    bool     true       
+WRITE_MODE_A                                string   false      READ_FIRST
+WRITE_MODE_B                                string   false      WRITE_FIRST
+WRITE_WIDTH_A                               int      false      9
+WRITE_WIDTH_B                               int      false      9
+XBLKNM                                      string   true       
+XILINX_LEGACY_PRIM                          string   false      
+XILINX_TRANSFORM_PINMAP                     string   false      
+XPM_CDC                                     enum     false      
+XSTLIB                                      bool     true       
+ars_ff1                                     string   false      
+ars_ff2                                     string   false      
+equivalent_register_removal                 string   false      
+inverted                                    string   false      
+mr_ff                                       string   false      
+ram_addr_begin                              int      false      0
+ram_addr_end                                int      false      4095
+ram_ext_slice_begin                         int      false      
+ram_ext_slice_end                           int      false      
+ram_offset                                  int      false      0
+ram_slice_begin                             int      false      0
+ram_slice_end                               int      false      7
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter {NAME =~ *cluster/data || NAME =~ *cluster/l2/data}'.
+# set modules [get_cells -hierarchical -filter {NAME =~ *cluster/data || NAME =~ *cluster/l2/data}]
+# foreach c $modules {report_property -all $c}
+# exit
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 18:28:19 2026...

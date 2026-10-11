@@ -195,3 +195,6 @@ c735fbd 的部署最小集最终 exit0：六 suites/20 Scala 用例，无失败/
 22. **D5 重建层次选择器**：新几何 baseline/c735fbd 均完成 synth_design、写出原checkpoint后，旧 D5 因固定 `$home/data/*` 未命中而 exit1。原日志确证32个RAMB36E2数据阵列在 `cluster/data/ram/*`，RTL_RAM_BITS=1048576（128KiB），元数据/plru仍在L2Home。修正只在固定路径为空时检查唯一同级同名array/ram，并要求所有读/写地址 startpoint（除GND/VCC）均属于对应L2Home，且集合非空；三组数组仍必须有RAMB，LUT<100000不变，资源总量计入已验证搬出的阵列。基线和候选在各自原DCP上的正向验证/错误owner负向拒绝均exit0，源码/网表/clock未改。四核从原synth DCP恢复原Tcl的opt/place/route/phys_opt default尾部；原失败退出码和日志不覆盖。单核旧D5已通过且继续原完整流程。最终RTL证据仍绑定c735fbd，checker源码另绑定本修正提交，不将门禁选择器变化伪装成RTL重测。
 
 c735fbd 对 2051dd0+同几何配置补丁的 A1 综合比较通过：backend扣除CVFPU后，各hart LUT +1.877/+2.082/+1.466/-2.161%，FF +6.184/+5.923/+5.923/+5.746%；L1D LUT +0.080/-5.988/-6.488/+1.893%。顶层209547 LUT（86.447%）、108510 FF、107 RAMB36+1 RAMB18、92DSP。原始hierarchical_synth.rpt和逐行area-synth.json在`records/be2-20261011/physical-c735fbd/`。这只是同配置综合面积，不是routed timing通过。
+
+
+c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=0，100MHz sys_clk WNS=+0.559ns。LUT59167、FF34563、BRAM52tiles（51RAMB36+2RAMB18）、DSP23。报告/Tcl/XDC/源文件hash清单在`physical-c735fbd/single/`。布局/布线使用default，无新例外，无bitstream/板上证据。单核仅改核数/profile；其四核配对结果仍待完成。

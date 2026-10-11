@@ -1,0 +1,118 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/d5-validate.tcl
+# set_param general.maxThreads 2
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint xilinx_kcu105_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1686.379 ; gain = 0.000 ; free physical = 19237 ; free virtual = 35023
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2718.711 ; gain = 0.000 ; free physical = 16515 ; free virtual = 33167
+INFO: [Netlist 29-17] Analyzing 12550 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 15 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3769.555 ; gain = 0.000 ; free physical = 14586 ; free virtual = 31238
+Restored from archive | CPU: 0.060000 secs | Memory: 1.805122 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3769.555 ; gain = 0.000 ; free physical = 14586 ; free virtual = 31238
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3801.398 ; gain = 0.000 ; free physical = 14470 ; free virtual = 31123
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1826 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 92 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 64 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 9 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 1579 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 4 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 64 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: d4f29112
+----- Checksum: PlaceDB: 1ae8c24a ShapeSum: ba09cec8 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:42 ; elapsed = 00:00:43 . Memory (MB): peak = 3801.398 ; gain = 2115.020 ; free physical = 14447 ; free virtual = 31100
+# cd [lindex $argv 1]
+# source [lindex $argv 2]
+## proc d5_verify_owner {home blocks} {
+##     set addresses [get_pins -quiet -of_objects $blocks -filter {DIRECTION == IN && REF_PIN_NAME =~ ADDR*}]
+##     if {![llength $addresses]} { error "D5: RAM address collection empty for $home" }
+##     set roots [all_fanin -quiet -flat -to $addresses -startpoints_only]
+##     set owned [list]
+##     foreach root $roots {
+##         set cells [get_cells -quiet -of_objects $root]
+##         if {![llength $cells]} { error "D5: unowned RAM address port $root for $home" }
+##         foreach cell $cells {
+##             set ref [get_property REF_NAME $cell]
+##             if {$ref eq "GND" || $ref eq "VCC"} { continue }
+##             if {![string match "$home/*" [get_property NAME $cell]]} {
+##                 error "D5: RAM address root $root is outside owner $home"
+##             }
+##             lappend owned $root
+##         }
+##     }
+##     if {![llength $owned]} { error "D5: no registered RAM address roots for $home" }
+##     return [lsort -unique $owned]
+## }
+## set homes [get_cells -hierarchical -filter {REF_NAME =~ L2Home*}]
+## if {[llength $homes] == 0} { error "D5: no L2Home hierarchy after synthesis" }
+## set out [open soc2-l2-bram-gate.tsv w]
+## puts $out "hierarchy\tLUT\tFF\tRAMB36\tRAMB18"
+## foreach home $homes {
+##     set path [get_property NAME $home]
+##     set scopes [list "$path/*"]
+##     foreach array {data meta plruArr} {
+##         set scope "$path/$array/*"
+##         set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+##         if {![llength $blocks]} {
+##             set scope "[file dirname $path]/$array/ram/*"
+##             set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+##             if {![llength $blocks]} { close $out; error "D5: $path/$array has no RAMB primitive" }
+##             set roots [d5_verify_owner $path $blocks]
+##             lappend scopes $scope
+##             puts $out "# hoisted $array owner=$path address_roots=[join $roots ,]"
+##         }
+##         puts $out "# $array\t[join $blocks ,]"
+##     }
+##     set ownership [list]
+##     foreach scope $scopes { lappend ownership "NAME =~ $scope" }
+##     set selection "([join $ownership { || }])"
+##     set lut [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ LUT*"]]
+##     set ff [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ FD*"]]
+##     set b36 [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ RAMB36*"]]
+##     set b18 [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ RAMB18*"]]
+##     puts $out "$path\t$lut\t$ff\t$b36\t$b18"
+##     flush $out
+##     if {$b36 + $b18 == 0 || $lut >= 100000} {
+##         close $out
+##         error "D5: L2Home mapping failed: $path LUT=$lut RAMB36=$b36 RAMB18=$b18"
+##     }
+## }
+## close $out
+## puts "SOC2_D5_L2_BRAM_GATE_PASS"
+SOC2_D5_L2_BRAM_GATE_PASS
+# set home [get_property NAME [lindex $homes 0]]
+# set blocks [get_cells -quiet -hierarchical -filter {NAME =~ *cluster/data/ram/* && REF_NAME =~ RAMB*}]
+# if {![llength $blocks]} {error "D5 negative check requires nonempty hoisted data RAM"}
+# if {![catch {d5_verify_owner "$home/incorrect_owner" $blocks} message]} {error "D5 accepted unrelated RAM"}
+# puts "D5_NEGATIVE_OWNER_REJECTED: $message"
+D5_NEGATIVE_OWNER_REJECTED: D5: RAM address root BreezeClusterAxi/cluster/l2/s2_e_set_reg[9]/C is outside owner BreezeClusterAxi/cluster/l2/incorrect_owner
+# exit
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 18:32:44 2026...

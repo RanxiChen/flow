@@ -42,11 +42,31 @@
   "G1_full": "deferred by user, unchanged original golden and test scales",
   "physical": {
     "source": "c735fbd",
-    "small": "running",
-    "single": "running",
+    "small": "running default opt/place/route resumed from unchanged synth checkpoint after corrected D5 selector",
+    "single": {
+      "exit": 0,
+      "WNS_ns": 0.412,
+      "WHS_ns": 0.031,
+      "sys_clk_WNS_ns": 0.559,
+      "TNS_ns": 0,
+      "THS_ns": 0,
+      "LUT": 59167,
+      "FF": 34563,
+      "BRAM_tiles": 52,
+      "DSP": 23,
+      "reports": "physical-c735fbd/single"
+    },
     "clock_hz": 100000000,
     "new_timing_exceptions": false,
     "bitstream": "not run",
     "board": "not run"
+  },
+  "A1": {
+    "scope": "four-hart synthesis; baseline2051dd0 with matching config-only patch",
+    "pass": true,
+    "max_backend_LUT_percent": 2.082038533250463,
+    "max_backend_FF_percent": 6.184156519359685,
+    "max_L1D_LUT_percent": 1.893,
+    "raw": "physical-c735fbd/area-synth.json"
   }
 }

@@ -1,0 +1,1647 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 18:37:54 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 20 -path_type full -file be2-worst-20.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.412ns  (required time - arrival time)
+  Source:                 __main___idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by __main___clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0_7/RST
+                            (recovery check against rising-edge clock __main___clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (__main___clkout1 rise@5.000ns - __main___clkout1 rise@0.000ns)
+  Data Path Delay:        3.672ns  (logic 0.117ns (3.186%)  route 3.555ns (96.814%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.197ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.429ns = ( 11.429 - 5.000 ) 
+    Source Clock Delay      (SCD):    6.793ns
+    Clock Pessimism Removal (CPR):    0.168ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock __main___clkout1 rise edge)
+                                                      0.000     0.000 r  
+                         clock source latency         3.566     3.566    
+                         propagated clock network latency
+                                                      3.227     6.793    
+    SLICE_X0Y165         FDRE                         0.000     6.793 r  __main___idelayctrl_ic_reset_reg/C
+    SLICE_X0Y165         FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     6.910 f  __main___idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          3.555    10.465    __main___idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y7
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0_7/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock __main___clkout1 rise edge)
+                                                      5.000     5.000 r  
+                         clock source latency         3.568     8.568    
+                         propagated clock network latency
+                                                      2.861    11.429    
+                         clock pessimism              0.168    11.596    
+                         clock uncertainty           -0.086    11.510    
+    BITSLICE_CONTROL_X0Y7
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.633    10.877    IDELAYCTRL_REPLICATED_0_7
+  -------------------------------------------------------------------
+                         required time                         10.877    
+                         arrival time                         -10.465    
+  -------------------------------------------------------------------
+                         slack                                  0.412    
+
+Slack (MET) :             0.537ns  (required time - arrival time)
+  Source:                 __main___idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by __main___clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0_21/RST
+                            (recovery check against rising-edge clock __main___clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (__main___clkout1 rise@5.000ns - __main___clkout1 rise@0.000ns)
+  Data Path Delay:        3.683ns  (logic 0.117ns (3.177%)  route 3.566ns (96.823%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.194ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.432ns = ( 11.432 - 5.000 ) 
+    Source Clock Delay      (SCD):    6.793ns
+    Clock Pessimism Removal (CPR):    0.168ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock __main___clkout1 rise edge)
+                                                      0.000     0.000 r  
+                         clock source latency         3.566     3.566    
+                         propagated clock network latency
+                                                      3.227     6.793    
+    SLICE_X0Y165         FDRE                         0.000     6.793 r  __main___idelayctrl_ic_reset_reg/C
+    SLICE_X0Y165         FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     6.910 f  __main___idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          3.566    10.476    __main___idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y10
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0_21/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock __main___clkout1 rise edge)
+                                                      5.000     5.000 r  
+                         clock source latency         3.568     8.568    
+                         propagated clock network latency
+                                                      2.864    11.432    
+                         clock pessimism              0.168    11.599    
+                         clock uncertainty           -0.086    11.513    
+    BITSLICE_CONTROL_X0Y10
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.500    11.013    IDELAYCTRL_REPLICATED_0_21
+  -------------------------------------------------------------------
+                         required time                         11.013    
+                         arrival time                         -10.476    
+  -------------------------------------------------------------------
+                         slack                                  0.537    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[10]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.033ns  (logic 1.646ns (18.222%)  route 7.387ns (81.778%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.279ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.595ns = ( 16.595 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.874    16.075    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X62Y153        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[10]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.447    16.595    
+                         clock pessimism              0.169    16.763    
+                         clock uncertainty           -0.079    16.684    
+    SLICE_X62Y153        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.634    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[10]
+  -------------------------------------------------------------------
+                         required time                         16.634    
+                         arrival time                         -16.075    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_lower_reg[19]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.048ns  (logic 1.646ns (18.192%)  route 7.402ns (81.808%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.264ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.610ns = ( 16.610 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.889    16.090    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X64Y164        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_lower_reg[19]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.462    16.610    
+                         clock pessimism              0.169    16.778    
+                         clock uncertainty           -0.079    16.699    
+    SLICE_X64Y164        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.649    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_lower_reg[19]
+  -------------------------------------------------------------------
+                         required time                         16.649    
+                         arrival time                         -16.090    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[10]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.053ns  (logic 1.646ns (18.182%)  route 7.407ns (81.818%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.259ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.615ns = ( 16.615 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.894    16.095    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y165        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[10]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.467    16.615    
+                         clock pessimism              0.169    16.783    
+                         clock uncertainty           -0.079    16.704    
+    SLICE_X67Y165        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.654    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[10]
+  -------------------------------------------------------------------
+                         required time                         16.654    
+                         arrival time                         -16.095    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[12]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.054ns  (logic 1.646ns (18.180%)  route 7.408ns (81.820%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.895    16.096    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[12]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X67Y166        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[12]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.096    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[14]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.053ns  (logic 1.646ns (18.182%)  route 7.407ns (81.818%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.259ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.615ns = ( 16.615 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.894    16.095    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y165        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[14]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.467    16.615    
+                         clock pessimism              0.169    16.783    
+                         clock uncertainty           -0.079    16.704    
+    SLICE_X67Y165        FDRE (Setup_FFF2_SLICEM_C_CE)
+                                                     -0.050    16.654    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[14]
+  -------------------------------------------------------------------
+                         required time                         16.654    
+                         arrival time                         -16.095    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[6]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.054ns  (logic 1.646ns (18.180%)  route 7.408ns (81.820%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.895    16.096    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[6]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X67Y166        FDRE (Setup_FFF2_SLICEM_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[6]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.096    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[8]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.054ns  (logic 1.646ns (18.180%)  route 7.408ns (81.820%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.895    16.096    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[8]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X67Y166        FDRE (Setup_GFF2_SLICEM_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[8]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.096    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[4]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.053ns  (logic 1.646ns (18.182%)  route 7.407ns (81.818%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.259ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.615ns = ( 16.615 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.894    16.095    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y165        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[4]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.467    16.615    
+                         clock pessimism              0.169    16.783    
+                         clock uncertainty           -0.079    16.704    
+    SLICE_X67Y165        FDRE (Setup_GFF2_SLICEM_C_CE)
+                                                     -0.050    16.654    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[4]
+  -------------------------------------------------------------------
+                         required time                         16.654    
+                         arrival time                         -16.095    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.559ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[7]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.054ns  (logic 1.646ns (18.180%)  route 7.408ns (81.820%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.895    16.096    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X67Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[7]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X67Y166        FDRE (Setup_HFF2_SLICEM_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[7]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.096    
+  -------------------------------------------------------------------
+                         slack                                  0.559    
+
+Slack (MET) :             0.560ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[54]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.056ns  (logic 1.646ns (18.176%)  route 7.410ns (81.824%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.255ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.619ns = ( 16.619 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.897    16.098    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X69Y167        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[54]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.471    16.619    
+                         clock pessimism              0.169    16.787    
+                         clock uncertainty           -0.079    16.708    
+    SLICE_X69Y167        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.658    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[54]
+  -------------------------------------------------------------------
+                         required time                         16.658    
+                         arrival time                         -16.098    
+  -------------------------------------------------------------------
+                         slack                                  0.560    
+
+Slack (MET) :             0.562ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[4]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.030ns  (logic 1.646ns (18.228%)  route 7.384ns (81.772%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.279ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.595ns = ( 16.595 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.871    16.072    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X63Y153        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[4]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.447    16.595    
+                         clock pessimism              0.169    16.763    
+                         clock uncertainty           -0.079    16.684    
+    SLICE_X63Y153        FDRE (Setup_EFF2_SLICEL_C_CE)
+                                                     -0.050    16.634    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[4]
+  -------------------------------------------------------------------
+                         required time                         16.634    
+                         arrival time                         -16.072    
+  -------------------------------------------------------------------
+                         slack                                  0.562    
+
+Slack (MET) :             0.562ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_upper_reg[19]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.045ns  (logic 1.646ns (18.198%)  route 7.399ns (81.802%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.264ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.610ns = ( 16.610 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.886    16.087    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X65Y164        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_upper_reg[19]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.462    16.610    
+                         clock pessimism              0.169    16.778    
+                         clock uncertainty           -0.079    16.699    
+    SLICE_X65Y164        FDRE (Setup_FFF2_SLICEL_C_CE)
+                                                     -0.050    16.649    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_3_upper_reg[19]
+  -------------------------------------------------------------------
+                         required time                         16.649    
+                         arrival time                         -16.087    
+  -------------------------------------------------------------------
+                         slack                                  0.562    
+
+Slack (MET) :             0.562ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[23]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.051ns  (logic 1.646ns (18.186%)  route 7.405ns (81.814%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.892    16.093    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X68Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[23]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X68Y166        FDRE (Setup_EFF2_SLICEL_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_upper_reg[23]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.093    
+  -------------------------------------------------------------------
+                         slack                                  0.562    
+
+Slack (MET) :             0.562ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[12]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.051ns  (logic 1.646ns (18.186%)  route 7.405ns (81.814%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.258ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.616ns = ( 16.616 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.892    16.093    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X68Y166        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[12]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.468    16.616    
+                         clock pessimism              0.169    16.784    
+                         clock uncertainty           -0.079    16.705    
+    SLICE_X68Y166        FDRE (Setup_FFF2_SLICEL_C_CE)
+                                                     -0.050    16.655    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[12]
+  -------------------------------------------------------------------
+                         required time                         16.655    
+                         arrival time                         -16.093    
+  -------------------------------------------------------------------
+                         slack                                  0.562    
+
+Slack (MET) :             0.562ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[14]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.050ns  (logic 1.646ns (18.188%)  route 7.404ns (81.812%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.259ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.615ns = ( 16.615 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.891    16.092    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X68Y165        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[14]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.467    16.615    
+                         clock pessimism              0.169    16.783    
+                         clock uncertainty           -0.079    16.704    
+    SLICE_X68Y165        FDRE (Setup_EFF2_SLICEL_C_CE)
+                                                     -0.050    16.654    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[14]
+  -------------------------------------------------------------------
+                         required time                         16.654    
+                         arrival time                         -16.092    
+  -------------------------------------------------------------------
+                         slack                                  0.562    
+
+Slack (MET) :             0.563ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[51]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.053ns  (logic 1.646ns (18.182%)  route 7.407ns (81.818%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.255ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.619ns = ( 16.619 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.894    16.095    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X70Y167        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[51]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.471    16.619    
+                         clock pessimism              0.169    16.787    
+                         clock uncertainty           -0.079    16.708    
+    SLICE_X70Y167        FDRE (Setup_EFF2_SLICEL_C_CE)
+                                                     -0.050    16.658    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_6_lower_reg[51]
+  -------------------------------------------------------------------
+                         required time                         16.658    
+                         arrival time                         -16.095    
+  -------------------------------------------------------------------
+                         slack                                  0.563    
+
+Slack (MET) :             0.563ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[7]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.053ns  (logic 1.646ns (18.182%)  route 7.407ns (81.818%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.255ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.619ns = ( 16.619 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.894    16.095    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X70Y167        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[7]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.471    16.619    
+                         clock pessimism              0.169    16.787    
+                         clock uncertainty           -0.079    16.708    
+    SLICE_X70Y167        FDRE (Setup_FFF2_SLICEL_C_CE)
+                                                     -0.050    16.658    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_7_upper_reg[7]
+  -------------------------------------------------------------------
+                         required time                         16.658    
+                         arrival time                         -16.095    
+  -------------------------------------------------------------------
+                         slack                                  0.563    
+
+Slack (MET) :             0.565ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[48]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.039ns  (logic 1.646ns (18.210%)  route 7.393ns (81.790%))
+  Logic Levels:           13  (BUFGCE=1 CARRY8=2 LUT4=1 LUT5=3 LUT6=6)
+  Clock Path Skew:        -0.267ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    6.607ns = ( 16.607 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.042ns
+    Clock Pessimism Removal (CPR):    0.169ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         4.255     4.255    
+                         propagated clock network latency
+                                                      2.787     7.042    
+    SLICE_X65Y212        FDRE                         0.000     7.042 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/C
+    SLICE_X65Y212        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     7.156 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[15]/Q
+                         net (fo=24, routed)          0.645     7.801    BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[26]_0[15]
+    SLICE_X65Y209        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.115     7.916 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36/O
+                         net (fo=1, routed)           0.000     7.916    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_i_36_n_0
+    SLICE_X65Y209        CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.253     8.169 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28/CO[7]
+                         net (fo=1, routed)           0.040     8.209    BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_28_n_0
+    SLICE_X65Y210        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     8.305 r  BreezeClusterAxi/cluster/l1d/probe/cpu1_req_hasPaddr_reg_i_16/CO[0]
+                         net (fo=3, routed)           0.406     8.711    BreezeClusterAxi/cluster/l1d/miss/CO[0]
+    SLICE_X67Y208        LUT4 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.117     8.828 r  BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6/O
+                         net (fo=2, routed)           0.278     9.106    BreezeClusterAxi/cluster/l1d/miss/cpu1_req_hasPaddr_i_6_n_0
+    SLICE_X67Y208        LUT5 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.192     9.298 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_22/O
+                         net (fo=2, routed)           0.196     9.494    BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_7
+    SLICE_X68Y208        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.041     9.535 f  BreezeClusterAxi/cluster/l1d/probe/rawEvents_memStallCycle_i_8/O
+                         net (fo=2, routed)           0.310     9.845    BreezeClusterAxi/cluster/l1d/miss/rsvValid_i_6_0
+    SLICE_X67Y202        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.193    10.038 f  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5/O
+                         net (fo=3, routed)           0.168    10.206    BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_5_n_0
+    SLICE_X67Y203        LUT6 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.191    10.397 r  BreezeClusterAxi/cluster/l1d/miss/rawEvents_memStallCycle_i_2/O
+                         net (fo=5, routed)           0.324    10.721    BreezeClusterAxi/cluster/l1d/probe/replayReason_reg[2]
+    SLICE_X70Y202        LUT6 (Prop_E6LUT_SLICEL_I4_O)
+                                                      0.131    10.852 f  BreezeClusterAxi/cluster/l1d/probe/replayReason[2]_i_4/O
+                         net (fo=6, routed)           0.453    11.305    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X73Y206        LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.040    11.345 f  BreezeClusterAxi/cluster/backend/csrFile/performance/wb_wfi_i_2/O
+                         net (fo=368, routed)         0.527    11.872    BreezeClusterAxi/cluster/backend/csrFile/performance/wb_solo_reg
+    SLICE_X76Y203        LUT6 (Prop_C6LUT_SLICEM_I0_O)
+                                                      0.040    11.912 f  BreezeClusterAxi/cluster/backend/csrFile/performance/mstatus_SPIE_i_3/O
+                         net (fo=93, routed)          1.163    13.075    BreezeClusterAxi/cluster/backend/csrFile/_backend_io_l1d_trapClearRsv
+    SLICE_X49Y178        LUT5 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.040    13.115 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1/O
+                         net (fo=17, routed)          1.003    14.118    BreezeClusterAxi/cluster/backend/csrFile/p_100_in_bufg_place
+    BUFGCE_X1Y80         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.083    14.201 r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_0_lower[55]_i_1_bufg_place/O
+                         net (fo=1695, routed)        1.880    16.081    BreezeClusterAxi/cluster/backend/csrFile/p_100_in
+    SLICE_X62Y157        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[48]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         4.148    14.148    
+                         propagated clock network latency
+                                                      2.459    16.607    
+                         clock pessimism              0.169    16.775    
+                         clock uncertainty           -0.079    16.696    
+    SLICE_X62Y157        FDRE (Setup_EFF2_SLICEM_C_CE)
+                                                     -0.050    16.646    BreezeClusterAxi/cluster/backend/csrFile/pmpRanges_1_lower_reg[48]
+  -------------------------------------------------------------------
+                         required time                         16.646    
+                         arrival time                         -16.081    
+  -------------------------------------------------------------------
+                         slack                                  0.565    
+
+
+
+
