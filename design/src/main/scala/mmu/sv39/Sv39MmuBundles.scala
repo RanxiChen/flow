@@ -16,7 +16,7 @@ class TlbResp extends Bundle {
 }
 class TlbPortIO(val withPmpCandidate: Boolean = false, val fetchCandidates: Int = 0) extends Bundle {
   val req = Flipped(Decoupled(new TlbReq))
-  val canAccept = Output(Bool()) // capacity before kill; never authorizes fire
+  val canAccept = Output(Bool()) // registered capacity before kill/SFENCE; never authorizes fire
   val resp = Valid(new TlbResp)
   val kill = Input(Bool())
   // Internal timing sideband only. It has the same response cycle, is not

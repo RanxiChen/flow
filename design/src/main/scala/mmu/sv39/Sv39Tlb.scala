@@ -41,8 +41,10 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   // A pipelined fetch may sample an array query on the cancellation edge;
   // kill clears its valid ownership. Keep kill out of the array enable path.
   // Existing clients retain the original no-fire-on-kill contract.
-  io.port.canAccept := !missValid && !io.sfence.valid && !sfS1Valid
-  io.port.req.ready := io.port.canAccept &&
+  // SFENCE is an action on the serial WB boundary, which cancels younger
+  // CPU slots. Its raw commit must not become an EX payload enable either.
+  io.port.canAccept := !missValid && !sfS1Valid
+  io.port.req.ready := io.port.canAccept && !io.sfence.valid &&
     (if (pipelinedFetchKill) true.B else !io.port.kill)
   io.idle := !missValid && !pendingFault && !sfS1Valid && !s1Valid
   io.miss.valid := missValid; io.miss.granted := missGranted

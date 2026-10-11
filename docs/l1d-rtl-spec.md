@@ -93,7 +93,7 @@ S0 冲突比较位 `[11:3]` 固定取页内 8 B 字地址，与几何无关。
 ### 1.2 MMU
 
 - `tlb: TlbPortIO`（发出方）：`req.valid` = S0 有 CPU 请求；`cmd` = Load（Load、LR）/ Store（Store、SC、AMO）；`kill` = `s1Kill || s2Kill`。
-- BE2 的 `tlb.canAccept` 仅表示 `!missValid && !sfence.valid && !sfS1Valid`；用于上述 admission 仲裁，默认 dTLB 的 req.ready/fire 仍保留 kill 抑制。iTLB 的既有 pipelinedFetchKill 规则不变。
+- BE2 的 `tlb.canAccept` 仅表示 `!missValid && !sfS1Valid`；用于上述 admission 仲裁。默认 dTLB 的 req.ready/fire 仍保留 kill 和 sfence.valid 抑制；串行 SFENCE 在 WB 的动作必定同时 kill 年轻 CPU 槽且 EX 已空。iTLB 的既有 pipelinedFetchKill 规则不变。
 - `ptw: Flipped(PtwMemIO)`：PTW 入口，见第 7 节。
 - `idle` 不经 L1D。
 
