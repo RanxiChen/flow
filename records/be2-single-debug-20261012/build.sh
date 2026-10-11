@@ -22,8 +22,11 @@ cd design
 JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4 taskset -c 6-9 nice -n 10 \
   java -XX:ActiveProcessorCount=4 -Xmx6G -jar "$root/be2-tools/sbt-launch-1.9.7.jar" \
   'set Test / parallelExecution := false' \
+  'set Compile / fork := true' \
   'testOnly flow.memsys.BreezeHangMonitorSpec' \
   'runMain flow.top.GenerateBreezeCluster single gshare linux tandem fpga-debug coherent-dma'
+test -s build/rtl/axi-cluster/single/gshare/linux/tandem/fpga-debug/coherent-dma/filelist.f
+test -s build/rtl/axi-cluster/single/gshare/linux/tandem/fpga-debug/coherent-dma/cluster-profile.txt
 stage=prepare
 cd "$work"
 test ! -e "$output"
