@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-11T12:56:09.353389+00:00",
+  "reason": "superseded by 7f7f186 early cancellation RTL; reassign four CPUs to matching single-hart product",
+  "source": "5ab7e64",
+  "stage": "route_design succeeded, post-route phys_opt incomplete; no final routed checkpoint/timing claim",
+  "targets": [
+    {
+      "pid": 2242041,
+      "cwd": "/home/chen/FUN/flow-runs/be2-5ab7e64-breeze-sd/gateware",
+      "cmd": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source xilinx_kcu105.tcl "
+    }
+  ]
+}

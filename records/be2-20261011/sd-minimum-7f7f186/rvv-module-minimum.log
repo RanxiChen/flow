@@ -1,0 +1,58 @@
+7f7f186b9326fa7329890013ba578e68b68211ba
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-b3-8ea5db5
++ bash records/be2-20261011/be2-rvv-system.sh 7f7f186b9326fa7329890013ba578e68b68211ba
++ rc=0
++ echo 0
++ cd design
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2
++ taskset -c 8-9 nice -n 10 java -XX:ActiveProcessorCount=2 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.memsys.WriteThroughHomeSpec flow.rvv.RvvFrontendSpec flow.rvv.RvvSmokeSpec' 'runMain flow.top.GenerateBreezeCluster single-rvv gshare linux coherent-dma'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] WriteThroughHomeSpec:
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - write-through 64-bit Home orders stores, AMO, SC, byte masks, failures and external invalidation
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - write-through 512-bit Home orders stores, AMO, SC, byte masks, failures and external invalidation
+[info] RvvFrontendSpec:
+[info] - kill drains orphan tags; commit and kill preserve the oldest; query covers commit and queued memory
+[info] - capacity reservations cover the last VIQ position and simultaneous commits
+[info] - a committed store blocks overlapping scalar reads and writes while still queued
+[info] - Serial decisions cover mask, FOF, vstart, strided, indexed, segmented, faults and device
+[info] - kill revokes a backpressured verdict on the same edge
+[info] - stale invalid ages after reset cannot clear a simultaneous interval allocation
+[info] - an orphan translation age prevents wrap alias until its late response drains
+[info] - a two-entry LUTRAM VIQ reserves commits across simultaneous kill and backpressure
+[info] RvvSmokeSpec:
+[info] - C1 elaborates and Verilator compiles VLEN=512 DLEN=512
+[info] - C1 elaborates and Verilator compiles VLEN=256 DLEN=256
+[info] - C1 elaborates and Verilator compiles VLEN=512 DLEN=256
+[info] Run completed in 1 minute, 31 seconds.
+[info] Total number of tests run: 13
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 13, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 93 s (01:33), completed Oct 11, 2026, 8:39:03 PM
+[info] running flow.top.GenerateBreezeCluster single-rvv gshare linux coherent-dma
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)

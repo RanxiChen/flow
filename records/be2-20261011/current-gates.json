@@ -50,7 +50,8 @@
       "TNS_ns": -12403.845,
       "THS_ns": -0.088,
       "failing_setup_endpoints": 19057,
-      "reports": "physical-c735fbd/small"
+      "reports": "physical-c735fbd/small",
+      "route_errors": 37
     },
     "single": {
       "exit": 0,
@@ -82,7 +83,7 @@
   "sd_products": {
     "four": {
       "source": "5ab7e64",
-      "status": "routing"
+      "status": "superseded, stopped after route command and during phys_opt; runner exit143; no final routed timing/checkpoint claim"
     },
     "single": {
       "source": "5ab7e64",
@@ -100,7 +101,7 @@
     },
     "kernel": {
       "source": "4e1f86d",
-      "status": "compiled Image; MMC_LITEX/SMP4/V context enabled",
+      "status": "compiled Image exit0 (44165632 bytes); MMC_LITEX/SMP4/V context enabled; three preliminary FAT packages built, final hardware rebind pending",
       "remote_evidence": "/home/chen/FUN/flow-runs/be2-4e1f86d-linux"
     },
     "board": "not run",
@@ -120,6 +121,53 @@
       "fault_traffic_ops_per_hart": 1000,
       "log": "minimum-a367267/be2-a367267-cluster-minimum.log",
       "P1_original_budget": "same cycles as c735fbd; 3 of 4 still fail +1%"
+    },
+    "active_physical_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+    "four_current": {
+      "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "status": "synthesizing",
+      "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-breeze-sd",
+      "host": "Alan",
+      "cores": "0-3",
+      "maxThreads": 4
+    },
+    "single_current": {
+      "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "status": "parallel physical synthesis from identical prepared project",
+      "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-single-parallel-sd",
+      "host": "Alan",
+      "inherited_four_configuration": true,
+      "cores": "4-7",
+      "maxThreads": 4
+    },
+    "single_rvv_current": {
+      "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "status": "synthesis passed; placement in progress; synthesis timing estimate not final",
+      "host": "Alan",
+      "cores": "8-9",
+      "maxThreads": 2,
+      "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-rvv-sd",
+      "whole_system_minimum": {
+        "exit": 0,
+        "original_scalar_ELFs": 14,
+        "rvv_ELFs": 2,
+        "tohost": 1,
+        "Sv39": "nonidentity alias through real shared DTLB/PTW",
+        "watchdog": 20000,
+        "max_cycles": 2000000,
+        "seed": 91
+      },
+      "module_minimum": {
+        "tests": 13,
+        "failed": 0,
+        "canceled": 0,
+        "ignored": 0
+      },
+      "synth_LUT": 116057,
+      "synth_FF": 56475,
+      "synth_BRAM_tiles": 242.5,
+      "synth_DSP": 177,
+      "VRF_RAMB36": 192
     }
   }
 }

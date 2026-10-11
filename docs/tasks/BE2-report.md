@@ -239,3 +239,13 @@ c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=
 20:33 CST：a367267 的 early/local cancel 修正最小回归最终 exit0，六 suites/20 Scala 用例，无失败/cancel/ignore。两配置20原 ISA ELF、六四核程序、原 S1 kill/默认及部署 seed91 每核1000故障、四个真实Sv39 PTW、原P1均保留；P1四程序cycles/retired与c735fbd相同，原+1%预算仍三项不通过。新标量SD工程在隔离工作树生成，避免与RVV sbt输出冲突。RVV最小集增加独立非恒等Sv39数据映射、原rv64uf/ud的ldst/fadd共四个ELF，原期望tohost=1/20k进展watchdog/2M总上限不变。
 
 4ae968a RVV综合完成：LUT117214/242400、FF56664、BRAM242.5tiles、DSP177；VRF为192 RAMB36（24bank×8），映射门禁通过，无L2持久数据、real dataless Home。该物理快照未含a367267修正，已在完整synth DCP及报告保存后按精确PID/cwd主动终止，exit1由SIGTERM产生，不作为时序失败或成功；停止审计在rvv-physical-4ae968a/superseded-stop.json。旧SD四核5ab7e64也已route完成但仍为被替代源；中间WNS−1.688ns不冒充最终报告。
+
+20:42 CST：7f7f186为三SD硬件活跃物理源（RTL与a367267完全相同，新增最小测试/执行器/原始证据）。标量SD桥+真实Home共4项通过，small和single production生成及BIOS冻结；四核CPU0–3/default综合，配对单核工程已冻结排队。RVV整机原I/M/A/C/CSR十项加原F/D的ldst/fadd四项全部tohost=1；向量Bare smoke3763cycles/107retired，非恒等Sv39 alias通过真实DTLB/PTW4121cycles/129retired，两者8物理输出均为12；13项模块用例全部通过且无fail/cancel/ignore，随后RVV production和SD BIOS冻结，CPU8–9/maxThreads2/default综合。精确命令、14+2ELF原签名及模块日志在sd-minimum-7f7f186，逐工程build-binding/cluster-profile/source-snapshot另保存。
+
+c735fbd四核旧最终route_status还明确有37个routing resource conflict，因此除负setup/hold外也不能称fully routed；process exit0不是物理PASS。该原始报告已归档，后续交付要求route错误为0和实际bitstream生成成功。
+
+软件归档核对：新Image最终为44165632字节，SHA256=d5f145bbd0b392b915892104966ceb6649106fbd96c4f0f52ab63d87083ed56d；三份本地FAT包逐文件大小/hash全部一致，复用OpenSBI仍为fa96fc4b…，不把途中kernel编译临时文件大小当作最终Image。最终硬件BIOS/CSR仍需重新绑定。
+
+20:56 CST：5ab7e64已被新RTL替代，按PID2242041、精确cwd/cmd终止post-route phys_opt，runner exit143；synth/place DCP及完整日志保留，route_design成功但未写final route DCP，不标记routed PASS/FAIL。空出的CPU4–7用于同源single prepared工程的完整物理，使用独立single-parallel输出；原工程的绝对RTL/约束hook为不可变输入，生成top/ROM init为同字节副本，所有新输出在新cwd。三个有效作业亲和性集合0–9共10CPU，nice10；Vivado2022.2/default/100MHz不变。
+
+21:00 CST：7f7f186 RVV综合LUT116057（47.879%）、FF56475、BRAM242.5、DSP177；VRF192RAMB36/无LUTRAM。综合估计WNS−1.062ns不是routed结论；关键路径requestDesc_length_0[1]→reserved[8]，31级，10.897ns数据中逻辑3.093/估计routing7.804。当前先完成原默认布局以取得实际路径；若仍不过，按请求准备/credit所有权划分寄存边界，不缩减golden/改变请求排序。

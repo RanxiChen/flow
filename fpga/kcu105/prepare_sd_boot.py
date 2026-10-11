@@ -40,6 +40,7 @@ def main():
     dts = repo / 'linux/buildroot-external/board/flow/dts/flow' / f'flow-be2-{key}.dts'
     subprocess.run(['dtc', '-I', 'dts', '-O', 'dtb', '-o', str(args.output / dtb_name), str(dts)], check=True)
     hardware = {}
+    hardware_build = {}
     if args.hardware_dir:
         csr = json.loads((args.hardware_dir / 'csr.json').read_text())
         if csr['csr_bases'].get('sdcard') != 0x12006000:
@@ -61,6 +62,18 @@ def main():
         for name in ('csr.json', 'software/bios/bios.bin'):
             data = (args.hardware_dir / name).read_bytes()
             hardware[name] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+        # Final packages identify the bitstream and immutable generated inputs,
+        # while prepare-only software packages can still precede implementation.
+        for name in ('gateware/xilinx_kcu105.bit', 'gateware/xilinx_kcu105.v',
+                     'gateware/xilinx_kcu105_rom.init', 'gateware/xilinx_kcu105.tcl',
+                     'gateware/xilinx_kcu105.xdc', 'source-snapshot/manifest.json',
+                     'cluster-profile.txt'):
+            path = args.hardware_dir / name
+            if path.is_file():
+                data = path.read_bytes()
+                hardware[name] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+        if (args.hardware_dir / 'build-binding.json').is_file():
+            hardware_build = json.loads((args.hardware_dir / 'build-binding.json').read_text())
     source = repo / 'software/breeze-linux'
     elf = args.output / 'serial-handoff.elf'
     subprocess.run([args.cross_prefix + 'gcc', '-march=rv64im_zicsr_zifencei',
@@ -80,7 +93,8 @@ def main():
                           'crc32': f'{zlib.crc32(data):08x}'}
     (args.output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     binding = {'profile': args.profile, 'harts': 4 if args.profile == 'four' else 1,
-               'hardware': hardware, 'software_images': str(args.images.resolve()),
+               'hardware': hardware, 'hardware_build': hardware_build,
+               'software_images': str(args.images.resolve()),
                'rvv_scope': 'R04 integer and unit-stride subset; unsupported encodings trap' if args.profile == 'single-rvv' else None}
     (args.output / 'product-binding.json').write_text(json.dumps(binding, indent=2) + '\n')
     print(f'Prepared FAT files in {args.output}; no SD card was written.')

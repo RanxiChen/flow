@@ -1,0 +1,62 @@
+7f7f186b9326fa7329890013ba578e68b68211ba
+HOST=chen-System-Product-Name CWD=/home/chen/FUN/flow-be2-b3-8ea5db5
++ mkdir -p design/build/cluster-tests
++ for suite in rv64uf rv64ud
++ for test in ldst fadd
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wl,--build-id=none -I third_party/riscv-tests/env/p -I third_party/riscv-tests/isa/macros/scalar -T third_party/riscv-tests/env/p/link.ld third_party/riscv-tests/isa/rv64uf/ldst.S -o design/build/riscv-tests/rv64uf-p-ldst
++ for test in ldst fadd
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wl,--build-id=none -I third_party/riscv-tests/env/p -I third_party/riscv-tests/isa/macros/scalar -T third_party/riscv-tests/env/p/link.ld third_party/riscv-tests/isa/rv64uf/fadd.S -o design/build/riscv-tests/rv64uf-p-fadd
++ for suite in rv64uf rv64ud
++ for test in ldst fadd
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wl,--build-id=none -I third_party/riscv-tests/env/p -I third_party/riscv-tests/isa/macros/scalar -T third_party/riscv-tests/env/p/link.ld third_party/riscv-tests/isa/rv64ud/ldst.S -o design/build/riscv-tests/rv64ud-p-ldst
++ for test in ldst fadd
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wl,--build-id=none -I third_party/riscv-tests/env/p -I third_party/riscv-tests/isa/macros/scalar -T third_party/riscv-tests/env/p/link.ld third_party/riscv-tests/isa/rv64ud/fadd.S -o design/build/riscv-tests/rv64ud-p-fadd
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64gcv_zicsr -mabi=lp64d -nostdlib -nostartfiles -Wl,--no-relax -T tests/cluster/link.ld tests/cluster/rvv_memory.S -o design/build/cluster-tests/rvv_memory
++ taskset -c 8-9 nice -n 10 riscv64-unknown-elf-gcc -march=rv64gcv_zicsr -mabi=lp64d -DBE2_RVV_SV39 -nostdlib -nostartfiles -Wl,--no-relax -T tests/cluster/link.ld tests/cluster/rvv_memory.S -o design/build/cluster-tests/rvv_memory_sv39
++ cd design
++ JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2
++ taskset -c 8-9 nice -n 10 java -XX:ActiveProcessorCount=2 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar 'set Test / parallelExecution := false' 'testOnly flow.cluster.RvvSystemSpec'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-b3-8ea5db5/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-b3-8ea5db5/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-be2-b3-8ea5db5/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+[info] RvvSystemSpec:
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - RVV system retains the minimum scalar ISA signatures and executes the vector memory smoke
+[info]   + rv64ui-p-add: tohost=1 cycles=6584 retired=509 
+[info]   + rv64ui-p-lw: tohost=1 cycles=4207 retired=322 
+[info]   + rv64ui-p-sw: tohost=1 cycles=7108 retired=553 
+[info]   + rv64ui-p-beq: tohost=1 cycles=4369 retired=330 
+[info]   + rv64um-p-mul: tohost=1 cycles=6430 retired=499 
+[info]   + rv64um-p-div: tohost=1 cycles=2066 retired=148 
+[info]   + rv64ua-p-amoadd_d: tohost=1 cycles=1543 retired=108 
+[info]   + rv64ua-p-lrsc: tohost=1 cycles=69537 retired=6282 
+[info]   + rv64uc-p-rvc: tohost=1 cycles=3749 retired=299 
+[info]   + rv64mi-p-csr: tohost=1 cycles=3758 retired=278 
+[info]   + rv64uf-p-ldst: tohost=1 cycles=1577 retired=110 
+[info]   + rv64uf-p-fadd: tohost=1 cycles=3015 retired=214 
+[info]   + rv64ud-p-ldst: tohost=1 cycles=1826 retired=129 
+[info]   + rv64ud-p-fadd: tohost=1 cycles=3054 retired=214 
+[info]   + rvv_memory: tohost=1 cycles=3763 retired=107 
+[info]   + rvv_memory_sv39: tohost=1 cycles=4121 retired=129 
+[info] Run completed in 1 minute, 14 seconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 81 s (01:21), completed Oct 11, 2026, 8:37:24 PM
