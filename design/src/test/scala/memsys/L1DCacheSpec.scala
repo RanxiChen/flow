@@ -221,11 +221,11 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val h = ram(0x1640); val m = ram(0x1680)
     runOps(CoreOp.load(h))
     val n = core.history.size
-    val holdsBefore = core.holdCycles
+    val replaysBefore = core.replayAttempts.size
     l2.reqReadyProb = 0
     core.enqueue(CoreOp.store(m, 0x3456), CoreOp.load(m, rd = 2),
       CoreOp.store(h + 8, 0x7788), CoreOp.load(h + 8, rd = 3), CoreOp.fence)
-    bench.runUntil(core.history.size >= n + 2 && core.holdCycles > holdsBefore + 3, limit = 1000)
+    bench.runUntil(core.history.size >= n + 2 && core.replayAttempts.size > replaysBefore, limit = 1000)
     core.history(n).kind mustBe "Mshr"
     core.history(n + 1).respCycle mustBe -1L
     ptw.read(h + 24)

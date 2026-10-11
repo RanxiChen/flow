@@ -173,7 +173,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     if (respValid) {
       check(inPipe.nonEmpty, "resp without an outstanding request")
       val t = inPipe.dequeue()
-      t.respCycle = now
+      if(!replayNow) t.respCycle = now
       val r = core.resp.bits
       val k = r.kind.peek().litValue
       val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else "Exc"

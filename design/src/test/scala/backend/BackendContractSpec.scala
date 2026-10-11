@@ -431,7 +431,7 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.at("commit",p.last) mustBe m.all("rspData").head+14
     m.events.count(e=>e.kind=="commit" && e.pc==p.last) mustBe 1
     m.events.count(e=>e.kind=="replay" && e.pc==p.last) mustBe 1
-    m.all("hold") must not be empty
+    m.all("hold") mustBe empty
   }}
   "P06_three_background_sources_and_twenty_ALUs" in { check() { m =>
     m.enableFp(); m.values(256)=BigInt("3ff0000000000000",16); m.values(264)=BigInt("4008000000000000",16)

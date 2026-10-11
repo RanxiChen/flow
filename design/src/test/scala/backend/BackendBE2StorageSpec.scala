@@ -10,7 +10,8 @@ import org.scalatest.matchers.must.Matchers
   * Injection changes only the existing committed-result capture, not any
   * issue, commit, arithmetic, credit or kill decision.
   */
-class BE2W2StorageProbe extends BreezeBackend(BackendConfig(privilegeProfile = PrivilegeProfile.Linux)) {
+class BE2W2StorageProbe(coproSeed: Option[Int] = None) extends BreezeBackend(BackendConfig(
+  privilegeProfile = PrivilegeProfile.Linux, coprocessorStub = coproSeed)) {
   val occupyW2 = IO(Input(Bool()))
   writeback.io.ordinary.valid := wbOrdinary || occupyW2
   when(occupyW2 && !wbOrdinary) {

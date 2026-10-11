@@ -31,7 +31,7 @@ class BE2CoprocessorSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSi
       m.writes(1).map(_.data).toVector mustBe Vector(BigInt(7))
       m.writes(2) mustBe empty
       m.events.count(e=>e.kind=="replay" && e.pc==c) mustBe 1
-      m.events.filter(e=>e.kind=="redirect" && e.data==0).size mustBe 1
+      m.events.filter(e=>e.kind=="redirect" && e.data==0x200).size mustBe 1
       d.io.observe.gprBusy.expect(0.U)
     }
   }
