@@ -563,8 +563,10 @@ class BreezeBackend(
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
-    .elsewhen(exAdvance) {
-      ex.valid := idLeave
+    .elsewhen(exAdvance) { ex.valid := idLeave }
+  // Kill invalidates ownership only. The wide EX payload capture must not
+  // inherit the valid register's same-edge WB cancellation priority.
+  when(exAdvance) {
       exSolo := idSolo
       // Payload is irrelevant when valid=0. Capture on slot advance; only
       // ex.valid needs the late ID authorization/hazard/redirect conditions.
