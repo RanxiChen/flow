@@ -5,6 +5,7 @@ import json
 from migen import Cat, ClockSignal, Constant, If, Instance, Module, ResetSignal, Signal
 
 from .core import L1D_EVENT_NAMES, RETIRE_LAYOUT
+from .axi_monitor import BreezeAxiMonitor
 
 
 class BreezeDebugILA(Module):
@@ -31,6 +32,9 @@ class BreezeDebugILA(Module):
         sources += [("l1d_" + name, getattr(cpu.l1d_events, name)) for name in L1D_EVENT_NAMES]
         sources += [("l2_" + name, signal) for name, signal in cpu.l2_events]
         for prefix, bus in (("memory", cpu.memory_bus), ("mmio", cpu.mmio_bus)):
+            monitor = BreezeAxiMonitor(bus, prefix + "_monitor")
+            setattr(self.submodules, prefix + "_monitor", monitor)
+            sources += monitor.sources
             for channel in ("ar", "aw", "w", "r", "b"):
                 endpoint = getattr(bus, channel)
                 fields = ["valid", "ready"]

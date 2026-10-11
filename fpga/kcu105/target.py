@@ -111,7 +111,8 @@ class BreezeKCU105SoC(SoCCore):
             self.add_constant(name, value)
         if debug:
             from flow.ila import BreezeDebugILA
-            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq)
+            self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq,
+                extra_sources=(("pll_locked", self.crg.pll.locked),))
             self.comb += platform.request('user_led', 0).eq(self.cpu.hang)
 
 

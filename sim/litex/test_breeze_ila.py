@@ -43,6 +43,10 @@ class BreezeILATest(unittest.TestCase):
                          'memory_w_strb', 'mmio_b_resp', 'l1d_mmio_cycles', 'l2_memReadsInFlight',
                          'router_read_dram', 'router_write_low', 'hang_reasons'):
                 self.assertIn('dbg_' + name, probes)
+            for prefix in ('memory', 'mmio'):
+                for name in ('ar_count', 'r_count', 'last_ar_addr', 'reads_pending',
+                             'write_active', 'error_seen', 'accounting_fault'):
+                    self.assertIn('dbg_' + prefix + '_monitor_' + name, probes)
             path = os.path.join(root, 'ila-probes.json')
             dut.write_probe_map(path)
             with open(path) as f:
