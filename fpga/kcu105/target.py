@@ -121,6 +121,7 @@ def main():
                         help='native SD, coherent DMA, BIOS SD software-image boot')
     parser.add_argument('--output-dir')
     parser.add_argument('--build', action='store_true', help='run Vivado after generating BIOS and gateware')
+    parser.add_argument('--vivado-threads', type=int, choices=(2, 4), default=4)
     args = parser.parse_args()
     if args.debug and args.cpu_type != 'breeze-tiny':
         parser.error('--debug requires --cpu-type breeze-tiny')
@@ -129,6 +130,16 @@ def main():
                                TINY_BUILD_DIR if args.cpu_type == 'breeze-tiny' else BUILD_DIR)
     builder = SnapshotBuilder(soc, output_dir=output, csr_csv=os.path.join(output, 'csr.csv'),
         csr_json=os.path.join(output, 'csr.json'), integrated_rom_auto_size=False, bios_console='lite')
+    soc.platform.toolchain.pre_synthesis_commands.append(
+        f'set_param general.maxThreads {args.vivado_threads}')
+    # A generated file is publishable only after setup/hold and routing pass.
+    # This check runs before write_bitstream, without weakening any constraint.
+    soc.platform.toolchain.pre_bitstream_commands += [
+        'set setup_path [get_timing_paths -quiet -delay_type max -max_paths 1]',
+        'set hold_path [get_timing_paths -quiet -delay_type min -max_paths 1]',
+        'if {![llength $setup_path] || ![llength $hold_path]} { error "Missing routed timing paths" }',
+        'if {[get_property SLACK $setup_path] < 0 || [get_property SLACK $hold_path] < 0} { error "Routed setup/hold failed; bitstream withheld" }',
+    ]
     os.makedirs(output, exist_ok=True)
     if args.debug:
         soc.debug_ila.write_probe_map(os.path.join(output, 'ila-probes.json'))

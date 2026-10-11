@@ -62,7 +62,7 @@ class CoherentDmaWishbone(g: BreezeMemGeometry) extends Module {
   when(state === finish) { state := idle }
   // Even an aborted bus cycle must drain its accepted Home response. A new
   // request cannot replace that owner; a normal master holds CYC through ACK.
-  when(state =/= idle && state =/= finish) {
+  when(state =/= idle && state =/= finish && !abandoned) {
     assert(!io.wishbone.cyc || !io.wishbone.stb || io.wishbone.adr === (q.addr ## offset),
       "DMA master changed address before coherent completion")
   }

@@ -77,10 +77,12 @@ class CoherentDmaWishboneSpec extends AnyFreeSpec with Matchers with ChiselSim {
       init(d); begin(d, BigInt("80000000", 16), false)
       d.io.home.req.ready.poke(true.B); d.clock.step(); d.io.home.req.ready.poke(false.B)
       d.io.wishbone.cyc.poke(false.B); d.io.wishbone.stb.poke(false.B); d.clock.step()
+      d.io.wishbone.adr.poke((BigInt("80000100", 16) >> 3).U)
       d.io.wishbone.cyc.poke(true.B); d.io.wishbone.stb.poke(true.B)
       d.io.home.rspDown.valid.poke(true.B); d.clock.step(); d.io.home.rspDown.valid.poke(false.B)
       d.io.wishbone.ack.expect(false.B); d.io.wishbone.err.expect(false.B); d.clock.step(2)
       d.io.home.req.valid.expect(true.B)
+      d.io.home.req.bits.addr.expect((BigInt("80000100", 16) >> 5).U)
     }
   }
 }
