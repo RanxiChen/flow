@@ -1,0 +1,106 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source postroute-closure.tcl
+# set_param general.maxThreads 4
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd/gateware/xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1695.492 ; gain = 0.000 ; free physical = 23059 ; free virtual = 41655
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.56 ; elapsed = 00:00:00.57 . Memory (MB): peak = 2568.184 ; gain = 0.000 ; free physical = 21623 ; free virtual = 40731
+INFO: [Netlist 29-17] Analyzing 8383 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 21 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.090 ; gain = 257.812 ; free physical = 13523 ; free virtual = 32521
+Restored from archive | CPU: 10.460000 secs | Memory: 252.571442 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 3654.090 ; gain = 257.812 ; free physical = 13523 ; free virtual = 32521
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3709.684 ; gain = 0.000 ; free physical = 13391 ; free virtual = 32388
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1677 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 177 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 3 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 865 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 6 instances
+  RAM32X1S => RAM32X1S (RAMS32): 512 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 32 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 112f126ed
+----- Checksum: PlaceDB: 43b8c68f ShapeSum: 383b7991 RouteDB: 96fce6cd 
+open_checkpoint: Time (s): cpu = 00:00:56 ; elapsed = 00:00:57 . Memory (MB): peak = 3709.684 ; gain = 2014.191 ; free physical = 13340 ; free virtual = 32338
+# if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
+# report_timing_summary -delay_type min_max -file baseline-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_timing_summary: Time (s): cpu = 00:00:57 ; elapsed = 00:00:17 . Memory (MB): peak = 4247.219 ; gain = 537.535 ; free physical = 11976 ; free virtual = 30974
+# report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+# report_exceptions -file baseline-exceptions.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+report_exceptions: Time (s): cpu = 00:00:29 ; elapsed = 00:00:12 . Memory (MB): peak = 4247.219 ; gain = 0.000 ; free physical = 11996 ; free virtual = 30994
+# set failing [get_timing_paths -quiet -delay_type max -slack_lesser_than 0 -max_paths 100]
+# set target_cells {}
+# set target_nets {}
+# set target_file [open targeted-replication.txt w]
+# foreach path $failing {
+#     set cell [get_cells -of_objects [get_pins [get_property STARTPOINT_PIN $path]]]
+#     if {[llength $cell] == 1 && [regexp {^FD[RCPS]E$} [get_property REF_NAME $cell]]} {
+#         set q [get_pins -of_objects $cell -filter {REF_PIN_NAME == Q}]
+#         set net [get_nets -of_objects $q]
+#         if {[llength $net] == 1} {
+#             puts $target_file "CELL=$cell NET=$net DONT_TOUCH=[get_property DONT_TOUCH $cell] FANOUT=[llength [get_pins -of_objects $net -filter {DIRECTION == IN}]]"
+#             lappend target_cells $cell
+#             lappend target_nets $net
+#         }
+#     }
+# }
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of_objects [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_pins BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_localEnable/enable_q_reg/C]] -filter {REF_PIN_NAME == Q}]] -filter {DIRECTION == IN}'.
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of_objects [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_pins BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_localEnable/enable_q_reg/C]] -filter {REF_PIN_NAME == Q}]] -filter {DIRECTION == IN}'.
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of_objects [get_nets -of_objects [get_pins -of_objects [get_cells -of_objects [get_pins BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_localEnable/enable_q_reg/C]] -filter {REF_PIN_NAME == Q}]] -filter {DIRECTION == IN}'.
+# close $target_file
+# set target_cells [lsort -unique $target_cells]
+# set target_nets [lsort -unique $target_nets]
+# if {![llength $target_nets]} {error "No failing register drivers; targeted candidate has no basis"}
+# set_property DONT_TOUCH false $target_cells
+# set target_nets [get_nets -of_objects [get_pins -of_objects $target_cells -filter {REF_PIN_NAME == Q}]]
+# if {![llength $target_nets]} {error "Selected register Q nets disappeared"}
+# set_property DONT_TOUCH false $target_nets
+# phys_opt_design -force_replication_on_nets $target_nets
+Command: phys_opt_design -force_replication_on_nets [get_nets -of_objects [get_pins -of_objects [list [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/d_slot_reg[0]/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/row_reg[2]/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/alu/alu/tokens_2_desc_decoded_op_reg[3]_srl2_srlopt_replica/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/mac/dot/reserved_reg[3]_replica/C}]] [get_cells -of_objects [get_pins BreezeRvvAxi/cluster/backend/vector/rvv/mac/legacy/resultLanes_localEnable/enable_q_reg/C]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/mem/desc_1_slot_reg[1]/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/mem/requestDesc_length_1_reg[3]/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/backend/vector/rvv/mem/writeMeta_slot_reg[2]/C}]] [get_cells -of_objects [get_pins {BreezeRvvAxi/cluster/buffer/fifo/deq_ptr_value_reg[0]/C}]]] -filter {REF_PIN_NAME == Q}]]
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-241] Physical synthesis in post route mode ( 100.0% nets are fully routed)
+ERROR: [Vivado_Tcl 4-265] Option -force_replication_on_nets is specified but not supported yet for post-route physical synthesis. Please remove the option and rerun phys_opt_design
+INFO: [Common 17-83] Releasing license: Implementation
+3 Infos, 0 Warnings, 0 Critical Warnings and 1 Errors encountered.
+phys_opt_design failed
+ERROR: [Common 17-39] 'phys_opt_design' failed due to earlier errors.
+
+    while executing
+"phys_opt_design -force_replication_on_nets $target_nets"
+    (file "postroute-closure.tcl" line 36)
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 11 23:31:10 2026...
