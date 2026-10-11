@@ -1,0 +1,24 @@
+checkpoint=/home/chen/FUN/flow-runs/be2-1ce2b97-small-default/gateware/xilinx_kcu105_synth.dcp
+vivado=2022.2
+s3decision nets=68 drivers=12
+cpuhold nets=32 drivers=4
+grant_ports ports=0 nets=0 drivers=0
+grant nets=28 drivers=12
+payload_enable cells=5390 endpoints=5390
+execution_control cells=20864 endpoints=20224
+frontend_control cells=26304 endpoints=47744
+arithmetic_enable cells=67104 endpoints=15068
+l1d_internal cells=29823 endpoints=51422
+local_exceptions cells=17030 endpoints=34060
+decision-payload fanout_hits=0 paths=0
+decision-execution fanout_hits=0 paths=0
+decision-frontend fanout_hits=0 paths=0
+decision-allowed fanout_hits=18786 paths=20
+hold-payload fanout_hits=0 paths=0
+hold-execution fanout_hits=0 paths=0
+hold-frontend fanout_hits=0 paths=0
+hold-allowed fanout_hits=16 paths=20
+grant-arithmetic fanout_hits=0 paths=0
+grant-l1d fanout_hits=0 paths=0
+wbdecision nets=0 drivers=0
+wbdecision-local UNRESOLVED_EMPTY_COLLECTION

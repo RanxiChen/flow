@@ -62,9 +62,10 @@ set decision [collect_nets {.*(l1d|backend).*(io_core_resp_valid|io_core_resp_bi
 set hold [collect_nets {.*l1d.*(cpuHold|io_core_s2Hold).*} cpuhold]
 set grant [collect_ports {.*backend.*/(writeback/io_(mul|div|fp)_ready|mulUnit/io_result_ready|divUnit/io_result_ready|fpUnit/io_result_ready)} grant_ports]
 if {![llength $grant]} {
-    set grant [collect_nets {.*writeback.*(io_grant|selected).*} grant]
+    set grant [collect_nets {.*(writeback.*(io_grant|selected|io_(mul|div|fp)_ready)|backend.*_writeback_io_(mul|div|fp)_ready).*} grant]
 }
 set payload [endpoints payload_enable {IS_SEQUENTIAL == 1 && (NAME =~ *backend*/ex_* || NAME =~ *backend*/mem_* || NAME =~ *backend*/perm_*) && NAME !~ *valid* && NAME !~ *Sent* && NAME !~ *Issued*} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
+set btb [endpoints btb_payload_control {IS_SEQUENTIAL == 1 && NAME =~ *backend*/btb_* && NAME !~ *valid* && NAME !~ *PayloadVisible*} {DIRECTION == IN && (REF_PIN_NAME =~ R* || REF_PIN_NAME =~ S* || REF_PIN_NAME =~ CE*)}]
 set execution [endpoints execution_control {IS_SEQUENTIAL == 1 && (NAME =~ *backend*/mulUnit/* || NAME =~ *backend*/divUnit/* || NAME =~ *backend*/fpUnit/*)} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
 set frontend [endpoints frontend_control {IS_SEQUENTIAL == 1 && NAME =~ *cluster/frontend*/* && NAME !~ *frontendBoundary*} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
 set arithmetic [endpoints arithmetic_enable {(NAME =~ *backend*/mulUnit/* && (REF_NAME == DSP48E2 || NAME =~ *pipeline* || NAME =~ *s0_* || NAME =~ *s1_* || NAME =~ *s2_*)) || NAME =~ *backend*/fpUnit/impl/*} {DIRECTION == IN && REF_PIN_NAME =~ CE*}]
@@ -72,12 +73,19 @@ set l1d [endpoints l1d_internal {IS_SEQUENTIAL == 1 && NAME =~ *cluster/l1d*/*} 
 set exceptions [endpoints local_exceptions {IS_SEQUENTIAL == 1 && ((NAME =~ *backend*/ex_valid* || NAME =~ *backend*/mem_valid* || NAME =~ *backend*/perm_valid* || NAME =~ *backend*/wb_valid*) || NAME =~ *backend*/writeback/w2_* || NAME =~ *backend*/scoreboard/* || NAME =~ *backend*/csrFile/* || NAME =~ *frontendBoundary/slowRedirect* || NAME =~ *l1d*/cpu*valid*)} {DIRECTION == IN && (REF_PIN_NAME == D || REF_PIN_NAME =~ CE*)}]
 foreach {label starts} [list decision $decision hold $hold] {
     query $label-payload $starts $payload
+    query $label-btb $starts $btb
     query $label-execution $starts $execution
     query $label-frontend $starts $frontend
     query $label-allowed $starts $exceptions
 }
 query grant-arithmetic $grant $arithmetic
 query grant-l1d $grant $l1d
+# The baseline optimizer merges grant into capacity/enable logic. Query the
+# identical registered ordinary-write arbitration inputs as a conservative
+# positive control; do not rename these pins to raw grant.
+set grant_context [endpoints grant_context {IS_SEQUENTIAL == 1 && (NAME =~ *backend*/writeback/w2_valid_reg* || NAME =~ *backend*/writeback/w2_bits_rd_isFp_reg*)} {DIRECTION == OUT && REF_PIN_NAME == Q}]
+query grant-context-arithmetic $grant_context $arithmetic
+query grant-context-l1d $grant_context $l1d
 set wbdecision [collect_nets {.*backend.*(wbCommit|wbKill).*} wbdecision]
 query wbdecision-local $wbdecision $exceptions
 report_utilization -hierarchical -file [file join $output utilization-hierarchical.rpt]

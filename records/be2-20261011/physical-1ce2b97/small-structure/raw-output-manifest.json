@@ -1,0 +1,185 @@
+{
+  "remote_root": "Alan:/home/chen/FUN/flow-runs/be2-1ce2b97-small-structure-synth",
+  "files": [
+    {
+      "path": "arithmetic_enable-endpoints.txt",
+      "sha256": "7b7063907754bcc84eb0fe16266f059272784e384b4aa6710709f08f6ee5ad60",
+      "bytes": 3746682
+    },
+    {
+      "path": "collections.txt",
+      "sha256": "b92c9b4c9053ada91c91990df0235dcb6e12c5349b2b584592b3e981b629de07",
+      "bytes": 944
+    },
+    {
+      "path": "cpuhold-sources.txt",
+      "sha256": "06be2f101313a310e926d38ffc023d2de0def53ed72bc33e4fc4b1dc97ff0f93",
+      "bytes": 2366
+    },
+    {
+      "path": "decision-allowed-fanout.txt",
+      "sha256": "177c6bc4e3ed1929707aff312972f426df89702e2b914fb531a19828219ee150",
+      "bytes": 5357071
+    },
+    {
+      "path": "decision-allowed-worst20.rpt",
+      "sha256": "68a827827ef50a336f60e93675fa07f72f87674d73faf9873f8cbcaf8e434055",
+      "bytes": 202131
+    },
+    {
+      "path": "decision-execution-fanout.txt",
+      "sha256": "70ad5c97c8a97ee5625d96418527d2e5ce602d619064d8ba703a525363277cb3",
+      "bytes": 4044735
+    },
+    {
+      "path": "decision-execution-worst20.rpt",
+      "sha256": "3b30eaccfacad6618b63d2cdea924eafa514dc87ca77482ab395d05a400b4573",
+      "bytes": 2347
+    },
+    {
+      "path": "decision-frontend-fanout.txt",
+      "sha256": "70ad5c97c8a97ee5625d96418527d2e5ce602d619064d8ba703a525363277cb3",
+      "bytes": 4044735
+    },
+    {
+      "path": "decision-frontend-worst20.rpt",
+      "sha256": "57d25a4ae5a2e3e5e367d6b4172f3d250f0c86dc8a511d1d049c0ba7adda930a",
+      "bytes": 2317
+    },
+    {
+      "path": "decision-payload-fanout.txt",
+      "sha256": "70ad5c97c8a97ee5625d96418527d2e5ce602d619064d8ba703a525363277cb3",
+      "bytes": 4044735
+    },
+    {
+      "path": "decision-payload-worst20.rpt",
+      "sha256": "fc6e3fb6dd2e6ba9b344b1fabe73c8e79a4c805086af4677dcf046029c2aaf69",
+      "bytes": 2479
+    },
+    {
+      "path": "execution_control-endpoints.txt",
+      "sha256": "9f2833882603fad5a0c63fc1ebc34c3ff118bbe0dc693417b6c12891df68c757",
+      "bytes": 4025144
+    },
+    {
+      "path": "frontend_control-endpoints.txt",
+      "sha256": "3c0e804c21a9c4f746b4e04980c70c52560f5722aa9b8004756d30f46e1cd4b7",
+      "bytes": 3104432
+    },
+    {
+      "path": "grant-arithmetic-fanout.txt",
+      "sha256": "fd8a4d907ce84dab38b74ad681826dfd759bba9cb882b5287f6020429103df8e",
+      "bytes": 1126623
+    },
+    {
+      "path": "grant-arithmetic-worst20.rpt",
+      "sha256": "19f8df314683598959700a5154a899b548837a3899f158ee525c6a0f104ef3a5",
+      "bytes": 2287
+    },
+    {
+      "path": "grant-l1d-fanout.txt",
+      "sha256": "fd8a4d907ce84dab38b74ad681826dfd759bba9cb882b5287f6020429103df8e",
+      "bytes": 1126623
+    },
+    {
+      "path": "grant-l1d-worst20.rpt",
+      "sha256": "cc5098341b9fad171955c45e05ee435d2f76eb075707bd43165b63e578184976",
+      "bytes": 1984
+    },
+    {
+      "path": "grant-sources.txt",
+      "sha256": "be755ffafe3a973f65897ed92fb070360d0fc3d1ce0c201b863b84e644570917",
+      "bytes": 2772
+    },
+    {
+      "path": "grant_ports-sources.txt",
+      "sha256": "d829868705c6d3ebfeb8ae73944f138c5fb2b5ba84d4c0df67f8b8c1d37ce8e6",
+      "bytes": 22
+    },
+    {
+      "path": "hold-allowed-fanout.txt",
+      "sha256": "1be9d030276fb47e47634100e97cf591f0f606b68286af0ed611717ecc5fffe8",
+      "bytes": 129087
+    },
+    {
+      "path": "hold-allowed-worst20.rpt",
+      "sha256": "30a34374e39f4c7269b293dd06cfee6d2ee1d8c147edc8ee896dc8f1f8c9d615",
+      "bytes": 139980
+    },
+    {
+      "path": "hold-execution-fanout.txt",
+      "sha256": "7dc08b1e4c086a54207fecb0b37b8a57d94f505e78032bca5f47bf647bfb3cd0",
+      "bytes": 128131
+    },
+    {
+      "path": "hold-execution-worst20.rpt",
+      "sha256": "467eec35ba3622053205d23ea31cb9eaf8bc6830dee80fd0a346fcf961319ce0",
+      "bytes": 2128
+    },
+    {
+      "path": "hold-frontend-fanout.txt",
+      "sha256": "7dc08b1e4c086a54207fecb0b37b8a57d94f505e78032bca5f47bf647bfb3cd0",
+      "bytes": 128131
+    },
+    {
+      "path": "hold-frontend-worst20.rpt",
+      "sha256": "099d0e738bd287cb0fc3fe952392b63fad75ddd0828822367a933f40d9991f8b",
+      "bytes": 2098
+    },
+    {
+      "path": "hold-payload-fanout.txt",
+      "sha256": "7dc08b1e4c086a54207fecb0b37b8a57d94f505e78032bca5f47bf647bfb3cd0",
+      "bytes": 128131
+    },
+    {
+      "path": "hold-payload-worst20.rpt",
+      "sha256": "1647e7c24bb0e974da7430c36f357ce4d0801229a8406a7fab36e4b59e6f41f8",
+      "bytes": 2260
+    },
+    {
+      "path": "l1d_internal-endpoints.txt",
+      "sha256": "32a458049c033b1c956aa58044bbcb52cb08dd2e428d67ef0913888c3751817d",
+      "bytes": 3024603
+    },
+    {
+      "path": "local_exceptions-endpoints.txt",
+      "sha256": "ad6dd0fb1514865cf3b279d8a5c49ad6cdbd0df381dccc905ee0817faba8226c",
+      "bytes": 2406468
+    },
+    {
+      "path": "payload_enable-endpoints.txt",
+      "sha256": "16d23fed2f8dde33f6e933a4f65f97db0ea5055bfe75f848ca662cf9f1cfd8f1",
+      "bytes": 303358
+    },
+    {
+      "path": "s3decision-sources.txt",
+      "sha256": "83b55f2071f55fe7783f7245154ebdfbe27feef765b506133ce676c6ef446239",
+      "bytes": 5320
+    },
+    {
+      "path": "timing-summary.rpt",
+      "sha256": "b77514e494b9724588339fdbda1affd33f8e2ad100c921998746cba5da7404cb",
+      "bytes": 93534
+    },
+    {
+      "path": "utilization-hierarchical.rpt",
+      "sha256": "c65928ff1ac2928590d43eb88815850417a5800038495e29f7f741c75464aafb",
+      "bytes": 221045
+    },
+    {
+      "path": "vivado.jou",
+      "sha256": "17cb031a2f430d55ed66958e3008b47d88874d778b585fa9efcad4fa2176215f",
+      "bytes": 999
+    },
+    {
+      "path": "vivado.log",
+      "sha256": "b73ea233f2e5e4cc1f162c50fe5eaf22847a1d708a2010227ffe5c89c85a42ba",
+      "bytes": 11617
+    },
+    {
+      "path": "wbdecision-sources.txt",
+      "sha256": "d633770c76057b651328e1e37d392afe00c84ba97b8cc42f2427ddf77bf6649b",
+      "bytes": 15
+    }
+  ]
+}

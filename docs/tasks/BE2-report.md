@@ -2,7 +2,7 @@
 
 2026-10-11。按任务书 §10 BE2-P 和 §11 加速模式连续实施；本文供用户最终审核。起点 `2051dd0bb9a0c701bb95fd3f1e755ae175023093`；分支 `refactor/be2-backend-decoupling`，工作区 `/home/chen/leisure/flow-be2`。主工作区及其既有未跟踪记录未修改。
 
-当前生产源：`790c1f6` 加下述部署几何裁定（待绑定新 SHA；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
+当前生产源：`c735fbd`（部署几何来自 `558096c`，后端来自 `790c1f6`；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
 
 ## 实现映射
 
@@ -109,7 +109,7 @@ RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等�
 
 统一 Java 调用为 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4 taskset -c <0-3 或 4-7> nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar '<sbt 参数>'`。G1 cwd `/home/chen/FUN/flow-be2-b3-8ea5db5/design`，G2 cwd `/home/chen/FUN/flow-be2-1a4deba/design`。每项原始 `.exit` 随日志保留。
 
-S1/A1/S2：单核/四核物理流程及准确基线综合正在执行；P1 已取得匹配冷启动及 64 KiB Fibonacci 的基线与候选数据，预算有失败，见下表；没有本候选 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
+以下阶段记录均按各自 SHA/几何解释。S1/A1/S2 当前状态见末尾；P1 已取得匹配冷启动及 64 KiB Fibonacci 的基线与候选数据，预算有失败，见下表；没有本候选 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
 
 补充证据：4757d5e G2 ledger 导出 1000 seeds 全通过，`be2-4757d5e-g2.log`；Spike 1000 seeds 全通过，`be2-4757d5e-spike-v4.log` 及 `be2-4757d5e-spike-v4/result.json`。初次 ELF 缺少 section table、误关闭 boot ROM 的 reference 适配失败另存 v1/v2/v3，不记为 DUT 失败。
 
@@ -132,7 +132,7 @@ S1/A1/S2：单核/四核物理流程及准确基线综合正在执行；P1 已�
 
 8df9ec9 最低故障集 4/4 tests（S1 双年轻槽取消、两核 seeds 91/92、四核 seed91，原每核1000操作），SB+fence seed35 1/1 test 通过，整个进程 exit 0，`be2-8df9ec9-fault-minimum.log/.exit`。四核 oracle AMO=720/load=3471/LR=243/SC成功226/失败32/store=670，取消426、精确异常171、refill error31；litmus 445 rounds/89独立点/5遍，禁止结果零，必需结果分别78/76次。两个 TERM 诊断进程独立保留，不能与这次 exit0 混记。
 
-最低门禁已收完。生产源仍为 7b885d6，8df9ec9 生产差异为空；同源/同配置 single/small 在 Alan 同时启动默认物理流程，准确 baseline2051dd0 四核仅综合用于 A1/S2 阳性对照。候选各4核、基线2核CPU，共10核；相同Vivado2022.2/器件/100MHz及默认指令。未加例外，未启动四核定制优化策略或板上测试。
+当时最低门禁已收完。该轮生产源为 7b885d6，8df9ec9 生产差异为空；同源/同配置 single/small 在 Alan 同时启动默认物理流程，准确 baseline2051dd0 四核仅综合用于 A1/S2 阳性对照。候选各4核、基线2核CPU，共10核；相同Vivado2022.2/器件/100MHz及默认指令。未加例外，未启动四核定制优化策略或板上测试。
 
 P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败）：
 
@@ -144,22 +144,22 @@ P1 匹配数据（same ELF/退休数；功能四项通过，性能预算失败�
 | fibonacci | 15654 | 17886 | 1329 | 14.258% | 未通过 |
 
 
-## Admission 修正与首轮物理证据（进行中）
+## Admission 修正与首轮物理证据（历史版本）
 
 7b885d6 的 single 默认 routed 完成，exit0，WNS=+0.030 ns、WHS=+0.028 ns、TNS/THS=0；sys_clk（100 MHz）WNS=+0.371 ns。全设计最差 setup 是 IDELAYCTRL reset 路径。原始报告及 Tcl 在 `records/be2-20261011/physical-7b885d6/single/`。这只证明该 SHA 的单核 routed，不代表新修正或四核已通过；未写 bitstream，未上板。
 
 同配置 exact2051dd0/7b885d6 的四核综合层次面积，扣除每个 fpUnit/impl 的 CVFPU 本体后，各后端 LUT 变化 +2.156/+2.142/+1.501/-0.984%，FF +7.003/+6.769/+6.769/+6.592%；各 L1D LUT -0.108/+0.830/+0.533/+1.000%。A1 对此源/配置/综合阶段通过。原始层次表和逐行 JSON 在 `physical-7b885d6/{baseline-synth,small-synth,area-synth.json}`。顶层综合 LUT=228169，占94.13%；baseline顶层226228。同级比较，未拿 routed 与 synth 混比。
 
-**自行裁定 18：EX admission 与取消分离。** 综合 checkpoint 用叶输出驱动作为 through 点，确证 S3 decision→EX 宽 payload CE 仍有1230端点、20条最差路径（旧版 query 的组合 from 点不足以作无路径证明，故保留失败查询并改正）。MEM/PERM 无该保持；执行单元及前端的初步无路径集合已有同方法 baseline 阳性，但完整查询仍在运行。原始残留来自 wbKill→L1D cpuKill→req.ready/TLB kill-ready→EX resourceWait。74c858e 增加 L1D/TLB canAccept，容量与实际 fire 分离：EX只读取消前的相同优先级 admission；实际 cache/TLB 请求仍在 kill 当拍不 fire、不留副作用。新增断言要求无 CPU kill 时 L1D canAccept==req.ready，新增定向例要求 older load精确13异常、年轻EX load不发请求/不提交/不写回，EX不被取消ready保持。1ce2b97 又排除 raw SFENCE 动作，TLB canAccept仅由 missValid/sfS1Valid寄存状态决定，req.ready仍抑制sfence.valid。SFENCE按R6到WB时EX已空且wbKill同时取消年轻CPU槽，因此不靠容量信号授权请求。MMU冻结文件的起点hash差异不重录掩盖；新侧带定义补入L1D接口表并只更新该文件授权hash。
+**自行裁定 18：EX admission 与取消分离。** 综合 checkpoint 用叶输出驱动作为 through 点，确证 S3 decision→EX 宽 payload CE 仍有1230端点、20条最差路径（旧版 query 的组合 from 点不足以作无路径证明，故保留失败查询并改正）。MEM/PERM 无该保持；执行单元及前端的初步无路径集合已有同方法 baseline 阳性，最终对应组结果见下文。原始残留来自 wbKill→L1D cpuKill→req.ready/TLB kill-ready→EX resourceWait。74c858e 增加 L1D/TLB canAccept，容量与实际 fire 分离：EX只读取消前的相同优先级 admission；实际 cache/TLB 请求仍在 kill 当拍不 fire、不留副作用。新增断言要求无 CPU kill 时 L1D canAccept==req.ready，新增定向例要求 older load精确13异常、年轻EX load不发请求/不提交/不写回，EX不被取消ready保持。1ce2b97 又排除 raw SFENCE 动作，TLB canAccept仅由 missValid/sfS1Valid寄存状态决定，req.ready仍抑制sfence.valid。SFENCE按R6到WB时EX已空且wbKill同时取消年轻CPU槽，因此不靠容量信号授权请求。MMU冻结文件的起点hash差异不重录掩盖；新侧带定义补入L1D接口表并只更新该文件授权hash。
 
-新增修正正在重跑相关最小门禁。首轮四核物理继续保留作真实对照；单核首轮时序和A1不能冒充最终修正版证据。
+该次新增修正的最小门禁结果如下。首轮四核物理继续保留作真实对照；单核首轮时序和A1不能冒充最终修正版证据。
 
 
 74c858e admission 定向7/7（R1取消、R6三项、S13 kill、P09/P10），G2 0–999全部通过，整个进程exit0；实际1000份ledger再经Spike独立比对1000/1000、exit0，脚本/fixture/golden不变。参考脚本首次路径错误exit2不作为测试失败或主机失败，改用明确scp后的be2-spike-ledger.py，成功日志用-v2单独保留。1ce2b97的Backend生产代码与74c858e相同，差异仅为TLB容量中排除SFENCE动作及协议注释。
 
 1ce2b97最低集：配置9/9、单核和四核ISA各10/10 ELF、原始四核系统程序6/6 ELF、S1双槽取消及四核fault seed91共2/2、行为PTW drain反例1/1，五suites15tests，exit0。六个四核程序cycles/各hart退休数与7b885d6完全一致，证明确实保留正常执行行为。原每核1000操作、精确异常cause/tval和tohost不变。日志在`records/be2-20261011/minimum-admission/`；真实Sv39串行PTW的两项关键用例 BE2FencePtwSpec 2/2 通过，exit0。
 
-1ce2b97生产single/small由B工作树生成，exit0，复制准确production目录至同SHA的C工作树后由SnapshotBuilder冻结，未重新用本地或旧源生成。该SHA四核默认物理已启动（CPU0–3/maxThreads4），单核同参数默认物理并行启动（CPU8–9/maxThreads2）；线程数是运行资源上限，不改变硬件参数或实现指令。首轮7b885d6四核仍在布线，保留其源和工程作对照，没有把中间负WNS当作最终指标。
+1ce2b97生产single/small由B工作树生成，exit0，复制准确production目录至同SHA的C工作树后由SnapshotBuilder冻结，未重新用本地或旧源生成。该SHA四核默认物理曾启动（CPU0–3/maxThreads4），单核同参数并行启动（CPU8–9/maxThreads2），均主动终止为143以替换源；线程数是运行资源上限，不改变硬件参数或实现指令。首轮7b885d6四核仍在布线，保留其源和工程作对照，没有把中间负WNS当作最终指标。
 
 默认 XDC 中沿用 LiteX 的既有 reset synchronizer/mr_ff false_path；未新增 false_path、multicycle 或放宽 clock。原始 XDC 已归档，100 MHz 的 sys_clk 与 FPGA/default DDR 约束完整保留。
 
