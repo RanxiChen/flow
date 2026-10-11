@@ -27,7 +27,10 @@ class MulUnit extends Module {
   val outstanding = count +& PopCount(valid)
   io.req.ready := outstanding < capacity.U
   val authorizeResult = io.commit && count > committedCount
-  io.result.valid := count =/= 0.U && (committedCount =/= 0.U || authorizeResult)
+  // R4 is established before R2: the caller still supplies an unregistered
+  // WB commit. Keep its legacy one-edge authorization boundary here. R2 may
+  // add same-cycle commitD authorization only after that token is registered.
+  io.result.valid := count =/= 0.U && committedCount =/= 0.U
   io.result.bits := results(head)
 
   // Twelve independent DSPs, no cascade or inferred register retiming.

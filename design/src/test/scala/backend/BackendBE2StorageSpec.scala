@@ -23,6 +23,21 @@ class BE2W2StorageProbe extends BreezeBackend(BackendConfig(privilegeProfile = P
 
 class BackendBE2StorageSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   import Instructions._
+  "R4 staging: an older memory hold cannot make MUL clear busy in its WB set cycle" in {
+    simulate(new BE2W2StorageProbe) { d =>
+      d.occupyW2.poke(false.B)
+      val m = new Environment(d); m.reset()
+      m.run(Seq(addi(20, 0, 3), addi(21, 0, 7)), 6)
+      m.holdUntil = m.cycle + 12
+      m.issue(ld(10, 0))
+      val mul = m.issue(mdu(1, 20, 21))
+      m.run(Seq(addi(2, 1, 0)), 30)
+      m.writes(1).map(_.data).toSeq mustBe Seq(BigInt(21))
+      m.writes(2).map(_.data).toSeq mustBe Seq(BigInt(21))
+      m.written(1) mustBe m.at("commit", mul) + 1
+      d.io.observe.gprBusy.expect(0.U)
+    }
+  }
   "N03: eight II=1 MULs survive eight consecutive W2 conflicts and write once in order" in {
     simulate(new BE2W2StorageProbe) { d =>
       d.occupyW2.poke(false.B)

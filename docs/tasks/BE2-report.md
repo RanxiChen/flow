@@ -54,6 +54,8 @@ MUL 共有八个已接受项的容量，包含运算流水中的项。结果存�
 
 late 使用两项无 flow/pipe 队列，队首仍在接收后下一拍提供给 Writeback，ready 只来自队列寄存计数；队列满时不能同拍借用 grant 接收新项。W2 无条件消费、写口优先级和阈值 3 保留。
 
+阶段边界：R4 时 WB commit 尚未由 R2 寄存，MUL 输出仍只看 committedCount 的寄存状态；同拍 commitD 授权旁路要等 R2 令牌寄存后再启用。否则旧全局 hold 能使算完的未提交 MUL 积在输出缓冲，WB 释放时同拍 set/clear busy，破坏既有所有权接棒。新增 BackendBE2StorageSpec 的 held-WB 用例检查提交后一拍完成，不放宽 scoreboard 的 set/clear 断言。
+
 测试迁移：MulProtocolSpec 原来的“第四项填满流水”改为八项填满总容量，保留 oldest commit+kill、已提交结果抗 kill、背压稳定、500 项算术参照及 1000 项原乘法器等价检查；新增八项延后一拍授权、停止 grant 后按序排空。WritebackSpec 按已授权的两项 late 容量检查 A/B 缓存、C 背压及满队列不借用同拍 grant；物理写回值、顺序和 W2 完成断言保留。
 
 ## B3：稳定性保护的源端审计（尚未取得结果）
