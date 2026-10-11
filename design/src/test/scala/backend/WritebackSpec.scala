@@ -83,6 +83,31 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
     }
   }
 
+  "BE2_R4_second_slot_error_is_fatal_on_receive_plus_one_and_completes_in_order" in {
+    simulate(new Writeback) { d =>
+      idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)
+      d.io.late.valid.poke(true.B); d.io.ordinary.valid.poke(true.B)
+      d.clock.step() // A is now blocked by W2.
+      d.io.late.bits.rd.idx.poke(6.U); d.io.late.bits.error.poke(true.B)
+      d.io.late.ready.expect(true.B); d.io.hartFatal.expect(false.B)
+      d.io.clear.valid.expect(false.B); d.clock.step() // N: accept error B.
+      d.io.late.valid.poke(false.B); d.io.ordinary.valid.poke(false.B)
+      d.io.hartFatal.expect(true.B) // N+1, while A still owns the queue head.
+      d.io.lateWriteError.expect(false.B); d.io.clear.valid.expect(false.B)
+      d.io.gprWrite.valid.expect(true.B); d.io.gprWrite.bits.idx.expect(5.U)
+      d.io.gprWrite.bits.data.expect(105.U); d.clock.step()
+      d.io.hartFatal.expect(true.B); d.io.lateWriteError.expect(false.B)
+      d.io.gprWrite.valid.expect(true.B); d.io.gprWrite.bits.idx.expect(1.U)
+      d.io.gprWrite.bits.data.expect(101.U); d.io.clear.bits.idx.expect(1.U)
+      d.clock.step()
+      d.io.hartFatal.expect(true.B); d.io.lateWriteError.expect(true.B)
+      d.io.gprWrite.valid.expect(false.B); d.io.clear.valid.expect(true.B)
+      d.io.clear.bits.idx.expect(6.U); d.clock.step()
+      d.io.hartFatal.expect(true.B); d.io.lateWriteError.expect(false.B)
+      d.io.clear.valid.expect(false.B); d.io.gprWrite.valid.expect(false.B)
+    }
+  }
+
   "BE2_R4_late_two_registered_slots_preserve_order_and_do_not_reuse_current_grant" in {
     simulate(new Writeback) { d =>
       idle(d); d.reset.poke(true.B); d.clock.step(); d.reset.poke(false.B)

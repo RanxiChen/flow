@@ -18,7 +18,7 @@ class OrdinaryResult extends Bundle {
   val data = UInt(64.W)
 }
 
-/** WB captures W2; L1D late captures a single lateReg without RF fall-through.
+/** WB captures W2; L1D late uses two registered slots without RF fall-through.
   * W2 wins its bank, then one background grant: lateReg > DIV > MUL > FPU.
   * Already committed writes survive all pipeline holds/kills and hartFatal.
   * Fairness bubbles originate only in ID.
@@ -98,7 +98,9 @@ class Writeback extends Module {
   val data = Mux1H(selected, Seq(lateReg.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
   val error = lateReg.valid && lateReg.bits.error
   val fatal = RegInit(false.B)
-  when(error) { fatal := true.B }
+  // Any accepted error must become fatal on N+1, even in the second slot
+  // behind an older result blocked by W2. Completion/clear remains in order.
+  when(io.late.fire && io.late.bits.error) { fatal := true.B }
   io.hartFatal := fatal || error
   io.lateWriteError := lateRegGrant && lateReg.bits.error
   val bgWrite = selected.orR && !io.lateWriteError && (rd.isFp || rd.idx =/= 0.U)
