@@ -5,6 +5,32 @@ import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
 
 class RvvRegisterFileSpec extends AnyFreeSpec with ChiselSim {
+  "512-bit accepted read tokens select all banks in two cycles and hold across disabled reads" in {
+    val p=RvvParams()
+    simulate(new RvvRegisterFile(p)) { d =>
+      d.io.readValid.foreach(_.poke(false.B)); d.io.readRows.foreach(_.poke(0.U))
+      d.io.write.foreach(_.valid.poke(false.B)); d.io.age.foreach(_.poke(0.U))
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      val ports=p.execReadPorts+2
+      val values=(0 until ports).map(r => BigInt(f"${r+1}%02x"*p.rowBytes,16))
+      for(r <- 0 until ports) {
+        d.io.write(0).valid.poke(true.B); d.io.write(0).bits.row.poke(r.U)
+        d.io.write(0).bits.data.poke(values(r).U)
+        d.io.write(0).bits.enables.poke(((BigInt(1)<<p.rowBytes)-1).U)
+        d.io.write(0).ready.expect(true.B); d.clock.step()
+        d.io.write(0).valid.poke(false.B); d.clock.step()
+      }
+      for(r <- 0 until ports) { d.io.readRows(r).poke(r.U); d.io.readValid(r).poke(true.B) }
+      d.clock.step(); d.io.readValid.foreach(_.poke(false.B)); d.clock.step()
+      for(r <- 0 until ports) { d.io.readData(r).expect(values(r).U); d.io.readRows(r).poke(((r+1)%ports).U) }
+      d.clock.step(3)
+      for(r <- 0 until ports) { d.io.readData(r).expect(values(r).U); d.io.readValid(r).poke(true.B) }
+      d.clock.step()
+      for(r <- 0 until ports) { d.io.readData(r).expect(values(r).U); d.io.readValid(r).poke(false.B) }
+      d.clock.step()
+      for(r <- 0 until ports) { d.io.readData(r).expect(values((r+1)%ports).U) }
+    }
+  }
   "two v0 subrows update their shadow bytes together and oldest writer wins a bank" in {
     val p=RvvParams(vlen=512,dlen=256,lanes=4,memoryBits=256)
     simulate(new RvvRegisterFile(p)) { d =>
