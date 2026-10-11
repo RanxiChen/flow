@@ -46,6 +46,7 @@ finish:
 fail:
   li t0, 3
   j finish
+.balign 4
 trap:
   csrr t0, mcause
   li t1, 2
