@@ -113,6 +113,8 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   private var s1Victim: Option[CoreTxn] = None
   private var s2KillNow = false
   private var excKillNow = false
+  private def decodedSolo(o: CoreOp): Boolean = enumIs(o.op,L1DOp.AMO) ||
+    ((enumIs(o.op,L1DOp.LR) || enumIs(o.op,L1DOp.SC)) && (o.aq || o.rl))
 
   def enqueue(ops: CoreOp*): Unit = pending ++= ops
   def last: CoreTxn = history.last
@@ -125,15 +127,17 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     if (presenting.isEmpty && !soloActive && rng.nextDouble() < issueProb) {
       if (retries.nonEmpty && (!retryWake || core.replayWake.peek().litToBoolean)) {
         val t=retries.dequeue(); presentingRetry=Some(t); presenting=Some(t.op)
-        presentingSolo=armSolo; armSolo=false; retryWake=false
+        presentingSolo=armSolo || decodedSolo(t.op); armSolo=false; retryWake=false
       } else if(retries.isEmpty && pending.nonEmpty) {
         presenting=Some(pending.dequeue()); presentingRetry=None
         val o=presenting.get
-        presentingSolo=enumIs(o.op,L1DOp.AMO) ||
-          ((enumIs(o.op,L1DOp.LR) || enumIs(o.op,L1DOp.SC)) && (o.aq || o.rl))
+        presentingSolo=decodedSolo(o)
       }
     }
-    core.req.valid.poke(presenting.nonEmpty.B)
+    // Model R6 ID admission: a solo item waits until older WB responses
+    // have left. Otherwise an older speculative response could be mistaken
+    // for this younger solo owner's response and release it prematurely.
+    core.req.valid.poke((presenting.nonEmpty && (!presentingSolo || inPipe.isEmpty)).B)
     presenting.foreach { o =>
       val b = core.req.bits
       b.op.poke(o.op); b.vaddr.poke(o.addr.U(64.W)); b.size.poke(o.size.U)
@@ -166,7 +170,7 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   private def kill(t: CoreTxn): Unit = { t.killed = true; t.killedAt = now; onKilled(t) }
 
   def sample(): Unit = {
-    val fired = presenting.nonEmpty && core.req.ready.peek().litToBoolean
+    val fired = core.req.valid.peek().litToBoolean && core.req.ready.peek().litToBoolean
     if (s1Victim.nonEmpty || s2KillNow) check(!fired, "request accepted in a kill cycle")
     if (core.s2Hold.peek().litToBoolean) holdCycles += 1
     if (core.mmioBusy.peek().litToBoolean) mmioBusyCycles += 1
