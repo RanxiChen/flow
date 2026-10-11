@@ -57,7 +57,8 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
     val frontend = Module(new BreezeFrontend(coreCfg.frontendCfg, memGeometry = mem))
     val buffer = Module(new FetchBuffer(64, 6, coreCfg.backendCfg.ghrLength))
     val frontendBoundary = Module(new BreezeFrontendBoundary(coreCfg.backendCfg.ghrLength))
-    val l1d = Module(new L1DCache(mem, withPmpCandidate = true, writeThrough = true))
+    val l1d = Module(new L1DCache(mem, withPmpCandidate = true, writeThrough = true, withEarlyCancel = true))
+    l1d.earlyCancel.get := backend.io.cacheEarlyCancel
     val l1i = Module(new L1IClient(mem))
     val mmu = Module(new Sv39Mmu(withPmpCandidate = true))
     val vectorTranslation = Module(new RvvTranslationClient(vp))

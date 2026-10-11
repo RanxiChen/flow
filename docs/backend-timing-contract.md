@@ -129,3 +129,11 @@ WB 本地架构动作和 L1D CPU valid 作废保留同拍，执行单元 commitD
 上文“s2Hold→各级保持”已删除为结构允许项。允许的例外仅 WB 本地 busy/CSR/退休/W2 捕获与 CPU/后端 valid 作废；串行 drained/idle 不进入 WB 判定。MMU 原 C4 的 sfence 两阶段后端等待在本任务范围内替换为 ID 采样和 MMU 自身 S0/S1 接收阻塞；不修改原 MMU 冻结文件或起点已有哈希差异。
 
 串行 drain 采样资格修订（§11）：cpuDrainedD 只采样 `olderEmpty && cpuDrained`；mmuIdleD 只采样 `olderEmpty && ID.valid && ID.sfence && mmuIdle`。这是 PS/MSHR 在最后旧 WB 边沿建立义务及前端最后一次翻译的交接屏障，不使用 raw 条件旁路寄存器。合格采样后 ID 等待期间保持无新 CPU 请求及翻译请求；raw 条件回落由 RTL 断言拒绝。T18 最早增加一拍；已持续等待的 T19/T20 的 D+1/D+5 不变。
+
+## 2026-10-11 BE2 单核 RVV 接入裁定
+
+用户授权第三种 SD 产品继承四核基础并更换访存、接 R04 RVV。默认关闭不增加 RVV 硬件。RVV32项 ID credit 含 EX/入口队列及两个 VIQ 游标；WB 只消费已寄存 verdict，commitD 延迟授权，killD 清未提交项并排空孤儿翻译，已提交项保留。vmv.x.s 按长延迟 GPR 结果统一写口与记分板；当前两位来源计数归 FPU，仅为统计归属。VS=Off/vill/未实现编码精确 cause2；Serial 暂按 R05 非法指令，tval=原指令。vsetvl 在 EX 计算、WB 更新向量 CSR，CSR/vset/标量访存均在 ID 等寄存向量 drained，WB 不二次等待。
+
+保守部署裁定：标量访存在 ID 等所有已提交向量及旧标量槽排空，未使用逐 PA 冲突查询来提高标量/向量重叠；查询口保留并在顶层置无效。向量之间仍可通过 VIQ 与独立请求游标并发。此顺序覆盖重叠和非重叠访存，牺牲 overlap，不冒充完成逐 PA 优化。翻译预检查全段每字节 PMP/PMA，拒绝 device，跨页两段均准备成功后才能 Ok。AXI 在 Ok 之后发生故障无法恢复成早期精确 Exc，按不可恢复总线错误进入 sticky hartFatal；既有协议断言保留，禁止无声写入错误 load 数据。
+
+四核 c735fbd 最终routed最差为 probe addr→local判定→wbKill→MSHR allocates→tag WE，20级/WNS−1.842ns。三产品增加 cacheEarlyCancel=寄存WB memory-owner早期exception或hartFatal，L1D副作用许可仅用该早期条件及本地Done/Miss/Exc/Replay；完整s2Kill仍清CPU槽、保留原精确取消。CPU S3与WB同一memory-owner，本地Exc/Replay本就无副作用，CSR/xret/IRQ等完整取消没有该CPU memory-owner；新增断言要求fullKill且非earlyKill时所有CPU副作用为零。独立L1D默认不启用该分离，仍以原full s2Kill检查测试输入的任意取消。未增加流水延迟或更新golden。

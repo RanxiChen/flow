@@ -397,3 +397,9 @@ L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列�
 同字 Store→Load 的 S1/S2/S3/PS 冲突共四拍，下一 Load 最早 E+5 接收。32B/64b 整行 refill 在 R+1…R+4 安装、R+5 回放 S0、R+8 回放 S3，lateReg 无冲突写回 R+9。新增快照级也必须处理同拍 probe/refill/tag/data 变更。普通 store 对齐与字节掩码在较早级生成，最后合法完成控制写许可；失败 store/SC 不写，AMO 值仍来自原 RMW 算法。
 
 BE2-P：请求携带 solo；非 solo S3 未判定返回 Replay/replayReason，回放尝试无副作用。solo 仅自保持 CPU S3 并等待实际结果/精确 Exc；CPU S1/S2 恒推进。replayWake 为 TLB 接收与 miss 资源可用的寄存唤醒信号。
+
+## 2026-10-11 可选 RVV 写穿模式
+
+只在 single-rvv 使用 writeThrough=true。普通 store/SC/AMO 由 ID 首次 solo 隔离，保存写 payload 后发 MaskWrite；CPU S3 等 Home WriteAck，错误为原 store access fault，无本地写入；成功后写命中行，不分配 store miss，不置 M。AMO miss 原 refill/replay 保留，WT 接管其已确定 payload；内部 refill/probe/PTW/Recheck 决策不受等待的 CPU WT 状态覆盖。接受的写不可被事后 kill 撤销，IRQ/串行先排空义务。
+
+外部失效等待所有 CPU store 槽/PS/WT 写完成后，沿原 Inv 探测路径丢弃行并清 LR 保留；不允许 writer 和外部失效互相等待。tlbWants 表示取消前的标量翻译容量，RVV共享仲裁只在标量不用时接受向量；已接受向量翻译不被标量 kill 丢失。普通单/四核 writeThrough=false 原合同不变。

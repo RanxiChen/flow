@@ -25,7 +25,14 @@ class RvvLoadStore(p: RvvParams) extends Module {
     val readBytes = Output(UInt(64.W)); val writeBytes = Output(UInt(64.W)); val bufferedBytes = Output(UInt(64.W))
     val war = Output(UInt(64.W)); val overlap = Output(UInt(64.W)); val credit = Output(UInt(64.W)); val axiStall = Output(UInt(64.W))
     val invalidations = Output(UInt(64.W))
+    val fatal = Output(Bool())
   })
+  // Keep the verification assertions below, and make an unrecoverable bus
+  // failure after Ok stop silicon even when assertions are synthesized away.
+  val busFailure = RegInit(false.B)
+  when((io.axi.r.fire && io.axi.r.bits.resp =/= 0.U) ||
+      (io.axi.b.fire && io.axi.b.bits.resp =/= 0.U)) { busFailure := true.B }
+  io.fatal := busFailure
   val requestDesc = Reg(new RvvDescriptor(p))
   val desc = Reg(Vec(p.memoryInflight,new RvvDescriptor(p)))
   val bound = RegInit(VecInit(Seq.fill(p.memoryInflight)(false.B)))
@@ -294,7 +301,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
     outputMask(b) := logicalByte < ld.decoded.bytes && sourceByte >= 0.S && sourceByte < p.memBytes.S
     outputData(b) := loadRotated(8*(b%p.memBytes)+7,8*(b%p.memBytes))
   }
-  io.write.valid := returnedValid && writeBound && !io.blocked(1)
+  io.write.valid := returnedValid && writeBound && !io.blocked(1) && !busFailure
   io.write.bits.row := ld.decoded.vd*p.rowsPerReg.U+targetRow
   io.write.bits.data := outputData.asUInt; io.write.bits.enables := outputMask.asUInt
   io.writeAge := ld.age

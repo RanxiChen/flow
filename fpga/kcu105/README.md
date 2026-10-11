@@ -1,52 +1,8 @@
-# Breeze on KCU105: DDR4 bring-up
+# Breeze BE2 on KCU105
 
-This target intentionally stops before OpenSBI and Linux.  The first board
-milestone is:
+当前交付是四核、继承相同配置的普通单核、以及写穿访存/512-bit AXI/RVV 单核三种 SD 产品。参数、BIOS 自动启动、Linux/GAPBS 软件编译和部署入口见 [三产品 SD 指南](sd-bringup.md)。准确物理状态见 [BE2 实施报告](../../docs/tasks/BE2-report.md)；生成工程、综合、routed timing、bitstream 和上板证据分别记录。
 
-1. start the selected Breeze cluster at the integrated LiteX BIOS ROM;
-2. let hart 0 run the BIOS using on-chip ROM and SRAM;
-3. complete DDR4 training and the BIOS memory test;
-4. upload a bare-metal demo to DDR4 over UART and execute it.
-
-In the four-hart product, the other three harts are parked by the Breeze LiteX
-startup code while the single-hart BIOS/demo path is exercised.
-
-## Select the CPU product
-
-| `--cpu-type` | RTL profile | Harts | L1I / L1D per hart | L2 | PLIC contexts |
-| --- | --- | ---: | --- | ---: | ---: |
-| `breeze` (default) | `small` | 4 | 8 / 8 KiB | 64 KiB | 8 (M/S per hart) |
-| `breeze-tiny` | `single` | 1 | 8 / 8 KiB | 16 KiB | 2 (M/S for hart 0) |
-
-Both use the same Linux-capable RV64GC core, Sv39 MMU, MESI L1D, L2/Home,
-CLINT and PLIC. Tiny retains the cluster fabric with one coherence client;
-the separate instruction-cache path also passes through L2/Home. It uses
-the existing single-cluster preset rather than a standalone core. Address
-maps, DDR geometry, clock frequency and the eight active PMP entries agree.
-Tiny's CLINT has one MSIP/MTIMECMP pair and the shared MTIME counter.
-The LiteX internal CPU registry key is `breeze_tiny` so generated C macros
-remain valid; the command-line product name is `breeze-tiny`.
-
-Generate matching production RTL before building the selected product:
-
-```sh
-cd /home/chen/FUN/flow/design
-sbt 'runMain flow.top.GenerateBreezeMulticoreClusterWishbone single gshare linux production'
-cd ..
-python fpga/kcu105/target.py --cpu-type breeze-tiny --build
-```
-
-Use `small` and `--cpu-type breeze` for four harts. The default output paths
-are respectively `build/fpga/kcu105-breeze-tiny-ddr` and
-`build/fpga/kcu105-breeze-ddr`; `--output-dir PATH` selects an isolated run.
-Omitting `--build` only generates the project and compiles the BIOS.
-The bitstream is `gateware/xilinx_kcu105.bit` within the selected output path.
-Run these commands in the LiteX environment with Vivado on `PATH`.
-
-Tiny is intended to leave space for subsequent ILA debugging; it does not
-itself establish that the DDR training issue is fixed. Its Linux device tree
-and Buildroot configuration are described in
-[`linux/buildroot-external/README.md`](../../linux/buildroot-external/README.md).
+以下保留早期调试/DDR说明，旧生成器和 Wishbone 路径不作为 BE2 三产品构建命令。
 
 ## Single-hart ILA debug build
 

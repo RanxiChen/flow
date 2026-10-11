@@ -28,8 +28,10 @@ class RvvMount(p: RvvParams) extends Module {
     val result = Decoupled(new FpResult)
     val returned = Output(UInt(6.W)); val drained = Output(Bool())
     val vxsat = Output(Bool()); val services = new RvvServices(p)
+    val fatal = Output(Bool())
   })
   val rvv = Module(new RvvCoprocessor(p))
+  io.fatal := rvv.io.fatal
   val ingress = withReset(reset.asBool || io.killD) { Module(new Queue(new RvvIssue(p), p.viqDepth, useSyncReadMem = true)) }
   ingress.io.enq.valid := io.issue.valid && !io.killD
   ingress.io.enq.bits := io.issue.bits
@@ -56,12 +58,12 @@ class RvvMount(p: RvvParams) extends Module {
   assert(used <= p.viqDepth.U && io.returned <= used, "vector credit ownership overflow/underflow")
   when(io.reserve) { assert(io.available && !io.killD) }
   when(io.commitD) { assert(uncommitted =/= 0.U) }
-  io.result.valid := rvv.io.scalarResult.valid
+  io.result.valid := rvv.io.scalarResult.valid && !rvv.io.fatal
   io.result.bits := 0.U.asTypeOf(io.result.bits)
   io.result.bits.rd.idx := rvv.io.scalarResult.bits.rd
   io.result.bits.rd.isFp := rvv.io.scalarResult.bits.floating
   io.result.bits.data := rvv.io.scalarResult.bits.data
-  rvv.io.scalarResult.ready := io.result.ready
+  rvv.io.scalarResult.ready := io.result.ready && !rvv.io.fatal
   io.drained := used === 0.U && uncommitted === 0.U && ingress.io.count === 0.U &&
     decisions.io.count === 0.U && rvv.io.drained
   io.vxsat := rvv.io.vxsat

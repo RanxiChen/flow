@@ -13,6 +13,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     val scalarResult = Decoupled(new RvvScalar)
     val drained = Output(Bool()); val vxsat = Output(Bool()); val fflags = Output(UInt(5.W))
     val creditReturn = Output(Bool())
+    val fatal = Output(Bool())
     val conflictQuery = Input(new RvvConflict); val conflict = Output(Bool())
     val invalidate = Decoupled(UInt(64.W)); val scalarWritesVisible = Input(Bool())
     val axi = new RvvAxi(p); val counters = Output(new RvvCounters)
@@ -49,6 +50,7 @@ class RvvCoprocessor(val p: RvvParams = RvvParams()) extends Module {
     q.io.enq.bits := dispatch.bits; q.io.enq.bits.slot := sb.io.slot
   }
   val mem = Module(new RvvLoadStore(p)); mem.io.in <> queues(0).io.deq
+  io.fatal := mem.io.fatal
   mem.io.prefetch <> front.io.prefetch
   prefetchEvent := mem.io.prefetchEvent
   mem.io.nextAge := front.io.nextAge; memAgeAllowed := mem.io.ageAllowed

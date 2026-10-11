@@ -12,9 +12,11 @@ import flow.mmu.sv39.{MmuCmd, TlbResp, TreePlru}
   * shares the SRAM ports, but can finish an older miss while CPU S2 waits.
   */
 class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
-    writeThrough: Boolean = false) extends Module {
+    writeThrough: Boolean = false, withEarlyCancel: Boolean = false) extends Module {
   val p = L1DParams(g)
   val io = IO(new L1DIO(p, withPmpCandidate))
+  val earlyCancel = if (withEarlyCancel) Some(IO(Input(Bool()))) else None
+  val effectKill = earlyCancel.getOrElse(io.core.s2Kill)
   private def idx(a: UInt): UInt = if (p.idxBits == 0) 0.U(p.idxW.W) else a(p.offBits + p.idxBits - 1, p.offBits)
   private def word(a: UInt): UInt = a(p.offBits - 1, 3)
   private def line(a: UInt): UInt = a(p.paddrBits - 1, p.offBits)
@@ -476,7 +478,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
     miss.io.s0Req.bits.beat === (p.wordsPerLine - 1).U)
   val psWriteBlocked = wholeBusy || miss.io.status.mshrState === MshrState.Install || probe.io.tagUpdate.valid
   val psCompletes = ps.valid && !psWriteBlocked
-  val psWrites = psCompletes && !(psAtomic && io.core.s2Kill)
+  val psWrites = psCompletes && !(psAtomic && effectKill)
   // These decision inputs must not depend on S0's kill-qualified grant:
   // a WB fault produces s2Kill from resp in the same cycle.
   val installing = miss.io.status.mshrState === MshrState.Install
@@ -650,7 +652,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
     mmioDecision -> 4.U, (blockingRequest && s2Miss) -> 5.U))
   io.core.replayWake := RegNext(io.tlb.req.ready && resourcesClear && !wholeBusy && !ps.valid, false.B)
 
-  val allocates = s2.valid && s2Miss && (ptw || (!io.core.s2Kill && !speculativeReplay))
+  val allocates = s2.valid && s2Miss && (ptw || (!effectKill && !speculativeReplay))
   miss.io.alloc.valid := allocates
   miss.io.alloc.bits := 0.U.asTypeOf(miss.io.alloc.bits)
   miss.io.alloc.bits.lineAddr := line(s2.paddr)
@@ -729,10 +731,10 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   probe.io.initDone := initDone
 
   val amoStarts = !writeThrough.B && s2.valid && isAmo && s2Amo &&
-    (!replay || atomicWait) && !s2.req.replayError && !io.core.s2Kill && !speculativeReplay
+    (!replay || atomicWait) && !s2.req.replayError && !effectKill && !speculativeReplay
   val stores = !writeThrough.B && s2.valid && !ptw && !s2.pmaDevice && !(replay && s2.req.replayError) &&
-    ((s2.req.core.op === L1DOp.Store && s2Done && (replay || (!io.core.s2Kill && !speculativeReplay))) ||
-      (isSc && scSuccess && s2Done && !io.core.s2Kill && !speculativeReplay) || amoStarts)
+    ((s2.req.core.op === L1DOp.Store && s2Done && (replay || (!effectKill && !speculativeReplay))) ||
+      (isSc && scSuccess && s2Done && !effectKill && !speculativeReplay) || amoStarts)
   when(psCompletes) { ps.valid := false.B; psAtomic := false.B }
   when(stores) {
     ps.valid := true.B
@@ -750,7 +752,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   }
   wt.foreach { w =>
     w.io.start.valid := wtCandidate && !w.io.active && s2.valid &&
-      (replay || s2.req.core.solo) && !io.core.s2Kill
+      (replay || s2.req.core.solo) && !effectKill
     w.io.start.bits := 0.U.asTypeOf(w.io.start.bits)
     w.io.start.bits.hit := hit
     w.io.start.bits.old := atomicData
@@ -773,9 +775,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   }
   when(amoStarts) { amoRmw := true.B; amoOld := atomicData }
   when(rsvTimer =/= 0.U) { rsvTimer := rsvTimer - 1.U }
-  val lrCompletes = cpuDecided && isLr && s2Done && !io.core.s2Kill && !speculativeReplay
+  val lrCompletes = cpuDecided && isLr && s2Done && !effectKill && !speculativeReplay
   when(lrCompletes) { rsvValid := true.B; rsvLine := line(s2.paddr); rsvTimer := p.rsvWindow.U }
-  val scCompletes = cpuDecided && isSc && !io.core.s2Kill
+  val scCompletes = cpuDecided && isSc && !effectKill && (if (withEarlyCancel) s2Done else true.B)
   val probeStarts = probe.io.s0Grant && probe.io.s0Req.bits === 0.U
   when(io.core.trapClearRsv || scCompletes ||
     (probeStarts && ((rsvValid && probeLine === rsvLine) || (lrCompletes && probeLine === line(s2.paddr)))) ||
@@ -808,7 +810,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   val tagMask = Mux1H(tagGrants, tagMasks)
   val tagValue = Mux1H(tagGrants, tagValues)
   val installPlru = installLast && miss.io.s0Req.bits.installTag.state =/= L1State.I
-  val hitPlru = s2.valid && hit && s2Done && !io.core.s2Kill && !installLast
+  val hitPlru = s2.valid && hit && s2Done && !effectKill && !installLast
   val installWayOH = UIntToOH(miss.io.s0Req.bits.way, p.ways)
   // Data candidates use each set's own state and early way selection. The
   // late completion/kill grant controls only the local write authorization.
@@ -898,7 +900,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   when(io.coh.rspUp.valid && !io.coh.rspUp.ready && !upHeld) { upHeld := true.B; upChoice := chooseProbe }
   when(io.coh.rspUp.fire) { upHeld := false.B }
 
-  mmio.io.start.valid := !fromInternal && cpu3.valid && cpu3.req.core.solo && s2Mmio && !mmio.io.active && !io.core.s2Kill
+  mmio.io.start.valid := !fromInternal && cpu3.valid && cpu3.req.core.solo && s2Mmio && !mmio.io.active && !effectKill
   mmio.io.start.bits.paddr := s2.paddr
   mmio.io.start.bits.isWrite := s2.req.core.op === L1DOp.Store
   mmio.io.start.bits.size := s2.req.core.size
@@ -959,6 +961,13 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
       "internal result has no reserved completion capacity")
     when(internalRefresh) {
       assert(reservedRefresh, "permission refresh lost its slot or produced a side effect")
+    }
+  }
+  if (withEarlyCancel) {
+    when(io.core.s2Kill && !effectKill && !fromInternal) {
+      assert(!allocates && !stores && !lrCompletes && !scCompletes && !mmio.io.start.valid &&
+        !wt.map(_.io.start.valid).getOrElse(false.B),
+        "full WB cancellation must deny all CPU effects locally")
     }
   }
   when(amoRmw) { assert(psCompletes, "AMO RMW protection exceeded two local beats") }

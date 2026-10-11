@@ -359,3 +359,9 @@ L2MemEngine 增加深度 l2Slots 的无 flow/pipe AR dispatch 队列。readReq.f
 用户追加三个带SD的bitstream后，`BreezeClusterConfig.coherentDma=true`启用AXI顶层的64bit经典Wishbone DMA入口，经单事务桥映射到现有Read/MaskWrite，ACK只在Home响应后产生；PMA只允许可缓存、非device且具备对应读写权限的完整8字节。未启用时不增加端口/桥，默认集群原合同不变。
 
 仅该SD预设使`L2Home(reportDmaErrors=true)`：MaskWrite miss的合并读发生refill错误时，返回WriteAck/error=1、不安装/不合并，以Wishbone ERR终结，BIOS不得把失败读取或加载当成功。这是新增DMA产品的错误报告能力，不改变默认模式上文WriteAck/error=0的合同。DMA应答不等同于DDR写回完成；该模式仍经L2缓存保持一致性，FENCE.I/启动跳板负责新程序取指可见性。
+
+## 2026-10-11 单核 RVV dataless Home
+
+single-rvv 明确替代 L2，为单核不保存持久缓存数据/目录的 Home；事务期间暂存32B行不等于 L2。CPU MaskWrite 在 B 后给 WriteAck，GetS/GetM 均返回 DataE；L1D 只保留 clean E/S，Put/InvAck不得携带脏数据。SD 写与 RVV 作废先等标量 writePending 消失再发 Inv，InvAck 后才允许其写请求继续。SD ACK/ERR 取实际 AXI 成功/失败；读取得最新写穿数据。
+
+512-bit 边界的标量32B行使用单拍窄传输，ARSIZE/AWSIZE=5，按64B半行旋转 RDATA/WDATA/WSTRB；64-bit测试边界保持四拍。scalar/VLSU读写仲裁分别保存 AXI owner，W跟随已接受AW到WLAST，ID前缀区分来源；标量优先但最多连续八burst后让向量前进。LiteX外壳当前全局只有一个在途读/写，限制吞吐，不宣称达到R04独立模型带宽。

@@ -2,9 +2,9 @@
 
 2026-10-11。按任务书 §10 BE2-P 和 §11 加速模式连续实施；本文供用户最终审核。起点 `2051dd0bb9a0c701bb95fd3f1e755ae175023093`；分支 `refactor/be2-backend-decoupling`，工作区 `/home/chen/leisure/flow-be2`。主工作区及其既有未跟踪记录未修改。
 
-当前生产源：`c735fbd`（部署几何来自 `558096c`，后端来自 `790c1f6`；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
+原标量验证生产源：`c735fbd`（部署几何来自 `558096c`，后端来自 `790c1f6`；包含单次 admission 仲裁及 BTB payload 分离）；首轮物理源为 `7b885d6`，`2f247ca`/`8df9ec9` 仅测试驱动/诊断更改。R2/R3/R5/R6、统一接口及降级协处理器桩已落地；R7 的串行条件已移出 WB，保留的中断判定例外见下文。G2 的 0–999 种子已通过；用户后续明确将门禁收缩为最小必备测试集，完整 G1 延期；最小门禁不称为完整 G1 通过。用户又明确要求四核优先、单核与四核一起推进，单核从四核同一套参数派生；此最新指示替代 §11 原“单核通过再四核”的执行顺序。物理验证在最小安全门禁通过后并行单核/四核，保持 100 MHz/default 策略；四核资源或时序不通过时允许删减硬件资源，单核同步使用调整后的参数，两者重新核验。
 
-当前门禁状态（2026-10-11 18:51 CST，以下旧版本记录保留其原 SHA/几何范围）：
+原标量阶段门禁状态（2026-10-11 18:51 CST，以下旧版本记录保留其原 SHA/几何范围）：
 
 | 门禁 | 最新证据与结论 |
 |---|---|
@@ -122,7 +122,7 @@ RTL 表达式层次如下；这里的“级”是布尔表达式依赖，不等�
 
 统一 Java 调用为 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=4 taskset -c <0-3 或 4-7> nice -n 10 java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar '<sbt 参数>'`。G1 cwd `/home/chen/FUN/flow-be2-b3-8ea5db5/design`，G2 cwd `/home/chen/FUN/flow-be2-1a4deba/design`。每项原始 `.exit` 随日志保留。
 
-以下阶段记录均按各自 SHA/几何解释。最新门禁状态见首表，P1 匹配数据及单核 routed 报告见末尾；该历史阶段没有 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
+以下阶段记录均按各自 SHA/几何解释。标量阶段门禁状态见首表；三SD产品的新增证据见最新追加节，P1 匹配数据及单核 routed 报告见末尾；该历史阶段没有 routed/bitstream/板上通过证据。frozen_check 起点 MMU 文件 hash 差异仍单独标记。
 
 补充证据：4757d5e G2 ledger 导出 1000 seeds 全通过，`be2-4757d5e-g2.log`；Spike 1000 seeds 全通过，`be2-4757d5e-spike-v4.log` 及 `be2-4757d5e-spike-v4/result.json`。初次 ELF 缺少 section table、误关闭 boot ROM 的 reference 适配失败另存 v1/v2/v3，不记为 DUT 失败。
 
@@ -214,4 +214,22 @@ c735fbd 单核最终routed exit0：全设计WNS=+0.412ns/WHS=+0.031ns，TNS/THS=
 
 23. **追加单核RVV及SD自动启动交付**：用户明确要求三种产品：四核基础版、同配置普通单核版、在普通单核上挂载RVV的版本，以及对应BIOS和可后期独立编译更新的SD软件。已核对flow-rvv/cc0be2f现有R05任务书及设计文档未提交补充，原工作树修改保留；接入采用BE2 §7落点。继承四核基础参数不意味着强迫RVV保留写回L2：该预设按已有方案启用写直通L1D、dataless home及宽AXI，标量/向量/SD DMA排序与作废一并覆盖；其余两个产品保留原缓存策略。
 
-当前BE2工程还未接通SD：`target.py`未提供`--with-sdcard`，旧`build_sd.sh`却传此选项，旧SD文档还描述已废止的Wishbone/coherent-dma入口；旧`prepare_sd_boot.py`限定历史软件hash且直接修改旧DTB内存，不能当作当前三产品的软件包。已有可复用的软件基线则是README和`linux/sd-gapbs/`记录的29ee514硬件/b2a895b软件：用户JTAG加载.bit，BIOS通过sdcard_init/sdcardboot从FAT按boot.json加载Image/OpenSBI/DTB/跳板，进入内嵌initramfs的Buildroot Linux，再运行gapbs-smoke。六个小图自检的板级结果记录在`docs/benchmarks/breeze-gapbs-20260918.md`，仅代表该旧产品，不冒充BE2验证。后续三产品沿用这条SD加载Linux的链路，更新构建入口、缓存/DMA接线、匹配BIOS/DTB及自动SD软件启动；不追加配置Flash镜像交付，SD也不存或加载bitstream。软件后续通过`linux/sd-gapbs/build.sh`独立编译，兼容更新只替换SD文件。该项已加入任务书§12；本段是范围与现状核查，不是新RVV、SD或启动通过证据。
+追加范围初查时 BE2 工程尚未接通SD：`target.py`未提供`--with-sdcard`，旧`build_sd.sh`却传此选项，旧SD文档还描述已废止的Wishbone/coherent-dma入口；旧`prepare_sd_boot.py`限定历史软件hash且直接修改旧DTB内存，不能当作当前三产品的软件包。已有可复用的软件基线则是README和`linux/sd-gapbs/`记录的29ee514硬件/b2a895b软件：用户JTAG加载.bit，BIOS通过sdcard_init/sdcardboot从FAT按boot.json加载Image/OpenSBI/DTB/跳板，进入内嵌initramfs的Buildroot Linux，再运行gapbs-smoke。六个小图自检的板级结果记录在`docs/benchmarks/breeze-gapbs-20260918.md`，仅代表该旧产品，不冒充BE2验证。后续三产品沿用这条SD加载Linux的链路，更新构建入口、缓存/DMA接线、匹配BIOS/DTB及自动SD软件启动；不追加配置Flash镜像交付，SD也不存或加载bitstream。软件后续通过`linux/sd-gapbs/build.sh`独立编译，兼容更新只替换SD文件。该项已加入任务书§12；本段是范围与现状核查，不是新RVV、SD或启动通过证据。
+
+## 三 SD 产品最新执行阶段（2026-10-11 20:15 CST）
+
+当前交付仍未完成，尚无三个可交付 bitstream。原首表只描述 c735fbd 标量阶段，不代表新 SD/RVV 产品通过。三产品范围、构建和软件包用法见 `fpga/kcu105/sd-bringup.md`；以下按各自准确源记录。
+
+- 5ab7e64 SD 普通单/四核：新桥3项和实际Home/独立GoldenMem集成1项通过，四核和普通单核production/coherent-dma RTL及BIOS生成成功，四核default全物理在Alan CPU4–7布线；四核结束后同runner顺序构建同配置单核。SD BIOS约39.94KiB，自动FAT软件启动，不包含Flash镜像。原97545a7另外14/14模块与配置用例保留。
+- R04本体来源：flow-rvv/cc0be2f九个RTL模块及当前R05设计导入，原工作树未改；2663770原前端8项+三种VLEN/DLEN compile smoke，共11/11。新增 `vmv.v.i` 是Linux6.18.7上下文discard所需立即数广播，保留原测试。
+- a70fec1、08248df：64/512-bit实际write-through L1D+Home各1项通过，使用原CoreDriver/GoldenMem/4000拍watchdog，不更改冻结的全行AxiMemory；新增宽总线masked memory是独立模型，覆盖byte mask、AMO、LR/SC、外部Inv、B错误原精确store cause7以及失败不改cache/DRAM。a70第一次整机生成因Bool.pad宽度克隆失败，082使用Cat显式扩展后RVV整机及BIOS生成exit0。
+- d3469ce 整机首先在原amoadd ELF触发内部完成容量断言。e663e5e修正WT CPU等待不能覆盖内部refill/probe/PTW/Recheck的判定，不放宽断言；保留失败日志。随后新增程序trap入口未四字节对齐，f879ef9只修复新增汇编入口，不改RTL或期望值。
+- f879ef9 RVV整机：原10个最小RV64I/M/A/C/CSR ELF签名全部tohost=1，新增向量内存程序tohost=1/1509cycles/87retired；独立检查输出8个64-bit元素均为12，检查VS=Off非法异常的精确mepc/mtval。
+- 4ae968a：同10个原ISA再次通过，扩展程序3763cycles/107retired，新增立即数广播、LMUL8的512B寄存器组store/load和vlenb检查通过；新AMO miss写穿回归及原前端/三种参数smoke共13/13，无failed/canceled/ignored。CPU8–9/maxThreads2的RVV default物理已进入综合。该快照尚未包含后续silicon busFailure保护，不能作为最终该保护的验证结果。
+- 4e1f86d软件：从保留的GAPBS Buildroot SDK和initramfs在新目录编译Linux6.18.7，应用两个MMC补丁，SMP4、MMC_LITEX、V用户上下文支持；kernel vector usercopy阈值设为INT_MAX，避免R05临时Serial路径被内核自动选作可故障恢复的copy。完整新编软件的Buildroot三份配方可后续独立执行；本次复用已编译rootfs/OpenSBI必须与新kernel区分并记录其输入hash。当前编译中，未声明Linux已启动。
+
+24. **接入保守裁定**：首版标量访存在ID等所有向量排空，未启用逐PA conflictQuery优化，保留接口；向量之间仍有32项VIQ/独立请求游标，不把整后端收紧成单条在途。现有LiteX AXI路由读/写各一在途限制实际性能，不能复用R04独立模型的带宽数字。两位long-source计数暂把向量标量结果归入FPU，不改变寄存器bank或结果所有权。
+25. **总线错误硬件保护**：R04对Ok后的AXI错误仅断言，综合去断言后不应静默继续。增加sticky RVV busFailure→hartFatal，阻止错误load写VRF与后续正常提交；早期翻译、VS/vill/Serial的精确异常合同保留。Ok之后不可恢复总线错误不冒充早期精确Exc。该新增保护仍需最小回归、重新生成/冻结最终RVV物理源。
+26. **SD软件接口核对**：5ab生成CSR实际PHY/core/reader/writer/IRQ偏移与DTB/两个MMC驱动补丁一致；打包器进一步核对块偏移、CSR宽度和hart数，仅页base相同不足以说明匹配。SD/card/mux外部时序和新板上启动均为OPEN/BOARD_NOT_RUN，不借用旧29ee514的GAPBS板级结果。
+
+主机规则本阶段每次重新读取共享配置并预检；cloud_chen有限5秒SSH连续timeout255，按当前配置回退Alan，记录工具Java11.0.32.1/Verilator5.028/Vivado2022.2及实际cwd/SHA。本地反向HTTP代理18897可用，所有新源通过精确提交fetch/ff或隔离worktree同步，未使用bundle。MMU原冻结hash差异仍保留，新增后端/L1D/Home合同仅按用户授权范围更新。

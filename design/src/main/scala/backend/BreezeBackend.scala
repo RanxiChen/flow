@@ -73,6 +73,7 @@ class BreezeBackend(
     val supervisorExternalInterrupt = Input(Bool())
     val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(64, cfg.ghrLength)))
     val l1d = Flipped(new L1DCoreIO)
+    val cacheEarlyCancel = Output(Bool())
     val mmuIdle = Input(Bool())
     val translationBlocked = Output(Bool())
     val frontendBtbUpdate = Output(new BreezeBTBUpdateReq(64))
@@ -228,13 +229,13 @@ class BreezeBackend(
     (wb.valid && wb.copro && !wb.solo && !coproDecisionValid)
   val downHold = wb.valid && wb.solo && !wb.exception &&
     ((wb.mem && !io.l1d.resp.valid) || (wb.copro && !coproDecisionValid))
-  val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
+  val wbCanLeave = wb.valid && !downHold && !io.hartFatal && !stopped
   wbCommit := wbCanLeave && !wbExc && !wbReplay
   // Preserve the frozen P09 external-event observation boundary. CSR
   // priority/masking uses its existing state; it is listed separately in
   // the R7 evidence rather than described as a newly registered decision.
   val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !perm.valid && !wb.valid &&
-    !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped
+    !io.l1d.mmioBusy && !io.hartFatal && !stopped
   val fenceRedirect = wbCommit && (wb.fencei || wb.sfence)
   val xret = wbCommit && (wb.mret || wb.sret)
   val satp = wbCommit && wb.csrWrite && wb.csrAddr === CSRMAP.satp.U
@@ -249,7 +250,11 @@ class BreezeBackend(
   writeback.io.ordinary.bits.flags := 0.U
   writeback.io.late <> io.l1d.late
 
-  io.hartFatal := writeback.io.hartFatal
+  io.hartFatal := writeback.io.hartFatal || vector.map(_.io.fatal).getOrElse(false.B)
+  // CPU S3 is aligned with this WB memory owner. Local Exc/Replay already
+  // deny its side effects; the remaining cancellation is the registered
+  // early exception or fatal. Avoid S3 -> WB kill -> S3 array write feedback.
+  io.cacheEarlyCancel := (wb.valid && wb.mem && wb.exception) || io.hartFatal
   regFile.io.rs1_addr := rs1
   regFile.io.rs2_addr := rs2
   regFile.io.rd_en := writeback.io.gprWrite.valid
@@ -340,7 +345,7 @@ class BreezeBackend(
   val atomicAddress = ex.ctrl.mem_op === BreezeMemOp.Lr || ex.ctrl.mem_op === BreezeMemOp.Sc ||
     ex.ctrl.mem_op === BreezeMemOp.Amo
   val address = exR1 + Mux(atomicAddress, 0.U, Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm))
-  val allowEx = !writeback.io.hartFatal && !stopped
+  val allowEx = !io.hartFatal && !stopped
   io.l1d.req.valid := exMem && allowEx
   val req = io.l1d.req.bits
   req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
@@ -398,7 +403,7 @@ class BreezeBackend(
   divUnit.io.req.bits.isWord := wordDiv
   divUnit.io.req.bits.fastValid := byZero || overflow
   divUnit.io.req.bits.fastData := Mux(wordDiv, Cat(Fill(32, fast(31)), fast(31,0)), fast)
-  fpUnit.io.req.valid := exFpLong && !exFpIssued && !writeback.io.hartFatal && !stopped
+  fpUnit.io.req.valid := exFpLong && !exFpIssued && !io.hartFatal && !stopped
   val fpIn = fpUnit.io.req.bits
   val fp1 = Mux(exFp.usesGpr1, exR1, exFprRead(0))
   fpIn.operandA := Mux(exFp.operation === BreezeFpOp.ADD.U, 0.U, fp1)

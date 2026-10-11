@@ -1,168 +1,55 @@
-# KCU105 single-hart SD and coherent DMA build
+# BE2 KCU105 三产品 SD 启动
 
-## 2026-09-12 simplification (supersedes the implementation notes below)
+2026-10-11。交付范围是 JTAG 加载的 FPGA bitstream、其中初始化的 BIOS、FAT SD 软件文件。SD 只存 Linux/OpenSBI/DTB/软件镜像；不存或加载 bitstream，不追加 Flash 配置镜像。
 
-The target now calls official `self.add_sdcard(mode="read+write")` directly.
-The custom SD helper, card-detect input, DMA status/reset/gating hardware and
-all custom SD max-delay constraints have been removed. The manual MMCM
-`clkouts` rewrite has also been removed; clock generation uses official CRG.
-UART/SD interrupt allocation is explicitly 10/11, matching the PLIC wiring.
-The Breeze coherent DMA entry and internal SD/DMA ILA probes are retained.
+| 产品 | `build_sd.sh` profile | CPU 参数 | 核数 | 缓存和内存边界 |
+|---|---|---|---:|---|
+| 四核基础版 | `four` | `breeze` | 4 | 每核 L1I/L1D 各 4KiB、两路；L2 四路/总128KiB；64-bit AXI |
+| 普通单核 | `single` | `breeze-tiny` | 1 | 从同一 `small` 配置仅改变核数；L2 总32KiB，其余每核参数相同 |
+| 单核 RVV | `single-rvv` | `breeze-rvv` | 1 | 同一标量基础、写穿 L1D、dataless Home、512-bit AXI；R04 向量后端 |
 
-The BIOS driver overlay is disabled: the builder uses installed official
-LiteX software. Old custom driver sources under `software/` are currently
-unused and have not been adapted. Official driver alignment/error handling
-and the updated LiteX/picolibc compatibility remain unfinished. No build or
-board validation was performed for this simplification. `SnapshotBuilder`
-in `build_support.py` only freezes gateware sources; it adds no hardware and
-does not replace software packages. Manual BIOS boot remains selected.
+三者均为 100MHz、RV64IMAFDC、GShare、Sv39、32-byte line、一个标量 MSHR、两个标量 miss slot、32-bit PA、2GiB DDR、64KiB BIOS ROM/SRAM。RVV 默认 VLEN=DLEN=512、八个64-bit lane、VIQ32、16KiB返回缓冲；仅支持已实现的整数与 unit-stride 子集。未实现的指令和 R05 临时 Serial 条件精确陷入，不宣称完整 V ISA。
 
-The r5 bitstream is not timing-qualified: its all-register-Q max-delay
-constraints segmented timing paths. Routed-DCP reanalysis gives WNS
--12.083 ns and WHS -0.241 ns. Preserve r5 artifacts; a fresh implementation
-with valid constraints is required. Removing the erroneous constraints does
-not complete external SD timing verification.
+SD 使用官方 LiteSDCard/LiteX read+write IP。64-bit Wishbone DMA 经专用一致性桥进入 Home，不直接旁路 DDR。基础版读最新脏数据、写前失效 L1D；RVV 版写穿标量与 SD/RVV 失效及 AXI 写完成排序。错误返回 ERR，不伪装 ACK。BIOS 使用固定上游 hash 匹配的局部驱动补丁，400kHz 初始化、最高5MHz四线传输、对齐 bounce buffer、内存屏障、有限重试和 DMA 错误检查。
 
-## Historical implementation notes (before simplification)
+CSR SD 页为 `0x12006000`，IRQ11，UART IRQ10；DTB 和 Linux MMC 驱动使用真实生成的 PHY/core/reader/writer/IRQ 子块偏移。软件打包器检查这些偏移和 hart 数，记录 BIOS/CSR/镜像哈希。
 
-This is a JTAG-loaded FPGA product. It does not store FPGA configuration in
-Flash, program the board, or modify the inserted SD card during the build.
+## 构建
 
-## Implementation
+仿真、编译及 RTL 生成前重新读取 [共享主机配置](../../docs/cross-project/simulation-host.md)，先预检 cloud_chen，不可用才使用 Alan；Vivado 始终用 Alan。通过本地反向 HTTP 代理同步准确提交，不使用 bundle。主机选择和资源上限由运行者落实，脚本不在本地自动发起远端任务。
 
-The SD PHY, command/data engine and DMA engines are the installed
-LiteSDCard/LiteX IP. `software/sdcard.c` is the Flow BIOS driver, selected by a
-per-build software overlay. It replaces the BIOS `liblitesdcard/sdcard.c`;
-the installed LiteX checkout and FatFs implementation are preserved. This is
-not a `litex_demo` application or a Linux MMC driver.
-
-`withCoherentDma=false` is the Chisel default. Passing `coherent-dma` as the
-generator's fifth argument adds a 64-bit Wishbone slave to the cluster/Home.
-Its RTL lives in a separate `coherent-dma` subdirectory and carries the
-platform JSON SHA256 in `cluster-profile.txt`. The LiteX DMA CPU variant
-rejects an absent/mismatched DMA marker or stale platform hash.
-
-DMA uses the existing blocking Home transaction, array ports, directory,
-probe/reply and memory refill/writeback machinery. CPU traffic and DMA
-alternate when both are pending; existing CPU arbitration is retained. DMA
-never becomes a directory owner/sharer. Coherent reads recall a UNIQUE owner
-if necessary; writes invalidate all existing L1D copies, wait for replies,
-merge byte enables into the latest line, and update L2 before ACK. Misses
-allocate through the existing 32-byte refill path. The only permitted DMA
-regions are cacheable read/write PMA memory. No DMA line cache, extra L2 bank,
-extra SRAM port, or extra directory bit is added.
-
-L1I is not a directory sharer: executing newly loaded code still requires
-the normal FENCE.I handoff. Coherence also does not replace driver barriers,
-DMA completion checks or software buffer ownership.
-
-The 64-bit LiteX DMA engines require 8-byte-aligned memory buffers. Aligned
-buffers are transferred directly. The BIOS driver uses one 512-byte static
-array in existing SRAM for unaligned buffers and CPU copies only those
-blocks. This is alignment adaptation, not cache maintenance, and does not
-instantiate a separate SRAM IP. The SD IP retains its own stream FIFOs.
-
-The driver initializes SD v2 cards at 400 kHz, then uses four data wires at
-at most 5 MHz. It distinguishes sector/byte addressing through OCR, reports
-raw CID/CSD words, checks actual SRAM/DDR DMA bounds, bounds command/data/DMA
-waits, and propagates read errors to FatFs. Legacy cards that do not answer
-CMD8 are not supported in this first-board profile. The DMA wrapper latches
-Wishbone errors and stops further requests; firmware resets DMA/PHY after
-failure. An error is never translated into a successful ACK.
-
-## Current map
-
-| Region | Address | Size |
-| --- | --- | --- |
-| BIOS ROM | `0x10010000` | 64 KiB |
-| SRAM | `0x11000000` | 64 KiB |
-| DDR | `0x80000000` | 2 GiB, ends at `0xffffffff` |
-| Existing CSR pages | `0x12000000` through `0x12005000` | unchanged allocation |
-| SD CSR | `0x12006000` | one 4 KiB page |
-| SD DMA status/reset | `0x12007000` | one 4 KiB page |
-
-The target checks actual SRAM/DDR regions against PMA. The MMCM search is
-restricted to exact clock frequencies: at 100 MHz sys, pll4x is 400 MHz and
-IDELAY reference is 200 MHz. This avoids the prior nominal-200/actual-201.389
-MHz discrepancy; generated clock configuration and Vivado reports remain
-the evidence for each particular build.
-
-## Build and progress
-
-On Alan, from `/home/chen/FUN/flow`, choose a **fresh absolute output path**:
+在已预检的环境中，从准确提交生成独立工程；每个输出目录必须不存在：
 
 ```sh
-nohup bash fpga/kcu105/build_sd.sh /absolute/fresh/output \
-  > /absolute/fresh/output.log 2>&1 < /dev/null &
-tail -f /absolute/fresh/output.log
+bash fpga/kcu105/build_sd.sh four /absolute/fresh/four
+bash fpga/kcu105/build_sd.sh single /absolute/fresh/single
+bash fpga/kcu105/build_sd.sh single-rvv /absolute/fresh/single-rvv
 ```
 
-The script runs the five directed hardware suites, generates
-single/gshare/linux/fpga-debug/coherent-dma RTL, compiles the BIOS, and then
-runs Vivado. `--prepare-only` stops before Vivado; `--vivado-only` consumes an
-already prepared directory. It never uses `--load`.
+可加 `--prepare-only` 仅生成 RTL/BIOS/工程；随后 `--vivado-only` 消费已冻结工程。构建器冻结源、记录约束、先检查映射再实现；setup/hold 不通过时在 write_bitstream 前拒绝生成。最小功能门禁由 BE2 执行记录单独绑定，不把只成功生成工程称为测试通过。产物为 `gateware/xilinx_kcu105.bit`，BIOS 已初始化在其中；独立 BIOS 文件为 `software/bios/bios.bin`。
 
-`FLOW_TEST_CACHE=/absolute/previous/output` can reuse passing tests only when
-that build's tracked design/config match the current commit, the current
-design/config are clean, and the previous source status is clean. It records
-the original tested commit separately from the new build commit.
+完整软件可以稍后独立编译：
 
-Important artifacts:
-
-- `directed-tests.log`, `directed-source-commit.txt`: hardware test evidence.
-- `prepare.log`, `prepare-exit-code.txt`: RTL/BIOS/project generation result.
-- `source-commit.txt`, `source-status.txt`, `platform.json`, `cluster-profile.txt`.
-- `source-snapshot/manifest.json`: hashes and original paths of frozen RTL.
-  Vivado consumes these copies. Include directories are copied too.
-- `software-source/`: the exact BIOS/library overlay used by this build.
-- `csr.json`, `csr.csv`: actual peripheral map; use these for later software.
-- `ila-probes.json`: original 54 probes followed by SD/DMA diagnostics.
-  CMD/DAT probes observe the PHY's internal registered inputs and pre-I/O
-  outputs/enables. They never connect the bidirectional package-pad nets to
-  the ILA; doing that caused r4's five unrouted SD nets (RTSTAT-1).
-- `vivado-exit-code.txt`: synthesis/implementation/bitstream command result.
-- `gateware/xilinx_kcu105.bit`, `gateware/xilinx_kcu105.ltx`, `gateware-sha256.txt`.
-
-## Board checks after the user loads the image
-
-BIOS automatic boot is disabled for initial SD diagnosis. The normal manual
-`sdcardboot` command remains available after data checks. The first-board
-console deliberately exposes no SD write/erase command.
-
-```text
-sd_status
-sdcard_init
-sdcard_read 0
-sd_file_crc <existing-FAT-file>
+```sh
+BUILDROOT_DIR=/path/to/buildroot BUILDROOT_OUT=/fresh/software/output \
+  SD_GAPBS_BOOT=/fresh/software/boot SD_GAPBS_PROFILE=four JOBS=2 \
+  bash linux/sd-gapbs/build.sh
 ```
 
-Compare the reported sector/file CRC32 with the same bytes read on a host.
-A successful card-detect signal does not prove SD command/data communication.
-KCU105 U107 multiplexes the SD connection between FPGA and system controller;
-`SYSCTLR_SDIO_MUX_SEL` is controlled by the system controller. SW15.6 ON with
-the other switches OFF selects external JTAG, not a direct FPGA-controlled
-SD mux pin. If identification times out, verify mux ownership and ILA command
-traffic before changing driver timing or card contents.
+profile 另可选 `single`、`single-rvv`。三个 DTB 分别为 `flow-be2-quad`、`flow-be2-single`、`flow-be2-single-rvv`。同一 SMP4/SD kernel 可配三份 DTB；软件 ABI 不改变时更新 SD 文件即可。已有 GAPBS SDK 可用 `linux/sd-gapbs/rebuild-kernel.sh` 在新目录重编 Linux，不修改旧 SDK/rootfs。完整构建配方仍是 `build.sh`。
 
-## Verification boundary
+按硬件工程打包匹配的软件：
 
-55 directed tests passed with the optional DMA RTL and aligned 2 GiB DDR /
-64 KiB SRAM PMA: DMA reads/writes, four-client invalidation, dirty partial
-writes, high DDR addresses, memory errors, consecutive Wishbone cycles,
-existing L2/L1 coherence and PMA checks. These tests do not establish physical
-SD communication, the BIOS SD driver's behavior on a card, or Linux boot.
+```sh
+python3 fpga/kcu105/prepare_sd_boot.py --profile four \
+  --hardware-dir /absolute/fresh/four --images /software/output/images \
+  --output /fresh/fat-files
+```
 
-The SD target currently adds 5 ns internal pad-route budgets for CMD/DAT.
-Those constraints are **not a complete external SD/card/mux timing model**;
-the PHY uses sys-clocked I/O with a divided/gated SD clock. A generated bitstream
-or clean internal setup/hold result must not be reported as complete SD
-interface timing verification. First-board reads and CRC checks are still
-required. Four-hart SD placement, full 2 GiB board memory tests and Linux boot
-remain separate milestones. ACT4 ELF preparation follows the single-hart
-FPGA build and must use its frozen map and a defined board completion protocol.
+将 `Image`、`fw_jump.bin`、匹配 `.dtb`、`serial-handoff.bin`、`boot.json` 放在 FAT 分区根目录。用户加载 `.bit` 后，BIOS 在 DDR training 后自动尝试 SD 软件启动；hart0 初始化，辅助 hart 等待发布入口，然后每核保留自己的 hart ID 进入 OpenSBI。Linux 使用内嵌 initramfs，继续执行既有 `gapbs-smoke`，不要求 SD 根文件系统。镜像加载地址见生成的 `boot.json`。
 
-The r4 build compiled BIOS successfully (39.02 KiB ROM), then failed bitstream
-DRC on the five CMD/DAT pad nets. Its directory and reports are retained.
-The subsequent fix moves ILA observations behind the IOBUF/SDR input registers
-and gives the output route-budget constraints explicit register startpoints;
-it requires a fresh synthesis/implementation, not a bitgen-only retry.
+## 证据范围
+
+最新构建、时序及测试状态以 [BE2 报告](../../docs/tasks/BE2-report.md) 和逐工程 manifest 为准，历史29ee514/b2a895b板上 GAPBS 成功不能替代新产品的板上证明。未上板时，报告必须保留 `BOARD_NOT_RUN`。
+
+[SD timing](sd-timing.md) 的定向内部预算不构成完整 SD/card/mux 外部时序证明。加载后仍需核验 KCU105 SD mux、初始化/文件 CRC、Linux MMC 枚举，以及四 hart 在线数。构建脚本不烧板、不写 SD 卡。

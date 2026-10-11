@@ -47,6 +47,17 @@ def main():
         expected_harts = 4 if args.profile == 'four' else 1
         if csr['constants'].get('breeze_num_harts') != expected_harts:
             raise SystemExit('hardware hart count does not match boot profile')
+        # The Linux driver accesses these independent CSR blocks. A matching
+        # page base alone cannot establish their register ABI.
+        sd_abi = {'phy_card_detect': (0x00, 1), 'phy_settings': (0x18, 1),
+                  'core_cmd_argument': (0x1c, 1), 'core_cmd_response': (0x28, 4),
+                  'block2mem_dma_base': (0x48, 2), 'block2mem_dma_error': (0x64, 1),
+                  'mem2block_dma_base': (0x68, 2), 'mem2block_dma_error': (0x84, 1),
+                  'ev_status': (0x88, 1), 'ev_enable': (0x90, 1)}
+        for name, (offset, size) in sd_abi.items():
+            reg = csr['csr_registers'].get('sdcard_' + name, {})
+            if reg.get('addr') != 0x12006000 + offset or reg.get('size') != size:
+                raise SystemExit(f'SD CSR ABI mismatch: {name}')
         for name in ('csr.json', 'software/bios/bios.bin'):
             data = (args.hardware_dir / name).read_bytes()
             hardware[name] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
