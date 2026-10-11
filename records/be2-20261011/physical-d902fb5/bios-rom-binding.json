@@ -1,0 +1,6 @@
+{
+  "bios_bytes": 40924,
+  "bios_sha256": "268bb402a1e2172dc6f327a7e1b2eda6d2e12cb5984b835a6a143880e58ec8a2",
+  "rom_prefix_matches_bios": true,
+  "rom_init_sha256": "ea576bc889751ca49fedb0008587f50ad0b08df7b302fa8c1ed487e0b407a313"
+}

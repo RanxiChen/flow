@@ -1,0 +1,209 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 22:27:23 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from [get_cells -of_objects [all_fanin -flat -startpoints_only -to [get_ports {sdcard_clk sdcard_cmd {sdcard_data[*]}}]] -filter IS_SEQUENTIAL] -to [get_ports {sdcard_clk sdcard_cmd {sdcard_data[*]}}] -max_paths 30 -file sd_output_paths.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             5.633ns  (required time - arrival time)
+  Source:                 FDCE_10/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_cmd
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        4.367ns  (logic 1.308ns (29.958%)  route 3.059ns (70.042%))
+  Logic Levels:           1  (OBUFT=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X7Y7                                        0.000     0.000 r  FDCE_10/C
+    SLICE_X7Y7           FDCE (Prop_HFF_SLICEM_C_Q)
+                                                      0.114     0.114 r  FDCE_10/Q
+                         net (fo=2, routed)           3.059     3.173    IOBUF_64/T
+    AD9                  OBUFT (TriStatD_OUTBUF_HRIO_T_O)
+                                                      1.194     4.367 r  IOBUF_64/OBUFT/O
+                         net (fo=1, unset)            0.000     4.367    sdcard_cmd
+    AD9                                                               r  sdcard_cmd (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -4.367    
+  -------------------------------------------------------------------
+                         slack                                  5.633    
+
+Slack (MET) :             6.029ns  (required time - arrival time)
+  Source:                 FDCE_15/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[3]
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        3.971ns  (logic 1.250ns (31.476%)  route 2.721ns (68.524%))
+  Logic Levels:           1  (OBUFT=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X30Y7                                       0.000     0.000 r  FDCE_15/C
+    SLICE_X30Y7          FDCE (Prop_FFF2_SLICEM_C_Q)
+                                                      0.117     0.117 r  FDCE_15/Q
+                         net (fo=1, routed)           2.721     2.838    IOBUF_68/I
+    AH8                  OBUFT (Prop_OUTBUF_HRIO_I_O)
+                                                      1.133     3.971 r  IOBUF_68/OBUFT/O
+                         net (fo=1, unset)            0.000     3.971    sdcard_data[3]
+    AH8                                                               r  sdcard_data[3] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -3.971    
+  -------------------------------------------------------------------
+                         slack                                  6.029    
+
+Slack (MET) :             6.074ns  (required time - arrival time)
+  Source:                 FDCE_14/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[2]
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        3.926ns  (logic 1.242ns (31.631%)  route 2.684ns (68.369%))
+  Logic Levels:           1  (OBUFT=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X31Y10                                      0.000     0.000 r  FDCE_14/C
+    SLICE_X31Y10         FDCE (Prop_DFF2_SLICEL_C_Q)
+                                                      0.117     0.117 r  FDCE_14/Q
+                         net (fo=1, routed)           2.684     2.801    IOBUF_67/I
+    AH9                  OBUFT (Prop_OUTBUF_HRIO_I_O)
+                                                      1.125     3.926 r  IOBUF_67/OBUFT/O
+                         net (fo=1, unset)            0.000     3.926    sdcard_data[2]
+    AH9                                                               r  sdcard_data[2] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -3.926    
+  -------------------------------------------------------------------
+                         slack                                  6.074    
+
+Slack (MET) :             6.122ns  (required time - arrival time)
+  Source:                 FDCE_8/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_clk
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        3.878ns  (logic 1.267ns (32.677%)  route 2.611ns (67.323%))
+  Logic Levels:           1  (OBUF=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X44Y8                                       0.000     0.000 r  FDCE_8/C
+    SLICE_X44Y8          FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  FDCE_8/Q
+                         net (fo=1, routed)           2.611     2.725    sdcard_clk_OBUF
+    AL10                 OBUF (Prop_OUTBUF_HRIO_I_O)
+                                                      1.153     3.878 r  sdcard_clk_OBUF_inst/O
+                         net (fo=0)                   0.000     3.878    sdcard_clk
+    AL10                                                              r  sdcard_clk (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -3.878    
+  -------------------------------------------------------------------
+                         slack                                  6.122    
+
+Slack (MET) :             6.149ns  (required time - arrival time)
+  Source:                 FDCE_13/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[1]
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        3.851ns  (logic 1.285ns (33.375%)  route 2.566ns (66.625%))
+  Logic Levels:           1  (OBUFT=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X31Y10                                      0.000     0.000 r  FDCE_13/C
+    SLICE_X31Y10         FDCE (Prop_DFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  FDCE_13/Q
+                         net (fo=1, routed)           2.566     2.680    IOBUF_66/I
+    AN9                  OBUFT (Prop_OUTBUF_HRIO_I_O)
+                                                      1.171     3.851 r  IOBUF_66/OBUFT/O
+                         net (fo=1, unset)            0.000     3.851    sdcard_data[1]
+    AN9                                                               r  sdcard_data[1] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -3.851    
+  -------------------------------------------------------------------
+                         slack                                  6.149    
+
+Slack (MET) :             6.464ns  (required time - arrival time)
+  Source:                 FDCE_12/C
+                            (rising edge-triggered cell FDCE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            sdcard_data[0]
+  Path Group:             **default**
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (MaxDelay Path 10.000ns)
+  Data Path Delay:        3.536ns  (logic 1.283ns (36.288%)  route 2.253ns (63.712%))
+  Logic Levels:           1  (OBUFT=1)
+  Output Delay:           0.000ns
+  Timing Exception:       MaxDelay Path 10.000ns -datapath_only
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    SLICE_X46Y8                                       0.000     0.000 r  FDCE_12/C
+    SLICE_X46Y8          FDCE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     0.114 r  FDCE_12/Q
+                         net (fo=1, routed)           2.253     2.367    IOBUF_65/I
+    AP9                  OBUFT (Prop_OUTBUF_HRIO_I_O)
+                                                      1.169     3.536 r  IOBUF_65/OBUFT/O
+                         net (fo=1, unset)            0.000     3.536    sdcard_data[0]
+    AP9                                                               r  sdcard_data[0] (INOUT)
+  -------------------------------------------------------------------    -------------------
+
+                         max delay                   10.000    10.000    
+                         output delay                -0.000    10.000    
+  -------------------------------------------------------------------
+                         required time                         10.000    
+                         arrival time                          -3.536    
+  -------------------------------------------------------------------
+                         slack                                  6.464    
+
+
+
+

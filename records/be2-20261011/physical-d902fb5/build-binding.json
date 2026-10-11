@@ -1,0 +1,21 @@
+{
+  "source_sha": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+  "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "scalar_base_rtl_diff": [
+    "design/src/main/scala/rvv/RvvAluPipeline.scala",
+    "design/src/main/scala/rvv/RvvAxiArbiter.scala",
+    "design/src/main/scala/rvv/RvvLoadStore.scala",
+    "design/src/main/scala/rvv/RvvRegisterFile.scala"
+  ],
+  "source_dirty": false,
+  "host": "Alan",
+  "hostname": "chen-System-Product-Name",
+  "cwd": "/home/chen/FUN/flow-be2-b3-8ea5db5",
+  "profile": "single-rvv",
+  "clock_hz": 100000000,
+  "target": "xcku040-ffva1156-2-e",
+  "vivado": "2022.2",
+  "golden_changed": false,
+  "board": "NOT_RUN",
+  "new_timing_exceptions": false
+}

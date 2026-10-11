@@ -1,0 +1,8 @@
+{
+  "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "BIOS_bytes": 40908,
+  "ROM_bytes": 65536,
+  "BIOS_matches_ROM_init": true,
+  "BIOS_sha256": "4cb3f1006153240e4fdfb3ed43a81f87472baadb564b47f7cb183689dd6c7e8b",
+  "ROM_init_sha256": "0c4ea96e9c24e85e6d43fd2f529359526deb3d10f19404428512bfb7ff2dc27c"
+}

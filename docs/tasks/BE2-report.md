@@ -275,3 +275,11 @@ c735fbd四核旧最终route_status还明确有37个routing resource conflict，�
 22:08 CST：99df4a1仅增加验证、不改d902fb5生产RTL/config；17ELF（原14标量、原2向量访存、增1向量算术）全部tohost=1、exit0。新增程序验证8个64位大操作数MAC低64结果、16个e32 MAC和16条连续signed packed-byte DOT的16个结果；外部GoldenMem以独立BigInt乘加和整数dot求期望，原内存/context签名仍逐项保持。MAC/DOT4259cycles/275retired，两个原RVV仍2852/3215cycles。日志sd-minimum-99df4a1。用于正在物理运行的d902fb5时明确标记相同生产RTL验证，bit源SHA保持d902fb5。
 
 准备postroute-closure.tcl作四核默认后处理若失败的备选：输入保存的准确route DCP，独立复制的工程和输出，不覆盖baseline；AggressiveExplore物理优化后NoTimingRelaxation/tns_cleanup路由，仍明确100MHz、原全量约束、SD同10ns传输预算，检查setup/hold/route errors再write_bitstream。Vivado2022.2本机help明确支持相应directive与post-route使用；没有应用retime或新clock/false_path/multicycle参数。当前只为准备，未运行该候选，四核默认仍在优化；不能把候选脚本本身当作结果。
+
+22:28 CST：第二个SD bitstream（四核7f7f186）完成，实际16007026字节，最终WNS+0.002/WHS+0.030/WPWS+0.108ns，TNS/THS/TPWS及全部failed endpoints0，route errors0，SD IO transport budget PASS。setup余量很小，如实保留；不再为该已过目标的产品追加物理优化，postroute-closure仅准备、NOT_RUN。四核Vivado/bit存在/SHA记录步骤均成功后set-e循环进入重复单核；按RTL/Tcl/ROMinit/BIOS四项相同hash确认已存在的single-parallel是同一输入，按准确PID2390890/cwd停止重复叶进程，wrapper最终143为主动省去重复工作，不冒充总wrapper exit0。four_phase_exit0的派生依据与完整审计在duplicate-stop.json；普通单核自身完整runner exit0。两个通过产品都保留准确7f源，不改核内配置。
+
+最终四核FAT包重新绑定实际.bit/BIOS/CSR，exit0，SD没有写入，硬件没有烧录；新Linux/SD/四核board均NOT_RUN。镜像单独重编译接口/工具链脚本保持。
+
+d902 RVV综合WNS+1.229ns、LUT119034/FF56918/BRAM242.5/DSP177，完整只读synth审计exit0、LUTLP违规0；比8a的−0.358改善但只为估计。当前placed最差writeMeta_slot→scoreboard reads约−0.540ns，另有ALU grant/carry/return RAM等控制路径，仍继续默认route而未宣布闭合。VRF EN路径移出当前最差组；不以仅一个修复保证所有路径通过。
+
+22:42 CST：四核及普通单核本地已下载的实际.bit/BIOS逐项匹配最终软件product-binding，两个包各五个SD文件大小/SHA256全部匹配manifest。d902只读place审计exit0，完整min/max报告WNS−0.540/WHS−0.111ns，LUTLP0；仅为placed估计，当前全局route仍在迭代，不能作为最终routed结论。原始place/synth审计、四核最终全量时序/路由/SD报告和wrapper主动停止说明一并归档。

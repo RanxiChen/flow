@@ -105,7 +105,7 @@
       "remote_evidence": "/home/chen/FUN/flow-runs/be2-4e1f86d-linux"
     },
     "board": "not run",
-    "published_bitstreams": 1,
+    "published_bitstreams": 2,
     "scalar_early_cancel_minimum": {
       "source": "a367267976d3e3a664ad482e01c45da489e2d20e",
       "host": "Alan",
@@ -128,11 +128,23 @@
     },
     "four_current": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "routing; final timing and route error gate pending",
+      "status": "bitstream generated, routed timing/SD IO transport passed; board not run",
       "remote": "/home/chen/FUN/flow-runs/be2-7f7f186-breeze-sd",
       "host": "Alan",
       "cores": "0-3",
-      "maxThreads": 4
+      "maxThreads": 4,
+      "phase_exit": 0,
+      "wrapper_exit": 143,
+      "wrapper_exit_reason": "duplicate same-input ordinary single intentionally stopped",
+      "WNS_ns": 0.002,
+      "WHS_ns": 0.03,
+      "WPWS_ns": 0.108,
+      "TNS_ns": 0,
+      "THS_ns": 0,
+      "route_errors": 0,
+      "bitstream_bytes": 16007026,
+      "reports": "physical-7f7f186/four",
+      "software_binding": "be2-final-7f7f186-sd-four; package exit0"
     },
     "single_current": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
@@ -224,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "minimum passed; production/BIOS generated; synthesizing",
+      "status": "synthesis passed; placed estimate negative, routing",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -248,7 +260,23 @@
         "RvvAxiArbiter",
         "RvvRegisterFile",
         "RvvAluPipeline"
-      ]
-    }
+      ],
+      "synth_WNS_ns": 1.229,
+      "synth_LUT": 119034,
+      "synth_FF": 56918,
+      "synth_BRAM_tiles": 242.5,
+      "synth_DSP": 177,
+      "additional_same_RTL_validation": {
+        "source": "99df4a182c162b496bf3d617c792136f0cab460d",
+        "exit": 0,
+        "ELFs": 17,
+        "MAC_DOT_cycles": 4259
+      },
+      "place_WNS_ns": -0.54,
+      "place_WHS_ns": -0.111,
+      "place_audit_exit": 0,
+      "place_reports": "physical-d902fb5/be2-d902fb5-rvv-place-audit"
+    },
+    "local_scalar_products_hash_verified": true
   }
 }

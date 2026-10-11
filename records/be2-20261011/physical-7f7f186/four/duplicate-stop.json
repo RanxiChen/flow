@@ -1,0 +1,18 @@
+{
+  "pid": 2390890,
+  "cwd": "/home/chen/FUN/flow-runs/be2-7f7f186-breeze-tiny-sd/gateware",
+  "cmd": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source xilinx_kcu105.tcl ",
+  "signal": "SIGTERM",
+  "time_utc": "2026-10-11T14:28:51.877842+00:00",
+  "source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "reason": "skip duplicate ordinary single; identical prepared inputs already produced timing-passing bitstream in single-parallel",
+  "identical_inputs_sha256": {
+    "gateware/xilinx_kcu105.v": "5b5171afd110a27e2d64dd534322a01e4886baa8e0aed03d017a794c3a65db06",
+    "gateware/xilinx_kcu105.tcl": "40444c7be39f9c36d5f0333c68055b66b8f44fe3ce33c5bbbef7d36276800591",
+    "gateware/xilinx_kcu105_rom.init": "727c2424fa4d7754ae9b7cdef797bc7be85f25ad140d078b13a46e1edde02d09",
+    "software/bios/bios.bin": "020a084e5245117a531a76c8e7bdaa6feb300ae3de6d8b50b1de49f885a929fb"
+  },
+  "completed_single": "/home/chen/FUN/flow-runs/be2-7f7f186-single-parallel-sd",
+  "four_phase_exit": 0,
+  "four_phase_evidence": "set-e loop advanced into single after four Vivado, bit existence and sha256 steps succeeded"
+}
