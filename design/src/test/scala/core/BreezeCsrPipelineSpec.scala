@@ -44,7 +44,8 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.hpmEvents.icacheMiss, dut.io.hpmEvents.dcacheAccess,
     dut.io.hpmEvents.dcacheMiss, dut.io.hpmEvents.dcacheUncached,
     dut.io.hpmEvents.memStallCycle, dut.io.hpmEvents.loadUseStall,
-    dut.io.hpmEvents.mulSourceStall, dut.io.hpmEvents.divSourceStall)
+    dut.io.hpmEvents.mulSourceStall, dut.io.hpmEvents.divSourceStall) ++
+    dut.io.hpmEvents.replay.toSeq
 
   "pipelined HPM matches an occurrence-time one-cycle-delayed model at every CSR-visible cycle" in {
     simulate(new CSRFile(64, privilegeProfile = PrivilegeProfile.Linux)) { dut =>
@@ -100,7 +101,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         }
         for (i <- 0 until 8) {
           val increment = if (selectors(i) == 13) conflict
-            else if (selectors(i) != 0 && (events & (1 << (selectors(i) - 1))) != 0) 1 else 0
+            else if (selectors(i) != 0 && (events & (1 << (selectors(i) - (if (selectors(i) >= 14) 2 else 1)))) != 0) 1 else 0
           counts(i) = written(CSRMAP.mhpmcounter3 + i).getOrElse(
             (counts(i) + delayedIncrements(i)) & mask)
           delayedIncrements(i) = if (written(CSRMAP.mhpmcounter3 + i).nonEmpty || inhibit.testBit(i + 3)) 0 else increment
@@ -110,7 +111,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
           (instret + (if (retire && !inhibit.testBit(2)) 1 else 0)) & mask)
         coreinst = (coreinst + (if (retire) 1 else 0)) & mask
         for (i <- 0 until 8) written(CSRMAP.mhpmevent3 + i).foreach { value =>
-          selectors(i) = if (value <= 13) value.toInt else 0
+          selectors(i) = if (value <= 20) value.toInt else 0
         }
         written(CSRMAP.mcountinhibit).foreach(value => inhibit = value & 0x7fd)
         dut.clock.step()
@@ -122,8 +123,8 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       check()
       // Exercise every selector on every counter, including continuous events
       // across reconfiguration and inhibited/enabled boundaries.
-      for (event <- 1 to 13; i <- 0 until 8)
-        tick(0xfff, Some((CSRMAP.mhpmevent3 + i, BigInt(event))), conflict = 2)
+      for (event <- 1 to 20; i <- 0 until 8)
+        tick(0x7ffff, Some((CSRMAP.mhpmevent3 + i, BigInt(event))), conflict = 2)
       tick(0x3ff, Some((CSRMAP.mcountinhibit, mask)))
       tick(0x3ff)
       tick(0x3ff, Some((CSRMAP.mcountinhibit, BigInt(0))))
@@ -134,7 +135,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         tick(0x3ff, Some((CSRMAP.mhpmcounter3 + i, BigInt(42))))
         tick()
       }
-      for (value <- Seq(BigInt(14), BigInt(0x101), (BigInt(1) << 63) | 13, mask))
+      for (value <- Seq(BigInt(21), BigInt(0x101), (BigInt(1) << 63) | 13, mask))
         for (i <- 0 until 8) tick(0x3ff, Some((CSRMAP.mhpmevent3 + i, value)))
       tick(write = Some((CSRMAP.mcycle, mask)))
       tick(retire = true, write = Some((CSRMAP.minstret, mask)))

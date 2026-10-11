@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 import scala.collection.mutable
 
 /** Cycle model is an environment, not a prediction copied from backend RTL.
-  * S1/S2/S3 are advanced on every non-s2Hold edge, irrespective of late.ready.
+  * S1/S2 advance each edge; only the solo S3 owner holds, irrespective of late.ready.
   * A replay that loses its write port moves to MSHR LATE; ordinary hits still
   * generate their unique Valid response. Seeds and response schedules are explicit.
   */
@@ -153,6 +153,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val soloHold = hold && s2.exists(_.solo)
     d.io.l1d.s2Hold.poke(soloHold.B)
     d.io.l1d.cpuDrained.poke((drained && pending.isEmpty && ps.isEmpty).B)
+    if (!drained || pending.nonEmpty || ps.nonEmpty) record("cpuOutstanding")
     val nextWake = pending.isEmpty && cycle >= holdUntil && tlbDone.values.forall(cycle >= _)
     d.io.l1d.replayWake.poke(wakeD.B)
     d.io.l1d.resp.bits.replayReason.poke((if(tlbBlocked) 1 else if(blockedLine) 2 else if(full) 3 else if(device) 4 else 0).U)
@@ -403,6 +404,22 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
   "T18_FENCEI_drained_WB_flush" in { check() { m =>
     val p=m.run(Seq(BigInt(0x100f)),8); val wb=m.at("ex",p.head)+3
     m.all("redirect") mustBe Seq(wb); m.all("icacheFlush") mustBe Seq(wb); m.at("commit",p.head) mustBe wb
+  }}
+  "BE2 R6 FENCEI samples CPU drain after the last WB creates a PS obligation" in { check() { m =>
+    val store=m.issue(sd(256)); val fence=m.issue(BigInt(0x100f))
+    m.run(Seq(nop),8)
+    m.at("id",fence) mustBe m.all("cpuOutstanding").last+2
+    m.at("id",fence) must be > m.at("commit",store)
+    m.all("icacheFlush") mustBe Seq(m.at("commit",fence))
+  }}
+  "BE2 R6 FENCEI waits for CPU MSHR ownership created by the last WB" in { check() { m =>
+    m.misses += BigInt(256); m.returnDelay=20
+    val load=m.issue(ld(1,256)); val fence=m.issue(BigInt(0x100f))
+    m.run(Seq(nop),12)
+    m.at("id",fence) mustBe m.all("late").last+2
+    m.at("id",fence) must be > m.at("commit",load)
+    m.writes(1).map(_.data).toVector mustBe Vector(BigInt(0x1234))
+    m.all("icacheFlush") mustBe Seq(m.at("commit",fence))
   }}
   "T19_FENCEI_wait_serial_ID" in { check() { m =>
     m.drained=false; val p=m.pc
