@@ -28,7 +28,7 @@ object GenerateBreezeCluster extends App {
     ChiselStage.emitSystemVerilogFile(
         if (cfg.rvv.nonEmpty) new BreezeRvvAxi(cfg, enableTandem, debug, hangThreshold)
         else new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
-        Array("--target-dir", targetDir.toString),
+        Array("--target-dir", targetDir.toString, "--full-stacktrace"),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
     // emitted, so the LiteX wrapper always loads the exact files of this run.

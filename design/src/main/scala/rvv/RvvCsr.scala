@@ -23,9 +23,10 @@ class RvvCsr(p: RvvParams) extends Module {
   val vs = RegInit(0.U(2.W)); val vl = RegInit(0.U(p.lengthBits.W))
   val vtype = RegInit((BigInt(1) << 63).U(64.W))
   val vstart = RegInit(0.U(p.lengthBits.W)); val vxrm = RegInit(0.U(2.W)); val vxsat = RegInit(false.B)
-  val reads = Seq(0x008 -> vstart.pad(64), 0x009 -> vxsat.asUInt.pad(64),
-    0x00a -> vxrm.pad(64), 0x00f -> (vxrm ## vxsat).pad(64),
-    0xc20 -> vl.pad(64), 0xc21 -> vtype, 0xc22 -> p.regBytes.U(64.W))
+  def entry(address: Int, data: UInt): (Int, UInt) = (address, data.pad(64))
+  val reads = Seq(entry(0x008, vstart), entry(0x009, vxsat.asUInt),
+    entry(0x00a, vxrm), entry(0x00f, vxrm ## vxsat),
+    entry(0xc20, vl), entry(0xc21, vtype), entry(0xc22, p.regBytes.U(64.W)))
   io.exists := reads.map { case (a, _) => io.address === a.U }.reduce(_ || _)
   io.read := Mux1H(reads.map { case (a, d) => (io.address === a.U) -> d })
   io.state.vl := vl; io.state.vtype := vtype; io.state.vstart := vstart; io.state.vxrm := vxrm
