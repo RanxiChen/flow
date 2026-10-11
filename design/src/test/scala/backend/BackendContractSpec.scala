@@ -391,6 +391,14 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.writes(5).head.data mustBe 1
     m.d.io.observe.fprBusy.expect(0.U)
   }}
+  "BE2 R2 flags-only authorization bridges WB ownership to delayed unit commit" in { check() { m =>
+    m.enableFp(); m.values(512)=BigInt("7ff8000000000000",16)
+    m.run(Seq(ld(1,512,true)),5)
+    val p=m.run(Seq(fp(0,1,toGpr=true),csr(5,1)),35)
+    m.writes(0) mustBe empty
+    m.writes(5).map(_.data).toVector mustBe Vector(BigInt(16))
+    m.at("id",p(1)) mustBe m.all("fpOut").last+1
+  }}
   "T18_FENCEI_drained_WB_flush" in { check() { m =>
     val p=m.run(Seq(BigInt(0x100f)),8); val wb=m.at("ex",p.head)+3
     m.all("redirect") mustBe Seq(wb); m.all("icacheFlush") mustBe Seq(wb); m.at("commit",p.head) mustBe wb

@@ -142,7 +142,7 @@ class FpUnit(val depth: Int = 32, val issueReservation: Boolean = false) extends
   when(flagsSet =/= flagsClear) {
     flagsOnlyCount := Mux(flagsSet, flagsOnlyCount + 1.U, flagsOnlyCount - 1.U)
   }
-  io.committedFlagsOnly := flagsOnlyCount =/= 0.U
+  io.committedFlagsOnly := flagsOnlyCount =/= 0.U || flagsSet
 
   when(io.req.fire) {
     // The pre-edge entry is empty, so the kill loop below cannot see a new
