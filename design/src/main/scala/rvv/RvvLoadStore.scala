@@ -70,20 +70,71 @@ class RvvLoadStore(p: RvvParams) extends Module {
   }
   val d = requestDesc
   val noAccess = d.issue.vl === 0.U || d.issue.vstart >= d.issue.vl
+  // Keep descriptor/segment arithmetic away from AR credit and response
+  // counters. Both preparation stages retain the current committed owner;
+  // no credit or external side effect is acquired before the AXI handshake.
   val segment = position >= d.length(0)
   val segmentOffset = Mux(segment,position-d.length(0),position)
-  val segmentRemain = d.length(segment)-segmentOffset
   val pa = d.pa(segment)+segmentOffset
-  val address = pa & (~(p.memBytes-1).U(64.W))
-  val prefix = pa(log2Ceil(p.memBytes)-1,0)
-  val neededBeats = (segmentRemain +& prefix + (p.memBytes-1).U) >> log2Ceil(p.memBytes)
-  val pageBeats = (4096.U - address(11,0)) >> log2Ceil(p.memBytes)
+  class RequestCursor extends Bundle {
+    val slot = UInt(p.memorySlotBits.W)
+    val pa = UInt(p.paBits.W)
+    val position = UInt(p.lengthBits.W)
+    val segmentRemaining = UInt(p.lengthBits.W)
+    val instructionRemaining = UInt(p.lengthBits.W)
+  }
+  class PreparedRequest extends Bundle {
+    val slot = UInt(p.memorySlotBits.W)
+    val address = UInt(p.paBits.W)
+    val logical = SInt((p.lengthBits+2).W)
+    val beats = UInt(log2Ceil(p.burstBeats+1).W)
+    val consumed = UInt(p.lengthBits.W)
+    val finalInstruction = Bool()
+  }
+  val cursor = Reg(new RequestCursor)
+  val cursorValid = RegInit(false.B)
+  val prepared = Reg(new PreparedRequest)
+  val preparedValid = RegInit(false.B)
+  when(generating && !noAccess && !cursorValid && !preparedValid) {
+    cursor.slot := current; cursor.pa := pa; cursor.position := position
+    cursor.segmentRemaining := d.length(segment)-segmentOffset
+    cursor.instructionRemaining := d.decoded.bytes-position
+    cursorValid := true.B
+  }
+  val cursorAddress = cursor.pa & (~(p.memBytes-1).U(p.paBits.W))
+  val prefix = cursor.pa(log2Ceil(p.memBytes)-1,0)
+  val neededBeats = (cursor.segmentRemaining +& prefix + (p.memBytes-1).U) >> log2Ceil(p.memBytes)
+  val pageBeats = (4096.U - cursorAddress(11,0)) >> log2Ceil(p.memBytes)
   val nBeats = Mux(neededBeats < p.burstBeats.U,neededBeats,p.burstBeats.U)
-  val beats = Mux(nBeats < pageBeats,nBeats,pageBeats)
-  val covered = beats * p.memBytes.U - prefix
-  val consumed = Mux(covered < segmentRemain,covered,segmentRemain)
-  val finalBurst = position + consumed >= d.decoded.bytes
-  val logical = position.zext - prefix.zext
+  val cursorBeats = Mux(nBeats < pageBeats,nBeats,pageBeats)
+  // The bound is checked before narrowing. Otherwise generic page arithmetic
+  // widens every downstream credit adder despite a maximum four-beat burst.
+  val boundedBeats = cursorBeats(log2Ceil(p.burstBeats+1)-1,0)
+  val covered = boundedBeats * p.memBytes.U - prefix
+  val cursorConsumed = Mux(covered < cursor.segmentRemaining,covered,cursor.segmentRemaining)
+  when(cursorValid && !preparedValid) {
+    assert(cursorBeats =/= 0.U && cursorBeats <= p.burstBeats.U,
+      "prepared vector burst length is outside its configured bound")
+    assert(cursorConsumed =/= 0.U && cursorConsumed <= cursor.instructionRemaining,
+      "prepared vector burst did not make bounded progress")
+    prepared.slot := cursor.slot; prepared.address := cursorAddress
+    prepared.logical := cursor.position.zext-prefix.zext
+    prepared.beats := boundedBeats; prepared.consumed := cursorConsumed
+    prepared.finalInstruction := cursorConsumed >= cursor.instructionRemaining
+    preparedValid := true.B; cursorValid := false.B
+  }
+  when(!generating || noAccess || (io.prefetch.fire && io.prefetch.bits.decoded.memory)) {
+    cursorValid := false.B; preparedValid := false.B
+  }
+  when(preparedValid) {
+    assert(generating && prepared.slot === current,"prepared vector request lost its owner")
+  }
+  assert(!(cursorValid && preparedValid),"two prepared requests share one vector cursor")
+  val address = prepared.address
+  val beats = prepared.beats
+  val consumed = prepared.consumed
+  val logical = prepared.logical
+  val finalBurst = prepared.finalInstruction
   io.ordering := d; io.orderingValid := generating && !noAccess
 
   class Burst extends Bundle {
@@ -99,7 +150,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val bSlots = Module(new Queue(UInt(p.memorySlotBits.W),p.memoryInflight))
   val reserved = RegInit(0.U(log2Ceil(p.returnBeats+1).W))
   when(generating && io.scalarWritesVisible) { scalarVisible := true.B }
-  val canRequest = generating && !noAccess && !io.conflict && (!firstRequest || scalarVisible || io.scalarWritesVisible)
+  val canRequest = generating && preparedValid && !noAccess && !io.conflict && (!firstRequest || scalarVisible || io.scalarWritesVisible)
   val creditOk = reserved +& beats <= p.returnBeats.U
   val writeBurst = RegInit(false.B); val writeMeta = Reg(new Burst)
   val writeBeat = RegInit(0.U(9.W)); val gathered = RegInit(false.B)
@@ -119,6 +170,7 @@ class RvvLoadStore(p: RvvParams) extends Module {
   bSlots.io.enq.valid := io.axi.aw.fire; bSlots.io.enq.bits := current
   val requestFire = io.axi.ar.fire || io.axi.aw.fire
   when(requestFire) {
+    preparedValid := false.B
     position := position+consumed; firstRequest := false.B
     when(finalBurst && !d.decoded.store) { generating := false.B; requestDone(current) := true.B }
   }

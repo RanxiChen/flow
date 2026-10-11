@@ -249,3 +249,7 @@ c735fbd四核旧最终route_status还明确有37个routing resource conflict，�
 20:56 CST：5ab7e64已被新RTL替代，按PID2242041、精确cwd/cmd终止post-route phys_opt，runner exit143；synth/place DCP及完整日志保留，route_design成功但未写final route DCP，不标记routed PASS/FAIL。空出的CPU4–7用于同源single prepared工程的完整物理，使用独立single-parallel输出；原工程的绝对RTL/约束hook为不可变输入，生成top/ROM init为同字节副本，所有新输出在新cwd。三个有效作业亲和性集合0–9共10CPU，nice10；Vivado2022.2/default/100MHz不变。
 
 21:00 CST：7f7f186 RVV综合LUT116057（47.879%）、FF56475、BRAM242.5、DSP177；VRF192RAMB36/无LUTRAM。综合估计WNS−1.062ns不是routed结论；关键路径requestDesc_length_0[1]→reserved[8]，31级，10.897ns数据中逻辑3.093/估计routing7.804。当前先完成原默认布局以取得实际路径；若仍不过，按请求准备/credit所有权划分寄存边界，不缩减golden/改变请求排序。
+
+27. **RVV请求准备寄存边界**：7f7f186的保存place DCP最差requestDesc_length_1[0]→responses_14[8]，−1.556ns，32级，11.169ns数据中logic3.376/estimated routing7.793。独立读取原DCP的worst20还列出scoreboard→VRF bank EN、ALU→accumulator cache等路径，后者不以本修正宣称已闭合。将提交后的单个访存请求游标划为segment/PA准备、突发packet准备、AXI接收三个边界；packet保留同一个current slot，AR/AW fire前不预扣返回credit、不改position、不产生外部副作用。接受后只更新一次position；AR仍预留全部返回beat，R仍无条件接收，credit仍直到VRF实际消费才归还。store仍等绑定/全部Inv完成才AW，已提交指令不会因kill被撤销。新增packet所有权/正向有界进展/容量断言；长度先证明≤burstBeats再缩窄credit加法输入。请求准备最多增加两拍及burst之间准备气泡，默认每四beat最多三个请求准备拍，名义供给仍≥64B/clk；实际LiteX单在途约束仍保留，不宣称板上带宽。该修正只改RvvLoadStore，不改变已通过最小集的普通单/四核RTL与配置。
+
+相应最小向量程序把512B context缓冲置于4KiB边界前24字节，覆盖两段翻译、部分首beat、跨行gather，并独立核对512个物理字节均255；原VSOff精确陷入、8输出值12、14原ISA签名、seed/watchdog/总上限保持。新修正目前未运行，测试与物理结果后续另按准确SHA绑定。

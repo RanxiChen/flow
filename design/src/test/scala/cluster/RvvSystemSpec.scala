@@ -77,6 +77,8 @@ class RvvSystemSpec extends AnyFreeSpec with Matchers with ChiselSim {
         if (file.getFileName.toString.startsWith("rvv_memory")) {
           val output = elf.symbol("vector_output")
           for (k <- 0 until 8) memory.read(output + k * 8, 8) mustBe BigInt(12)
+          val context = elf.symbol("vector_context")
+          for (k <- 0 until 512) memory.read(context + k, 1) mustBe BigInt(255)
         }
       }
     }

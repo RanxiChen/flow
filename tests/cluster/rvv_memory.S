@@ -109,7 +109,11 @@ trap:
 .balign 64
 .globl vector_output
 vector_output: .zero 64
-.balign 64
+/* Exercise both pretranslated segments, a partial first bus beat and the
+   store/load row gather across a 4KiB boundary. */
+.balign 4096
+.zero 4096-24
+.globl vector_context
 vector_context: .zero 512
 .balign 64
 .globl tohost

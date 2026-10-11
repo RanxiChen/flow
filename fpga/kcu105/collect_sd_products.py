@@ -71,6 +71,13 @@ def main():
             raise ValueError(f'{profile}: missing completed bitstream/routed checkpoint')
         if bit.stat().st_mtime_ns < checkpoint.stat().st_mtime_ns:
             raise ValueError(f'{profile}: bitstream predates the routed checkpoint')
+        rom_words = (gateware / 'xilinx_kcu105_rom.init').read_text().splitlines()
+        if not rom_words or any(not re.fullmatch('[0-9a-fA-F]{16}', w) for w in rom_words):
+            raise ValueError(f'{profile}: unexpected 64-bit BIOS ROM initialization')
+        rom_data = b''.join(int(w, 16).to_bytes(8, 'little') for w in rom_words)
+        bios = (hardware / 'software/bios/bios.bin').read_bytes()
+        if not bios or rom_data[:len(bios)] != bios:
+            raise ValueError(f'{profile}: BIOS binary differs from the synthesized ROM input')
         timing = timing_summary(gateware / 'xilinx_kcu105_timing.rpt')
         route = (gateware / 'xilinx_kcu105_route_status.rpt').read_text()
         errors = re.search(r'# of nets with routing errors\.+\s*:\s*(\d+)', route)
@@ -91,6 +98,7 @@ def main():
                              'software_input': str(software.resolve()), 'build': binding,
                              'routed_timing_ns': timing, 'route_errors': 0,
                              'routed_checkpoint': digest(checkpoint), 'config': configs[profile],
+                             'bios_matches_rom_init': True,
                              'board': 'NOT_RUN', 'sd_external_timing': 'OPEN; see sd-timing.md'}
     scalar_derived = {'profile', 'nCores', 'idBits'}
     rvv_changes = {'profile', 'idBits', 'rvv', 'memoryBits'}
@@ -111,6 +119,7 @@ def main():
         destination.mkdir()
         shutil.copy2(hardware / 'gateware/xilinx_kcu105.bit', destination / f'be2-{profile}-sd.bit')
         shutil.copy2(hardware / 'software/bios/bios.bin', destination / 'bios.bin')
+        shutil.copy2(hardware / 'gateware/xilinx_kcu105_rom.init', destination / 'bios-rom.init')
         for name in ('csr.json', 'cluster-profile.txt', 'build-binding.json', 'platform.json'):
             shutil.copy2(hardware / name, destination / name)
         shutil.copytree(software, destination / 'sd')
