@@ -124,8 +124,9 @@ def main():
             candidate = json.loads(candidate_path.read_text())
             if (candidate['source_sha'] != expected_source or
                     candidate['clock_hz'] != binding['clock_hz'] or
-                    candidate['new_timing_exceptions'] or not candidate['constraints_unchanged']):
-                raise ValueError(f'{profile}: physical candidate changed source/constraints')
+                    candidate['new_timing_exceptions'] or not candidate.get(
+                        'timing_constraints_unchanged', candidate.get('constraints_unchanged', False))):
+                raise ValueError(f'{profile}: physical candidate changed source/timing requirements')
             original = Path(candidate['original'])
             if (json.loads((original / 'build-binding.json').read_text())['source_sha'] != expected_source or
                     digest(original / 'gateware/xilinx_kcu105_route.dcp')['sha256'] !=
