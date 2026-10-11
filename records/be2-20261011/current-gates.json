@@ -236,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "synthesis passed; placed estimate negative, routing",
+      "status": "default routed setup failed; bitstream withheld; same-source postroute candidate running",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -275,7 +275,19 @@
       "place_WNS_ns": -0.54,
       "place_WHS_ns": -0.111,
       "place_audit_exit": 0,
-      "place_reports": "physical-d902fb5/be2-d902fb5-rvv-place-audit"
+      "place_reports": "physical-d902fb5/be2-d902fb5-rvv-place-audit",
+      "default_process_exit": 1,
+      "default_WNS_ns": -0.095,
+      "default_WHS_ns": 0.03,
+      "default_WPWS_ns": 0.103,
+      "default_TNS_ns": -1.61,
+      "default_setup_failures": 43,
+      "default_route_errors": 0,
+      "default_reports": "physical-d902fb5/default-routed",
+      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-postroute-sd",
+      "candidate_maxThreads": 4,
+      "candidate_affinity": "0-3",
+      "candidate_RTL_config_constraints_unchanged": true
     },
     "local_scalar_products_hash_verified": true
   }

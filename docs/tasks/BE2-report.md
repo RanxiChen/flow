@@ -283,3 +283,5 @@ c735fbd四核旧最终route_status还明确有37个routing resource conflict，�
 d902 RVV综合WNS+1.229ns、LUT119034/FF56918/BRAM242.5/DSP177，完整只读synth审计exit0、LUTLP违规0；比8a的−0.358改善但只为估计。当前placed最差writeMeta_slot→scoreboard reads约−0.540ns，另有ALU grant/carry/return RAM等控制路径，仍继续默认route而未宣布闭合。VRF EN路径移出当前最差组；不以仅一个修复保证所有路径通过。
 
 22:39 CST：四核及普通单核本地已下载的实际.bit/BIOS逐项匹配最终软件product-binding，两个包各五个SD文件大小/SHA256全部匹配manifest。d902只读place审计exit0，完整min/max报告WNS−0.540/WHS−0.111ns，LUTLP0；仅为placed估计，当前全局route仍在迭代，不能作为最终routed结论。原始place/synth审计、四核最终全量时序/路由/SD报告和wrapper主动停止说明一并归档。
+
+23:08 CST：d902默认RVV全流程完成为exit1，准确最终WNS−0.095/WHS+0.030/WPWS+0.103ns、TNS−1.610ns/43个setup失败端点、hold/pulse失败0、route errors0；门禁拒绝.bit，失败原始报告及完整log保留。此前postroute−0.116是中间值，不能冒充最终值。仅43个端点小幅setup违反，先从准确route DCP在新be2-d902fb5-rvv-postroute-sd目录执行已准备的AggressiveExplore + NoTimingRelaxation/tns_cleanup，CPU0–3/max4/nice10；RTL/config/源SHA/100MHz/全部原约束不变，原checkpoint不覆盖。候选先保存baseline最差20路径和例外报告，再检查完整setup/hold/route门禁及SD IO预算；只有通过才生成bit。只复用同生产RTL已经通过的最小集，不重跑相同仿真。

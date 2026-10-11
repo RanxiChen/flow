@@ -5,6 +5,7 @@ open_checkpoint [lindex $argv 0]
 # No IO exclusion or relaxed clock/exception is applied.
 if {[get_property PERIOD [get_clocks sys_clk]] != 10.0} {error "Expected unchanged 100MHz sys_clk"}
 report_timing_summary -delay_type min_max -file baseline-timing.rpt
+report_timing -max_paths 20 -path_type full -file baseline-worst-20.rpt
 report_exceptions -file baseline-exceptions.rpt
 phys_opt_design -directive AggressiveExplore
 route_design -directive NoTimingRelaxation -tns_cleanup

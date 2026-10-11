@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Reuse an exact completed routed input in a fresh product directory.
+set -Eeuo pipefail
+input=${1:?absolute original hardware directory}
+output=${2:?absolute fresh candidate directory}
+script=${3:?reviewed postroute Tcl}
+case "$input:$output:$script" in /*:/*:/*) ;; *) exit 2;; esac
+test -s "$input/gateware/xilinx_kcu105_route.dcp"
+test ! -e "$output"
+cp -a --reflink=auto "$input" "$output"
+trap 'rc=$?; echo "$rc" > "$output/postroute-exit-code.txt"' EXIT
+python3 - "$input" "$output" "$script" <<'PY'
+import datetime,hashlib,json,pathlib,sys
+original,dest,tcl=map(pathlib.Path,sys.argv[1:])
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+binding=json.loads((original/'build-binding.json').read_text())
+record=dict(original=str(original),source_sha=binding['source_sha'],
+ input_checkpoint_sha256=sha(original/'gateware/xilinx_kcu105_route.dcp'),
+ script_sha256=sha(tcl),host='Alan',clock_hz=100000000,
+ vivado='2022.2',maxThreads=4,affinity='0-3',nice=10,
+ directives=['AggressiveExplore','NoTimingRelaxation','tns_cleanup'],
+ constraints_unchanged=True,new_timing_exceptions=False,
+ start_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),board='NOT_RUN')
+(dest/'physical-candidate.json').write_text(json.dumps(record,indent=2)+'\n')
+PY
+cp "$script" "$output/gateware/postroute-closure.tcl"
+cd "$output/gateware"
+# A copied old bitstream must never survive a failing candidate gate.
+if [[ -f xilinx_kcu105.bit ]]; then mv xilinx_kcu105.bit input-reference.bit; fi
+taskset -c 0-3 nice -n 10 /home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado \
+ -mode batch -source postroute-closure.tcl \
+ -tclargs "$input/gateware/xilinx_kcu105_route.dcp" \
+ > "$output/postroute-vivado.log" 2>&1
+test -s xilinx_kcu105.bit
+sha256sum xilinx_kcu105.bit ../software/bios/bios.bin > "$output/product-sha256.txt"
