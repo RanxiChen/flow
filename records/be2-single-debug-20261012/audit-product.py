@@ -62,7 +62,8 @@ binding = {'source_sha': source, 'scalar_base_source_sha':
            'ILA_width': probes['total_width'], 'ILA_probes': len(probes['probes']),
            'source_snapshot_files_verified': len(manifest),
            'bios_matches_rom': True, 'functional_config_matches_single': True,
-           'golden_changed': False, 'new_timing_exceptions': False,
+           'golden_changed': False, 'new_user_timing_exceptions': False,
+           'vendor_debug_constraints': 'Vivado ILA/debug hub generated IP constraints',
            'stage': 'PREPARED' if args.prepared_only else 'COMPLETED',
            'board': 'NOT_CAPTURED', 'files': {}}
 for name in ('ila-probes.json', 'cluster-profile.txt', 'csr.json',

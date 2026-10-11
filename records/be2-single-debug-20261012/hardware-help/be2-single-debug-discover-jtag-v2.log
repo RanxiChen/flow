@@ -1,0 +1,588 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Mon Oct 12 06:29:47 2026
+# Process ID: 2575737
+# Current directory: /home/chen/FUN/flow-runs
+# Command line: vivado -mode batch -source be2-single-debug-discover-jtag-v2.tcl -log be2-single-debug-discover-jtag-v2.log -journal be2-single-debug-discover-jtag-v2.jou
+# Log file: /home/chen/FUN/flow-runs/be2-single-debug-discover-jtag-v2.log
+# Journal file: /home/chen/FUN/flow-runs/be2-single-debug-discover-jtag-v2.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4800.288 MHz, CPU Physical cores: 1, Host memory: 67150 MB
+#-----------------------------------------------------------
+source be2-single-debug-discover-jtag-v2.tcl
+# set_param general.maxThreads 2
+# load_features labtools
+# puts [help run_hw_ila]
+run_hw_ila
+
+Description: 
+Arm hardware ILAs.
+
+Syntax: 
+run_hw_ila  [-trigger_now] [-compile_only] [-file <arg>] [-force] [-quiet]
+            [-verbose] [<hw_ilas>...]
+
+Usage: 
+  Name             Description
+  ----------------------------
+  [-trigger_now]   Trigger and capture immediately.
+  [-compile_only]  Test only compile trigger state machine file but do not 
+                   upload.
+  [-file]          Trigger at startup file name. Command will not arm ILA 
+                   core.
+  [-force]         Overwrite existing file
+  [-quiet]         Ignore command errors
+  [-verbose]       Suspend message limits during command execution
+  [<hw_ilas>]      hardware ILAs
+                   Default: Current hardware ILA
+
+Categories: 
+Hardware
+
+Description:
+
+  Arm triggers and run the specified hardware ILA debug cores on the current
+  hardware device.
+
+  The Integrated Logic Analyzer (ILA) debug core lets you perform in-system
+  debug of implemented designs, or design bitstreams, on a programmed Xilinx
+  FPGA. The ILA core includes many advanced features of modern logic
+  analyzers, including boolean trigger equations, and edge transition
+  triggers. You can use the ILA core to probe specific signals of the design,
+  to trigger on programmed hardware events, and capture data samples from the
+  Xilinx FPGA in real-time. Refer to LogiCORE IP Integrated Logic Analyzer
+  (PG172) for details of the ILA core.
+
+  You can add ILA debug cores into the RTL source files of a design, or in
+  the synthesized netlist using the create_debug_core command. Refer to the
+  Vivado Design Suite User Guide: Vivado Programming and Debugging (UG908)
+  for more information on adding debug cores and signal probes to the design.
+
+  Debug cores and probes are written to a probes file (.ltx) using the
+  write_debug_probes command, and associated with the hardware device along
+  with the bitstream file (.bit) using the PROBES.FILE and PROGRAM.FILE
+  properties of the hw_device object. The hardware device is programmed using
+  the program_hw_devices command. The ILA debug cores in the design are
+  accessible from the Hardware Manager using the get_hw_ilas command. The
+  debug probes assigned to the ILA debug cores can be returned with the
+  get_hw_probes command.
+
+  The steps to debug your design in hardware using an ILA debug core are:
+
+   *  Connect to the hardware server and target using connect_hw_server and
+      open_hw_target.
+
+   *  Program the FPGA with the bitstream (.bit) and probes (.ltx) files
+      using program_hw_devices.
+
+   *  Set up the ILA debug core trigger events and data capture controls
+      using set_property to configure properties of the ILA.
+
+   *  Arm the ILA debug core triggers on the Xilinx FPGA using run_hw_ila.
+      When a trigger event occurs, or the capture condition is met, the ILA
+      capture buffer is filled.
+
+   *  Uploaded sampled data from the hw_device into a Vivado logic analyzer
+      hw_ila_data object using upload_hw_ila_data.
+
+   *  View the captured data in the Waveform window of the Vivado logic
+      analyzer feature using display_hw_ila_data.
+
+  You can set up an ILA debug core to trigger on specific events or
+  conditions at the debug probes, and to capture data under specific
+  conditions, using CONTROL properties on the hw_ila object. You set these
+  properties with the set_property command. Refer to the Vivado Design Suite
+  User Guide: Vivado Programming and Debugging (UG908) for more information
+  on setting properties to configure debug cores and signal probes to monitor
+  the design.
+
+  Note: The Vivado IDE provides a graphical interface to configure hw_ila and
+  hw_probes for trigger and capture. You can use the Vivado IDE to see the
+  properties needed to configure and run the hw_ila.
+
+  The specific properties on the hw_ila you can use to configure a debug core
+  include the following:
+
+   *  CONTROL.DATA_DEPTH - Defaults to the MAX_DATA_DEPTH of the ILA debug
+      core, which was set when the debug core was created or inserted into
+      the design. The data depth defines the number of data samples the
+      hw_ila object can capture in a data window. Set the data depth as an
+      integer which is a power of two, from 1 to the maximum data depth
+      (MAX_DATA_DEPTH) of the hw_ila.
+
+      Note: The value of DATA_DEPTH is related to CONTROL.WINDOW_COUNT by the
+      equation: DATA_DEPTH * WINDOW_COUNT = MAX_DATA_DEPTH
+
+   *  CONTROL.WINDOW_COUNT - Lets you divide the MAX_DATA_DEPTH of the ILA
+      core into a number of data windows to store sample data from multiple
+      trigger events. In the case of 10 data windows for example, the first
+      window will be filled at the first trigger event, and each subsequent
+      window will be filled upon subsequent triggering events or capture
+      conditions.
+
+   *  CONTROL.TRIGGER_POSITION - An integer value related to the DATA_DEPTH.
+      Positions the trigger event in the sample data buffer. For a DATA_DEPTH
+      of 1024, position 0 refers to the first (or left-most) data buffer and
+      1023 refers to the last (or right-most) data buffer. The
+      TRIGGER_POSITION lets you capture sample data ahead of the trigger
+      event. For instance, with a DATA_DEPTH of 256, a TRIGGER_POSITION of
+      100 allows you to capture 100 data samples ahead of the trigger, and
+      155 data samples at and after the trigger event.
+
+      Note: In the case of run_hw_ila -trigger_now 1, the TRIGGER_POSITION
+      merely positions the trigger mark in the Vivado logic analyzer waveform
+      window. Because the trigger event is immediate, there is no time to
+      capture data samples ahead of the trigger.
+
+   *  CONTROL.TRIGGER_MODE - Valid values include:
+
+       -  BASIC_ONLY - The trigger condition is the result of a Boolean
+          equation using the TRIGGER_CONDITION to evaluate the values on each
+          of the associated ILA probes.
+
+       -  BASIC_OR_TRIG_IN - The ILA core is triggered by a Boolean equation
+          considering probe values, or by the TRIG_IN port on the core.
+
+       -  ADVANCED_ONLY - The ILA core is configured to have advanced trigger
+          capabilities defined in a user-defined Trigger State Machine (TSM).
+
+       -  ADVANCED_OR_TRIG_IN - The ILA core is triggered by the TSM or by
+          the TRIG_IN port on the core.
+
+       -  TRIG_IN_ONLY - The ILA core is triggered only by the TRIG_IN port
+          on the core.
+
+   *  CONTROL.TRIGGER_CONDITION - Defines a Boolean equation which evaluates
+      comparators on participating probes on the ILA debug core. When the
+      condition evaluates to true, the BASIC trigger mode is satisfied. Valid
+      values include:
+
+       -  AND - Trigger condition is "true" if all participating probe
+          comparators evaluate "true", otherwise trigger condition is
+          "false".
+
+       -  NAND - Trigger condition is "true" if at least one participating
+          probe comparator evaluates "false", otherwise trigger condition is
+          "false".
+
+       -  OR - Trigger condition is "true" if at least one participating
+          probe comparator evaluates "true", otherwise trigger condition is
+          "false".
+
+       -  NOR - Trigger condition is "true" if all participating probe
+          comparators evaluate "false", otherwise trigger condition is
+          "false".
+
+      Note: The evaluation of the probes participating in the trigger
+      condition is determined by the TRIGGER_COMPARE_VALUE property assigned
+      to the hw_probe object, as returned by get_hw_probes. If the
+      TRIGGER_COMPARE_VALUE is `X` then it is not participating in the
+      trigger condition.
+
+   *  CONTROL.TSM_FILE - Specify the path to a file defining a Trigger Finite
+      State Machine (TSM) to be used for advanced trigger handling.
+
+   *  CONTROL.TRIG_OUT_MODE - Used to transition the TRIG_OUT port on the ILA
+      core to be used to drive the TRIG_IN port on other ILA cores. Valid
+      values include:
+
+       -  DISABLED - Disable the TRIG_OUT port on the ILA core.
+
+       -  TRIGGER_ONLY - Transition the TRIG_OUT port when the trigger
+          conditions have been satisfied.
+
+       -  TRIG_IN_ONLY - Transition the TRIG_OUT when the TRIG_IN signal
+          transitions. Use this to pass the trigger event along a chain of
+          ILA cores.
+
+       -  TRIGGER_OR_TRIG_IN - Transition the TRIG_OUT when either the
+          trigger conditions are satisfied, or the TRIG_IN transitions.
+
+   *  CONTROL.CAPTURE_MODE - Valid values include ALWAYS or BASIC. Capture
+      and store a data sample on the debug core ALWAYS during a given clock
+      cycle, or only if the CAPTURE_CONDITION evaluates to "true" (BASIC).
+
+   *  CONTROL.CAPTURE_CONDITION - Defines a Boolean equation for
+      participating probe comparators on the ILA debug core that must
+      evaluate to TRUE to meet the data capture condition. When the capture
+      condition evaluates to true, the BASIC capture mode is satisfied. Valid
+      values include:
+
+       -  AND - Capture condition is "true" if all participating probe
+          comparators evaluate "true", otherwise capture condition is
+          "false".
+
+       -  NAND - Capture condition is "true" if at least one participating
+          probe comparator evaluates "false", otherwise capture condition is
+          "false".
+
+       -  OR - Capture condition is "true" if at least one participating
+          probe comparator evaluates "true", otherwise capture condition is
+          "false".
+
+       -  NOR - Capture condition is "true" if all participating probe
+          comparators evaluate "false", otherwise capture condition is
+          "false".
+
+      Note: The evaluation of the probes participating in the capture
+      condition is determined by the CAPTURE_COMPARE_VALUE property assigned
+      to the hw_probe object, as returned by get_hw_probes. If the
+      CAPTURE_COMPARE_VALUE is `X` then it is not participating in the
+      trigger condition.
+
+  Note: There are other properties on the ILA core that also determine the
+  operation of the core, but they are not user-configurable.
+
+  With the ILA core configured, you can use the run_hw_ila command to arm the
+  ILA cores on the target part. When this command is run, the trigger
+  configurations defined in the hw_ila and hw_probe objects are written to
+  the target Xilinx FPGA (hw_device) and arms the ILA core or cores on the
+  device.
+
+  With the hw_ila armed and running, the wait_on_hw_ila command stops your
+  Tcl script to wait for the data sample buffers to be populated with
+  captured data. When the memory of the ILA core is full on the physical
+  hw_device, the wait_on_hw_ila command returns, and your Tcl script resumes.
+
+  You can use upload_hw_ila_data to upload the captured data from the
+  physical memory of the hw_device into a hw_ila_data object in the Vivado
+  logic analyzer. Then view the ILA data in the waveform window of the Vivado
+  logic analyzer using display_hw_ila_data, and write the data for use in
+  external tools using the write_hw_ila_data command.
+
+  You can also immediately trigger the probes on the hw_device using the
+  -trigger_now option, to capture data from the device right away, rather
+  than waiting for trigger events or capture conditions to be met over time.
+
+  You can use reset_hw_ila to restore the CONTROL properties of the ILA debug
+  core to their default setting, and reset the probe comparator values to
+  `X`.
+
+Arguments:
+
+  -trigger_now - (Optional) Immediately trigger the ILA debug cores,
+  regardless of trigger conditions, to capture sample data at the debug
+  ports. This is a boolean argument enabled by its presence.
+
+  -compile_only - (Optional) Compile the trigger state machine file
+  (CONTROL.TSM_FILE) to perform syntax checking and report compiler errors
+  and warnings. This option does not load and arm the hardware device. This
+  option is only supported when in advanced trigger mode
+  (CONTROL.TRIGGER_MODE ADVANCED_ONLY), and will otherwise return an error.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+  -file <arg> - (Optional) When the TRIGGER_MODE is set to BASIC_ONLY, this
+  option will export a file containing the current trigger and probe
+  configuration settings. The trigger file can be used by the
+  apply_hw_ila_trigger command to define triggers for the hw_device to use on
+  startup, or upon booting the device. Using the -file option prevents the
+  run_hw_ila command from arming the ILA core triggers on the hardware
+  device.
+
+  Note: If no extension is specified, a default file extension of .tas is
+  assigned.
+
+  -force - (Optional) Overwrite the specified trigger file if it already
+  exists. By default the tool will not overwrite an existing file.
+
+  <hw_ilas> - (Optional) Specify one or more hw_ila objects to run. The
+  hw_ila objects can either be specified as objects returned by the
+  get_hw_ilas or current_hw_ila commands, or specified by name. If the hw_ila
+  is not specified, the current_hw_ila will be run.
+
+  Note: You can only specify one hw_ila object when using the -file option.
+
+Example:
+
+  The following example sets the trigger and capture properties on the
+  current hw_ila object, and then runs the hw_ila, specified by name, to arm
+  the hw_device and wait for the data buffers to be filled:
+
+    current_hw_ila [get_hw_ilas hw_ila_1]  
+    set_property CONTROL.DATA_DEPTH 1024 [current_hw_ila]  
+    set_property CONTROL.TRIGGER_MODE BASIC_ONLY [current_hw_ila]  
+    set_property CONTROL.TRIGGER_CONDITION AND [current_hw_ila]  
+    set_property CONTROL.CAPTURE_MODE ALWAYS [current_hw_ila]  
+    run_hw_ila -trigger_now hw_ila_1  
+    wait_on_hw_ila hw_ila_1 
+    
+
+  This example writes a trigger configuration file for the current hw_ila
+  object, to the specified file, but does not arm the current hw_device:
+
+    run_hw_ila -file C:/Data/trigger_config1  
+    
+
+  Note: A default file extension of .tas is assigned to the specified file.
+
+See Also:
+
+   *  apply_hw_ila_trigger
+   *  current_hw_device
+   *  current_hw_ila
+   *  current_hw_ila_data
+   *  get_hw_devices
+   *  get_hw_ilas
+   *  get_hw_ila_datas
+   *  get_hw_probes
+   *  reset_hw_ila
+   *  set_property
+   *  upload_hw_ila_data
+   *  wait_on_hw_ila
+   *  write_debug_probes
+   *  write_hw_ila_data
+
+# puts [help upload_hw_ila_data]
+upload_hw_ila_data
+
+Description: 
+Stop capturing. Upload any captured hardware ILA data.
+
+Syntax: 
+upload_hw_ila_data  [-quiet] [-verbose] [<hw_ilas>...]
+
+Returns: 
+hardware ILA data objects
+
+Usage: 
+  Name         Description
+  ------------------------
+  [-quiet]     Ignore command errors
+  [-verbose]   Suspend message limits during command execution
+  [<hw_ilas>]  List of hardware ILA objects.
+               Default: Current hardware ILA
+
+Categories: 
+Hardware
+
+Description:
+
+  Upload the captured data from the memory buffers of the specified ILA debug
+  cores on the Xilinx FPGA hardware device, and move it into a hw_ila_data
+  object in the Vivado logic analyzer.
+
+  You can upload captured data from the ILA debug core at any time during the
+  capture process triggered by the run_hw_ila command. However, you may want
+  to use the wait_on_hw_ila command in any Tcl scripts, to wait until the
+  sample data buffers of the ILA core are fully populated with data. If you
+  run the upload_hw_ila_data command prior to this, you may see a message as
+  follows:
+
+    INFO: [Labtools 27-1965] The ILA core `hw_ila_1` trigger was stopped by user \  
+    at 2014-Mar-06 08:59:30  
+    INFO: [Labtools 27-2212] The ILA core `hw_ila_1` captured `6` windows with \  
+    `64` samples each, and a last partial window with `0` samples. 
+    
+
+  The upload process creates a hw_ila_data object in the process of moving
+  the captured data from the ILA debug core, hw_ila, on the physical FPGA
+  device, hw_device. The hw_ila_data object is named after the hw_ila core it
+  is uploaded from.
+
+  Note: Each hw_ila object has only one matching hw_ila_data object
+  associated with it. Each time upload_hw_ila_data is run for a specific
+  hw_ila core, the hw_ila_data object is overwritten if it already exists.
+
+  The data object, hw_ila_data can be viewed in the waveform viewer of the
+  Vivado logic analyzer by using the display_hw_ila_data command, and can be
+  written to disk using the write_hw_ila_data command.
+
+  This command returns a hw_ila_data object, or returns an error if it fails.
+
+Arguments:
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+  <hw_ilas> - (Optional) Specify one or more hw_ila objects to upload data
+  from. The hw_ila objects can either be specified as objects returned by the
+  get_hw_ilas or current_hw_ila commands, or specified by name. If the hw_ila
+  is not specified, the data will be uploaded from the current_hw_ila.
+
+Example:
+
+  The following example arms the current hardware ILA debug core on the
+  target hw_device, captures sample data at the probes as trigger events or
+  capture conditions are encountered. Tcl script processing is suspended
+  while sample data is captured, and then the data is uploaded from the
+  hw_ila on the hw_device, into a hw_ila_data object:
+
+    run_hw_ila -trigger_now [current_hw_ila]  
+    wait_on_hw_ila [current_hw_ila]  
+    upload_hw_ila_data [current_hw_ila] 
+    
+
+See Also:
+
+   *  current_hw_device
+   *  current_hw_ila
+   *  current_hw_ila_data
+   *  display_hw_ila_data
+   *  get_hw_devices
+   *  get_hw_ilas
+   *  get_hw_ila_datas
+   *  run_hw_ila
+   *  wait_on_hw_ila
+   *  write_hw_ila_data
+
+# puts [help write_hw_ila_data]
+write_hw_ila_data
+
+Description: 
+Write hardware ILA data to a file
+
+Syntax: 
+write_hw_ila_data  [-force] [-csv_file] [-vcd_file] [-legacy_csv_file] [-quiet]
+                   [-verbose] <file> [<hw_ila_data>] [<hw_ila_data>]
+
+Returns: 
+Name of the output file
+
+Usage: 
+  Name                Description
+  -------------------------------
+  [-force]            Overwrite existing file
+  [-csv_file]         Export CSV format file only
+  [-vcd_file]         Export VCD format file only
+  [-legacy_csv_file]  Export csv file without radix information.
+  [-quiet]            Ignore command errors
+  [-verbose]          Suspend message limits during command execution
+  <file>              hardware ILA data file name
+  [<hw_ila_data>]     hardware ILA data object
+                      Default: Current hardware ILA data
+
+Categories: 
+Hardware
+
+Description:
+
+  Write the ILA debug core sample data, stored in the specified hw_ila_data
+  object, to a binary file on the disk.
+
+  A hw_ila_data object is created when the hw_ila is triggered on the
+  hw_device, or by the upload_hw_ila_data command when moving the captured
+  data from the physical FPGA device, hw_device.
+
+  The write_hw_ila_data lets you write the data of the hw_ila_data object to
+  a binary file on the disk for later review. You can read the ILA debug core
+  data back into the Vivado logic analyzer using the read_hw_ila_data
+  command, which creates a new hw_ila_data object.
+
+  This command returns the name of the file written, or returns an error if
+  it fails.
+
+Arguments:
+
+  -force - (Optional) Overwrite an existing file of the same name if one
+  exists.
+
+  -csv_file - (Optional) Export a comma-separated values (CSV) file only.
+  This configures the write_hw_ila_data command to export the ILA data in the
+  form of a CSV file that can be used to import into a spreadsheet or
+  third-party application, rather than the default binary ILA file format.
+
+  -vcd_file - (Optional) Export a value change dump (VCD) file only. This
+  configures the write_hw_ila_data command to export the ILA data in the form
+  of a VCD file that can be used to import into a third-party application or
+  viewer, rather than the default binary ILA file format.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+  <file> - (Required) The filename of the ILA data file to write. The default
+  file extension for an ILA data file is .ila. The default file extension for
+  -csv_file is .csv, and for -vcd_file is .vcd.
+
+  Note: If the path is not specified as part of the file name, the file will
+  be written into the current working directory, or the directory from which
+  the tool was launched.
+
+  <hw_ila_data> - (Optional) The hardware ILA data to write to the specified
+  file. The hw_ila_data must be specified as an object, as returned by the
+  get_hw_ila_datas or the current_hw_ila_data commands. If no hw_ila_data
+  object is specified, the current hw_ila_data is written to the specified
+  file.
+
+Example:
+
+  The following example uploads the data from the hw_ila debug core into a
+  hw_ila_data object, and then writes that data object to the specified ILA
+  data file, overwriting an existing file if one exists:
+
+    write_hw_ila_data -force design1_ila_data [upload_hw_ila_data hw_ila_1] 
+    
+
+  This example triggers the hw_ila, then writes the captured hw_ila_data to a
+  CSV file:
+
+    run_hw_ila hw_ila_1  
+    write_hw_ila_data -csv_file C:/Data/design1_ila_data [current_hw_ila_data] 
+    
+
+See Also:
+
+   *  current_hw_ila
+   *  current_hw_ila_data
+   *  get_hw_ilas
+   *  get_hw_ila_datas
+   *  run_hw_ila
+   *  upload_hw_ila_data
+   *  wait_on_hw_ila
+
+# open_hw_manager
+# connect_hw_server -url localhost:3121
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2022.2.0
+  ****** Build date   : Oct 05 2022-07:25:37
+    **** Build number : 2022.2.1664925937
+      ** Copyright 2017-2026 Xilinx, Inc. All Rights Reserved.
+
+
+
+# set targets [get_hw_targets -quiet]
+# puts "BE2_JTAG_TARGET_COUNT=[llength $targets]"
+BE2_JTAG_TARGET_COUNT=0
+# puts "BE2_JTAG_TARGETS=$targets"
+BE2_JTAG_TARGETS=
+# disconnect_hw_server
+# close_hw_manager
+# exit
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 06:29:56 2026...

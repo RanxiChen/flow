@@ -19,6 +19,8 @@
 
 构建脚本 `records/be2-single-debug-20261012/build.sh`：新增monitor与原ILA连接测试、既有BreezeHangMonitorSpec、准确源独立RTL生成、BIOS/项目准备、Vivado实现、完整时序门禁后生成bit/ltx。保持100MHz/原时序例外；增加调试探针会改变资源和物理结果，不能复用普通单核旧时序。
 
+新增约束仅为Vivado生成的ILA/debug hub IP自身约束，没有新增用户false-path/multicycle、没有豁免CPU或AXI路径。准备好的 `fpga/kcu105/capture_single_debug.tcl` 仅在用户已加载匹配bit后读取ILA，输出CSV/VCD/原生ILA文件；不烧录或复位CPU。2022.2本机help确认 `wait_on_hw_ila -timeout` 单位为分钟，脚本使用0.5（30秒），不能沿用其他版本示例中的5000。
+
 实际运行结果、源SHA、主机、exit、bit/ltx路径后续按原始报告补充。此时状态为准备，尚未生成调试bit，也没有上板抓取结果。
 
 2026-10-12 06:27 CST：b8e62666de08752a96fd27b838a2fcd79536d3da 在Alan独立worktree `/home/chen/FUN/flow-be2-single-debug-20261012` 执行；每次启动重读共享配置，首选cloud_chen均5秒SSH timeout255，Alan预检Java11.0.32.1/Verilator5.028/GCC13.2.0、磁盘19GiB及内存可用后回退。运行CPU6–9/nice10/maxThreads4；同步用本地反向HTTP代理，无bundle。
@@ -30,3 +32,7 @@
 BIOS/工程prepare成功，prepared-audit核对129个不可变源文件SHA、ROM内BIOS前缀、单核所有功能参数与原产品一致（仅tandem/debug打开）。ILA6.2共161probe/1896bit、深度4096、输入流水2拍，正在Vivado默认100MHz实现，未有最终timing/bit结论。报告和原始记录见 `records/be2-single-debug-20261012/prepared/`。
 
 用户确认JTAG连接Alan；06:24只读Vivado/hw_server discovery未发现目标，USB列表只识别CP2105串口桥，尚无波形或CPU工作状态证明。后续以实际target与capture为准；这不阻塞bit构建，不烧写Flash。
+
+综合完成：WNS+1.492ns（仅综合估计）、LUT74347/FF57881/BRAM264.5tiles/DSP23，0error/0critical warning。ILA容量可容纳，Vivado已进入place；最终routed timing另记，综合hold负值不是最终hold结果。主机上的Tandem/ILA marker与129项source-snapshot、BIOS ROM前缀已核对。原综合报告按阶段归档。
+
+另查旧板级记录和当前CP2105双接口：FPGA用户串口应选Standard通道（Alan现为ttyUSB1/if01），ttyUSB0/if00为Enhanced系统控制器通道。AMD文档亦说明该分工：https://docs.amd.com/r/en-US/pg235-v-hdmi-tx-ss/KCU105-Board-FMCH-VADJ-Adjustment 。此为“只打印0”的待核对候选，尚未收到用户所用串口确认，不宣称已定位原因。没有打开或写用户串口。

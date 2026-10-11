@@ -1,0 +1,208 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Mon Oct 12 06:31:08 2026
+# Process ID: 2576162
+# Current directory: /home/chen/FUN/flow-runs
+# Command line: vivado -mode batch -source be2-single-debug-ila-help.tcl -log be2-single-debug-ila-help.log -journal be2-single-debug-ila-help.jou
+# Log file: /home/chen/FUN/flow-runs/be2-single-debug-ila-help.log
+# Journal file: /home/chen/FUN/flow-runs/be2-single-debug-ila-help.jou
+# Running On: chen-System-Product-Name, OS: Linux, CPU Frequency: 4899.268 MHz, CPU Physical cores: 1, Host memory: 67150 MB
+#-----------------------------------------------------------
+source be2-single-debug-ila-help.tcl
+# set_param general.maxThreads 2
+# load_features labtools
+# puts [help wait_on_hw_ila]
+wait_on_hw_ila
+
+Description: 
+Wait until all hardware ILA data has been captured.
+
+Syntax: 
+wait_on_hw_ila  [-timeout <arg>] [-quiet] [-verbose] [<hw_ilas>...]
+
+Usage: 
+  Name         Description
+  ------------------------
+  [-timeout]   Timeout in minutes. Decimal value allowed
+               Default: No timeout
+  [-quiet]     Ignore command errors
+  [-verbose]   Suspend message limits during command execution
+  [<hw_ilas>]  hardware ILA objects.
+               Default: Current hardware ILA
+
+Categories: 
+Hardware
+
+Description:
+
+  Suspend Tcl script or Tcl command processing until the ILA debug core
+  memory is filled by captured data samples.
+
+  This command is used after the run_hw_ila command to pause Tcl processing
+  to wait for the data buffers to fill up. When the wait_on_hw_ila command
+  returns, the Tcl command or script processing can continue.
+
+  With the ILA debug core memory filed with sample data, when Tcl processing
+  resumes, you can upload the captured data samples into an ILA debug core
+  data object, or hw_ila_data object. Use the upload_ila_data command to
+  perform this action.
+
+  This command operates silently, returning nothing if successful, or
+  returning an error if it fails.
+
+Arguments:
+
+  -timeout <arg> - (Optional) Wait for this period of time for all data on
+  the ILA debug cores to be captured. If the timeout interval is reached, the
+  wait command is terminated.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+  <hw_ilas> - (Optional) Specify one or more hw_ila objects to wait on. The
+  hw_ila objects must be specified as an object as returned by the
+  get_hw_ilas or current_hw_ila commands. If the hardware ILA is not
+  specified, the current_hw_ila will be run.
+
+Example:
+
+  The following example waits for all data on the current hardware ILA debug
+  core to be captured:
+
+    run_hw_ila hw_ila_1 -trigger_now 1  
+    INFO: [Labtools 27-1964] The ILA core `hw_ila_1` trigger was armed  
+       at 2014-Mar-02 13:20:30  
+    wait_on_hw_ila hw_ila_1  
+    display_hw_ila_data [upload_hw_ila_data hw_ila_1]  
+    INFO: [Labtools 27-1966] The ILA core `hw_ila_1` triggered   
+       at 2014-Mar-02 13:20:31 
+    
+
+See Also:
+
+   *  current_hw_device
+   *  current_hw_ila
+   *  current_hw_ila_data
+   *  display_hw_ila_data
+   *  get_hw_devices
+   *  get_hw_ilas
+   *  run_hw_ila
+   *  upload_hw_ila_data
+
+# puts [help upload_hw_ila_data]
+upload_hw_ila_data
+
+Description: 
+Stop capturing. Upload any captured hardware ILA data.
+
+Syntax: 
+upload_hw_ila_data  [-quiet] [-verbose] [<hw_ilas>...]
+
+Returns: 
+hardware ILA data objects
+
+Usage: 
+  Name         Description
+  ------------------------
+  [-quiet]     Ignore command errors
+  [-verbose]   Suspend message limits during command execution
+  [<hw_ilas>]  List of hardware ILA objects.
+               Default: Current hardware ILA
+
+Categories: 
+Hardware
+
+Description:
+
+  Upload the captured data from the memory buffers of the specified ILA debug
+  cores on the Xilinx FPGA hardware device, and move it into a hw_ila_data
+  object in the Vivado logic analyzer.
+
+  You can upload captured data from the ILA debug core at any time during the
+  capture process triggered by the run_hw_ila command. However, you may want
+  to use the wait_on_hw_ila command in any Tcl scripts, to wait until the
+  sample data buffers of the ILA core are fully populated with data. If you
+  run the upload_hw_ila_data command prior to this, you may see a message as
+  follows:
+
+    INFO: [Labtools 27-1965] The ILA core `hw_ila_1` trigger was stopped by user \  
+    at 2014-Mar-06 08:59:30  
+    INFO: [Labtools 27-2212] The ILA core `hw_ila_1` captured `6` windows with \  
+    `64` samples each, and a last partial window with `0` samples. 
+    
+
+  The upload process creates a hw_ila_data object in the process of moving
+  the captured data from the ILA debug core, hw_ila, on the physical FPGA
+  device, hw_device. The hw_ila_data object is named after the hw_ila core it
+  is uploaded from.
+
+  Note: Each hw_ila object has only one matching hw_ila_data object
+  associated with it. Each time upload_hw_ila_data is run for a specific
+  hw_ila core, the hw_ila_data object is overwritten if it already exists.
+
+  The data object, hw_ila_data can be viewed in the waveform viewer of the
+  Vivado logic analyzer by using the display_hw_ila_data command, and can be
+  written to disk using the write_hw_ila_data command.
+
+  This command returns a hw_ila_data object, or returns an error if it fails.
+
+Arguments:
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+  <hw_ilas> - (Optional) Specify one or more hw_ila objects to upload data
+  from. The hw_ila objects can either be specified as objects returned by the
+  get_hw_ilas or current_hw_ila commands, or specified by name. If the hw_ila
+  is not specified, the data will be uploaded from the current_hw_ila.
+
+Example:
+
+  The following example arms the current hardware ILA debug core on the
+  target hw_device, captures sample data at the probes as trigger events or
+  capture conditions are encountered. Tcl script processing is suspended
+  while sample data is captured, and then the data is uploaded from the
+  hw_ila on the hw_device, into a hw_ila_data object:
+
+    run_hw_ila -trigger_now [current_hw_ila]  
+    wait_on_hw_ila [current_hw_ila]  
+    upload_hw_ila_data [current_hw_ila] 
+    
+
+See Also:
+
+   *  current_hw_device
+   *  current_hw_ila
+   *  current_hw_ila_data
+   *  display_hw_ila_data
+   *  get_hw_devices
+   *  get_hw_ilas
+   *  get_hw_ila_datas
+   *  run_hw_ila
+   *  wait_on_hw_ila
+   *  write_hw_ila_data
+
+# exit
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 06:31:13 2026...
