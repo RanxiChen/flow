@@ -95,7 +95,9 @@ class RvvLoadStore(p: RvvParams) extends Module {
   val cursorValid = RegInit(false.B)
   val prepared = Reg(new PreparedRequest)
   val preparedValid = RegInit(false.B)
-  when(generating && !noAccess && !cursorValid && !preparedValid) {
+  // A final store advances position at AW but retains generating until Wlast.
+  // It must not prepare a zero-length successor during that data lifetime.
+  when(generating && !noAccess && position < d.decoded.bytes && !cursorValid && !preparedValid) {
     cursor.slot := current; cursor.pa := pa; cursor.position := position
     cursor.segmentRemaining := d.length(segment)-segmentOffset
     cursor.instructionRemaining := d.decoded.bytes-position
