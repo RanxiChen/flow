@@ -10,7 +10,7 @@ import flow.interface._
   */
 class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Module {
     require(numHpm > 0 && numHpm <= 29)
-    private val eventWidth = log2Ceil(BREEZE_HPM_EVENT.WB_PORT_CONFLICT + 1)
+    private val eventWidth = log2Ceil(BREEZE_HPM_EVENT.MAX + 1)
     val io = IO(new Bundle {
         // Already qualified by commit_valid, write_en, and absence of a trap.
         val write = Input(Bool())
@@ -51,7 +51,7 @@ class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Mod
 
     // Validate the FULL software value before truncating. For example, 0x101
     // must still select NONE, not event 1.
-    val legalSelector = Mux(io.data <= BREEZE_HPM_EVENT.WB_PORT_CONFLICT.U,
+    val legalSelector = Mux(io.data <= BREEZE_HPM_EVENT.MAX.U,
         io.data(eventWidth - 1, 0), 0.U(eventWidth.W))
     val eventTable = Seq(
         BREEZE_HPM_EVENT.CONTROL_RETIRED -> rawEvents.controlRetired,
@@ -68,10 +68,11 @@ class BreezePerformanceCounters(xlen: Int = 64, val numHpm: Int = 8) extends Mod
         BREEZE_HPM_EVENT.DIV_SOURCE_STALL -> rawEvents.divSourceStall,
         BREEZE_HPM_EVENT.WB_PORT_CONFLICT -> rawEvents.wbPortConflict
     )
+    val replayEvents = (0 until 7).map(i => (BREEZE_HPM_EVENT.REPLAY_OTHER + i) -> rawEvents.replay(i))
     for (index <- 0 until numHpm) {
         when(writes(CSRMAP.mhpmevent3 + index)) { selectors(index) := legalSelector }
         val eventOverwritten = RegNext(writes(CSRMAP.mhpmcounter3 + index), false.B)
-        val selectedEvent = Mux1H(eventTable.map { case (id, event) =>
+        val selectedEvent = Mux1H((eventTable ++ replayEvents).map { case (id, event) =>
             (eventSelectors(index) === id.U(eventWidth.W)) -> event.asUInt
         })
         val visible = counters(index) + pending(index)

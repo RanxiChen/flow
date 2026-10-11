@@ -374,6 +374,7 @@ class BreezeHpmEvents extends Bundle {
     val mulSourceStall = Bool()
     val divSourceStall = Bool()
     val wbPortConflict = UInt(2.W)
+    val replay = Vec(7, Bool())
 }
 
 class CSRFDebugIO(val XLEN: Int = 64) extends Bundle {

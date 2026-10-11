@@ -593,8 +593,7 @@ class BreezeBackend(
       ex.rs2_data := exR2
       exFpr := exFprRead
     }
-  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; perm.valid := false.B; wb.valid := false.B }
-    .otherwise {
+  locally {
       // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
       mem := 0.U.asTypeOf(mem)
       mem.valid := ex.valid && exAdvance
@@ -648,6 +647,7 @@ class BreezeBackend(
         }
       }
     }
+  when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; perm.valid := false.B; wb.valid := false.B }
   when(reset.asBool) { nextPc := io.resetAddr }
     .elsewhen(wbKill) { nextPc := io.frontendRedirect.target }
     .elsewhen(wbCommit) { nextPc := wb.nextPc }
@@ -665,6 +665,8 @@ class BreezeBackend(
   io.backendEvents.mulSourceStall := scoreboard.io.sourceStall(LongSource.MUL)
   io.backendEvents.divSourceStall := scoreboard.io.sourceStall(LongSource.DIV)
   io.backendEvents.wbPortConflict := writeback.io.conflict
+  for(i <- 0 until 7) io.backendEvents.replay(i) := wbReplay &&
+    Mux(wb.copro, 6.U, io.l1d.resp.bits.replayReason) === i.U
   csrFile.io.hpmEvents := io.backendEvents
 
   io.observe := 0.U.asTypeOf(io.observe)

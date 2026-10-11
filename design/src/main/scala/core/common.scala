@@ -352,6 +352,14 @@ object BREEZE_HPM_EVENT {
    val MUL_SOURCE_STALL = 11
    val DIV_SOURCE_STALL = 12
    val WB_PORT_CONFLICT = 13
+   val REPLAY_OTHER = 14
+   val REPLAY_TLB = 15
+   val REPLAY_LINE = 16
+   val REPLAY_FULL = 17
+   val REPLAY_MMIO = 18
+   val REPLAY_LR = 19
+   val REPLAY_COPRO = 20
+   val MAX = REPLAY_COPRO
 }
 
 object SIM_SYSTEM {

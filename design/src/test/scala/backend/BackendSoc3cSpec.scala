@@ -92,6 +92,8 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
       d.io.l1d.late.valid.poke(false.B); d.io.l1d.late.bits.rd.idx.poke(1.U)
       d.io.l1d.late.bits.rd.isFp.poke(false.B); d.io.l1d.late.bits.data.poke(0x1234.U)
       d.io.l1d.late.bits.error.poke(false.B); d.io.l1d.drained.poke(false.B); d.io.l1d.mmioBusy.poke(false.B)
+    d.io.l1d.cpuDrained.poke(false.B)
+    d.io.l1d.replayWake.poke(true.B)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
       var cycle=0
       val exPcs=scala.collection.mutable.ArrayBuffer.empty[BigInt]
