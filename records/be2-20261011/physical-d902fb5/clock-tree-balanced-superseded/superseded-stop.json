@@ -1,0 +1,8 @@
+{
+  "pid": 2434060,
+  "cwd": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-tree-balanced-sd/gateware",
+  "cmd": "/home/chen/Tool/FPGA/Vivado/2022.2/bin/unwrapped/lnx64.o/vivado -mode batch -source postroute-closure.tcl -tclargs /home/chen/FUN/flow-runs/be2-d902fb5-rvv-placed-replication-sd/gateware/xilinx_kcu105_route.dcp ",
+  "time": "2026-10-11T16:09:29.958149+00:00",
+  "signal": "SIGTERM",
+  "reason": "Place30-823 incompatible fixed clock roots X2Y2/X1Y1 prevented CLOCK_DELAY_GROUP; replace own candidate with explicit common existing sys_clk root"
+}

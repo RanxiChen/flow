@@ -31,6 +31,8 @@ if 'route_design -unroute\n' in tcl.read_text():
 if 'CLOCK_DELAY_GROUP' in tcl.read_text():
  record['physical_clock_routing_property']='CLOCK_DELAY_GROUP be2_ddr_serdes on BUFGCE/O and BUFGCE_DIV/O nets'
  record['directives']=['partial clock unroute','NoTimingRelaxation','tns_cleanup']
+ if 'set_property USER_CLOCK_ROOT' in tcl.read_text():
+  record['physical_clock_routing_property'] += '; USER_CLOCK_ROOT both outputs set to existing sys_clk CLOCK_ROOT'
  record['constraints_unchanged']=False
  record['timing_constraints_unchanged']=True
 prior=original/'physical-candidate.json'
