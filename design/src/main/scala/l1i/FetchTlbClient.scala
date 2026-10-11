@@ -26,7 +26,9 @@ class FetchTlbClient(withPmpCandidate: Boolean = false) extends Module {
   io.request.ready := state === St.Idle && !io.kill && !io.block
   io.response.valid := state === St.Response && !io.kill
   io.response.bits := result
-  io.tlb.req.valid := state === St.Send && !io.kill
+  // SFENCE blocks both new frontend requests and a previously queued/retry
+  // translation. In-flight MMU work drains; queued work is flushed at WB.
+  io.tlb.req.valid := state === St.Send && !io.kill && !io.block
   io.tlb.req.bits.vaddr := request.vaddr; io.tlb.req.bits.cmd := MmuCmd.Fetch
   io.tlb.kill := io.kill
   val pmp = Module(new BreezePmpChecker(64, decoded = true, precomputedEnd = withPmpCandidate))
