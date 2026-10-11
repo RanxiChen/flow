@@ -134,12 +134,18 @@ object RvvAluArithmetic {
       a(8*j+7,8*j) +& bv
     }
     val sums = (0 until p.rowBytes).map { j =>
-      var cin: Bool = subtract
-      val block = j-j%8
-      for(k <- block until j) {
-        val nextBoundary = VecInit((0 until 4).map(sew => ((k+1) % (1 << sew) == 0).B))(sewInput)
-        cin = Mux(nextBoundary,subtract,byteBase(k)(8) || (byteBase(k)(7,0).andR && cin))
+      // Parallel byte carry lookahead for each legal element width. A carry
+      // term starts at a generating byte and crosses only propagating bytes
+      // inside that element. Runtime SEW selects one bounded carry cone;
+      // it does not insert a mux at every byte of a serial recurrence.
+      val carries = (0 until 4).map { sew =>
+        val first = j-j%(1 << sew)
+        def propagate(from: Int): Bool =
+          (from until j).map(k => byteBase(k)(7,0).andR).foldLeft(true.B)(_ && _)
+        val generated = (first until j).map(k => byteBase(k)(8) && propagate(k+1))
+        generated.foldLeft(subtract && propagate(first))(_ || _)
       }
+      val cin = VecInit(carries)(sewInput)
       (byteBase(j)(7,0) + cin.asUInt)(7,0)
     }
     var shifted: UInt = a
