@@ -20,6 +20,13 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           val m = new Environment(d, seed); m.reset()
           m.enableFp()
           val rng = new scala.util.Random(seed)
+          // Advance the stub PRNG by a seed-dependent number of real requests.
+          // Resetting the DUT alone would otherwise repeat the same first delay
+          // in all 1000 runs despite the other randomized perturbations.
+          for (_ <- 0 until rng.nextInt(5)) {
+            m.issue(BigInt(0x0b))
+            for (_ <- 0 until 32) m.step()
+          }
           val a = 1 + rng.nextInt(127); val b = 1 + rng.nextInt(31)
           val pcs = Vector(m.issue(addi(20,0,a)), m.issue(addi(21,0,b)))
           for(_ <- 0 until 6) m.step()
