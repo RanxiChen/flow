@@ -236,7 +236,7 @@
     "single_rvv_current": {
       "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "clock-resource placement RUNNING; RAM/SRL internal BEL packing left to tool, all LOC/simple BEL equality checked",
+      "status": "Quick clock-resource place rerun with name/value snapshots and fresh post-place collections; RUNNING",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -284,7 +284,7 @@
       "default_setup_failures": 43,
       "default_route_errors": 0,
       "default_reports": "physical-d902fb5/default-routed",
-      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-loc-balanced-sd",
+      "candidate_remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-clock-placed-audited-sd",
       "candidate_maxThreads": 4,
       "candidate_affinity": "0-3",
       "candidate_RTL_config_constraints_unchanged": false,
@@ -395,6 +395,13 @@
         "before_unroute": true,
         "reason": "Vivado12-1405 internal LUTRAM macro BEL conflict during fixing all primitive BELs",
         "reports": "physical-d902fb5/clock-placement-bel-rejected"
+      },
+      "placed_location_handle_rejected": {
+        "exit": 1,
+        "place_command_success": true,
+        "before_route": true,
+        "reason": "Vivado17-70 stale primitive collection after place_design recreated netlist objects; audit property call failed",
+        "reports": "physical-d902fb5/clock-placement-handle-rejected"
       }
     },
     "local_scalar_products_hash_verified": true
