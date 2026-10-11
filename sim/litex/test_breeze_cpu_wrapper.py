@@ -40,6 +40,7 @@ def _write_production_rtl(root, cpu_cls=Breeze):
     values = dict(bus='axi', profile=cpu_cls.cluster_profile, preset=cpu_cls.core_preset,
         privilege=cpu_cls.privilege_profile, tandem=str(cpu_cls.tandem_enabled).lower(),
         debug=str(cpu_cls.debug_enabled).lower(), platformSha256=digest,
+        coherentDma=str(cpu_cls.coherent_dma).lower(),
         nCores=str(cpu_cls.num_harts), idBits='1', l2Slots='2', l2BytesPerCore='65536',
         hangThresholdCycles='10000000')
     values.update(cpu_cls.expected_marker)

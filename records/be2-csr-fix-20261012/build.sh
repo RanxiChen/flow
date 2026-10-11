@@ -16,9 +16,11 @@ hostname
 git rev-parse HEAD
 date -u +%FT%TZ
 set -x
+PYTHONPATH="$work/sim/litex${PYTHONPATH:+:$PYTHONPATH}" \
+BE2_BRIDGE_EVIDENCE="$evidence/integration-observations" \
 taskset -c 6-9 nice -n 10 python -m unittest -v \
-  sim.litex.test_breeze_cpu_wrapper sim.litex.test_breeze_ila \
-  sim.litex.test_breeze_axi_monitor sim.litex.test_migen_width_contract
+  test_mmio_csr_bridge test_breeze_cpu_wrapper test_breeze_ila \
+  test_breeze_axi_monitor test_migen_width_contract
 stage=reuse_unchanged_core_rtl
 python - "$work" "$oldwork" "$oldoutput" "$evidence" <<'PY'
 import pathlib, json, hashlib, shutil, subprocess, sys
