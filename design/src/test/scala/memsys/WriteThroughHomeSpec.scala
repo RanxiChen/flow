@@ -130,6 +130,8 @@ class WriteThroughHomeSpec extends AnyFreeSpec with Matchers with ChiselSim {
         dram.read(miss + 9, 1) mustBe arch.read(miss + 9, 1)
         run(CoreOp.load(a), CoreOp.store(a + 8, BigInt("1122334455667788", 16)), CoreOp.load(a + 8))
         run(CoreOp.amo(a, 7, BreezeAmoFunc.Add), CoreOp.load(a))
+        val atomicMiss = MainRam + 0xc80
+        run(CoreOp.amo(atomicMiss, 11, BreezeAmoFunc.Add), CoreOp.load(atomicMiss))
         run(CoreOp.lr(a), CoreOp.sc(a, 123, success = true), CoreOp.load(a))
         run(CoreOp.lr(a))
         d.io.inv.valid.poke(true.B); d.io.inv.bits.poke(a.U)

@@ -557,7 +557,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
     (lookupDecision && !snapshotStale && lookupFault) ||
     (mmioDecision && mmio.io.done.valid && mmio.io.done.bits.error))
   val s2Recheck = WireDefault((s2.valid && internalRefresh) || (lookupDecision && snapshotStale))
-  if (writeThrough) { when(wtActive) { s2Recheck := false.B } }
+  if (writeThrough) { when(wtActive && !fromInternal) { s2Recheck := false.B } }
   val s2Mmio = mmioDecision && !mmio.io.done.valid
   val s2Amo = (replayDecision && replayAmo) || (cacheReady && cacheHitAmo)
   val s2PtwResp = (replayDone && ptw) || (cacheReady && ptw && hit)
@@ -569,7 +569,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
   val wtCandidate = (cacheReady && cacheStore && psRoom && resourcesClear) ||
     (scDecision && scSuccess && ownedHit && psRoom) || s2Amo
   if (writeThrough) {
-    when(wtActive || wtCandidate) {
+    // The saved WT owner is the held CPU request. An internal refill,
+    // probe, PTW or Recheck keeps its own completion decision while it runs.
+    when((wtActive && !fromInternal) || wtCandidate) {
       s2Done := wt.get.io.done && !wt.get.io.error
       s2Fault := wt.get.io.done && wt.get.io.error
       s2Miss := false.B
