@@ -1,0 +1,7 @@
+# Keep kernel usercopy scalar: R05 temporary Serial cases trap as illegal
+# rather than implementing per-element fault recovery. User vector context
+# save/restore still uses the supported e8/m8 unit-stride path.
+CONFIG_RISCV_ISA_V=y
+CONFIG_RISCV_ISA_V_DEFAULT_ENABLE=y
+# CONFIG_RISCV_ISA_V_PREEMPTIVE is not set
+CONFIG_RISCV_ISA_V_UCOPY_THRESHOLD=2147483647
