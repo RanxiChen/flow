@@ -195,14 +195,11 @@ class BreezeBackend(
     ((wb.mem && !io.l1d.resp.valid) || (wb.copro && !coproDecisionValid))
   val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
   wbCommit := wbCanLeave && !wbExc && !wbReplay
-  val interruptPendingD = RegNext(csrFile.io.interruptPending, false.B)
-  val interruptCauseD = RegNext(csrFile.io.interruptCause, 0.U)
-  val interruptEligibleD = RegNext(!ex.valid && !mem.valid && !perm.valid && !wb.valid &&
-    !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped, false.B)
-  // A CSR commit may change masking/delegation at the same sampling edge.
-  // Discard that stale permission sample and resample the new CSR state.
-  val interruptCsrChangeD = RegNext(wbCommit && wb.csrWrite, false.B)
-  val interrupt = interruptPendingD && interruptEligibleD && !interruptCsrChangeD
+  // Preserve the frozen P09 external-event observation boundary. CSR
+  // priority/masking uses its existing state; it is listed separately in
+  // the R7 evidence rather than described as a newly registered decision.
+  val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !perm.valid && !wb.valid &&
+    !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped
   val fenceRedirect = wbCommit && (wb.fencei || wb.sfence)
   val xret = wbCommit && (wb.mret || wb.sret)
   val satp = wbCommit && wb.csrWrite && wb.csrAddr === CSRMAP.satp.U
@@ -416,7 +413,7 @@ class BreezeBackend(
   csrFile.io.time := io.time
   csrFile.io.trap.valid := (wbCanLeave && wbExc) || interrupt
   csrFile.io.trap.is_interrupt := interrupt
-  csrFile.io.trap.cause := Mux(interrupt, interruptCauseD, Mux(wbMemExc, io.l1d.resp.bits.excCause, Mux(wbCoproExc, coproDecision.cause, wb.cause)))
+  csrFile.io.trap.cause := Mux(interrupt, csrFile.io.interruptCause, Mux(wbMemExc, io.l1d.resp.bits.excCause, Mux(wbCoproExc, coproDecision.cause, wb.cause)))
   csrFile.io.trap.pc := Mux(interrupt, nextPc, wb.pc)
   csrFile.io.trap.tval := Mux(interrupt, 0.U, Mux(wbMemExc, io.l1d.resp.bits.tval, Mux(wbCoproExc, coproDecision.tval, wb.tval)))
   csrFile.io.mret_commit := wbCommit && wb.mret
@@ -558,7 +555,7 @@ class BreezeBackend(
   val slowRedirectGap = RegNext(wbKill, false.B)
   io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
     !ordinaryHazard && !creditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
-    !csrFile.io.interruptPending && !interruptPendingD && !sleeping && !stopped && !io.hartFatal
+    !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) {
