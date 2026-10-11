@@ -159,9 +159,12 @@ object GenerateRegFileVerilogFile extends App {
 class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=false,
               val hartId:Int=0,
               val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
-              val enableCompressed: Boolean = false, val useFASE: Boolean = false) extends Module {
+              val enableCompressed: Boolean = false, val useFASE: Boolean = false,
+              val rvv: Option[flow.rvv.RvvParams] = None) extends Module {
     require(hartId >= 0, "CSRFile hartId must be non-negative")
     val io = IO(new Bundle{
+        val vectorState = rvv.map(p => Output(new flow.rvv.RvvCsrState(p)))
+        val vectorCommit = rvv.map(p => Input(new flow.rvv.RvvCsrCommit(p)))
         val faseEnter = if (useFASE) Some(Input(Bool())) else None
         val faseDiagnostic = if (useFASE) Some(Output(Vec(12, UInt(XLEN.W)))) else None
         val csr_addr = Input(UInt(12.W))
@@ -211,6 +214,15 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
         val csr_illegal = Output(Bool())
         val debug = if (enabledebug) Some(new CSRFDebugIO(XLEN)) else None
     })
+    val vector = rvv.map(p => Module(new flow.rvv.RvvCsr(p)))
+    vector.foreach { v =>
+        v.io.address := io.csr_addr
+        v.io.write := io.commit_valid && io.commit_write_en && !io.trap.valid
+        v.io.writeAddress := io.commit_addr; v.io.writeData := io.commit_wdata
+        v.io.commit := io.vectorCommit.get; io.vectorState.get := v.io.state
+    }
+    val vectorDirty = vector.map(_.io.vs === 3.U).getOrElse(false.B)
+    val vectorVs = vector.map(_.io.vs).getOrElse(0.U(2.W))
     // csr supported
     val printer = RegInit(0.U(XLEN.W))
     private val implementedHpmCounters = 8
@@ -230,6 +242,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     private val enableSupervisorUser = privilegeProfile.enableSupervisorUser
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
         (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) |
+        (if (rvv.nonEmpty) BigInt(1) << 21 else BigInt(0)) |
         (if (enableCompressed) BigInt(1) << 2 else BigInt(0)) |
         (if (enableSupervisorUser) (BigInt(1) << 18) | (BigInt(1) << 20) else BigInt(0))
     val misa = WireDefault(misa_value.U(XLEN.W))
@@ -326,19 +339,19 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val linuxXlenFields = if (enableSupervisorUser) {
         ((BigInt(2) << 34) | (BigInt(2) << 32)).U(XLEN.W)
     } else 0.U(XLEN.W)
-    mstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
+    mstatus_read := (((mstatus_FS === "b11".U) || vectorDirty).asUInt << (XLEN - 1)) |
         linuxXlenFields | (mstatus_TSR.asUInt << 22) | (mstatus_TW.asUInt << 21) |
         (mstatus_TVM.asUInt << 20) | (mstatus_MXR.asUInt << 19) |
         (mstatus_SUM.asUInt << 18) | (mstatus_MPRV.asUInt << 17) |
-        (mstatus_FS << 13) | (mstatus_MPP << 11) |
+        (vectorVs << 9) | (mstatus_FS << 13) | (mstatus_MPP << 11) |
         (mstatus_SPP.asUInt << 8) | (mstatus_MPIE.asUInt << 7) |
         (mstatus_SPIE.asUInt << 5) | (mstatus_MIE.asUInt << 3) |
         (mstatus_SIE.asUInt << 1)
     val sstatus_read = Wire(UInt(XLEN.W))
-    sstatus_read := ((mstatus_FS === "b11".U).asUInt << (XLEN - 1)) |
+    sstatus_read := (((mstatus_FS === "b11".U) || vectorDirty).asUInt << (XLEN - 1)) |
         (if (enableSupervisorUser) (BigInt(2) << 32).U(XLEN.W) else 0.U(XLEN.W)) |
         (mstatus_MXR.asUInt << 19) | (mstatus_SUM.asUInt << 18) |
-        (mstatus_FS << 13) | (mstatus_SPP.asUInt << 8) |
+        (vectorVs << 9) | (mstatus_FS << 13) | (mstatus_SPP.asUInt << 8) |
         (mstatus_SPIE.asUInt << 5) | (mstatus_SIE.asUInt << 1)
     val mie_read = Wire(UInt(XLEN.W))
     val mip_read = Wire(UInt(XLEN.W))
@@ -424,7 +437,8 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val bankData = readBanks.map(bank => Mux1H(bank.map { case (addresses, data) =>
         addresses.map(addressHits(_)).reduce(_ || _) -> data.pad(XLEN)
     }))
-    val csrImplemented = addressHits.values.toSeq.reduce(_ || _)
+    val vectorCsrAccess = vector.map(_.io.exists).getOrElse(false.B)
+    val csrImplemented = addressHits.values.toSeq.reduce(_ || _) || vectorCsrAccess
     val old_csr_val = WireDefault(0.U(XLEN.W))
     val new_csr_val = WireDefault(old_csr_val)
     val read_csr = WireDefault(false.B)
@@ -432,7 +446,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     val uimm = io.csr_reg_data(4, 0)
     // Unselected banks produce zero. All selectors are mutually exclusive;
     // no priority chain is required within or between banks.
-    old_csr_val := Mux(read_csr, bankData.reduce(_ | _), 0.U)
+    old_csr_val := Mux(read_csr, bankData.reduce(_ | _) | vector.map(_.io.read).getOrElse(0.U(64.W)), 0.U)
     val fpCsrAccess = addressHits(CSRMAP.fflags) ||
         addressHits(CSRMAP.frm) || addressHits(CSRMAP.fcsr)
     val csrAccess = io.csr_cmd =/= CSR_CMD.NOP.U
@@ -468,7 +482,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     io.csr_illegal := csrAccess && (
         !csrImplemented || privilegeDenied || customCsrDenied || satpDenied || sstcDenied ||
         readOnlyWrite || counterDenied ||
-        (fpCsrAccess && mstatus_FS === 0.U))
+        (fpCsrAccess && mstatus_FS === 0.U) || (vectorCsrAccess && vectorVs === 0.U))
 
     // SEIP reads include the external wire, but CSR read/modify/write uses
     // only its software-pending bit (Privileged ISA, machine interrupt CSRs).

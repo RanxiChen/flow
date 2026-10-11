@@ -26,7 +26,8 @@ object GenerateBreezeCluster extends App {
         (if(enableTandem) "tandem" else "production") / (if(debug) "fpga-debug" else "cpu")
     private val targetDir = if (cfg.coherentDma) baseDir / "coherent-dma" else baseDir
     ChiselStage.emitSystemVerilogFile(
-        new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
+        if (cfg.rvv.nonEmpty) new BreezeRvvAxi(cfg, enableTandem, debug, hangThreshold)
+        else new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
         Array("--target-dir", targetDir.toString),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
@@ -69,6 +70,6 @@ object GenerateBreezeCluster extends App {
     private val platformHash = java.security.MessageDigest.getInstance("SHA-256")
         .digest(platformBytes).map(b => f"${b & 0xff}%02x").mkString
     os.write.over(targetDir / "cluster-profile.txt",
-        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
-    os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\n")
+        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${if (cfg.rvv.nonEmpty) 2 else flow.coherence.CoherenceParams(mem).slotBits}\n")
+    os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\nrvv=${cfg.rvv.nonEmpty}\nmemoryBits=${cfg.rvv.map(_.memoryBits).getOrElse(64)}\n")
 }

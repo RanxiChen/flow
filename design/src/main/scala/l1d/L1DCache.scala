@@ -11,7 +11,8 @@ import flow.mmu.sv39.{MmuCmd, TlbResp, TreePlru}
   * CPU S1/S2/S3 retain their backend-aligned slots during s2Hold. Internal work
   * shares the SRAM ports, but can finish an older miss while CPU S2 waits.
   */
-class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends Module {
+class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false,
+    writeThrough: Boolean = false) extends Module {
   val p = L1DParams(g)
   val io = IO(new L1DIO(p, withPmpCandidate))
   private def idx(a: UInt): UInt = if (p.idxBits == 0) 0.U(p.idxW.W) else a(p.offBits + p.idxBits - 1, p.offBits)
@@ -46,6 +47,10 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val miss = Module(new L1DMiss(p))
   val probe = Module(new L1DProbe(p))
   val mmio = Module(new L1DMmio(p))
+  val wt = if (writeThrough) Some(Module(new L1DWriteThrough(p))) else None
+  val wtActive = wt.map(_.io.active).getOrElse(false.B)
+  val writePending = if (writeThrough) Some(IO(Output(Bool()))) else None
+  val tlbWants = if (writeThrough) Some(IO(Output(Bool()))) else None
 
   val cpu1 = RegInit(0.U.asTypeOf(new L1S1(p)))
   val cpu2 = RegInit(0.U.asTypeOf(new L1S2(p)))
@@ -118,7 +123,8 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val olderDrained = !cpu1.valid && !cpu2.valid && !cpu3.valid && !internal1.valid && !internal2.valid && !internal3.valid &&
     !miss.io.status.mshrValid && !ps.valid
   val cpuEntryOpen = initDone && !cpuRetry && !recheckIssued && !mmio.io.active && !acquireBusy &&
-    (!probe.io.pending.valid || rsvProbeHeld) && !wholeBusy && (!needsDrain || olderDrained)
+    (!probe.io.pending.valid || rsvProbeHeld) && !wholeBusy && !wtActive && (!needsDrain || olderDrained)
+  tlbWants.foreach(_ := cpuRetry || (io.core.req.valid && cpuEntryOpen && !cpuConflict))
   val canPtw = initDone && resourcesClear && !ptwOutstanding && !ptwConflict && !ps.valid &&
     (!cpu3.valid || cpuRetry) && (!cpu2.valid || cpuRetry) && (!cpu1.valid || cpuRetry) &&
     !internal1.valid && !internal2.valid && !internal3.valid
@@ -440,7 +446,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val writable = (0 until p.ways).map(w => hitVec(w) &&
     (s2.tagVec(w).state === L1State.E || s2.tagVec(w).state === L1State.M)).reduce(_ || _)
   val sharedHit = (0 until p.ways).map(w => hitVec(w) && s2.tagVec(w).state === L1State.S).reduce(_ || _)
-  localAmo := amoRmw || (!fromInternal && cpu3.valid && cpu3.req.core.op === L1DOp.AMO &&
+  localAmo := wtActive || amoRmw || (!fromInternal && cpu3.valid && cpu3.req.core.op === L1DOp.AMO &&
     hit && writable && !atomicWait && !cpuRetry)
   val hitWord = s2.hitData
   val isStore = !ptw && storeLike(s2.req.core.op)
@@ -527,7 +533,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val cacheOp = ptw || cacheLoad || cacheStore || blockingAtomic
   val ownedHit = hit && writable
   val cacheNeedsMiss = ((ptw || cacheLoad) && !hit) ||
-    ((cacheStore || blockingAtomic) && !ownedHit)
+    (((cacheStore && !writeThrough.B) || blockingAtomic) && !ownedHit)
   val cacheHasCapacity = (ptw && ptwCanAllocate) || (!ptw && canAllocate)
   val cacheHitDone = (cacheLoad && hit) || (ownedHit && (isLr || (cacheStore && psRoom)))
   val cacheHitAmo = ownedHit && isAmo && psRoom
@@ -542,23 +548,34 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     s2.req.core.op === L1DOp.Store && !psRoom
   val replayDone = replayDecision && !replayFault && !replayAmo && !replayWait
 
-  val s2Done = (replayDone && !ptw) || (rmwDecision && psCompletes) ||
+  val s2Done = WireDefault((replayDone && !ptw) || (rmwDecision && psCompletes) ||
     (fenceDecision && io.core.drained) ||
     (mmioDecision && mmio.io.done.valid && !mmio.io.done.bits.error) ||
-    (scDecision && (!scSuccess || psRoom)) || (cacheReady && cacheHitDone)
-  val s2Miss = cacheReady && cacheNeedsMiss && cacheHasCapacity
-  val s2Fault = (replayDecision && replayFault) ||
+    (scDecision && (!scSuccess || psRoom)) || (cacheReady && cacheHitDone))
+  val s2Miss = WireDefault(cacheReady && cacheNeedsMiss && cacheHasCapacity)
+  val s2Fault = WireDefault((replayDecision && replayFault) ||
     (lookupDecision && !snapshotStale && lookupFault) ||
-    (mmioDecision && mmio.io.done.valid && mmio.io.done.bits.error)
-  val s2Recheck = (s2.valid && internalRefresh) || (lookupDecision && snapshotStale)
+    (mmioDecision && mmio.io.done.valid && mmio.io.done.bits.error))
+  val s2Recheck = WireDefault((s2.valid && internalRefresh) || (lookupDecision && snapshotStale))
+  if (writeThrough) { when(wtActive) { s2Recheck := false.B } }
   val s2Mmio = mmioDecision && !mmio.io.done.valid
   val s2Amo = (replayDecision && replayAmo) || (cacheReady && cacheHitAmo)
   val s2PtwResp = (replayDone && ptw) || (cacheReady && ptw && hit)
-  val s2Wait = (replayDecision && replayWait) || (accessDecision && cpuLaneBusy) ||
+  val s2Wait = WireDefault((replayDecision && replayWait) || (accessDecision && cpuLaneBusy) ||
     (rmwDecision && !psCompletes) ||
     (accessDecision && !cpuLaneBusy && !amoRmw && atomicWait) ||
     (fenceDecision && !io.core.drained) || (scDecision && scSuccess && !psRoom) ||
-    (cacheDecision && lineBusy) || (cacheReady && cacheWait)
+    (cacheDecision && lineBusy) || (cacheReady && cacheWait))
+  val wtCandidate = (cacheReady && cacheStore && psRoom && resourcesClear) ||
+    (scDecision && scSuccess && ownedHit && psRoom) || s2Amo
+  if (writeThrough) {
+    when(wtActive || wtCandidate) {
+      s2Done := wt.get.io.done && !wt.get.io.error
+      s2Fault := wt.get.io.done && wt.get.io.error
+      s2Miss := false.B
+      s2Wait := !wt.get.io.done
+    }
+  }
   // Assertion-only consumers disappear when synthesis removes assertions.
   // Name the instances so the routed netlist can prove their absence.
   val shadowPmp = Module(new flow.mmu.BreezePmpChecker(64))
@@ -586,7 +603,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
       s2.highAddress === (s2.physicalAddress >> p.paddrBits).orR,
       "[SOC3 M1] S2 permission snapshot differs from current context")
   }
-  val undecided = s2Wait || s2Recheck || s2Mmio || s2Amo || (blockingRequest && s2Miss)
+  val undecided = s2Wait || s2Recheck || s2Mmio || (s2Amo && !wt.map(_.io.done).getOrElse(false.B)) || (blockingRequest && s2Miss)
   // Admission reserves the single internal result's capacity. In particular,
   // PTW is accepted only with free miss resources, and replay waits for PS.
   // An internal wait here would prevent that same lane finishing the miss.
@@ -621,6 +638,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     s2Miss -> L1DRespKind.Mshr,
     s2Fault -> L1DRespKind.Exc))
   io.core.resp.bits.data := Mux(amoRmw, amoOld, Mux(isSc, Mux(scSuccess, 0.U, 1.U), Mux(isLr, atomicData, loadData)))
+  wt.foreach { w => when(w.io.done && isAmo) { io.core.resp.bits.data := w.io.old } }
   io.core.resp.bits.excCause := Mux(misaligned, Mux(isStore, 6.U, 4.U),
     Mux(s2.pageFault, Mux(isStore, 15.U, 13.U), Mux(isStore, 7.U, 5.U)))
   io.core.resp.bits.tval := s2.req.core.vaddr
@@ -708,9 +726,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     (!cpu3StoreProbe || cpuRetry || atomicWait) && !psSameProbe
   probe.io.initDone := initDone
 
-  val amoStarts = s2.valid && isAmo && s2Amo &&
+  val amoStarts = !writeThrough.B && s2.valid && isAmo && s2Amo &&
     (!replay || atomicWait) && !s2.req.replayError && !io.core.s2Kill && !speculativeReplay
-  val stores = s2.valid && !ptw && !s2.pmaDevice && !(replay && s2.req.replayError) &&
+  val stores = !writeThrough.B && s2.valid && !ptw && !s2.pmaDevice && !(replay && s2.req.replayError) &&
     ((s2.req.core.op === L1DOp.Store && s2Done && (replay || (!io.core.s2Kill && !speculativeReplay))) ||
       (isSc && scSuccess && s2Done && !io.core.s2Kill && !speculativeReplay) || amoStarts)
   when(psCompletes) { ps.valid := false.B; psAtomic := false.B }
@@ -727,6 +745,29 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     val amoAligned = (amoAlu.io.newOperand << (s2.paddr(2, 0) ## 0.U(3.W)))(63, 0)
     ps.data := Mux(isAmo, amoAligned, s2.storeDataAligned)
     ps.setDirty := hitState === L1State.E
+  }
+  wt.foreach { w =>
+    w.io.start.valid := wtCandidate && !w.io.active && s2.valid &&
+      (replay || s2.req.core.solo) && !io.core.s2Kill
+    w.io.start.bits := 0.U.asTypeOf(w.io.start.bits)
+    w.io.start.bits.hit := hit
+    w.io.start.bits.old := atomicData
+    val captured = w.io.start.bits.store
+    captured.idx := s2.req.idx; captured.word := s2.req.word; captured.way := hitWay
+    captured.paddr := s2.paddr; captured.mask := s2.storeMask
+    captured.data := Mux(isAmo,
+      (amoAlu.io.newOperand << (s2.paddr(2, 0) ## 0.U(3.W)))(63, 0), s2.storeDataAligned)
+    captured.setDirty := false.B
+    w.io.consume := w.io.done && cpuDecided && !fromInternal
+    when(w.io.consume && w.io.localWrite.valid) {
+      assert(psRoom, "successful write-through lacks local completion capacity")
+      ps := w.io.localWrite
+      psAtomic := false.B
+    }
+    writePending.get := w.io.active || ps.valid ||
+      (cpu1.valid && storeLike(cpu1.req.core.op)) ||
+      (cpu2.valid && storeLike(cpu2.req.core.op)) ||
+      (cpu3.valid && storeLike(cpu3.req.core.op))
   }
   when(amoStarts) { amoRmw := true.B; amoOld := atomicData }
   when(rsvTimer =/= 0.U) { rsvTimer := rsvTimer - 1.U }
@@ -827,8 +868,19 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     }
   }
 
-  io.coh.req <> miss.io.req
-  miss.io.rspDown.valid := io.coh.rspDown.valid
+  if (writeThrough) {
+    val w = wt.get
+    // A reserved miss request cannot be preempted after VALID is presented.
+    // Solo stores start only with empty miss resources, so there is no tie.
+    io.coh.req.valid := w.io.req.valid || miss.io.req.valid
+    io.coh.req.bits := Mux(w.io.req.valid, w.io.req.bits, miss.io.req.bits)
+    w.io.req.ready := io.coh.req.ready
+    miss.io.req.ready := io.coh.req.ready && !w.io.req.valid
+    w.io.rsp.valid := io.coh.rspDown.valid && io.coh.rspDown.bits.op === RspDownOp.WriteAck
+    w.io.rsp.bits := io.coh.rspDown.bits
+    assert(!(w.io.req.valid && miss.io.req.valid), "write-through and miss owners overlapped")
+  } else { io.coh.req <> miss.io.req }
+  miss.io.rspDown.valid := io.coh.rspDown.valid && (!writeThrough.B || io.coh.rspDown.bits.op =/= RspDownOp.WriteAck)
   miss.io.rspDown.bits := io.coh.rspDown.bits
   io.coh.rspDown.ready := true.B
   probe.io.snp <> io.coh.snp
@@ -857,10 +909,10 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   mmio.io.doneConsume := !fromInternal && cpuDecided
   mmio.io.drained := io.core.drained
   io.mmio <> mmio.io.axi
-  io.core.mmioBusy := mmio.io.busy
-  io.core.drained := !miss.io.status.mshrValid && !ps.valid
+  io.core.mmioBusy := mmio.io.busy || wtActive
+  io.core.drained := !miss.io.status.mshrValid && !ps.valid && !wtActive
   def cpuReplay(slot: L1S2): Bool = slot.valid && slot.req.src === L1Src.Replay && !slot.req.replayPtw
-  io.core.cpuDrained := !ps.valid && !(miss.io.status.mshrValid && miss.io.status.mshrCpu) &&
+  io.core.cpuDrained := !ps.valid && !wtActive && !(miss.io.status.mshrValid && miss.io.status.mshrCpu) &&
     !cpuReplay(internal2) && !cpuReplay(internal3) &&
     !(internal1.valid && internal1.req.src === L1Src.Replay && !internal1.req.replayPtw)
   when(cpuHold) { assert(!cpu1.valid && !cpu2.valid, "[N01] solo S3 hold with younger CPU slots") }

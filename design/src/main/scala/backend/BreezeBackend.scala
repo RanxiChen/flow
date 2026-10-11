@@ -9,6 +9,7 @@ import flow.divider.DivUnit
 import flow.multiplier.MulUnit
 import flow.fpu._
 import flow.platform.BreezeMcuPlatform
+import flow.rvv._
 
 /** Metadata for MEM/WB, not a completion queue. Arithmetic stays in its source. */
 class Stage(val cfg: BackendConfig) extends Bundle {
@@ -47,6 +48,9 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val csrData = UInt(64.W)
   val rs1 = UInt(5.W)
   val rs2 = UInt(5.W)
+  val vectorSet = cfg.rvv.map(_ => Bool())
+  val vectorVl = cfg.rvv.map(p => UInt(p.lengthBits.W))
+  val vectorType = cfg.rvv.map(_ => UInt(64.W))
   val predictionMiss = Bool()
 }
 
@@ -56,8 +60,10 @@ class BreezeBackend(
     val hartId: Int = 0, val useFASE: Boolean = false
 ) extends Module {
   require(cfg.VLEN == 64 && hartId >= 0)
+  require(!(cfg.rvv.nonEmpty && cfg.coprocessorStub.nonEmpty), "RVV and test stub share one mount")
   require(!useFASE, "v1 FASE integration awaits the cluster specification")
   val io = IO(new Bundle {
+    val rvv = cfg.rvv.map(p => new RvvServices(p))
     val resetAddr = Input(UInt(64.W))
     val fase = if (useFASE) Some(new FaseBackendIO) else None
     val machineTimerInterrupt = Input(Bool())
@@ -92,13 +98,16 @@ class BreezeBackend(
   val regFile = Module(new RegFile(64))
   val fpRegFile = Module(new BreezeFpRegFile)
   val csrFile = Module(new CSRFile(64, enabledebug = enabledebug, hartId = hartId,
-    privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
+    privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed, rvv = cfg.rvv))
   val scoreboard = Module(new Scoreboard(pipeStages = 4))
-  val writeback = Module(new Writeback(withCoprocessor = cfg.coprocessorStub.nonEmpty))
+  val writeback = Module(new Writeback(withCoprocessor = cfg.coprocessorStub.nonEmpty || cfg.rvv.nonEmpty))
   val mulUnit = Module(new MulUnit(registeredCommit = true))
   val divUnit = Module(new DivUnit(registeredCommit = true))
   val fpUnit = Module(new FpUnit(issueReservation = true))
   val coprocessor = cfg.coprocessorStub.map(seed => Module(new CoprocessorStub(seed)))
+  val vector = cfg.rvv.map(p => Module(new RvvMount(p)))
+  vector.foreach(v => io.rvv.get <> v.io.services)
+  val vectorDrainedD = vector.map(v => RegNext(v.io.drained, false.B)).getOrElse(true.B)
   val coproUsed = RegInit(false.B)
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
@@ -135,19 +144,38 @@ class BreezeBackend(
   fpDecoder.io.inst := inst
   immGen.io.inst := inst
   immGen.io.type_sel := ctrl.sel_imm
-  val idCopro = cfg.coprocessorStub.nonEmpty.B && inst(6,0) === "h0b".U
+  def vectorEncoding(x: UInt): Bool = cfg.rvv.nonEmpty.B &&
+    ((x(6,0) === "h57".U && x(14,12) =/= 7.U) ||
+      ((x(6,0) === "h07".U || x(6,0) === "h27".U) && (x(14,12) === 0.U || x(14,12) >= 5.U)))
+  def setEncoding(x: UInt): Bool = cfg.rvv.nonEmpty.B && x(6,0) === "h57".U && x(14,12) === 7.U
+  def scalarVector(x: UInt): Bool = vectorEncoding(x) && x(6,0) === "h57".U &&
+    x(31,26) === 16.U && x(14,12) === 2.U && x(19,15) === 0.U && x(25)
+  val idVector = vectorEncoding(inst)
+  val idSet = setEncoding(inst)
+  val vectorSupported = cfg.rvv.map { p =>
+    val snapshot = WireDefault(0.U.asTypeOf(new RvvIssue(p)))
+    snapshot.instruction := inst
+    snapshot.vl := csrFile.io.vectorState.get.vl; snapshot.vtype := csrFile.io.vectorState.get.vtype
+    RvvDecode(snapshot,p).supported
+  }.getOrElse(false.B)
+  val vectorEnabled = csrFile.io.vectorState.map(_.enabled).getOrElse(false.B)
+  val vectorVill = csrFile.io.vectorState.map(_.vtype(63)).getOrElse(false.B)
+  val setLegal = !inst(31) || inst(31,30) === 3.U || inst(31,25) === 0x40.U
+  val idVectorLegal = idVector && vectorSupported && vectorEnabled && !vectorVill
+  val idCopro = (cfg.coprocessorStub.nonEmpty.B && inst(6,0) === "h0b".U) || idVectorLegal
   val idCsr = ctrl.csr_cmd =/= CSR_CMD.NOP.U
   val idEstop = inst === "h7ff00073".U
-  val idSerial = ctrl.fencei || ctrl.is_sfence_vma || idEstop || idCsr
+  val idSerial = ctrl.fencei || ctrl.is_sfence_vma || idEstop || idCsr || idSet
   val olderEmpty = !ex.valid && !mem.valid && !perm.valid && !wb.valid
   val serialInFlight = (ex.valid && (ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.estop ||
-    ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U)) || (mem.valid && mem.serial) ||
+    ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U || setEncoding(ex.inst))) || (mem.valid && mem.serial) ||
     (perm.valid && perm.serial) || (wb.valid && wb.serial)
   val soloInFlight = (ex.valid && exSolo) || (mem.valid && mem.solo) ||
     (perm.valid && perm.solo) || (wb.valid && wb.solo)
   val idAtomic = ctrl.mem_op === BreezeMemOp.Lr || ctrl.mem_op === BreezeMemOp.Sc ||
     ctrl.mem_op === BreezeMemOp.Amo
-  val idSolo = soloArm || ctrl.mem_op === BreezeMemOp.Amo || (idAtomic && (ctrl.amo_aq || ctrl.amo_rl))
+  val idSolo = soloArm || (cfg.writeThrough.B && !idVector &&
+    (ctrl.mem_op === BreezeMemOp.Store || ctrl.mem_op === BreezeMemOp.Sc || fpCtrl.isStore)) || ctrl.mem_op === BreezeMemOp.Amo || (idAtomic && (ctrl.amo_aq || ctrl.amo_rl))
   // A retiring CPU S3 can create PS/MSHR ownership at this edge. Sampling
   // only after the older pipeline is empty closes that obligation handoff.
   val cpuDrainedD = RegNext(io.l1d.cpuDrained && olderEmpty, false.B)
@@ -160,16 +188,18 @@ class BreezeBackend(
   val scalarDrainedD = scalarDrained
   val serialReady = (!ctrl.fencei || cpuDrainedD) &&
     (!ctrl.is_sfence_vma || (cpuDrainedD && mmuIdleD)) &&
-    (!(idEstop || idCsr) || scalarDrainedD)
+    (!(idEstop || idCsr) || scalarDrainedD) &&
+    (!(idSerial || ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U || fpCtrl.isLoad || fpCtrl.isStore) || vectorDrainedD)
   val serialIdWait = idSerial && (!olderEmpty || !serialReady)
   val soloIdWait = idSolo && (!olderEmpty || (soloArm && replayReason =/= 4.U && !io.l1d.replayWake))
-  val gpr1Used = Mux(fpCtrl.valid, fpCtrl.usesGpr1,
+  val gpr1Used = Mux(idVector || idSet,
+    Mux(idSet, inst(31,30) =/= 3.U && rs1 =/= 0.U, inst(6,0) =/= "h57".U || inst(14,12) === 4.U || inst(14,12) === 6.U), Mux(fpCtrl.valid, fpCtrl.usesGpr1,
     (ctrl.sel_alu1 === SEL_ALU1.RS1.U && !(idCsr && ctrl.csr_cmd(2))) || ctrl.bru_inst ||
-      ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.is_sfence_vma)
-  val gpr2Used = !fpCtrl.valid && (ctrl.sel_alu2 === SEL_ALU2.RS2.U || ctrl.bru_inst ||
+      ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.is_sfence_vma))
+  val gpr2Used = Mux(idVector || idSet, idSet && inst(31,25) === 0x40.U, !fpCtrl.valid && (ctrl.sel_alu2 === SEL_ALU2.RS2.U || ctrl.bru_inst ||
     ctrl.mem_op === BreezeMemOp.Store || ctrl.mem_op === BreezeMemOp.Sc ||
-    ctrl.mem_op === BreezeMemOp.Amo || ctrl.is_sfence_vma)
-  val idWrites = !idCopro && Mux(fpCtrl.valid, fpCtrl.writesFpr || fpCtrl.writesGpr, ctrl.wb_en)
+    ctrl.mem_op === BreezeMemOp.Amo || ctrl.is_sfence_vma))
+  val idWrites = Mux(idVector || idSet, idSet || scalarVector(inst), !idCopro && Mux(fpCtrl.valid, fpCtrl.writesFpr || fpCtrl.writesGpr, ctrl.wb_en))
   val idBank = fpCtrl.valid && fpCtrl.writesFpr
   val operands = scoreboard.io.operands
   operands(0).used := gpr1Used || fpCtrl.usesFpr1
@@ -190,8 +220,8 @@ class BreezeBackend(
   val wbDone = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Done
   val wbMiss = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Mshr
   val wbMemExc = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Exc
-  val coproDecisionValid = coprocessor.map(_.io.decision.valid).getOrElse(false.B)
-  val coproDecision = coprocessor.map(_.io.decision.bits).getOrElse(0.U.asTypeOf(new CoprocessorDecision))
+  val coproDecisionValid = coprocessor.map(_.io.decision.valid).orElse(vector.map(_.io.decision.valid)).getOrElse(false.B)
+  val coproDecision = coprocessor.map(_.io.decision.bits).orElse(vector.map(_.io.decision.bits)).getOrElse(0.U.asTypeOf(new CoprocessorDecision))
   val wbCoproExc = wb.valid && wb.copro && coproDecisionValid && coproDecision.exception
   val wbExc = wb.valid && (wb.exception || wbMemExc || wbCoproExc)
   val wbReplay = (wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Replay) ||
@@ -210,8 +240,8 @@ class BreezeBackend(
   val satp = wbCommit && wb.csrWrite && wb.csrAddr === CSRMAP.satp.U
   wbKill := (wbCanLeave && (wbExc || wbReplay)) || interrupt || fenceRedirect || xret || satp || (wbCommit && wb.wfi)
 
-  val wbLong = wb.mul || wb.div || wb.fp || (wb.mem && wb.load && wbMiss)
-  val wbOrdinary = wbCommit && wb.writes && !wb.mul && !wb.div && !wb.fp && (!wb.mem || wbDone)
+  val wbLong = wb.mul || wb.div || wb.fp || (wb.copro && wb.writes) || (wb.mem && wb.load && wbMiss)
+  val wbOrdinary = wbCommit && wb.writes && !wb.mul && !wb.div && !wb.fp && !wb.copro && (!wb.mem || wbDone)
   val wbData = Mux(wb.mem, io.l1d.resp.bits.data, wb.data)
   writeback.io.ordinary.valid := wbOrdinary
   writeback.io.ordinary.bits.rd := wb.rd
@@ -241,25 +271,28 @@ class BreezeBackend(
   scoreboard.io.idLeave := idLeave
   scoreboard.io.fpFlagsPending := fpUnit.io.committedFlagsOnly
   val exLegal = ex.valid && !ex.illegal_inst && !ex.instruction_access_fault && !ex.instruction_page_fault
-  val exMem = exLegal && (ex.ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U || exFp.isLoad || exFp.isStore ||
+  val exMem = exLegal && !vectorEncoding(ex.inst) && !setEncoding(ex.inst) && (ex.ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U || exFp.isLoad || exFp.isStore ||
     ex.inst(6,0) === OPCODE.MISC_MEM && !ex.ctrl.fencei)
   val exLoad = exMem && !(exFp.isStore || ex.ctrl.mem_op === BreezeMemOp.Store || ex.inst(6,0) === OPCODE.MISC_MEM)
   val exMul = exLegal && ex.ctrl.mul_valid && ex.rd_addr =/= 0.U
   val exDiv = exLegal && ex.ctrl.div_valid && ex.rd_addr =/= 0.U
   val exFpLong = exLegal && exFp.fpuValid
   val exBank = exFp.valid && exFp.writesFpr
-  val exWrites = !(cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U) && Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
+  val exVector = vectorEncoding(ex.inst) && exLegal
+  val exSet = setEncoding(ex.inst) && exLegal
+  val exVectorScalar = exVector && scalarVector(ex.inst)
+  val exWrites = Mux(vectorEncoding(ex.inst) || setEncoding(ex.inst), setEncoding(ex.inst) || scalarVector(ex.inst), !(cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U) && Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en))
   for ((stage, index) <- Seq(mem -> 1, perm -> 2, wb -> 3)) {
     // A WB memory destination remains protected through its whole S2 cycle,
     // independently of Done/Mshr/Exc. Next cycle W2 writes or busy takes over.
-    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem)
+    scoreboard.io.pipe(index).valid := stage.valid && (stage.mul || stage.div || stage.fp || stage.mem || (stage.copro && stage.writes))
     scoreboard.io.pipe(index).bits.rd := stage.rd
     scoreboard.io.pipe(index).bits.source := Mux(stage.mem, LongSource.L1D.U,
       Mux(stage.div, LongSource.DIV.U, Mux(stage.mul, LongSource.MUL.U, LongSource.FPU.U)))
     // CSR must wait even for a store/Fence or an FP-to-x0 producer.
     when(!stage.writes) { scoreboard.io.pipe(index).bits.rd.idx := 0.U }
   }
-  scoreboard.io.pipe(0).valid := exMul || exDiv || exFpLong || exMem
+  scoreboard.io.pipe(0).valid := exMul || exDiv || exFpLong || exMem || exVectorScalar
   scoreboard.io.pipe(0).bits.rd.idx := Mux(exWrites, ex.rd_addr, 0.U)
   scoreboard.io.pipe(0).bits.rd.isFp := exBank
   scoreboard.io.pipe(0).bits.source := Mux(exMem, LongSource.L1D.U,
@@ -271,10 +304,10 @@ class BreezeBackend(
     def matches(dest: L1DDestination): Bool =
       dest.isFp === fp.B && (fp.B || dest.idx =/= 0.U) && addr === dest.idx
     val fromW2 = writeback.io.w2.valid && matches(writeback.io.w2.bits.rd)
-    val fromWb = wb.valid && wb.writes && !wb.mem && !wb.mul && !wb.div && !wb.fp && matches(wb.rd)
-    val fromMem = mem.valid && mem.writes && !mem.mem && !mem.mul && !mem.div && !mem.fp &&
+    val fromWb = wb.valid && wb.writes && !wb.mem && !wb.mul && !wb.div && !wb.fp && !wb.copro && matches(wb.rd)
+    val fromMem = mem.valid && mem.writes && !mem.mem && !mem.mul && !mem.div && !mem.fp && !mem.copro &&
       mem.csrCmd === CSR_CMD.NOP.U && matches(mem.rd)
-    val fromPerm = perm.valid && perm.writes && !perm.mem && !perm.mul && !perm.div && !perm.fp &&
+    val fromPerm = perm.valid && perm.writes && !perm.mem && !perm.mul && !perm.div && !perm.fp && !perm.copro &&
       perm.csrCmd === CSR_CMD.NOP.U && matches(perm.rd)
     Mux(fromMem, mem.data, Mux(fromPerm, perm.data,
       Mux(fromWb, wb.data, Mux(fromW2, writeback.io.w2.bits.data, saved))))
@@ -485,7 +518,9 @@ class BreezeBackend(
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
     (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) ||
-    (perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite)
+    (perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) || (wb.valid && wb.csrWrite) ||
+    (ex.valid && setEncoding(ex.inst)) || mem.vectorSet.map(mem.valid && _).getOrElse(false.B) ||
+    perm.vectorSet.map(perm.valid && _).getOrElse(false.B) || wb.vectorSet.map(wb.valid && _).getOrElse(false.B)
   val oldCsrUsesRs1 = ctrl.sel_alu1 === SEL_ALU1.RS1.U || ctrl.bru_inst || ctrl.is_sfence_vma ||
     ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.csr_cmd === CSR_CMD.RW.U ||
     ctrl.csr_cmd === CSR_CMD.RS.U || ctrl.csr_cmd === CSR_CMD.RC.U
@@ -563,9 +598,40 @@ class BreezeBackend(
     writeback.io.copro.get.valid := false.B
     writeback.io.copro.get.bits := 0.U.asTypeOf(new FpResult)
   }
+  vector.foreach { v =>
+    val p = cfg.rvv.get
+    v.io.reserve := idLeave && idVectorLegal && !io.fetchBuffer.bits.illegalCompressed &&
+      !io.fetchBuffer.bits.instructionAccessFault && !io.fetchBuffer.bits.instructionPageFault
+    v.io.issue.valid := exVector && allowEx
+    v.io.issue.bits := 0.U.asTypeOf(v.io.issue.bits)
+    v.io.issue.bits.instruction := ex.inst; v.io.issue.bits.rs1 := exR1; v.io.issue.bits.rs2 := exR2
+    v.io.issue.bits.rd := ex.rd_addr
+    val state = csrFile.io.vectorState.get
+    v.io.issue.bits.vl := state.vl; v.io.issue.bits.vtype := state.vtype
+    v.io.issue.bits.vstart := state.vstart; v.io.issue.bits.vxrm := state.vxrm; v.io.issue.bits.frm := csrFile.io.frm
+    v.io.consume := wbCommit && wb.copro
+    v.io.commitD := RegNext(wbCommit && wb.copro, false.B); v.io.killD := killD
+    writeback.io.copro.get <> v.io.result
+    val vc = csrFile.io.vectorCommit.get
+    vc := 0.U.asTypeOf(vc)
+    vc.valid := wbCommit && (wb.copro || wb.vectorSet.get)
+    vc.set := wb.vectorSet.get
+    vc.vl := wb.vectorVl.get; vc.vtype := wb.vectorType.get
+    vc.trap := wbCanLeave && wbCoproExc && v.io.verdict.kind === 2.U
+    vc.vstart := v.io.verdict.vstart; vc.vxsat := v.io.vxsat
+    when(wbCoproExc && v.io.verdict.kind === 3.U) { csrFile.io.trap.tval := wb.rawInst }
+  }
+  // Initial mounted version conservatively separates scalar memory and
+  // serial state changes from all older vector work. Vector-to-vector
+  // issue still overlaps through the bounded VIQ and execution queues.
+  val vectorMemoryWait = cfg.rvv.nonEmpty.B && !idVector &&
+    (ctrl.mem_cmd =/= MEM_TYPE.NOT_MEM.U || fpCtrl.isLoad || fpCtrl.isStore || idSerial) &&
+    (!vectorDrainedD || (ex.valid && vectorEncoding(ex.inst)) ||
+      (mem.valid && mem.copro) || (perm.valid && perm.copro) || (wb.valid && wb.copro))
+  val vectorCreditWait = idVectorLegal && !vector.map(_.io.available).getOrElse(true.B)
   val slowRedirectGap = RegNext(wbKill, false.B)
   io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !creditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !creditWait && !vectorMemoryWait && !vectorCreditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
@@ -583,7 +649,8 @@ class BreezeBackend(
       ex.instruction_access_fault := io.fetchBuffer.bits.instructionAccessFault
       ex.instruction_page_fault := io.fetchBuffer.bits.instructionPageFault
       ex.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
-      ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid && !idCopro) ||
+      ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid && !idCopro && !(idSet && setLegal && vectorEnabled)) ||
+        (idVector && !idVectorLegal) || (idSet && (!setLegal || !vectorEnabled)) ||
         (fpCtrl.valid && !csrFile.io.fp_enabled) || (ctrl.is_mret && csrFile.io.mret_illegal) ||
         (ctrl.is_sret && csrFile.io.sret_illegal) || (ctrl.is_wfi && csrFile.io.wfi_illegal) ||
         (ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)
@@ -634,8 +701,14 @@ class BreezeBackend(
       mem.mul := exMul
       mem.div := exDiv
       mem.fp := exFpLong
-      mem.copro := cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U && exLegal
-      mem.serial := ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.estop || ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U
+      mem.copro := (cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U && exLegal) || exVector
+      cfg.rvv.foreach { p =>
+        val state = csrFile.io.vectorState.get
+        val (vl, vtype) = RvvSetVl(ex.inst, exR1, exR2, state.vl, state.vtype, p)
+        mem.vectorSet.get := exSet; mem.vectorVl.get := vl; mem.vectorType.get := vtype
+        when(exSet) { mem.data := vl.pad(64) }
+      }
+      mem.serial := exSet || ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.estop || ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U
       mem.fencei := ex.ctrl.fencei
       mem.sfence := ex.ctrl.is_sfence_vma
       mem.wfi := ex.is_wfi

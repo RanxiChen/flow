@@ -80,7 +80,9 @@ case class BackendConfig(
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
-    val coprocessorStub: Option[Int] = scala.None
+    val coprocessorStub: Option[Int] = scala.None,
+    val rvv: Option[flow.rvv.RvvParams] = scala.None,
+    val writeThrough: Boolean = false
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -116,7 +118,9 @@ case class BreezeCoreConfig(
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
-    val coprocessorStub: Option[Int] = scala.None
+    val coprocessorStub: Option[Int] = scala.None,
+    val rvv: Option[flow.rvv.RvvParams] = scala.None,
+    val writeThrough: Boolean = false
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -144,7 +148,7 @@ case class BreezeCoreConfig(
         enableCompressed = enableCompressed,
         enableMmu = enableMmu,
         loadUseBypass = loadUseBypass,
-        coprocessorStub = coprocessorStub
+        coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = writeThrough
     )
 }
 
@@ -232,13 +236,14 @@ final case class BreezeClusterConfig(
     privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     loadUseBypass: Boolean = false,
     coprocessorStub: Option[Int] = scala.None,
-    coherentDma: Boolean = false
+    coherentDma: Boolean = false,
+    rvv: Option[flow.rvv.RvvParams] = scala.None
 ) {
     val nCores: Int = mem.nCores
 
     /** Per-core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = rvv.nonEmpty)
 }
 
 /** Named cluster profiles. `single`/`dual`/`small` are the deployment sizes;
@@ -254,13 +259,15 @@ object BreezeClusterPresets {
     // Deployment tuning is owned by the four-hart profile. A single hart
     // uses exactly the same parameters, changing only its name and hart count.
     val single: BreezeClusterConfig = small.copy(profileName = "single", mem = small.mem.copy(nCores = 1))
+    val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
+        rvv = Some(flow.rvv.RvvParams(paBits = single.mem.paddrBits, cacheLineBytes = single.mem.lineBytes)))
     val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))
     val stress: BreezeClusterConfig = BreezeClusterConfig("stress", BreezeMemGeometry.stress)
     val smokeL2w4: BreezeClusterConfig = BreezeClusterConfig("smoke-l2w4", BreezeMemGeometry.l2FourWay)
     val smokeL1dw2: BreezeClusterConfig = BreezeClusterConfig("smoke-l1dw2", BreezeMemGeometry.l1dTwoWay)
     val smoke1core: BreezeClusterConfig = BreezeClusterConfig("smoke-1core", BreezeMemGeometry.singleCore)
 
-    val all: Seq[BreezeClusterConfig] = Seq(single, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
+    val all: Seq[BreezeClusterConfig] = Seq(single, singleRvv, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
 
     /** Resolve a generator CLI profile name; unknown names fail fast. */
     def fromName(name: String): BreezeClusterConfig =

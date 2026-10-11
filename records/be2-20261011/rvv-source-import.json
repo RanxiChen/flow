@@ -1,0 +1,43 @@
+{
+  "source": "/home/chen/leisure/flow-rvv",
+  "commit": "cc0be2f",
+  "note": "RTL clean at source HEAD; design document includes existing user worktree additions; source worktree preserved",
+  "files": [
+    {
+      "path": "design/src/main/scala/rvv/RvvAluPipeline.scala",
+      "sha256": "986d4dcd7e94dab736f4a6e70bb60fd00cee109d5d95bf4ded87318e6569db48"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvCoprocessor.scala",
+      "sha256": "c8a13d23258d3a09afd23d1034b01cf0233dae351545f3b5ecad049bd009b8fd"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvDotPipeline.scala",
+      "sha256": "cdb4dccca518180074b79189f1ceed2ba939e84fbd6db51b5cea49950f8e057c"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvExecution.scala",
+      "sha256": "3345bd24348e7d5fd98b32e9d5a7964598f3235e298e4856ffa6ac0f7b6a7e65"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvFrontend.scala",
+      "sha256": "02fa1b72143ddf2b1f65c4ad8929ee27fc3557caa1921b0065806a712d5528cc"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvLoadStore.scala",
+      "sha256": "c7a123a70fdd5a4123d01cc4bae4fdea10d9e77623c7e34e1f21f5a0768aa0f5"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvLutramQueue.scala",
+      "sha256": "c734ec5ab926bee2ab02503764bf7547bf84e9b01d6b2914faa81a2aea678b3e"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvRegisterFile.scala",
+      "sha256": "350b8e3226a141eaeeed3e7ae041302627eeb329b55d561bb5fba57be6ede95a"
+    },
+    {
+      "path": "design/src/main/scala/rvv/RvvTypes.scala",
+      "sha256": "cc6e48f197c9982dfa718c0de517a7554f93f7550727ef2ca84f988f4adebd56"
+    }
+  ]
+}
