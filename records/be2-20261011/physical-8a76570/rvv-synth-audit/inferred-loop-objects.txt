@@ -1,0 +1,2 @@
+PATTERN *alui_23*
+PATTERN *sel0*

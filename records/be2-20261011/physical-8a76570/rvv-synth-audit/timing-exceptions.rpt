@@ -1,0 +1,24 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sun Oct 11 21:44:21 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_exceptions -file timing-exceptions.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Exceptions Report
+
+Position  From                                                                              Through         To                                                                                Setup           Hold            Status           
+--------  --------------------------------------------------------------------------------  --------------  --------------------------------------------------------------------------------  --------------  --------------  -----------------
+2         *                                                                                 *               [get_cells -hierarchical -filter {mr_ff == TRUE}]                                 false           false           
+3         *                                                                                 *               [get_pins -filter {REF_PIN_NAME == PRE} -of_objects [get_cells -hierarchical -fi  false           false           
+                                                                                                            lter {ars_ff1 == TRUE || ars_ff2 == TRUE}]]                                                                       
+4         [get_pins -filter {REF_PIN_NAME == C} -of_objects [get_cells -hierarchical -filt  *               [get_pins -filter {REF_PIN_NAME == D} -of_objects [get_cells -hierarchical -filt  max=2           -               
+          er {ars_ff1 == TRUE}]]                                                                            er {ars_ff2 == TRUE}]]                                                                                            
+5         [get_clocks { sys_clk }]                                                                          [get_clocks { clk125_p }]                                                         clock_group     clock_group     
+5         [get_clocks { clk125_p }]                                                                         [get_clocks { sys_clk }]                                                          clock_group     clock_group     Non-existent path
+

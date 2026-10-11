@@ -6,7 +6,10 @@ import flow.bus._
 
 /** Scalar-first arbitration with a bounded eight-burst run. Read response
   * routing uses a source ID; write data stays with its accepted AW owner.
-  * Address ownership is latched whenever downstream applies backpressure.
+  * Address ownership is latched whenever the registered address queue fills.
+  * Two entries cut both arbitration-valid and downstream-ready feedback. An
+  * accepted address belongs to the queue until the external AXI handshake;
+  * the source reserves its response credit at this local acceptance boundary.
   */
 class RvvAxiArbiter(addrBits: Int, dataBits: Int) extends Module {
   val in = Axi4Params(addrBits, dataBits, 1)
@@ -17,9 +20,13 @@ class RvvAxiArbiter(addrBits: Int, dataBits: Int) extends Module {
     val mem = new Axi4MasterIO(out)
   })
   val clients = Seq(io.scalar, io.vector)
+  val readAddresses = Module(new Queue(new Axi4Ar(out), 2, pipe=false, flow=false))
+  val writeAddresses = Module(new Queue(new Axi4Aw(out), 2, pipe=false, flow=false))
+  io.mem.ar <> readAddresses.io.deq
+  io.mem.aw <> writeAddresses.io.deq
   def address(read: Boolean, allowed: Bool): (Bool, Bool) = {
     val ports = clients.map(c => if (read) c.ar else c.aw)
-    val target = if (read) io.mem.ar else io.mem.aw
+    val target = if (read) readAddresses.io.enq else writeAddresses.io.enq
     val held = RegInit(false.B); val owner = Reg(Bool())
     val scalarRun = RegInit(0.U(4.W))
     val select = Mux(held, owner, ports(1).valid && (!ports(0).valid || scalarRun === 8.U))
