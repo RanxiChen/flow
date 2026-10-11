@@ -6,6 +6,7 @@ from migen import Cat, ClockSignal, Constant, Instance, Record, ResetSignal, Sig
 from litex.soc.cores.cpu import CPU, CPU_GCC_TRIPLE_RISCV64
 from litex.soc.interconnect import axi, wishbone
 from .axi_router import BreezeAxiRouter, platform_regions
+from .mmio_bridge import BreezeMmioBridge
 
 RETIRE_LAYOUT = [
     ("valid", 1),
@@ -120,9 +121,14 @@ class _BreezeClusterCPU(CPU):
         self.mmio_bus = axi.AXILiteInterface(data_width=64, address_width=32)
         self.submodules.axi_router = BreezeAxiRouter(self.memory_bus, platform_regions(self.flow_root_dir()))
         # Only the DRAM exit is eligible for LiteX's direct native connection.
-        # The low-bandwidth exit and MMIO use LiteX's own protocol adapters.
+        # Memory's low-bandwidth exit uses LiteX's own AXI protocol adapter.
+        # MMIO is explicitly bridged while its original CSR byte offset exists.
         self.memory_buses = [self.axi_router.dram]
-        self.periph_buses = [self.axi_router.low, self.mmio_bus]
+        self.mmio_wishbone = wishbone.Interface(data_width=64, address_width=32,
+                                                addressing='word')
+        self.submodules.mmio_bridge = BreezeMmioBridge(
+            self.mmio_bus, self.mmio_wishbone, self.mem_map['csr'])
+        self.periph_buses = [self.axi_router.low, self.mmio_wishbone]
         self.ibus, self.dbus = self.memory_bus, self.mmio_bus
         if self.coherent_dma:
             self.dma_bus = wishbone.Interface(data_width=64, address_width=32, addressing='word')

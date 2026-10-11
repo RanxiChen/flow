@@ -21,6 +21,7 @@ from flow.axi_router import check_soc_regions, platform_regions, add_inactive_bo
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
 from flow.wiring import pack_plic_sources
+from flow.mmio_bridge import CSR_ADDRESS_WIDTH, CSR_DATA_WIDTH, CSR_PAGING
 from build_support import SnapshotBuilder
 
 SYS_CLK_FREQ = 100_000_000
@@ -71,8 +72,9 @@ class BreezeKCU105SoC(SoCCore):
             cpu_variant='standard', bus_standard='wishbone', bus_data_width=64,
             bus_address_width=32, bus_bursting=False, bus_interconnect='shared', bus_timeout=None,
             integrated_rom_size=ROM_SIZE, integrated_sram_size=SRAM_SIZE,
-            integrated_main_ram_size=0, csr_data_width=32, csr_address_width=14,
-            csr_paging=0x1000, with_ctrl=True, with_uart=True, uart_name='serial',
+            integrated_main_ram_size=0, csr_data_width=CSR_DATA_WIDTH,
+            csr_address_width=CSR_ADDRESS_WIDTH,
+            csr_paging=CSR_PAGING, with_ctrl=True, with_uart=True, uart_name='serial',
             uart_baudrate=UART_BAUDRATE, with_timer=True)
         self.ddrphy = usddrphy.USDDRPHY(platform.request('ddram'), memtype='DDR4',
             sys_clk_freq=sys_clk_freq, iodelay_clk_freq=200e6)
@@ -114,6 +116,11 @@ class BreezeKCU105SoC(SoCCore):
             self.debug_ila = BreezeDebugILA(self.cpu, platform, clock_hz=sys_clk_freq,
                 extra_sources=(("pll_locked", self.crg.pll.locked),))
             self.comb += platform.request('user_led', 0).eq(self.cpu.hang)
+
+    def do_finalize(self):
+        super().do_finalize()
+        self.cpu.mmio_bridge.check_csr_region(
+            self.bus.regions['csr'], self.csr.data_width, self.csr.alignment)
 
 
 def main():

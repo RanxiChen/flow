@@ -8,12 +8,16 @@ Run on the configured simulation host, optionally with BE2_BRIDGE_EVIDENCE.
 import json
 import os
 import pathlib
+import sys
 import unittest
 
 from migen import If, Module, Signal
-from migen.sim import run_simulation
+from migen.sim import passive, run_simulation
 from litex.soc.cores.uart import UART
 from litex.soc.interconnect import axi, csr, csr_bus, wishbone
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / 'litex_wrapper'))
+from flow.mmio_bridge import BreezeMmioBridge
 
 
 UART_BASE = 0x12001000
@@ -33,7 +37,7 @@ class CsrPath(Module):
             self.wb, self.csrb, register=True)
         if not direct_wishbone:
             self.axil = axi.AXILiteInterface(data_width=64, address_width=32)
-            self.submodules.axi_to_wb = axi.AXILite2Wishbone(self.axil, self.wb)
+            self.submodules.axi_to_wb = BreezeMmioBridge(self.axil, self.wb, 0x12000000)
         if native_uart:
             # Register Buffer avoids an unrelated Memory simulation backend.
             self.submodules.uart = UART(tx_fifo_depth=1, rx_fifo_depth=1)
@@ -342,6 +346,50 @@ class MmioCsrBridgeTest(unittest.TestCase):
                                   'txfull_read': actual})
             self.assertEqual(actual, 1, 'full UART TX queue was reported as empty')
         self.simulate(dut, process(), observations)
+
+    def test_csr_window_edges_and_full_width_devices_with_wb_wait(self):
+        dut, observations, selects = Module(), [], []
+        bus = axi.AXILiteInterface(data_width=64, address_width=32)
+        wb = wishbone.Interface(data_width=64, address_width=32, addressing='word')
+        dut.submodules.bridge = BreezeMmioBridge(bus, wb, 0x12000000)
+        wait = Signal(3)
+        dut.sync += If(~wb.cyc, wait.eq(0)).Elif(wait != 4, wait.eq(wait + 1))
+        full_word = 0x1122334455667788
+        dut.comb += [wb.ack.eq(wb.cyc & wb.stb & (wait == 4)), wb.dat_r.eq(full_word)]
+        driver = AxiDriver(bus, observations)
+
+        @passive
+        def monitor():
+            while True:
+                if (yield wb.cyc) and (yield wb.stb):
+                    selects.append(((yield wb.adr), (yield wb.sel)))
+                yield
+
+        def process():
+            for address, expected in ((0x12000000, 0x0f), (0x12000004, 0xf0),
+                                      (0x1200fff8, 0x0f), (0x1200fffc, 0xf0),
+                                      (0x11fffffc, 0xff), (0x12010004, 0xff),
+                                      (0x0200bff8, 0xff), (0x0c200004, 0xff)):
+                selects.clear()
+                actual = yield from driver.read(address, backpressure=5)
+                observations.append({'wishbone_samples': list(selects)})
+                self.assertGreaterEqual(len(selects), 4, 'fixture did not exercise Wishbone waiting')
+                self.assertEqual(set(selects), {(address // 8, expected)})
+                self.assertEqual(actual, word_from_axi(address, full_word))
+        self.simulate(dut, [process(), monitor()], observations)
+
+    def test_csr_config_mismatch_is_rejected(self):
+        from types import SimpleNamespace
+        bus = axi.AXILiteInterface(data_width=64, address_width=32)
+        wb = wishbone.Interface(data_width=64, address_width=32, addressing='word')
+        bridge = BreezeMmioBridge(bus, wb, 0x12000000)
+        region = SimpleNamespace(origin=0x12000000, size=0x10000)
+        bridge.check_csr_region(region, 32, 32)
+        for region, width, alignment in ((SimpleNamespace(origin=0x12010000, size=0x10000), 32, 32),
+                                          (SimpleNamespace(origin=0x12000000, size=0x20000), 32, 32),
+                                          (region, 8, 32), (region, 32, 64)):
+            with self.assertRaisesRegex(ValueError, 'contract mismatch'):
+                bridge.check_csr_region(region, width, alignment)
 
 
 if __name__ == '__main__':

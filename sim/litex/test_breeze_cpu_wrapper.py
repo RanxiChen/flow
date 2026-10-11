@@ -10,8 +10,9 @@ from unittest import mock
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
-from flow.core import BreezeTinyDebug, RETIRE_LAYOUT
-from litex.soc.interconnect import axi
+from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeRvvDma, RETIRE_LAYOUT
+from flow.mmio_bridge import BreezeMmioBridge
+from litex.soc.interconnect import axi, wishbone
 
 
 class _Platform:
@@ -30,10 +31,10 @@ def _write_production_rtl(root, cpu_cls=Breeze):
     with mock.patch.object(cpu_cls, 'flow_root_dir', return_value=root):
         rtl_dir = cpu_cls.rtl_dir()
     os.makedirs(rtl_dir)
-    with open(os.path.join(rtl_dir, 'BreezeClusterAxi.sv'), 'w') as f:
-        f.write('module BreezeClusterAxi; endmodule\n')
+    with open(os.path.join(rtl_dir, cpu_cls.rtl_module + '.sv'), 'w') as f:
+        f.write('module ' + cpu_cls.rtl_module + '; endmodule\n')
     with open(os.path.join(rtl_dir, 'filelist.f'), 'w') as f:
-        f.write('BreezeClusterAxi.sv\n')
+        f.write(cpu_cls.rtl_module + '.sv\n')
     with open(os.path.join(root, 'config/breeze_mcu_platform.json'), 'rb') as f:
         digest = hashlib.sha256(f.read()).hexdigest()
     values = dict(bus='axi', profile=cpu_cls.cluster_profile, preset=cpu_cls.core_preset,
@@ -41,6 +42,7 @@ def _write_production_rtl(root, cpu_cls=Breeze):
         debug=str(cpu_cls.debug_enabled).lower(), platformSha256=digest,
         nCores=str(cpu_cls.num_harts), idBits='1', l2Slots='2', l2BytesPerCore='65536',
         hangThresholdCycles='10000000')
+    values.update(cpu_cls.expected_marker)
     marker_path = os.path.join(rtl_dir, 'cluster-profile.txt')
     with open(marker_path, 'w') as f:
         f.write(''.join(f'{key}={value}\n' for key, value in values.items()))
@@ -58,7 +60,9 @@ class BreezeCpuWrapperTest(unittest.TestCase):
                 self.assertIsInstance(cpu.memory_bus, axi.AXIInterface)
                 self.assertIsInstance(cpu.mmio_bus, axi.AXILiteInterface)
                 self.assertEqual(cpu.memory_buses, [cpu.axi_router.dram])
-                self.assertEqual(cpu.periph_buses, [cpu.axi_router.low, cpu.mmio_bus])
+                self.assertEqual(cpu.periph_buses, [cpu.axi_router.low, cpu.mmio_wishbone])
+                self.assertIsInstance(cpu.mmio_wishbone, wishbone.Interface)
+                self.assertIsInstance(cpu.mmio_bridge, BreezeMmioBridge)
                 self.assertEqual(cpu.l2_bytes, cls.num_harts * 65536)
                 self.assertEqual(cpu.id_width, 1)
                 self.assertEqual(platform.sources, [os.path.join(rtl_dir, 'BreezeClusterAxi.sv')])
@@ -85,6 +89,17 @@ class BreezeCpuWrapperTest(unittest.TestCase):
                              len(RETIRE_LAYOUT))
             self.assertIn('o_io_debug_l1dEvents_mmio_cycles', cpu.cpu_params)
             self.assertIn('o_io_debug_l2Events_memReadsInFlight', cpu.cpu_params)
+
+    def test_all_three_sd_products_use_the_same_csr_bridge(self):
+        for cls in (BreezeDma, BreezeTinyDma, BreezeRvvDma):
+            with self.subTest(product=cls.cluster_profile), tempfile.TemporaryDirectory() as root:
+                _write_production_rtl(root, cls)
+                with mock.patch.object(cls, 'flow_root_dir', return_value=root):
+                    cpu = cls(_Platform())
+                self.assertIsInstance(cpu.mmio_bridge, BreezeMmioBridge)
+                self.assertEqual(cpu.mmio_bridge.csr_origin, 0x12000000)
+                self.assertEqual(cpu.mmio_bridge.csr_size, 0x10000)
+                self.assertEqual(cpu.periph_buses, [cpu.axi_router.low, cpu.mmio_wishbone])
 
     def test_each_required_marker_mismatch_is_rejected(self):
         for key in ('bus', 'profile', 'preset', 'privilege', 'tandem', 'debug', 'platformSha256', 'nCores'):

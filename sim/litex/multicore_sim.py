@@ -23,6 +23,7 @@ from flow.axi_router import platform_regions, check_soc_regions, add_inactive_bo
 from flow.clint_verilog import BreezeClintVerilog
 from flow.plic_verilog import BreezePlicVerilog
 from flow.wiring import pack_plic_sources
+from flow.mmio_bridge import CSR_ADDRESS_WIDTH, CSR_DATA_WIDTH, CSR_PAGING
 
 CPUS['breeze'] = Breeze
 CPUS['breeze_tiny'] = BreezeTiny
@@ -50,7 +51,8 @@ class MulticoreSimSoC(SoCCore):
             bus_bursting=False, bus_interconnect='shared', bus_timeout=None,
             integrated_rom_size=REGIONS['linux_boot_rom']['size'],
             integrated_sram_size=REGIONS['sram']['size'], integrated_main_ram_size=0,
-            csr_data_width=32, csr_address_width=14, csr_paging=0x1000,
+            csr_data_width=CSR_DATA_WIDTH, csr_address_width=CSR_ADDRESS_WIDTH,
+            csr_paging=CSR_PAGING,
             with_ctrl=True, with_uart=True, uart_name='sim', with_timer=True)
         sdram_clk_freq = int(sys_clk_freq)
         module = EDY4016A(sdram_clk_freq, '1:4')
@@ -83,6 +85,11 @@ class MulticoreSimSoC(SoCCore):
             'BREEZE_UART_PLIC_SOURCE': 10, 'MEMTEST_DATA_SIZE': MEMTEST_BYTES,
             'MEMTEST_ADDR_SIZE': MEMTEST_BYTES, 'CONFIG_BIOS_NO_BOOT': 1}.items():
             self.add_constant(name, value)
+
+    def do_finalize(self):
+        super().do_finalize()
+        self.cpu.mmio_bridge.check_csr_region(
+            self.bus.regions['csr'], self.csr.data_width, self.csr.alignment)
 
 
 def main():
