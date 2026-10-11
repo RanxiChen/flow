@@ -20,7 +20,9 @@ def git(*args):
 assert git('rev-parse', 'HEAD') == a.source
 assert not git('status', '--short'), 'Build tree must be clean'
 changed = git('diff', '--name-only', a.scalar_base, a.source, '--', 'design/src/main', 'config').splitlines()
-assert changed == ['design/src/main/scala/rvv/RvvLoadStore.scala'], changed
+allowed = {f'design/src/main/scala/rvv/{name}.scala' for name in
+           ('RvvLoadStore', 'RvvAxiArbiter', 'RvvRegisterFile', 'RvvAluPipeline')}
+assert changed and set(changed) <= allowed, changed
 for entry in json.loads((a.hardware / 'source-snapshot/manifest.json').read_text()):
     assert hashlib.sha256(Path(entry['snapshot']).read_bytes()).hexdigest() == entry['sha256']
 profile = a.repo / 'design/build/rtl/axi-cluster/single-rvv/gshare/linux/production/cpu/coherent-dma/cluster-profile.txt'

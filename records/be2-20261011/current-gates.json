@@ -124,7 +124,7 @@
     },
     "active_physical_source": {
       "scalar": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "single-rvv": "8a76570a6f9f4d108301cb807b561f796315966d"
+      "single-rvv": "d902fb518f67a00aa1bf7f8af0dd18e43150f201"
     },
     "four_current": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
@@ -169,7 +169,7 @@
     },
     "single_rvv_reference": {
       "source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "7f7f186 historical routing reference; post-route physical optimization, no final timing claim",
+      "status": "routed timing failed; bitstream withheld by gate; process exit1",
       "host": "Alan",
       "cores": "4-5",
       "maxThreads": 2,
@@ -194,12 +194,17 @@
       "synth_FF": 56475,
       "synth_BRAM_tiles": 242.5,
       "synth_DSP": 177,
-      "VRF_RAMB36": 192
+      "VRF_RAMB36": 192,
+      "process_exit": 1,
+      "WNS_ns": -1.33,
+      "WHS_ns": 0.03,
+      "route_errors": 0,
+      "reports": "physical-7f7f186/rvv-routed"
     },
-    "single_rvv_current": {
+    "single_rvv_request_reference": {
       "source": "8a76570a6f9f4d108301cb807b561f796315966d",
       "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
-      "status": "module minimum13/13 passed, production/SD BIOS generated, synthesis timing optimization",
+      "status": "superseded after synth/place DCP saved; SIGTERM exit1; no routed timing claim",
       "host": "Alan",
       "cores": "8-9",
       "maxThreads": 2,
@@ -211,7 +216,39 @@
         "ignored": 0
       },
       "bios_rom_prefix_matches": true,
-      "source_snapshot_hashes_verified": true
+      "source_snapshot_hashes_verified": true,
+      "place_WNS_ns": -1.133,
+      "place_WHS_ns": -0.097,
+      "reports": "physical-8a76570/rvv-place-audit"
+    },
+    "single_rvv_current": {
+      "source": "d902fb518f67a00aa1bf7f8af0dd18e43150f201",
+      "scalar_base_source": "7f7f186b9326fa7329890013ba578e68b68211ba",
+      "status": "minimum passed; production/BIOS generated; synthesizing",
+      "host": "Alan",
+      "cores": "8-9",
+      "maxThreads": 2,
+      "remote": "/home/chen/FUN/flow-runs/be2-d902fb5-rvv-sd",
+      "whole_system_exit": 0,
+      "original_ISA_ELFs": 14,
+      "RVV_ELFs": 2,
+      "vector_Bare_cycles": 2852,
+      "vector_Sv39_cycles": 3215,
+      "module_minimum": {
+        "tests": 4,
+        "failed": 0,
+        "canceled": 0,
+        "ignored": 0,
+        "carry_cases": 192
+      },
+      "bios_rom_prefix_matches": true,
+      "source_snapshot_hashes_verified": true,
+      "only_RTL_changes": [
+        "RvvLoadStore",
+        "RvvAxiArbiter",
+        "RvvRegisterFile",
+        "RvvAluPipeline"
+      ]
     }
   }
 }
