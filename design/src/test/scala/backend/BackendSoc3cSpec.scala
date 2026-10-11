@@ -50,8 +50,9 @@ class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim 
     m.all("redirect") mustBe Seq(3,4)
     m.events.filter(_.kind=="redirect").map(_.data).toSeq mustBe Seq(branch+8,BigInt(0x200))
     m.events.filter(e=>e.kind=="commit" && e.pc==branch) mustBe empty
-    // D3 permits the earlier legal EX training; the WB kill edge trains none.
-    m.all("btb") mustBe Seq(3)
+    // EX trains at 3; the registered BTB output exposes it at 4. The WB
+    // kill edge at 4 creates no new training, so there is no output at 5.
+    m.all("btb") mustBe Seq(4)
     m.d.io.observe.gprBusy.expect(0.U)
   }}
   "C1 FP request fires once and advances while an older committed miss is outstanding" in { check { m =>
