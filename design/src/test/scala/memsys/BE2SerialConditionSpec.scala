@@ -66,7 +66,7 @@ class BE2SerialBackendProbe extends BreezeBackend(BackendConfig(privilegeProfile
   * independently of a younger iTLB request, as at the backend boundary.
   * CSRW and MRET configure real PMP/Sv39/S-mode state before that request.
   */
-class BE2FencePtwHarness extends Module {
+class BE2FencePtwHarness(g: BreezeMemGeometry = BreezeMemGeometry.singleCore) extends Module {
   val io = IO(new Bundle {
     val fetch = Flipped(Decoupled(new FrontendFetchBundle(64, 8)))
     val itlb = new TlbPortIO(withPmpCandidate = true)
@@ -85,7 +85,7 @@ class BE2FencePtwHarness extends Module {
     val missRequest = Output(Bool())
   })
   val backend = Module(new BE2SerialBackendProbe)
-  val cache = Module(new L1DCache(BreezeMemGeometry.singleCore, withPmpCandidate = true))
+  val cache = Module(new L1DCache(g, withPmpCandidate = true))
   val dtlb = Module(new Sv39Mmu(withPmpCandidate = true))
   backend.io.fetchBuffer <> io.fetch
   backend.io.l1d <> cache.io.core
@@ -143,9 +143,11 @@ class BE2FencePtwHarness extends Module {
 }
 
 class BE2FencePtwSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
-  for (warm <- Seq(false, true)) {
-  s"B3 audit: real Sv39 PTW ${if (warm) "hit" else "miss"} has identical sampled WB conditions" in {
-    simulate(new BE2FencePtwHarness) { d =>
+  for ((geometry, g) <- Seq("default" -> BreezeMemGeometry.singleCore,
+      "BE2 deployment" -> flow.config.BreezeClusterPresets.single.mem);
+      warm <- Seq(false, true)) {
+  s"B3 audit: real Sv39 PTW ${if (warm) "hit" else "miss"} has identical sampled WB conditions ($geometry)" in {
+    simulate(new BE2FencePtwHarness(g)) { d =>
       d.io.fetch.valid.poke(false.B)
       d.io.itlb.req.valid.poke(false.B); d.io.itlb.kill.poke(false.B)
       d.io.itlb.req.bits.vaddr.poke(BigInt("40000000", 16).U)
