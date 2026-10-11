@@ -27,12 +27,16 @@ class RvvRegisterFile(p: RvvParams, writers: Int = 3) extends Module {
   def bank(row: UInt): UInt = if(bankBits == 0) 0.U else row(bankBits-1,0)
   def index(row: UInt): UInt = row >> bankBits
   for(r <- 0 until p.execReadPorts+2) {
+    val captureRead = RegNext(io.readValid(r),false.B)
     for(b <- 0 until p.writeBanks) {
       banks(b)(r).io.readAddress := index(io.readRows(r))
-      banks(b)(r).io.readEnable := io.readValid(r) && bank(io.readRows(r)) === b.U
+      // Physical reads have no architectural effect. Keep their BRAM enable
+      // local, and admit the returned value only with the registered logical
+      // read token. This removes scoreboard/grant fanout to every BRAM EN.
+      banks(b)(r).io.readEnable := true.B
     }
     val selectedBank = RegNext(RegEnable(bank(io.readRows(r)),io.readValid(r)))
-    val outputs = banks.map(copies => RegNext(copies(r).io.readData))
+    val outputs = banks.map(copies => RegEnable(copies(r).io.readData,captureRead))
     io.readData(r) := VecInit(outputs)(selectedBank)
   }
   io.write.foreach(_.ready := false.B)
