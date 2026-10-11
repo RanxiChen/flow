@@ -23,6 +23,8 @@
 
 实际运行结果、源SHA、主机、exit、bit/ltx路径后续按原始报告补充。此时状态为准备，尚未生成调试bit，也没有上板抓取结果。
 
+使用新调试bit时，在Vivado Hardware Manager设置对应 `.ltx` 为Probes文件，再立即抓取。可先看 `dbg_seen_retire`、`dbg_last_retire_pc`、`dbg_retire_valid`、`dbg_hart_fatal` 和两组 `dbg_*_monitor_*`；它们分别判断是否执行过指令、目前停点、是否继续退休，以及请求/响应是否前进。连续4096周期为40.96微秒，不能据单个短窗没有退休就断定死锁；结合sticky停顿原因和持久计数判断。要抓启动过程，可先arm，再由用户按板上复位按钮，以ROM地址 `0x10010000` 的AR握手或首次退休为触发。ILA/debug hub均使用sys时钟；sys不运行时无法采样，debug core不可访问本身只构成时钟/连接排查线索。
+
 2026-10-12 06:27 CST：b8e62666de08752a96fd27b838a2fcd79536d3da 在Alan独立worktree `/home/chen/FUN/flow-be2-single-debug-20261012` 执行；每次启动重读共享配置，首选cloud_chen均5秒SSH timeout255，Alan预检Java11.0.32.1/Verilator5.028/GCC13.2.0、磁盘19GiB及内存可用后回退。运行CPU6–9/nice10/maxThreads4；同步用本地反向HTTP代理，无bundle。
 
 新增monitor测试同时覆盖AXI4/AXI-Lite两种接口、RLAST、W早于AW、同拍请求/响应、双响应错误、反压不计接受和无总线驱动；1项含两subtest PASS。原ILA检查2/2 PASS，原BreezeHangMonitorSpec5/5 PASS，fail/cancel/ignore/pending均0。普通标量生产RTL/config对原7f差异为空（仅4个RVV文件不同，此配置不实例化），debug/Tandem使用原可选路径。
