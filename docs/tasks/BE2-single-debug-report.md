@@ -44,3 +44,5 @@ BIOS/工程prepare成功，prepared-audit核对129个不可变源文件SHA、ROM
 另查旧板级记录和当前CP2105双接口：FPGA用户串口应选Standard通道（Alan现为ttyUSB1/if01），ttyUSB0/if00为Enhanced系统控制器通道。AMD文档亦说明该分工：https://docs.amd.com/r/en-US/pg235-v-hdmi-tx-ss/KCU105-Board-FMCH-VADJ-Adjustment 。此为“只打印0”的待核对候选，尚未收到用户所用串口确认，不宣称已定位原因。没有打开或写用户串口。
 
 本地实际bit/ltx逐项匹配最终binding SHA256，五文件CoreMark+原GAPBS软件包重新绑定实际bit/BIOS/CSR，下载及SD安装均校验通过。原四核/普通单核/RVV三个交付产品未覆盖；本次是额外的普通单核调试产品。Tandem为退休观测，波形未取得时不推断CPU健康。新增软件及SD审计见 [CoreMark/GAPBS报告](BE2-coremark-gapbs-sd-report.md)。
+
+交付前再次只读发现JTAG：hw_server localhost3121的target count仍为0，discovery exit0（quiet枚举正常返回空，不代表找到板）；final console/exit归档。因此此次没有program/reset/ILA capture，单核健康状态未判断。编译成功及SD准备不能替代板上执行证明。
