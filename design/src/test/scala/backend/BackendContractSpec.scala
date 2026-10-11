@@ -649,6 +649,11 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.d.io.debug.get.idExeValid.expect(true.B)
     m.d.io.debug.get.idExePc.expect(branch.U)
     m.step()
+    m.d.io.frontendBtbUpdate.valid.expect(false.B)
+    m.d.io.frontendBtbUpdate.pc.expect(0.U)
+    m.d.io.frontendBtbUpdate.target.expect(0.U)
+    m.d.io.frontendBtbUpdate.predType.expect(FrontendPredType.NONE)
+    m.d.io.frontendBtbUpdate.taken.expect(false.B)
     for(_ <- 0 until 12) m.step()
     m.all("redirect").last mustBe 4
     m.all("ex").filter(_>4) mustBe empty

@@ -458,15 +458,17 @@ class BreezeBackend(
   pht := 0.U.asTypeOf(pht)
   ghr := 0.U.asTypeOf(ghr)
   val train = exLegal && exAdvance && !wbKill && (ex.ctrl.bru_inst || ex.ctrl.redir_inst)
+  // Preserve the public zero-on-no-training payload without making the
+  // same-edge WB cancellation reset every PC/target bit. Payload and its
+  // visibility qualifier have the same register boundary as before.
+  val btbPayloadVisible = RegNext(train, false.B)
   if (cfg.branchPredKind == flow.config.FrontendBranchPredictorKind.GShare) {
-    when(train) {
-      btb.valid := ex.pred.predType === FrontendPredType.BR || ex.pred.predType === FrontendPredType.JAL ||
-        (ex.pred.predType === FrontendPredType.JALR && redirected)
-      btb.pc := ex.pc
-      btb.target := jau.io.jmp_addr
-      btb.predType := ex.pred.predType
-      btb.taken := taken
-    }
+    btb.valid := train && (ex.pred.predType === FrontendPredType.BR || ex.pred.predType === FrontendPredType.JAL ||
+      (ex.pred.predType === FrontendPredType.JALR && redirected))
+    btb.pc := ex.pc
+    btb.target := jau.io.jmp_addr
+    btb.predType := ex.pred.predType
+    btb.taken := taken
     pht.valid := train && ex.pred.predType === FrontendPredType.BR
     pht.idx := ex.pred.phtIdx
     pht.taken := taken
@@ -474,6 +476,10 @@ class BreezeBackend(
     ghr.taken := taken
   }
   io.frontendBtbUpdate := btb
+  io.frontendBtbUpdate.pc := Mux(btbPayloadVisible, btb.pc, 0.U)
+  io.frontendBtbUpdate.target := Mux(btbPayloadVisible, btb.target, 0.U)
+  io.frontendBtbUpdate.predType := Mux(btbPayloadVisible, btb.predType, FrontendPredType.NONE)
+  io.frontendBtbUpdate.taken := btbPayloadVisible && btb.taken
   io.frontendPhtUpdate := pht
   io.frontendGhrUpdate := ghr
 
