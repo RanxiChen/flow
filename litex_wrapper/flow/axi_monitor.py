@@ -1,5 +1,6 @@
 """Passive, registered AXI accounting for JTAG/ILA startup diagnosis."""
 from migen import Cat, If, Module, Signal
+from litex.soc.interconnect.axi import AXILiteInterface
 
 
 class BreezeAxiMonitor(Module):
@@ -26,7 +27,9 @@ class BreezeAxiMonitor(Module):
             stalls.eq(Cat(*(getattr(bus, c).valid & ~getattr(bus, c).ready for c in channels))),
             ar_addr.eq(bus.ar.addr), aw_addr.eq(bus.aw.addr),
             r_resp.eq(bus.r.resp), b_resp.eq(bus.b.resp),
-            r_last.eq(bus.r.last if hasattr(bus.r, 'last') else 1),
+            # Migen stream endpoints always expose first/last, including
+            # AXI-Lite. Its compatibility last is not a bus completion bit.
+            r_last.eq(1 if isinstance(bus, AXILiteInterface) else bus.r.last),
         ]
         self.sources = []
 
