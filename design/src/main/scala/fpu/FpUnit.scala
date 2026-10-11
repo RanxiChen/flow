@@ -83,6 +83,7 @@ class FpUnit(val depth: Int = 32) extends Module {
   })
   val oldest = (commitCursor + PriorityEncoder(candidates.asUInt))(tagWidth - 1, 0)
   val returned = entries(impl.io.tag_o)
+  val returnCommitted = returned.committed || (io.commit && oldest === impl.io.tag_o)
   // Only the actual CVFPU handshake fixes arbitration tag/data. A two-entry
   // non-flow/non-pipe queue makes CVFPU ready depend on registered occupancy,
   // rather than on WB/scoreboard/ID advance in this cycle.
@@ -91,7 +92,7 @@ class FpUnit(val depth: Int = 32) extends Module {
     val result = new FpResult
   }, 2, pipe = false, flow = false))
   val resultBuffered = RegInit(VecInit(Seq.fill(depth)(false.B)))
-  completed.io.enq.valid := impl.io.out_valid_o && returned.valid && returned.committed
+  completed.io.enq.valid := impl.io.out_valid_o && returned.valid && returnCommitted
   completed.io.enq.bits.tag := impl.io.tag_o
   completed.io.enq.bits.result.rd.idx := returned.rd
   completed.io.enq.bits.result.rd.isFp := returned.isFp
@@ -100,7 +101,7 @@ class FpUnit(val depth: Int = 32) extends Module {
   io.result.valid := completed.io.deq.valid
   io.result.bits := completed.io.deq.bits.result
   completed.io.deq.ready := io.result.ready
-  impl.io.out_ready_i := !returned.valid || (returned.committed && completed.io.enq.ready)
+  impl.io.out_ready_i := !returned.valid || (returnCommitted && completed.io.enq.ready)
   val completingTag = completed.io.deq.bits.tag
   val completingEntry = entries(completingTag)
   io.busy := entries.map(_.valid).reduce(_ || _) || impl.io.busy_o ||

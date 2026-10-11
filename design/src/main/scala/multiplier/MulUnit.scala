@@ -10,7 +10,7 @@ import flow.core.MUL_OP
   * outstanding item can therefore end in the eight-slot result store even
   * if writeback stops indefinitely. DSP slots are not additional credits.
   */
-class MulUnit extends Module {
+class MulUnit(val registeredCommit: Boolean = false) extends Module {
   val io = IO(new IntMduIO(new IntMulRequest))
   val capacity = 8
   val valid = RegInit(VecInit(Seq.fill(3)(false.B)))
@@ -30,7 +30,7 @@ class MulUnit extends Module {
   // R4 is established before R2: the caller still supplies an unregistered
   // WB commit. Keep its legacy one-edge authorization boundary here. R2 may
   // add same-cycle commitD authorization only after that token is registered.
-  io.result.valid := count =/= 0.U && committedCount =/= 0.U
+  io.result.valid := count =/= 0.U && (committedCount =/= 0.U || (registeredCommit.B && authorizeResult))
   io.result.bits := results(head)
 
   // Twelve independent DSPs, no cascade or inferred register retiming.

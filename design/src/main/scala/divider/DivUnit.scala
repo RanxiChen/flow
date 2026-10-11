@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import flow.backend.{IntDivRequest, IntMduIO}
 
-class DivUnit extends Module {
+class DivUnit(val registeredCommit: Boolean = false) extends Module {
   val io = IO(new IntMduIO(new IntDivRequest))
   val occupied = RegInit(false.B)
   val committed = RegInit(false.B)
@@ -20,7 +20,7 @@ class DivUnit extends Module {
   arithmeticActive := divider.io.busy
   val cancel = io.killUncommitted && occupied && !committed && !io.commit
   io.req.ready := !occupied
-  io.result.valid := occupied && committed && done
+  io.result.valid := occupied && (committed || (registeredCommit.B && io.commit)) && done
   io.result.bits.rd := rd
   io.result.bits.data := data
   divider.io.flush := cancel

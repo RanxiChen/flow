@@ -93,8 +93,8 @@ class BreezeBackend(
     privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
   val scoreboard = Module(new Scoreboard(pipeStages = 4))
   val writeback = Module(new Writeback)
-  val mulUnit = Module(new MulUnit)
-  val divUnit = Module(new DivUnit)
+  val mulUnit = Module(new MulUnit(registeredCommit = true))
+  val divUnit = Module(new DivUnit(registeredCommit = true))
   val fpUnit = Module(new FpUnit)
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
@@ -116,6 +116,7 @@ class BreezeBackend(
   val wbCommit = Wire(Bool())
   val branchRedirect = Wire(Bool())
   val idLeave = Wire(Bool())
+  val killD = RegNext(wbKill || io.hartFatal, false.B)
 
   val inst = io.fetchBuffer.bits.inst
   val ctrl = decoder.io.exe_ctrl
@@ -346,12 +347,12 @@ class BreezeBackend(
   val resourceWait = (exMem && !io.l1d.req.ready) || (exMul && !mulUnit.io.req.ready) ||
     (exDiv && !divUnit.io.req.ready) || (exFpLong && !exFpIssued && !fpUnit.io.req.ready)
   exAdvance := allowEx && !resourceWait
-  mulUnit.io.commit := wbCommit && wb.mul
-  divUnit.io.commit := wbCommit && wb.div
-  fpUnit.io.commit := wbCommit && wb.fp
-  mulUnit.io.killUncommitted := wbKill || io.hartFatal
-  divUnit.io.killUncommitted := wbKill || io.hartFatal
-  fpUnit.io.killUncommitted := wbKill || io.hartFatal
+  mulUnit.io.commit := RegNext(wbCommit && wb.mul, false.B)
+  divUnit.io.commit := RegNext(wbCommit && wb.div, false.B)
+  fpUnit.io.commit := RegNext(wbCommit && wb.fp, false.B)
+  mulUnit.io.killUncommitted := killD
+  divUnit.io.killUncommitted := killD
+  fpUnit.io.killUncommitted := killD
   branchRedirect := exLegal && !exRedirectSent &&
     ((taken =/= ex.pred.predTaken) || (taken && ex.pred.predTaken && jau.io.jmp_addr =/= ex.pred.predPc))
   val redirected = exRedirectSent || branchRedirect
@@ -461,7 +462,7 @@ class BreezeBackend(
       case (v,w,b,r,h) => v && w && h && operands.take(3).map(o => o.used && o.rd.isFp === b && o.rd.idx === r && (b || r =/= 0.U)).reduce(_ || _)
   }.reduce(_ || _)
   val slowRedirectGap = RegNext(wbKill, false.B)
-  io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
+  io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
     !ordinaryHazard && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
