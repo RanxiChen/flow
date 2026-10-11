@@ -254,9 +254,12 @@ class L1DCacheSpec extends AnyFreeSpec with Matchers with ChiselSim {
     val a = ram(0xe00); val b = ram(0xe40)
     runOps(CoreOp.load(a, rd = 2), CoreOp.load(b, rd = 3), CoreOp.load(b + 8, rd = 4))
     val t = core.history.toSeq
-    t(0).kind mustBe "Mshr"; t(1).kind mustBe "Mshr"; t(2).kind mustBe "Done"
+    t(0).kind mustBe "Mshr"; t(1).kind mustBe "Done"; t(2).kind mustBe "Done"
+    // The second miss replays, then its solo attempt waits for the actual
+    // refill response rather than committing an Mshr/late pair.
+    core.replayAttempts.map(_._2) must contain (t(1).id)
     t(1).respCycle must be >= t(0).lateCycle
-    t(2).respCycle must be >= t(1).lateCycle
+    t(2).respCycle must be >= t(1).respCycle
     l2.gets.map(_._3) mustBe Seq(line(a), line(b))
     finish()
   }

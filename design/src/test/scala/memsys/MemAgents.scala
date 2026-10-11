@@ -52,6 +52,7 @@ object CoreOp {
 }
 
 class CoreTxn(val id: Int, val op: CoreOp, var fired: Long) {
+  val firstFired = fired
   var respCycle = -1L
   var kind = ""
   var value: BigInt = 0
@@ -108,6 +109,8 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
   private var soloActive = false
   private var presentingSolo = false
   private var replayNow = false
+  private var rawReplay = false
+  private var waitingKill: Option[CoreTxn] = None
   private var lateReady = true
   private var respValid = false
   private var s1Victim: Option[CoreTxn] = None
@@ -155,12 +158,17 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     // A request accepted in the previous cycle is in S1 now.
     s1Victim = inPipe.lastOption.filter(t => t.op.s1Kill && t.fired == now - 1)
     respValid = core.resp.valid.peek().litToBoolean
-    s2KillNow = inPipe.headOption.exists(t => (respValid && t.op.s2KillAtResp) ||
-      t.op.s2KillAfter.exists(delay => now >= t.fired + delay))
+    def deadline(t: CoreTxn): Boolean = t.op.s2KillAfter.exists(delay => now >= t.firstFired + delay)
+    // Replay moves the logical instruction to ID. Cancellation retains its
+    // original deadline even while that retry waits for a resource wake.
+    waitingKill = if (inPipe.isEmpty) presentingRetry.orElse(retries.headOption).filter(deadline) else None
+    s2KillNow = waitingKill.nonEmpty || inPipe.headOption.exists(t =>
+      (respValid && t.op.s2KillAtResp) || deadline(t))
     excKillNow = killOnExc && respValid && !s2KillNow &&
       core.resp.bits.kind.peek().litValue == L1DRespKind.Exc.litValue
     if (excKillNow) s2KillNow = true
-    replayNow = respValid && core.resp.bits.kind.peek().litValue == L1DRespKind.Replay.litValue
+    rawReplay = respValid && core.resp.bits.kind.peek().litValue == L1DRespKind.Replay.litValue
+    replayNow = rawReplay && !s2KillNow
     if(replayNow) { check(!soloActive,"solo request replayed twice"); s2KillNow=true }
     core.s1Kill.poke(s1Victim.nonEmpty.B)
     core.s2Kill.poke(s2KillNow.B)
@@ -177,10 +185,10 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     if (respValid) {
       check(inPipe.nonEmpty, "resp without an outstanding request")
       val t = inPipe.dequeue()
-      if(!replayNow) t.respCycle = now
+      if(!rawReplay) t.respCycle = now
       val r = core.resp.bits
       val k = r.kind.peek().litValue
-      val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else "Exc"
+      val kind = if (k == L1DRespKind.Done.litValue) "Done" else if (k == L1DRespKind.Mshr.litValue) "Mshr" else if(rawReplay) "Replay" else "Exc"
       if(replayNow) {
         replayAttempts += ((now,t.id,r.replayReason.peek().litValue.toInt))
         val reissue=Vector(t) ++ inPipe.toVector ++ retries.toVector
@@ -207,11 +215,16 @@ class CoreDriver(core: L1DCoreIO, golden: GoldenMem, device: Option[AxiLiteDevic
     }
     if (s2KillNow && !respValid) {
       soloActive=false
-      check(inPipe.nonEmpty, "S2 cancellation without an outstanding request")
-      inPipe.foreach(kill); inPipe.clear(); progress()
+      check(inPipe.nonEmpty || waitingKill.nonEmpty, "cancellation without an outstanding logical request")
+      inPipe.foreach(kill); inPipe.clear()
+      retries.foreach(kill); retries.clear()
+      presentingRetry.foreach { t => kill(t); presenting=None; presentingRetry=None }
+      retryWake=false; armSolo=false; progress()
     }
     s1Victim.foreach { v =>
-      if (inPipe.exists(_ eq v)) { kill(v); inPipe.dequeueAll(_ eq v) }
+      if (inPipe.exists(_ eq v)) { kill(v); inPipe.dequeueAll(_ eq v); soloActive=false }
+      if (retries.exists(_ eq v)) { kill(v); retries.dequeueAll(_ eq v) }
+      presentingRetry.filter(_ eq v).foreach { t => kill(t); presenting=None; presentingRetry=None }
       progress()
     }
     if (fired) {

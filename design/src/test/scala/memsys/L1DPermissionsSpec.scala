@@ -50,6 +50,7 @@ class L1DPermissionsSpec extends AnyFreeSpec with Matchers with ChiselSim {
     d.io.core.req.bits.op.poke(L1DOp.Load); d.io.core.req.bits.vaddr.poke(0.U)
     d.io.core.req.bits.size.poke(3.U); d.io.core.req.bits.signed.poke(false.B)
     d.io.core.req.bits.amoFunc.poke(BreezeAmoFunc.Swap)
+    d.io.core.req.bits.solo.poke(false.B)
     d.io.core.req.bits.aq.poke(false.B); d.io.core.req.bits.rl.poke(false.B)
     d.io.core.req.bits.wdata.poke(0.U); d.io.core.req.bits.rd.isFp.poke(false.B)
     d.io.core.req.bits.rd.idx.poke(1.U); d.io.core.req.bits.isFlw.poke(false.B)

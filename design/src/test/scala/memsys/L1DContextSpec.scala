@@ -64,16 +64,31 @@ class L1DContextSpec extends L1DPermissionsSpec {
   }
   private def decide(d: L1DCsrContextHarness, denied: Boolean, store: Boolean, atomic: Boolean = false): Unit = {
     var seen = false
+    var replayed = false
+    var retry = false
     if (atomic && !denied) d.grantRelease.poke(true.B)
     for (_ <- 0 until 24) {
+      d.io.core.s1Kill.poke(false.B); d.io.core.s2Kill.poke(false.B)
+      d.io.core.req.valid.poke(retry.B)
+      if (retry && d.io.core.req.ready.peek().litToBoolean) retry=false
       if (d.io.core.resp.valid.peek().litToBoolean) {
-        seen mustBe false; seen = true
-        d.io.core.resp.bits.kind.expect(if (denied) L1DRespKind.Exc else if (atomic) L1DRespKind.Done else L1DRespKind.Mshr)
-        if (denied) d.io.core.resp.bits.excCause.expect((if (store) 7 else 5).U)
+        if (d.io.core.resp.bits.kind.peek().litValue == L1DRespKind.Replay.litValue) {
+          replayed mustBe false; replayed=true; retry=true
+          d.io.coherenceRequest.expect(false.B); d.io.mmioRequest.expect(false.B)
+          d.io.core.s1Kill.poke(true.B); d.io.core.s2Kill.poke(true.B)
+          d.io.core.req.bits.solo.poke(true.B)
+          d.grantRelease.poke(true.B)
+        } else {
+          seen mustBe false; seen = true
+          d.io.core.resp.bits.kind.expect(if (denied) L1DRespKind.Exc
+            else if (atomic || replayed) L1DRespKind.Done else L1DRespKind.Mshr)
+          if (denied) d.io.core.resp.bits.excCause.expect((if (store) 7 else 5).U)
+        }
       }
       if (denied) { d.io.coherenceRequest.expect(false.B); d.io.mmioRequest.expect(false.B) }
       d.clock.step()
     }
+    d.io.core.req.valid.poke(false.B); d.io.core.s1Kill.poke(false.B); d.io.core.s2Kill.poke(false.B)
     seen mustBe true
   }
   "SOC3: CSRW pmpcfg0/pmpaddr0/MPRV/MPP immediately followed by load/store/AMO, both directions" in {
@@ -117,13 +132,15 @@ class L1DContextSpec extends L1DPermissionsSpec {
       decide(d, denied=true, store=false)
     }
   }
-  "SOC3: a multi-cycle S2 Hold invalidates permission snapshots on both context transitions" in {
+  "SOC3: a multi-cycle solo S3 wait invalidates permission snapshots on both context transitions" in {
     simulate(new L1DCsrContextHarness) { d =>
       start(d)
-      // A first committed miss occupies the MSHR, so a younger load holds.
+      // A first committed miss occupies the MSHR; the younger solo retry waits in S3.
       csrw(d, CSRMAP.pmpaddr0, BigInt("1fffffff",16)); csrw(d, CSRMAP.pmpcfg0, 0x1f)
       csrw(d, CSRMAP.mstatus, BigInt(1)<<17)
+      d.clock.step() // isolate the first miss from the setup CSR permission event
       launch(d, L1DOp.Load); decide(d, denied=false, store=false)
+      d.io.core.req.bits.solo.poke(true.B) // R5 retry is isolated
       d.io.core.req.bits.vaddr.poke((address+0x40).U)
       d.io.core.req.valid.poke(true.B); d.io.core.req.ready.expect(true.B); d.clock.step()
       d.io.core.req.valid.poke(false.B); d.clock.step(5)
