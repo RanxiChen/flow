@@ -4,11 +4,7 @@ import chisel3._
 import chisel3.util._
 import flow.interface.{L1DDestination, L1DLate}
 
-class FpResult extends Bundle {
-  val rd = new L1DDestination
-  val data = UInt(64.W)
-  val flags = UInt(5.W)
-}
+class FpResult extends LongLatResult
 class RegisterWrite extends Bundle {
   val idx = UInt(5.W)
   val data = UInt(64.W)
@@ -23,12 +19,13 @@ class OrdinaryResult extends Bundle {
   * Already committed writes survive all pipeline holds/kills and hartFatal.
   * Fairness bubbles originate only in ID.
   */
-class Writeback extends Module {
+class Writeback(val withCoprocessor: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val late = Flipped(Decoupled(new L1DLate))
-    val div = Flipped(Decoupled(new IntMduResult))
-    val mul = Flipped(Decoupled(new IntMduResult))
+    val div = Flipped(Decoupled(new FpResult))
+    val mul = Flipped(Decoupled(new FpResult))
     val fp = Flipped(Decoupled(new FpResult))
+    val copro = if (withCoprocessor) Some(Flipped(Decoupled(new FpResult))) else None
     val ordinary = Flipped(Valid(new FpResult))
     val w2 = Output(Valid(new OrdinaryResult))
     val gprWrite = Valid(new RegisterWrite)
@@ -59,27 +56,32 @@ class Writeback extends Module {
     w2.bits.data := io.ordinary.bits.data
   }
   io.w2 := w2
-  val valids = VecInit(Seq(lateReg.valid, io.div.valid, io.mul.valid, io.fp.valid))
-  val banks = VecInit(Seq(lateReg.bits.rd.isFp, false.B, false.B, io.fp.bits.rd.isFp))
+  val lateSource = Wire(Decoupled(new FpResult))
+  lateSource.valid := lateReg.valid
+  lateSource.bits.rd := lateReg.bits.rd
+  lateSource.bits.data := lateReg.bits.data
+  lateSource.bits.flags := 0.U
+  val sources = Seq(lateSource, io.div, io.mul, io.fp) ++ io.copro.toSeq
+  val valids = VecInit(sources.map(_.valid))
+  val banks = VecInit(sources.map(_.bits.rd.isFp))
   val ordinaryWrite = w2.valid
-  val needsPort = VecInit(Seq(!lateReg.bits.error && (lateReg.bits.rd.isFp || lateReg.bits.rd.idx =/= 0.U),
-    io.div.bits.rd =/= 0.U, io.mul.bits.rd =/= 0.U, io.fp.bits.rd.isFp || io.fp.bits.rd.idx =/= 0.U))
-  val eligible = VecInit((0 until 4).map(i => valids(i) &&
+  val needsPort = VecInit(sources.zipWithIndex.map { case (s,i) =>
+    (if(i == 0) !lateReg.bits.error else true.B) && (s.bits.rd.isFp || s.bits.rd.idx =/= 0.U)
+  })
+  val eligible = VecInit(sources.indices.map(i => valids(i) &&
     !(needsPort(i) && ordinaryWrite && banks(i) === w2.bits.rd.isFp)))
   val selected = PriorityEncoderOH(eligible.asUInt)
   io.grant := selected
   val lateRegGrant = selected(0)
   lateQueue.io.deq.ready := lateRegGrant
-  io.div.ready := selected(1)
-  io.mul.ready := selected(2)
-  io.fp.ready := selected(3)
+  sources.zipWithIndex.foreach { case (s,i) => s.ready := selected(i) }
   val starvation = RegInit(VecInit(Seq.fill(2)(0.U(2.W))))
   val inFlight = RegInit(VecInit(Seq.fill(2)(false.B)))
   val conflicts = Wire(Vec(2, Bool()))
   val protect = Wire(Vec(2, Bool()))
   for (bank <- 0 until 2) {
-    val waiting = (0 until 4).map(i => valids(i) && banks(i) === (bank == 1).B).reduce(_ || _)
-    val granted = (0 until 4).map(i => selected(i) && banks(i) === (bank == 1).B).reduce(_ || _)
+    val waiting = sources.indices.map(i => valids(i) && banks(i) === (bank == 1).B).reduce(_ || _)
+    val granted = sources.indices.map(i => selected(i) && banks(i) === (bank == 1).B).reduce(_ || _)
     conflicts(bank) := waiting && !granted
     protect(bank) := starvation(bank) === 3.U && !inFlight(bank)
     when(conflicts(bank)) { when(starvation(bank) =/= 3.U) { starvation(bank) := starvation(bank) + 1.U } }
@@ -93,9 +95,8 @@ class Writeback extends Module {
   io.starvation := starvation
   io.bubbleInFlight := inFlight
   val rd = Wire(new L1DDestination)
-  rd.isFp := (selected(0) && lateReg.bits.rd.isFp) || (selected(3) && io.fp.bits.rd.isFp)
-  rd.idx := Mux1H(selected, Seq(lateReg.bits.rd.idx, io.div.bits.rd, io.mul.bits.rd, io.fp.bits.rd.idx))
-  val data = Mux1H(selected, Seq(lateReg.bits.data, io.div.bits.data, io.mul.bits.data, io.fp.bits.data))
+  rd := Mux1H(selected, sources.map(_.bits.rd))
+  val data = Mux1H(selected, sources.map(_.bits.data))
   val error = lateReg.valid && lateReg.bits.error
   val fatal = RegInit(false.B)
   // Any accepted error must become fatal on N+1, even in the second slot
@@ -114,8 +115,8 @@ class Writeback extends Module {
   write(false); write(true)
   io.clear.valid := selected.orR && (rd.isFp || rd.idx =/= 0.U)
   io.clear.bits := rd
-  io.fpFlags.valid := selected(3)
-  io.fpFlags.bits := io.fp.bits.flags
+  io.fpFlags.valid := selected(3) || (if(withCoprocessor) selected(4) else false.B)
+  io.fpFlags.bits := Mux1H(selected, sources.map(_.bits.flags))
   val pastActive = RegNext(!reset.asBool, false.B)
   val wasLateBlocked = RegNext(io.late.valid && !io.late.ready, false.B)
   val heldLate = RegNext(io.late.bits.asUInt)

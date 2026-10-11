@@ -13,6 +13,7 @@ import flow.platform.BreezeMcuPlatform
 /** Metadata for MEM/WB, not a completion queue. Arithmetic stays in its source. */
 class Stage(val cfg: BackendConfig) extends Bundle {
   val valid = Bool()
+  val solo = Bool()
   val pc = UInt(64.W)
   val nextPc = UInt(64.W)
   val inst = UInt(32.W)
@@ -28,6 +29,7 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val mul = Bool()
   val div = Bool()
   val fp = Bool()
+  val copro = Bool()
   val serial = Bool()
   val fencei = Bool()
   val sfence = Bool()
@@ -92,10 +94,12 @@ class BreezeBackend(
   val csrFile = Module(new CSRFile(64, enabledebug = enabledebug, hartId = hartId,
     privilegeProfile = cfg.privilegeProfile, enableCompressed = cfg.enableCompressed))
   val scoreboard = Module(new Scoreboard(pipeStages = 4))
-  val writeback = Module(new Writeback)
+  val writeback = Module(new Writeback(withCoprocessor = cfg.coprocessorStub.nonEmpty))
   val mulUnit = Module(new MulUnit(registeredCommit = true))
   val divUnit = Module(new DivUnit(registeredCommit = true))
   val fpUnit = Module(new FpUnit(issueReservation = true))
+  val coprocessor = cfg.coprocessorStub.map(seed => Module(new CoprocessorStub(seed)))
+  val coproUsed = RegInit(false.B)
   val alu = Module(new ALU(64))
   val bru = Module(new BRU(64))
   val jau = Module(new JAU(64))
@@ -109,7 +113,9 @@ class BreezeBackend(
   val wb = RegInit(0.U.asTypeOf(new Stage(cfg)))
   val sleeping = RegInit(false.B)
   val stopped = RegInit(false.B)
-  val sfenceSent = RegInit(false.B)
+  val exSolo = RegInit(false.B)
+  val soloArm = RegInit(false.B)
+  val replayReason = RegInit(0.U(3.W))
   val nextPc = RegInit(0.U(64.W))
   val wbKill = Wire(Bool())
   val exAdvance = Wire(Bool())
@@ -117,6 +123,7 @@ class BreezeBackend(
   val branchRedirect = Wire(Bool())
   val idLeave = Wire(Bool())
   val killD = RegNext(wbKill || io.hartFatal, false.B)
+  val mulPortCommitD = RegNext(wbCommit && wb.mul, false.B)
 
   val inst = io.fetchBuffer.bits.inst
   val ctrl = decoder.io.exe_ctrl
@@ -128,18 +135,35 @@ class BreezeBackend(
   fpDecoder.io.inst := inst
   immGen.io.inst := inst
   immGen.io.type_sel := ctrl.sel_imm
+  val idCopro = cfg.coprocessorStub.nonEmpty.B && inst(6,0) === "h0b".U
   val idCsr = ctrl.csr_cmd =/= CSR_CMD.NOP.U
   val idEstop = inst === "h7ff00073".U
-  val idSerial = ctrl.fencei || ctrl.is_sfence_vma || ctrl.is_wfi || idEstop
-  val serialInFlight = (ex.valid && (ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.is_wfi || ex.estop)) ||
-    (mem.valid && mem.serial) || (perm.valid && perm.serial) || (wb.valid && wb.serial)
+  val idSerial = ctrl.fencei || ctrl.is_sfence_vma || idEstop || idCsr
+  val olderEmpty = !ex.valid && !mem.valid && !perm.valid && !wb.valid
+  val serialInFlight = (ex.valid && (ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.estop ||
+    ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U)) || (mem.valid && mem.serial) ||
+    (perm.valid && perm.serial) || (wb.valid && wb.serial)
+  val soloInFlight = (ex.valid && exSolo) || (mem.valid && mem.solo) ||
+    (perm.valid && perm.solo) || (wb.valid && wb.solo)
+  val idAtomic = ctrl.mem_op === BreezeMemOp.Lr || ctrl.mem_op === BreezeMemOp.Sc ||
+    ctrl.mem_op === BreezeMemOp.Amo
+  val idSolo = soloArm || ctrl.mem_op === BreezeMemOp.Amo || (idAtomic && (ctrl.amo_aq || ctrl.amo_rl))
+  val cpuDrainedD = RegNext(io.l1d.cpuDrained, false.B)
+  val mmuIdleD = RegNext(io.mmuIdle, false.B)
+  val scalarDrained = !(scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.committedFlagsOnly)
+  val scalarDrainedD = RegNext(scalarDrained, false.B)
+  val serialReady = (!ctrl.fencei || cpuDrainedD) &&
+    (!ctrl.is_sfence_vma || (cpuDrainedD && mmuIdleD)) &&
+    (!(idEstop || idCsr) || scalarDrainedD)
+  val serialIdWait = idSerial && (!olderEmpty || !serialReady)
+  val soloIdWait = idSolo && (!olderEmpty || (soloArm && replayReason =/= 4.U && !io.l1d.replayWake))
   val gpr1Used = Mux(fpCtrl.valid, fpCtrl.usesGpr1,
     (ctrl.sel_alu1 === SEL_ALU1.RS1.U && !(idCsr && ctrl.csr_cmd(2))) || ctrl.bru_inst ||
       ctrl.sel_jpc_i === SEL_JPC_I.RS1.U || ctrl.is_sfence_vma)
   val gpr2Used = !fpCtrl.valid && (ctrl.sel_alu2 === SEL_ALU2.RS2.U || ctrl.bru_inst ||
     ctrl.mem_op === BreezeMemOp.Store || ctrl.mem_op === BreezeMemOp.Sc ||
     ctrl.mem_op === BreezeMemOp.Amo || ctrl.is_sfence_vma)
-  val idWrites = Mux(fpCtrl.valid, fpCtrl.writesFpr || fpCtrl.writesGpr, ctrl.wb_en)
+  val idWrites = !idCopro && Mux(fpCtrl.valid, fpCtrl.writesFpr || fpCtrl.writesGpr, ctrl.wb_en)
   val idBank = fpCtrl.valid && fpCtrl.writesFpr
   val operands = scoreboard.io.operands
   operands(0).used := gpr1Used || fpCtrl.usesFpr1
@@ -160,19 +184,22 @@ class BreezeBackend(
   val wbDone = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Done
   val wbMiss = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Mshr
   val wbMemExc = wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Exc
-  val wbExc = wb.valid && (wb.exception || wbMemExc)
-  val serialWait = wb.valid && !wb.exception && ((wb.fencei && !io.l1d.drained) ||
-    (wb.sfence && (!sfenceSent || !io.mmuIdle)) ||
-    (wb.estop && (scoreboard.io.gprBusy.orR || scoreboard.io.fprBusy.orR || fpUnit.io.committedFlagsOnly)))
-  val downHold = io.l1d.s2Hold || serialWait
+  val coproDecisionValid = coprocessor.map(_.io.decision.valid).getOrElse(false.B)
+  val coproDecision = coprocessor.map(_.io.decision.bits).getOrElse(0.U.asTypeOf(new CoprocessorDecision))
+  val wbCoproExc = wb.valid && wb.copro && coproDecisionValid && coproDecision.exception
+  val wbExc = wb.valid && (wb.exception || wbMemExc || wbCoproExc)
+  val wbReplay = (wbResponse && io.l1d.resp.bits.kind === L1DRespKind.Replay) ||
+    (wb.valid && wb.copro && !wb.solo && !coproDecisionValid)
+  val downHold = wb.valid && wb.solo && !wb.exception &&
+    ((wb.mem && !io.l1d.resp.valid) || (wb.copro && !coproDecisionValid))
   val wbCanLeave = wb.valid && !downHold && !writeback.io.hartFatal && !stopped
-  wbCommit := wbCanLeave && !wbExc
+  wbCommit := wbCanLeave && !wbExc && !wbReplay
   val interrupt = csrFile.io.interruptPending && !ex.valid && !mem.valid && !perm.valid && !wb.valid &&
     !io.l1d.mmioBusy && !writeback.io.hartFatal && !stopped
   val fenceRedirect = wbCommit && (wb.fencei || wb.sfence)
   val xret = wbCommit && (wb.mret || wb.sret)
   val satp = wbCommit && wb.csrWrite && wb.csrAddr === CSRMAP.satp.U
-  wbKill := (wbCanLeave && wbExc) || interrupt || fenceRedirect || xret || satp || (wbCommit && wb.wfi)
+  wbKill := (wbCanLeave && (wbExc || wbReplay)) || interrupt || fenceRedirect || xret || satp || (wbCommit && wb.wfi)
 
   val wbLong = wb.mul || wb.div || wb.fp || (wb.mem && wb.load && wbMiss)
   val wbOrdinary = wbCommit && wb.writes && !wb.mul && !wb.div && !wb.fp && (!wb.mem || wbDone)
@@ -182,9 +209,7 @@ class BreezeBackend(
   writeback.io.ordinary.bits.data := wbData
   writeback.io.ordinary.bits.flags := 0.U
   writeback.io.late <> io.l1d.late
-  writeback.io.div <> divUnit.io.result
-  writeback.io.mul <> mulUnit.io.result
-  writeback.io.fp <> fpUnit.io.result
+
   io.hartFatal := writeback.io.hartFatal
   regFile.io.rs1_addr := rs1
   regFile.io.rs2_addr := rs2
@@ -214,7 +239,7 @@ class BreezeBackend(
   val exDiv = exLegal && ex.ctrl.div_valid && ex.rd_addr =/= 0.U
   val exFpLong = exLegal && exFp.fpuValid
   val exBank = exFp.valid && exFp.writesFpr
-  val exWrites = Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
+  val exWrites = !(cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U) && Mux(exFp.valid, exFp.writesFpr || exFp.writesGpr, ex.ctrl.wb_en)
   for ((stage, index) <- Seq(mem -> 1, perm -> 2, wb -> 3)) {
     // A WB memory destination remains protected through its whole S2 cycle,
     // independently of Done/Mshr/Exc. Next cycle W2 writes or busy takes over.
@@ -273,7 +298,7 @@ class BreezeBackend(
   val atomicAddress = ex.ctrl.mem_op === BreezeMemOp.Lr || ex.ctrl.mem_op === BreezeMemOp.Sc ||
     ex.ctrl.mem_op === BreezeMemOp.Amo
   val address = exR1 + Mux(atomicAddress, 0.U, Mux(exFp.isLoad || exFp.isStore, fpImm, ex.imm))
-  val allowEx = !downHold && !wbKill && !writeback.io.hartFatal && !stopped
+  val allowEx = !writeback.io.hartFatal && !stopped
   io.l1d.req.valid := exMem && allowEx
   val req = io.l1d.req.bits
   req.op := MuxLookup(ex.ctrl.mem_op.asUInt, L1DOp.Load)(Seq(
@@ -291,6 +316,7 @@ class BreezeBackend(
   req.rd.idx := ex.rd_addr
   req.rd.isFp := exBank
   req.isFlw := exFp.isLoad && !exFp.isDouble
+  req.solo := exSolo
   io.l1d.s1Kill := wbKill || io.hartFatal
   io.l1d.s2Kill := wbKill || io.hartFatal
   io.l1d.trapClearRsv := csrFile.io.trap.valid
@@ -346,7 +372,7 @@ class BreezeBackend(
   fpIn.rd.isFp := exBank
   val resourceWait = exMem && !io.l1d.req.ready
   exAdvance := allowEx && !resourceWait
-  mulUnit.io.commit := RegNext(wbCommit && wb.mul, false.B)
+  mulUnit.io.commit := mulPortCommitD
   divUnit.io.commit := RegNext(wbCommit && wb.div, false.B)
   fpUnit.io.commit := RegNext(wbCommit && wb.fp, false.B)
   mulUnit.io.killUncommitted := killD
@@ -383,27 +409,29 @@ class BreezeBackend(
   csrFile.io.time := io.time
   csrFile.io.trap.valid := (wbCanLeave && wbExc) || interrupt
   csrFile.io.trap.is_interrupt := interrupt
-  csrFile.io.trap.cause := Mux(interrupt, csrFile.io.interruptCause, Mux(wbMemExc, io.l1d.resp.bits.excCause, wb.cause))
+  csrFile.io.trap.cause := Mux(interrupt, csrFile.io.interruptCause, Mux(wbMemExc, io.l1d.resp.bits.excCause, Mux(wbCoproExc, coproDecision.cause, wb.cause)))
   csrFile.io.trap.pc := Mux(interrupt, nextPc, wb.pc)
-  csrFile.io.trap.tval := Mux(interrupt, 0.U, Mux(wbMemExc, io.l1d.resp.bits.tval, wb.tval))
+  csrFile.io.trap.tval := Mux(interrupt, 0.U, Mux(wbMemExc, io.l1d.resp.bits.tval, Mux(wbCoproExc, coproDecision.tval, wb.tval)))
   csrFile.io.mret_commit := wbCommit && wb.mret
   csrFile.io.sret_commit := wbCommit && wb.sret
   io.mmuContext := csrFile.io.mmu_context
   io.reservationKill := csrFile.io.trap.valid
-  io.translationBlocked := wb.valid && wb.sfence
-  io.sfence.valid := wb.valid && wb.sfence && !sfenceSent && io.l1d.drained && io.mmuIdle && !wb.exception && !io.hartFatal
+  io.translationBlocked := (io.fetchBuffer.valid && ctrl.is_sfence_vma) ||
+    (ex.valid && ex.ctrl.is_sfence_vma) || (mem.valid && mem.sfence) || (perm.valid && perm.sfence) || (wb.valid && wb.sfence)
+  io.sfence.valid := wbCommit && wb.sfence
   io.sfence.vaddr := wb.address
   io.sfence.asid := wb.storeData(15,0)
   io.sfence.useVaddr := wb.rs1 =/= 0.U
   io.sfence.useAsid := wb.rs2 =/= 0.U
-  when(io.sfence.valid) { sfenceSent := true.B }
-  when(wbCanLeave) { sfenceSent := false.B }
+  when(wbKill || io.hartFatal) { soloArm := false.B }
+  when(wbReplay) { soloArm := true.B; replayReason := Mux(wb.copro, 4.U, io.l1d.resp.bits.replayReason) }
+  when(idLeave && soloArm) { soloArm := false.B }
   io.frontendRedirect.valid := wbKill || branchRedirect
   // Flush once when SFENCE reaches WB, without issuing the final redirect early.
   io.frontendRedirect.flush := io.frontendRedirect.valid || (wb.valid && wb.sfence && !RegNext(wb.valid && wb.sfence, false.B))
   io.frontendRedirect.cacheFlush := wbCommit && wb.fencei
   io.frontendRedirect.target := Mux(csrFile.io.trap.valid, csrFile.io.trap_target,
-    Mux(xret, csrFile.io.xret_target, Mux(wbKill, wb.nextPc, exNext)))
+    Mux(xret, csrFile.io.xret_target, Mux(wbReplay, wb.pc, Mux(wbKill, wb.nextPc, exNext))))
   // Keep the legacy backend events at WB for the frozen observation contract.
   // The cluster's frontend boundary consumes these two functional routes.
   io.frontendFastRedirect := 0.U.asTypeOf(io.frontendFastRedirect)
@@ -484,14 +512,51 @@ class BreezeBackend(
     exDiv && !divUnit.io.req.fire)
   fpUnit.io.reserve := idLeave && idFp
   val creditWait = (idMul && !mulCredit) || (idDiv && !divCredit) || (idFp && !fpUnit.io.reserveReady)
+  def longPort(reserve: Bool, available: Bool, commit: Bool, killed: UInt,
+      drained: Bool, raw: DecoupledIO[IntMduResult]): LongLatUnit = {
+    val port = Wire(new LongLatUnit)
+    port.reserve := reserve; port.available := available
+    port.commitD := commit; port.killD := killD
+    port.returned := killed + raw.fire.asUInt
+    port.drained := drained
+    port.result.valid := raw.valid
+    port.result.bits.rd.idx := raw.bits.rd; port.result.bits.rd.isFp := false.B
+    port.result.bits.data := raw.bits.data; port.result.bits.flags := 0.U
+    raw.ready := port.result.ready
+    port
+  }
+  val mulPort = longPort(idLeave && idMul, mulCredit, mulPortCommitD,
+    mulUnit.io.killed, mulUnit.io.drained, mulUnit.io.result)
+  val divPort = longPort(idLeave && idDiv, divCredit, RegNext(wbCommit && wb.div, false.B),
+    divUnit.io.killed, divUnit.io.drained, divUnit.io.result)
+  val fpPort = Wire(new LongLatUnit)
+  fpPort.reserve := idLeave && idFp; fpPort.available := fpUnit.io.reserveReady
+  fpPort.commitD := RegNext(wbCommit && wb.fp, false.B); fpPort.killD := killD
+  fpPort.returned := fpUnit.io.killed + fpUnit.io.result.fire.asUInt
+  fpPort.drained := fpUnit.io.drained
+  fpPort.result <> fpUnit.io.result
+  writeback.io.div <> divPort.result
+  writeback.io.mul <> mulPort.result
+  writeback.io.fp <> fpPort.result
+  coprocessor.foreach { c =>
+    c.io.req.valid := ex.valid && ex.inst(6,0) === "h0b".U && !ex.illegal_inst && allowEx
+    c.io.req.bits := ex.inst
+    c.io.commitD := RegNext(wbCommit && wb.copro, false.B)
+    c.io.killD := killD
+    when(idLeave && idCopro) { coproUsed := true.B }
+    when(c.io.returned) { coproUsed := false.B }
+    writeback.io.copro.get.valid := false.B
+    writeback.io.copro.get.bits := 0.U.asTypeOf(new FpResult)
+  }
   val slowRedirectGap = RegNext(wbKill, false.B)
   io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !creditWait && !serialInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !creditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) {
       ex.valid := idLeave
+      exSolo := idSolo
       // Payload is irrelevant when valid=0. Capture on slot advance; only
       // ex.valid needs the late ID authorization/hazard/redirect conditions.
       ex.pc := io.fetchBuffer.bits.pc
@@ -501,7 +566,7 @@ class BreezeBackend(
       ex.instruction_access_fault := io.fetchBuffer.bits.instructionAccessFault
       ex.instruction_page_fault := io.fetchBuffer.bits.instructionPageFault
       ex.instruction_fault_second_parcel := io.fetchBuffer.bits.instructionFaultSecondParcel
-      ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid) ||
+      ex.illegal_inst := io.fetchBuffer.bits.illegalCompressed || (decoder.io.illegal_inst && !fpCtrl.valid && !idCopro) ||
         (fpCtrl.valid && !csrFile.io.fp_enabled) || (ctrl.is_mret && csrFile.io.mret_illegal) ||
         (ctrl.is_sret && csrFile.io.sret_illegal) || (ctrl.is_wfi && csrFile.io.wfi_illegal) ||
         (ctrl.is_sfence_vma && csrFile.io.sfence_vma_illegal)
@@ -529,10 +594,11 @@ class BreezeBackend(
       exFpr := exFprRead
     }
   when(reset.asBool || wbKill || io.hartFatal) { mem.valid := false.B; perm.valid := false.B; wb.valid := false.B }
-    .elsewhen(!downHold) {
+    .otherwise {
       // EX wait never holds MEM/WB: insert a bubble behind the older MEM.
       mem := 0.U.asTypeOf(mem)
       mem.valid := ex.valid && exAdvance
+      mem.solo := exSolo
       mem.pc := ex.pc
       mem.nextPc := exNext
       mem.inst := ex.inst
@@ -552,7 +618,8 @@ class BreezeBackend(
       mem.mul := exMul
       mem.div := exDiv
       mem.fp := exFpLong
-      mem.serial := ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.is_wfi || ex.estop
+      mem.copro := cfg.coprocessorStub.nonEmpty.B && ex.inst(6,0) === "h0b".U && exLegal
+      mem.serial := ex.ctrl.fencei || ex.ctrl.is_sfence_vma || ex.estop || ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U
       mem.fencei := ex.ctrl.fencei
       mem.sfence := ex.ctrl.is_sfence_vma
       mem.wfi := ex.is_wfi
@@ -571,8 +638,8 @@ class BreezeBackend(
       mem.rs2 := ex.rs2_addr
       mem.predictionMiss := redirected
       perm := mem
-      wb := perm
-      when(perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) {
+      when(!downHold) { wb := perm }
+      when(!downHold && perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) {
         wb.data := csrFile.io.csr_old_data
         wb.csrWrite := csrFile.io.csr_write_en
         wb.csrData := csrFile.io.csr_new_data
@@ -611,7 +678,7 @@ class BreezeBackend(
   io.observe.gprBusy := scoreboard.io.gprBusy
   io.observe.fprBusy := scoreboard.io.fprBusy
   io.observe.memHold := downHold
-  io.observe.exHold := downHold || resourceWait
+  io.observe.exHold := resourceWait
   io.observe.grant := writeback.io.grant
   io.observe.fpIn := fpUnit.io.req.fire
   io.observe.fpOut := fpUnit.io.result.fire
@@ -620,6 +687,13 @@ class BreezeBackend(
   io.observe.divIn := divUnit.io.req.fire
   io.observe.divIterating := divUnit.arithmeticActive
   io.observe.translationBlocked := io.translationBlocked
+  io.observe.replay := wbReplay
+  io.observe.replayPc := wb.pc
+  io.observe.replayReason := Mux(wb.copro, 6.U, io.l1d.resp.bits.replayReason)
+  io.observe.solo := wb.valid && wb.solo
+  io.observe.memAdvance := true.B
+  io.observe.permAdvance := true.B
+  io.observe.killD := killD
   io.tandem.foreach { t =>
     t := 0.U.asTypeOf(t)
     t.valid := wbCommit
@@ -683,7 +757,8 @@ class BreezeBackend(
   val heldPerm = RegNext(perm.asUInt)
   val heldWb = RegNext(wb.asUInt)
   when(pastActive && !reset.asBool && pastDownHold && !pastKill) {
-    assert(mem.asUInt === heldMem && perm.asUInt === heldPerm && wb.asUInt === heldWb, "[S09] held MEM/WB metadata changed")
+    assert(wb.asUInt === heldWb, "[N01] held solo WB metadata changed")
+    assert(!mem.valid && !perm.valid, "[N01] MEM/PERM did not advance to bubbles")
   }
   when(!reset.asBool) {
     assert(!mulUnit.io.req.valid || mulUnit.io.req.ready, "[R3] reserved MUL rejected")
@@ -695,17 +770,25 @@ class BreezeBackend(
     }
     assert(!io.l1d.resp.valid || (wb.valid && wb.mem), "[S15] L1D resp is not aligned to WB")
     assert(!(io.l1d.resp.valid && io.l1d.s2Hold), "[S15] simultaneous hold and decision")
-    assert(!(mem.valid && mem.mem && downHold) || io.l1d.s2Hold, "[stall direction] MEM memory held without s2Hold")
-    assert(!serialWait || (!ex.valid && !mem.valid && !perm.valid), "[stall direction] serial wait with younger pipeline entries")
-    assert(!wbKill || !(io.l1d.req.fire || mulUnit.io.req.fire || divUnit.io.req.fire), "[S13] younger request survived WB kill")
+    assert(!downHold || (wb.solo && !ex.valid && !mem.valid && !perm.valid),
+      "[N01] WB self-hold without empty younger stages")
+    assert(!wbReplay || !wb.solo, "[N02] solo instruction replayed twice")
+    assert(!killD || !(mulUnit.io.req.fire || divUnit.io.req.fire || fpUnit.io.req.fire),
+      "[R2] new unit request during delayed kill")
+    when(idLeave && idSerial) {
+      assert(olderEmpty, "[R6] serial issued before older WB drained")
+      assert(!ctrl.fencei || io.l1d.cpuDrained, "[R6] sampled CPU drain fell before FENCE.I issue")
+      assert(!ctrl.is_sfence_vma || (io.l1d.cpuDrained && io.mmuIdle),
+        "[R6] sampled SFENCE condition fell before ID issue")
+      assert(!(idEstop || idCsr) || scalarDrained, "[R6] sampled scalar drain fell")
+    }
     assert(!(branchRedirect && exRedirectSent), "[S09] EX redirected twice in one occupancy")
     when(downHold && wb.valid) {
       assert(!(train || io.frontendSlowRedirect.valid || csrFile.io.commit_valid || csrFile.io.trap.valid ||
         csrFile.io.mret_commit || csrFile.io.sret_commit), "[S09] control side effect while WB held")
       // S09 explicitly permits requests with their own one-shot state (A08/B01).
       // SFENCE must request while WB waits, then wait for the subsequent idle.
-      assert(!io.sfence.valid || (wb.sfence && !sfenceSent && io.l1d.drained && io.mmuIdle),
-        "[S09] SFENCE repeated or issued before drain/idle")
+      assert(!io.sfence.valid, "[R6] serial action during blocking WB wait")
     }
     assert(!downHold || !wbCommit, "[S09] held WB retired")
     assert(!wbCommit || !wb.mem || io.l1d.resp.valid, "[S15] memory retired without S3 decision")

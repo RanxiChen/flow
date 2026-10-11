@@ -28,7 +28,7 @@ private[backend] object Instructions {
     (BigInt(if(toGpr) 0x60 else if(div) 0x0d else 1)<<25)|(BigInt(b)<<20)|(BigInt(a)<<15)|(BigInt(rd)<<7)|0x53
   def fma(rd: Int): BigInt = (BigInt(1)<<25)|(BigInt(rd)<<7)|0x43
 }
-private[backend] final case class Request(addr: BigInt, rd: Int, fp: Boolean, op: Int, data: BigInt)
+private[backend] final case class Request(addr: BigInt, rd: Int, fp: Boolean, op: Int, data: BigInt, solo: Boolean = false)
 private[backend] final case class Event(cycle: Int, kind: String, pc: BigInt = 0, rd: Int = -1, data: BigInt = 0)
 private[backend] class BackendTimingProbe(bypass: Boolean) extends
     BreezeBackend(BackendConfig(privilegeProfile=PrivilegeProfile.Linux, loadUseBypass=bypass), enabledebug=true) {
@@ -63,6 +63,8 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var instructionPageFault = false
   var faultSecondParcel = false
   private val rng = new scala.util.Random(seed)
+  private val fetched = mutable.Map.empty[BigInt,BigInt]
+  private val replayFetch = mutable.Queue.empty[(BigInt,BigInt)]
   private var s0Read: Option[Request] = None
   private var s1: Option[Request] = None
   private var s2: Option[Request] = None
@@ -92,11 +94,14 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     d.io.l1d.resp.bits.data.poke(0.U); d.io.l1d.resp.bits.excCause.poke(0.U); d.io.l1d.resp.bits.tval.poke(0.U)
     d.io.l1d.late.valid.poke(false.B); d.io.l1d.late.bits.rd.idx.poke(0.U)
     d.io.l1d.late.bits.rd.isFp.poke(false.B); d.io.l1d.late.bits.data.poke(0.U); d.io.l1d.late.bits.error.poke(false.B)
+    d.io.l1d.cpuDrained.poke(true.B); d.io.l1d.replayWake.poke(true.B)
+    d.io.l1d.resp.bits.replayReason.poke(0.U)
     d.io.l1d.drained.poke(true.B); d.io.l1d.mmioBusy.poke(false.B)
     d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
   }
   def step(instruction: Option[(BigInt,BigInt)] = None): Boolean = {
-    instruction match {
+    val actualInstruction = replayFetch.headOption.orElse(instruction)
+    actualInstruction match {
       case Some((p,i)) =>
         d.io.fetchBuffer.valid.poke(true.B); d.io.fetchBuffer.bits.pc.poke(p.U)
         d.io.fetchBuffer.bits.inst.poke(i.U); d.io.fetchBuffer.bits.rawInst.poke(i.U)
@@ -124,13 +129,18 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     val full = s2.exists(q => misses(q.addr) && pending.nonEmpty && !blockedLine)
     val fence = s2.exists(_.op == 5) && pending.nonEmpty
     val hold = blockedLine || retry || full || fence || (s2.nonEmpty && cycle < holdUntil) || (randomHold && s2.nonEmpty && rng.nextInt(4)==0)
-    d.io.l1d.s2Hold.poke(hold.B)
+    val replay = hold && s2.exists(q => !q.solo)
+    val soloHold = hold && s2.exists(_.solo)
+    d.io.l1d.s2Hold.poke(soloHold.B)
+    d.io.l1d.cpuDrained.poke((drained && pending.isEmpty && ps.isEmpty).B)
+    d.io.l1d.replayWake.poke((pending.isEmpty && cycle >= holdUntil).B)
+    d.io.l1d.resp.bits.replayReason.poke((if(blockedLine) 2 else if(full) 3 else 0).U)
     d.io.l1d.drained.poke((drained && pending.isEmpty && ps.isEmpty).B)
-    d.io.l1d.resp.valid.poke((s2.nonEmpty && !hold).B)
+    d.io.l1d.resp.valid.poke((s2.nonEmpty && !soloHold).B)
     var allocated: Option[(Request,Int)] = None
     s2.foreach { q =>
       val miss = misses(q.addr) && pending.isEmpty && !faults(q.addr)
-      d.io.l1d.resp.bits.kind.poke(if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
+      d.io.l1d.resp.bits.kind.poke(if(replay) L1DRespKind.Replay else if(faults(q.addr)) L1DRespKind.Exc else if(miss) L1DRespKind.Mshr else L1DRespKind.Done)
       d.io.l1d.resp.bits.data.poke(values(q.addr).U)
       d.io.l1d.resp.bits.excCause.poke(faultCause.U); d.io.l1d.resp.bits.tval.poke(q.addr.U)
       if (!hold && miss) allocated = Some(q -> (cycle+(if(randomHold) 1+rng.nextInt(40) else returnDelay)))
@@ -142,10 +152,17 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
       ((q.addr>>3)&511)==((reqAddr>>3)&511))
     val installing = pending.exists { case (_,r) => cycle >= r+1 && cycle <= r+5 }
     d.io.l1d.req.ready.poke((!hold && !conflict && !installing).B)
-    val accepted = instruction.nonEmpty && bool(d.io.fetchBuffer.ready)
-    if(accepted) record("id", instruction.get._1)
+    val accepted = actualInstruction.nonEmpty && bool(d.io.fetchBuffer.ready)
+    val replayAccepted = accepted && replayFetch.nonEmpty
+    if(accepted) {
+      record("id", actualInstruction.get._1)
+      fetched(actualInstruction.get._1) = actualInstruction.get._2
+      if(replayAccepted) replayFetch.dequeue()
+    }
     val o = d.io.observe
     if(bool(o.exFire)) record("ex",uint(o.exPc))
+    val replayPc = if(bool(o.replay)) Some(uint(o.replayPc)) else None
+    if(bool(o.replay)) record("replay",uint(o.replayPc),data=uint(o.replayReason))
     if(bool(o.commit)) record("commit",uint(o.commitPc))
     if(bool(d.io.hartFatal)) record("fatal")
     if(bool(o.gprWrite.valid)) record("gpr",r=uint(o.gprWrite.bits.idx).toInt,data=uint(o.gprWrite.bits.data))
@@ -174,7 +191,7 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(d.io.translationBlocked)) record("xlatBlock")
     val fired = bool(d.io.l1d.req.valid) && bool(d.io.l1d.req.ready)
     val newReq = if(fired) Some(Request(reqAddr,uint(d.io.l1d.req.bits.rd.idx).toInt,
-      bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op).toInt,uint(d.io.l1d.req.bits.wdata))) else None
+      bool(d.io.l1d.req.bits.rd.isFp),uint(d.io.l1d.req.bits.op).toInt,uint(d.io.l1d.req.bits.wdata),bool(d.io.l1d.req.bits.solo))) else None
     if(fired) record("req",uint(o.exPc))
     if(s2.nonEmpty && !hold) record("resp",r=s2.get.rd,data=uint(d.io.l1d.resp.bits.kind))
     val lateFire = lateValid && bool(d.io.l1d.late.ready)
@@ -185,11 +202,19 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     d.clock.step()
     ps = if(s2.exists(q=>q.op==1) && !hold && !kill) s2 else None
     if(kill) { s0Read=None; s1=None; s2=None; retryAt=None }
-    else if(!hold) { s2=s1; s1=s0Read; s0Read=newReq; retryAt=None }
+    else {
+      if(!soloHold) s2=s1
+      s1=s0Read; s0Read=newReq
+      if(!soloHold) retryAt=None
+    }
+    replayPc.foreach { p =>
+      val younger = fetched.toSeq.filter(_._1 >= p).sortBy(_._1)
+      replayFetch.clear(); replayFetch.enqueueAll(younger)
+    }
     if(lateFire) { misses -= pending.get._1.addr; pending=None; lateStored=false; lateData=None }
     if(allocated.nonEmpty && !kill) { pending=allocated; misses -= allocated.get._1.addr }
     cycle += 1
-    accepted
+    accepted && !replayAccepted
   }
   def issue(i: BigInt): BigInt = {
     val p=pc; pc+=4

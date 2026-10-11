@@ -169,6 +169,7 @@ class L1MshrAlloc(p: L1DParams) extends Bundle {
 /** Miss unit status consumed by S0 arbitration, S2 decisions and probe. */
 class L1MissStatus(p: L1DParams) extends Bundle {
   val mshrValid = Bool()
+  val mshrCpu = Bool()
   val mshrState = MshrState()
   val mshrLineAddr = UInt(p.lineAddrBits.W)
   val mshrWay = UInt(p.wayBits.W)

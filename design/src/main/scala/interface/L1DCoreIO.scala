@@ -10,7 +10,7 @@ object L1DOp extends ChiselEnum {
   val Load, Store, LR, SC, AMO, Fence = Value
 }
 object L1DRespKind extends ChiselEnum {
-  val Done, Mshr, Exc = Value
+  val Done, Mshr, Exc, Replay = Value
 }
 class L1DDestination extends Bundle {
   val isFp = Bool()
@@ -27,12 +27,14 @@ class L1DCoreReq extends Bundle {
   val wdata = UInt(64.W)
   val rd = new L1DDestination
   val isFlw = Bool()
+  val solo = Bool()
 }
 class L1DCoreResp extends Bundle {
   val kind = L1DRespKind()
   val data = UInt(64.W)
   val excCause = UInt(64.W)
   val tval = UInt(64.W)
+  val replayReason = UInt(3.W)
 }
 class L1DLate extends Bundle {
   val rd = new L1DDestination
@@ -47,6 +49,8 @@ class L1DCoreIO extends Bundle {
   val s2Hold = Output(Bool())
   val late = Decoupled(new L1DLate)
   val drained = Output(Bool())
+  val cpuDrained = Output(Bool())
+  val replayWake = Output(Bool())
   val mmioBusy = Output(Bool())
   val trapClearRsv = Input(Bool())
   val csr = Input(new BreezeMmuContext(64))

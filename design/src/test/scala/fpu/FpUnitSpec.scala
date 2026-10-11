@@ -405,12 +405,14 @@ class FpUnitSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
       writes mustBe 1; d.io.committedFlagsOnly.expect(false.B); d.io.busy.expect(false.B)
     }
   }
-  "SOC3c D2 same-edge FP fire/kill drains its tag before forty consecutive new requests" in {
+  "BE2 R2 delayed FP kill drains its tag before forty consecutive new requests" in {
     simulate(new FpProbe) { d =>
       init(d)
       d.io.req.bits.rd.idx.poke(31.U)
-      d.io.req.valid.poke(true.B); d.io.killUncommitted.poke(true.B)
+      d.io.req.valid.poke(true.B); d.io.killUncommitted.poke(false.B)
       d.io.req.ready.expect(true.B); d.rawInFire.expect(false.B)
+      d.clock.step()
+      d.io.req.valid.poke(false.B); d.io.killUncommitted.poke(true.B)
       d.clock.step()
       d.io.killUncommitted.poke(false.B)
       d.draining.expect(true.B)

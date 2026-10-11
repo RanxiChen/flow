@@ -20,7 +20,8 @@ class BE2PerturbationSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
           val m = new Environment(d, seed); m.reset()
           val rng = new scala.util.Random(seed)
           val a = 1 + rng.nextInt(127); val b = 1 + rng.nextInt(31)
-          val pcs = m.run(Seq(addi(20,0,a), addi(21,0,b)), 6)
+          val pcs = Vector(m.issue(addi(20,0,a)), m.issue(addi(21,0,b)))
+          for(_ <- 0 until 6) m.step()
           m.returnDelay = 1 + rng.nextInt(40)
           m.misses += 0x100
           val program = Vector(ld(10,0x100)) ++ (1 to 8).map(rd => mdu(rd,20,21)) ++

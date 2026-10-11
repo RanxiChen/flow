@@ -190,6 +190,7 @@ class L1DMiss(p: L1DParams) extends Module {
 
   // ---------------- Status ----------------
   io.status.mshrValid := state =/= MshrState.Idle
+  io.status.mshrCpu := m.src === MshrSrc.Cpu
   io.status.mshrState := state
   io.status.mshrLineAddr := m.lineAddr
   io.status.mshrWay := m.way

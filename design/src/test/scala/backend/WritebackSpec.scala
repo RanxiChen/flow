@@ -9,8 +9,8 @@ class WritebackSpec extends AnyFreeSpec with Matchers with ChiselSim {
   private def idle(d: Writeback): Unit = {
     d.io.late.valid.poke(false.B); d.io.late.bits.rd.idx.poke(1.U)
     d.io.late.bits.rd.isFp.poke(false.B); d.io.late.bits.data.poke(101.U); d.io.late.bits.error.poke(false.B)
-    d.io.div.valid.poke(false.B); d.io.div.bits.rd.poke(2.U); d.io.div.bits.data.poke(102.U)
-    d.io.mul.valid.poke(false.B); d.io.mul.bits.rd.poke(3.U); d.io.mul.bits.data.poke(103.U)
+    d.io.div.valid.poke(false.B); d.io.div.bits.rd.idx.poke(2.U); d.io.div.bits.data.poke(102.U)
+    d.io.mul.valid.poke(false.B); d.io.mul.bits.rd.idx.poke(3.U); d.io.mul.bits.data.poke(103.U)
     d.io.fp.valid.poke(false.B); d.io.fp.bits.rd.idx.poke(4.U)
     d.io.fp.bits.rd.isFp.poke(false.B); d.io.fp.bits.data.poke(104.U); d.io.fp.bits.flags.poke(17.U)
     d.io.ordinary.valid.poke(false.B); d.io.ordinary.bits.rd.idx.poke(5.U)

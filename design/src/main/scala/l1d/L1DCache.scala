@@ -79,7 +79,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   val cpuHold = Wire(Bool())
   val internalHold = Wire(Bool())
   val cpuAdvance = !cpuHold
-  val cpu1Advance = cpuAdvance
+  val cpu1Advance = true.B
   val internalAdvance = !internalHold
   val internal1Advance = !internal1.valid || internalAdvance
   val cpuKill = io.core.s1Kill || io.core.s2Kill
@@ -350,9 +350,9 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
     cpu1.needsRecheck := contextChanged
     cpu1.pmpEnd := selectedEnd
   }
+  cpu2.valid := cpu1.valid && !cpuKill
+  captureRead(cpu2, cpu1, cpuPhysical, cpuTlb, cpuTlbValid, cpuTags, cpuData)
   when(cpuAdvance) {
-    cpu2.valid := cpu1.valid && !cpuKill
-    captureRead(cpu2, cpu1, cpuPhysical, cpuTlb, cpuTlbValid, cpuTags, cpuData)
     cpu3 := cpu2
     cpu3.valid := cpu2.valid && !cpuKill
     cpu3.needsRecheck := cpu2.needsRecheck || contextChanged
@@ -586,7 +586,11 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   // An internal wait here would prevent that same lane finishing the miss.
   internalHold := internalRefresh
   val atomicReplayResp = replay && atomicWait && (isLr || s2.req.replayError)
-  cpuHold := cpu3.valid && !atomicReplayResp && (internal3.valid || undecided)
+  // Speculative attempts leave S3 in one cycle. Only an isolated request
+  // owns a waiting S3 slot; CPU S1/S2 keep advancing independently.
+  val speculativeReplay = cpu3.valid && !cpu3.req.core.solo &&
+    (internal3.valid || undecided || (!fromInternal && mmioDecision))
+  cpuHold := cpu3.valid && cpu3.req.core.solo && !atomicReplayResp && (internal3.valid || undecided)
   io.core.s2Hold := cpuHold
   // Resource waits must requery SRAM when they resume; do not reuse a tag
   // snapshot acquired before the older refill/probe/writeback completed.
@@ -604,16 +608,22 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   amoAlu.io.rs2 := s2.req.core.wdata
   val cpuDecided = atomicReplayResp || (cpu3.valid && !fromInternal &&
     (s2Done || (s2Miss && !blockingAtomic) || s2Fault))
-  io.core.resp.valid := cpuDecided
+  io.core.resp.valid := cpuDecided || speculativeReplay
   io.core.resp.bits.kind := MuxCase(L1DRespKind.Done, Seq(
+    speculativeReplay -> L1DRespKind.Replay,
     s2Miss -> L1DRespKind.Mshr,
     s2Fault -> L1DRespKind.Exc))
   io.core.resp.bits.data := Mux(amoRmw, amoOld, Mux(isSc, Mux(scSuccess, 0.U, 1.U), Mux(isLr, atomicData, loadData)))
   io.core.resp.bits.excCause := Mux(misaligned, Mux(isStore, 6.U, 4.U),
     Mux(s2.pageFault, Mux(isStore, 15.U, 13.U), Mux(isStore, 7.U, 5.U)))
   io.core.resp.bits.tval := s2.req.core.vaddr
+  io.core.resp.bits.replayReason := MuxCase(0.U, Seq(
+    cpu3.translationMiss -> 1.U, (sameMshr || sameWb) -> 2.U,
+    (!miss.io.status.canAllocate && cacheNeedsMiss) -> 3.U,
+    mmioDecision -> 4.U, (blockingAtomic && s2Miss) -> 5.U))
+  io.core.replayWake := RegNext(io.tlb.req.ready && resourcesClear && !wholeBusy && !ps.valid, false.B)
 
-  val allocates = s2.valid && s2Miss && (ptw || !io.core.s2Kill)
+  val allocates = s2.valid && s2Miss && (ptw || (!io.core.s2Kill && !speculativeReplay))
   miss.io.alloc.valid := allocates
   miss.io.alloc.bits := 0.U.asTypeOf(miss.io.alloc.bits)
   miss.io.alloc.bits.lineAddr := line(s2.paddr)
@@ -692,10 +702,10 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   probe.io.initDone := initDone
 
   val amoStarts = s2.valid && isAmo && s2Amo &&
-    (!replay || atomicWait) && !s2.req.replayError && !io.core.s2Kill
+    (!replay || atomicWait) && !s2.req.replayError && !io.core.s2Kill && !speculativeReplay
   val stores = s2.valid && !ptw && !s2.pmaDevice && !(replay && s2.req.replayError) &&
-    ((s2.req.core.op === L1DOp.Store && s2Done && (replay || !io.core.s2Kill)) ||
-      (isSc && scSuccess && s2Done && !io.core.s2Kill) || amoStarts)
+    ((s2.req.core.op === L1DOp.Store && s2Done && (replay || (!io.core.s2Kill && !speculativeReplay))) ||
+      (isSc && scSuccess && s2Done && !io.core.s2Kill && !speculativeReplay) || amoStarts)
   when(psCompletes) { ps.valid := false.B; psAtomic := false.B }
   when(stores) {
     ps.valid := true.B
@@ -713,7 +723,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   }
   when(amoStarts) { amoRmw := true.B; amoOld := atomicData }
   when(rsvTimer =/= 0.U) { rsvTimer := rsvTimer - 1.U }
-  val lrCompletes = cpuDecided && isLr && s2Done && !io.core.s2Kill
+  val lrCompletes = cpuDecided && isLr && s2Done && !io.core.s2Kill && !speculativeReplay
   when(lrCompletes) { rsvValid := true.B; rsvLine := line(s2.paddr); rsvTimer := p.rsvWindow.U }
   val scCompletes = cpuDecided && isSc && !io.core.s2Kill
   val probeStarts = probe.io.s0Grant && probe.io.s0Req.bits === 0.U
@@ -827,7 +837,7 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   when(io.coh.rspUp.valid && !io.coh.rspUp.ready && !upHeld) { upHeld := true.B; upChoice := chooseProbe }
   when(io.coh.rspUp.fire) { upHeld := false.B }
 
-  mmio.io.start.valid := !fromInternal && cpu3.valid && s2Mmio && !mmio.io.active && !io.core.s2Kill
+  mmio.io.start.valid := !fromInternal && cpu3.valid && cpu3.req.core.solo && s2Mmio && !mmio.io.active && !io.core.s2Kill
   mmio.io.start.bits.paddr := s2.paddr
   mmio.io.start.bits.isWrite := s2.req.core.op === L1DOp.Store
   mmio.io.start.bits.size := s2.req.core.size
@@ -842,6 +852,15 @@ class L1DCache(g: BreezeMemGeometry, withPmpCandidate: Boolean = false) extends 
   io.mmio <> mmio.io.axi
   io.core.mmioBusy := mmio.io.busy
   io.core.drained := !miss.io.status.mshrValid && !ps.valid
+  def cpuReplay(slot: L1S2): Bool = slot.valid && slot.req.src === L1Src.Replay && !slot.req.replayPtw
+  io.core.cpuDrained := !ps.valid && !(miss.io.status.mshrValid && miss.io.status.mshrCpu) &&
+    !cpuReplay(internal2) && !cpuReplay(internal3) &&
+    !(internal1.valid && internal1.req.src === L1Src.Replay && !internal1.req.replayPtw)
+  when(cpuHold) { assert(!cpu1.valid && !cpu2.valid, "[N01] solo S3 hold with younger CPU slots") }
+  when(speculativeReplay) {
+    assert(!allocates && !stores && !lrCompletes && !mmio.io.start.valid,
+      "[N02] replay attempt has a side effect")
+  }
 
   io.events := 0.U.asTypeOf(io.events)
   io.events.load_access := io.core.req.fire && cpuLoad

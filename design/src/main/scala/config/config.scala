@@ -79,7 +79,8 @@ case class BackendConfig(
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
-    val loadUseBypass: Boolean = false
+    val loadUseBypass: Boolean = false,
+    val coprocessorStub: Option[Int] = None
 ){}
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
@@ -114,7 +115,8 @@ case class BreezeCoreConfig(
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
-    val loadUseBypass: Boolean = false
+    val loadUseBypass: Boolean = false,
+    val coprocessorStub: Option[Int] = None
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -141,7 +143,8 @@ case class BreezeCoreConfig(
         privilegeProfile = privilegeProfile,
         enableCompressed = enableCompressed,
         enableMmu = enableMmu,
-        loadUseBypass = loadUseBypass
+        loadUseBypass = loadUseBypass,
+        coprocessorStub = coprocessorStub
     )
 }
 
@@ -227,13 +230,14 @@ final case class BreezeClusterConfig(
     mem: BreezeMemGeometry,
     corePreset: CorePreset = CorePreset.Gshare,
     privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
-    loadUseBypass: Boolean = false
+    loadUseBypass: Boolean = false,
+    coprocessorStub: Option[Int] = None
 ) {
     val nCores: Int = mem.nCores
 
     /** Per-core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub)
 }
 
 /** Named cluster profiles. `single`/`dual`/`small` are the deployment sizes;

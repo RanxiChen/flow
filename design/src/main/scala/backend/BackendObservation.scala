@@ -22,4 +22,11 @@ class BackendObservation extends Bundle {
   val divIn = Bool()
   val divIterating = Bool()
   val translationBlocked = Bool()
+  val replay = Bool()
+  val replayPc = UInt(64.W)
+  val replayReason = UInt(3.W)
+  val solo = Bool()
+  val memAdvance = Bool()
+  val permAdvance = Bool()
+  val killD = Bool()
 }
