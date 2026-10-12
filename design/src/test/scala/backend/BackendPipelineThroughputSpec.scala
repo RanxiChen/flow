@@ -19,6 +19,7 @@ class BackendPipelineThroughputSpec extends AnyFreeSpec with Matchers with Breez
   "independent ALUs, dependent ALUs and native hit loads overlap and preserve all results" in {
     simulate(new BreezeBackend(cfg, enabledebug = true)) { d =>
       val count = 64
+      val throughputFailures = scala.collection.mutable.ArrayBuffer.empty[String]
       for (name <- Seq("alu-independent", "alu-dependent", "load-hit-model")) {
         val m = new Environment(d)
         m.reset()
@@ -62,12 +63,11 @@ class BackendPipelineThroughputSpec extends AnyFreeSpec with Matchers with Breez
         }
         // A one-instruction-per-cycle contract is checked independently of
         // the result scoreboard; a serial implementation must fail this gate.
-        withClue(name) {
-          gaps mustBe Seq.fill(count - 1)(1)
-          maximum must be >= 4
-          commits.sliding(2).map(p => p(1).cycle - p(0).cycle).toSeq mustBe Seq.fill(count - 1)(1)
-        }
+        if (gaps != Seq.fill(count - 1)(1) || maximum < 4 ||
+            commits.sliding(2).map(p => p(1).cycle - p(0).cycle).toSeq != Seq.fill(count - 1)(1))
+          throughputFailures += s"$name gaps=${gaps.distinct.sorted.mkString("/")} max_inflight=$maximum"
       }
+      withClue(throughputFailures.mkString("; ")) { throughputFailures mustBe empty }
     }
   }
 }

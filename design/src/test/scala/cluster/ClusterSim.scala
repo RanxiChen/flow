@@ -407,7 +407,7 @@ object ClusterSim extends PeekPokeAPI {
               b(o.commit), x(o.commitPc), b(t.valid), x(t.pc), x(t.inst), b(t.rdWriteEn),
               x(t.rdAddr), x(t.rdData), b(o.exHold), b(o.memHold), b(o.replay), b(o.solo),
               b(d.load_access), b(d.store_access), b(d.load_miss), b(d.store_miss),
-              b(dut.io.l2Events.memRead), b(dut.io.mem.ar.valid && dut.io.mem.ar.ready),
+              b(dut.io.l2Events.memRead), b(dut.io.mem.ar.valid) * b(dut.io.mem.ar.ready),
               b(dut.io.hartFatal(h))).mkString(","))
           }
         }
