@@ -1,0 +1,9 @@
+{
+  "production_tcl": "/home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware/xilinx_kcu105.tcl",
+  "production_tcl_sha256": "e04d7d4ab2f4f42f5a2459c20f08d6e98668042e17fedf3666351ff8e6da2424",
+  "synth_only_tcl": "/home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware/f2-synth-only.tcl",
+  "synth_only_tcl_sha256": "ca3360feb2ff9af61af0971cf347385cbee66e73c6d94cfdc181abb5b3bfb2d8",
+  "identical_production_prefix": true,
+  "stop_before": "opt_design/place_design/route_design/write_bitstream",
+  "new_timing_exceptions": false
+}

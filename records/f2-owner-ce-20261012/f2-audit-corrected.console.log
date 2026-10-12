@@ -1,0 +1,84 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source audit-synth-dcp.tcl
+# open_checkpoint /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware/xilinx_kcu105_synth.dcp
+Command: open_checkpoint /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware/xilinx_kcu105_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.605 ; gain = 0.000 ; free physical = 38292 ; free virtual = 53548
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.47 ; elapsed = 00:00:00.47 . Memory (MB): peak = 2534.883 ; gain = 0.000 ; free physical = 36929 ; free virtual = 52687
+INFO: [Netlist 29-17] Analyzing 8148 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 5 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3212.156 ; gain = 0.000 ; free physical = 36400 ; free virtual = 52158
+Restored from archive | CPU: 0.060000 secs | Memory: 1.813782 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3212.156 ; gain = 0.000 ; free physical = 36400 ; free virtual = 52158
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3308.047 ; gain = 0.000 ; free physical = 36299 ; free virtual = 52058
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2125 instances were transformed.
+  CFGLUT5 => CFGLUT5 (SRL16E, SRLC32E): 1432 instances
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 23 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 3 instances
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 7 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 544 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 3 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 24 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 3c8d500f
+----- Checksum: PlaceDB: 244fb3ba ShapeSum: 183d9c55 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:22 ; elapsed = 00:00:23 . Memory (MB): peak = 3308.047 ; gain = 1614.441 ; free physical = 36299 ; free virtual = 52058
+# set payload_regs [get_cells -quiet -hier -filter {NAME =~ *frontend/cache/slots* && IS_SEQUENTIAL}]
+# set ce_pins [get_pins -quiet -of_objects $payload_regs -filter {REF_PIN_NAME == CE}]
+# set stream [open f2-payload-ce-audit-corrected.txt w]
+# puts $stream "payload_registers [llength $payload_regs]"
+# puts $stream "payload_ce_pins [llength $ce_pins]"
+# if {[llength $payload_regs] == 0 || [llength $ce_pins] != [llength $payload_regs]} {
+#     close $stream
+#     error "Mapped payload slots or CE pins missing"
+# }
+# set starts [all_fanin -flat -startpoints_only -to $ce_pins]
+# set unexpected {}
+# foreach pin $starts {
+#     puts $stream "CE_STARTPOINT $pin"
+#     # Vivado reports a sequential timing startpoint at its clock /C, rather
+#     # than its data output /Q, for this all_fanin query.
+#     if {![regexp {/(qValid|refillFault|tail)_reg[^/]*/(C|Q)$} $pin]} {
+#         lappend unexpected $pin
+#     }
+# }
+# puts $stream "unexpected_startpoints [llength $unexpected]"
+# close $stream
+# report_timing -delay_type max -to $ce_pins -max_paths 20 -nworst 1 -file f2-payload-ce-timing-corrected.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -to_pins  -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:21 ; elapsed = 00:00:13 . Memory (MB): peak = 4173.668 ; gain = 865.621 ; free physical = 35523 ; free virtual = 51282
+# if {[llength $unexpected] != 0} {error "Payload CE has non-owner startpoints: $unexpected"}
+# puts "FLOW_F2_OWNER_CE_GATE PASS: [llength $payload_regs] registers, [llength $starts] owner startpoints"
+FLOW_F2_OWNER_CE_GATE PASS: 560 registers, 3 owner startpoints
+# close_design
+# exit
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 21:20:01 2026...

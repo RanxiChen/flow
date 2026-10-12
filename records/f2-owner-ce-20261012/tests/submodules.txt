@@ -1,0 +1,2 @@
+ 23153ba10a0ab8c6ee774b5e1a928007c3b2adcc third_party/cvfpu (v0.6.6-93-g23153ba)
+-bcffa2b3188b040c611f90dc0b6e422f54775a09 third_party/riscv-tests

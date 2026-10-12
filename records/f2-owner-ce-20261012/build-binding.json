@@ -1,0 +1,20 @@
+{
+  "source_sha": "d4350cbb3e13cadd5a49848835b8b5cd44fa0299",
+  "source_dirty": false,
+  "host": "Alan",
+  "hostname": "chen-System-Product-Name",
+  "cwd": "/home/chen/FUN/flow-f2-owner-ce-20261012",
+  "profile": "single",
+  "clock_hz": 100000000,
+  "target": "xcku040-ffva1156-2-e",
+  "vivado": "2022.2",
+  "frontend": "BreezeFrontendPipeline",
+  "backend": "BE2-P BreezeBackend",
+  "debug": true,
+  "tandem": true,
+  "golden_changed": false,
+  "board": "NOT_RUN",
+  "new_timing_exceptions": false,
+  "bios_sha256": "95fecc2e1138e9879d9beeef572ac8c3fe016471ada8e7e052423571a0b0fa7e",
+  "bios_rom_matches": true
+}

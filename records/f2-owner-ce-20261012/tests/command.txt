@@ -1,0 +1,1 @@
+java -XX:ActiveProcessorCount=4 -Xmx6G -jar /home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar set\ Test\ /\ parallelExecution\ :=\ false testOnly\ flow.frontend.\*\ flow.memsys.L1IRegisteredReturnSpec\ flow.memsys.L1IClientSpec\ flow.util.RegisteredPairQueueSpec 

@@ -1,0 +1,1497 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Mon Oct 12 21:18:10 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -delay_type max -to [get_pins -quiet -of_objects [get_cells -quiet -hier -filter {NAME =~ *frontend/cache/slots* && IS_SEQUENTIAL}] -filter {REF_PIN_NAME == CE}] -max_paths 20 -nworst 1 -file f2-payload-ce-timing.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_0_reg/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_0_reg/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_0_reg/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_0_reg
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_1_reg/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_1_reg/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_1_reg/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_accessFault_1_reg
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[0]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[0]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[0]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[0]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[10]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[10]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[10]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[10]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[11]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[11]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[11]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[11]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[12]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[12]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[12]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[12]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[13]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[13]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[13]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[13]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[14]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[14]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[14]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[14]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[15]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[15]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[15]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[15]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[16]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[16]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[16]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[16]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[17]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[17]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[17]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[17]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[18]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[18]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[18]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[18]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[19]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[19]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[19]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[19]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[1]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[1]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[1]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[1]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[20]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[20]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[20]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[20]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[21]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[21]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[21]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[21]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[22]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[22]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[22]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[22]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[23]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[23]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[23]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[23]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[24]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[24]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[24]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[24]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+Slack (MET) :             8.838ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[25]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        0.891ns  (logic 0.230ns (25.814%)  route 0.661ns (74.186%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    7.029ns = ( 17.029 - 10.000 ) 
+    Source Clock Delay      (SCD):    7.184ns
+    Clock Pessimism Removal (CPR):    0.011ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    G10                                               0.000     0.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000     0.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.521     0.521 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.090     0.611    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000     0.611 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.671     1.282    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.083     1.365 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.584     3.949    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                     -0.231     3.718 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.325     4.043    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.282     4.325 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.859     7.184    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.115     7.299 f  BreezeClusterAxi/cluster/frontend/cache/tail_reg/Q
+                         net (fo=3, unplaced)         0.256     7.555    BreezeClusterAxi/cluster/frontend/cache/tail
+                         LUT3 (Prop_LUT3_I0_O)        0.115     7.670 r  BreezeClusterAxi/cluster/frontend/cache/slots_0_mask[1]_i_1/O
+                         net (fo=280, unplaced)       0.405     8.075    BreezeClusterAxi/cluster/frontend/cache/slots_0_pc0
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[25]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+    G10                                               0.000    10.000 r  clk125_p (IN)
+                         net (fo=0)                   0.000    10.000    IBUFDS/I
+    HPIOBDIFFINBUF_X1Y59 DIFFINBUF (Prop_DIFFINBUF_HPIOBDIFFINBUF_DIFF_IN_P_O)
+                                                      0.324    10.324 r  IBUFDS/DIFFINBUF_INST/O
+                         net (fo=1, estimated)        0.051    10.375    IBUFDS/OUT
+    G10                  IBUFCTRL (Prop_IBUFCTRL_HPIOB_I_O)
+                                                      0.000    10.375 r  IBUFDS/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.585    10.960    IBUFDS_n_0_BUFG_inst_n_0
+                         BUFGCE (Prop_BUFGCE_I_O)     0.075    11.035 r  IBUFDS_n_0_BUFG_inst/O
+                         net (fo=9, unplaced)         2.439    13.474    crg_clkin_signal
+                         MMCME3_ADV (Prop_MMCME3_ADV_CLKIN1_CLKOUT0)
+                                                      0.335    13.809 r  MMCME2_ADV/CLKOUT0
+                         net (fo=2, unplaced)         0.282    14.091    crg_clkout0
+                         BUFGCE_DIV (Prop_BUFGCE_DIV_I_O)
+                                                      0.224    14.315 r  BUFGCE_DIV/O
+                         net (fo=63641, unplaced)     2.714    17.029    BreezeClusterAxi/cluster/frontend/cache/out
+                         FDRE                                         r  BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[25]/C
+                         clock pessimism              0.011    17.039    
+                         clock uncertainty           -0.079    16.960    
+                         FDRE (Setup_FDRE_C_CE)      -0.047    16.913    BreezeClusterAxi/cluster/frontend/cache/slots_0_data_reg[25]
+  -------------------------------------------------------------------
+                         required time                         16.913    
+                         arrival time                          -8.075    
+  -------------------------------------------------------------------
+                         slack                                  8.838    
+
+
+
+

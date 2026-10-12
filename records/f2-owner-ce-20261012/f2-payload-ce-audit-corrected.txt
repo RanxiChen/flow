@@ -1,0 +1,6 @@
+payload_registers 560
+payload_ce_pins 560
+CE_STARTPOINT BreezeClusterAxi/cluster/frontend/cache/qValid_reg/C
+CE_STARTPOINT BreezeClusterAxi/cluster/frontend/cache/refillFault_reg/C
+CE_STARTPOINT BreezeClusterAxi/cluster/frontend/cache/tail_reg/C
+unexpected_startpoints 0
