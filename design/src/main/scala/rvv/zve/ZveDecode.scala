@@ -83,6 +83,8 @@ object ZveDecode {
       d.source1Bytes := p.vrf.regBytes.U; d.destinationBytes := p.vrf.regBytes.U }
     when(d.maskSources || d.scalarResult) { d.source2Registers := 1.U; d.source2Bytes := p.vrf.regBytes.U }
     when(d.maskSources) { d.source1Registers := 1.U; d.source1Bytes := p.vrf.regBytes.U }
+    when(op===ZveOp.vcompress.U) { d.source1Registers := 1.U; d.source1Bytes := p.vrf.regBytes.U }
+    when(toVectorScalar) { d.destinationRegisters := 1.U; d.destinationBytes := p.vrf.regBytes.U }
     when(d.maskResult || maskMemory) { d.destinationRegisters := 1.U; d.destinationBytes := p.vrf.regBytes.U }
     when(d.whole) {
       val count=Mux(wholeMove,vs1+1.U,x(31,29)+1.U)
