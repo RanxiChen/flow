@@ -87,7 +87,7 @@ object ZveDecode {
     when(toVectorScalar) { d.destinationRegisters := 1.U; d.destinationBytes := p.vrf.regBytes.U }
     when(d.maskResult || maskMemory) { d.destinationRegisters := 1.U; d.destinationBytes := p.vrf.regBytes.U }
     when(d.whole) {
-      val count=Mux(wholeMove,vs1+1.U,x(31,29)+1.U)
+      val count=Mux(wholeMove,vs1+&1.U,x(31,29)+&1.U)
       d.source2Registers := count; d.destinationRegisters := count
       d.source2Bytes := count*p.vrf.regBytes.U; d.destinationBytes := count*p.vrf.regBytes.U
     }
@@ -142,8 +142,8 @@ object ZveDecode {
       (d.destinationWidth > d.source1Width && e1 >= 0.S && vd+&d.destinationRegisters === vs1+&d.source1Registers)
     val maskOverlap = !d.maskResult || d.maskSources ||
       ((!(dst & src2).orR || vd===vs2) && (!d.vectorSource1 || !(dst & src1).orR || vd===vs1))
-    val segmentOk = !memory || d.whole || (d.destinationRegisters*(x(31,29)+1.U) <= 8.U &&
-      vd+& (d.destinationRegisters*(x(31,29)+1.U)) <= 32.U)
+    val segmentOk = !memory || d.whole || (d.destinationRegisters*(x(31,29)+&1.U) <= 8.U &&
+      vd+& (d.destinationRegisters*(x(31,29)+&1.U)) <= 32.U)
     val indexedOverlap = !memory || x(6,0)===0x27.U || !x(27,26)(0) ||
       !(group(vd,d.destinationRegisters*(x(31,29)+&1.U)) & src2).orR
     val vlmax = bytes(lmul) >> d.sew
@@ -159,7 +159,7 @@ object ZveDecode {
     when(!d.whole && in.scalar.vl > vlmax) { d.legal := false.B }
     // Segment fields are disjoint groups, so extend the owned range.
     when(memory && !d.whole && !maskMemory) {
-      val all=group(vd,d.destinationRegisters*(x(31,29)+1.U))
+      val all=group(vd,d.destinationRegisters*(x(31,29)+&1.U))
       when(x(6,0) === 0x27.U) { d.reads := all | Mux(d.vectorSource2,src2,0.U) | Mux(!x(25),1.U,0.U) }
         .otherwise { d.writes := all }
     }

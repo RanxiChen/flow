@@ -21,6 +21,7 @@ class ZveWindow(p: ZveParams) extends Module {
   val committed = RegInit(VecInit(Seq.fill(p.window)(false.B)))
   val judged = RegInit(VecInit(Seq.fill(p.window)(false.B)))
   val issued = RegInit(VecInit(Seq.fill(p.window)(false.B)))
+  val executed = RegInit(VecInit(Seq.fill(p.window)(false.B)))
   val commands = Reg(Vec(p.window, new ZveCommand(p)))
   val nextAge = RegInit(0.U(p.ageBits.W))
   val ageFits = (0 until p.window).map(i => !live(i) ||
@@ -55,7 +56,7 @@ class ZveWindow(p: ZveParams) extends Module {
   io.completion <> completed.io.deq
   when(returns.io.out.fire) {
     val r = returns.io.out.bits
-    assert(live(r.slot) && committed(r.slot) && issued(r.slot), "completion lacks executed ownership")
+    assert(live(r.slot) && committed(r.slot) && executed(r.slot), "completion lacks executed ownership")
     assert(commands(r.slot).age === r.age, "stale completion reused a window slot")
     assert(commands(r.slot).unit === returns.io.chosen, "completion from the wrong unit")
     live(r.slot) := false.B
@@ -66,7 +67,7 @@ class ZveWindow(p: ZveParams) extends Module {
   for(u <- 0 until p.units) {
     io.execute(u).valid := mailboxValid(u)
     io.execute(u).bits := mailbox(u)
-    when(io.execute(u).fire) { mailboxValid(u) := false.B }
+    when(io.execute(u).fire) { mailboxValid(u) := false.B; executed(mailbox(u).slot) := true.B }
     val inUnit = (0 until p.window).map(i => live(i) && committed(i) &&
       !issued(i) && commands(i).unit === u.U)
     val selected = oldest(inUnit)
@@ -102,7 +103,7 @@ class ZveWindow(p: ZveParams) extends Module {
     assert(io.issue.bits.unit < p.units.U)
     commands(free) := io.issue.bits
     commands(free).slot := free; commands(free).age := nextAge
-    live(free) := true.B; committed(free) := false.B; judged(free) := false.B; issued(free) := false.B
+    live(free) := true.B; committed(free) := false.B; judged(free) := false.B; issued(free) := false.B; executed(free) := false.B
     nextAge := nextAge + 1.U
   }
   io.drained := !live.asUInt.orR && !mailboxValid.asUInt.orR && !completed.io.deq.valid

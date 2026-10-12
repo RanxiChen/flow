@@ -16,7 +16,8 @@ class ZveIntegerArithmeticHarness extends Module {
   d.operation := io.operation; d.sew := io.sew; d.source2Width := io.sew+io.sourceWide.asUInt
   d.destinationWidth := io.sew+io.destinationWide.asUInt; d.issue.scalar.vxrm := io.rounding
   val (a,b)=ZveIntegerArithmetic.multiplyOperands(d,io.a,io.b,io.old)
-  val product=RegNext((a*b).asUInt)(63,0)
+  val productWide=RegNext((a*b).asUInt)
+  val product=productWide(63,0)
   val (v,s)=ZveIntegerArithmetic(d,io.a,io.b,io.old,product,io.carry)
   io.result := v; io.saturated := s
 }
