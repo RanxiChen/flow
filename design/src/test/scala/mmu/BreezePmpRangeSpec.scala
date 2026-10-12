@@ -29,6 +29,10 @@ class BreezePmpRangeSpec extends AnyFreeSpec with ChiselSim {
       for ((a, previous) <- samples; mode <- 0 until 4) {
         d.io.cfg.poke((mode << 3).U)
         d.io.addr.poke(a.U); d.io.previous.poke(previous.U)
+        // expect queues deferred checks. A long pure-combinational sweep
+        // needs a synchronous read to drain svsim's bidirectional pipes;
+        // there is no clock.step here to perform that synchronization.
+        d.io.range.lower.peek()
         val (lower, upper) = mode match {
           case 0 | 1 => (previous << 2, a << 2)
           case 2 => (a << 2, (a << 2) + 4)
