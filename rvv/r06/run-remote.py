@@ -23,6 +23,8 @@ if any(not re.fullmatch(r'flow\.[A-Za-z0-9_.]+',s) for s in args.suites):
 sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
 if subprocess.check_output(['git','diff','HEAD','--name-only'],cwd=ROOT,text=True).strip():
     sys.exit('Tracked source changes must be committed before a SHA-bound gate')
+if subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','design/src','rvv/r06'],cwd=ROOT,text=True).strip():
+    sys.exit('New source files must be committed before a SHA-bound gate')
 raw=CONFIG.read_text()
 blocks=re.findall(r'```text\n(.*?)```',raw,re.S)
 hosts=[]
@@ -72,6 +74,7 @@ if not h.get('ssh_jump'):
 script=f'''set -e
 {h['breeze_rvv_environment']}
 mkdir -p {shlex.quote(evidence)}
+curl -fsSI --connect-timeout 8 --max-time 20 --proxy {shlex.quote(h['proxy_url'])} https://repo.maven.apache.org/maven2/ > {shlex.quote(evidence)}/proxy-preflight.txt
 if test ! -d {shlex.quote(remoteRoot)}/.git; then
   git -c http.proxy={shlex.quote(h['proxy_url'])} clone --no-checkout https://github.com/RanxiChen/flow.git {shlex.quote(remoteRoot)}
 fi
