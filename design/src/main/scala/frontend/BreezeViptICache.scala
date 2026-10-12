@@ -42,9 +42,9 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   })
   val offBits = log2Ceil(g.lineBytes)
   val setBits = log2Ceil(g.l1Sets)
-  val tagBits = 64 - offBits - setBits
+  val tagBits = g.paddrBits - offBits - setBits
   def set(pc: UInt): UInt = if (setBits == 0) 0.U else pc(offBits + setBits - 1, offBits)
-  def tag(pa: UInt): UInt = pa(63, offBits + setBits)
+  def tag(pa: UInt): UInt = pa(g.paddrBits - 1, offBits + setBits)
   require(offBits + setBits <= 12)
   val tags = Seq.fill(g.l1iWays)(SyncReadMem(g.l1Sets, UInt(tagBits.W)))
   val data = Seq.fill(g.l1iWays)(SyncReadMem(g.l1Sets, UInt((g.lineBytes * 8).W)))
@@ -98,7 +98,13 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   when(query) { q := selected; qMeta := valid(set(selected.pc)) }
   val pmp = Module(new BreezeFetchPmp(tlbParams.ways + tlbParams.superpages + 1))
   pmp.io.fire := query; pmp.io.vaddr := selected.pc; pmp.io.context := io.context
-  pmp.io.paddrs := io.tlb.fetchPaddrs.get; pmp.io.select := io.tlb.fetchSelect.get
+  // PMA below rejects every selected PA outside the configured physical
+  // bus before a hit or refill can authorize execution. For all eligible
+  // candidates these bits are already zero. Compare that same bounded PA
+  // against the full CSR ranges, sharing the constant high-bit comparisons.
+  pmp.io.paddrs := VecInit(io.tlb.fetchPaddrs.get.map(pa =>
+    Cat(0.U((64 - g.paddrBits).W), pa(g.paddrBits - 1, 0))))
+  pmp.io.select := io.tlb.fetchSelect.get
   val pa = io.tlb.candidatePaddr.get
   // Executable PMA regions are cache-line aligned. Both valid parcels lie
   // within this line; classification needs no late 64-bit end-address adder.

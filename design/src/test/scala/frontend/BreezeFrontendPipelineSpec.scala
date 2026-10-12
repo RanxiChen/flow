@@ -351,6 +351,30 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
     }
   }
 
+  "a high physical alias faults before using a low-address cached instruction" in {
+    val va = BigInt("40000000", 16)
+    val high = base + (BigInt(1) << geometry.paddrBits)
+    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      val h = new Driver(d, va)
+      h.executableTor(high + 0x1000)
+      d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+      h.mapPage(va, base)
+      for (i <- 0 until 32) h.put32(base + i * 4, BigInt("12300193", 16))
+      assert(h.collect(1).head.instruction == BigInt("12300193", 16))
+      d.io.block.poke(true.B); for (_ <- 0 until 30) h.tick()
+      d.io.idle.expect(true.B)
+      val refills = h.refills.size
+      h.mapPage(va, high)
+      d.io.sfence.valid.poke(true.B); h.tick(); d.io.sfence.valid.poke(false.B)
+      d.io.redirect.valid.poke(true.B); d.io.redirect.bits.poke(va.U); h.tick()
+      d.io.redirect.valid.poke(false.B); d.io.block.poke(false.B)
+      val got = h.collect(1).head
+      assert(got.pc == va && got.accessFault && !got.pageFault)
+      assert(got.raw == 0 && h.refills.size == refills,
+        "unsupported high PA must neither execute an aliased hit nor allocate a refill")
+    }
+  }
+
   "2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons" in {
     val va = BigInt("40000002", 16)
     for (level <- Seq(1, 2)) {

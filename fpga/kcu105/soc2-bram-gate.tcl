@@ -34,6 +34,13 @@ foreach home $homes {
         if {![llength $blocks]} {
             set scope "[file dirname $path]/$array/ram/*"
             set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+            if {![llength $blocks]} {
+                # Rebuilt hierarchy can lift a unique single-hart array all
+                # the way to the design root. The same exclusive registered
+                # address-owner check is mandatory for this fallback too.
+                set scope "$array/ram/*"
+                set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+            }
             if {![llength $blocks]} { close $out; error "D5: $path/$array has no RAMB primitive" }
             set roots [d5_verify_owner $path $blocks]
             lappend scopes $scope

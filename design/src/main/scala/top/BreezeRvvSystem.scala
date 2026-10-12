@@ -54,7 +54,7 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
     io.backendObservation.foreach(_(h) := backend.io.observe)
     val frontend = Module(new BreezeFrontendPipeline(mem,
       BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)),
-      backendConnected = true, predictorEnabled = coreCfg.useGShare))
+      mmuParams = cfg.mmu, backendConnected = true, predictorEnabled = coreCfg.useGShare))
     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, writeThrough = true, withEarlyCancel = true))
     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
     val l1i = Module(new L1IClient(mem))
