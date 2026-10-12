@@ -114,7 +114,9 @@ object ZveDecode {
       ZveOp.vmflt,ZveOp.vmfle,ZveOp.vmfgt,ZveOp.vmfge)
     d.unit := Mux(memory,ZveUnit.memory.U,Mux(cross,ZveUnit.cross.U,
       Mux(fma,ZveUnit.fma.U,Mux(conversion,ZveUnit.conversion.U,Mux(fast,ZveUnit.alu.U,ZveUnit.integer.U)))))
-    d.serial := memory
+    val memoryVl=Mux(d.whole,(x(31,29)+&1.U)*p.vrf.regBytes.U>>memoryWidth,
+      Mux(maskMemory,(in.scalar.vl+&7.U)>>3,in.scalar.vl))
+    d.serial := memory && in.scalar.vstart<memoryVl
     def aligned(base: UInt,count: UInt): Bool = (base & (count-1.U)) === 0.U && base+&count <= 32.U
     val widths = (!d.vectorSource1 || d.source1Width <= 2.U) &&
       (!d.vectorSource2 || d.source2Width <= 2.U) && d.destinationWidth <= 2.U &&
@@ -142,6 +144,8 @@ object ZveDecode {
       ((!(dst & src2).orR || vd===vs2) && (!d.vectorSource1 || !(dst & src1).orR || vd===vs1))
     val segmentOk = !memory || d.whole || (d.destinationRegisters*(x(31,29)+1.U) <= 8.U &&
       vd+& (d.destinationRegisters*(x(31,29)+1.U)) <= 32.U)
+    val indexedOverlap = !memory || x(6,0)===0x27.U || !x(27,26)(0) ||
+      !(group(vd,d.destinationRegisters*(x(31,29)+&1.U)) & src2).orR
     val vlmax = bytes(lmul) >> d.sew
     val roundingOperation=is(ZveOp.vfadd,ZveOp.vfsub,ZveOp.vfrsub,ZveOp.vfmul,ZveOp.vfdiv,
       ZveOp.vfrdiv,ZveOp.vfsqrt,ZveOp.vfrec7,ZveOp.vfmacc,ZveOp.vfnmacc,ZveOp.vfmsac,
@@ -150,7 +154,7 @@ object ZveDecode {
       (is(ZveOp.vfcvt,ZveOp.vfwcvt,ZveOp.vfncvt) && !x(17))
     d.legal := hits.reduce(_ || _) && widths && groups && emul && floatingWidth && v0Legal &&
       noRestart && destructiveOverlap && (d.reduction || d.scalarResult || (wideOverlap && wideOverlap1)) &&
-      maskOverlap && segmentOk && (validType || (memory && d.whole)) &&
+      maskOverlap && segmentOk && indexedOverlap && (validType || (memory && d.whole)) &&
       (!roundingOperation || in.scalar.frm<=4.U)
     when(!d.whole && in.scalar.vl > vlmax) { d.legal := false.B }
     // Segment fields are disjoint groups, so extend the owned range.

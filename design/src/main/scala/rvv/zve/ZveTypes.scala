@@ -26,6 +26,8 @@ object ZveUnit {
 class ZveIssue(p: ZveParams) extends Bundle {
   val scalar = new RvvIssue(p.vrf)
   val fpScalar = UInt(64.W)
+  val epoch = UInt(8.W)
+  val memoryAge = UInt(32.W)
 }
 
 class ZveCommand(p: ZveParams) extends Bundle {
@@ -90,7 +92,15 @@ class ZveTranslationResponse(p: ZveParams) extends Bundle {
   val epoch = UInt(8.W)
   val exception = Bool()
   val cause = UInt(64.W)
+  val tval = UInt(64.W)
   val device = Bool()
+}
+
+/** Admission acquires a PA lease until release.fire. During a Serial command
+  * the SoC additionally prevents younger scalar memory side effects. */
+class ZveMemoryOrder extends Bundle {
+  val tag=UInt(16.W); val age=UInt(32.W); val pa=UInt(64.W)
+  val bytes=UInt(3.W); val store=Bool()
 }
 
 class ZveFpRequest extends Bundle {
