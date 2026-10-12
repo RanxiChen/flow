@@ -1,0 +1,61 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source audit-routed-bus-skew.tcl
+# set_param general.maxThreads 4
+# open_checkpoint xilinx_kcu105_route.dcp
+Command: open_checkpoint xilinx_kcu105_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.211 ; gain = 0.000 ; free physical = 34834 ; free virtual = 53517
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.47 ; elapsed = 00:00:00.46 . Memory (MB): peak = 2544.199 ; gain = 0.000 ; free physical = 33430 ; free virtual = 52616
+INFO: [Netlist 29-17] Analyzing 8123 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 5 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 3409.199 ; gain = 215.086 ; free physical = 32700 ; free virtual = 51887
+Restored from archive | CPU: 6.790000 secs | Memory: 195.861122 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 3409.199 ; gain = 215.086 ; free physical = 32700 ; free virtual = 51887
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3483.090 ; gain = 0.000 ; free physical = 32638 ; free virtual = 51824
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2131 instances were transformed.
+  CFGLUT5 => CFGLUT5 (SRL16E, SRLC32E): 1432 instances
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 23 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 3 instances
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 7 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 546 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 7 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 24 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 224356479
+----- Checksum: PlaceDB: cfb58531 ShapeSum: 5c8b23a8 RouteDB: f7f4bba0 
+open_checkpoint: Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 3483.090 ; gain = 1789.879 ; free physical = 32639 ; free virtual = 51825
+# report_bus_skew -file bus-skew.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+report_bus_skew: Time (s): cpu = 00:00:33 ; elapsed = 00:00:09 . Memory (MB): peak = 3800.445 ; gain = 317.355 ; free physical = 32325 ; free virtual = 51511
+# report_clock_interaction -file clock-interaction.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+# quit
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 23:01:18 2026...

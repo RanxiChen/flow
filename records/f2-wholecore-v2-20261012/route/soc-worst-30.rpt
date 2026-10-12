@@ -1,0 +1,1566 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Mon Oct 12 22:58:12 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 30 -path_type full -file soc-worst-30.rpt
+| Design            : xilinx_kcu105
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.016ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[16]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.465ns  (logic 0.114ns (1.204%)  route 9.351ns (98.796%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.356ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.514ns = ( 15.514 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.351    15.431    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[16]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.135    15.514    
+                         clock pessimism              0.097    15.610    
+                         clock uncertainty           -0.079    15.531    
+    SLICE_X25Y272        FDRE (Setup_AFF_SLICEL_C_R)
+                                                     -0.084    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[16]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.431    
+  -------------------------------------------------------------------
+                         slack                                  0.016    
+
+Slack (MET) :             0.016ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[17]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.465ns  (logic 0.114ns (1.204%)  route 9.351ns (98.796%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.356ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.514ns = ( 15.514 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.351    15.431    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[17]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.135    15.514    
+                         clock pessimism              0.097    15.610    
+                         clock uncertainty           -0.079    15.531    
+    SLICE_X25Y272        FDRE (Setup_BFF_SLICEL_C_R)
+                                                     -0.084    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[17]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.431    
+  -------------------------------------------------------------------
+                         slack                                  0.016    
+
+Slack (MET) :             0.016ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[18]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.465ns  (logic 0.114ns (1.204%)  route 9.351ns (98.796%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.356ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.514ns = ( 15.514 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.351    15.431    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[18]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.135    15.514    
+                         clock pessimism              0.097    15.610    
+                         clock uncertainty           -0.079    15.531    
+    SLICE_X25Y272        FDRE (Setup_CFF_SLICEL_C_R)
+                                                     -0.084    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[18]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.431    
+  -------------------------------------------------------------------
+                         slack                                  0.016    
+
+Slack (MET) :             0.016ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[19]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.465ns  (logic 0.114ns (1.204%)  route 9.351ns (98.796%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.356ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.514ns = ( 15.514 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.351    15.431    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[19]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.135    15.514    
+                         clock pessimism              0.097    15.610    
+                         clock uncertainty           -0.079    15.531    
+    SLICE_X25Y272        FDRE (Setup_DFF_SLICEL_C_R)
+                                                     -0.084    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[19]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.431    
+  -------------------------------------------------------------------
+                         slack                                  0.016    
+
+Slack (MET) :             0.023ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[24]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.459ns  (logic 0.114ns (1.205%)  route 9.345ns (98.795%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.355ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.515ns = ( 15.515 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.345    15.425    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[24]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.136    15.515    
+                         clock pessimism              0.097    15.611    
+                         clock uncertainty           -0.079    15.532    
+    SLICE_X25Y273        FDRE (Setup_AFF_SLICEL_C_R)
+                                                     -0.084    15.448    breezeaximonitor1_mmio_monitor_ar_count_reg[24]
+  -------------------------------------------------------------------
+                         required time                         15.448    
+                         arrival time                         -15.425    
+  -------------------------------------------------------------------
+                         slack                                  0.023    
+
+Slack (MET) :             0.023ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[25]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.459ns  (logic 0.114ns (1.205%)  route 9.345ns (98.795%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.355ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.515ns = ( 15.515 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.345    15.425    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[25]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.136    15.515    
+                         clock pessimism              0.097    15.611    
+                         clock uncertainty           -0.079    15.532    
+    SLICE_X25Y273        FDRE (Setup_BFF_SLICEL_C_R)
+                                                     -0.084    15.448    breezeaximonitor1_mmio_monitor_ar_count_reg[25]
+  -------------------------------------------------------------------
+                         required time                         15.448    
+                         arrival time                         -15.425    
+  -------------------------------------------------------------------
+                         slack                                  0.023    
+
+Slack (MET) :             0.023ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[26]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.459ns  (logic 0.114ns (1.205%)  route 9.345ns (98.795%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.355ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.515ns = ( 15.515 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.345    15.425    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[26]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.136    15.515    
+                         clock pessimism              0.097    15.611    
+                         clock uncertainty           -0.079    15.532    
+    SLICE_X25Y273        FDRE (Setup_CFF_SLICEL_C_R)
+                                                     -0.084    15.448    breezeaximonitor1_mmio_monitor_ar_count_reg[26]
+  -------------------------------------------------------------------
+                         required time                         15.448    
+                         arrival time                         -15.425    
+  -------------------------------------------------------------------
+                         slack                                  0.023    
+
+Slack (MET) :             0.023ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[27]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.459ns  (logic 0.114ns (1.205%)  route 9.345ns (98.795%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.355ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.515ns = ( 15.515 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.345    15.425    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[27]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.136    15.515    
+                         clock pessimism              0.097    15.611    
+                         clock uncertainty           -0.079    15.532    
+    SLICE_X25Y273        FDRE (Setup_DFF_SLICEL_C_R)
+                                                     -0.084    15.448    breezeaximonitor1_mmio_monitor_ar_count_reg[27]
+  -------------------------------------------------------------------
+                         required time                         15.448    
+                         arrival time                         -15.425    
+  -------------------------------------------------------------------
+                         slack                                  0.023    
+
+Slack (MET) :             0.025ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[20]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.455ns  (logic 0.114ns (1.206%)  route 9.341ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.358ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.512ns = ( 15.512 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.341    15.421    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[20]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.133    15.512    
+                         clock pessimism              0.097    15.608    
+                         clock uncertainty           -0.079    15.529    
+    SLICE_X25Y272        FDRE (Setup_EFF_SLICEL_C_R)
+                                                     -0.083    15.446    breezeaximonitor1_mmio_monitor_ar_count_reg[20]
+  -------------------------------------------------------------------
+                         required time                         15.446    
+                         arrival time                         -15.421    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.025ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[21]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.455ns  (logic 0.114ns (1.206%)  route 9.341ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.358ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.512ns = ( 15.512 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.341    15.421    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[21]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.133    15.512    
+                         clock pessimism              0.097    15.608    
+                         clock uncertainty           -0.079    15.529    
+    SLICE_X25Y272        FDRE (Setup_FFF_SLICEL_C_R)
+                                                     -0.083    15.446    breezeaximonitor1_mmio_monitor_ar_count_reg[21]
+  -------------------------------------------------------------------
+                         required time                         15.446    
+                         arrival time                         -15.421    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.025ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[22]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.455ns  (logic 0.114ns (1.206%)  route 9.341ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.358ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.512ns = ( 15.512 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.341    15.421    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[22]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.133    15.512    
+                         clock pessimism              0.097    15.608    
+                         clock uncertainty           -0.079    15.529    
+    SLICE_X25Y272        FDRE (Setup_GFF_SLICEL_C_R)
+                                                     -0.083    15.446    breezeaximonitor1_mmio_monitor_ar_count_reg[22]
+  -------------------------------------------------------------------
+                         required time                         15.446    
+                         arrival time                         -15.421    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.025ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[23]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.455ns  (logic 0.114ns (1.206%)  route 9.341ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.358ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.512ns = ( 15.512 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.341    15.421    dbg_reset
+    SLICE_X25Y272        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[23]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.133    15.512    
+                         clock pessimism              0.097    15.608    
+                         clock uncertainty           -0.079    15.529    
+    SLICE_X25Y272        FDRE (Setup_HFF_SLICEL_C_R)
+                                                     -0.083    15.446    breezeaximonitor1_mmio_monitor_ar_count_reg[23]
+  -------------------------------------------------------------------
+                         required time                         15.446    
+                         arrival time                         -15.421    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.032ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[28]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.449ns  (logic 0.114ns (1.206%)  route 9.335ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.357ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.513ns = ( 15.513 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.335    15.415    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[28]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.134    15.513    
+                         clock pessimism              0.097    15.609    
+                         clock uncertainty           -0.079    15.530    
+    SLICE_X25Y273        FDRE (Setup_EFF_SLICEL_C_R)
+                                                     -0.083    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[28]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.415    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[29]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.449ns  (logic 0.114ns (1.206%)  route 9.335ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.357ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.513ns = ( 15.513 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.335    15.415    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[29]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.134    15.513    
+                         clock pessimism              0.097    15.609    
+                         clock uncertainty           -0.079    15.530    
+    SLICE_X25Y273        FDRE (Setup_FFF_SLICEL_C_R)
+                                                     -0.083    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[29]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.415    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[30]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.449ns  (logic 0.114ns (1.206%)  route 9.335ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.357ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.513ns = ( 15.513 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.335    15.415    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[30]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.134    15.513    
+                         clock pessimism              0.097    15.609    
+                         clock uncertainty           -0.079    15.530    
+    SLICE_X25Y273        FDRE (Setup_GFF_SLICEL_C_R)
+                                                     -0.083    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[30]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.415    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_mmio_monitor_ar_count_reg[31]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.449ns  (logic 0.114ns (1.206%)  route 9.335ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.357ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.513ns = ( 15.513 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.335    15.415    dbg_reset
+    SLICE_X25Y273        FDRE                                         r  breezeaximonitor1_mmio_monitor_ar_count_reg[31]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.134    15.513    
+                         clock pessimism              0.097    15.609    
+                         clock uncertainty           -0.079    15.530    
+    SLICE_X25Y273        FDRE (Setup_HFF_SLICEL_C_R)
+                                                     -0.083    15.447    breezeaximonitor1_mmio_monitor_ar_count_reg[31]
+  -------------------------------------------------------------------
+                         required time                         15.447    
+                         arrival time                         -15.415    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.062ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezekcu105soc_axi_lite2wishbone_data_reg[22]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.456ns  (logic 0.114ns (1.206%)  route 9.342ns (98.794%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.320ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.550ns = ( 15.550 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.342    15.422    dbg_reset
+    SLICE_X44Y207        FDRE                                         r  breezekcu105soc_axi_lite2wishbone_data_reg[22]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.171    15.550    
+                         clock pessimism              0.097    15.646    
+                         clock uncertainty           -0.079    15.567    
+    SLICE_X44Y207        FDRE (Setup_EFF_SLICEL_C_R)
+                                                     -0.083    15.484    breezekcu105soc_axi_lite2wishbone_data_reg[22]
+  -------------------------------------------------------------------
+                         required time                         15.484    
+                         arrival time                         -15.422    
+  -------------------------------------------------------------------
+                         slack                                  0.062    
+
+Slack (MET) :             0.083ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            block2mem_wishbonedmawriter_base_storage_reg[57]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.433ns  (logic 0.114ns (1.209%)  route 9.319ns (98.791%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.322ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.548ns = ( 15.548 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.319    15.399    dbg_reset
+    SLICE_X39Y207        FDRE                                         r  block2mem_wishbonedmawriter_base_storage_reg[57]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.169    15.548    
+                         clock pessimism              0.097    15.644    
+                         clock uncertainty           -0.079    15.565    
+    SLICE_X39Y207        FDRE (Setup_EFF_SLICEL_C_R)
+                                                     -0.083    15.482    block2mem_wishbonedmawriter_base_storage_reg[57]
+  -------------------------------------------------------------------
+                         required time                         15.482    
+                         arrival time                         -15.399    
+  -------------------------------------------------------------------
+                         slack                                  0.083    
+
+Slack (MET) :             0.100ns  (required time - arrival time)
+  Source:                 crg_idelayctrl_ic_reset_reg/C
+                            (rising edge-triggered cell FDRE clocked by crg_clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            IDELAYCTRL_REPLICATED_0/RST
+                            (recovery check against rising-edge clock crg_clkout1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             **async_default**
+  Path Type:              Recovery (Max at Slow Process Corner)
+  Requirement:            5.000ns  (crg_clkout1 rise@5.000ns - crg_clkout1 rise@0.000ns)
+  Data Path Delay:        4.157ns  (logic 0.117ns (2.815%)  route 4.040ns (97.185%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.157ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.662ns = ( 10.662 - 5.000 ) 
+    Source Clock Delay      (SCD):    5.914ns
+    Clock Pessimism Removal (CPR):    0.096ns
+  Clock Uncertainty:      0.086ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.158ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock crg_clkout1 rise edge)
+                                                      0.000     0.000 r  
+                         clock source latency         2.725     2.725    
+                         propagated clock network latency
+                                                      3.189     5.914    
+    SLICE_X0Y98          FDRE                         0.000     5.914 r  crg_idelayctrl_ic_reset_reg/C
+    SLICE_X0Y98          FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     6.031 f  crg_idelayctrl_ic_reset_reg/Q
+                         net (fo=25, routed)          4.040    10.071    crg_idelayctrl_ic_reset
+    BITSLICE_CONTROL_X0Y0
+                         IDELAYCTRL                                   f  IDELAYCTRL_REPLICATED_0/RST
+  -------------------------------------------------------------------    -------------------
+
+                         (clock crg_clkout1 rise edge)
+                                                      5.000     5.000 r  
+                         clock source latency         2.799     7.799    
+                         propagated clock network latency
+                                                      2.863    10.662    
+                         clock pessimism              0.096    10.757    
+                         clock uncertainty           -0.086    10.671    
+    BITSLICE_CONTROL_X0Y0
+                         IDELAYCTRL (Recov_CONTROL_BITSLICE_CONTROL_REFCLK_RST)
+                                                     -0.500    10.171    IDELAYCTRL_REPLICATED_0
+  -------------------------------------------------------------------
+                         required time                         10.171    
+                         arrival time                         -10.071    
+  -------------------------------------------------------------------
+                         slack                                  0.100    
+
+Slack (MET) :             0.125ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[63]/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.611ns  (logic 3.111ns (32.369%)  route 6.500ns (67.631%))
+  Logic Levels:           27  (CARRY8=9 LUT2=1 LUT3=2 LUT4=1 LUT5=9 LUT6=5)
+  Clock Path Skew:        -0.245ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.814ns = ( 15.814 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.155ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.741     6.155    
+    SLICE_X61Y147        FDRE                         0.000     6.155 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/C
+    SLICE_X61Y147        FDRE (Prop_AFF_SLICEM_C_Q)
+                                                      0.115     6.270 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/Q
+                         net (fo=45, routed)          0.697     6.967    BreezeClusterAxi/cluster/l1d/miss/io_pending_addr[0]
+    SLICE_X60Y149        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.173     7.140 r  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_47/O
+                         net (fo=1, routed)           0.000     7.140    BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_47_n_0
+    SLICE_X60Y149        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     7.490 f  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_22/CO[7]
+                         net (fo=1, routed)           0.040     7.530    BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_22_n_0
+    SLICE_X60Y150        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     7.626 f  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_9/CO[0]
+                         net (fo=1, routed)           0.405     8.031    BreezeClusterAxi/cluster/l1d/probe/PROBE_PIPE.shift_probes_reg[0][767]_1[0]
+    SLICE_X61Y146        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     8.222 f  BreezeClusterAxi/cluster/l1d/probe/dbg_l1d_probe_held_cycles_inferred_i_3/O
+                         net (fo=2, routed)           0.258     8.480    BreezeClusterAxi/cluster/l1d/probe/dbg_l1d_probe_held_cycles_inferred_i_3_n_0
+    SLICE_X62Y145        LUT5 (Prop_D6LUT_SLICEM_I3_O)
+                                                      0.118     8.598 f  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_13/O
+                         net (fo=1, routed)           0.154     8.752    BreezeClusterAxi/cluster/l1d/probe/probe_io_hold
+    SLICE_X62Y143        LUT5 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.120     8.872 r  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_11/O
+                         net (fo=1, routed)           0.237     9.109    BreezeClusterAxi/cluster/l1d/probe/io_s0Req_valid05_out
+    SLICE_X62Y143        LUT5 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.116     9.225 r  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_9/O
+                         net (fo=2, routed)           0.259     9.484    BreezeClusterAxi/cluster/l1d/miss/_probe_io_s0Req_valid
+    SLICE_X64Y139        LUT5 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     9.524 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_17/O
+                         net (fo=1, routed)           0.146     9.670    BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_17_n_0
+    SLICE_X64Y141        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.042     9.712 f  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_8/O
+                         net (fo=4, routed)           0.230     9.942    BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_8_n_0
+    SLICE_X65Y140        LUT6 (Prop_E6LUT_SLICEL_I2_O)
+                                                      0.131    10.073 r  BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_5/O
+                         net (fo=1, routed)           0.327    10.400    BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_5_n_0
+    SLICE_X65Y140        LUT6 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    10.441 r  BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_3/O
+                         net (fo=8, routed)           0.302    10.743    BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_3_n_0
+    SLICE_X67Y139        LUT2 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.138    10.881 r  BreezeClusterAxi/cluster/l1d/miss/wb_rd_isFp_i_2/O
+                         net (fo=8, routed)           0.299    11.180    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X67Y135        LUT5 (Prop_H6LUT_SLICEM_I2_O)
+                                                      0.043    11.223 f  BreezeClusterAxi/cluster/backend/csrFile/performance/coreinst[0]_i_3/O
+                         net (fo=71, routed)          0.168    11.391    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_valid_reg_2
+    SLICE_X67Y134        LUT5 (Prop_F6LUT_SLICEM_I3_O)
+                                                      0.137    11.528 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/coreinst[0]_i_1/O
+                         net (fo=187, routed)         0.433    11.961    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_valid_reg
+    SLICE_X68Y150        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.040    12.001 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/mstatus_FS[1]_i_8/O
+                         net (fo=9, routed)           0.436    12.437    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_csrCmd_reg[2]
+    SLICE_X70Y158        LUT3 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    12.569 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/mstatus_FS[1]_i_4/O
+                         net (fo=10, routed)          0.513    13.082    BreezeClusterAxi/cluster/backend/writeback/lateQueue/csrFile/printer4
+    SLICE_X66Y173        LUT5 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.040    13.122 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/inhibit[10]_i_4/O
+                         net (fo=7, routed)           0.539    13.661    BreezeClusterAxi/cluster/backend/writeback/lateQueue/inhibit[10]_i_4_n_0
+    SLICE_X59Y177        LUT5 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116    13.777 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_0[1]_i_4/O
+                         net (fo=5, routed)           0.300    14.077    BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_0[1]_i_4_n_0
+    SLICE_X59Y182        LUT5 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116    14.193 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_3[1]_i_3/O
+                         net (fo=67, routed)          0.554    14.747    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_csrAddr_reg[1]_rep_6
+    SLICE_X51Y187        LUT3 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.131    14.878 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3[15]_i_9/O
+                         net (fo=1, routed)           0.000    14.878    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3[15]_i_9_n_0
+    SLICE_X51Y187        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404    15.282 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[15]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.309    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[15]_i_1_n_0
+    SLICE_X51Y188        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.328 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.355    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[23]_i_1_n_0
+    SLICE_X51Y189        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.374 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[31]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.401    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[31]_i_1_n_0
+    SLICE_X51Y190        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.420 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[39]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.447    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[39]_i_1_n_0
+    SLICE_X51Y191        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.466 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[47]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.493    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[47]_i_1_n_0
+    SLICE_X51Y192        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.512 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[55]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.539    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[55]_i_1_n_0
+    SLICE_X51Y193        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186    15.725 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[63]_i_1/O[7]
+                         net (fo=1, routed)           0.041    15.766    BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[63]_2[63]
+    SLICE_X51Y193        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[63]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.435    15.814    
+                         clock pessimism              0.097    15.910    
+                         clock uncertainty           -0.079    15.831    
+    SLICE_X51Y193        FDRE (Setup_HFF_SLICEL_C_D)
+                                                      0.060    15.891    BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[63]
+  -------------------------------------------------------------------
+                         required time                         15.891    
+                         arrival time                         -15.766    
+  -------------------------------------------------------------------
+                         slack                                  0.125    
+
+Slack (MET) :             0.127ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor0_memory_monitor_last_r_resp_reg[1]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.507ns  (logic 0.114ns (1.199%)  route 9.393ns (98.801%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.204ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.666ns = ( 15.666 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.393    15.473    dbg_reset
+    SLICE_X10Y230        FDRE                                         r  breezeaximonitor0_memory_monitor_last_r_resp_reg[1]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.287    15.666    
+                         clock pessimism              0.097    15.762    
+                         clock uncertainty           -0.079    15.683    
+    SLICE_X10Y230        FDRE (Setup_HFF_SLICEM_C_R)
+                                                     -0.083    15.600    breezeaximonitor0_memory_monitor_last_r_resp_reg[1]
+  -------------------------------------------------------------------
+                         required time                         15.600    
+                         arrival time                         -15.473    
+  -------------------------------------------------------------------
+                         slack                                  0.127    
+
+Slack (MET) :             0.134ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_sampled_reg[1]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.404ns  (logic 0.114ns (1.212%)  route 9.290ns (98.788%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.299ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.571ns = ( 15.571 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.290    15.370    dbg_reset
+    SLICE_X42Y230        FDRE                                         r  breezeaximonitor1_sampled_reg[1]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.192    15.571    
+                         clock pessimism              0.097    15.667    
+                         clock uncertainty           -0.079    15.588    
+    SLICE_X42Y230        FDRE (Setup_DFF_SLICEM_C_R)
+                                                     -0.084    15.504    breezeaximonitor1_sampled_reg[1]
+  -------------------------------------------------------------------
+                         required time                         15.504    
+                         arrival time                         -15.370    
+  -------------------------------------------------------------------
+                         slack                                  0.134    
+
+Slack (MET) :             0.134ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_stalls_reg[2]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.404ns  (logic 0.114ns (1.212%)  route 9.290ns (98.788%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.299ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.571ns = ( 15.571 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.290    15.370    dbg_reset
+    SLICE_X42Y230        FDRE                                         r  breezeaximonitor1_stalls_reg[2]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.192    15.571    
+                         clock pessimism              0.097    15.667    
+                         clock uncertainty           -0.079    15.588    
+    SLICE_X42Y230        FDRE (Setup_CFF_SLICEM_C_R)
+                                                     -0.084    15.504    breezeaximonitor1_stalls_reg[2]
+  -------------------------------------------------------------------
+                         required time                         15.504    
+                         arrival time                         -15.370    
+  -------------------------------------------------------------------
+                         slack                                  0.134    
+
+Slack (MET) :             0.136ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breezeaximonitor1_stalls_reg[1]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.404ns  (logic 0.114ns (1.212%)  route 9.290ns (98.788%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.299ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.571ns = ( 15.571 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.290    15.370    dbg_reset
+    SLICE_X42Y230        FDRE                                         r  breezeaximonitor1_stalls_reg[1]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.192    15.571    
+                         clock pessimism              0.097    15.667    
+                         clock uncertainty           -0.079    15.588    
+    SLICE_X42Y230        FDRE (Setup_DFF2_SLICEM_C_R)
+                                                     -0.082    15.506    breezeaximonitor1_stalls_reg[1]
+  -------------------------------------------------------------------
+                         required time                         15.506    
+                         arrival time                         -15.370    
+  -------------------------------------------------------------------
+                         slack                                  0.136    
+
+Slack (MET) :             0.139ns  (required time - arrival time)
+  Source:                 BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[61]/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.596ns  (logic 3.099ns (32.295%)  route 6.497ns (67.705%))
+  Logic Levels:           27  (CARRY8=9 LUT2=1 LUT3=2 LUT4=1 LUT5=9 LUT6=5)
+  Clock Path Skew:        -0.245ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.814ns = ( 15.814 - 10.000 ) 
+    Source Clock Delay      (SCD):    6.155ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.741     6.155    
+    SLICE_X61Y147        FDRE                         0.000     6.155 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/C
+    SLICE_X61Y147        FDRE (Prop_AFF_SLICEM_C_Q)
+                                                      0.115     6.270 r  BreezeClusterAxi/cluster/l1d/probe/r_addr_reg[0]/Q
+                         net (fo=45, routed)          0.697     6.967    BreezeClusterAxi/cluster/l1d/miss/io_pending_addr[0]
+    SLICE_X60Y149        LUT6 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.173     7.140 r  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_47/O
+                         net (fo=1, routed)           0.000     7.140    BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_47_n_0
+    SLICE_X60Y149        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     7.490 f  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_22/CO[7]
+                         net (fo=1, routed)           0.040     7.530    BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_22_n_0
+    SLICE_X60Y150        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[0])
+                                                      0.096     7.626 f  BreezeClusterAxi/cluster/l1d/miss/dbg_l1d_probe_held_cycles_inferred_i_9/CO[0]
+                         net (fo=1, routed)           0.405     8.031    BreezeClusterAxi/cluster/l1d/probe/PROBE_PIPE.shift_probes_reg[0][767]_1[0]
+    SLICE_X61Y146        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.191     8.222 f  BreezeClusterAxi/cluster/l1d/probe/dbg_l1d_probe_held_cycles_inferred_i_3/O
+                         net (fo=2, routed)           0.258     8.480    BreezeClusterAxi/cluster/l1d/probe/dbg_l1d_probe_held_cycles_inferred_i_3_n_0
+    SLICE_X62Y145        LUT5 (Prop_D6LUT_SLICEM_I3_O)
+                                                      0.118     8.598 f  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_13/O
+                         net (fo=1, routed)           0.154     8.752    BreezeClusterAxi/cluster/l1d/probe/probe_io_hold
+    SLICE_X62Y143        LUT5 (Prop_H6LUT_SLICEM_I4_O)
+                                                      0.120     8.872 r  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_11/O
+                         net (fo=1, routed)           0.237     9.109    BreezeClusterAxi/cluster/l1d/probe/io_s0Req_valid05_out
+    SLICE_X62Y143        LUT5 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.116     9.225 r  BreezeClusterAxi/cluster/l1d/probe/wholeOwner[2]_i_9/O
+                         net (fo=2, routed)           0.259     9.484    BreezeClusterAxi/cluster/l1d/miss/_probe_io_s0Req_valid
+    SLICE_X64Y139        LUT5 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.040     9.524 r  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_17/O
+                         net (fo=1, routed)           0.146     9.670    BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_17_n_0
+    SLICE_X64Y141        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.042     9.712 f  BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_8/O
+                         net (fo=4, routed)           0.230     9.942    BreezeClusterAxi/cluster/l1d/miss/replayReason[2]_i_8_n_0
+    SLICE_X65Y140        LUT6 (Prop_E6LUT_SLICEL_I2_O)
+                                                      0.131    10.073 r  BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_5/O
+                         net (fo=1, routed)           0.327    10.400    BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_5_n_0
+    SLICE_X65Y140        LUT6 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.041    10.441 r  BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_3/O
+                         net (fo=8, routed)           0.302    10.743    BreezeClusterAxi/cluster/l1d/miss/rsvLine[26]_i_3_n_0
+    SLICE_X67Y139        LUT2 (Prop_E5LUT_SLICEM_I0_O)
+                                                      0.138    10.881 r  BreezeClusterAxi/cluster/l1d/miss/wb_rd_isFp_i_2/O
+                         net (fo=8, routed)           0.299    11.180    BreezeClusterAxi/cluster/backend/csrFile/performance/_l1d_io_core_resp_valid
+    SLICE_X67Y135        LUT5 (Prop_H6LUT_SLICEM_I2_O)
+                                                      0.043    11.223 f  BreezeClusterAxi/cluster/backend/csrFile/performance/coreinst[0]_i_3/O
+                         net (fo=71, routed)          0.168    11.391    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_valid_reg_2
+    SLICE_X67Y134        LUT5 (Prop_F6LUT_SLICEM_I3_O)
+                                                      0.137    11.528 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/coreinst[0]_i_1/O
+                         net (fo=187, routed)         0.433    11.961    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_valid_reg
+    SLICE_X68Y150        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.040    12.001 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/mstatus_FS[1]_i_8/O
+                         net (fo=9, routed)           0.436    12.437    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_csrCmd_reg[2]
+    SLICE_X70Y158        LUT3 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.132    12.569 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/mstatus_FS[1]_i_4/O
+                         net (fo=10, routed)          0.513    13.082    BreezeClusterAxi/cluster/backend/writeback/lateQueue/csrFile/printer4
+    SLICE_X66Y173        LUT5 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.040    13.122 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/inhibit[10]_i_4/O
+                         net (fo=7, routed)           0.539    13.661    BreezeClusterAxi/cluster/backend/writeback/lateQueue/inhibit[10]_i_4_n_0
+    SLICE_X59Y177        LUT5 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.116    13.777 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_0[1]_i_4/O
+                         net (fo=5, routed)           0.300    14.077    BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_0[1]_i_4_n_0
+    SLICE_X59Y182        LUT5 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.116    14.193 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/pending_3[1]_i_3/O
+                         net (fo=67, routed)          0.554    14.747    BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_csrAddr_reg[1]_rep_6
+    SLICE_X51Y187        LUT3 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.131    14.878 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3[15]_i_9/O
+                         net (fo=1, routed)           0.000    14.878    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3[15]_i_9_n_0
+    SLICE_X51Y187        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404    15.282 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[15]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.309    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[15]_i_1_n_0
+    SLICE_X51Y188        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.328 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[23]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.355    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[23]_i_1_n_0
+    SLICE_X51Y189        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.374 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[31]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.401    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[31]_i_1_n_0
+    SLICE_X51Y190        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.420 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[39]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.447    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[39]_i_1_n_0
+    SLICE_X51Y191        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.466 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[47]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.493    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[47]_i_1_n_0
+    SLICE_X51Y192        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019    15.512 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[55]_i_1/CO[7]
+                         net (fo=1, routed)           0.027    15.539    BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[55]_i_1_n_0
+    SLICE_X51Y193        CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174    15.713 r  BreezeClusterAxi/cluster/backend/writeback/lateQueue/counters_3_reg[63]_i_1/O[5]
+                         net (fo=1, routed)           0.038    15.751    BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[63]_2[61]
+    SLICE_X51Y193        FDRE                                         r  BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[61]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.435    15.814    
+                         clock pessimism              0.097    15.910    
+                         clock uncertainty           -0.079    15.831    
+    SLICE_X51Y193        FDRE (Setup_FFF_SLICEL_C_D)
+                                                      0.059    15.890    BreezeClusterAxi/cluster/backend/csrFile/performance/counters_3_reg[61]
+  -------------------------------------------------------------------
+                         required time                         15.890    
+                         arrival time                         -15.751    
+  -------------------------------------------------------------------
+                         slack                                  0.139    
+
+Slack (MET) :             0.139ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem2block_dma_base_storage_reg[57]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.381ns  (logic 0.114ns (1.215%)  route 9.267ns (98.785%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.553ns = ( 15.553 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.267    15.347    dbg_reset
+    SLICE_X40Y207        FDRE                                         r  mem2block_dma_base_storage_reg[57]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.174    15.553    
+                         clock pessimism              0.097    15.649    
+                         clock uncertainty           -0.079    15.570    
+    SLICE_X40Y207        FDRE (Setup_DFF_SLICEM_C_R)
+                                                     -0.084    15.486    mem2block_dma_base_storage_reg[57]
+  -------------------------------------------------------------------
+                         required time                         15.486    
+                         arrival time                         -15.347    
+  -------------------------------------------------------------------
+                         slack                                  0.139    
+
+Slack (MET) :             0.139ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            mem2block_dma_base_storage_reg[61]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.381ns  (logic 0.114ns (1.215%)  route 9.267ns (98.785%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.553ns = ( 15.553 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.267    15.347    dbg_reset
+    SLICE_X40Y207        FDRE                                         r  mem2block_dma_base_storage_reg[61]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.174    15.553    
+                         clock pessimism              0.097    15.649    
+                         clock uncertainty           -0.079    15.570    
+    SLICE_X40Y207        FDRE (Setup_CFF_SLICEM_C_R)
+                                                     -0.084    15.486    mem2block_dma_base_storage_reg[61]
+  -------------------------------------------------------------------
+                         required time                         15.486    
+                         arrival time                         -15.347    
+  -------------------------------------------------------------------
+                         slack                                  0.139    
+
+Slack (MET) :             0.141ns  (required time - arrival time)
+  Source:                 breeze_ila/inst/ila_core_inst/u_ila_regs/U_XSDB_SLAVE/G_1PIPE_IFACE.s_di_r_reg[9]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/shadow_reg[9]/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.667ns  (logic 0.301ns (3.114%)  route 9.366ns (96.886%))
+  Logic Levels:           1  (LUT6=1)
+  Clock Path Skew:        -0.171ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.678ns = ( 15.678 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.945ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.531     5.945    
+    SLICE_X18Y175        FDRE                         0.000     5.945 r  breeze_ila/inst/ila_core_inst/u_ila_regs/U_XSDB_SLAVE/G_1PIPE_IFACE.s_di_r_reg[9]/C
+    SLICE_X18Y175        FDRE (Prop_FFF_SLICEM_C_Q)
+                                                      0.114     6.059 r  breeze_ila/inst/ila_core_inst/u_ila_regs/U_XSDB_SLAVE/G_1PIPE_IFACE.s_di_r_reg[9]/Q
+                         net (fo=179, routed)         9.340    15.399    breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/s_di_i[9]
+    SLICE_X9Y283         LUT6 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.187    15.586 r  breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/shadow[9]_i_1/O
+                         net (fo=1, routed)           0.026    15.612    breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/shadow[9]
+    SLICE_X9Y283         FDRE                                         r  breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/shadow_reg[9]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.299    15.678    
+                         clock pessimism              0.097    15.774    
+                         clock uncertainty           -0.079    15.695    
+    SLICE_X9Y283         FDRE (Setup_BFF_SLICEL_C_D)
+                                                      0.058    15.753    breeze_ila/inst/ila_core_inst/u_ila_regs/MU_SRL[117].mu_srl_reg/shadow_reg[9]
+  -------------------------------------------------------------------
+                         required time                         15.753    
+                         arrival time                         -15.612    
+  -------------------------------------------------------------------
+                         slack                                  0.141    
+
+Slack (MET) :             0.141ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            core_block_count_storage_reg[29]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.381ns  (logic 0.114ns (1.215%)  route 9.267ns (98.785%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.317ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.553ns = ( 15.553 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.267    15.347    dbg_reset
+    SLICE_X40Y207        FDRE                                         r  core_block_count_storage_reg[29]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.174    15.553    
+                         clock pessimism              0.097    15.649    
+                         clock uncertainty           -0.079    15.570    
+    SLICE_X40Y207        FDRE (Setup_DFF2_SLICEM_C_R)
+                                                     -0.082    15.488    core_block_count_storage_reg[29]
+  -------------------------------------------------------------------
+                         required time                         15.488    
+                         arrival time                         -15.347    
+  -------------------------------------------------------------------
+                         slack                                  0.141    
+
+Slack (MET) :             0.145ns  (required time - arrival time)
+  Source:                 sys_rst_reg/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            block2mem_wishbonedmawriter_base_storage_reg[61]/R
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        9.375ns  (logic 0.114ns (1.216%)  route 9.261ns (98.784%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.318ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.552ns = ( 15.552 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.966ns
+    Clock Pessimism Removal (CPR):    0.097ns
+  Clock Uncertainty:      0.079ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.142ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+                         clock source latency         3.414     3.414    
+                         propagated clock network latency
+                                                      2.552     5.966    
+    SLICE_X2Y97          FDRE                         0.000     5.966 r  sys_rst_reg/C
+    SLICE_X2Y97          FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     6.080 r  sys_rst_reg/Q
+                         net (fo=3638, routed)        9.261    15.341    dbg_reset
+    SLICE_X40Y207        FDRE                                         r  block2mem_wishbonedmawriter_base_storage_reg[61]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)   10.000    10.000 r  
+                         clock source latency         3.379    13.379    
+                         propagated clock network latency
+                                                      2.173    15.552    
+                         clock pessimism              0.097    15.648    
+                         clock uncertainty           -0.079    15.569    
+    SLICE_X40Y207        FDRE (Setup_HFF2_SLICEM_C_R)
+                                                     -0.083    15.486    block2mem_wishbonedmawriter_base_storage_reg[61]
+  -------------------------------------------------------------------
+                         required time                         15.486    
+                         arrival time                         -15.341    
+  -------------------------------------------------------------------
+                         slack                                  0.145    
+
+
+
+
