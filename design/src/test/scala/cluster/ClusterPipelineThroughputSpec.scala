@@ -12,7 +12,7 @@ import org.scalatest.matchers.must.Matchers
 class ClusterPipelineThroughputSpec extends AnyFreeSpec with Matchers {
   "warm deployment instruction streams report issue and retire throughput independently of functional PASS" in {
     val root = Paths.get(sys.env("PIPELINE_EVIDENCE"))
-    val names = Seq("alu-independent", "alu-dependent", "load-hit")
+    val names = Seq("alu-independent", "alu-dependent", "load-hit", "alu-compressed")
     val cfg = BreezeClusterPresets.single.copy(privilegeProfile = PrivilegeProfile.Linux, coherentDma = true)
     val runs = names.map { name =>
       ClusterRunConfig(cfg, root.resolve(s"$name.elf"), observeBackend = true,
@@ -27,13 +27,15 @@ class ClusterPipelineThroughputSpec extends AnyFreeSpec with Matchers {
         val image = Elf64.load(run.elf)
         val begin = image.symbol("probe_begin")
         val end = image.symbol("probe_end")
+        withClue(result.reason) { Files.isRegularFile(root.resolve(s"cluster-$name.csv")) mustBe true }
         val source = scala.io.Source.fromFile(root.resolve(s"cluster-$name.csv").toFile)
         val rows = try source.getLines().drop(1).map(_.split(",")).toVector finally source.close()
         def isWindow(pc: String): Boolean = { val p = BigInt(pc, 16); p >= begin && p < end }
         val observed = rows.filter(r => r(7) == "1" && isWindow(r(8)))
         // Every pass must execute each of the 64 distinct sequential PCs once.
         observed.size mustBe 192
-        observed.map(r => BigInt(r(8),16)) mustBe Vector.fill(3)((0 until 64).map(i => begin + 4*i)).flatten
+        val step = if(name == "alu-compressed") 2 else 4
+        observed.map(r => BigInt(r(8),16)) mustBe Vector.fill(3)((0 until 64).map(i => begin + step*i)).flatten
         val warm = observed.drop(64)
         val first = warm.head(0).toLong
         val last = warm.last(0).toLong
@@ -61,7 +63,8 @@ class ClusterPipelineThroughputSpec extends AnyFreeSpec with Matchers {
         if (name == "load-hit") misses mustBe 0
         // A diagnostic threshold, not a rewrite of any frozen P1 golden:
         // a warmed, unrolled independent ALU stream should sustain >=0.5 IPC.
-        if (name == "alu-independent" && ipc < 0.5) slow += s"$name IPC=$ipc < diagnostic target 0.5"
+        if ((name == "alu-independent" || name == "alu-compressed") && ipc < 0.5)
+          slow += s"$name IPC=$ipc < diagnostic target 0.5"
       }
     } finally summary.close()
     withClue("Functional PASS does not establish pipelining: " + slow.mkString("; ")) { slow mustBe empty }

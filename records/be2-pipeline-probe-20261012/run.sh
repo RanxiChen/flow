@@ -18,7 +18,7 @@ date -u +%FT%TZ > "$evidence/start-utc.txt"
 java -version > "$evidence/java.txt" 2>&1
 verilator --version > "$evidence/verilator.txt"
 riscv64-unknown-elf-gcc --version > "$evidence/compiler.txt"
-for item in 0:alu-independent 1:alu-dependent 2:load-hit; do
+for item in 0:alu-independent 1:alu-dependent 2:load-hit 3:alu-compressed; do
     index=${item%%:*}
     name=${item#*:}
     riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 \

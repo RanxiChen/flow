@@ -1,6 +1,7 @@
 /* Branch-free 64-instruction windows. Three passes over the same instructions
  * and data; pass 0 warms caches, passes 1/2 are measured in the simulation.
- * CASE 0: independent ALU, CASE 1: RAW chain, CASE 2: warm L1D loads.
+ * CASE 0: independent ALU, CASE 1: RAW chain, CASE 2: warm L1D loads,
+ * CASE 3: independent explicit 16-bit C.ADDI instructions.
  * No change to existing tests, reference values or watchdogs.
  */
 #include "common.h"
@@ -32,16 +33,21 @@ probe_begin:
   addi a1, a1, 1
   addi a1, a1, 1
   addi a1, a1, 1
-#else
+#elif CASE == 2
   ld a1, 0(s2)
   ld a2, 8(s2)
   ld a3, 16(s2)
   ld a4, 24(s2)
+#else
+  .2byte 0x0585 /* c.addi a1,1 */
+  .2byte 0x0605 /* c.addi a2,1 */
+  .2byte 0x0685 /* c.addi a3,1 */
+  .2byte 0x0705 /* c.addi a4,1 */
 #endif
   .endr
   .globl probe_end
 probe_end:
-#if CASE == 0
+#if CASE == 0 || CASE == 3
   CHECK_IMM a1, 16, 1
   CHECK_IMM a2, 16, 2
   CHECK_IMM a3, 16, 3
