@@ -262,13 +262,11 @@ object BreezeClusterPresets {
         BreezeMemGeometry.default.copy(l1Sets = 64, l1dWays = 1, l1iWays = 2,
             l2Ways = 4, l2BytesPerCore = 32768),
         // Retain the original translation capacity in every deployment.
-        // Four harts own the configuration; singles copy it below.
+        // Single-hart resource configuration is independent below.
         mmu = flow.mmu.sv39.Sv39MmuParams())
     // User 2026-10-12: resource-rich scalar single is independent of quad.
     // Original full geometry: private 16KiB I/D, 64KiB eight-way L2.
-    val single: BreezeClusterConfig = BreezeClusterConfig("single",
-        BreezeMemGeometry.singleCore, mmu = flow.mmu.sv39.Sv39MmuParams(),
-        fpTagEntries = 32)
+    val single: BreezeClusterConfig = BreezeSingleFullConfig.cluster
     val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
         rvv = Some(flow.rvv.RvvParams(paBits = single.mem.paddrBits, cacheLineBytes = single.mem.lineBytes)))
     val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))

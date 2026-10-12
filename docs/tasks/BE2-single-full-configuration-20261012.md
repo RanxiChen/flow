@@ -28,4 +28,6 @@
 
 软件候选是Alan `/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/images/Image`，已包含CoreMark/GAPBS，历史SHA256 `524dfe764cef92e90dfe2634dbbd87e2e2c3ee71ca8052e92415cba7adb74cb7`（交付前重新核对实际字节）。标量ISA、DDR/ROM/CSR/CLINT/PLIC/SD地址及100MHz系统/1MHz timebase保持，因此可复用同一Image/fw_jump.bin；新产品生成自己的BIOS、DTB、SD启动包、最终bit/LTX和hash绑定。兼容性核对、最小仿真、综合、routed timing和上板结果分别记载；不将旧内核原SD busy/width问题标为已经修复。
 
-当前状态：配置和验证入口准备中，未宣称新综合或新时序通过。四核工作暂停；不烧录板卡。
+独立配置文件：`design/src/main/scala/config/BreezeSingleFullConfig.scala`，由 `BreezeClusterPresets.single` 引用；明确选择Linux特权profile。生成CLI仍为 `GenerateBreezeCluster single gshare linux tandem fpga-debug coherent-dma`。
+
+当前状态：配置已本地提交。准备同步精确提交到Alan，生成RTL/BIOS并启动综合；未宣称新综合或新时序通过。四核工作暂停；不烧录板卡。
