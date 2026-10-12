@@ -30,7 +30,7 @@
 
 先执行整核吞吐、后端定向合同与必要ISA/异常/kill/Sv39、多核及RVV访存门禁；不放宽前一轮新增0.5 IPC诊断门槛或已有golden。三配置的RTL/BIOS、routed timing、bitstream与上板结果分别记录，旧时序不能算作新顶层通过。
 
-删除覆盖映射：旧前端/realigner/FetchTlbClient/cache/predictor的14份模块测试随9份废弃RTL移除；混合RVC、跨页第二parcel异常、SFENCE重映射、PMP、权限变化、取消中的refill及历史/RAS恢复由保留的`BreezeFrontendPipelineSpec`覆盖，预测存储/训练冲突由`BreezePipelinePredictorSpec`覆盖，MMU/PMP本体测试保留。`L1IRegisteredReturnSpec`迁移到真实新前端+原L1IClient，仍核对原始地址/指令数据和flush不安装旧返回；仅将被删cache的内部固定拍数替换为新F0/F1/F2的有界交付等待，L1IClient的E+1注册返回断言未变。未删除或放宽ISA/程序golden、后端合同、seed、scale及watchdog。新增`BreezeResolutionReservationSpec`直接压满ID反馈预留，持续条件分支造成实际训练反压，并核对global取消只释放未到EX的预留、已经接受的训练只消费一次。
+删除覆盖映射：旧前端/realigner/FetchTlbClient/cache/predictor的14份模块测试随9份废弃RTL移除；混合RVC、跨页第二parcel异常、SFENCE重映射、PMP、权限变化、取消中的refill及历史/RAS恢复由保留的`BreezeFrontendPipelineSpec`覆盖，预测存储/训练冲突由`BreezePipelinePredictorSpec`覆盖，MMU/PMP本体测试保留。`L1IRegisteredReturnSpec`迁移到真实新前端+原L1IClient，仍核对原始地址/指令数据和flush不安装旧返回；仅将被删cache的内部固定拍数替换为新F0/F1/F2的有界交付等待，L1IClient的E+1注册返回断言未变。另移除`BackendSoc3cSpec`中唯一仅实例化旧两项skid的入口（其余三项后端D1/C1测试保留）：新前端的`instruction output remains stable while stalled and resumes in order`、随机反压/RVC及真实整核分支/访存程序承担输出保持、顺序及恢复检查；旧skid的两项容量和内部拍数不适用于新八项instruction队列。未删除或放宽ISA/程序golden、后端合同、seed、scale及watchdog。新增`BreezeResolutionReservationSpec`直接压满ID反馈预留，持续条件分支造成实际训练反压，并核对global取消只释放未到EX的预留、已经接受的训练只消费一次。
 
 ## 首轮生产接入证据
 
@@ -44,3 +44,5 @@
 | 16位C.ADDI | 128/128 | 1.0 | 122 |
 
 后端原生三项64条定向流均II=1/退休间隔1拍；整核原0.5IPC门槛未改而全部通过，暖窗口无cache miss/replay/L2/外部内存访问。此证据只覆盖1核Linux/RVC/MMU能力配置运行的M/Bare自检程序，不代表Linux用户态、四核、RVV、删除后最终源码或FPGA时序通过。后续删除后门禁单独补记。
+
+删除后首轮编译源`f70f35664c471fb89b39edd6313450b64973ff8c`在Alan exit=1：`BackendSoc3cSpec`遗留一个旧`Soc3cSkidBackendFixture`引用。失败日志保留于`/home/chen/FUN/flow-runs/pipeline-minimum-f70f356-20261012.console`；这是删除遗漏，尚未执行运行时测试，不是主机不可用。后续源清理该入口后重跑。
