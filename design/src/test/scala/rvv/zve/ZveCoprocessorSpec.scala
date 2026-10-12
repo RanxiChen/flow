@@ -148,6 +148,30 @@ class ZveCoprocessorSpec extends AnyFreeSpec with ChiselSim {
       instruction("vfsqrt.v"); assert(read(16)==packed(floats,32))
       write(8,packed(Seq.fill(16)(fbits(-1.0f)),32))
       instruction("vfsqrt.v",expectedFlags=16); assert(read(16)==packed(Seq.fill(16)(BigInt("7fc00000",16)),32))
+      // The full topology must allow an independent ALU to pass a slow divide,
+      // while keeping a dependent ALU behind the divide's physical write ack.
+      write(8,packed(a,32)); write(12,packed(b,32)); write(16,0); write(20,0); write(24,0)
+      def enqueue(name: String,vd: Int,vs2: Int=8,scalar: Int=0): BigInt = {
+        val in=d.io.issue.bits
+        in.scalar.instruction.poke(encoding(name,vd,vs2,12).U); in.scalar.rs1.poke(scalar.U)
+        in.scalar.vtype.poke(16.U); in.scalar.vl.poke(16.U); in.scalar.vstart.poke(0.U)
+        d.io.issue.valid.poke(true.B); waitFor(d.io.issue.ready.peek().litToBoolean); d.clock.step(); d.io.issue.valid.poke(false.B)
+        waitFor(d.io.verdict.valid.peek().litToBoolean); d.io.verdict.bits.kind.expect(0.U)
+        val age=d.io.verdict.bits.age.peek().litValue
+        d.io.verdict.ready.poke(true.B); d.clock.step(); d.io.verdict.ready.poke(false.B)
+        d.io.commit.poke(true.B); d.clock.step(); d.io.commit.poke(false.B); age
+      }
+      val divideAge=enqueue("vdiv.vx",16,scalar=3)
+      val independentAge=enqueue("vadd.vv",20)
+      val dependentAge=enqueue("vadd.vv",24,vs2=16)
+      for(age<-Seq(independentAge,divideAge,dependentAge)) {
+        waitFor(d.io.completion.valid.peek().litToBoolean); d.io.completion.bits.age.expect(age.U)
+        d.io.completion.bits.exception.expect(false.B)
+        d.io.completion.ready.poke(true.B); d.clock.step(); d.io.completion.ready.poke(false.B)
+      }
+      waitFor(d.io.drained.peek().litToBoolean)
+      assert(read(16)==packed(a.map(_/3),32)); assert(read(20)==packed(a.map(_+2),32))
+      assert(read(24)==packed(a.map(v=>v/3+2),32))
     }
   }
 }
