@@ -44,7 +44,7 @@ def _write_production_rtl(root, cpu_cls=Breeze):
         debug=str(cpu_cls.debug_enabled).lower(), platformSha256=digest,
         coherentDma=str(cpu_cls.coherent_dma).lower(),
         nCores=str(cpu_cls.num_harts), idBits='1', l2Slots='2', l2BytesPerCore='65536',
-        hangThresholdCycles='10000000')
+        hangThresholdCycles='10000000', fpTagEntries='32')
     values.update(cpu_cls.expected_marker)
     values.update(cpu_cls.translation_marker)
     marker_path = os.path.join(rtl_dir, 'cluster-profile.txt')
@@ -119,7 +119,7 @@ class BreezeCpuWrapperTest(unittest.TestCase):
                 self.assertEqual(cpu.periph_buses, [cpu.axi_router.low, cpu.mmio_wishbone])
 
     def test_each_required_marker_mismatch_is_rejected(self):
-        for key in ('bus', 'profile', 'preset', 'privilege', 'tandem', 'debug', 'platformSha256', 'nCores', 'itlbWays'):
+        for key in ('bus', 'profile', 'preset', 'privilege', 'tandem', 'debug', 'platformSha256', 'nCores', 'itlbWays', 'fpTagEntries'):
             with tempfile.TemporaryDirectory() as root:
                 _, path = _write_production_rtl(root, BreezeTiny)
                 with open(path) as f:

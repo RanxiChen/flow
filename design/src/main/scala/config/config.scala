@@ -1,6 +1,6 @@
 package flow.config
 
-import chisel3.util.log2Ceil
+import chisel3.util.{log2Ceil, isPow2}
 
 /** Preserve the 16-entry CSR layout; upper entries are hardwired OFF/zero. */
 object BreezePmpConfig {
@@ -82,8 +82,9 @@ case class BackendConfig(
     val loadUseBypass: Boolean = false,
     val coprocessorStub: Option[Int] = scala.None,
     val rvv: Option[flow.rvv.RvvParams] = scala.None,
-    val writeThrough: Boolean = false
-){}
+    val writeThrough: Boolean = false,
+    val fpTagEntries: Int = 32
+){ require(fpTagEntries >= 8 && isPow2(fpTagEntries)) }
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
   * machine-only core used by the existing firmware.  `linux` enables the
@@ -120,7 +121,8 @@ case class BreezeCoreConfig(
     val loadUseBypass: Boolean = false,
     val coprocessorStub: Option[Int] = scala.None,
     val rvv: Option[flow.rvv.RvvParams] = scala.None,
-    val writeThrough: Boolean = false
+    val writeThrough: Boolean = false,
+    val fpTagEntries: Int = 32
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -148,7 +150,8 @@ case class BreezeCoreConfig(
         enableCompressed = enableCompressed,
         enableMmu = enableMmu,
         loadUseBypass = loadUseBypass,
-        coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = writeThrough
+        coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = writeThrough,
+        fpTagEntries = fpTagEntries
     )
 }
 
@@ -238,13 +241,14 @@ final case class BreezeClusterConfig(
     coprocessorStub: Option[Int] = scala.None,
     coherentDma: Boolean = false,
     rvv: Option[flow.rvv.RvvParams] = scala.None,
-    mmu: flow.mmu.sv39.Sv39MmuParams = flow.mmu.sv39.Sv39MmuParams()
+    mmu: flow.mmu.sv39.Sv39MmuParams = flow.mmu.sv39.Sv39MmuParams(),
+    fpTagEntries: Int = 32
 ) {
     val nCores: Int = mem.nCores
 
     /** Per-core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = rvv.nonEmpty)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = rvv.nonEmpty, fpTagEntries = fpTagEntries)
 }
 
 /** Named cluster profiles. `single`/`dual`/`small` are the deployment sizes;
@@ -260,9 +264,11 @@ object BreezeClusterPresets {
         // Retain the original translation capacity in every deployment.
         // Four harts own the configuration; singles copy it below.
         mmu = flow.mmu.sv39.Sv39MmuParams())
-    // Deployment tuning is owned by the four-hart profile. A single hart
-    // uses exactly the same parameters, changing only its name and hart count.
-    val single: BreezeClusterConfig = small.copy(profileName = "single", mem = small.mem.copy(nCores = 1))
+    // User 2026-10-12: resource-rich scalar single is independent of quad.
+    // Original full geometry: private 16KiB I/D, 64KiB eight-way L2.
+    val single: BreezeClusterConfig = BreezeClusterConfig("single",
+        BreezeMemGeometry.singleCore, mmu = flow.mmu.sv39.Sv39MmuParams(),
+        fpTagEntries = 32)
     val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
         rvv = Some(flow.rvv.RvvParams(paBits = single.mem.paddrBits, cacheLineBytes = single.mem.lineBytes)))
     val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))

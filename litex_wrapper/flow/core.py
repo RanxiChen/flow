@@ -236,7 +236,8 @@ class _BreezeClusterCPU(CPU):
         expected = {"bus": "axi", "profile": cls.cluster_profile, "preset": cls.core_preset,
             "privilege": cls.privilege_profile, "tandem": str(cls.tandem_enabled).lower(),
             "debug": str(cls.debug_enabled).lower(), "platformSha256": platform_hash,
-            "nCores": str(cls.num_harts), **cls.translation_marker, **cls.expected_marker}
+            "nCores": str(cls.num_harts), "fpTagEntries": "32",
+            **cls.translation_marker, **cls.expected_marker}
         mismatches = [f"{key}: expected={value} actual={values.get(key)}"
                       for key, value in expected.items() if values.get(key) != value]
         if mismatches:

@@ -4,14 +4,21 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
-    "single deployment inherits the four-hart configuration except profile and hart count" in {
+    "resource-rich single keeps full memory geometry and thirty-two FP tags independently of quad" in {
         val four = BreezeClusterPresets.small
         four.mmu mustBe flow.mmu.sv39.Sv39MmuParams()
         four.mem.l1dWays mustBe 1
         four.mem.l1Sets * four.mem.lineBytes * four.mem.l1dWays mustBe 2048
         four.mem.l1Sets * four.mem.lineBytes * four.mem.l1iWays mustBe 4096
-        BreezeClusterPresets.single.copy(profileName = four.profileName,
-            mem = BreezeClusterPresets.single.mem.copy(nCores = four.nCores)) mustBe four
+        val single = BreezeClusterPresets.single
+        single.mem mustBe BreezeMemGeometry.singleCore
+        single.mmu mustBe flow.mmu.sv39.Sv39MmuParams()
+        single.fpTagEntries mustBe 32
+        single.coreCfg().backendCfg.fpTagEntries mustBe 32
+        single.mem.l1Sets * single.mem.lineBytes * single.mem.l1dWays mustBe 16384
+        single.mem.l1Sets * single.mem.lineBytes * single.mem.l1iWays mustBe 16384
+        single.mem.l2BytesPerCore mustBe 65536
+        single.mem.l2Ways mustBe 8
     }
     "privilege profiles should keep MCU as default and enable Linux Bare mode explicitly" in {
         PrivilegeProfile.fromName("mcu") mustBe PrivilegeProfile.Mcu
@@ -76,7 +83,7 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         val single = BreezeClusterPresets.single
         single.profileName mustBe "single"
         single.nCores mustBe 1
-        single.mem mustBe BreezeClusterPresets.small.mem.copy(nCores = 1)
+        single.mem mustBe BreezeMemGeometry.singleCore
         single.corePreset mustBe CorePreset.Gshare
         BreezeClusterPresets.dual.nCores mustBe 2
         BreezeClusterPresets.small.nCores mustBe 4

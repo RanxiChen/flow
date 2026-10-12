@@ -97,11 +97,15 @@ class FpUnit(val depth: Int = 32, val issueReservation: Boolean = false) extends
   impl.io.dst_fmt_i := request.dstFmt
   impl.io.int_fmt_i := request.intFmt
 
-  val candidates = VecInit((0 until depth).map { offset =>
-    val index = (commitCursor + offset.U)(tagWidth - 1, 0)
-    entries(index).valid && !entries(index).committed
-  })
-  val oldest = (commitCursor + PriorityEncoder(candidates.asUInt))(tagWidth - 1, 0)
+  // Circular priority without depth independent dynamic table reads. Choose
+  // the first live tag at/above the cursor, wrapping to the first live tag
+  // only if that suffix is empty. Capacity, age and same-edge commit/kill
+  // rules are unchanged, including the old empty-table cursor value.
+  val candidates = VecInit(entries.map(e => e.valid && !e.committed))
+  val suffixMask = (Fill(depth, true.B) << commitCursor)(depth - 1, 0)
+  val suffix = candidates.asUInt & suffixMask
+  val oldest = Mux(suffix.orR, PriorityEncoder(suffix),
+    Mux(candidates.asUInt.orR, PriorityEncoder(candidates.asUInt), commitCursor))
   val returned = entries(impl.io.tag_o)
   val returnCommitted = returned.committed || (io.commit && oldest === impl.io.tag_o)
   // Only the actual CVFPU handshake fixes arbitration tag/data. A two-entry

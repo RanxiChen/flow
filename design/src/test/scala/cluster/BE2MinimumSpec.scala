@@ -8,11 +8,12 @@ import org.scalatest.matchers.must.Matchers
 /** User-selected minimum gate, separate from the unchanged full ISA suites. */
 class BE2MinimumSpec extends AnyFreeSpec with Matchers {
   for (profile <- Seq("single", "small"))
-  s"minimum RV64I M A C and CSR programs retain their original pass signatures ($profile)" in {
+  s"minimum RV64I M A F D C and CSR programs retain their original pass signatures ($profile)" in {
     val root = ClusterSim.repoRoot
     val names = Seq("rv64ui-p-add", "rv64ui-p-lw", "rv64ui-p-sw", "rv64ui-p-beq",
       "rv64um-p-mul", "rv64um-p-div", "rv64ua-p-amoadd_d", "rv64ua-p-lrsc",
-      "rv64uc-p-rvc", "rv64mi-p-csr")
+      "rv64uc-p-rvc", "rv64mi-p-csr", "rv64uf-p-ldst", "rv64uf-p-fadd",
+      "rv64ud-p-ldst", "rv64ud-p-fadd")
     val cfg = BreezeClusterPresets.fromName(profile).copy(privilegeProfile = PrivilegeProfile.Linux)
     val runs = names.map { name =>
       val elf = root.resolve(s"design/build/riscv-tests/$name")

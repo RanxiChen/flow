@@ -76,6 +76,8 @@ object GenerateBreezeCluster extends App {
         s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${if (cfg.rvv.nonEmpty) 2 else flow.coherence.CoherenceParams(mem).slotBits}\n")
     os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\nrvv=${cfg.rvv.nonEmpty}\nmemoryBits=${cfg.rvv.map(_.memoryBits).getOrElse(64)}\n")
     os.write.append(targetDir / "cluster-profile.txt",
+        s"fpTagEntries=${cfg.fpTagEntries}\n")
+    os.write.append(targetDir / "cluster-profile.txt",
         s"itlbSets=${cfg.mmu.itlb.sets}\nitlbWays=${cfg.mmu.itlb.ways}\nitlbSuperpages=${cfg.mmu.itlb.superpages}\n" +
         s"dtlbSets=${cfg.mmu.dtlb.sets}\ndtlbWays=${cfg.mmu.dtlb.ways}\ndtlbSuperpages=${cfg.mmu.dtlb.superpages}\n" +
         s"wcUpperSets=${cfg.mmu.wcUpperSets}\nwcUpperWays=${cfg.mmu.wcUpperWays}\n" +

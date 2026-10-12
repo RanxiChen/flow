@@ -143,7 +143,10 @@ def main():
                     candidate['input_checkpoint_sha256']):
                 raise ValueError(f'{profile}: physical candidate input identity mismatch')
             products[profile]['physical_candidate'] = candidate
-    scalar_derived = {'profile', 'nCores', 'idBits'}
+    # User 2026-10-12 explicitly allows independent scalar resource profiles.
+    scalar_derived = {'profile', 'nCores', 'idBits', 'fpTagEntries',
+                      'l1Sets', 'l1dWays', 'l1iWays', 'l2Ways',
+                      'l2BytesPerCore', 'l2Slots'}
     rvv_changes = {'profile', 'idBits', 'rvv', 'memoryBits'}
     # User requested ILA/tandem on the ordinary single hart. These flags
     # describe passive observation; all compute/cache/clock fields still match.

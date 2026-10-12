@@ -111,7 +111,7 @@ class BreezeBackend(
   val writeback = Module(new Writeback(withCoprocessor = cfg.coprocessorStub.nonEmpty || cfg.rvv.nonEmpty))
   val mulUnit = Module(new MulUnit(registeredCommit = true))
   val divUnit = Module(new DivUnit(registeredCommit = true))
-  val fpUnit = Module(new FpUnit(issueReservation = true))
+  val fpUnit = Module(new FpUnit(depth = cfg.fpTagEntries, issueReservation = true))
   val coprocessor = cfg.coprocessorStub.map(seed => Module(new CoprocessorStub(seed)))
   val vector = cfg.rvv.map(p => Module(new RvvMount(p)))
   vector.foreach(v => io.rvv.get <> v.io.services)
