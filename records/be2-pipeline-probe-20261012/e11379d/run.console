@@ -1,0 +1,812 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-be2-pipeline-probe-20261012/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-pipeline-probe-20261012/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-be2-pipeline-probe-20261012/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-be2-pipeline-probe-20261012/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BackendPipelineThroughputSpec:
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00100093
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00200113
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00300193
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=id pc=0x000000000000040c inst=0x00400213
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x00500293
+[CYCLE] c=         4 kind=ex pc=0x000000000000040c
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00100093
+[CYCLE] c=         5 kind=id pc=0x0000000000000414 inst=0x00600313
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00200113
+[CYCLE] c=         5 kind=gpr rd= 1 data=0x0000000000000001
+[CYCLE] c=         6 kind=id pc=0x0000000000000418 inst=0x00700393
+[CYCLE] c=         6 kind=ex pc=0x0000000000000414
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00300193
+[CYCLE] c=         6 kind=gpr rd= 2 data=0x0000000000000002
+[CYCLE] c=         7 kind=id pc=0x000000000000041c inst=0x00800413
+[CYCLE] c=         7 kind=ex pc=0x0000000000000418
+[CYCLE] c=         7 kind=commit pc=0x000000000000040c inst=0x00400213
+[CYCLE] c=         7 kind=gpr rd= 3 data=0x0000000000000003
+[CYCLE] c=         8 kind=id pc=0x0000000000000420 inst=0x00900493
+[CYCLE] c=         8 kind=ex pc=0x000000000000041c
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x00500293
+[CYCLE] c=         8 kind=gpr rd= 4 data=0x0000000000000004
+[CYCLE] c=         9 kind=id pc=0x0000000000000424 inst=0x00a00513
+[CYCLE] c=         9 kind=ex pc=0x0000000000000420
+[CYCLE] c=         9 kind=commit pc=0x0000000000000414 inst=0x00600313
+[CYCLE] c=         9 kind=gpr rd= 5 data=0x0000000000000005
+[CYCLE] c=        10 kind=id pc=0x0000000000000428 inst=0x00b00593
+[CYCLE] c=        10 kind=ex pc=0x0000000000000424
+[CYCLE] c=        10 kind=commit pc=0x0000000000000418 inst=0x00700393
+[CYCLE] c=        10 kind=gpr rd= 6 data=0x0000000000000006
+[CYCLE] c=        11 kind=id pc=0x000000000000042c inst=0x00c00613
+[CYCLE] c=        11 kind=ex pc=0x0000000000000428
+[CYCLE] c=        11 kind=commit pc=0x000000000000041c inst=0x00800413
+[CYCLE] c=        11 kind=gpr rd= 7 data=0x0000000000000007
+[CYCLE] c=        12 kind=id pc=0x0000000000000430 inst=0x00d00693
+[CYCLE] c=        12 kind=ex pc=0x000000000000042c
+[CYCLE] c=        12 kind=commit pc=0x0000000000000420 inst=0x00900493
+[CYCLE] c=        12 kind=gpr rd= 8 data=0x0000000000000008
+[CYCLE] c=        13 kind=id pc=0x0000000000000434 inst=0x00e00713
+[CYCLE] c=        13 kind=ex pc=0x0000000000000430
+[CYCLE] c=        13 kind=commit pc=0x0000000000000424 inst=0x00a00513
+[CYCLE] c=        13 kind=gpr rd= 9 data=0x0000000000000009
+[CYCLE] c=        14 kind=id pc=0x0000000000000438 inst=0x00f00793
+[CYCLE] c=        14 kind=ex pc=0x0000000000000434
+[CYCLE] c=        14 kind=commit pc=0x0000000000000428 inst=0x00b00593
+[CYCLE] c=        14 kind=gpr rd=10 data=0x000000000000000a
+[CYCLE] c=        15 kind=id pc=0x000000000000043c inst=0x01000813
+[CYCLE] c=        15 kind=ex pc=0x0000000000000438
+[CYCLE] c=        15 kind=commit pc=0x000000000000042c inst=0x00c00613
+[CYCLE] c=        15 kind=gpr rd=11 data=0x000000000000000b
+[CYCLE] c=        16 kind=id pc=0x0000000000000440 inst=0x01100093
+[CYCLE] c=        16 kind=ex pc=0x000000000000043c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000430 inst=0x00d00693
+[CYCLE] c=        16 kind=gpr rd=12 data=0x000000000000000c
+[CYCLE] c=        17 kind=id pc=0x0000000000000444 inst=0x01200113
+[CYCLE] c=        17 kind=ex pc=0x0000000000000440
+[CYCLE] c=        17 kind=commit pc=0x0000000000000434 inst=0x00e00713
+[CYCLE] c=        17 kind=gpr rd=13 data=0x000000000000000d
+[CYCLE] c=        18 kind=id pc=0x0000000000000448 inst=0x01300193
+[CYCLE] c=        18 kind=ex pc=0x0000000000000444
+[CYCLE] c=        18 kind=commit pc=0x0000000000000438 inst=0x00f00793
+[CYCLE] c=        18 kind=gpr rd=14 data=0x000000000000000e
+[CYCLE] c=        19 kind=id pc=0x000000000000044c inst=0x01400213
+[CYCLE] c=        19 kind=ex pc=0x0000000000000448
+[CYCLE] c=        19 kind=commit pc=0x000000000000043c inst=0x01000813
+[CYCLE] c=        19 kind=gpr rd=15 data=0x000000000000000f
+[CYCLE] c=        20 kind=id pc=0x0000000000000450 inst=0x01500293
+[CYCLE] c=        20 kind=ex pc=0x000000000000044c
+[CYCLE] c=        20 kind=commit pc=0x0000000000000440 inst=0x01100093
+[CYCLE] c=        20 kind=gpr rd=16 data=0x0000000000000010
+[CYCLE] c=        21 kind=id pc=0x0000000000000454 inst=0x01600313
+[CYCLE] c=        21 kind=ex pc=0x0000000000000450
+[CYCLE] c=        21 kind=commit pc=0x0000000000000444 inst=0x01200113
+[CYCLE] c=        21 kind=gpr rd= 1 data=0x0000000000000011
+[CYCLE] c=        22 kind=id pc=0x0000000000000458 inst=0x01700393
+[CYCLE] c=        22 kind=ex pc=0x0000000000000454
+[CYCLE] c=        22 kind=commit pc=0x0000000000000448 inst=0x01300193
+[CYCLE] c=        22 kind=gpr rd= 2 data=0x0000000000000012
+[CYCLE] c=        23 kind=id pc=0x000000000000045c inst=0x01800413
+[CYCLE] c=        23 kind=ex pc=0x0000000000000458
+[CYCLE] c=        23 kind=commit pc=0x000000000000044c inst=0x01400213
+[CYCLE] c=        23 kind=gpr rd= 3 data=0x0000000000000013
+[CYCLE] c=        24 kind=id pc=0x0000000000000460 inst=0x01900493
+[CYCLE] c=        24 kind=ex pc=0x000000000000045c
+[CYCLE] c=        24 kind=commit pc=0x0000000000000450 inst=0x01500293
+[CYCLE] c=        24 kind=gpr rd= 4 data=0x0000000000000014
+[CYCLE] c=        25 kind=id pc=0x0000000000000464 inst=0x01a00513
+[CYCLE] c=        25 kind=ex pc=0x0000000000000460
+[CYCLE] c=        25 kind=commit pc=0x0000000000000454 inst=0x01600313
+[CYCLE] c=        25 kind=gpr rd= 5 data=0x0000000000000015
+[CYCLE] c=        26 kind=id pc=0x0000000000000468 inst=0x01b00593
+[CYCLE] c=        26 kind=ex pc=0x0000000000000464
+[CYCLE] c=        26 kind=commit pc=0x0000000000000458 inst=0x01700393
+[CYCLE] c=        26 kind=gpr rd= 6 data=0x0000000000000016
+[CYCLE] c=        27 kind=id pc=0x000000000000046c inst=0x01c00613
+[CYCLE] c=        27 kind=ex pc=0x0000000000000468
+[CYCLE] c=        27 kind=commit pc=0x000000000000045c inst=0x01800413
+[CYCLE] c=        27 kind=gpr rd= 7 data=0x0000000000000017
+[CYCLE] c=        28 kind=id pc=0x0000000000000470 inst=0x01d00693
+[CYCLE] c=        28 kind=ex pc=0x000000000000046c
+[CYCLE] c=        28 kind=commit pc=0x0000000000000460 inst=0x01900493
+[CYCLE] c=        28 kind=gpr rd= 8 data=0x0000000000000018
+[CYCLE] c=        29 kind=id pc=0x0000000000000474 inst=0x01e00713
+[CYCLE] c=        29 kind=ex pc=0x0000000000000470
+[CYCLE] c=        29 kind=commit pc=0x0000000000000464 inst=0x01a00513
+[CYCLE] c=        29 kind=gpr rd= 9 data=0x0000000000000019
+[CYCLE] c=        30 kind=id pc=0x0000000000000478 inst=0x01f00793
+[CYCLE] c=        30 kind=ex pc=0x0000000000000474
+[CYCLE] c=        30 kind=commit pc=0x0000000000000468 inst=0x01b00593
+[CYCLE] c=        30 kind=gpr rd=10 data=0x000000000000001a
+[CYCLE] c=        31 kind=id pc=0x000000000000047c inst=0x02000813
+[CYCLE] c=        31 kind=ex pc=0x0000000000000478
+[CYCLE] c=        31 kind=commit pc=0x000000000000046c inst=0x01c00613
+[CYCLE] c=        31 kind=gpr rd=11 data=0x000000000000001b
+[CYCLE] c=        32 kind=id pc=0x0000000000000480 inst=0x02100093
+[CYCLE] c=        32 kind=ex pc=0x000000000000047c
+[CYCLE] c=        32 kind=commit pc=0x0000000000000470 inst=0x01d00693
+[CYCLE] c=        32 kind=gpr rd=12 data=0x000000000000001c
+[CYCLE] c=        33 kind=id pc=0x0000000000000484 inst=0x02200113
+[CYCLE] c=        33 kind=ex pc=0x0000000000000480
+[CYCLE] c=        33 kind=commit pc=0x0000000000000474 inst=0x01e00713
+[CYCLE] c=        33 kind=gpr rd=13 data=0x000000000000001d
+[CYCLE] c=        34 kind=id pc=0x0000000000000488 inst=0x02300193
+[CYCLE] c=        34 kind=ex pc=0x0000000000000484
+[CYCLE] c=        34 kind=commit pc=0x0000000000000478 inst=0x01f00793
+[CYCLE] c=        34 kind=gpr rd=14 data=0x000000000000001e
+[CYCLE] c=        35 kind=id pc=0x000000000000048c inst=0x02400213
+[CYCLE] c=        35 kind=ex pc=0x0000000000000488
+[CYCLE] c=        35 kind=commit pc=0x000000000000047c inst=0x02000813
+[CYCLE] c=        35 kind=gpr rd=15 data=0x000000000000001f
+[CYCLE] c=        36 kind=id pc=0x0000000000000490 inst=0x02500293
+[CYCLE] c=        36 kind=ex pc=0x000000000000048c
+[CYCLE] c=        36 kind=commit pc=0x0000000000000480 inst=0x02100093
+[CYCLE] c=        36 kind=gpr rd=16 data=0x0000000000000020
+[CYCLE] c=        37 kind=id pc=0x0000000000000494 inst=0x02600313
+[CYCLE] c=        37 kind=ex pc=0x0000000000000490
+[CYCLE] c=        37 kind=commit pc=0x0000000000000484 inst=0x02200113
+[CYCLE] c=        37 kind=gpr rd= 1 data=0x0000000000000021
+[CYCLE] c=        38 kind=id pc=0x0000000000000498 inst=0x02700393
+[CYCLE] c=        38 kind=ex pc=0x0000000000000494
+[CYCLE] c=        38 kind=commit pc=0x0000000000000488 inst=0x02300193
+[CYCLE] c=        38 kind=gpr rd= 2 data=0x0000000000000022
+[CYCLE] c=        39 kind=id pc=0x000000000000049c inst=0x02800413
+[CYCLE] c=        39 kind=ex pc=0x0000000000000498
+[CYCLE] c=        39 kind=commit pc=0x000000000000048c inst=0x02400213
+[CYCLE] c=        39 kind=gpr rd= 3 data=0x0000000000000023
+[CYCLE] c=        40 kind=id pc=0x00000000000004a0 inst=0x02900493
+[CYCLE] c=        40 kind=ex pc=0x000000000000049c
+[CYCLE] c=        40 kind=commit pc=0x0000000000000490 inst=0x02500293
+[CYCLE] c=        40 kind=gpr rd= 4 data=0x0000000000000024
+[CYCLE] c=        41 kind=id pc=0x00000000000004a4 inst=0x02a00513
+[CYCLE] c=        41 kind=ex pc=0x00000000000004a0
+[CYCLE] c=        41 kind=commit pc=0x0000000000000494 inst=0x02600313
+[CYCLE] c=        41 kind=gpr rd= 5 data=0x0000000000000025
+[CYCLE] c=        42 kind=id pc=0x00000000000004a8 inst=0x02b00593
+[CYCLE] c=        42 kind=ex pc=0x00000000000004a4
+[CYCLE] c=        42 kind=commit pc=0x0000000000000498 inst=0x02700393
+[CYCLE] c=        42 kind=gpr rd= 6 data=0x0000000000000026
+[CYCLE] c=        43 kind=id pc=0x00000000000004ac inst=0x02c00613
+[CYCLE] c=        43 kind=ex pc=0x00000000000004a8
+[CYCLE] c=        43 kind=commit pc=0x000000000000049c inst=0x02800413
+[CYCLE] c=        43 kind=gpr rd= 7 data=0x0000000000000027
+[CYCLE] c=        44 kind=id pc=0x00000000000004b0 inst=0x02d00693
+[CYCLE] c=        44 kind=ex pc=0x00000000000004ac
+[CYCLE] c=        44 kind=commit pc=0x00000000000004a0 inst=0x02900493
+[CYCLE] c=        44 kind=gpr rd= 8 data=0x0000000000000028
+[CYCLE] c=        45 kind=id pc=0x00000000000004b4 inst=0x02e00713
+[CYCLE] c=        45 kind=ex pc=0x00000000000004b0
+[CYCLE] c=        45 kind=commit pc=0x00000000000004a4 inst=0x02a00513
+[CYCLE] c=        45 kind=gpr rd= 9 data=0x0000000000000029
+[CYCLE] c=        46 kind=id pc=0x00000000000004b8 inst=0x02f00793
+[CYCLE] c=        46 kind=ex pc=0x00000000000004b4
+[CYCLE] c=        46 kind=commit pc=0x00000000000004a8 inst=0x02b00593
+[CYCLE] c=        46 kind=gpr rd=10 data=0x000000000000002a
+[CYCLE] c=        47 kind=id pc=0x00000000000004bc inst=0x03000813
+[CYCLE] c=        47 kind=ex pc=0x00000000000004b8
+[CYCLE] c=        47 kind=commit pc=0x00000000000004ac inst=0x02c00613
+[CYCLE] c=        47 kind=gpr rd=11 data=0x000000000000002b
+[CYCLE] c=        48 kind=id pc=0x00000000000004c0 inst=0x03100093
+[CYCLE] c=        48 kind=ex pc=0x00000000000004bc
+[CYCLE] c=        48 kind=commit pc=0x00000000000004b0 inst=0x02d00693
+[CYCLE] c=        48 kind=gpr rd=12 data=0x000000000000002c
+[CYCLE] c=        49 kind=id pc=0x00000000000004c4 inst=0x03200113
+[CYCLE] c=        49 kind=ex pc=0x00000000000004c0
+[CYCLE] c=        49 kind=commit pc=0x00000000000004b4 inst=0x02e00713
+[CYCLE] c=        49 kind=gpr rd=13 data=0x000000000000002d
+[CYCLE] c=        50 kind=id pc=0x00000000000004c8 inst=0x03300193
+[CYCLE] c=        50 kind=ex pc=0x00000000000004c4
+[CYCLE] c=        50 kind=commit pc=0x00000000000004b8 inst=0x02f00793
+[CYCLE] c=        50 kind=gpr rd=14 data=0x000000000000002e
+[CYCLE] c=        51 kind=id pc=0x00000000000004cc inst=0x03400213
+[CYCLE] c=        51 kind=ex pc=0x00000000000004c8
+[CYCLE] c=        51 kind=commit pc=0x00000000000004bc inst=0x03000813
+[CYCLE] c=        51 kind=gpr rd=15 data=0x000000000000002f
+[CYCLE] c=        52 kind=id pc=0x00000000000004d0 inst=0x03500293
+[CYCLE] c=        52 kind=ex pc=0x00000000000004cc
+[CYCLE] c=        52 kind=commit pc=0x00000000000004c0 inst=0x03100093
+[CYCLE] c=        52 kind=gpr rd=16 data=0x0000000000000030
+[CYCLE] c=        53 kind=id pc=0x00000000000004d4 inst=0x03600313
+[CYCLE] c=        53 kind=ex pc=0x00000000000004d0
+[CYCLE] c=        53 kind=commit pc=0x00000000000004c4 inst=0x03200113
+[CYCLE] c=        53 kind=gpr rd= 1 data=0x0000000000000031
+[CYCLE] c=        54 kind=id pc=0x00000000000004d8 inst=0x03700393
+[CYCLE] c=        54 kind=ex pc=0x00000000000004d4
+[CYCLE] c=        54 kind=commit pc=0x00000000000004c8 inst=0x03300193
+[CYCLE] c=        54 kind=gpr rd= 2 data=0x0000000000000032
+[CYCLE] c=        55 kind=id pc=0x00000000000004dc inst=0x03800413
+[CYCLE] c=        55 kind=ex pc=0x00000000000004d8
+[CYCLE] c=        55 kind=commit pc=0x00000000000004cc inst=0x03400213
+[CYCLE] c=        55 kind=gpr rd= 3 data=0x0000000000000033
+[CYCLE] c=        56 kind=id pc=0x00000000000004e0 inst=0x03900493
+[CYCLE] c=        56 kind=ex pc=0x00000000000004dc
+[CYCLE] c=        56 kind=commit pc=0x00000000000004d0 inst=0x03500293
+[CYCLE] c=        56 kind=gpr rd= 4 data=0x0000000000000034
+[CYCLE] c=        57 kind=id pc=0x00000000000004e4 inst=0x03a00513
+[CYCLE] c=        57 kind=ex pc=0x00000000000004e0
+[CYCLE] c=        57 kind=commit pc=0x00000000000004d4 inst=0x03600313
+[CYCLE] c=        57 kind=gpr rd= 5 data=0x0000000000000035
+[CYCLE] c=        58 kind=id pc=0x00000000000004e8 inst=0x03b00593
+[CYCLE] c=        58 kind=ex pc=0x00000000000004e4
+[CYCLE] c=        58 kind=commit pc=0x00000000000004d8 inst=0x03700393
+[CYCLE] c=        58 kind=gpr rd= 6 data=0x0000000000000036
+[CYCLE] c=        59 kind=id pc=0x00000000000004ec inst=0x03c00613
+[CYCLE] c=        59 kind=ex pc=0x00000000000004e8
+[CYCLE] c=        59 kind=commit pc=0x00000000000004dc inst=0x03800413
+[CYCLE] c=        59 kind=gpr rd= 7 data=0x0000000000000037
+[CYCLE] c=        60 kind=id pc=0x00000000000004f0 inst=0x03d00693
+[CYCLE] c=        60 kind=ex pc=0x00000000000004ec
+[CYCLE] c=        60 kind=commit pc=0x00000000000004e0 inst=0x03900493
+[CYCLE] c=        60 kind=gpr rd= 8 data=0x0000000000000038
+[CYCLE] c=        61 kind=id pc=0x00000000000004f4 inst=0x03e00713
+[CYCLE] c=        61 kind=ex pc=0x00000000000004f0
+[CYCLE] c=        61 kind=commit pc=0x00000000000004e4 inst=0x03a00513
+[CYCLE] c=        61 kind=gpr rd= 9 data=0x0000000000000039
+[CYCLE] c=        62 kind=id pc=0x00000000000004f8 inst=0x03f00793
+[CYCLE] c=        62 kind=ex pc=0x00000000000004f4
+[CYCLE] c=        62 kind=commit pc=0x00000000000004e8 inst=0x03b00593
+[CYCLE] c=        62 kind=gpr rd=10 data=0x000000000000003a
+[CYCLE] c=        63 kind=id pc=0x00000000000004fc inst=0x04000813
+[CYCLE] c=        63 kind=ex pc=0x00000000000004f8
+[CYCLE] c=        63 kind=commit pc=0x00000000000004ec inst=0x03c00613
+[CYCLE] c=        63 kind=gpr rd=11 data=0x000000000000003b
+[CYCLE] c=        64 kind=ex pc=0x00000000000004fc
+[CYCLE] c=        64 kind=commit pc=0x00000000000004f0 inst=0x03d00693
+[CYCLE] c=        64 kind=gpr rd=12 data=0x000000000000003c
+[CYCLE] c=        65 kind=commit pc=0x00000000000004f4 inst=0x03e00713
+[CYCLE] c=        65 kind=gpr rd=13 data=0x000000000000003d
+[CYCLE] c=        66 kind=commit pc=0x00000000000004f8 inst=0x03f00793
+[CYCLE] c=        66 kind=gpr rd=14 data=0x000000000000003e
+[CYCLE] c=        67 kind=commit pc=0x00000000000004fc inst=0x04000813
+[CYCLE] c=        67 kind=gpr rd=15 data=0x000000000000003f
+[CYCLE] c=        68 kind=gpr rd=16 data=0x0000000000000040
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00108093
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00108093
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x00108093
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=id pc=0x000000000000040c inst=0x00108093
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x00108093
+[CYCLE] c=         4 kind=ex pc=0x000000000000040c
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00108093
+[CYCLE] c=         5 kind=id pc=0x0000000000000414 inst=0x00108093
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00108093
+[CYCLE] c=         5 kind=gpr rd= 1 data=0x0000000000000001
+[CYCLE] c=         6 kind=id pc=0x0000000000000418 inst=0x00108093
+[CYCLE] c=         6 kind=ex pc=0x0000000000000414
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x00108093
+[CYCLE] c=         6 kind=gpr rd= 1 data=0x0000000000000002
+[CYCLE] c=         7 kind=id pc=0x000000000000041c inst=0x00108093
+[CYCLE] c=         7 kind=ex pc=0x0000000000000418
+[CYCLE] c=         7 kind=commit pc=0x000000000000040c inst=0x00108093
+[CYCLE] c=         7 kind=gpr rd= 1 data=0x0000000000000003
+[CYCLE] c=         8 kind=id pc=0x0000000000000420 inst=0x00108093
+[CYCLE] c=         8 kind=ex pc=0x000000000000041c
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x00108093
+[CYCLE] c=         8 kind=gpr rd= 1 data=0x0000000000000004
+[CYCLE] c=         9 kind=id pc=0x0000000000000424 inst=0x00108093
+[CYCLE] c=         9 kind=ex pc=0x0000000000000420
+[CYCLE] c=         9 kind=commit pc=0x0000000000000414 inst=0x00108093
+[CYCLE] c=         9 kind=gpr rd= 1 data=0x0000000000000005
+[CYCLE] c=        10 kind=id pc=0x0000000000000428 inst=0x00108093
+[CYCLE] c=        10 kind=ex pc=0x0000000000000424
+[CYCLE] c=        10 kind=commit pc=0x0000000000000418 inst=0x00108093
+[CYCLE] c=        10 kind=gpr rd= 1 data=0x0000000000000006
+[CYCLE] c=        11 kind=id pc=0x000000000000042c inst=0x00108093
+[CYCLE] c=        11 kind=ex pc=0x0000000000000428
+[CYCLE] c=        11 kind=commit pc=0x000000000000041c inst=0x00108093
+[CYCLE] c=        11 kind=gpr rd= 1 data=0x0000000000000007
+[CYCLE] c=        12 kind=id pc=0x0000000000000430 inst=0x00108093
+[CYCLE] c=        12 kind=ex pc=0x000000000000042c
+[CYCLE] c=        12 kind=commit pc=0x0000000000000420 inst=0x00108093
+[CYCLE] c=        12 kind=gpr rd= 1 data=0x0000000000000008
+[CYCLE] c=        13 kind=id pc=0x0000000000000434 inst=0x00108093
+[CYCLE] c=        13 kind=ex pc=0x0000000000000430
+[CYCLE] c=        13 kind=commit pc=0x0000000000000424 inst=0x00108093
+[CYCLE] c=        13 kind=gpr rd= 1 data=0x0000000000000009
+[CYCLE] c=        14 kind=id pc=0x0000000000000438 inst=0x00108093
+[CYCLE] c=        14 kind=ex pc=0x0000000000000434
+[CYCLE] c=        14 kind=commit pc=0x0000000000000428 inst=0x00108093
+[CYCLE] c=        14 kind=gpr rd= 1 data=0x000000000000000a
+[CYCLE] c=        15 kind=id pc=0x000000000000043c inst=0x00108093
+[CYCLE] c=        15 kind=ex pc=0x0000000000000438
+[CYCLE] c=        15 kind=commit pc=0x000000000000042c inst=0x00108093
+[CYCLE] c=        15 kind=gpr rd= 1 data=0x000000000000000b
+[CYCLE] c=        16 kind=id pc=0x0000000000000440 inst=0x00108093
+[CYCLE] c=        16 kind=ex pc=0x000000000000043c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000430 inst=0x00108093
+[CYCLE] c=        16 kind=gpr rd= 1 data=0x000000000000000c
+[CYCLE] c=        17 kind=id pc=0x0000000000000444 inst=0x00108093
+[CYCLE] c=        17 kind=ex pc=0x0000000000000440
+[CYCLE] c=        17 kind=commit pc=0x0000000000000434 inst=0x00108093
+[CYCLE] c=        17 kind=gpr rd= 1 data=0x000000000000000d
+[CYCLE] c=        18 kind=id pc=0x0000000000000448 inst=0x00108093
+[CYCLE] c=        18 kind=ex pc=0x0000000000000444
+[CYCLE] c=        18 kind=commit pc=0x0000000000000438 inst=0x00108093
+[CYCLE] c=        18 kind=gpr rd= 1 data=0x000000000000000e
+[CYCLE] c=        19 kind=id pc=0x000000000000044c inst=0x00108093
+[CYCLE] c=        19 kind=ex pc=0x0000000000000448
+[CYCLE] c=        19 kind=commit pc=0x000000000000043c inst=0x00108093
+[CYCLE] c=        19 kind=gpr rd= 1 data=0x000000000000000f
+[CYCLE] c=        20 kind=id pc=0x0000000000000450 inst=0x00108093
+[CYCLE] c=        20 kind=ex pc=0x000000000000044c
+[CYCLE] c=        20 kind=commit pc=0x0000000000000440 inst=0x00108093
+[CYCLE] c=        20 kind=gpr rd= 1 data=0x0000000000000010
+[CYCLE] c=        21 kind=id pc=0x0000000000000454 inst=0x00108093
+[CYCLE] c=        21 kind=ex pc=0x0000000000000450
+[CYCLE] c=        21 kind=commit pc=0x0000000000000444 inst=0x00108093
+[CYCLE] c=        21 kind=gpr rd= 1 data=0x0000000000000011
+[CYCLE] c=        22 kind=id pc=0x0000000000000458 inst=0x00108093
+[CYCLE] c=        22 kind=ex pc=0x0000000000000454
+[CYCLE] c=        22 kind=commit pc=0x0000000000000448 inst=0x00108093
+[CYCLE] c=        22 kind=gpr rd= 1 data=0x0000000000000012
+[CYCLE] c=        23 kind=id pc=0x000000000000045c inst=0x00108093
+[CYCLE] c=        23 kind=ex pc=0x0000000000000458
+[CYCLE] c=        23 kind=commit pc=0x000000000000044c inst=0x00108093
+[CYCLE] c=        23 kind=gpr rd= 1 data=0x0000000000000013
+[CYCLE] c=        24 kind=id pc=0x0000000000000460 inst=0x00108093
+[CYCLE] c=        24 kind=ex pc=0x000000000000045c
+[CYCLE] c=        24 kind=commit pc=0x0000000000000450 inst=0x00108093
+[CYCLE] c=        24 kind=gpr rd= 1 data=0x0000000000000014
+[CYCLE] c=        25 kind=id pc=0x0000000000000464 inst=0x00108093
+[CYCLE] c=        25 kind=ex pc=0x0000000000000460
+[CYCLE] c=        25 kind=commit pc=0x0000000000000454 inst=0x00108093
+[CYCLE] c=        25 kind=gpr rd= 1 data=0x0000000000000015
+[CYCLE] c=        26 kind=id pc=0x0000000000000468 inst=0x00108093
+[CYCLE] c=        26 kind=ex pc=0x0000000000000464
+[CYCLE] c=        26 kind=commit pc=0x0000000000000458 inst=0x00108093
+[CYCLE] c=        26 kind=gpr rd= 1 data=0x0000000000000016
+[CYCLE] c=        27 kind=id pc=0x000000000000046c inst=0x00108093
+[CYCLE] c=        27 kind=ex pc=0x0000000000000468
+[CYCLE] c=        27 kind=commit pc=0x000000000000045c inst=0x00108093
+[CYCLE] c=        27 kind=gpr rd= 1 data=0x0000000000000017
+[CYCLE] c=        28 kind=id pc=0x0000000000000470 inst=0x00108093
+[CYCLE] c=        28 kind=ex pc=0x000000000000046c
+[CYCLE] c=        28 kind=commit pc=0x0000000000000460 inst=0x00108093
+[CYCLE] c=        28 kind=gpr rd= 1 data=0x0000000000000018
+[CYCLE] c=        29 kind=id pc=0x0000000000000474 inst=0x00108093
+[CYCLE] c=        29 kind=ex pc=0x0000000000000470
+[CYCLE] c=        29 kind=commit pc=0x0000000000000464 inst=0x00108093
+[CYCLE] c=        29 kind=gpr rd= 1 data=0x0000000000000019
+[CYCLE] c=        30 kind=id pc=0x0000000000000478 inst=0x00108093
+[CYCLE] c=        30 kind=ex pc=0x0000000000000474
+[CYCLE] c=        30 kind=commit pc=0x0000000000000468 inst=0x00108093
+[CYCLE] c=        30 kind=gpr rd= 1 data=0x000000000000001a
+[CYCLE] c=        31 kind=id pc=0x000000000000047c inst=0x00108093
+[CYCLE] c=        31 kind=ex pc=0x0000000000000478
+[CYCLE] c=        31 kind=commit pc=0x000000000000046c inst=0x00108093
+[CYCLE] c=        31 kind=gpr rd= 1 data=0x000000000000001b
+[CYCLE] c=        32 kind=id pc=0x0000000000000480 inst=0x00108093
+[CYCLE] c=        32 kind=ex pc=0x000000000000047c
+[CYCLE] c=        32 kind=commit pc=0x0000000000000470 inst=0x00108093
+[CYCLE] c=        32 kind=gpr rd= 1 data=0x000000000000001c
+[CYCLE] c=        33 kind=id pc=0x0000000000000484 inst=0x00108093
+[CYCLE] c=        33 kind=ex pc=0x0000000000000480
+[CYCLE] c=        33 kind=commit pc=0x0000000000000474 inst=0x00108093
+[CYCLE] c=        33 kind=gpr rd= 1 data=0x000000000000001d
+[CYCLE] c=        34 kind=id pc=0x0000000000000488 inst=0x00108093
+[CYCLE] c=        34 kind=ex pc=0x0000000000000484
+[CYCLE] c=        34 kind=commit pc=0x0000000000000478 inst=0x00108093
+[CYCLE] c=        34 kind=gpr rd= 1 data=0x000000000000001e
+[CYCLE] c=        35 kind=id pc=0x000000000000048c inst=0x00108093
+[CYCLE] c=        35 kind=ex pc=0x0000000000000488
+[CYCLE] c=        35 kind=commit pc=0x000000000000047c inst=0x00108093
+[CYCLE] c=        35 kind=gpr rd= 1 data=0x000000000000001f
+[CYCLE] c=        36 kind=id pc=0x0000000000000490 inst=0x00108093
+[CYCLE] c=        36 kind=ex pc=0x000000000000048c
+[CYCLE] c=        36 kind=commit pc=0x0000000000000480 inst=0x00108093
+[CYCLE] c=        36 kind=gpr rd= 1 data=0x0000000000000020
+[CYCLE] c=        37 kind=id pc=0x0000000000000494 inst=0x00108093
+[CYCLE] c=        37 kind=ex pc=0x0000000000000490
+[CYCLE] c=        37 kind=commit pc=0x0000000000000484 inst=0x00108093
+[CYCLE] c=        37 kind=gpr rd= 1 data=0x0000000000000021
+[CYCLE] c=        38 kind=id pc=0x0000000000000498 inst=0x00108093
+[CYCLE] c=        38 kind=ex pc=0x0000000000000494
+[CYCLE] c=        38 kind=commit pc=0x0000000000000488 inst=0x00108093
+[CYCLE] c=        38 kind=gpr rd= 1 data=0x0000000000000022
+[CYCLE] c=        39 kind=id pc=0x000000000000049c inst=0x00108093
+[CYCLE] c=        39 kind=ex pc=0x0000000000000498
+[CYCLE] c=        39 kind=commit pc=0x000000000000048c inst=0x00108093
+[CYCLE] c=        39 kind=gpr rd= 1 data=0x0000000000000023
+[CYCLE] c=        40 kind=id pc=0x00000000000004a0 inst=0x00108093
+[CYCLE] c=        40 kind=ex pc=0x000000000000049c
+[CYCLE] c=        40 kind=commit pc=0x0000000000000490 inst=0x00108093
+[CYCLE] c=        40 kind=gpr rd= 1 data=0x0000000000000024
+[CYCLE] c=        41 kind=id pc=0x00000000000004a4 inst=0x00108093
+[CYCLE] c=        41 kind=ex pc=0x00000000000004a0
+[CYCLE] c=        41 kind=commit pc=0x0000000000000494 inst=0x00108093
+[CYCLE] c=        41 kind=gpr rd= 1 data=0x0000000000000025
+[CYCLE] c=        42 kind=id pc=0x00000000000004a8 inst=0x00108093
+[CYCLE] c=        42 kind=ex pc=0x00000000000004a4
+[CYCLE] c=        42 kind=commit pc=0x0000000000000498 inst=0x00108093
+[CYCLE] c=        42 kind=gpr rd= 1 data=0x0000000000000026
+[CYCLE] c=        43 kind=id pc=0x00000000000004ac inst=0x00108093
+[CYCLE] c=        43 kind=ex pc=0x00000000000004a8
+[CYCLE] c=        43 kind=commit pc=0x000000000000049c inst=0x00108093
+[CYCLE] c=        43 kind=gpr rd= 1 data=0x0000000000000027
+[CYCLE] c=        44 kind=id pc=0x00000000000004b0 inst=0x00108093
+[CYCLE] c=        44 kind=ex pc=0x00000000000004ac
+[CYCLE] c=        44 kind=commit pc=0x00000000000004a0 inst=0x00108093
+[CYCLE] c=        44 kind=gpr rd= 1 data=0x0000000000000028
+[CYCLE] c=        45 kind=id pc=0x00000000000004b4 inst=0x00108093
+[CYCLE] c=        45 kind=ex pc=0x00000000000004b0
+[CYCLE] c=        45 kind=commit pc=0x00000000000004a4 inst=0x00108093
+[CYCLE] c=        45 kind=gpr rd= 1 data=0x0000000000000029
+[CYCLE] c=        46 kind=id pc=0x00000000000004b8 inst=0x00108093
+[CYCLE] c=        46 kind=ex pc=0x00000000000004b4
+[CYCLE] c=        46 kind=commit pc=0x00000000000004a8 inst=0x00108093
+[CYCLE] c=        46 kind=gpr rd= 1 data=0x000000000000002a
+[CYCLE] c=        47 kind=id pc=0x00000000000004bc inst=0x00108093
+[CYCLE] c=        47 kind=ex pc=0x00000000000004b8
+[CYCLE] c=        47 kind=commit pc=0x00000000000004ac inst=0x00108093
+[CYCLE] c=        47 kind=gpr rd= 1 data=0x000000000000002b
+[CYCLE] c=        48 kind=id pc=0x00000000000004c0 inst=0x00108093
+[CYCLE] c=        48 kind=ex pc=0x00000000000004bc
+[CYCLE] c=        48 kind=commit pc=0x00000000000004b0 inst=0x00108093
+[CYCLE] c=        48 kind=gpr rd= 1 data=0x000000000000002c
+[CYCLE] c=        49 kind=id pc=0x00000000000004c4 inst=0x00108093
+[CYCLE] c=        49 kind=ex pc=0x00000000000004c0
+[CYCLE] c=        49 kind=commit pc=0x00000000000004b4 inst=0x00108093
+[CYCLE] c=        49 kind=gpr rd= 1 data=0x000000000000002d
+[CYCLE] c=        50 kind=id pc=0x00000000000004c8 inst=0x00108093
+[CYCLE] c=        50 kind=ex pc=0x00000000000004c4
+[CYCLE] c=        50 kind=commit pc=0x00000000000004b8 inst=0x00108093
+[CYCLE] c=        50 kind=gpr rd= 1 data=0x000000000000002e
+[CYCLE] c=        51 kind=id pc=0x00000000000004cc inst=0x00108093
+[CYCLE] c=        51 kind=ex pc=0x00000000000004c8
+[CYCLE] c=        51 kind=commit pc=0x00000000000004bc inst=0x00108093
+[CYCLE] c=        51 kind=gpr rd= 1 data=0x000000000000002f
+[CYCLE] c=        52 kind=id pc=0x00000000000004d0 inst=0x00108093
+[CYCLE] c=        52 kind=ex pc=0x00000000000004cc
+[CYCLE] c=        52 kind=commit pc=0x00000000000004c0 inst=0x00108093
+[CYCLE] c=        52 kind=gpr rd= 1 data=0x0000000000000030
+[CYCLE] c=        53 kind=id pc=0x00000000000004d4 inst=0x00108093
+[CYCLE] c=        53 kind=ex pc=0x00000000000004d0
+[CYCLE] c=        53 kind=commit pc=0x00000000000004c4 inst=0x00108093
+[CYCLE] c=        53 kind=gpr rd= 1 data=0x0000000000000031
+[CYCLE] c=        54 kind=id pc=0x00000000000004d8 inst=0x00108093
+[CYCLE] c=        54 kind=ex pc=0x00000000000004d4
+[CYCLE] c=        54 kind=commit pc=0x00000000000004c8 inst=0x00108093
+[CYCLE] c=        54 kind=gpr rd= 1 data=0x0000000000000032
+[CYCLE] c=        55 kind=id pc=0x00000000000004dc inst=0x00108093
+[CYCLE] c=        55 kind=ex pc=0x00000000000004d8
+[CYCLE] c=        55 kind=commit pc=0x00000000000004cc inst=0x00108093
+[CYCLE] c=        55 kind=gpr rd= 1 data=0x0000000000000033
+[CYCLE] c=        56 kind=id pc=0x00000000000004e0 inst=0x00108093
+[CYCLE] c=        56 kind=ex pc=0x00000000000004dc
+[CYCLE] c=        56 kind=commit pc=0x00000000000004d0 inst=0x00108093
+[CYCLE] c=        56 kind=gpr rd= 1 data=0x0000000000000034
+[CYCLE] c=        57 kind=id pc=0x00000000000004e4 inst=0x00108093
+[CYCLE] c=        57 kind=ex pc=0x00000000000004e0
+[CYCLE] c=        57 kind=commit pc=0x00000000000004d4 inst=0x00108093
+[CYCLE] c=        57 kind=gpr rd= 1 data=0x0000000000000035
+[CYCLE] c=        58 kind=id pc=0x00000000000004e8 inst=0x00108093
+[CYCLE] c=        58 kind=ex pc=0x00000000000004e4
+[CYCLE] c=        58 kind=commit pc=0x00000000000004d8 inst=0x00108093
+[CYCLE] c=        58 kind=gpr rd= 1 data=0x0000000000000036
+[CYCLE] c=        59 kind=id pc=0x00000000000004ec inst=0x00108093
+[CYCLE] c=        59 kind=ex pc=0x00000000000004e8
+[CYCLE] c=        59 kind=commit pc=0x00000000000004dc inst=0x00108093
+[CYCLE] c=        59 kind=gpr rd= 1 data=0x0000000000000037
+[CYCLE] c=        60 kind=id pc=0x00000000000004f0 inst=0x00108093
+[CYCLE] c=        60 kind=ex pc=0x00000000000004ec
+[CYCLE] c=        60 kind=commit pc=0x00000000000004e0 inst=0x00108093
+[CYCLE] c=        60 kind=gpr rd= 1 data=0x0000000000000038
+[CYCLE] c=        61 kind=id pc=0x00000000000004f4 inst=0x00108093
+[CYCLE] c=        61 kind=ex pc=0x00000000000004f0
+[CYCLE] c=        61 kind=commit pc=0x00000000000004e4 inst=0x00108093
+[CYCLE] c=        61 kind=gpr rd= 1 data=0x0000000000000039
+[CYCLE] c=        62 kind=id pc=0x00000000000004f8 inst=0x00108093
+[CYCLE] c=        62 kind=ex pc=0x00000000000004f4
+[CYCLE] c=        62 kind=commit pc=0x00000000000004e8 inst=0x00108093
+[CYCLE] c=        62 kind=gpr rd= 1 data=0x000000000000003a
+[CYCLE] c=        63 kind=id pc=0x00000000000004fc inst=0x00108093
+[CYCLE] c=        63 kind=ex pc=0x00000000000004f8
+[CYCLE] c=        63 kind=commit pc=0x00000000000004ec inst=0x00108093
+[CYCLE] c=        63 kind=gpr rd= 1 data=0x000000000000003b
+[CYCLE] c=        64 kind=ex pc=0x00000000000004fc
+[CYCLE] c=        64 kind=commit pc=0x00000000000004f0 inst=0x00108093
+[CYCLE] c=        64 kind=gpr rd= 1 data=0x000000000000003c
+[CYCLE] c=        65 kind=commit pc=0x00000000000004f4 inst=0x00108093
+[CYCLE] c=        65 kind=gpr rd= 1 data=0x000000000000003d
+[CYCLE] c=        66 kind=commit pc=0x00000000000004f8 inst=0x00108093
+[CYCLE] c=        66 kind=gpr rd= 1 data=0x000000000000003e
+[CYCLE] c=        67 kind=commit pc=0x00000000000004fc inst=0x00108093
+[CYCLE] c=        67 kind=gpr rd= 1 data=0x000000000000003f
+[CYCLE] c=        68 kind=gpr rd= 1 data=0x0000000000000040
+[CYCLE] c=         0 kind=id pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         1 kind=id pc=0x0000000000000404 inst=0x00803103
+[CYCLE] c=         1 kind=ex pc=0x0000000000000400
+[CYCLE] c=         2 kind=id pc=0x0000000000000408 inst=0x01003183
+[CYCLE] c=         2 kind=ex pc=0x0000000000000404
+[CYCLE] c=         3 kind=id pc=0x000000000000040c inst=0x01803203
+[CYCLE] c=         3 kind=ex pc=0x0000000000000408
+[CYCLE] c=         4 kind=id pc=0x0000000000000410 inst=0x02003283
+[CYCLE] c=         4 kind=ex pc=0x000000000000040c
+[CYCLE] c=         4 kind=commit pc=0x0000000000000400 inst=0x00003083
+[CYCLE] c=         5 kind=id pc=0x0000000000000414 inst=0x02803303
+[CYCLE] c=         5 kind=ex pc=0x0000000000000410
+[CYCLE] c=         5 kind=commit pc=0x0000000000000404 inst=0x00803103
+[CYCLE] c=         5 kind=gpr rd= 1 data=0x00000000000003e8
+[CYCLE] c=         6 kind=id pc=0x0000000000000418 inst=0x03003383
+[CYCLE] c=         6 kind=ex pc=0x0000000000000414
+[CYCLE] c=         6 kind=commit pc=0x0000000000000408 inst=0x01003183
+[CYCLE] c=         6 kind=gpr rd= 2 data=0x00000000000003e9
+[CYCLE] c=         7 kind=id pc=0x000000000000041c inst=0x03803403
+[CYCLE] c=         7 kind=ex pc=0x0000000000000418
+[CYCLE] c=         7 kind=commit pc=0x000000000000040c inst=0x01803203
+[CYCLE] c=         7 kind=gpr rd= 3 data=0x00000000000003ea
+[CYCLE] c=         8 kind=id pc=0x0000000000000420 inst=0x04003483
+[CYCLE] c=         8 kind=ex pc=0x000000000000041c
+[CYCLE] c=         8 kind=commit pc=0x0000000000000410 inst=0x02003283
+[CYCLE] c=         8 kind=gpr rd= 4 data=0x00000000000003eb
+[CYCLE] c=         9 kind=id pc=0x0000000000000424 inst=0x04803503
+[CYCLE] c=         9 kind=ex pc=0x0000000000000420
+[CYCLE] c=         9 kind=commit pc=0x0000000000000414 inst=0x02803303
+[CYCLE] c=         9 kind=gpr rd= 5 data=0x00000000000003ec
+[CYCLE] c=        10 kind=id pc=0x0000000000000428 inst=0x05003583
+[CYCLE] c=        10 kind=ex pc=0x0000000000000424
+[CYCLE] c=        10 kind=commit pc=0x0000000000000418 inst=0x03003383
+[CYCLE] c=        10 kind=gpr rd= 6 data=0x00000000000003ed
+[CYCLE] c=        11 kind=id pc=0x000000000000042c inst=0x05803603
+[CYCLE] c=        11 kind=ex pc=0x0000000000000428
+[CYCLE] c=        11 kind=commit pc=0x000000000000041c inst=0x03803403
+[CYCLE] c=        11 kind=gpr rd= 7 data=0x00000000000003ee
+[CYCLE] c=        12 kind=id pc=0x0000000000000430 inst=0x06003683
+[CYCLE] c=        12 kind=ex pc=0x000000000000042c
+[CYCLE] c=        12 kind=commit pc=0x0000000000000420 inst=0x04003483
+[CYCLE] c=        12 kind=gpr rd= 8 data=0x00000000000003ef
+[CYCLE] c=        13 kind=id pc=0x0000000000000434 inst=0x06803703
+[CYCLE] c=        13 kind=ex pc=0x0000000000000430
+[CYCLE] c=        13 kind=commit pc=0x0000000000000424 inst=0x04803503
+[CYCLE] c=        13 kind=gpr rd= 9 data=0x00000000000003f0
+[CYCLE] c=        14 kind=id pc=0x0000000000000438 inst=0x07003783
+[CYCLE] c=        14 kind=ex pc=0x0000000000000434
+[CYCLE] c=        14 kind=commit pc=0x0000000000000428 inst=0x05003583
+[CYCLE] c=        14 kind=gpr rd=10 data=0x00000000000003f1
+[CYCLE] c=        15 kind=id pc=0x000000000000043c inst=0x07803803
+[CYCLE] c=        15 kind=ex pc=0x0000000000000438
+[CYCLE] c=        15 kind=commit pc=0x000000000000042c inst=0x05803603
+[CYCLE] c=        15 kind=gpr rd=11 data=0x00000000000003f2
+[CYCLE] c=        16 kind=id pc=0x0000000000000440 inst=0x08003083
+[CYCLE] c=        16 kind=ex pc=0x000000000000043c
+[CYCLE] c=        16 kind=commit pc=0x0000000000000430 inst=0x06003683
+[CYCLE] c=        16 kind=gpr rd=12 data=0x00000000000003f3
+[CYCLE] c=        17 kind=id pc=0x0000000000000444 inst=0x08803103
+[CYCLE] c=        17 kind=ex pc=0x0000000000000440
+[CYCLE] c=        17 kind=commit pc=0x0000000000000434 inst=0x06803703
+[CYCLE] c=        17 kind=gpr rd=13 data=0x00000000000003f4
+[CYCLE] c=        18 kind=id pc=0x0000000000000448 inst=0x09003183
+[CYCLE] c=        18 kind=ex pc=0x0000000000000444
+[CYCLE] c=        18 kind=commit pc=0x0000000000000438 inst=0x07003783
+[CYCLE] c=        18 kind=gpr rd=14 data=0x00000000000003f5
+[CYCLE] c=        19 kind=id pc=0x000000000000044c inst=0x09803203
+[CYCLE] c=        19 kind=ex pc=0x0000000000000448
+[CYCLE] c=        19 kind=commit pc=0x000000000000043c inst=0x07803803
+[CYCLE] c=        19 kind=gpr rd=15 data=0x00000000000003f6
+[CYCLE] c=        20 kind=id pc=0x0000000000000450 inst=0x0a003283
+[CYCLE] c=        20 kind=ex pc=0x000000000000044c
+[CYCLE] c=        20 kind=commit pc=0x0000000000000440 inst=0x08003083
+[CYCLE] c=        20 kind=gpr rd=16 data=0x00000000000003f7
+[CYCLE] c=        21 kind=id pc=0x0000000000000454 inst=0x0a803303
+[CYCLE] c=        21 kind=ex pc=0x0000000000000450
+[CYCLE] c=        21 kind=commit pc=0x0000000000000444 inst=0x08803103
+[CYCLE] c=        21 kind=gpr rd= 1 data=0x00000000000003f8
+[CYCLE] c=        22 kind=id pc=0x0000000000000458 inst=0x0b003383
+[CYCLE] c=        22 kind=ex pc=0x0000000000000454
+[CYCLE] c=        22 kind=commit pc=0x0000000000000448 inst=0x09003183
+[CYCLE] c=        22 kind=gpr rd= 2 data=0x00000000000003f9
+[CYCLE] c=        23 kind=id pc=0x000000000000045c inst=0x0b803403
+[CYCLE] c=        23 kind=ex pc=0x0000000000000458
+[CYCLE] c=        23 kind=commit pc=0x000000000000044c inst=0x09803203
+[CYCLE] c=        23 kind=gpr rd= 3 data=0x00000000000003fa
+[CYCLE] c=        24 kind=id pc=0x0000000000000460 inst=0x0c003483
+[CYCLE] c=        24 kind=ex pc=0x000000000000045c
+[CYCLE] c=        24 kind=commit pc=0x0000000000000450 inst=0x0a003283
+[CYCLE] c=        24 kind=gpr rd= 4 data=0x00000000000003fb
+[CYCLE] c=        25 kind=id pc=0x0000000000000464 inst=0x0c803503
+[CYCLE] c=        25 kind=ex pc=0x0000000000000460
+[CYCLE] c=        25 kind=commit pc=0x0000000000000454 inst=0x0a803303
+[CYCLE] c=        25 kind=gpr rd= 5 data=0x00000000000003fc
+[CYCLE] c=        26 kind=id pc=0x0000000000000468 inst=0x0d003583
+[CYCLE] c=        26 kind=ex pc=0x0000000000000464
+[CYCLE] c=        26 kind=commit pc=0x0000000000000458 inst=0x0b003383
+[CYCLE] c=        26 kind=gpr rd= 6 data=0x00000000000003fd
+[CYCLE] c=        27 kind=id pc=0x000000000000046c inst=0x0d803603
+[CYCLE] c=        27 kind=ex pc=0x0000000000000468
+[CYCLE] c=        27 kind=commit pc=0x000000000000045c inst=0x0b803403
+[CYCLE] c=        27 kind=gpr rd= 7 data=0x00000000000003fe
+[CYCLE] c=        28 kind=id pc=0x0000000000000470 inst=0x0e003683
+[CYCLE] c=        28 kind=ex pc=0x000000000000046c
+[CYCLE] c=        28 kind=commit pc=0x0000000000000460 inst=0x0c003483
+[CYCLE] c=        28 kind=gpr rd= 8 data=0x00000000000003ff
+[CYCLE] c=        29 kind=id pc=0x0000000000000474 inst=0x0e803703
+[CYCLE] c=        29 kind=ex pc=0x0000000000000470
+[CYCLE] c=        29 kind=commit pc=0x0000000000000464 inst=0x0c803503
+[CYCLE] c=        29 kind=gpr rd= 9 data=0x0000000000000400
+[CYCLE] c=        30 kind=id pc=0x0000000000000478 inst=0x0f003783
+[CYCLE] c=        30 kind=ex pc=0x0000000000000474
+[CYCLE] c=        30 kind=commit pc=0x0000000000000468 inst=0x0d003583
+[CYCLE] c=        30 kind=gpr rd=10 data=0x0000000000000401
+[CYCLE] c=        31 kind=id pc=0x000000000000047c inst=0x0f803803
+[CYCLE] c=        31 kind=ex pc=0x0000000000000478
+[CYCLE] c=        31 kind=commit pc=0x000000000000046c inst=0x0d803603
+[CYCLE] c=        31 kind=gpr rd=11 data=0x0000000000000402
+[CYCLE] c=        32 kind=id pc=0x0000000000000480 inst=0x10003083
+[CYCLE] c=        32 kind=ex pc=0x000000000000047c
+[CYCLE] c=        32 kind=commit pc=0x0000000000000470 inst=0x0e003683
+[CYCLE] c=        32 kind=gpr rd=12 data=0x0000000000000403
+[CYCLE] c=        33 kind=id pc=0x0000000000000484 inst=0x10803103
+[CYCLE] c=        33 kind=ex pc=0x0000000000000480
+[CYCLE] c=        33 kind=commit pc=0x0000000000000474 inst=0x0e803703
+[CYCLE] c=        33 kind=gpr rd=13 data=0x0000000000000404
+[CYCLE] c=        34 kind=id pc=0x0000000000000488 inst=0x11003183
+[CYCLE] c=        34 kind=ex pc=0x0000000000000484
+[CYCLE] c=        34 kind=commit pc=0x0000000000000478 inst=0x0f003783
+[CYCLE] c=        34 kind=gpr rd=14 data=0x0000000000000405
+[CYCLE] c=        35 kind=id pc=0x000000000000048c inst=0x11803203
+[CYCLE] c=        35 kind=ex pc=0x0000000000000488
+[CYCLE] c=        35 kind=commit pc=0x000000000000047c inst=0x0f803803
+[CYCLE] c=        35 kind=gpr rd=15 data=0x0000000000000406
+[CYCLE] c=        36 kind=id pc=0x0000000000000490 inst=0x12003283
+[CYCLE] c=        36 kind=ex pc=0x000000000000048c
+[CYCLE] c=        36 kind=commit pc=0x0000000000000480 inst=0x10003083
+[CYCLE] c=        36 kind=gpr rd=16 data=0x0000000000000407
+[CYCLE] c=        37 kind=id pc=0x0000000000000494 inst=0x12803303
+[CYCLE] c=        37 kind=ex pc=0x0000000000000490
+[CYCLE] c=        37 kind=commit pc=0x0000000000000484 inst=0x10803103
+[CYCLE] c=        37 kind=gpr rd= 1 data=0x0000000000000408
+[CYCLE] c=        38 kind=id pc=0x0000000000000498 inst=0x13003383
+[CYCLE] c=        38 kind=ex pc=0x0000000000000494
+[CYCLE] c=        38 kind=commit pc=0x0000000000000488 inst=0x11003183
+[CYCLE] c=        38 kind=gpr rd= 2 data=0x0000000000000409
+[CYCLE] c=        39 kind=id pc=0x000000000000049c inst=0x13803403
+[CYCLE] c=        39 kind=ex pc=0x0000000000000498
+[CYCLE] c=        39 kind=commit pc=0x000000000000048c inst=0x11803203
+[CYCLE] c=        39 kind=gpr rd= 3 data=0x000000000000040a
+[CYCLE] c=        40 kind=id pc=0x00000000000004a0 inst=0x14003483
+[CYCLE] c=        40 kind=ex pc=0x000000000000049c
+[CYCLE] c=        40 kind=commit pc=0x0000000000000490 inst=0x12003283
+[CYCLE] c=        40 kind=gpr rd= 4 data=0x000000000000040b
+[CYCLE] c=        41 kind=id pc=0x00000000000004a4 inst=0x14803503
+[CYCLE] c=        41 kind=ex pc=0x00000000000004a0
+[CYCLE] c=        41 kind=commit pc=0x0000000000000494 inst=0x12803303
+[CYCLE] c=        41 kind=gpr rd= 5 data=0x000000000000040c
+[CYCLE] c=        42 kind=id pc=0x00000000000004a8 inst=0x15003583
+[CYCLE] c=        42 kind=ex pc=0x00000000000004a4
+[CYCLE] c=        42 kind=commit pc=0x0000000000000498 inst=0x13003383
+[CYCLE] c=        42 kind=gpr rd= 6 data=0x000000000000040d
+[CYCLE] c=        43 kind=id pc=0x00000000000004ac inst=0x15803603
+[CYCLE] c=        43 kind=ex pc=0x00000000000004a8
+[CYCLE] c=        43 kind=commit pc=0x000000000000049c inst=0x13803403
+[CYCLE] c=        43 kind=gpr rd= 7 data=0x000000000000040e
+[CYCLE] c=        44 kind=id pc=0x00000000000004b0 inst=0x16003683
+[CYCLE] c=        44 kind=ex pc=0x00000000000004ac
+[CYCLE] c=        44 kind=commit pc=0x00000000000004a0 inst=0x14003483
+[CYCLE] c=        44 kind=gpr rd= 8 data=0x000000000000040f
+[CYCLE] c=        45 kind=id pc=0x00000000000004b4 inst=0x16803703
+[CYCLE] c=        45 kind=ex pc=0x00000000000004b0
+[CYCLE] c=        45 kind=commit pc=0x00000000000004a4 inst=0x14803503
+[CYCLE] c=        45 kind=gpr rd= 9 data=0x0000000000000410
+[CYCLE] c=        46 kind=id pc=0x00000000000004b8 inst=0x17003783
+[CYCLE] c=        46 kind=ex pc=0x00000000000004b4
+[CYCLE] c=        46 kind=commit pc=0x00000000000004a8 inst=0x15003583
+[CYCLE] c=        46 kind=gpr rd=10 data=0x0000000000000411
+[CYCLE] c=        47 kind=id pc=0x00000000000004bc inst=0x17803803
+[CYCLE] c=        47 kind=ex pc=0x00000000000004b8
+[CYCLE] c=        47 kind=commit pc=0x00000000000004ac inst=0x15803603
+[CYCLE] c=        47 kind=gpr rd=11 data=0x0000000000000412
+[CYCLE] c=        48 kind=id pc=0x00000000000004c0 inst=0x18003083
+[CYCLE] c=        48 kind=ex pc=0x00000000000004bc
+[CYCLE] c=        48 kind=commit pc=0x00000000000004b0 inst=0x16003683
+[CYCLE] c=        48 kind=gpr rd=12 data=0x0000000000000413
+[CYCLE] c=        49 kind=id pc=0x00000000000004c4 inst=0x18803103
+[CYCLE] c=        49 kind=ex pc=0x00000000000004c0
+[CYCLE] c=        49 kind=commit pc=0x00000000000004b4 inst=0x16803703
+[CYCLE] c=        49 kind=gpr rd=13 data=0x0000000000000414
+[CYCLE] c=        50 kind=id pc=0x00000000000004c8 inst=0x19003183
+[CYCLE] c=        50 kind=ex pc=0x00000000000004c4
+[CYCLE] c=        50 kind=commit pc=0x00000000000004b8 inst=0x17003783
+[CYCLE] c=        50 kind=gpr rd=14 data=0x0000000000000415
+[CYCLE] c=        51 kind=id pc=0x00000000000004cc inst=0x19803203
+[CYCLE] c=        51 kind=ex pc=0x00000000000004c8
+[CYCLE] c=        51 kind=commit pc=0x00000000000004bc inst=0x17803803
+[CYCLE] c=        51 kind=gpr rd=15 data=0x0000000000000416
+[CYCLE] c=        52 kind=id pc=0x00000000000004d0 inst=0x1a003283
+[CYCLE] c=        52 kind=ex pc=0x00000000000004cc
+[CYCLE] c=        52 kind=commit pc=0x00000000000004c0 inst=0x18003083
+[CYCLE] c=        52 kind=gpr rd=16 data=0x0000000000000417
+[CYCLE] c=        53 kind=id pc=0x00000000000004d4 inst=0x1a803303
+[CYCLE] c=        53 kind=ex pc=0x00000000000004d0
+[CYCLE] c=        53 kind=commit pc=0x00000000000004c4 inst=0x18803103
+[CYCLE] c=        53 kind=gpr rd= 1 data=0x0000000000000418
+[CYCLE] c=        54 kind=id pc=0x00000000000004d8 inst=0x1b003383
+[CYCLE] c=        54 kind=ex pc=0x00000000000004d4
+[CYCLE] c=        54 kind=commit pc=0x00000000000004c8 inst=0x19003183
+[CYCLE] c=        54 kind=gpr rd= 2 data=0x0000000000000419
+[CYCLE] c=        55 kind=id pc=0x00000000000004dc inst=0x1b803403
+[CYCLE] c=        55 kind=ex pc=0x00000000000004d8
+[CYCLE] c=        55 kind=commit pc=0x00000000000004cc inst=0x19803203
+[CYCLE] c=        55 kind=gpr rd= 3 data=0x000000000000041a
+[CYCLE] c=        56 kind=id pc=0x00000000000004e0 inst=0x1c003483
+[CYCLE] c=        56 kind=ex pc=0x00000000000004dc
+[CYCLE] c=        56 kind=commit pc=0x00000000000004d0 inst=0x1a003283
+[CYCLE] c=        56 kind=gpr rd= 4 data=0x000000000000041b
+[CYCLE] c=        57 kind=id pc=0x00000000000004e4 inst=0x1c803503
+[CYCLE] c=        57 kind=ex pc=0x00000000000004e0
+[CYCLE] c=        57 kind=commit pc=0x00000000000004d4 inst=0x1a803303
+[CYCLE] c=        57 kind=gpr rd= 5 data=0x000000000000041c
+[CYCLE] c=        58 kind=id pc=0x00000000000004e8 inst=0x1d003583
+[CYCLE] c=        58 kind=ex pc=0x00000000000004e4
+[CYCLE] c=        58 kind=commit pc=0x00000000000004d8 inst=0x1b003383
+[CYCLE] c=        58 kind=gpr rd= 6 data=0x000000000000041d
+[CYCLE] c=        59 kind=id pc=0x00000000000004ec inst=0x1d803603
+[CYCLE] c=        59 kind=ex pc=0x00000000000004e8
+[CYCLE] c=        59 kind=commit pc=0x00000000000004dc inst=0x1b803403
+[CYCLE] c=        59 kind=gpr rd= 7 data=0x000000000000041e
+[CYCLE] c=        60 kind=id pc=0x00000000000004f0 inst=0x1e003683
+[CYCLE] c=        60 kind=ex pc=0x00000000000004ec
+[CYCLE] c=        60 kind=commit pc=0x00000000000004e0 inst=0x1c003483
+[CYCLE] c=        60 kind=gpr rd= 8 data=0x000000000000041f
+[CYCLE] c=        61 kind=id pc=0x00000000000004f4 inst=0x1e803703
+[CYCLE] c=        61 kind=ex pc=0x00000000000004f0
+[CYCLE] c=        61 kind=commit pc=0x00000000000004e4 inst=0x1c803503
+[CYCLE] c=        61 kind=gpr rd= 9 data=0x0000000000000420
+[CYCLE] c=        62 kind=id pc=0x00000000000004f8 inst=0x1f003783
+[CYCLE] c=        62 kind=ex pc=0x00000000000004f4
+[CYCLE] c=        62 kind=commit pc=0x00000000000004e8 inst=0x1d003583
+[CYCLE] c=        62 kind=gpr rd=10 data=0x0000000000000421
+[CYCLE] c=        63 kind=id pc=0x00000000000004fc inst=0x1f803803
+[CYCLE] c=        63 kind=ex pc=0x00000000000004f8
+[CYCLE] c=        63 kind=commit pc=0x00000000000004ec inst=0x1d803603
+[CYCLE] c=        63 kind=gpr rd=11 data=0x0000000000000422
+[CYCLE] c=        64 kind=ex pc=0x00000000000004fc
+[CYCLE] c=        64 kind=commit pc=0x00000000000004f0 inst=0x1e003683
+[CYCLE] c=        64 kind=gpr rd=12 data=0x0000000000000423
+[CYCLE] c=        65 kind=commit pc=0x00000000000004f4 inst=0x1e803703
+[CYCLE] c=        65 kind=gpr rd=13 data=0x0000000000000424
+[CYCLE] c=        66 kind=commit pc=0x00000000000004f8 inst=0x1f003783
+[CYCLE] c=        66 kind=gpr rd=14 data=0x0000000000000425
+[CYCLE] c=        67 kind=commit pc=0x00000000000004fc inst=0x1f803803
+[CYCLE] c=        67 kind=gpr rd=15 data=0x0000000000000426
+[CYCLE] c=        68 kind=gpr rd=16 data=0x0000000000000427
+[info] - independent ALUs, dependent ALUs and native hit loads overlap and preserve all results
+[info]   + PIPE_BACKEND name=alu-independent count=64 id_gaps=1 commit_span=63 max_inflight=5 
+[info]   + PIPE_BACKEND name=alu-dependent count=64 id_gaps=1 commit_span=63 max_inflight=5 
+[info]   + PIPE_BACKEND name=load-hit-model count=64 id_gaps=1 commit_span=63 max_inflight=5 
+[info] ClusterPipelineThroughputSpec:
+[warn] src/main/scala/l2/L2Home.scala 178:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 3 warning(s) during hardware elaboration.
+[info] - warm deployment instruction streams report issue and retire throughput independently of functional PASS *** FAILED ***
+[info]   Functional PASS does not establish pipelining: alu-independent IPC=0.09221902017291066 < diagnostic target 0.5; alu-compressed IPC=0.13617021276595745 < diagnostic target 0.5 ArrayBuffer("alu-independent IPC=0.09221902017291066 < diagnostic target 0.5", "alu-compressed IPC=0.13617021276595745 < diagnostic target 0.5") was not empty (ClusterPipelineThroughputSpec.scala:70)
+[info]   + PIPE_CLUSTER name=alu-independent functional=true warm_retired=128 span=1388 ipc=0.09221902017291066 distinct_ex_commit_overlap=0 misses=0 l2_reads=0 replay=0 
+[info]   + PIPE_CLUSTER name=alu-dependent functional=true warm_retired=128 span=1388 ipc=0.09221902017291066 distinct_ex_commit_overlap=0 misses=0 l2_reads=0 replay=0 
+[info]   + PIPE_CLUSTER name=load-hit functional=true warm_retired=128 span=1388 ipc=0.09221902017291066 distinct_ex_commit_overlap=0 misses=0 l2_reads=0 replay=0 
+[info]   + PIPE_CLUSTER name=alu-compressed functional=true warm_retired=128 span=940 ipc=0.13617021276595745 distinct_ex_commit_overlap=0 misses=0 l2_reads=0 replay=0 
+[info] Run completed in 48 seconds, 319 milliseconds.
+[info] Total number of tests run: 2
+[info] Suites: completed 2, aborted 0
+[info] Tests: succeeded 1, failed 1, canceled 0, ignored 0, pending 0
+[info] *** 1 TEST FAILED ***
+[error] Failed tests:
+[error] 	flow.cluster.ClusterPipelineThroughputSpec
+[error] (Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 52 s, completed Oct 12, 2026, 9:11:12 AM

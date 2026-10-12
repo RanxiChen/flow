@@ -1,0 +1,167 @@
+{
+  "source_sha": "e11379d92057ebb0338da1dd32ade75285af13c8",
+  "scope": "same deployed core configuration; whole-core programs execute in M/Bare",
+  "backend": {
+    "alu-independent": {
+      "retired": 64,
+      "id_gap": 1,
+      "retire_gap": 1,
+      "inclusive_retire_span": 64,
+      "maximum_pending_id_before_same_cycle_commit": 5,
+      "functional_scoreboard_pass": true
+    },
+    "alu-dependent": {
+      "retired": 64,
+      "id_gap": 1,
+      "retire_gap": 1,
+      "inclusive_retire_span": 64,
+      "maximum_pending_id_before_same_cycle_commit": 5,
+      "functional_scoreboard_pass": true
+    },
+    "load-hit-model": {
+      "retired": 64,
+      "id_gap": 1,
+      "retire_gap": 1,
+      "inclusive_retire_span": 64,
+      "maximum_pending_id_before_same_cycle_commit": 5,
+      "functional_scoreboard_pass": true
+    }
+  },
+  "whole_core": {
+    "alu-independent": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 142,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "alu-dependent": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 140,
+        "14": 1
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "load-hit": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 142,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "alu-compressed": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        470,
+        470
+      ],
+      "warm_ipc": 0.13617021276595745,
+      "retire_gap_histogram": {
+        "4": 64,
+        "11": 62
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 79,
+        "4": 63,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    }
+  },
+  "xml": [
+    {
+      "name": "flow.backend.BackendPipelineThroughputSpec",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "flow.cluster.ClusterPipelineThroughputSpec",
+      "tests": "1",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "verdict": "BACKEND_PIPELINING_PASS__WHOLE_CORE_THROUGHPUT_FAIL",
+  "hashes": {
+    "java.txt": "35bc3ade5fd02a3a95bef3272a0f30718c0521e2f799a3d307173aa4b9340d7e",
+    "source-sha.txt": "b27b45bd336d9c823516926cf07839a3fecf68b6877a47d1b26f9bf8be50dbed",
+    "audit.console": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cluster-summary.csv": "d9aa408b1a1bfe6e9b8d8d9cf63085907bac91b8ec2d54f3f3e2ce78f044bfc3",
+    "verilator.txt": "f65388ee388c80a7f798f93e5af558c21b4b69a141d712fbb1ef2f8a03ca75a7",
+    "run.console": "81ee439f48f3b3565cfe4dd863453c5d95ff544dcbf6b7ebf7bc5f3289184822",
+    "alu-independent.dump": "e69bead65cdf0d011b907b1c56c175d780c1ed48082b2a1edd406ae7fbc73b37",
+    "cluster-alu-dependent.csv": "30ee3ad004ed396af7cdd3600f032db05a5a0f400da1d751d1960b309762b9d3",
+    "compiler.txt": "b44d13490dca2fb30d8cf52505e06bf5239beabd22ee1c3ac8c41deaba584f66",
+    "start-utc.txt": "03c4b80687130816ce5a4c2d2300a1b9b1fa9c84a646b6d5d4419c937410fc1e",
+    "alu-dependent.elf": "c8fde2f262f1c252a32a40926270319484b7daa16eda919700abb4a7a8214f50",
+    "backend-alu-dependent.csv": "34cc584f29c00a757be797db4711c84dbb189fbcd7aa7faa726af5cb1eaf022c",
+    "alu-compressed.dump": "55ce8c54ce0d065486eb91a9cc5d074e4e520a879716a99cf17d15d0c5849d01",
+    "TEST-flow.backend.BackendPipelineThroughputSpec.xml": "722bd03acac4523e84792b332adf4ff9c4430cca976e4c27d7cf7c0ada6a52b2",
+    "load-hit.elf": "6a7a2799ece21c1e8e3d5800e94f20624a31d2a5fdb51b588ad1185bbac0177e",
+    "backend-alu-independent.csv": "58166384f9e0e0dea4fcef28d1e5d08251752159a123cdb121f2fda087b61ac1",
+    "host.txt": "5f32065d1939b87907d8927ff6203f7e20b26fd048b7bcc8bfc10b3e7f6e84da",
+    "audit-scope-note.txt": "3a228063d73dbafdd4e851981954b91ee75a40bba12831d4b520e923c526b3ec",
+    "alu-independent.elf": "fb5371e3093e69b0ed2f20ef1af00d91ea3a882f0aa22fe4535d4d6c3670ee77",
+    "cluster-alu-independent.csv": "048c617d4ea1c5f5c4c455b6f4632e6ff4a37d6c3639368d4ac0f92eb00bf1e7",
+    "alu-compressed.elf": "9e65ad95f2cdb6acf3cc5e1908d37a7c399b6b9d177b91617d6d6b82195f257f",
+    "source-cwd.txt": "792f27deea77aa24afbc23c88bb23cb4dd42ec0d1614ebad74dad8de9d9964fd",
+    "TEST-flow.cluster.ClusterPipelineThroughputSpec.xml": "5fa8042f5d366031bbac7f3f37acfca7056873eaa8bf18501544b3e1c610cc78",
+    "run.exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "load-hit.dump": "348d6c6fbb1eb4b1eddd27a437dc4379030206b3b58a7f064b91a69bcd77289e",
+    "alu-dependent.dump": "e4d91cf4396431e81eb300bdc673db8a2d0a8859b882ad60287d309412293587",
+    "cluster-alu-compressed.csv": "83ca2361dc1eb8cee9bf12a8a925998c32a159054068ea214a752f6f9da9279d",
+    "elf-sha256.txt": "d6f5e11553a47f41eb88d4933a07073bc033c4398c2e2ed15ad752dab5de1c46",
+    "backend-load-hit-model.csv": "10a5fb9a793cac864d8e948331884b2b20b4c14c016e82c6b3a507c4305bb60c",
+    "cluster-load-hit.csv": "999add2fc1b2292f39c4576dac7734db8d738daf51761aebad0ba1d41eb92fb1"
+  }
+}

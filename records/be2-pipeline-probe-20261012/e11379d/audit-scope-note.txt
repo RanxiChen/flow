@@ -1,0 +1,9 @@
+Initial postprocessing incorrectly required a same-cycle GPR write for the
+first cold load. It failed on load-hit row 0: cycle963, pc800000c0, rd_write0,
+rd=b, data=0, load_miss1. This is an early-committed cache miss with later
+writeback, permitted by the existing architectural trace contract.
+The simulation itself passed all four functional tohost checks.
+The corrected postprocessor checks that exact cold-miss metadata and leaves
+the later writeback payload unclaimed, because this CSV did not capture it.
+It checks all 128 warm load values, remaining visible cold hit values, and
+all ALU values without weakening or changing a simulation golden.

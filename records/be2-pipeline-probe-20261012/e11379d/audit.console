@@ -1,0 +1,91 @@
+{
+  "verdict": "BACKEND_PIPELINING_PASS__WHOLE_CORE_THROUGHPUT_FAIL",
+  "whole_core": {
+    "alu-independent": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 142,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "alu-dependent": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 140,
+        "14": 1
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "load-hit": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        694,
+        694
+      ],
+      "warm_ipc": 0.09221902017291066,
+      "retire_gap_histogram": {
+        "11": 126
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 142,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    },
+    "alu-compressed": {
+      "functional_pass": true,
+      "warm_retired": 128,
+      "window_spans": [
+        470,
+        470
+      ],
+      "warm_ipc": 0.13617021276595745,
+      "retire_gap_histogram": {
+        "4": 64,
+        "11": 62
+      },
+      "id_gap_histogram_during_warm_extent": {
+        "11": 79,
+        "4": 63,
+        "14": 5
+      },
+      "ex_hold_cycles": 0,
+      "wb_hold_cycles": 0,
+      "distinct_window_ex_commit_overlap": 0,
+      "no_cache_miss_replay_or_external_memory_in_warm_extent": true,
+      "diagnostic_target_0_5_ipc_met": false
+    }
+  }
+}
