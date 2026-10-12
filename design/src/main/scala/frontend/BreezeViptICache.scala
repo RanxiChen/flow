@@ -70,7 +70,7 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   val cancelOutput = io.cancel || io.fenceI
   val cancel = cancelOutput || io.cancelYounger
   val returns = withReset(reset.asBool || cancel) {
-    Module(new Queue(new PipelineFetchWindow(p), 2, pipe = true, flow = false))
+    Module(new flow.util.RegisteredPairQueue(new PipelineFetchWindow(p), pipe = true))
   }
   // F2 consumes its own response while canceling younger queries. Masking
   // this response with cancelYounger would create fire -> redirect -> !fire.

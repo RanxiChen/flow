@@ -98,9 +98,9 @@ class _BreezeClusterCPU(CPU):
     nop = "nop"
     expected_marker = {}
     translation_marker = {
-        'itlbSets': '4', 'itlbWays': '2', 'itlbSuperpages': '1',
-        'dtlbSets': '4', 'dtlbWays': '2', 'dtlbSuperpages': '1',
-        'wcUpperSets': '1', 'wcUpperWays': '2', 'wcMiddleSets': '2', 'wcMiddleWays': '2',
+        'itlbSets': '8', 'itlbWays': '4', 'itlbSuperpages': '4',
+        'dtlbSets': '8', 'dtlbWays': '4', 'dtlbSuperpages': '4',
+        'wcUpperSets': '1', 'wcUpperWays': '4', 'wcMiddleSets': '2', 'wcMiddleWays': '4',
     }
     debug_enabled = False
     tandem_enabled = False

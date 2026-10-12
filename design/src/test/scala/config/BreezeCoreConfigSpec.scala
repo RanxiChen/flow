@@ -6,6 +6,7 @@ import org.scalatest.matchers.must.Matchers
 class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
     "single deployment inherits the four-hart configuration except profile and hart count" in {
         val four = BreezeClusterPresets.small
+        four.mmu mustBe flow.mmu.sv39.Sv39MmuParams()
         BreezeClusterPresets.single.copy(profileName = four.profileName,
             mem = BreezeClusterPresets.single.mem.copy(nCores = four.nCores)) mustBe four
     }

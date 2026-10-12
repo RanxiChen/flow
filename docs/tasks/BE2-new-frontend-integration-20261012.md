@@ -61,7 +61,25 @@ EX恢复修正源`feb0fca7240d6755634641f2056eaea64be05748`：同一reservation�
 
 构建入口后续源72676d3防止旧生成物误用：新一次生成在目标目录的独立emitted/UUID内输出，manifest仅列本次实际SV；LiteX拒绝缺少新前端/BE2后端或混入旧阻塞前端。Alan `python -m unittest discover -s sim/litex -p test_breeze_cpu_wrapper.py -v`，7/7 PASS、exit=0，日志`/home/chen/FUN/flow-runs/pipeline-wrapper-72676d3-20261012/`。这是构建入口验证，不能当作完整SoC仿真。
 
-### 四核资源调整裁定（待新最低门禁与综合复核）
+### 保留原 TLB 的四核收敛方案评估（用户暂停构建后，只读分析）
+
+本节是后续候选方案，不代表已经修改 RTL 或恢复 TLB 参数。当前硬件候选仍是 36fddea；暂停后没有启动新的综合/布局布线。使用 Vivado 2022.2 在 Alan 只读打开 ab5c0b2 的四核 synth DCP，执行 `flow-four-resource-audit-20261012.tcl`，exit=0。脚本、原综合报告及查询输出保存在 [resource-audit-ab5c0b2](../../records/be2-pipeline-probe-20261012/resource-audit-ab5c0b2/)。
+
+原层级报告四核合计：后端 132058 LUT（包含 CSR/PMP 52167 LUT）、MMU 32971 LUT、L1D 35058 LUT、L2 6780 LUT；ICache 返回队列归属 18587 LUT，后端 lateQueue 归属 3501 LUT。这些是综合重建层级的资源归属，不是各源代码模块的独立成本。返回队列的网表层级除 LUTRAM 还包含大量 LUT 和 CARRY8，CSR 层级也含以 Memory_reg 命名的逻辑；应追踪实际组合锥与端点，不能承诺换掉两项存储即可省下 18587 LUT。查询中的宏单元和内部子单元也不能直接相加作为物理 LUT 利用率。
+
+推荐候选顺序：恢复原 iTLB/dTLB 的 8sets×4ways+4superpage 与 walk-cache 4ways，先保留现有 cache 容量；核实并优化宽浅返回存储、CSR/PMP 译码/更新与写回选择的真实组合锥。保持 FIFO 容量、pipe/flow、反压稳定、同沿入出队、取消和精确异常语义，比较整个四核资源而非某一重建层级。只有测得这条路径收益不足时再试 cache 参数候选：L1 sets 64→32 保留两路（各 4KiB→2KiB），或者减少 ways；L2 减 ways 必须同时记录 sets/容量，避免仅减少字节数却留下主要比较和仲裁逻辑。所有容量候选须覆盖冲突替换、dirty writeback、probe、PTW、LR/SC/AMO 以及 SD coherent DMA 的原 golden。
+
+面积规划目标可取 85%–90% LUT，作为给布线留空间的工程目标而非通过保证；以原 260026 LUT 为基线，90% 对应 218160 LUT，需要净省 41866 LUT。面积达到候选目标后才用实际 routed 路径决定时序修改，依次区分 F1 TLB/PMP/tag、后端 hold/ready/写口控制、L1D/L2 仲裁与高扇出布线；不以加级、降频或修改约束掩盖问题。保留 100MHz、精确异常、程序顺序、无死锁及原 golden。四核和派生单核独立工程并行实现，单核不独立调整基础参数。
+
+### 用户确认执行后的第一轮等价面积候选
+
+恢复部署默认完整 `Sv39MmuParams()`（i/dTLB 各 8sets×4ways+4superpage，upper/middle walk-cache 各 4ways），同步恢复严格 LiteX marker；四核与两种单核继续同源派生，L1/L2 容量及路数不变。ICache 两项返回和 Writeback 两项 late 返回改为 `RegisteredPairQueue`：两个独立不复位数据寄存器、复位 ownership、非 flow；前者 pipe=true、后者 pipe=false，与原 Queue 同容量和同拍接口。F1 已预留响应容量、F2 反压保持、满队列同沿出入、late.ready 只读寄存 occupancy、取消边界及 E+1 返回合同均保持。新增软件 FIFO model 与原 Chisel Queue 的逐拍对照，覆盖 282-bit 数据、满/空、反压、同时入出及 clear。
+
+PMP 范围计算采用恒等式 `(boundary & ~byteMask) + byteMask == boundary | byteMask`，替换 NAPOT/NA4 上界中一次宽加法，保留完整 65-bit 范围和 58-bit blockPrevious。新增独立整数区间模型覆盖 OFF/TOR/NA4/NAPOT、最大全 ones 编码及零下溢；复用原随机权限 oracle。资源收益待整体综合实测，不承诺层级归属的 LUT 全部消失。新最小验证入口 `resource-minimum.sh` 保存源/主机/工具/XML，选择原 T11/T12/T21/T22、精确异常、FENCE/SFENCE 和前端恢复合同，不改原 golden、seed、scale 或 watchdog。
+
+旧 36fddea 的系统最小回归已在 Alan exit=0（包括新增 SFENCE AXI 反压程序、原四核程序及 RVV），它是本轮改动前的基线证据，不作为新候选通过证明。
+
+### 四核资源调整裁定（先前缩 TLB 的候选，已由用户决定恢复）
 
 实际面积超限后将部署iTLB/dTLB各由8sets×4ways+4superpage entries改为4sets×2ways+1superpage entry；PTW upper/middle walk-cache从4ways改为2ways（sets仍1/2）。保持16位ASID、4KiB/2MiB/1GiB页型、Svade/PMP/权限、共享PTW接口和F0/F1/F2级数。只缩容量、不裁指令或权限。四核为配置所有者，普通单核和RVV单核由其copy派生；profile新增MMU参数以防单核独立调参，并输出各项到cluster-profile。
 

@@ -30,7 +30,9 @@ object BreezePmpDecode {
     val napotMask = addr ^ (addr + 1.U)
     val byteMask = Cat(0.U(9.W), Mux(mode(0), napotMask, 0.U(54.W)), 3.U(2.W))
     val pow2Lower = boundary & ~byteMask
-    val pow2Upper = pow2Lower + byteMask + 1.U
+    // pow2Lower clears every bit in byteMask. Their sum has no carries
+    // and equals boundary | byteMask; retain the full 65-bit boundary.
+    val pow2Upper = (boundary | byteMask) + 1.U
     out.lower := Mux(mode(1), pow2Lower, previous)
     out.upper := Mux(mode(1), pow2Upper, boundary)
     out.nonempty := mode =/= 0.U && out.lower < out.upper

@@ -257,12 +257,9 @@ object BreezeClusterPresets {
     val small: BreezeClusterConfig = BreezeClusterConfig("small",
         BreezeMemGeometry.default.copy(l1Sets = 64, l1dWays = 2, l1iWays = 2,
             l2Ways = 4, l2BytesPerCore = 32768),
-        // Capacity tuning only: retain ASID width, page sizes, permissions,
-        // Svade and the shared PTW protocol. Default standalone MMU is intact.
-        mmu = flow.mmu.sv39.Sv39MmuParams(
-            itlb = flow.mmu.sv39.Sv39TlbParams(4, 2, 1),
-            dtlb = flow.mmu.sv39.Sv39TlbParams(4, 2, 1),
-            wcUpperWays = 2, wcMiddleWays = 2))
+        // Retain the original translation capacity in every deployment.
+        // Four harts own the configuration; singles copy it below.
+        mmu = flow.mmu.sv39.Sv39MmuParams())
     // Deployment tuning is owned by the four-hart profile. A single hart
     // uses exactly the same parameters, changing only its name and hart count.
     val single: BreezeClusterConfig = small.copy(profileName = "single", mem = small.mem.copy(nCores = 1))

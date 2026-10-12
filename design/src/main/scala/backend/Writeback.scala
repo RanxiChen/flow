@@ -43,7 +43,7 @@ class Writeback(val withCoprocessor: Boolean = false) extends Module {
   val w2 = RegInit(0.U.asTypeOf(Valid(new OrdinaryResult)))
   // Two registered slots keep late.ready independent of the current grant.
   // Non-flow/non-pipe preserves the first-return -> writeback one-edge delay.
-  val lateQueue = Module(new Queue(new L1DLate, 2, pipe = false, flow = false))
+  val lateQueue = Module(new flow.util.RegisteredPairQueue(new L1DLate, pipe = false))
   lateQueue.io.enq <> io.late
   val lateReg = Wire(Valid(new L1DLate))
   lateReg.valid := lateQueue.io.deq.valid

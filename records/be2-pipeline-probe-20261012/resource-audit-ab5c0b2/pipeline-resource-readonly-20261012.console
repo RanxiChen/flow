@@ -1,0 +1,87 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/flow-four-resource-audit-20261012.tcl
+# set_param general.maxThreads 2
+# set out [lindex $argv 1]
+# file mkdir $out
+# open_checkpoint [lindex $argv 0]
+Command: open_checkpoint /home/chen/FUN/flow-runs/pipeline-ab5c0b2-20261012/four/gateware/xilinx_kcu105_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1686.441 ; gain = 0.000 ; free physical = 17331 ; free virtual = 46837
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2802.180 ; gain = 0.000 ; free physical = 15561 ; free virtual = 45768
+INFO: [Netlist 29-17] Analyzing 19348 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 20 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 4028.820 ; gain = 0.000 ; free physical = 17266 ; free virtual = 47463
+Restored from archive | CPU: 0.060000 secs | Memory: 1.812592 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 4028.820 ; gain = 0.000 ; free physical = 17266 ; free virtual = 47463
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4028.820 ; gain = 0.000 ; free physical = 17269 ; free virtual = 47466
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2100 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 92 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 2 instances
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 32 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 13 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 1800 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 16 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 64 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 1137cff02
+----- Checksum: PlaceDB: a7297169 ShapeSum: 6c538d99 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:49 ; elapsed = 00:00:50 . Memory (MB): peak = 4028.820 ; gain = 2342.379 ; free physical = 17269 ; free virtual = 47466
+# set fd [open "$out/cells.txt" w]
+# foreach {label pattern} {
+#   fetch_return */frontend*/cache/returns/ram_ext/*
+#   late_return */backend*/writeback/lateQueue/ram_ext/*
+#   csr */backend*/csrFile/*
+#   fetch_cache */frontend*/cache/*
+# } {
+#   set cells [get_cells -quiet -hierarchical -filter "IS_PRIMITIVE == 1 && NAME =~ $pattern"]
+#   puts $fd "GROUP $label cells=[llength $cells]"
+#   array unset counts
+#   foreach c $cells {
+#     set ref [get_property REF_NAME $c]
+#     if {![info exists counts($ref)]} {set counts($ref) 0}
+#     incr counts($ref)
+#   }
+#   foreach ref [lsort [array names counts]] {puts $fd "REF $ref $counts($ref)"}
+#   set n 0
+#   foreach c $cells {
+#     set ref [get_property REF_NAME $c]
+#     if {[string match LUT* $ref] || [string match RAM* $ref]} {
+#       puts $fd "CELL $ref $c"
+#       incr n
+#       if {$n >= 50} {break}
+#     }
+#   }
+#   if {[llength $cells] > 0} {report_property -all [lindex $cells 0] -file "$out/$label-property.txt"}
+# }
+# close $fd
+# puts "FLOW_READONLY_AUDIT_DONE $out"
+FLOW_READONLY_AUDIT_DONE /home/chen/FUN/flow-runs/pipeline-resource-readonly-20261012
+# close_design
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 11:38:56 2026...
