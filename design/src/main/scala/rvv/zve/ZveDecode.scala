@@ -24,9 +24,9 @@ object ZveDecode {
     val sew=vt(5,3)
     val lmul=Mux(vt(2),vt(2,0).asSInt,vt(1,0).zext).pad(6)
     val memoryWidth=Mux(f3 === 0.U,0.U,f3-4.U)(1,0)
-    d.whole := memory && x(27,26) === 0.U && x(24,20) === 8.U
+    val wholeMemory=memory && x(27,26) === 0.U && x(24,20) === 8.U
     val wholeMove=is(ZveOp.vmv1r,ZveOp.vmv2r,ZveOp.vmv4r,ZveOp.vmv8r)
-    d.whole := d.whole || wholeMove
+    d.whole := wholeMemory || wholeMove
     val maskMemory=memory && x(27,26) === 0.U && x(24,20) === 11.U
     d.maskSources := is(ZveOp.vmand,ZveOp.vmandn,ZveOp.vmor,ZveOp.vmorn,ZveOp.vmxor,
       ZveOp.vmnand,ZveOp.vmnor,ZveOp.vmxnor,ZveOp.vcpop,ZveOp.vfirst,ZveOp.vmsbf,

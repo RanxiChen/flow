@@ -3,8 +3,17 @@ package flow.rvv.zve
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
+import svsim.{CommonCompilationSettings, CommonSettingsModifications}
+import flow.fpu.BreezeFpSources
 
 class ZveFpArithmeticSpec extends AnyFreeSpec with ChiselSim {
+  override implicit def commonSettingsModifications: CommonSettingsModifications = {
+    val inherited=super.commonSettingsModifications
+    (settings: CommonCompilationSettings) => {
+      val base=inherited(settings)
+      base.copy(includeDirs=Some((base.includeDirs.getOrElse(Seq.empty) :+ BreezeFpSources.includeDir.toString).distinct))
+    }
+  }
   private def boxed(f: Float): BigInt = (BigInt("ffffffff",16)<<32) | BigInt(java.lang.Float.floatToRawIntBits(f)&0xffffffffL)
   "real FPnew FMA preserves fused precision and suppresses inactive invalid operations" in {
     simulate(new ZveFpBatchHarness(8,4,0)) { d =>
