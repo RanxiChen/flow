@@ -114,6 +114,7 @@ assert sum(int(x["errors"]) + int(x["skipped"]) for x in report["xml"]) == 0
 assert (root / "run.exit").read_text().strip() == "1"
 report["verdict"] = "BACKEND_PIPELINING_PASS__WHOLE_CORE_THROUGHPUT_FAIL"
 report["hashes"] = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                    for p in root.iterdir() if p.is_file() and p.name != "analysis.json"}
+                    for p in root.iterdir() if p.is_file() and
+                    p.name not in ("analysis.json", "audit.console", "audit.exit")}
 (root / "analysis.json").write_text(json.dumps(report, indent=2) + "\n")
 print(json.dumps({"verdict": report["verdict"], "whole_core": report["whole_core"]}, indent=2))

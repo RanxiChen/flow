@@ -135,7 +135,6 @@
   "hashes": {
     "java.txt": "35bc3ade5fd02a3a95bef3272a0f30718c0521e2f799a3d307173aa4b9340d7e",
     "source-sha.txt": "b27b45bd336d9c823516926cf07839a3fecf68b6877a47d1b26f9bf8be50dbed",
-    "audit.console": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "cluster-summary.csv": "d9aa408b1a1bfe6e9b8d8d9cf63085907bac91b8ec2d54f3f3e2ce78f044bfc3",
     "verilator.txt": "f65388ee388c80a7f798f93e5af558c21b4b69a141d712fbb1ef2f8a03ca75a7",
     "run.console": "81ee439f48f3b3565cfe4dd863453c5d95ff544dcbf6b7ebf7bc5f3289184822",
