@@ -48,3 +48,5 @@
 删除后首轮编译源`f70f35664c471fb89b39edd6313450b64973ff8c`在Alan exit=1：`BackendSoc3cSpec`遗留一个旧`Soc3cSkidBackendFixture`引用。失败日志保留于`/home/chen/FUN/flow-runs/pipeline-minimum-f70f356-20261012.console`；这是删除遗漏，尚未执行运行时测试，不是主机不可用。后续源清理该入口后重跑。
 
 接线复查补充裁定：预测训练和EX恢复必须分别持有自己的`kind`。引入训练FIFO后，原独立前端共用的`conditional`读取FIFO队头，不再代表当前EX解析指令。回归源`d6eb39e56fe0de0261f72f7e4827a0df5f9e407e`在Alan的独立cwd `/home/chen/FUN/flow-pipeline-recovery-repro-20261012`已复现：较老JAL训练排队、当前条件分支实际taken且before-history=5，恢复应为11，却得到5。原始失败保留`/home/chen/FUN/flow-runs/pipeline-recovery-repro-d6eb39e-20261012/`。修正训练类型只用于PHT/BTB入队，EX类型只用于即拍GHR恢复；追加反向条件分支→JAL恢复检查。保持FIFO容量、ID/EX协议及既有golden不变，后续同一回归核对修正。
+
+部署裁定：保留用户已经要求的单核ILA、tandem及总线监控器。`build_sd.sh single <fresh-output> --prepare-only --debug`生成相应新流水前端的调试单核；四核和RVV使用原生产观察配置。收集器只在普通单核明确debug=true/tandem=true且匹配LTX/probe-map存在时允许这两个观察标记与其他产品不同，所有核心/缓存/时钟等资源字段继续严格一致；不更改CPU ISA/golden或时序门禁。新`bind-production.py`逐项核对不可变RTL快照的hash、必须出现新前端与BE2后端、不得含旧前端模块、SD coherent DMA及真实BIOS/ROM字节绑定，避免使用之前生成的旧CPU RTL。

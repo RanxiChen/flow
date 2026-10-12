@@ -112,6 +112,12 @@ def main():
             if actual['bytes'] != expected['bytes'] or actual['sha256'] != expected['sha256']:
                 raise ValueError(f'{profile}: boot image changed: {name}')
         configs[profile] = profile_config(hardware / 'cluster-profile.txt')
+        if configs[profile].get('debug') == 'true':
+            if profile != 'single' or configs[profile].get('tandem') != 'true':
+                raise ValueError(f'{profile}: debug requires the authorized single-hart tandem build')
+            for name in ('gateware/xilinx_kcu105.ltx', 'ila-probes.json'):
+                if not (hardware / name).is_file() or not (hardware / name).stat().st_size:
+                    raise ValueError(f'{profile}: missing matching ILA artifact: {name}')
         products[profile] = {'source_sha': expected_source, 'scalar_base_source_sha': args.source_sha,
                              'hardware_input': str(hardware.resolve()),
                              'software_input': str(software.resolve()), 'build': binding,
@@ -139,6 +145,11 @@ def main():
             products[profile]['physical_candidate'] = candidate
     scalar_derived = {'profile', 'nCores', 'idBits'}
     rvv_changes = {'profile', 'idBits', 'rvv', 'memoryBits'}
+    # User requested ILA/tandem on the ordinary single hart. These flags
+    # describe passive observation; all compute/cache/clock fields still match.
+    if configs['single'].get('debug') == 'true':
+        scalar_derived |= {'debug', 'tandem'}
+        rvv_changes |= {'debug', 'tandem'}
     for key in configs['four'].keys() | configs['single'].keys():
         if key not in scalar_derived and configs['four'].get(key) != configs['single'].get(key):
             raise ValueError(f'Ordinary single hart differs from the four-hart configuration: {key}')
@@ -152,6 +163,9 @@ def main():
         destination = args.output / profile
         destination.mkdir()
         shutil.copy2(hardware / 'gateware/xilinx_kcu105.bit', destination / f'be2-{profile}-sd.bit')
+        if configs[profile].get('debug') == 'true':
+            shutil.copy2(hardware / 'gateware/xilinx_kcu105.ltx', destination / f'be2-{profile}-sd.ltx')
+            shutil.copy2(hardware / 'ila-probes.json', destination / 'ila-probes.json')
         shutil.copy2(hardware / 'software/bios/bios.bin', destination / 'bios.bin')
         shutil.copy2(hardware / 'gateware/xilinx_kcu105_rom.init', destination / 'bios-rom.init')
         for name in ('csr.json', 'cluster-profile.txt', 'build-binding.json', 'platform.json'):

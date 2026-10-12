@@ -2,9 +2,10 @@
 # Run on the selected, preflighted hardware host. Build only; no programmer/SD writes.
 set -Eeuo pipefail
 flow_root=$(cd -- "$(dirname -- "$0")/../.." && pwd)
-profile=${1:?usage: build_sd.sh four|single|single-rvv ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only]}
+profile=${1:?usage: build_sd.sh four|single|single-rvv ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only] [--debug]}
 output=${2:?absolute fresh output required}
 mode=${3:---all}
+debug=${4:-}
 case "$profile" in
     four) rtl_profile=small; cpu=breeze;;
     single) rtl_profile=single; cpu=breeze-tiny;;
@@ -13,6 +14,18 @@ case "$profile" in
 esac
 case "$output" in /*) ;; *) echo 'Output must be absolute' >&2; exit 2;; esac
 case "$mode" in --all|--prepare-only|--vivado-only) ;; *) exit 2;; esac
+case "$debug" in ''|--debug) ;; *) exit 2;; esac
+if [[ -n "$debug" && "$profile" != single ]]; then
+    echo '--debug requires the single product' >&2; exit 2
+fi
+features=coherent-dma
+rtl_variant=production/cpu
+target_options=()
+if [[ "$debug" == --debug ]]; then
+    features='tandem fpga-debug coherent-dma'
+    rtl_variant=tandem/fpga-debug
+    target_options+=(--debug)
+fi
 stage=prepare
 finish() {
     result=$?
@@ -31,13 +44,14 @@ if [[ "$mode" != --vivado-only ]]; then
     cp "$flow_root/config/breeze_mcu_platform.json" "$output/platform.json"
     printf '%s\n' "$profile" > "$output/product-profile.txt"
     cd "$flow_root/design"
-    "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile gshare linux coherent-dma" \
+    "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile gshare linux $features" \
         2>&1 | tee "$output/rtl-generation.log"
     cd "$flow_root"
     "${PYTHON:-python3}" fpga/kcu105/target.py --cpu-type "$cpu" --with-sdcard \
+        "${target_options[@]}" \
         --sys-clk-freq 100000000 --vivado-threads "${VIVADO_THREADS:-4}" \
         --output-dir "$output" 2>&1 | tee "$output/prepare.log"
-    cp "design/build/rtl/axi-cluster/$rtl_profile/gshare/linux/production/cpu/coherent-dma/cluster-profile.txt" \
+    cp "design/build/rtl/axi-cluster/$rtl_profile/gshare/linux/$rtl_variant/coherent-dma/cluster-profile.txt" \
         "$output/cluster-profile.txt"
     touch "$output/prepared"
     echo 0 > "$output/prepare-exit-code.txt"
