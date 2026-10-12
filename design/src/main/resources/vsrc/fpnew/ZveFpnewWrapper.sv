@@ -85,5 +85,5 @@ module ZveFpnewWrapper #(parameter int TAG_WIDTH=16, KIND=2) (
     .busy_o,
     .early_valid_o  (unused_early_valid)
   );
-  assign result_o = WIDTH == 64 ? result_bits : {32'hffffffff, result_bits[31:0]};
+  assign result_o = WIDTH == 64 ? 64'(result_bits) : {32'hffffffff, result_bits[31:0]};
 endmodule
