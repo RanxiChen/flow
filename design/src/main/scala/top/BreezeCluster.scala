@@ -2,16 +2,14 @@ package flow.top
 
 import chisel3._
 import flow.backend.BreezeBackend
-import flow.buffer.FetchBuffer
 import flow.bus._
 import flow.coherence._
 import flow.config.BreezeClusterConfig
-import flow.frontend.{BreezeFrontend, BreezeFrontendBoundary}
+import flow.frontend.{BreezeFrontendPipeline, BreezeFrontendPipelineParams}
 import flow.interface.TracePayload
 import flow.l1d.{L1DCache, L1DEvents}
-import flow.l1i.{FetchTlbClient, L1IClient}
+import flow.l1i.L1IClient
 import flow.l2.{L2Events, L2Home}
-import flow.mmu.sv39.Sv39Mmu
 import flow.platform.BreezeMcuPlatform
 
 /** Native memory-system connection boundary. Cache miss/replay execution is
@@ -51,14 +49,11 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
   for (h <- 0 until p.nCores) {
     val backend = Module(new BreezeBackend(coreCfg.backendCfg, hartId = h))
     io.backendObservation.foreach(_(h) := backend.io.observe)
-    val frontend = Module(new BreezeFrontend(coreCfg.frontendCfg, memGeometry = mem))
-    val buffer = Module(new FetchBuffer(64, 6, coreCfg.backendCfg.ghrLength))
-    val frontendBoundary = Module(new BreezeFrontendBoundary(coreCfg.backendCfg.ghrLength))
+    val frontend = Module(new BreezeFrontendPipeline(mem,
+      BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)), backendConnected = true))
     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, withEarlyCancel = true))
     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
     val l1i = Module(new L1IClient(mem))
-    val mmu = Module(new Sv39Mmu(withPmpCandidate = true))
-    val fetchTlb = Module(new FetchTlbClient(withPmpCandidate = true))
 
     backend.io.resetAddr := io.resetAddr
     backend.io.machineSoftwareInterrupt := io.msip(h)
@@ -67,42 +62,14 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     backend.io.externalInterrupts := io.externalInterrupts(h)
     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
     backend.io.l1d <> l1d.io.core
-    backend.io.mmuIdle := mmu.io.idle
-    frontend.io.resetAddr := io.resetAddr
-    frontendBoundary.io.fast := backend.io.frontendFastRedirect
-    frontendBoundary.io.slow := backend.io.frontendSlowRedirect
-    frontend.io.beRedirect := frontendBoundary.io.applied
-    frontend.io.btbUpdate := backend.io.frontendBtbUpdate
-    frontend.io.phtUpdate := backend.io.frontendPhtUpdate
-    frontend.io.ghrUpdate := backend.io.frontendGhrUpdate
-    buffer.io.in <> frontend.io.fetchBuffer
-    buffer.io.flush := frontendBoundary.io.applied.flush
-    frontendBoundary.io.in <> buffer.io.out
-    backend.io.fetchBuffer <> frontendBoundary.io.out
+    backend.io.mmuIdle := frontend.io.mmuIdle
+    BreezePipelineLink(backend, frontend)
 
     val context = backend.io.mmuContext
-    mmu.io.csr.sv39 := (if (coreCfg.enableMmu) context.satp(63, 60) === 8.U else false.B)
-    mmu.io.csr.asid := context.satp(59, 44)
-    mmu.io.csr.rootPpn := context.satp(43, 0)
-    mmu.io.csr.priv := context.privilege
-    mmu.io.csr.mprv := context.mprv; mmu.io.csr.mpp := context.mpp
-    mmu.io.csr.sum := context.sum; mmu.io.csr.mxr := context.mxr
-    mmu.io.sfence.valid := backend.io.sfence.valid
-    mmu.io.sfence.rs1Nz := backend.io.sfence.useVaddr
-    mmu.io.sfence.rs2Nz := backend.io.sfence.useAsid
-    mmu.io.sfence.vaddr := backend.io.sfence.vaddr
-    mmu.io.sfence.asid := backend.io.sfence.asid
-    mmu.io.dtlb <> l1d.io.tlb
-    l1d.io.ptw <> mmu.io.ptwMem
-    fetchTlb.io.tlb <> mmu.io.itlb
-    fetchTlb.io.context := context
-    fetchTlb.io.kill := frontendBoundary.io.applied.flush
-    fetchTlb.io.block := backend.io.translationBlocked
-    fetchTlb.io.request <> frontend.io.translateReq
-    frontend.io.translateRsp <> fetchTlb.io.response
-
-    l1i.io.demand <> frontend.io.nextLevelReq
-    frontend.io.nextLevelRsp <> l1i.io.demandRsp
+    l1d.io.tlb <> frontend.io.dtlb.get
+    l1d.io.ptw <> frontend.io.ptwMem
+    l1i.io.demand <> frontend.io.refillReq
+    frontend.io.refillRsp <> l1i.io.demandRsp
     // No prefetch trigger or installation contract exists in the frontend.
     l1i.io.prefetch.valid := false.B
     l1i.io.prefetch.bits := 0.U

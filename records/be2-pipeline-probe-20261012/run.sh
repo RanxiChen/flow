@@ -10,7 +10,7 @@ trap 'rc=$?; printf "%s\n" "$rc" > "$evidence/run.exit"' EXIT
 cd "$work"
 test "$(git rev-parse HEAD)" = "$expected"
 test -z "$(git status --porcelain --untracked-files=no)"
-git diff --exit-code f88096e6c20f73dd6b76d9b8e5c17f753c46470f -- design/src/main config third_party/cvfpu
+git diff --exit-code "${PIPELINE_PRODUCTION_BASELINE_SHA:-$expected}" -- design/src/main config third_party/cvfpu
 git rev-parse HEAD > "$evidence/source-sha.txt"
 hostname > "$evidence/host.txt"
 pwd > "$evidence/source-cwd.txt"

@@ -88,6 +88,8 @@ class BE2FencePtwHarness(g: BreezeMemGeometry = BreezeMemGeometry.singleCore) ex
   val cache = Module(new L1DCache(g, withPmpCandidate = true))
   val dtlb = Module(new Sv39Mmu(withPmpCandidate = true))
   backend.io.fetchBuffer <> io.fetch
+  backend.io.frontendResolutionAvailable := true.B
+  backend.io.frontendResolve.ready := true.B
   backend.io.l1d <> cache.io.core
   backend.io.resetAddr := 0x400.U
   backend.io.machineTimerInterrupt := false.B

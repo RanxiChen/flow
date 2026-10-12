@@ -59,7 +59,7 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
   */
 class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
     p: BreezeFrontendPipelineParams = BreezeFrontendPipelineParams(),
-    mmuParams: Sv39MmuParams = Sv39MmuParams()) extends Module {
+    mmuParams: Sv39MmuParams = Sv39MmuParams(), backendConnected: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val resetPc = Input(UInt(64.W))
     val context = Input(new BreezeMmuContext(64))
@@ -68,11 +68,16 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val fenceI = Input(Bool())
     val sfence = Input(new SfenceIO)
     val resolve = Flipped(Decoupled(new PipelineResolution(p)))
+    val resolutionReserve = if(backendConnected) Some(Input(Bool())) else None
+    val resolutionAvailable = Output(Bool())
     val committedBranch = Flipped(Valid(Bool()))
     val instruction = Decoupled(new PipelineInstruction(p))
     val refillReq = new L1CacheMissReqIO(64)
     val refillRsp = new L1CacheMissRespIO(g.lineBytes * 8)
     val ptwMem = new PtwMemIO
+    val dtlb = if(backendConnected) Some(new TlbPortIO(withPmpCandidate = true)) else None
+    val mmuIdle = Output(Bool())
+    val hpm = Output(new BreezeHpmEvents)
     val idle = Output(Bool())
     val debug = Output(new Bundle {
       val f0Fire = Bool(); val f0Pc = UInt(64.W); val f1Fire = Bool(); val f2Fire = Bool()
@@ -94,9 +99,13 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   mmu.io.csr.priv := io.context.privilege; mmu.io.csr.mprv := io.context.mprv
   mmu.io.csr.mpp := io.context.mpp; mmu.io.csr.sum := io.context.sum; mmu.io.csr.mxr := io.context.mxr
   mmu.io.sfence := io.sfence
-  mmu.io.dtlb.req.valid := false.B
-  mmu.io.dtlb.req.bits := 0.U.asTypeOf(new TlbReq)
-  mmu.io.dtlb.kill := false.B
+  if(backendConnected) { io.dtlb.get <> mmu.io.dtlb }
+  else {
+    mmu.io.dtlb.req.valid := false.B
+    mmu.io.dtlb.req.bits := 0.U.asTypeOf(new TlbReq)
+    mmu.io.dtlb.kill := false.B
+  }
+  io.mmuIdle := mmu.io.idle
   io.ptwMem <> mmu.io.ptwMem
   val cache = Module(new BreezeViptICache(g, p, mmuParams.itlb))
   val predictor = Module(new BreezePipelinePredictor(p))
@@ -107,19 +116,45 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   io.instruction <> queue.io.deq
 
   // Resolve accepts only when all required training records can be retained.
-  val conditional = io.resolve.bits.kind === 1.U
-  val updatesBtb = io.resolve.bits.kind =/= 0.U && (!conditional || io.resolve.bits.taken)
-  io.resolve.ready := (!conditional || predictor.io.phtUpdate.ready) &&
+  // ID reserves a record before EX. Accepted EX resolution immediately owns
+  // redirect/history/RAS effects; its training record stays until both banks
+  // accept it. Training backpressure affects ID admission, never EX advance.
+  val training = if(backendConnected) Some(Module(new Queue(new PipelineResolution(p), 4))) else None
+  val feedback = training.map(_.io.deq).getOrElse(io.resolve)
+  val conditional = feedback.bits.kind === 1.U
+  val updatesBtb = feedback.bits.kind =/= 0.U && (!conditional || feedback.bits.taken)
+  feedback.ready := (!conditional || predictor.io.phtUpdate.ready) &&
     (!updatesBtb || predictor.io.btbUpdate.ready) && !io.redirect.valid
-  predictor.io.phtUpdate.valid := io.resolve.valid && conditional &&
+  io.resolutionAvailable := true.B
+  if(backendConnected) {
+    val used = RegInit(0.U(3.W))
+    val reserved = RegInit(0.U(3.W))
+    val reserve = io.resolutionReserve.get
+    val cancel = io.redirect.valid || io.fenceI
+    val release = Mux(cancel, reserved, io.resolve.fire.asUInt)
+    io.resolutionAvailable := used < 4.U && !cancel
+    training.get.io.enq <> io.resolve
+    // Suppress an unconsumed EX record at a global cancellation. Previously
+    // accepted training is retained, matching legal speculative training.
+    training.get.io.enq.valid := io.resolve.valid && !cancel
+    io.resolve.ready := training.get.io.enq.ready && !cancel
+    used := used + reserve.asUInt - training.get.io.deq.fire.asUInt - Mux(cancel, reserved, 0.U)
+    reserved := reserved + reserve.asUInt - release
+    when(reserve) { assert(io.resolutionAvailable, "unreserved branch feedback capacity") }
+    when(io.resolve.valid && !cancel) {
+      assert(reserved =/= 0.U && io.resolve.ready, "EX resolution lacks its ID reservation")
+    }
+    assert(used <= 4.U && reserved <= used)
+  }
+  predictor.io.phtUpdate.valid := feedback.valid && conditional &&
     (!updatesBtb || predictor.io.btbUpdate.ready) && !io.redirect.valid
-  predictor.io.phtUpdate.bits.index := io.resolve.bits.phtIndex
-  predictor.io.phtUpdate.bits.taken := io.resolve.bits.taken
-  predictor.io.btbUpdate.valid := io.resolve.valid && updatesBtb &&
+  predictor.io.phtUpdate.bits.index := feedback.bits.phtIndex
+  predictor.io.phtUpdate.bits.taken := feedback.bits.taken
+  predictor.io.btbUpdate.valid := feedback.valid && updatesBtb &&
     (!conditional || predictor.io.phtUpdate.ready) && !io.redirect.valid
-  predictor.io.btbUpdate.bits.pc := io.resolve.bits.eventPc
-  predictor.io.btbUpdate.bits.target := io.resolve.bits.target
-  predictor.io.btbUpdate.bits.kind := io.resolve.bits.kind
+  predictor.io.btbUpdate.bits.pc := feedback.bits.eventPc
+  predictor.io.btbUpdate.bits.target := feedback.bits.target
+  predictor.io.btbUpdate.bits.kind := feedback.bits.kind
   predictor.io.btbUpdate.bits.invalidate := false.B
   val resolvedRedirect = io.resolve.fire && io.resolve.bits.incorrect
   val globalCancel = io.redirect.valid || io.fenceI
@@ -366,6 +401,9 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   cache.io.request.bits.history := Mux(cache.io.f1Prediction.valid, earlyHistory, forecastHistory)
   when(f2Fire && carryValid) { assert(w.pc === carryPc + 2.U, "noncontiguous RVC continuation") }
   io.idle := cache.io.idle && mmu.io.idle && queue.io.empty && !carryValid
+  io.hpm := 0.U.asTypeOf(io.hpm)
+  io.hpm.icacheAccess := cache.io.request.fire
+  io.hpm.icacheMiss := cache.io.refillReq.req
   io.debug.f0Fire := cache.io.request.fire; io.debug.f0Pc := pc
   io.debug.f1Fire := cache.io.f1Prediction.valid; io.debug.f2Fire := f2Fire
   io.debug.f1Redirect := f1Redirect; io.debug.f2Redirect := f2Redirect

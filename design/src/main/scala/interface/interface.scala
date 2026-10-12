@@ -139,6 +139,10 @@ class FrontendPredInfo(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundl
     val predTaken = Bool()
     val predPc = UInt(VLEN.W)
     val phtIdx = UInt(BranchPredictConst.phtIdxWidth(ghrLength).W)
+    val eventPc = UInt(VLEN.W)
+    val historyBefore = UInt(ghrLength.max(2).W)
+    val rasPush = Bool()
+    val rasPop = Bool()
 }
 
 class BreezePHTPredictReq(val vlen: Int, val ghrLength: Int) extends Bundle {

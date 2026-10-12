@@ -10,6 +10,7 @@ import flow.multiplier.MulUnit
 import flow.fpu._
 import flow.platform.BreezeMcuPlatform
 import flow.rvv._
+import flow.frontend.{BreezeFrontendPipelineParams, PipelineResolution}
 
 /** Metadata for MEM/WB, not a completion queue. Arithmetic stays in its source. */
 class Stage(val cfg: BackendConfig) extends Bundle {
@@ -52,6 +53,7 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val vectorVl = cfg.rvv.map(p => UInt(p.lengthBits.W))
   val vectorType = cfg.rvv.map(_ => UInt(64.W))
   val predictionMiss = Bool()
+  val branchTaken = Bool()
 }
 
 /** Five-stage backend: ID/EX/MEM/PERM/WB. EX accepts, WB commits, W2/lateReg write the RFs. */
@@ -72,6 +74,11 @@ class BreezeBackend(
     val externalInterrupts = Input(UInt(BreezeMcuPlatform.ExternalInterruptWidth.W))
     val supervisorExternalInterrupt = Input(Bool())
     val fetchBuffer = Flipped(Decoupled(new FrontendFetchBundle(64, cfg.ghrLength)))
+    val frontendResolutionAvailable = Input(Bool())
+    val frontendResolutionReserve = Output(Bool())
+    val frontendResolve = Decoupled(new PipelineResolution(BreezeFrontendPipelineParams(historyBits = cfg.ghrLength.max(2))))
+    val committedBranch = Valid(Bool())
+    val frontendRestart = Output(new FrontendRedirectIO(64))
     val l1d = Flipped(new L1DCoreIO)
     val cacheEarlyCancel = Output(Bool())
     val mmuIdle = Input(Bool())
@@ -489,6 +496,14 @@ class BreezeBackend(
   io.frontendSlowRedirect.valid := wbKill
   io.frontendSlowRedirect.flush := wbKill ||
     (wb.valid && wb.sfence && !RegNext(wb.valid && wb.sfence, false.B))
+  val permissionRestart = wbCommit && wb.csrWrite &&
+    (wb.csrAddr === CSRMAP.mstatus.U || wb.csrAddr === CSRMAP.pmpcfg0.U ||
+      wb.csrAddr === CSRMAP.pmpcfg2.U ||
+      (wb.csrAddr >= CSRMAP.pmpaddr0.U && wb.csrAddr < (CSRMAP.pmpaddr0 + 16).U))
+  io.frontendRestart := io.frontendSlowRedirect
+  io.frontendRestart.valid := wbKill || permissionRestart
+  io.frontendRestart.flush := io.frontendRestart.valid
+  when(permissionRestart && !wbKill) { io.frontendRestart.target := wb.nextPc }
   val btb = RegInit(0.U.asTypeOf(new BreezeBTBUpdateReq(64)))
   val pht = RegInit(0.U.asTypeOf(io.frontendPhtUpdate))
   val ghr = RegInit(0.U.asTypeOf(io.frontendGhrUpdate))
@@ -520,6 +535,23 @@ class BreezeBackend(
   io.frontendBtbUpdate.taken := btbPayloadVisible && btb.taken
   io.frontendPhtUpdate := pht
   io.frontendGhrUpdate := ghr
+  val exControl = ex.ctrl.bru_inst || ex.ctrl.redir_inst || ex.pred.predType =/= FrontendPredType.NONE || ex.pred.predTaken
+  io.frontendResolve.valid := exLegal && exAdvance && !wbKill && !io.hartFatal && exControl
+  io.frontendResolve.bits.eventPc := ex.pred.eventPc
+  io.frontendResolve.bits.target := jau.io.jmp_addr
+  io.frontendResolve.bits.nextPc := exNext
+  io.frontendResolve.bits.kind := Mux(ex.ctrl.bru_inst, 1.U,
+    Mux(ex.ctrl.redir_inst, Mux(ex.inst(6,0) === OPCODE.JALR, 3.U, 2.U), 0.U))
+  io.frontendResolve.bits.taken := taken
+  io.frontendResolve.bits.incorrect := branchRedirect
+  io.frontendResolve.bits.historyBefore := ex.pred.historyBefore
+  io.frontendResolve.bits.phtIndex := ex.pred.phtIdx
+  io.frontendResolve.bits.rasPush := ex.pred.rasPush
+  io.frontendResolve.bits.rasPop := ex.pred.rasPop
+  io.frontendResolve.bits.returnAddress := ex.pc + ex.instLen
+  when(io.frontendResolve.valid) { assert(io.frontendResolve.ready, "reserved EX branch feedback was backpressured") }
+  io.committedBranch.valid := wbCommit && wb.inst(6,0) === OPCODE.BRANCH
+  io.committedBranch.bits := wb.branchTaken
 
   val csrStateHazard = (ex.valid && ex.ctrl.csr_cmd =/= CSR_CMD.NOP.U) ||
     (mem.valid && mem.csrCmd =/= CSR_CMD.NOP.U) ||
@@ -638,10 +670,13 @@ class BreezeBackend(
       (mem.valid && mem.copro) || (perm.valid && perm.copro) || (wb.valid && wb.copro))
   val vectorCreditWait = idVectorLegal && !vector.map(_.io.available).getOrElse(true.B)
   val slowRedirectGap = RegNext(wbKill, false.B)
+  val idControl = ctrl.bru_inst || ctrl.redir_inst || io.fetchBuffer.bits.pred.predType =/= FrontendPredType.NONE || io.fetchBuffer.bits.pred.predTaken
+  val feedbackWait = idControl && !io.frontendResolutionAvailable
   io.fetchBuffer.ready := exAdvance && !slowRedirectGap && !killD && !scoreboard.io.hazard && !csrStateHazard && !csrRegHazard &&
-    !ordinaryHazard && !creditWait && !vectorMemoryWait && !vectorCreditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
+    !ordinaryHazard && !creditWait && !feedbackWait && !vectorMemoryWait && !vectorCreditWait && !(idCopro && coproUsed) && !serialInFlight && !soloInFlight && !serialIdWait && !soloIdWait && !writeback.io.idStarve && !branchRedirect && !wbKill &&
     !csrFile.io.interruptPending && !sleeping && !stopped && !io.hartFatal
   idLeave := io.fetchBuffer.fire
+  io.frontendResolutionReserve := idLeave && idControl
   when(reset.asBool || wbKill || io.hartFatal) { ex.valid := false.B }
     .elsewhen(exAdvance) { ex.valid := idLeave }
   // Kill invalidates ownership only. The wide EX payload capture must not
@@ -734,6 +769,7 @@ class BreezeBackend(
       mem.rs1 := ex.rs1_addr
       mem.rs2 := ex.rs2_addr
       mem.predictionMiss := redirected
+      mem.branchTaken := taken
       perm := mem
       when(!downHold) { wb := perm }
       when(!downHold && perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) {

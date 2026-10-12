@@ -49,10 +49,10 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         BreezeCoreConfig().useGShare mustBe true
         BreezeCoreConfig().frontendCfg.branchPredCfg.kind mustBe FrontendBranchPredictorKind.GShare
         BreezeCoreConfig().backendCfg.branchPredKind mustBe FrontendBranchPredictorKind.GShare
-        BreezeCoreConfig().backendCfg.ghrLength mustBe 8
+        BreezeCoreConfig().backendCfg.ghrLength mustBe 10
         BreezeFrontendConfig().branchPredCfg.kind mustBe FrontendBranchPredictorKind.GShare
         BackendConfig().branchPredKind mustBe FrontendBranchPredictorKind.GShare
-        BackendConfig().ghrLength mustBe 8
+        BackendConfig().ghrLength mustBe 10
         BreezeCoreConfigs.gshare().useGShare mustBe true
         BreezeCoreConfigs.gshare().frontendCfg.branchPredCfg.kind mustBe
             FrontendBranchPredictorKind.GShare

@@ -49,7 +49,7 @@ case object NoBranchPredictorConfig extends FrontendBranchPredictorConfig {
 }
 
 case class GShareBranchPredictorConfig(
-    override val ghrLength: Int = 8,
+    override val ghrLength: Int = 10,
     override val btbEntryNum: Int = 16
 ) extends FrontendBranchPredictorConfig {
     require(ghrLength > 0, "GShare ghrLength must be greater than 0")
@@ -74,7 +74,7 @@ case class BackendConfig(
     val VLEN: Int = 64,
     val PLEN: Int = 64,
     val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare,
-    val ghrLength: Int = 8,
+    val ghrLength: Int = 10,
     val enableTandem: Boolean = false,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
@@ -112,7 +112,7 @@ case class BreezeCoreConfig(
     val useFASE: Boolean = false,
     val enableTandem: Boolean = false,
     val useGShare: Boolean = true,
-    val gshareGhrLength: Int = 8,
+    val gshareGhrLength: Int = 10,
     val gshareBtbEntryNum: Int = 16,
     val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
     val enableCompressed: Boolean = false,
