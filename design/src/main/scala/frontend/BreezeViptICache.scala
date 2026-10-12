@@ -97,8 +97,12 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   val query = io.tlb.req.fire
   io.predictorQuery.valid := query
   io.predictorQuery.bits := selected
-  val rawTags = VecInit(tags.map(_.read(set(selected.pc), query)))
-  val rawData = VecInit(data.map(_.read(set(selected.pc), query)))
+  // SRAM reads are private until `query` records the F0 owner. Keep the
+  // physical read enable off same-cycle backend/F2 cancellation and ready
+  // feedback; a discarded read has no response or cache-state side effect.
+  val arrayRead = !waiting && !refillWrite
+  val rawTags = VecInit(tags.map(_.read(set(selected.pc), arrayRead)))
+  val rawData = VecInit(data.map(_.read(set(selected.pc), arrayRead)))
   when(query) { q := selected; qMeta := valid(set(selected.pc)) }
   val pmp = Module(new BreezeFetchPmp(tlbParams.ways + tlbParams.superpages + 1))
   pmp.io.fire := query; pmp.io.vaddr := selected.pc; pmp.io.context := io.context
@@ -170,7 +174,11 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   qValid := query && !failedQuery
   when(query && deferredValid && !retryValid) { deferredValid := false.B }
   when(complete || refillFault) { retryValid := false.B; refillFault := false.B }
-  when(complete && retryValid && deferredValid) {
+  // A deferred younger request cannot replay while retryValid is set. Its
+  // private history may be refreshed on each registered F1 candidate; the
+  // final successful candidate supplies the value used on replay. This keeps
+  // F2 cancellation and kill-qualified iTLB completion off this register CE.
+  when(qValid && retryValid && deferredValid) {
     // The younger request was accepted before the missed group could supply
     // history. Rehash it with the head's eventual F1 preview on replay.
     deferred.history := io.historyAfter
@@ -246,6 +254,7 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
     assert(!qValid || !refillFault, "ICache query and refill fault share a private write")
     when(count === 1.U) { assert(head =/= tail, "ICache private write aliases the visible head") }
   }
+  when(query) { assert(arrayRead, "F0 query without ICache array read") }
   when(quiesceReplayWhenBlocked.B && io.block) {
     assert(!io.tlb.req.fire, "SFENCE block must also stop deferred/retry translation admission")
   }
