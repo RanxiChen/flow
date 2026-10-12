@@ -1,0 +1,602 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Mon Oct 12 22:40:45 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_drc -file xilinx_kcu105_drc.rpt
+| Design       : xilinx_kcu105
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Fully Routed
+------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: checkpoint_xilinx_kcu105_synth
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max violations: <unlimited>
+             Violations found: 107
++-----------+----------+---------------------------------------------------------------------+------------+
+| Rule      | Severity | Description                                                         | Violations |
++-----------+----------+---------------------------------------------------------------------+------------+
+| BUFC-1    | Warning  | Input Buffer Connections                                            | 8          |
+| CFGBVS-1  | Warning  | Missing CFGBVS and CONFIG_VOLTAGE Design Properties                 | 1          |
+| DPIP-2    | Warning  | Input pipelining                                                    | 21         |
+| DPOP-3    | Warning  | PREG Output pipelining                                              | 3          |
+| DPOP-4    | Warning  | MREG Output pipelining                                              | 7          |
+| DPOR-2    | Warning  | Asynchronous load check                                             | 51         |
+| PDCN-1569 | Warning  | LUT equation term check                                             | 3          |
+| RTSTAT-10 | Warning  | No routable loads                                                   | 1          |
+| AVAL-155  | Advisory | enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND | 12         |
++-----------+----------+---------------------------------------------------------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+BUFC-1#1 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3/IBUFCTRL_INST (in IOBUFDSE3 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#2 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_1/IBUFCTRL_INST (in IOBUFDSE3_1 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#3 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_2/IBUFCTRL_INST (in IOBUFDSE3_2 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#4 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_3/IBUFCTRL_INST (in IOBUFDSE3_3 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#5 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_4/IBUFCTRL_INST (in IOBUFDSE3_4 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#6 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_5/IBUFCTRL_INST (in IOBUFDSE3_5 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#7 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_6/IBUFCTRL_INST (in IOBUFDSE3_6 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+BUFC-1#8 Warning
+Input Buffer Connections  
+Input buffer IOBUFDSE3_7/IBUFCTRL_INST (in IOBUFDSE3_7 macro) has no loads. It is recommended to have an input buffer drive an internal load.
+Related violations: <none>
+
+CFGBVS-1#1 Warning
+Missing CFGBVS and CONFIG_VOLTAGE Design Properties  
+Neither the CFGBVS nor CONFIG_VOLTAGE voltage property is set in the current_design.  Configuration bank voltage select (CFGBVS) must be set to VCCO or GND, and CONFIG_VOLTAGE must be set to the correct configuration voltage, in order to determine the I/O voltage support for the pins in bank 0.  It is suggested to specify these either using the 'Edit Device Properties' function in the GUI or directly in the XDC file using the following syntax:
+
+ set_property CFGBVS value1 [current_design]
+ #where value1 is either VCCO or GND
+
+ set_property CONFIG_VOLTAGE value2 [current_design]
+ #where value2 is the voltage provided to configuration bank 0
+
+Refer to the device configuration user guide for more information.
+Related violations: <none>
+
+DPIP-2#1 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#2 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#3 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#4 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#5 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#6 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#7 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#8 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#9 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#10 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__2 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#11 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__2 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#12 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__3 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__3/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#13 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__3 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__3/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#14 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#15 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#16 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#17 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#18 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__6 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__6/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#19 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__6 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__6/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#20 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPIP-2#21 Warning
+Input pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7 input BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+Related violations: <none>
+
+DPOP-3#1 Warning
+PREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+Related violations: <none>
+
+DPOP-3#2 Warning
+PREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+Related violations: <none>
+
+DPOP-3#3 Warning
+PREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+Related violations: <none>
+
+DPOP-4#1 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#2 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#3 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#4 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#5 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#6 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOP-4#7 Warning
+MREG Output pipelining  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7 multiplier stage BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+Related violations: <none>
+
+DPOR-2#1 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][0]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#2 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][10]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#3 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][11]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#4 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][12]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#5 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][13]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#6 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][14]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#7 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][15]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#8 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][16]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#9 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][1]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#10 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][2]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#11 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][3]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#12 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][4]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#13 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][5]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#14 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][6]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#15 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][7]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#16 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][8]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#17 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q_reg[product][9]). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#18 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][0]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#19 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][10]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#20 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][11]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#21 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][12]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#22 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][13]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#23 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][14]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#24 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][15]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#25 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][16]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#26 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][1]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#27 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][2]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#28 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][3]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#29 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][4]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#30 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][5]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#31 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][6]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#32 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][7]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#33 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][8]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#34 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][9]__0). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#35 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][0]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#36 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][10]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#37 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][11]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#38 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][12]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#39 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][13]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#40 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][14]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#41 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][15]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#42 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][16]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#43 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][1]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#44 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][2]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#45 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][3]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#46 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][4]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#47 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][5]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#48 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][6]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#49 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][7]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#50 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][8]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+DPOR-2#51 Warning
+Asynchronous load check  
+DSP BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 output is connected to registers with an asynchronous reset (BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q_reg[product][9]__3). This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+PDCN-1569#1 Warning
+LUT equation term check  
+Used physical LUT pin 'A1' of cell dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/temp_curid[31]_i_1 (pin dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/temp_curid[31]_i_1/I1) is not included in the LUT equation: 'O5=(A4*A3)+(A4*(~A3)*(~A2))+((~A4))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#2 Warning
+LUT equation term check  
+Used physical LUT pin 'A1' of cell dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.id_state[0]_i_1 (pin dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.id_state[0]_i_1/I0) is not included in the LUT equation: 'O6=(A6+~A6)*((A2))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+PDCN-1569#3 Warning
+LUT equation term check  
+Used physical LUT pin 'A5' of cell dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/temp_curid[31]_i_1 (pin dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/temp_curid[31]_i_1/I0) is not included in the LUT equation: 'O5=(A4*A3)+(A4*(~A3)*(~A2))+((~A4))'. If this cell is a user instantiated LUT in the design, please remove connectivity to the pin or change the equation and/or INIT string of the LUT to prevent this issue. If the cell is inferred or IP created LUT, please regenerate the IP and/or resynthesize the design to attempt to correct the issue.
+Related violations: <none>
+
+RTSTAT-10#1 Warning
+No routable loads  
+25 net(s) have no routable loads. The problem bus(es) and/or net(s) are dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD1/ctl_reg_en_2[1],
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i,
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gras.rsts/ram_empty_i,
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.wr/gwhf.whf/overflow,
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.wr_rst_reg[2],
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.wr/gwas.wsts/ram_full_i,
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.wr/gwhf.whf/overflow,
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.rd_rst_reg[0],
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.wr_rst_reg[2],
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD7_CTL/ctl_reg[2:0],
+dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD7_CTL/ctl_reg_en_2[1],
+dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_inst/TMS,
+dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_capture[0],
+dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_drck[0],
+dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_runtest[0]
+ (the first 15 of 23 listed nets/buses).
+Related violations: <none>
+
+AVAL-155#1 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_0_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#2 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_10_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#3 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_11_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#4 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_1_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#5 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_2_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#6 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_3_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#7 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_4_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#8 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_5_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#9 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_6_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#10 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_7_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#11 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_8_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+AVAL-155#12 Advisory
+enum_AMULTSEL_BMULTSEL_enum_DREG_ADREG_0_connects_CED_CEAD_RSTD_GND  
+BreezeClusterAxi/cluster/backend/mulUnit/tiles_9_1/dsp: DSP48E2 is not using the D port (AMULTSEL = A and BMULTSEL = B). For improved power characteristics, set DREG and ADREG to '1', tie CED, CEAD, and RSTD to logic '0'.
+Related violations: <none>
+
+

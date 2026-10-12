@@ -1,0 +1,1666 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source run-full-route.tcl
+# set gateware /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware
+# set source_snapshot /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/source-snapshot
+# set_param general.maxThreads 4
+# open_checkpoint $gateware/xilinx_kcu105_synth.dcp
+Command: open_checkpoint /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-retry2-20261012/single/gateware/xilinx_kcu105_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.492 ; gain = 0.000 ; free physical = 34777 ; free virtual = 53441
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.48 ; elapsed = 00:00:00.49 . Memory (MB): peak = 2535.715 ; gain = 0.000 ; free physical = 33387 ; free virtual = 52553
+INFO: [Netlist 29-17] Analyzing 8148 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 5 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3179.973 ; gain = 0.000 ; free physical = 32855 ; free virtual = 52021
+Restored from archive | CPU: 0.060000 secs | Memory: 1.813828 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3179.973 ; gain = 0.000 ; free physical = 32855 ; free virtual = 52021
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3275.863 ; gain = 0.000 ; free physical = 32784 ; free virtual = 51950
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2125 instances were transformed.
+  CFGLUT5 => CFGLUT5 (SRL16E, SRLC32E): 1432 instances
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 23 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 69 instances
+  IOBUFDSE3 => IOBUFDSE3 (DIFFINBUF, IBUFCTRL, INV, OBUFT_DCIEN(x2)): 8 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUF(x2)): 1 instance 
+  RAM16X1D => RAM32X1D (RAMD32(x2)): 3 instances
+  RAM256X1D => RAM256X1D (MUXF7(x4), MUXF8(x2), RAMD64E(x8)): 8 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 7 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 544 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 3 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 24 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 3c8d500f
+----- Checksum: PlaceDB: 244fb3ba ShapeSum: 183d9c55 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:22 ; elapsed = 00:00:23 . Memory (MB): peak = 3275.863 ; gain = 1582.371 ; free physical = 32784 ; free virtual = 51950
+# source $gateware/flow_sd_timing.tcl
+## set flow_sd_in [get_ports {sdcard_cmd sdcard_data[*]}]
+## set flow_sd_out [get_ports {sdcard_clk sdcard_cmd sdcard_data[*]}]
+## if {[llength $flow_sd_in] != 5 || [llength $flow_sd_out] != 6} {
+##     error "Unexpected SD ports; refusing broad timing exceptions"
+## }
+## set flow_sd_rx [get_cells -of_objects [all_fanout -flat -endpoints_only -from $flow_sd_in] -filter {IS_SEQUENTIAL}]
+## set flow_sd_tx [get_cells -of_objects [all_fanin -flat -startpoints_only -to $flow_sd_out] -filter {IS_SEQUENTIAL}]
+## if {[llength $flow_sd_rx] != 5 || [llength $flow_sd_tx] < 6 || [llength $flow_sd_tx] > 16} {
+##     error "Unexpected SD IO register topology: RX=$flow_sd_rx TX=$flow_sd_tx"
+## }
+## set_max_delay -datapath_only 10.0 -from $flow_sd_in -to $flow_sd_rx
+## set_max_delay -datapath_only 10.0 -from $flow_sd_tx -to $flow_sd_out
+## puts "FLOW_SD_TIMING RX=[llength $flow_sd_rx] TX=[llength $flow_sd_tx] IO_BUDGET_NS=10"
+FLOW_SD_TIMING RX=5 TX=11 IO_BUDGET_NS=10
+## proc flow_report_sd_timing {} {
+##     global flow_sd_in flow_sd_out flow_sd_rx flow_sd_tx
+##     report_timing -from $flow_sd_in -to $flow_sd_rx -max_paths 20 -file sd_input_paths.rpt
+##     report_timing -from $flow_sd_tx -to $flow_sd_out -max_paths 30 -file sd_output_paths.rpt
+##     report_timing -delay_type min -from $flow_sd_tx -to $flow_sd_out -max_paths 30 -file sd_output_min_paths.rpt
+##     report_exceptions -file sd_timing_exceptions.rpt
+##     set bad_in [get_timing_paths -from $flow_sd_in -to $flow_sd_rx -slack_lesser_than 0 -max_paths 1]
+##     set bad_out [get_timing_paths -from $flow_sd_tx -to $flow_sd_out -slack_lesser_than 0 -max_paths 1]
+##     if {[llength $bad_in] || [llength $bad_out]} {error "SD IO transport budget failed"}
+##     puts "FLOW_SD_IO_BUDGET_PASS (board assumptions still require confirmation)"
+## }
+# source $source_snapshot/soc2-bram-gate.tcl
+## proc d5_verify_owner {home blocks} {
+##     set addresses [get_pins -quiet -of_objects $blocks -filter {DIRECTION == IN && REF_PIN_NAME =~ ADDR*}]
+##     if {![llength $addresses]} { error "D5: RAM address collection empty for $home" }
+##     set roots [all_fanin -quiet -flat -to $addresses -startpoints_only]
+##     set owned [list]
+##     foreach root $roots {
+##         set cells [get_cells -quiet -of_objects $root]
+##         if {![llength $cells]} { error "D5: unowned RAM address port $root for $home" }
+##         foreach cell $cells {
+##             set ref [get_property REF_NAME $cell]
+##             if {$ref eq "GND" || $ref eq "VCC"} { continue }
+##             if {![string match "$home/*" [get_property NAME $cell]]} {
+##                 error "D5: RAM address root $root is outside owner $home"
+##             }
+##             lappend owned $root
+##         }
+##     }
+##     if {![llength $owned]} { error "D5: no registered RAM address roots for $home" }
+##     return [lsort -unique $owned]
+## }
+## set homes [get_cells -hierarchical -filter {REF_NAME =~ L2Home*}]
+## if {[llength $homes] == 0} { error "D5: no L2Home hierarchy after synthesis" }
+## set out [open soc2-l2-bram-gate.tsv w]
+## puts $out "hierarchy\tLUT\tFF\tRAMB36\tRAMB18"
+## foreach home $homes {
+##     set path [get_property NAME $home]
+##     set scopes [list "$path/*"]
+##     foreach array {data meta plruArr} {
+##         set scope "$path/$array/*"
+##         set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+##         if {![llength $blocks]} {
+##             set scope "[file dirname $path]/$array/ram/*"
+##             set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+##             if {![llength $blocks]} {
+##                 # Rebuilt hierarchy can lift a unique single-hart array all
+##                 # the way to the design root. The same exclusive registered
+##                 # address-owner check is mandatory for this fallback too.
+##                 set scope "$array/ram/*"
+##                 set blocks [get_cells -quiet -hierarchical -filter "NAME =~ $scope && (REF_NAME =~ RAMB36* || REF_NAME =~ RAMB18*)"]
+##             }
+##             if {![llength $blocks]} { close $out; error "D5: $path/$array has no RAMB primitive" }
+##             set roots [d5_verify_owner $path $blocks]
+##             lappend scopes $scope
+##             puts $out "# hoisted $array owner=$path address_roots=[join $roots ,]"
+##         }
+##         puts $out "# $array\t[join $blocks ,]"
+##     }
+##     set ownership [list]
+##     foreach scope $scopes { lappend ownership "NAME =~ $scope" }
+##     set selection "([join $ownership { || }])"
+##     set lut [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ LUT*"]]
+##     set ff [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ FD*"]]
+##     set b36 [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ RAMB36*"]]
+##     set b18 [llength [get_cells -hierarchical -filter "$selection && REF_NAME =~ RAMB18*"]]
+##     puts $out "$path\t$lut\t$ff\t$b36\t$b18"
+##     flush $out
+##     if {$b36 + $b18 == 0 || $lut >= 100000} {
+##         close $out
+##         error "D5: L2Home mapping failed: $path LUT=$lut RAMB36=$b36 RAMB18=$b18"
+##     }
+## }
+## close $out
+## puts "SOC2_D5_L2_BRAM_GATE_PASS"
+SOC2_D5_L2_BRAM_GATE_PASS
+# opt_design -directive default
+Command: opt_design -directive default
+INFO: [Vivado_Tcl 4-136] Directive used for opt_design is: default
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.72 . Memory (MB): peak = 3347.602 ; gain = 63.734 ; free physical = 32780 ; free virtual = 51946
+
+Starting Cache Timing Information Task
+Ending Cache Timing Information Task | Checksum: ac37a27f
+
+Time (s): cpu = 00:00:00.26 ; elapsed = 00:00:00.26 . Memory (MB): peak = 3347.602 ; gain = 0.000 ; free physical = 32780 ; free virtual = 51946
+
+Starting Logic Optimization Task
+
+Phase 1 Generate And Synthesize Debug Cores
+INFO: [Chipscope 16-329] Generating Script for core instance : dbg_hub 
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [IP_Flow 19-3806] Processing IP xilinx.com:ip:xsdbm:3.0 for cell dbg_hub_CV.
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 3609.398 ; gain = 0.000 ; free physical = 32144 ; free virtual = 51312
+Phase 1 Generate And Synthesize Debug Cores | Checksum: afdff16b
+
+Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3609.398 ; gain = 28.844 ; free physical = 32144 ; free virtual = 51312
+
+Phase 2 Retarget
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[eff_sub]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[special_result][mantissa][22]_i_3, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[shamt][0]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[shamt][0]_i_2, which resulted in an inversion of 54 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[shamt][3]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[addend][70]_i_2, which resulted in an inversion of 63 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[shamt][6]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_pre_adder_pipeline.pre_q[addend][43]_i_3, which resulted in an inversion of 20 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][2]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][2]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][3]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][3]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][4]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][4]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][5]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][5]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][6]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][6]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][7]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][7]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][8]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][8]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][9]_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_alignment_control_pipeline.align_q[exp_prod][9]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910/i_ct_vfdsu_top/x_ct_vfdsu_double/x_ct_vfdsu_srt/x_ct_vfdsu_srt_radix16_with_sqrt/vfdsu_ex4_rslt_denorm_i_1 into driver instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910/i_ct_vfdsu_top/x_ct_vfdsu_double/x_ct_vfdsu_srt/x_ct_vfdsu_srt_radix16_with_sqrt/vfdsu_ex4_rslt_denorm_i_2, which resulted in an inversion of 123 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/writeback/lateQueue/lateData_rd_isFp_i_1 into driver instance BreezeClusterAxi/cluster/backend/writeback/lateQueue/state[2]_i_4, which resulted in an inversion of 8 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/writeback/remainderReg[39]_i_69 into driver instance BreezeClusterAxi/cluster/backend/writeback/shiftReg[3]_i_21, which resulted in an inversion of 96 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/backend/writeback/shiftReg[5]_i_22 into driver instance BreezeClusterAxi/cluster/backend/writeback/shiftReg[3]_i_23, which resulted in an inversion of 9 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[14]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[14]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[16]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[16]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[18]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[18]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[30]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_0_2_ext/cpuTlbHeld_paddr[30]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[24]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[24]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[26]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[26]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[28]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_0_ext/cpuTlbHeld_paddr[28]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[17]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[17]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[19]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[19]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[20]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[20]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[21]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[21]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[22]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[22]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[23]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[23]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[25]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[25]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[27]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[27]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[29]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[29]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[31]_i_2 into driver instance BreezeClusterAxi/cluster/frontend/mmu/dtlb/mem_3_1_ext/cpuTlbHeld_paddr[31]_i_4, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/frontend/mmu/itlb/mem_1_0_ext/retry_history[9]_i_1 into driver instance BreezeClusterAxi/cluster/frontend/mmu/itlb/mem_1_0_ext/retry_history[9]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/initIdx[7]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/tags_0_0_ext/r_valid_i_2, which resulted in an inversion of 7 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/Memory_reg_i_4 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_i_94, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/localState[1]_i_2 into driver instance BreezeClusterAxi/cluster/l1d/miss/ps_setDirty_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/m_src_i_2 into driver instance BreezeClusterAxi/cluster/l1d/miss/backend_io_hpmEvents_REG_dcacheMiss_i_2, which resulted in an inversion of 26 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[10]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_30__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[11]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_36__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[12]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_34__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[13]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_40__29, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[14]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_38__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[15]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_45, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[16]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_42__8, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[17]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_48, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[18]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_46, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[19]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_52, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[20]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_50, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[21]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_11__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[22]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_9__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[23]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_15, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[24]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_13__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[25]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_20, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[26]_i_2 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_14_21_i_17, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[7]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_28__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[8]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_26__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/miss/wbLineAddr[9]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/miss/Memory_reg_0_15_0_13_i_32__30, which resulted in an inversion of 36 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/probe/m_src_i_1 into driver instance BreezeClusterAxi/cluster/l1d/probe/backend_io_hpmEvents_REG_dcacheMiss_i_3, which resulted in an inversion of 53 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l1d/probe/wbLineAddr[26]_i_1 into driver instance BreezeClusterAxi/cluster/l1d/probe/wbBeat[1]_i_4, which resulted in an inversion of 47 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l2/meta/ram/s2_hitWay[0]_i_1 into driver instance BreezeClusterAxi/cluster/l2/meta/ram/mem_reg_0_i_31__0, which resulted in an inversion of 8 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l2/meta/ram/s2_hitWay[1]_i_1 into driver instance BreezeClusterAxi/cluster/l2/meta/ram/mem_reg_0_i_30__0, which resulted in an inversion of 8 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l2/slots/probeArb/j_slot_i_1 into driver instance BreezeClusterAxi/cluster/l2/slots/probeArb/probeServed_0_i_2, which resulted in an inversion of 35 pins
+INFO: [Opt 31-1287] Pulled Inverter BreezeClusterAxi/cluster/l2/slots/reqNext[1]_i_2 into driver instance BreezeClusterAxi/cluster/l2/slots/reqNext[1]_i_5, which resulted in an inversion of 30 pins
+INFO: [Opt 31-1287] Pulled Inverter OSERDESE3_25_i_1 into driver instance OSERDESE3_22_i_5, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter OSERDESE3_25_i_2 into driver instance OSERDESE3_22_i_7, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter OSERDESE3_25_i_3 into driver instance OSERDESE3_22_i_9, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter OSERDESE3_25_i_4 into driver instance OSERDESE3_20_i_9, which resulted in an inversion of 4 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[1]_i_1 into driver instance core_crc7_inserter_reg0[4]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[2]_i_1 into driver instance core_crc7_inserter_reg0[5]_i_2, which resulted in an inversion of 4 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[3]_i_1 into driver instance core_crc7_inserter_reg0[6]_i_7, which resulted in an inversion of 4 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[4]_i_1 into driver instance core_cmd_response_status[4]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[5]_i_1 into driver instance core_cmd_response_status[5]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter core_cmd_response_status[6]_i_1 into driver instance core_cmd_response_status[6]_i_2, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter csr_bankarray_interface1_bank_bus_dat_r[8]_i_1 into driver instance ODELAYE3_i_4, which resulted in an inversion of 66 pins
+INFO: [Opt 31-1287] Pulled Inverter csr_bankarray_interface2_bank_bus_dat_r[31]_i_1 into driver instance core_block_count_storage[31]_i_3, which resulted in an inversion of 22 pins
+INFO: [Opt 31-1287] Pulled Inverter csr_bankarray_interface3_bank_bus_dat_r[31]_i_1 into driver instance sdram_phaseinjector1_command_storage[7]_i_2, which resulted in an inversion of 19 pins
+INFO: [Opt 31-1287] Pulled Inverter csr_bankarray_interface4_bank_bus_dat_r[31]_i_1 into driver instance breezekcu105soc_timer_load_storage[31]_i_2, which resulted in an inversion of 9 pins
+INFO: [Opt 31-1287] Pulled Inverter csr_bankarray_interface5_bank_bus_dat_r[7]_i_1 into driver instance csr_bankarray_interface5_bank_bus_dat_r[7]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-138] Pushed 8 inverter(s) to 168 load pin(s).
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[0].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[10].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[11].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[12].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[13].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[14].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[15].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[16].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[17].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[18].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[19].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[1].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[20].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[21].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[22].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[23].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[24].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[25].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[26].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[27].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[28].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[29].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[2].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[30].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[31].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[32].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[33].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[34].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[35].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[36].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[37].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[38].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[39].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[3].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[40].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[41].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[42].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[43].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[44].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[45].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[46].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[47].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[48].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[49].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[4].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[50].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[51].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[52].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[53].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[54].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[55].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[56].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[5].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[6].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[7].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[8].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[0].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[9].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[0].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[10].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[11].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[12].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[13].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[14].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[15].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[16].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[17].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[18].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[19].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[1].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[20].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[21].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[22].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[23].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[24].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[25].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[26].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[27].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[28].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[29].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[2].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[30].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[31].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[32].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[33].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[34].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[35].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[36].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[37].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[38].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[39].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[3].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[40].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[41].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[42].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[43].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[44].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[45].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[46].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[47].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Opt 31-422] The CLOCK_DOMAINS attribute on the BRAM cell breeze_ila/inst/ila_core_inst/ila_trace_memory_inst/SUBCORE_RAM.BLK_MEM_GEN[1].trace_block_memory/inst_blk_mem_gen/gnbram.gnativebmg.native_blk_mem_gen/valid.cstr/ramloop[48].ram.r/prim_noinit.ram/DEVICE_8SERIES.NO_BMM_INFO.SDP.SIMPLE_PRIM36.ram has been changed from INDEPENDENT to COMMON to match the clocking topology used for the BRAM.
+INFO: [Common 17-14] Message 'Opt 31-422' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 2 Retarget | Checksum: 128001d4e
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:01:03 . Memory (MB): peak = 3609.398 ; gain = 28.844 ; free physical = 32332 ; free virtual = 51499
+INFO: [Opt 31-389] Phase Retarget created 68 cells and removed 162 cells
+INFO: [Opt 31-1021] In phase Retarget, 257 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 3 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 3 Constant propagation | Checksum: f404319a
+
+Time (s): cpu = 00:00:50 ; elapsed = 00:01:03 . Memory (MB): peak = 3609.398 ; gain = 28.844 ; free physical = 32332 ; free virtual = 51499
+INFO: [Opt 31-389] Phase Constant propagation created 1 cells and removed 17 cells
+INFO: [Opt 31-1021] In phase Constant propagation, 337 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 4 Sweep
+Phase 4 Sweep | Checksum: 957c1baf
+
+Time (s): cpu = 00:00:51 ; elapsed = 00:01:05 . Memory (MB): peak = 3609.398 ; gain = 28.844 ; free physical = 32339 ; free virtual = 51507
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 43 cells
+INFO: [Opt 31-1021] In phase Sweep, 10408 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 5 BUFG optimization
+INFO: [Opt 31-1077] Phase BUFG optimization inserted 0 global clock buffer(s) for CLOCK_LOW_FANOUT.
+Phase 5 BUFG optimization | Checksum: dc628cbe
+
+Time (s): cpu = 00:00:53 ; elapsed = 00:01:05 . Memory (MB): peak = 3633.410 ; gain = 52.855 ; free physical = 32356 ; free virtual = 51523
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+INFO: [Opt 31-1021] In phase BUFG optimization, 2 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 6 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 6 Shift Register Optimization | Checksum: dc628cbe
+
+Time (s): cpu = 00:00:53 ; elapsed = 00:01:05 . Memory (MB): peak = 3633.410 ; gain = 52.855 ; free physical = 32356 ; free virtual = 51524
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 7 Post Processing Netlist
+Phase 7 Post Processing Netlist | Checksum: 957c1baf
+
+Time (s): cpu = 00:00:53 ; elapsed = 00:01:06 . Memory (MB): peak = 3633.410 ; gain = 52.855 ; free physical = 32357 ; free virtual = 51524
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+INFO: [Opt 31-1021] In phase Post Processing Netlist, 248 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |              68  |             162  |                                            257  |
+|  Constant propagation         |               1  |              17  |                                            337  |
+|  Sweep                        |               0  |              43  |                                          10408  |
+|  BUFG optimization            |               0  |               0  |                                              2  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                            248  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.12 ; elapsed = 00:00:00.12 . Memory (MB): peak = 3633.410 ; gain = 0.000 ; free physical = 32363 ; free virtual = 51531
+Ending Logic Optimization Task | Checksum: c0cbc5a8
+
+Time (s): cpu = 00:00:56 ; elapsed = 00:01:08 . Memory (MB): peak = 3633.410 ; gain = 52.855 ; free physical = 32363 ; free virtual = 51531
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+INFO: [Pwropt 34-9] Applying IDT optimizations ...
+INFO: [Pwropt 34-10] Applying ODC optimizations ...
+
+Finished Running Vector-less Activity Propagation
+
+
+Starting PowerOpt Patch Enables Task
+INFO: [Pwropt 34-162] WRITE_MODE attribute of 0 BRAM(s) out of a total of 286 has been updated to save power. Run report_power_opt to get a complete listing of the BRAMs updated.
+INFO: [Pwropt 34-201] Structural ODC has moved 1 WE to EN ports
+Number of BRAM Ports augmented: 230 newly gated: 1 Total Ports: 572
+Ending PowerOpt Patch Enables Task | Checksum: 1855ae9fd
+
+Time (s): cpu = 00:00:00.91 ; elapsed = 00:00:00.9 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32474 ; free virtual = 51642
+Ending Power Optimization Task | Checksum: 1855ae9fd
+
+Time (s): cpu = 00:00:39 ; elapsed = 00:00:19 . Memory (MB): peak = 4542.469 ; gain = 909.059 ; free physical = 32623 ; free virtual = 51790
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 1855ae9fd
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32623 ; free virtual = 51790
+
+Starting Netlist Obfuscation Task
+Netlist sorting complete. Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32623 ; free virtual = 51790
+Ending Netlist Obfuscation Task | Checksum: c555805b
+
+Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.07 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32623 ; free virtual = 51790
+INFO: [Common 17-83] Releasing license: Implementation
+216 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:01:38 ; elapsed = 00:01:29 . Memory (MB): peak = 4542.469 ; gain = 1266.605 ; free physical = 32623 ; free virtual = 51790
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# place_design -directive default
+Command: place_design -directive default
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+INFO: [Place 46-5] The placer was invoked with the 'default' directive.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 4 CPUs
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32629 ; free virtual = 51797
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: c3e7aa8c
+
+Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32629 ; free virtual = 51797
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4542.469 ; gain = 0.000 ; free physical = 32629 ; free virtual = 51797
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_2 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_3 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_4 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_5 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_6 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_7 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_8 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_9 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_10 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_11 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_12 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_13 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_14 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_15 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_16 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_17 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_18 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_19 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_20 replication was created for IDELAYCTRL IDELAYCTRL
+INFO: [Place 30-1907] IDELAYCTRL_REPLICATED_0_21 replication was created for IDELAYCTRL IDELAYCTRL
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: aa686b03
+
+Time (s): cpu = 00:00:38 ; elapsed = 00:00:25 . Memory (MB): peak = 4759.562 ; gain = 217.094 ; free physical = 32004 ; free virtual = 51172
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 19f6e9cce
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:00:38 . Memory (MB): peak = 4759.562 ; gain = 217.094 ; free physical = 31556 ; free virtual = 50724
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 19f6e9cce
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:00:38 . Memory (MB): peak = 4759.562 ; gain = 217.094 ; free physical = 31556 ; free virtual = 50724
+Phase 1 Placer Initialization | Checksum: 19f6e9cce
+
+Time (s): cpu = 00:01:05 ; elapsed = 00:00:38 . Memory (MB): peak = 4759.562 ; gain = 217.094 ; free physical = 31556 ; free virtual = 50724
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 119491d7f
+
+Time (s): cpu = 00:01:14 ; elapsed = 00:00:43 . Memory (MB): peak = 4767.562 ; gain = 225.094 ; free physical = 31515 ; free virtual = 50683
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 1a3b39c46
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:00:45 . Memory (MB): peak = 4767.562 ; gain = 225.094 ; free physical = 31496 ; free virtual = 50664
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 1a3b39c46
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:00:45 . Memory (MB): peak = 4767.562 ; gain = 225.094 ; free physical = 31496 ; free virtual = 50664
+
+Phase 2.4 Global Placement Core
+
+Phase 2.4.1 UpdateTiming Before Physical Synthesis
+Phase 2.4.1 UpdateTiming Before Physical Synthesis | Checksum: 1a17167c7
+
+Time (s): cpu = 00:03:19 ; elapsed = 00:01:42 . Memory (MB): peak = 4767.562 ; gain = 225.094 ; free physical = 31673 ; free virtual = 50841
+
+Phase 2.4.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 789 LUTNM shape to break, 2053 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 338, two critical 451, total 789, new lutff created 4
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 1568 nets or LUTs. Breaked 789 LUTs, combined 779 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-1132] Very high fanout net 'BreezeClusterAxi/cluster/frontend/mmu/ptw/wVpn_reg[0]_0' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 1814 to 135 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 135.
+INFO: [Physopt 32-1132] Very high fanout net 'BreezeClusterAxi/cluster/frontend/mmu/ptw/_ptw_io_done_bits_refill_vpn[0]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 1810 to 131 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 131.
+INFO: [Physopt 32-76] Pass 1. Identified 1 candidate net for fanout optimization.
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/frontend/cache/head. Replicated 8 times.
+INFO: [Physopt 32-232] Optimized 1 net. Created 8 new instances.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 1 net or cell. Created 8 new cells, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.08 . Memory (MB): peak = 4802.930 ; gain = 0.000 ; free physical = 31642 ; free virtual = 50810
+INFO: [Physopt 32-456] No candidate cells for DSP register optimization found in the design.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1123] No candidate cells found for Shift Register to Pipeline optimization
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-677] No candidate cells for Shift Register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-526] No candidate cells for BRAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4802.930 ; gain = 0.000 ; free physical = 31642 ; free virtual = 50810
+INFO: [Physopt 32-68] No nets found for critical-cell optimization.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4802.930 ; gain = 0.000 ; free physical = 31642 ; free virtual = 50810
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |          789  |            779  |                  1568  |           0  |           1  |  00:00:01  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |            8  |              0  |                     1  |           0  |           1  |  00:00:01  |
+|  DSP Register                                     |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Critical Cell                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |          797  |            779  |                  1569  |           0  |          10  |  00:00:02  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.4.2 Physical Synthesis In Placer | Checksum: 1acc019b4
+
+Time (s): cpu = 00:03:28 ; elapsed = 00:01:48 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31569 ; free virtual = 50737
+Phase 2.4 Global Placement Core | Checksum: 137dcd985
+
+Time (s): cpu = 00:03:34 ; elapsed = 00:01:51 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31561 ; free virtual = 50729
+Phase 2 Global Placement | Checksum: 137dcd985
+
+Time (s): cpu = 00:03:35 ; elapsed = 00:01:51 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31633 ; free virtual = 50800
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 2043f3f65
+
+Time (s): cpu = 00:03:41 ; elapsed = 00:01:53 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31664 ; free virtual = 50831
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 1598347b0
+
+Time (s): cpu = 00:03:52 ; elapsed = 00:01:59 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31677 ; free virtual = 50845
+
+Phase 3.3 Small Shape DP
+
+Phase 3.3.1 Small Shape Clustering
+Phase 3.3.1 Small Shape Clustering | Checksum: 13fae7f8f
+
+Time (s): cpu = 00:04:59 ; elapsed = 00:02:27 . Memory (MB): peak = 4802.930 ; gain = 260.461 ; free physical = 31589 ; free virtual = 50757
+
+Phase 3.3.2 DP Optimization
+Phase 3.3.2 DP Optimization | Checksum: 8b7ce162
+
+Time (s): cpu = 00:05:28 ; elapsed = 00:02:39 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31509 ; free virtual = 50677
+
+Phase 3.3.3 Flow Legalize Slice Clusters
+Phase 3.3.3 Flow Legalize Slice Clusters | Checksum: 12f533a64
+
+Time (s): cpu = 00:05:29 ; elapsed = 00:02:39 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31523 ; free virtual = 50691
+
+Phase 3.3.4 Slice Area Swap
+
+Phase 3.3.4.1 Slice Area Swap Initial
+Phase 3.3.4.1 Slice Area Swap Initial | Checksum: 8ec42c97
+
+Time (s): cpu = 00:05:34 ; elapsed = 00:02:44 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31503 ; free virtual = 50671
+Phase 3.3.4 Slice Area Swap | Checksum: 8ec42c97
+
+Time (s): cpu = 00:05:35 ; elapsed = 00:02:44 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31507 ; free virtual = 50675
+Phase 3.3 Small Shape DP | Checksum: 122782686
+
+Time (s): cpu = 00:05:57 ; elapsed = 00:02:50 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31540 ; free virtual = 50708
+
+Phase 3.4 Re-assign LUT pins
+Phase 3.4 Re-assign LUT pins | Checksum: 18229cd9e
+
+Time (s): cpu = 00:06:00 ; elapsed = 00:02:54 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31562 ; free virtual = 50730
+
+Phase 3.5 Pipeline Register Optimization
+Phase 3.5 Pipeline Register Optimization | Checksum: 108bc6797
+
+Time (s): cpu = 00:06:00 ; elapsed = 00:02:54 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31564 ; free virtual = 50732
+
+Phase 3.6 Fast Optimization
+Phase 3.6 Fast Optimization | Checksum: 131f063b6
+
+Time (s): cpu = 00:06:40 ; elapsed = 00:03:12 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31480 ; free virtual = 50648
+Phase 3 Detail Placement | Checksum: 131f063b6
+
+Time (s): cpu = 00:06:41 ; elapsed = 00:03:13 . Memory (MB): peak = 4875.891 ; gain = 333.422 ; free physical = 31486 ; free virtual = 50654
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 13f941e20
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-1.914 | TNS=-2043.595 |
+Phase 1 Physical Synthesis Initialization | Checksum: 10144379c
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:02 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31535 ; free virtual = 50703
+INFO: [Place 46-35] Processed net BreezeClusterAxi/cluster/backend/csrFile/performance/SR[0], inserted BUFG to drive 20751 loads.
+INFO: [Place 46-34] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/wb_csrAddr_reg[10], BUFG insertion was skipped due to possible timing degradation.
+INFO: [Place 46-35] Processed net BreezeClusterAxi/cluster/l1d/accessDecision2, inserted BUFG to drive 1621 loads.
+INFO: [Place 46-56] BUFG insertion identified 3 candidate nets. Inserted BUFG: 2, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 0, Skipped due to Timing Degradation: 1, Skipped due to Illegal Netlist: 0.
+Ending Physical Synthesis Task | Checksum: 1668ab41b
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:05 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31517 ; free virtual = 50685
+Phase 4.1.1.1 BUFG Insertion | Checksum: 99caf9bc
+
+Time (s): cpu = 00:07:33 ; elapsed = 00:03:34 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31517 ; free virtual = 50685
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=-0.222. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: e29fac0c
+
+Time (s): cpu = 00:08:29 ; elapsed = 00:04:07 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31527 ; free virtual = 50695
+
+Time (s): cpu = 00:08:29 ; elapsed = 00:04:07 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31529 ; free virtual = 50697
+Phase 4.1 Post Commit Optimization | Checksum: e29fac0c
+
+Time (s): cpu = 00:08:29 ; elapsed = 00:04:08 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31529 ; free virtual = 50697
+Netlist sorting complete. Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.22 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31513 ; free virtual = 50681
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 1d454b54f
+
+Time (s): cpu = 00:08:31 ; elapsed = 00:04:09 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31519 ; free virtual = 50687
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|                8x8|              32x32|
+|___________|___________________|___________________|
+|      South|                8x8|              16x16|
+|___________|___________________|___________________|
+|       East|                8x8|              32x32|
+|___________|___________________|___________________|
+|       West|              16x16|              32x32|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 1d454b54f
+
+Time (s): cpu = 00:08:32 ; elapsed = 00:04:10 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31525 ; free virtual = 50693
+Phase 4.3 Placer Reporting | Checksum: 1d454b54f
+
+Time (s): cpu = 00:08:32 ; elapsed = 00:04:10 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31525 ; free virtual = 50693
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31525 ; free virtual = 50693
+
+Time (s): cpu = 00:08:32 ; elapsed = 00:04:10 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31525 ; free virtual = 50693
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 2189a91f1
+
+Time (s): cpu = 00:08:33 ; elapsed = 00:04:11 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31527 ; free virtual = 50695
+Ending Placer Task | Checksum: 205fb01be
+
+Time (s): cpu = 00:08:33 ; elapsed = 00:04:11 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31527 ; free virtual = 50695
+INFO: [Common 17-83] Releasing license: Implementation
+65 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:08:41 ; elapsed = 00:04:14 . Memory (MB): peak = 4946.367 ; gain = 403.898 ; free physical = 31730 ; free virtual = 50898
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# phys_opt_design -directive default
+Command: phys_opt_design -directive default
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-137] Directive used for phys_opt_design is: default
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:00:13 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31645 ; free virtual = 50813
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 43.45s |  WALL: 13.10s
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31645 ; free virtual = 50813
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.222 | TNS=-18.592 |
+Phase 1 Physical Synthesis Initialization | Checksum: 15d6d5cc1
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:07 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31567 ; free virtual = 50735
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.222 | TNS=-18.592 |
+
+Phase 2 DSP Register Optimization
+INFO: [Physopt 32-456] No candidate cells for DSP register optimization found in the design.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Phase 2 DSP Register Optimization | Checksum: 15d6d5cc1
+
+Time (s): cpu = 00:00:19 ; elapsed = 00:00:08 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31565 ; free virtual = 50733
+
+Phase 3 Critical Path Optimization
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.222 | TNS=-18.592 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/data_1_ext/_data_1_ext_RW0_rdata[68]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[3]. Replicated 3 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[3]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.220 | TNS=-18.450 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[2]. Replicated 3 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.218 | TNS=-18.309 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[10]. Replicated 1 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[10]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.199 | TNS=-17.228 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor[0]. Replicated 2 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.199 | TNS=-17.202 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[7].  Re-placed instance BreezeClusterAxi/cluster/l1i/addr_0_reg[14]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[7]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.199 | TNS=-17.003 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[14].  Re-placed instance BreezeClusterAxi/cluster/l1i/addr_0_reg[21]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[14]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.199 | TNS=-16.804 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[15].  Re-placed instance BreezeClusterAxi/cluster/l1i/addr_0_reg[22]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[15]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.199 | TNS=-16.605 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[2].  Re-placed instance BreezeClusterAxi/cluster/l1i/addr_0_reg[9]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1i/RW0_wdata[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.198 | TNS=-16.407 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/_GEN_7__0[0].  Re-placed instance BreezeClusterAxi/cluster/backend/mem_rd_idx_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/_GEN_7__0[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.197 | TNS=-16.105 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[4]. Replicated 4 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[4]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.195 | TNS=-15.915 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/slots_1_data[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/slots_1_data_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/slots_1_data[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.194 | TNS=-15.850 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN_2[9].  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/entries_9_committed_reg
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN_2[9]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.194 | TNS=-15.724 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[5]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/carryParcel_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.192 | TNS=-15.602 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/data_1_ext/_data_1_ext_RW0_rdata[68]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/deferredValid_reg. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/reserved_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/restart_cacheFlush_reg. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/queue/count_reg[3]_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/entrance_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/ex_ctrl_sel_wb_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_13_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_39_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_77_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_94_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/_scoreboard_io_hazard. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/io_hazard_00. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_fpUnit_io_committedFlagsOnly.  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/head[2]_i_109
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_fpUnit_io_committedFlagsOnly. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.191 | TNS=-15.070 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[5]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/carryParcel_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.188 | TNS=-14.558 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/predictor/pht/_predictor_io_result_available_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0_reg_rep[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.185 | TNS=-14.550 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/deferredValid.  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/deferredValid_reg
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/deferredValid. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.183 | TNS=-14.519 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[16].  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/entries_16_valid_reg
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[16]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.180 | TNS=-14.201 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/D[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/D[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.179 | TNS=-14.156 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/carryPc_reg[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/carryPc_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/carryPc_reg[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.175 | TNS=-13.763 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[30]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/deq_ptr_value_i_2_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910/i_ct_vfdsu_top/x_ct_vfdsu_ctrl/gen_input_pipeline[0].inp_pipe_valid_q_reg[1]_1.  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910/i_ct_vfdsu_top/x_ct_vfdsu_ctrl/deq_ptr_value_i_6
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/impl/i_fpnew/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910/i_ct_vfdsu_top/x_ct_vfdsu_ctrl/gen_input_pipeline[0].inp_pipe_valid_q_reg[1]_1. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.173 | TNS=-13.712 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[2].  Re-placed instance BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.172 | TNS=-13.362 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0_reg_rep[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.169 | TNS=-13.350 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/deq_ptr_value_i_5_n_0.  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/deq_ptr_value_i_5
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/deq_ptr_value_i_5_n_0. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.169 | TNS=-13.301 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/carryValid_reg_rep_n_0.  Re-placed instance BreezeClusterAxi/cluster/frontend/carryValid_reg_rep
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/carryValid_reg_rep_n_0. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.168 | TNS=-12.621 |
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.168 | TNS=-12.621 |
+Phase 3 Critical Path Optimization | Checksum: 186883730
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:00:29 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31630 ; free virtual = 50799
+
+Phase 4 Critical Path Optimization
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.168 | TNS=-12.621 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/data_1_ext/_data_1_ext_RW0_rdata[68]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[30]. Replicated 1 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[30]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.165 | TNS=-12.474 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN_2[7].  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/entries_7_committed_reg
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN_2[7]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.161 | TNS=-12.228 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/predictor/pht/_predictor_io_result_available_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/D[3].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[3]_rep__0
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/D[3]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.157 | TNS=-12.129 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/refillSet[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/refillSet_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/refillSet[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.157 | TNS=-11.972 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[3]. Replicated 1 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[3]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.156 | TNS=-11.777 |
+INFO: [Physopt 32-81] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[1]. Replicated 3 times.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.154 | TNS=-11.681 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[4].  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/commitCursor_reg[4]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/commitCursor__0[4]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.154 | TNS=-11.585 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferredValid. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/s1Vaddr_reg_n_0_[35].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/s1Vaddr_reg[35]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/s1Vaddr_reg_n_0_[35]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.152 | TNS=-11.189 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[10]_repN. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-710] Processed net BreezeClusterAxi/cluster/frontend/cache/data_1_ext/Memory_reg_0_i_1__0_n_0. Critical path length was reduced through logic transformation on cell BreezeClusterAxi/cluster/frontend/cache/data_1_ext/Memory_reg_0_i_1__0_comp.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/deferredValid_reg. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.152 | TNS=-7.700 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[5]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/carryParcel_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/carryParcel[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.149 | TNS=-7.595 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[5]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/head_repN_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_3_n_0.  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_3
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_3_n_0. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.144 | TNS=-7.196 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/deferredValid. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.140 | TNS=-6.812 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_7[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_7_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_7[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.140 | TNS=-6.672 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.140 | TNS=-6.552 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_6[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.136 | TNS=-6.432 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/readBank[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.128 | TNS=-4.980 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/predictor/pht/_predictor_io_result_available_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0_reg_rep[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.127 | TNS=-4.975 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.127 | TNS=-4.847 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.127 | TNS=-4.720 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_4[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.123 | TNS=-4.592 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[3].  Re-placed instance BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0_reg_rep[3]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[3]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.118 | TNS=-4.581 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/reserved[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/reserved[1]_i_3_n_0.  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/reserved[1]_i_3
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/reserved[1]_i_3_n_0. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.112 | TNS=-4.507 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_1_0_ext/_R0_addr_d0__1[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/predictor/btb/ram_1_0_ext/_R0_addr_d0_reg_rep[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_1_0_ext/_R0_addr_d0__1[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.109 | TNS=-4.505 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/predictor/btb/ram_0_0_ext/_R0_addr_d0[0]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/available_1_i_2_n_0.  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/available_1_i_2
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/cache/available_1_i_2_n_0. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.106 | TNS=-4.395 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/csrFile/satp_reg[63]_0[48].  Re-placed instance BreezeClusterAxi/cluster/backend/csrFile/satp_reg[48]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/csrFile/satp_reg[63]_0[48]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.103 | TNS=-3.624 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/data_2_ext/_data_2_ext_RW0_rdata[140]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/_GEN[10]_repN. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/deferredValid_reg. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/reserved_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/cache/pmp/restart_cacheFlush_reg. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/frontend/queue/count_reg[3]_1. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/fpUnit/input_0/ram_ext/entrance_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/ex_ctrl_sel_wb_reg[1]. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_13_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_39_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_77_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/head[2]_i_94_n_0. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/backend/writeback/lateQueue/_scoreboard_io_hazard. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/fpUnit/io_hazard_00.  Re-placed instance BreezeClusterAxi/cluster/backend/fpUnit/head[2]_i_106
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/io_hazard_00. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.102 | TNS=-3.494 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_5[2].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_5_reg[2]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_5[2]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.095 | TNS=-3.392 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[4].  Re-placed instance BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/wb_rd_idx_reg[4]_0[4]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.094 | TNS=-3.345 |
+INFO: [Physopt 32-702] Processed net BreezeClusterAxi/cluster/l1d/internal3_pmpAllowed. Optimizations did not improve timing on the net.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1d/internal3_req_src[0].  Re-placed instance BreezeClusterAxi/cluster/l1d/internal3_req_src_reg[0]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1d/internal3_req_src[0]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.092 | TNS=-3.343 |
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 61 pins.
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/fpUnit/io_hazard_00. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.092 | TNS=-3.295 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/l1d/internal3_req_src[1].  Re-placed instance BreezeClusterAxi/cluster/l1d/internal3_req_src_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/l1d/internal3_req_src[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.090 | TNS=-3.256 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/backend/_GEN_7__0[1].  Re-placed instance BreezeClusterAxi/cluster/backend/mem_rd_idx_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/backend/_GEN_7__0[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.090 | TNS=-3.208 |
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_3[1].  Re-placed instance BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_3_reg[1]
+INFO: [Physopt 32-735] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_3[1]. Optimization improves timing on the net.
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.090 | TNS=-3.118 |
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.090 | TNS=-3.118 |
+Phase 4 Critical Path Optimization | Checksum: a7b1fbe9
+
+Time (s): cpu = 00:02:04 ; elapsed = 00:00:45 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31616 ; free virtual = 50784
+Netlist sorting complete. Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31619 ; free virtual = 50787
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31595 ; free virtual = 50763
+INFO: [Physopt 32-603] Post Physical Optimization Timing Summary | WNS=-0.090 | TNS=-3.118 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization   |  WNS Gain (ns)  |  TNS Gain (ns)  |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  DSP Register   |          0.000  |          0.000  |            0  |              0  |                     0  |           0  |           1  |  00:00:01  |
+|  Critical Path  |          0.133  |         15.474  |           18  |              0  |                    58  |           0  |           2  |  00:00:37  |
+|  Total          |          0.133  |         15.474  |           18  |              0  |                    58  |           0  |           3  |  00:00:38  |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31593 ; free virtual = 50761
+Ending Physical Synthesis Task | Checksum: 14ecc9ad1
+
+Time (s): cpu = 00:02:05 ; elapsed = 00:00:46 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31596 ; free virtual = 50764
+INFO: [Common 17-83] Releasing license: Implementation
+233 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:02:48 ; elapsed = 00:01:00 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31699 ; free virtual = 50867
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# report_utilization -hierarchical -file xilinx_kcu105_utilization_hierarchical_place.rpt
+# report_utilization -file xilinx_kcu105_utilization_place.rpt
+# report_io -file xilinx_kcu105_io.rpt
+report_io: Time (s): cpu = 00:00:00.12 ; elapsed = 00:00:00.24 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31665 ; free virtual = 50833
+# report_control_sets -verbose -file xilinx_kcu105_control_sets.rpt
+report_control_sets: Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.28 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31668 ; free virtual = 50838
+# report_clock_utilization -file xilinx_kcu105_clock_utilization.rpt
+report_clock_utilization: Time (s): cpu = 00:00:12 ; elapsed = 00:00:08 . Memory (MB): peak = 4946.367 ; gain = 0.000 ; free physical = 31562 ; free virtual = 50733
+# write_checkpoint -force xilinx_kcu105_place.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:14 ; elapsed = 00:00:06 . Memory (MB): peak = 4994.391 ; gain = 40.020 ; free physical = 31277 ; free virtual = 50637
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-full-route-20261012/xilinx_kcu105_place.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:23 ; elapsed = 00:00:15 . Memory (MB): peak = 4994.391 ; gain = 48.023 ; free physical = 30739 ; free virtual = 50038
+# report_timing_summary -delay_type min_max -report_unconstrained -file post-place-timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+report_timing_summary: Time (s): cpu = 00:00:22 ; elapsed = 00:00:07 . Memory (MB): peak = 4994.391 ; gain = 0.000 ; free physical = 30708 ; free virtual = 50006
+# route_design -directive default
+Command: route_design -directive default
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'default'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 6850211b ConstDB: 0 ShapeSum: 667d387c RouteDB: 4e04a9d7
+Post Restoration Checksum: NetGraph: 3c87d86c NumContArr: ad6625a Constraints: 41d43660 Timing: 0
+Phase 1 Build RT Design | Checksum: 89327126
+
+Time (s): cpu = 00:01:25 ; elapsed = 00:00:53 . Memory (MB): peak = 5078.133 ; gain = 83.742 ; free physical = 31178 ; free virtual = 50477
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 89327126
+
+Time (s): cpu = 00:01:25 ; elapsed = 00:00:53 . Memory (MB): peak = 5085.133 ; gain = 90.742 ; free physical = 31151 ; free virtual = 50450
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 89327126
+
+Time (s): cpu = 00:01:26 ; elapsed = 00:00:53 . Memory (MB): peak = 5085.133 ; gain = 90.742 ; free physical = 31151 ; free virtual = 50450
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 156dc6a71
+
+Time (s): cpu = 00:01:33 ; elapsed = 00:00:57 . Memory (MB): peak = 5210.133 ; gain = 215.742 ; free physical = 30834 ; free virtual = 50133
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 13c8b53b4
+
+Time (s): cpu = 00:02:04 ; elapsed = 00:01:10 . Memory (MB): peak = 5210.133 ; gain = 215.742 ; free physical = 30970 ; free virtual = 50269
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.282  | TNS=0.000  | WHS=-0.135 | THS=-19.852|
+
+
+Phase 2.5 Update Timing for Bus Skew
+
+Phase 2.5.1 Update Timing
+Phase 2.5.1 Update Timing | Checksum: 12994b72c
+
+Time (s): cpu = 00:03:19 ; elapsed = 00:01:35 . Memory (MB): peak = 5275.133 ; gain = 280.742 ; free physical = 31076 ; free virtual = 50375
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.282  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 2.5 Update Timing for Bus Skew | Checksum: 1345b5b3b
+
+Time (s): cpu = 00:03:19 ; elapsed = 00:01:35 . Memory (MB): peak = 5275.133 ; gain = 280.742 ; free physical = 31069 ; free virtual = 50368
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0.00224723 %
+  Global Horizontal Routing Utilization  = 0.00149159 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 137945
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 98916
+  Number of Partially Routed Nets     = 39029
+  Number of Node Overlaps             = 4
+
+Phase 2 Router Initialization | Checksum: fddebc15
+
+Time (s): cpu = 00:03:24 ; elapsed = 00:01:37 . Memory (MB): peak = 5275.133 ; gain = 280.742 ; free physical = 31002 ; free virtual = 50301
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: fddebc15
+
+Time (s): cpu = 00:03:24 ; elapsed = 00:01:37 . Memory (MB): peak = 5275.133 ; gain = 280.742 ; free physical = 31002 ; free virtual = 50301
+Phase 3 Initial Routing | Checksum: 27658e149
+
+Time (s): cpu = 00:04:04 ; elapsed = 00:01:53 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30948 ; free virtual = 50247
+
+INFO: [Route 35-449] Initial Estimated Congestion
+ ________________________________________________________________________
+|           | Global Congestion | Long Congestion   | Short Congestion  |
+|           |___________________|___________________|___________________|
+| Direction | Size   | % Tiles  | Size   | % Tiles  | Size   | % Tiles  |
+|___________|________|__________|________|__________|________|__________|
+|      NORTH|     8x8|      0.69|     4x4|      0.64|   16x16|      2.76|
+|___________|________|__________|________|__________|________|__________|
+|      SOUTH|     8x8|      1.91|     4x4|      1.21|   16x16|      4.70|
+|___________|________|__________|________|__________|________|__________|
+|       EAST|     8x8|      0.67|     4x4|      0.25|   16x16|      2.57|
+|___________|________|__________|________|__________|________|__________|
+|       WEST|   16x16|      1.70|     8x8|      0.63|   32x32|      5.69|
+|___________|________|__________|________|__________|________|__________|
+Congestion Report
+GLOBAL Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+WEST
+	INT_X32Y156->INT_X47Y171 (XIPHY_L_X32Y120->CLEL_R_X47Y171)
+SHORT Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+NORTH
+	INT_X48Y140->INT_X55Y163 (BRAM_X48Y140->CLEL_R_X55Y163)
+	INT_X48Y156->INT_X55Y163 (BRAM_X48Y155->CLEL_R_X55Y163)
+	INT_X48Y148->INT_X55Y155 (BRAM_X48Y145->CLEL_R_X55Y155)
+SOUTH
+	INT_X40Y140->INT_X55Y171 (CLE_M_X40Y140->CLEL_R_X55Y171)
+	INT_X56Y236->INT_X63Y243 (BRAM_X56Y235->CLEL_R_X63Y243)
+	INT_X40Y164->INT_X47Y171 (CLE_M_X40Y164->CLEL_R_X47Y171)
+	INT_X40Y156->INT_X47Y163 (CLE_M_X40Y156->CLEL_R_X47Y163)
+	INT_X40Y148->INT_X47Y155 (CLE_M_X40Y148->CLEL_R_X47Y155)
+EAST
+	INT_X48Y140->INT_X55Y163 (BRAM_X48Y140->CLEL_R_X55Y163)
+	INT_X48Y156->INT_X55Y163 (BRAM_X48Y155->CLEL_R_X55Y163)
+	INT_X48Y148->INT_X55Y155 (BRAM_X48Y145->CLEL_R_X55Y155)
+WEST
+	INT_X48Y220->INT_X63Y251 (BRAM_X48Y220->CLEL_R_X63Y251)
+	INT_X48Y236->INT_X63Y251 (BRAM_X48Y235->CLEL_R_X63Y251)
+	INT_X48Y220->INT_X63Y235 (BRAM_X48Y220->CLEL_R_X63Y235)
+	INT_X32Y156->INT_X47Y171 (XIPHY_L_X32Y120->CLEL_R_X47Y171)
+
+INFO: [Route 35-448] Estimated Global/Short routing congestion is level 5 (32x32). Congestion levels of 5 and greater can reduce routability and impact timing closure.
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 63371
+ Number of Nodes with overlaps = 8737
+ Number of Nodes with overlaps = 2423
+ Number of Nodes with overlaps = 1011
+ Number of Nodes with overlaps = 498
+ Number of Nodes with overlaps = 276
+ Number of Nodes with overlaps = 183
+ Number of Nodes with overlaps = 131
+ Number of Nodes with overlaps = 96
+ Number of Nodes with overlaps = 72
+ Number of Nodes with overlaps = 51
+ Number of Nodes with overlaps = 41
+ Number of Nodes with overlaps = 28
+ Number of Nodes with overlaps = 27
+ Number of Nodes with overlaps = 26
+ Number of Nodes with overlaps = 24
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 15
+ Number of Nodes with overlaps = 13
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 13
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 6
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_130_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 4
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_140_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+INFO: [Route 35-443] CLB routing congestion detected. Several CLBs have high routing utilization, which can impact timing closure. Congested CLBs and Nets are dumped in: iter_160_CongestedCLBsAndNets.txt
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.677 | TNS=-209.370| WHS=-0.051 | THS=-0.300 |
+
+Phase 4.1 Global Iteration 0 | Checksum: cbcbbdc7
+
+Time (s): cpu = 00:10:56 ; elapsed = 00:05:50 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30950 ; free virtual = 50250
+
+Phase 4.2 Global Iteration 1
+ Number of Nodes with overlaps = 392
+ Number of Nodes with overlaps = 145
+ Number of Nodes with overlaps = 104
+ Number of Nodes with overlaps = 78
+ Number of Nodes with overlaps = 41
+ Number of Nodes with overlaps = 30
+ Number of Nodes with overlaps = 19
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.524 | TNS=-120.973| WHS=N/A    | THS=N/A    |
+
+Phase 4.2 Global Iteration 1 | Checksum: 1864875b5
+
+Time (s): cpu = 00:12:02 ; elapsed = 00:06:41 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30978 ; free virtual = 50278
+
+Phase 4.3 Global Iteration 2
+ Number of Nodes with overlaps = 3934
+ Number of Nodes with overlaps = 899
+ Number of Nodes with overlaps = 406
+ Number of Nodes with overlaps = 197
+ Number of Nodes with overlaps = 99
+ Number of Nodes with overlaps = 67
+ Number of Nodes with overlaps = 33
+ Number of Nodes with overlaps = 26
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 14
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 9
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.599 | TNS=-139.639| WHS=N/A    | THS=N/A    |
+
+Phase 4.3 Global Iteration 2 | Checksum: 278dd2025
+
+Time (s): cpu = 00:13:41 ; elapsed = 00:07:51 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31060 ; free virtual = 50360
+Phase 4 Rip-up And Reroute | Checksum: 278dd2025
+
+Time (s): cpu = 00:13:41 ; elapsed = 00:07:51 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31060 ; free virtual = 50360
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 Delay CleanUp
+
+Phase 5.1.1 Update Timing
+Phase 5.1.1 Update Timing | Checksum: 1f171b995
+
+Time (s): cpu = 00:14:02 ; elapsed = 00:07:59 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31027 ; free virtual = 50326
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.524 | TNS=-120.973| WHS=0.004  | THS=0.000  |
+
+ Number of Nodes with overlaps = 0
+Phase 5.1 Delay CleanUp | Checksum: 196182f25
+
+Time (s): cpu = 00:14:07 ; elapsed = 00:08:01 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30980 ; free virtual = 50279
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 196182f25
+
+Time (s): cpu = 00:14:07 ; elapsed = 00:08:02 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30980 ; free virtual = 50279
+Phase 5 Delay and Skew Optimization | Checksum: 196182f25
+
+Time (s): cpu = 00:14:08 ; elapsed = 00:08:02 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 30980 ; free virtual = 50279
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 1fa11098e
+
+Time (s): cpu = 00:14:28 ; elapsed = 00:08:10 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31014 ; free virtual = 50314
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.524 | TNS=-120.301| WHS=0.004  | THS=0.000  |
+
+Phase 6.1 Hold Fix Iter | Checksum: 1ca588882
+
+Time (s): cpu = 00:14:29 ; elapsed = 00:08:10 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31015 ; free virtual = 50315
+Phase 6 Post Hold Fix | Checksum: 1ca588882
+
+Time (s): cpu = 00:14:29 ; elapsed = 00:08:11 . Memory (MB): peak = 5335.133 ; gain = 340.742 ; free physical = 31015 ; free virtual = 50315
+
+Phase 7 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 13.9134 %
+  Global Horizontal Routing Utilization  = 12.3204 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Congestion Report
+North Dir 1x1 Area, Max Cong = 86.0169%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X48Y151 -> INT_X48Y151
+South Dir 1x1 Area, Max Cong = 90.7173%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X38Y177 -> INT_X38Y177
+   INT_X44Y161 -> INT_X44Y161
+   INT_X46Y157 -> INT_X46Y157
+   INT_X48Y146 -> INT_X48Y146
+   INT_X48Y144 -> INT_X48Y144
+East Dir 1x1 Area, Max Cong = 96.1538%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X44Y163 -> INT_X44Y163
+   INT_X53Y156 -> INT_X53Y156
+   INT_X52Y155 -> INT_X52Y155
+   INT_X46Y152 -> INT_X46Y152
+   INT_X53Y152 -> INT_X53Y152
+West Dir 4x4 Area, Max Cong = 92.1274%, Congestion bounded by tiles (Lower Left Tile -> Upper Right Tile):
+   INT_X40Y172 -> INT_X43Y175
+   INT_X40Y168 -> INT_X43Y171
+   INT_X40Y164 -> INT_X43Y167
+   INT_X40Y160 -> INT_X43Y163
+   INT_X40Y156 -> INT_X43Y159
+
+------------------------------
+Reporting congestion hotspots
+------------------------------
+Direction: North
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 0.5 Sparse Ratio: 0.5
+Direction: South
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 1 Sparse Ratio: 0.75
+Direction: East
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 1 Aspect Ratio: 0.333333 Sparse Ratio: 0.75
+Direction: West
+----------------
+Congested clusters found at Level 2
+Effective congestion level: 3 Aspect Ratio: 0.2 Sparse Ratio: 1.25
+
+Phase 7 Route finalize | Checksum: 1200aa618
+
+Time (s): cpu = 00:14:34 ; elapsed = 00:08:14 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 30965 ; free virtual = 50265
+
+Phase 8 Verifying routed nets
+
+ Verification completed successfully
+Phase 8 Verifying routed nets | Checksum: 1200aa618
+
+Time (s): cpu = 00:14:35 ; elapsed = 00:08:14 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 30956 ; free virtual = 50256
+
+Phase 9 Depositing Routes
+Phase 9 Depositing Routes | Checksum: 1200aa618
+
+Time (s): cpu = 00:14:42 ; elapsed = 00:08:19 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 30978 ; free virtual = 50277
+
+Phase 10 Post Router Timing
+INFO: [Route 35-57] Estimated Timing Summary | WNS=-0.524 | TNS=-120.301| WHS=0.004  | THS=0.000  |
+
+WARNING: [Route 35-328] Router estimated timing not met.
+Resolution: For a complete and accurate timing signoff, report_timing_summary must be run after route_design. Alternatively, route_design can be run with the -timing_summary option to enable a complete timing signoff at the end of route_design.
+Phase 10 Post Router Timing | Checksum: 1200aa618
+
+Time (s): cpu = 00:14:52 ; elapsed = 00:08:22 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 31000 ; free virtual = 50300
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:14:52 ; elapsed = 00:08:22 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 31124 ; free virtual = 50424
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+24 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:15:05 ; elapsed = 00:08:29 . Memory (MB): peak = 5368.367 ; gain = 373.977 ; free physical = 31124 ; free virtual = 50424
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# phys_opt_design -directive default
+Command: phys_opt_design -directive default
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-241] Physical synthesis in post route mode ( 100.0% nets are fully routed)
+INFO: [Vivado_Tcl 4-137] Directive used for phys_opt_design is: default
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:00:41 ; elapsed = 00:00:12 . Memory (MB): peak = 5368.367 ; gain = 0.000 ; free physical = 31037 ; free virtual = 50337
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 43.36s |  WALL: 13.96s
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5368.367 ; gain = 0.000 ; free physical = 31032 ; free virtual = 50332
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.531 | TNS=-120.704 | WHS=0.004 | THS=0.000 |
+Phase 1 Physical Synthesis Initialization | Checksum: 17503549e
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 5368.367 ; gain = 0.000 ; free physical = 30924 ; free virtual = 50223
+WARNING: [Physopt 32-745] Physical Optimization has determined that the magnitude of the negative slack is too large and it is highly unlikely that slack will be improved. Post-Route Physical Optimization is most effective when WNS is above -0.5ns
+
+Phase 2 Critical Path Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.531 | TNS=-120.704 | WHS=0.004 | THS=0.000 |
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/data_2_ext/_data_2_ext_RW0_rdata[212].
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/S[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[8]
+INFO: [Physopt 32-952] Improved path group WNS = -0.524. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/S[0].
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 5439.641 ; gain = 0.000 ; free physical = 30815 ; free virtual = 50114
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/mmu/itlb/basePlru_1[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/slots_1_pageFault_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/mmu/itlb/mem_1_0_ext/p_32_in.
+INFO: [Physopt 32-710] Processed net BreezeClusterAxi/cluster/frontend/mmu/itlb/mem_1_0_ext/p_32_in. Critical path length was reduced through logic transformation on cell BreezeClusterAxi/cluster/frontend/mmu/itlb/mem_1_0_ext/basePlru_7[2]_i_3__0_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.523. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/restart_cacheFlush_reg.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/head_repN_1.
+INFO: [Physopt 32-710] Processed net BreezeClusterAxi/cluster/frontend/cache/head0. Critical path length was reduced through logic transformation on cell BreezeClusterAxi/cluster/frontend/cache/head_i_1__0_comp.
+INFO: [Physopt 32-952] Improved path group WNS = -0.518. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/restart_cacheFlush_reg.
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 5968.344 ; gain = 0.000 ; free physical = 30583 ; free virtual = 49883
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/D[4].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[4]_rep__0
+INFO: [Physopt 32-952] Improved path group WNS = -0.510. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/D[4].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[5].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_5_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/f2Redirect.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/f2Redirect0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_reg_i_7_n_2.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_i_17_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/data3[63].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_56_69_i_36_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_56_69_i_72_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/outputs_1_predictedTarget3[63].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_20[30].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_14_27_i_327_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/specStack_3[63]_i_5_n_0.
+INFO: [Physopt 32-952] Improved path group WNS = -0.508. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/p_114_in.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[23]_0[0].  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[16]
+INFO: [Physopt 32-952] Improved path group WNS = -0.499. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[23]_0[0].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_14_27_i_204_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_20[27].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_14_27_i_338_n_0.
+INFO: [Physopt 32-663] Processed net BreezeClusterAxi/cluster/frontend/cache/specStack_5[63]_i_14_n_0.  Re-placed instance BreezeClusterAxi/cluster/frontend/cache/specStack_5[63]_i_14
+INFO: [Physopt 32-952] Improved path group WNS = -0.495. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/specStack_5[63]_i_14_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/carryPc_reg[11].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_i_83_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pc[14]_i_3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pc[62]_i_6_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pc[62]_i_7_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/outputs_1_predictedTaken4[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pc[62]_i_10_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/outputs_0_predictedTaken.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/carryPageFault_i_14_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_0_13_i_54__0_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_7_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_0_13_i_346_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/storage_0_0_eventPc[29]_i_3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_5[1]__0[29].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/storage_0_0_pc[15]_i_8_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_1_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[5].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/carryPc_reg[11].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_5_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/f2Redirect.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/f2Redirect0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_reg_i_7_n_2.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_i_83_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 42 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.492. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pc[14]_i_3_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/data_2_ext/_data_2_ext_RW0_rdata[212].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/q_pc_reg[31]_0[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/deferredValid_reg.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/mmu/itlb/sfS1Valid_reg_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/restart_cacheFlush_reg_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/f1Redirect.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/CO[0].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/pc[63]_i_49_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 42 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.485. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/pmp/refillPrediction_btb_0_target_reg[19].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/slots_1_pageFault_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/backend_io_hpmEvents_REG_icacheMiss_i_17_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/data3[63].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_56_69_i_36_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_56_69_i_72_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/outputs_1_predictedTarget3[63].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_20[30].
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 43 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.477. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_14_27_i_327_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_0_13_i_156__0_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_GEN_20[1].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/Memory_reg_0_3_0_13_i_277_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/specStack_6[63]_i_4_n_0.
+INFO: [Physopt 32-608] Optimized 1 net.  Swapped 41 pins.
+INFO: [Physopt 32-952] Improved path group WNS = -0.476. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/p_114_in.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/p_114_in.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/jal.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/storage_0_0_instruction[19]_i_4_n_0.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/_cache_io_response_bits_pageFault_1.
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: sys_clk. Processed net: BreezeClusterAxi/cluster/frontend/cache/deferred_history[9]_i_1_n_0.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.476 | TNS=-90.713 | WHS=0.004 | THS=0.000 |
+Phase 2 Critical Path Optimization | Checksum: 2b5f223dd
+
+Time (s): cpu = 00:10:14 ; elapsed = 00:08:19 . Memory (MB): peak = 6036.344 ; gain = 667.977 ; free physical = 30461 ; free virtual = 49761
+INFO: [Physopt 32-715] Performed route finalization on the design.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 6036.344 ; gain = 0.000 ; free physical = 30475 ; free virtual = 49776
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=-0.481 | TNS=-92.214 | WHS=0.004 | THS=0.000 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization   |  WNS Gain (ns)  |  TNS Gain (ns)  |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Critical Path  |          0.055  |         29.991  |            0  |              0  |                    11  |           0  |           1  |  00:08:05  |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 6036.344 ; gain = 0.000 ; free physical = 30475 ; free virtual = 49776
+Ending Physical Synthesis Task | Checksum: 1923cd1a8
+
+Time (s): cpu = 00:10:23 ; elapsed = 00:08:26 . Memory (MB): peak = 6036.344 ; gain = 667.977 ; free physical = 30502 ; free virtual = 49803
+INFO: [Common 17-83] Releasing license: Implementation
+105 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:11:10 ; elapsed = 00:08:44 . Memory (MB): peak = 6036.344 ; gain = 667.977 ; free physical = 30840 ; free virtual = 50140
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+# write_checkpoint -force xilinx_kcu105_route.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:14 ; elapsed = 00:00:07 . Memory (MB): peak = 6052.352 ; gain = 8.004 ; free physical = 30742 ; free virtual = 50267
+report_design_analysis: Time (s): cpu = 00:00:11 ; elapsed = 00:00:07 . Memory (MB): peak = 6052.352 ; gain = 0.000 ; free physical = 30753 ; free virtual = 50278
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-full-route-20261012/xilinx_kcu105_route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:35 ; elapsed = 00:00:23 . Memory (MB): peak = 6052.352 ; gain = 16.008 ; free physical = 30938 ; free virtual = 50381
+# report_route_status -file xilinx_kcu105_route_status.rpt
+# report_drc -file xilinx_kcu105_drc.rpt
+Command: report_drc -file xilinx_kcu105_drc.rpt
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-full-route-20261012/xilinx_kcu105_drc.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:17 ; elapsed = 00:00:06 . Memory (MB): peak = 6052.352 ; gain = 0.000 ; free physical = 30856 ; free virtual = 50299
+# report_timing_summary -datasheet -max_paths 10 -file xilinx_kcu105_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+report_timing_summary: Time (s): cpu = 00:01:03 ; elapsed = 00:00:18 . Memory (MB): peak = 6052.352 ; gain = 0.000 ; free physical = 31087 ; free virtual = 50531
+# report_power -file xilinx_kcu105_power.rpt
+Command: report_power -file xilinx_kcu105_power.rpt
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+WARNING: [Power 33-332] Found switching activity that implies high-fanout reset nets being asserted for excessive periods of time which may result in inaccurate power analysis.
+Resolution: To review and fix problems, please run Power Constraints Advisor in the GUI from Tools > Power Constraints Advisor or run report_power with the -advisory option to generate a text report.
+0 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+report_power: Time (s): cpu = 00:00:33 ; elapsed = 00:00:15 . Memory (MB): peak = 6060.355 ; gain = 8.004 ; free physical = 30981 ; free virtual = 50426
+# report_timing_summary -delay_type min_max -report_unconstrained -file routed-generation-gate.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+# report_timing -max_paths 30 -path_type full -file soc-worst-30.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 30 -nworst 1 -delay_type max -sort_by slack.
+# check_timing -verbose -file check-timing.rpt
+# report_methodology -file methodology.rpt
+Command: report_methodology -file methodology.rpt
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [DRC 23-133] Running Methodology with 4 threads
+INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file /home/chen/FUN/flow-runs/f2-owner-ce-d4350cb-full-route-20261012/methodology.rpt.
+report_methodology completed successfully
+report_methodology: Time (s): cpu = 00:00:48 ; elapsed = 00:00:18 . Memory (MB): peak = 6060.355 ; gain = 0.000 ; free physical = 31013 ; free virtual = 50459
+# source $gateware/routed_timing_gate.tcl
+## proc flow_require_routed_timing {report_path} {
+##     set stream [open $report_path r]
+##     set report [read $stream]
+##     close $stream
+##     set section [string first {| Design Timing Summary} $report]
+##     if {$section < 0} {error "Missing design timing summary; bitstream withheld"}
+##     foreach line [split [string range $report $section end] "\n"] {
+##         set fields [regexp -all -inline {\S+} $line]
+##         if {[llength $fields] != 12} {continue}
+##         set numeric 1
+##         foreach value $fields {
+##             if {![regexp {^-?[0-9]+(?:\.[0-9]+)?$} $value]} {set numeric 0; break}
+##         }
+##         if {!$numeric} {continue}
+##         foreach index {0 4 8} {
+##             if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}
+##         }
+##         foreach index {1 2 5 6 9 10} {
+##             if {[lindex $fields $index] != 0} {error "Routed failed endpoints/total slack: $fields; bitstream withheld"}
+##         }
+##         puts "FLOW_COMPLETE_TIMING_GATE PASS: $fields"
+##         return
+##     }
+##     error "No complete design timing row; bitstream withheld"
+## }
+# flow_require_routed_timing routed-generation-gate.rpt
+Routed setup/hold/pulse-or-skew failed: -0.481 -92.214 659 187110 0.004 0.000 0 187083 0.103 0.000 0 77527; bitstream withheld
+    while executing
+"error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld""
+    invoked from within
+"if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}"
+    ("foreach" body line 2)
+    invoked from within
+"foreach index {0 4 8} {
+            if {[lindex $fields $index] < 0} {error "Routed setup/hold/pulse-or-skew failed: $fields; bitstream withheld"}
+   ..."
+    ("foreach" body line 9)
+    invoked from within
+"foreach line [split [string range $report $section end] "\n"] {
+        set fields [regexp -all -inline {\S+} $line]
+        if {[llength $fields] != ..."
+    (procedure "flow_require_routed_timing" line 7)
+    invoked from within
+"flow_require_routed_timing routed-generation-gate.rpt"
+    (file "run-full-route.tcl" line 31)
+INFO: [Common 17-206] Exiting Vivado at Mon Oct 12 22:04:22 2026...
