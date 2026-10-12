@@ -55,9 +55,9 @@ class BreezeBankedPht(p: BreezeFrontendPipelineParams) extends Module {
   trainActive := trainRead
   when(trainRead) {
     training := updates.io.deq.bits
-    trainWasInitialized := initialized(updates.io.deq.bits.index)
   }
   val readData = Wire(Vec(p.phtBanks, UInt(2.W)))
+  val readInitialized = Wire(Vec(p.phtBanks, Bool()))
   val granted = Wire(Vec(3, Bool()))
   granted := VecInit(Seq.fill(3)(false.B))
   val selectedIndex = Wire(Vec(p.phtBanks, UInt(p.historyBits.W)))
@@ -68,12 +68,19 @@ class BreezeBankedPht(p: BreezeFrontendPipelineParams) extends Module {
     val trainBank = trainRead && bank(updates.io.deq.bits.index) === b.U
     selectedIndex(b) := Mux(trainBank, updates.io.deq.bits.index, prediction)
     readData(b) := ram(b).read(row(selectedIndex(b)), trainBank || any)
+    // The initialized bit belongs to the same selected row as the counter.
+    // Read just this bank's rows once, sharing it between training and all
+    // granted identical queries. Denied queries are masked by available.
+    val bankInitialized = VecInit((0 until rows).map(r => initialized((r << bankBits) | b)))
+    readInitialized(b) := (if (rows == 1) bankInitialized(0)
+                          else bankInitialized(row(selectedIndex(b))))
     for (q <- 0 until 3) {
       when(io.query.valid && bank(io.query.bits(q)) === b.U) {
         granted(q) := !trainBank && io.query.bits(q) === prediction
       }
     }
   }
+  when(trainRead) { trainWasInitialized := readInitialized(bank(updates.io.deq.bits.index)) }
   val oldCounter = Mux(trainWasInitialized, readData(bank(training.index)), 1.U(2.W))
   val updated = Mux(training.taken,
     Mux(oldCounter === 3.U, 3.U, oldCounter + 1.U),
@@ -85,7 +92,7 @@ class BreezeBankedPht(p: BreezeFrontendPipelineParams) extends Module {
   for (q <- 0 until 3) {
     val available = RegNext(granted(q), false.B)
     val index = RegEnable(io.query.bits(q), io.query.valid)
-    val init = RegEnable(initialized(io.query.bits(q)), io.query.valid)
+    val init = RegEnable(readInitialized(bank(io.query.bits(q))), io.query.valid)
     // SyncReadMem same-address read/write is unspecified. Forward the write
     // sampled at the read edge instead, including the first-ever training.
     val bypass = RegNext(io.query.valid && trainActive && training.index === io.query.bits(q), false.B)

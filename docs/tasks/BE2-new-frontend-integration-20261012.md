@@ -81,6 +81,10 @@ PMP 范围计算采用恒等式 `(boundary & ~byteMask) + byteMask == boundary |
 
 ### 四核资源调整裁定（先前缩 TLB 的候选，已由用户决定恢复）
 
+后续 b59e9be 保留完整 TLB/cache 的第一轮：Alan 最小组件/合同回归 56/56、构建接口 7/7，exit=0；三套 RTL/BIOS prepare/binding exit=0。四核与带 ILA 单核并行 Vivado 2022.2：四核 synth LUT252355（104.11%，相对 ab5c0b2 净省7671）、FF116893、BRAM108.5、DSP92，仍在 place 前因 UTLZ-1 exit=1，无 routed/bit；单核 synth LUT84177（34.73%）、FF59401、BRAM264.5、DSP23，继续实现，尚不宣称时序通过。PMP 新测试首次长组合扫描遇到 svsim 双向 pipe 写阻塞（Java stack 保留在 console），测试样本/期望值不变，b59e9be 增加每组同步 peek 后通过；此问题不作为 RTL 死锁或主机不可用证据。
+
+第二轮仍保留完整 TLB、cache、10-bit history/1024 PHT 和 bank 数。PHT 初始化有效位按同一 counter bank/row 查询，共享给该 bank 的训练和所有已获准同索引预测，未获准查询仍由 available 屏蔽；减少四次全表动态读选择，不改变初值、更新、冲突或同址旁路。NAPOT mask bit j 用低 j 位全一前缀表达 `addr ^ (addr + 1)`；NA4/NAPOT 的大小在 56-bit aperture 内恒正，只让 TOR 比较前后编码地址，OFF 仍空。保留原两个预测器测试，新增 1/4/8-bank 独立整数 counter model 检查不同 bank/row 和同 bank 冲突；复用全部 PMP 整数区间/随机权限模型。资源与时序收益仍待新源综合。
+
 实际面积超限后将部署iTLB/dTLB各由8sets×4ways+4superpage entries改为4sets×2ways+1superpage entry；PTW upper/middle walk-cache从4ways改为2ways（sets仍1/2）。保持16位ASID、4KiB/2MiB/1GiB页型、Svade/PMP/权限、共享PTW接口和F0/F1/F2级数。只缩容量、不裁指令或权限。四核为配置所有者，普通单核和RVV单核由其copy派生；profile新增MMU参数以防单核独立调参，并输出各项到cluster-profile。
 
 另采用已有的32位物理总线边界缩小VIPT物理tag及候选PMP比较输入：原PMA早已以完整64位selected PA拒绝高位非零地址，且在cache hit/refill前阻止授权。对所有可授权PA，缩小前后完全相同；对越界PA，原完整PMA仍必须返回access fault，不能通过截断别名执行低地址行。PMP仍比较完整CSR范围、不改变8项PMP或任何地址/异常接口。新增“预热低地址→Sv39重映射到相同低位的高PA”自检，要求准确access fault、raw=0、不产生refill，验证不能借缓存别名绕过拒绝。现有PMP随机oracle与程序golden保持。

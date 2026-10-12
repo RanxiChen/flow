@@ -3,8 +3,43 @@ package flow.frontend
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.freespec.AnyFreeSpec
+import scala.util.Random
 
 class BreezePipelinePredictorSpec extends AnyFreeSpec with ChiselSim {
+  for (banks <- Seq(1, 4, 8)) {
+    s"PHT bank-local initialized reads preserve independent row counters ($banks banks)" in {
+      simulate(new BreezeBankedPht(BreezeFrontendPipelineParams(phtBanks = banks))) { d =>
+        d.io.query.valid.poke(false.B); d.io.query.bits.foreach(_.poke(0.U))
+        d.io.train.valid.poke(false.B); d.io.train.bits.index.poke(0.U)
+        d.io.train.bits.taken.poke(false.B)
+        d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+        val counters = Array.fill(1024)(1)
+        val rng = new Random(0xb314L + banks)
+        val directed = Seq(0, 1, 2, 3, 4, 255, 256, 257, 511, 512, 768, 1020, 1021, 1022, 1023)
+        for (n <- 0 until 128) {
+          val index = if (n < directed.size) directed(n) else rng.nextInt(1024)
+          val taken = rng.nextBoolean()
+          d.io.train.bits.index.poke(index.U); d.io.train.bits.taken.poke(taken.B)
+          d.io.train.valid.poke(true.B); d.io.train.ready.expect(true.B)
+          d.clock.step(); d.io.train.valid.poke(false.B); d.clock.step(9)
+          counters(index) = (counters(index) + (if (taken) 1 else -1)).max(0).min(3)
+          val other = if (n % 2 == 0) (index + banks) % 1024 else rng.nextInt(1024)
+          val indices = Seq(index, other, if (n % 3 == 0) index else rng.nextInt(1024))
+          d.io.query.valid.poke(true.B)
+          indices.indices.foreach(q => d.io.query.bits(q).poke(indices(q).U))
+          d.clock.step(); d.io.query.valid.poke(false.B)
+          for (q <- indices.indices) {
+            val selected = indices.find(i => i % banks == indices(q) % banks).get
+            val available = indices(q) == selected
+            d.io.available(q).expect(available.B)
+            d.io.taken(q).expect((available && counters(indices(q)) >= 2).B)
+          }
+          d.clock.step()
+        }
+      }
+    }
+  }
+
   "PHT broadcasts identical indices, reports bank conflicts and trains current counters" in {
     val p = BreezeFrontendPipelineParams()
     simulate(new BreezeBankedPht(p)) { d =>
