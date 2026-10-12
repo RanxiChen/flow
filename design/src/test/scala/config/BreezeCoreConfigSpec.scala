@@ -81,7 +81,7 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         BreezeClusterPresets.dual.nCores mustBe 2
         BreezeClusterPresets.small.nCores mustBe 4
         BreezeClusterPresets.small.mem mustBe BreezeMemGeometry.default.copy(
-            l1Sets = 64, l1dWays = 2, l1iWays = 2, l2Ways = 4, l2BytesPerCore = 32768)
+            l1Sets = 64, l1dWays = 1, l1iWays = 2, l2Ways = 4, l2BytesPerCore = 32768)
         BreezeClusterPresets.stress.mem mustBe BreezeMemGeometry.stress
         BreezeClusterPresets.smokeL2w4.mem.l2Ways mustBe 4
         BreezeClusterPresets.smokeL1dw2.mem.l1dWays mustBe 2
