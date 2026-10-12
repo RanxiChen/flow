@@ -46,3 +46,5 @@
 后端原生三项64条定向流均II=1/退休间隔1拍；整核原0.5IPC门槛未改而全部通过，暖窗口无cache miss/replay/L2/外部内存访问。此证据只覆盖1核Linux/RVC/MMU能力配置运行的M/Bare自检程序，不代表Linux用户态、四核、RVV、删除后最终源码或FPGA时序通过。后续删除后门禁单独补记。
 
 删除后首轮编译源`f70f35664c471fb89b39edd6313450b64973ff8c`在Alan exit=1：`BackendSoc3cSpec`遗留一个旧`Soc3cSkidBackendFixture`引用。失败日志保留于`/home/chen/FUN/flow-runs/pipeline-minimum-f70f356-20261012.console`；这是删除遗漏，尚未执行运行时测试，不是主机不可用。后续源清理该入口后重跑。
+
+接线复查补充裁定：预测训练和EX恢复必须分别持有自己的`kind`。引入训练FIFO后，原独立前端共用的`conditional`读取FIFO队头，不再代表当前EX解析指令。回归源`d6eb39e56fe0de0261f72f7e4827a0df5f9e407e`在Alan的独立cwd `/home/chen/FUN/flow-pipeline-recovery-repro-20261012`已复现：较老JAL训练排队、当前条件分支实际taken且before-history=5，恢复应为11，却得到5。原始失败保留`/home/chen/FUN/flow-runs/pipeline-recovery-repro-d6eb39e-20261012/`。修正训练类型只用于PHT/BTB入队，EX类型只用于即拍GHR恢复；追加反向条件分支→JAL恢复检查。保持FIFO容量、ID/EX协议及既有golden不变，后续同一回归核对修正。

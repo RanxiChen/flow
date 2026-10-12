@@ -123,9 +123,9 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   // accept it. Training backpressure affects ID admission, never EX advance.
   val training = if(backendConnected) Some(Module(new Queue(new PipelineResolution(p), 4))) else None
   val feedback = training.map(_.io.deq).getOrElse(io.resolve)
-  val conditional = feedback.bits.kind === 1.U
-  val updatesBtb = feedback.bits.kind =/= 0.U && (!conditional || feedback.bits.taken)
-  feedback.ready := ((!conditional || predictor.io.phtUpdate.ready) &&
+  val trainingConditional = feedback.bits.kind === 1.U
+  val updatesBtb = feedback.bits.kind =/= 0.U && (!trainingConditional || feedback.bits.taken)
+  feedback.ready := ((!trainingConditional || predictor.io.phtUpdate.ready) &&
     (!updatesBtb || predictor.io.btbUpdate.ready) || !predictorEnabled.B) && !io.redirect.valid
   io.resolutionAvailable := true.B
   io.debug.resolutionUsed := 0.U
@@ -153,17 +153,20 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     }
     assert(used <= 4.U && reserved <= used)
   }
-  predictor.io.phtUpdate.valid := predictorEnabled.B && feedback.valid && conditional &&
+  predictor.io.phtUpdate.valid := predictorEnabled.B && feedback.valid && trainingConditional &&
     (!updatesBtb || predictor.io.btbUpdate.ready) && !io.redirect.valid
   predictor.io.phtUpdate.bits.index := feedback.bits.phtIndex
   predictor.io.phtUpdate.bits.taken := feedback.bits.taken
   predictor.io.btbUpdate.valid := predictorEnabled.B && feedback.valid && updatesBtb &&
-    (!conditional || predictor.io.phtUpdate.ready) && !io.redirect.valid
+    (!trainingConditional || predictor.io.phtUpdate.ready) && !io.redirect.valid
   predictor.io.btbUpdate.bits.pc := feedback.bits.eventPc
   predictor.io.btbUpdate.bits.target := feedback.bits.target
   predictor.io.btbUpdate.bits.kind := feedback.bits.kind
   predictor.io.btbUpdate.bits.invalidate := false.B
   val resolvedRedirect = io.resolve.fire && io.resolve.bits.incorrect
+  // EX recovery belongs to this resolving instruction; the training head
+  // may be an older control instruction of a different kind.
+  val resolvedConditional = io.resolve.bits.kind === 1.U
   val globalCancel = io.redirect.valid || io.fenceI
   val olderCancel = globalCancel || resolvedRedirect
   queue.io.clear := olderCancel
@@ -384,8 +387,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   when(f2Redirect) { pc := actualNext }
   when(resolvedRedirect) {
     pc := io.resolve.bits.nextPc
-    specHistory := Mux(conditional, append(io.resolve.bits.historyBefore, io.resolve.bits.taken), io.resolve.bits.historyBefore)
-    forecastHistory := Mux(conditional, append(io.resolve.bits.historyBefore, io.resolve.bits.taken), io.resolve.bits.historyBefore)
+    specHistory := Mux(resolvedConditional, append(io.resolve.bits.historyBefore, io.resolve.bits.taken), io.resolve.bits.historyBefore)
+    forecastHistory := Mux(resolvedConditional, append(io.resolve.bits.historyBefore, io.resolve.bits.taken), io.resolve.bits.historyBefore)
     specStack := resolvedNextStack; specPtr := resolvedNextPtr; specCount := resolvedNextCount
     carryValid := false.B; faultStop := false.B
   }
