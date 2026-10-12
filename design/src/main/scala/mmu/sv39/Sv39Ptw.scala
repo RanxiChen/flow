@@ -5,19 +5,21 @@ import chisel3.util._
 
 class Sv39Ptw extends Module {
   val io = IO(new Bundle {
-    val iMiss = Input(new TlbMiss); val dMiss = Input(new TlbMiss)
-    val iGrant = Output(Bool()); val dGrant = Output(Bool()); val done = Valid(new PtwDone)
+    val iMiss = Input(new TlbMiss); val dMiss = Input(new TlbMiss); val d2Miss = Input(new TlbMiss)
+    val iGrant = Output(Bool()); val dGrant = Output(Bool()); val d2Grant = Output(Bool())
+    val done = Valid(new PtwDone)
     val upper = Flipped(new WalkCachePort(9)); val middle = Flipped(new WalkCachePort(18))
     val mem = new PtwMemIO; val idle = Output(Bool())
   })
   object State extends ChiselEnum { val sIdle, sLookup, sReq, sWait, sCheck = Value }
   val state = RegInit(State.sIdle)
-  val wSide = Reg(Bool()); val wVpn = Reg(UInt(27.W)); val wAsid = Reg(UInt(16.W))
+  val wSide = Reg(UInt(2.W)); val wVpn = Reg(UInt(27.W)); val wAsid = Reg(UInt(16.W))
   val wRoot = Reg(UInt(44.W)); val wLevel = Reg(UInt(2.W)); val wBase = Reg(UInt(44.W))
   val wPte = Reg(UInt(64.W)); val wAf = Reg(Bool())
   io.idle := state === State.sIdle
   io.dGrant := io.idle && io.dMiss.valid && !io.dMiss.granted
-  io.iGrant := io.idle && io.iMiss.valid && !io.iMiss.granted && !io.dGrant
+  io.d2Grant := io.idle && io.d2Miss.valid && !io.d2Miss.granted && !io.dGrant
+  io.iGrant := io.idle && io.iMiss.valid && !io.iMiss.granted && !io.dGrant && !io.d2Grant
   io.upper.lookup.key := wVpn(26, 18); io.upper.lookup.asid := wAsid
   io.middle.lookup.key := wVpn(26, 9); io.middle.lookup.asid := wAsid
   io.upper.lookupFire := state === State.sLookup; io.middle.lookupFire := state === State.sLookup
@@ -27,12 +29,13 @@ class Sv39Ptw extends Module {
   val slice = MuxLookup(wLevel, wVpn(8, 0))(Seq(2.U -> wVpn(26, 18), 1.U -> wVpn(17, 9)))
   io.mem.req.valid := state === State.sReq; io.mem.req.bits.paddr := Cat(wBase, slice, 0.U(3.W))
   io.done.valid := false.B; io.done.bits := 0.U.asTypeOf(new PtwDone); io.done.bits.side := wSide
-  val selected = Mux(wSide, io.dMiss, io.iMiss)
+  val selected = MuxLookup(wSide, io.iMiss)(Seq(1.U -> io.dMiss, 2.U -> io.d2Miss))
   switch(state) {
     is(State.sIdle) {
-      when(io.dGrant || io.iGrant) {
-        val m = Mux(io.dGrant, io.dMiss, io.iMiss)
-        wSide := io.dGrant; wVpn := m.vpn; wAsid := m.asid; wRoot := m.rootPpn; state := State.sLookup
+      when(io.dGrant || io.d2Grant || io.iGrant) {
+        val m = Mux(io.dGrant, io.dMiss, Mux(io.d2Grant, io.d2Miss, io.iMiss))
+        wSide := Mux(io.dGrant, 1.U, Mux(io.d2Grant, 2.U, 0.U))
+        wVpn := m.vpn; wAsid := m.asid; wRoot := m.rootPpn; state := State.sLookup
       }
     }
     is(State.sLookup) {
@@ -65,5 +68,5 @@ class Sv39Ptw extends Module {
   val previousAddress = RegNext(io.mem.req.bits.paddr)
   when(stalled) { assert(io.mem.req.valid && io.mem.req.bits.paddr === previousAddress, "PTW request changed under backpressure") }
   when(io.done.valid) { assert(selected.valid && selected.granted, "PTW done without owner") }
-  assert(!(io.iGrant && io.dGrant), "PTW granted both sides")
+  assert(PopCount(Seq(io.iGrant, io.dGrant, io.d2Grant)) <= 1.U, "PTW granted multiple sides")
 }

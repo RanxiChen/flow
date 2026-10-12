@@ -47,7 +47,8 @@ class TlbMiss extends Bundle {
   val vpn = UInt(27.W); val asid = UInt(16.W); val rootPpn = UInt(44.W)
 }
 class PtwDone extends Bundle {
-  val side = Bool(); val pageFault = Bool(); val accessFault = Bool()
+  val side = UInt(2.W) // 0: instruction, 1: scalar data, 2: vector data
+  val pageFault = Bool(); val accessFault = Bool()
   val refillValid = Bool(); val refill = new TlbRefill
 }
 class WalkCacheLookup(keyBits: Int) extends Bundle {
