@@ -50,6 +50,21 @@ class BreezeResolutionReservationSpec extends AnyFreeSpec with ChiselSim {
         assert(trained == 4)
         d.io.debug.resolutionUsed.expect(0.U); d.io.debug.resolutionReserved.expect(0.U)
 
+        // Recovery must use the current EX kind, not a preceding queued train.
+        for ((olderKind, exKind, before, after) <- Seq((2, 1, 5, 11), (1, 2, 6, 6))) {
+          d.io.resolutionReserve.get.poke(true.B); tick(); tick()
+          d.io.resolutionReserve.get.poke(false.B)
+          d.io.resolve.valid.poke(true.B); d.io.resolve.bits.kind.poke(olderKind.U)
+          d.io.resolve.bits.incorrect.poke(false.B); d.io.resolve.ready.expect(true.B); tick()
+          d.io.resolve.bits.kind.poke(exKind.U); d.io.resolve.bits.historyBefore.poke(before.U)
+          d.io.resolve.bits.incorrect.poke(true.B); d.io.resolve.ready.expect(true.B); tick()
+          d.io.debug.specHistory.expect(after.U)
+          d.io.resolve.valid.poke(false.B); d.io.resolve.bits.incorrect.poke(false.B)
+          for (_ <- 0 until 40) tick()
+        }
+        assert(trained == 8)
+        d.io.resolve.bits.kind.poke(1.U)
+
         // Sustained conditional branches exceed the banked predictor's II=2.
         // Model ID admission followed by EX one cycle later, including training pressure.
         var issued = 0; var resolved = 0; var pending = false; var waits = 0
@@ -63,7 +78,7 @@ class BreezeResolutionReservationSpec extends AnyFreeSpec with ChiselSim {
           if(admit) issued += 1
           tick(); pending = admit
         }
-        assert(issued == 32 && resolved == 32 && trained == 36)
+        assert(issued == 32 && resolved == 32 && trained == 40)
         if(enabled) assert(waits > 0, "test must exercise real training backpressure")
         d.io.debug.resolutionUsed.expect(0.U); d.io.debug.resolutionReserved.expect(0.U)
 
@@ -77,7 +92,7 @@ class BreezeResolutionReservationSpec extends AnyFreeSpec with ChiselSim {
         d.io.redirect.valid.poke(false.B)
         d.io.debug.resolutionReserved.expect(0.U); d.io.debug.resolutionUsed.expect(1.U)
         for (_ <- 0 until 40) tick()
-        assert(trained == 37)
+        assert(trained == 41)
         d.io.debug.resolutionUsed.expect(0.U); d.io.resolutionAvailable.expect(true.B)
       }
     }
