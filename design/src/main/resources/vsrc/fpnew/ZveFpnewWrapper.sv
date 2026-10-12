@@ -38,10 +38,16 @@ module ZveFpnewWrapper #(parameter int TAG_WIDTH=16, KIND=2) (
   fpnew_pkg::status_t cast_status;
   wire use_cast = KIND == 1 && (op_i == 4'(fpnew_pkg::F2I) || op_i == 4'(fpnew_pkg::I2F));
   logic prefer_cast;
-  wire choose_cast = cast_valid && (!arithmetic_valid || prefer_cast);
+  logic selection_held, held_cast;
+  wire choose_cast = selection_held ? held_cast : cast_valid && (!arithmetic_valid || prefer_cast);
   always_ff @(posedge clk_i) begin
-    if (reset_i) prefer_cast <= 1'b0;
-    else if (out_valid_o && out_ready_i) prefer_cast <= !choose_cast;
+    if (reset_i) begin
+      prefer_cast <= 1'b0; selection_held <= 1'b0; held_cast <= 1'b0;
+    end else if (out_valid_o && out_ready_i) begin
+      prefer_cast <= !choose_cast; selection_held <= 1'b0;
+    end else if (out_valid_o && !out_ready_i) begin
+      selection_held <= 1'b1; held_cast <= choose_cast;
+    end
   end
   // KIND=0: ADDMUL only; KIND=1: conversions/non-computational; KIND=2: general.
   // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
