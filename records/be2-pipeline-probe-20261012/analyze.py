@@ -33,6 +33,7 @@ def differences(values):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("root", type=pathlib.Path)
+parser.add_argument("--expected", choices=("legacy-fail", "pipeline-pass"), default="legacy-fail")
 args = parser.parse_args()
 root = args.root
 report = {"source_sha": (root / "source-sha.txt").read_text().strip(),
@@ -109,10 +110,15 @@ for path in sorted(root.glob("TEST-*.xml")):
     report["xml"].append(attrs)
 assert len(report["xml"]) == 2
 assert sum(int(x["tests"]) for x in report["xml"]) == 2
-assert sum(int(x["failures"]) for x in report["xml"]) == 1
+passing = args.expected == "pipeline-pass"
+assert sum(int(x["failures"]) for x in report["xml"]) == (0 if passing else 1)
 assert sum(int(x["errors"]) + int(x["skipped"]) for x in report["xml"]) == 0
-assert (root / "run.exit").read_text().strip() == "1"
-report["verdict"] = "BACKEND_PIPELINING_PASS__WHOLE_CORE_THROUGHPUT_FAIL"
+assert (root / "run.exit").read_text().strip() == ("0" if passing else "1")
+if passing:
+    assert all(x["diagnostic_target_0_5_ipc_met"] for x in report["whole_core"].values())
+    assert all(x["distinct_window_ex_commit_overlap"] > 0 for x in report["whole_core"].values())
+report["verdict"] = ("BACKEND_AND_WHOLE_CORE_PIPELINING_PASS" if passing else
+                     "BACKEND_PIPELINING_PASS__WHOLE_CORE_THROUGHPUT_FAIL")
 report["hashes"] = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                     for p in root.iterdir() if p.is_file() and
                     p.name not in ("analysis.json", "audit.console", "audit.exit")}

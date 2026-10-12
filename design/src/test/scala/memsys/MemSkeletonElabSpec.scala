@@ -8,7 +8,8 @@ import flow.coherence.CoherenceParams
 import flow.top.{BreezeCluster, BreezeClusterAxi}
 import flow.l1d.L1DCache
 import flow.l2.L2Home
-import flow.l1i.{L1ICache, L1IClient, L1IParams, FetchTlbClient}
+import flow.l1i.L1IClient
+import flow.frontend.BreezeFrontendPipeline
 import org.scalatest.freespec.AnyFreeSpec
 
 /** Skeleton gate: L1D and L2 elaborate to SystemVerilog in every v1 geometry. */
@@ -32,8 +33,8 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
     s"AXI-Lite arbiter elaborates ($name)" in {
       ChiselStage.emitSystemVerilog(new Axi4LiteArbiter(g.nCores), firtoolOpts = Array("-disable-all-randomization"))
     }
-    s"L1ICache elaborates ($name)" in {
-      ChiselStage.emitSystemVerilog(new L1ICache(L1IParams(g)), firtoolOpts = Array("-disable-all-randomization"))
+    s"pipelined frontend and VIPT I-cache elaborate ($name)" in {
+      ChiselStage.emitSystemVerilog(new BreezeFrontendPipeline(g), firtoolOpts = Array("-disable-all-randomization"))
     }
     s"L1IClient elaborates ($name)" in {
       ChiselStage.emitSystemVerilog(new L1IClient(g), firtoolOpts = Array("-disable-all-randomization"))
@@ -45,8 +46,4 @@ class MemSkeletonElabSpec extends AnyFreeSpec {
       ChiselStage.emitSystemVerilog(new L2Home(g), firtoolOpts = Array("-disable-all-randomization"))
     }
   }
-  "FetchTlbClient elaborates" in {
-    ChiselStage.emitSystemVerilog(new FetchTlbClient, firtoolOpts = Array("-disable-all-randomization"))
-  }
-
 }

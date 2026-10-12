@@ -4,22 +4,9 @@ import chisel3._
 import chisel3.util._
 import flow.config.{BackendConfig, PrivilegeProfile}
 import flow.fpu.BreezeFpChiselSim
-import flow.frontend.BreezeFrontendBoundary
 import flow.interface._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-
-/** Production skid and backend connection; memory replies remain independent stimuli. */
-class Soc3cSkidBackendFixture extends Module {
-  val backend = Module(new BreezeBackend(BackendConfig(privilegeProfile = PrivilegeProfile.Linux), enabledebug = true))
-  val boundary = Module(new BreezeFrontendBoundary(backend.cfg.ghrLength))
-  val io = IO(chiselTypeOf(backend.io))
-  backend.io <> io
-  boundary.io.fast := backend.io.frontendFastRedirect
-  boundary.io.slow := backend.io.frontendSlowRedirect
-  boundary.io.in <> io.fetchBuffer
-  backend.io.fetchBuffer <> boundary.io.out
-}
 
 class BackendSoc3cSpec extends AnyFreeSpec with Matchers with BreezeFpChiselSim {
   import Instructions._

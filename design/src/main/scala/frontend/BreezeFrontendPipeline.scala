@@ -53,13 +53,14 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
   assert(count <= p.instructionSlots.U)
 }
 
-/** Standalone frontend boundary: genuine VIPT F0/F1, streaming RVC F2.
-  * Backend implementation is deliberately outside this module. Resolve and
-  * commit inputs specify the contract for the later backend reconstruction.
+/** Production/standalone frontend boundary: genuine VIPT F0/F1, streaming RVC F2.
+  * Backend implementation is outside this module. Connected mode exposes
+  * the shared data TLB and reserves training capacity before backend EX.
   */
 class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
     p: BreezeFrontendPipelineParams = BreezeFrontendPipelineParams(),
-    mmuParams: Sv39MmuParams = Sv39MmuParams(), backendConnected: Boolean = false) extends Module {
+    mmuParams: Sv39MmuParams = Sv39MmuParams(), backendConnected: Boolean = false,
+    predictorEnabled: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val resetPc = Input(UInt(64.W))
     val context = Input(new BreezeMmuContext(64))
@@ -83,6 +84,7 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
       val f0Fire = Bool(); val f0Pc = UInt(64.W); val f1Fire = Bool(); val f2Fire = Bool()
       val f1Redirect = Bool(); val f2Redirect = Bool(); val specHistory = UInt(p.historyBits.W)
       val queryHistory = UInt(p.historyBits.W); val rasCount = UInt(log2Ceil(p.rasDepth + 1).W)
+      val resolutionUsed = UInt(3.W); val resolutionReserved = UInt(3.W); val trainingFire = Bool()
     })
   })
   def append(h: UInt, bit: Bool): UInt = Cat(h(p.historyBits - 2, 0), bit)
@@ -123,9 +125,12 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   val feedback = training.map(_.io.deq).getOrElse(io.resolve)
   val conditional = feedback.bits.kind === 1.U
   val updatesBtb = feedback.bits.kind =/= 0.U && (!conditional || feedback.bits.taken)
-  feedback.ready := (!conditional || predictor.io.phtUpdate.ready) &&
-    (!updatesBtb || predictor.io.btbUpdate.ready) && !io.redirect.valid
+  feedback.ready := ((!conditional || predictor.io.phtUpdate.ready) &&
+    (!updatesBtb || predictor.io.btbUpdate.ready) || !predictorEnabled.B) && !io.redirect.valid
   io.resolutionAvailable := true.B
+  io.debug.resolutionUsed := 0.U
+  io.debug.resolutionReserved := 0.U
+  io.debug.trainingFire := feedback.fire
   if(backendConnected) {
     val used = RegInit(0.U(3.W))
     val reserved = RegInit(0.U(3.W))
@@ -133,6 +138,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val cancel = io.redirect.valid || io.fenceI
     val release = Mux(cancel, reserved, io.resolve.fire.asUInt)
     io.resolutionAvailable := used < 4.U && !cancel
+    io.debug.resolutionUsed := used
+    io.debug.resolutionReserved := reserved
     training.get.io.enq <> io.resolve
     // Suppress an unconsumed EX record at a global cancellation. Previously
     // accepted training is retained, matching legal speculative training.
@@ -146,11 +153,11 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     }
     assert(used <= 4.U && reserved <= used)
   }
-  predictor.io.phtUpdate.valid := feedback.valid && conditional &&
+  predictor.io.phtUpdate.valid := predictorEnabled.B && feedback.valid && conditional &&
     (!updatesBtb || predictor.io.btbUpdate.ready) && !io.redirect.valid
   predictor.io.phtUpdate.bits.index := feedback.bits.phtIndex
   predictor.io.phtUpdate.bits.taken := feedback.bits.taken
-  predictor.io.btbUpdate.valid := feedback.valid && updatesBtb &&
+  predictor.io.btbUpdate.valid := predictorEnabled.B && feedback.valid && updatesBtb &&
     (!conditional || predictor.io.phtUpdate.ready) && !io.redirect.valid
   predictor.io.btbUpdate.bits.pc := feedback.bits.eventPc
   predictor.io.btbUpdate.bits.target := feedback.bits.target
@@ -206,7 +213,7 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   cache.io.discardDeferred := cache.io.f1.valid && earlyTaken
   cache.io.request.valid := !io.block && !faultStop && !olderCancel
   cache.io.request.bits.pc := pc
-  predictor.io.query.valid := cache.io.predictorQuery.valid
+  predictor.io.query.valid := predictorEnabled.B && cache.io.predictorQuery.valid
   predictor.io.query.bits.pc := cache.io.predictorQuery.bits.pc
   predictor.io.query.bits.history := cache.io.predictorQuery.bits.history
   cache.io.prediction := predictor.io.result
@@ -296,7 +303,7 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
       Cat(Fill(43, raw(31)), raw(19, 12), raw(20), raw(30, 21), 0.U(1.W)))
     val jalrImm = Mux(out.compressed, 0.U(64.W), Cat(Fill(52, raw(31)), raw(31, 20)))
     val returnTarget = (groupStacks(lane)((groupPtrs(lane) - 1.U)(rasPtrBits - 1, 0)) + jalrImm) & ~1.U(64.W)
-    val rasPredict = out.rasPop && groupCounts(lane) =/= 0.U
+    val rasPredict = predictorEnabled.B && out.rasPop && groupCounts(lane) =/= 0.U
     out.predictedTaken := safe && ((branch && direction) || jal ||
       (jalr && (rasPredict || (btb.hit && btb.kind === 3.U))))
     out.predictedTarget := Mux(branch, out.pc + branchImm,
@@ -364,7 +371,7 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     (!w.prediction.btb(outputs(i).eventPc =/= w.pc).hit ||
       w.prediction.btb(outputs(i).eventPc =/= w.pc).target =/= outputs(i).predictedTarget)))
   val directInstr = outputs(PriorityEncoder(direct))
-  predictor.io.btbRepair.valid := f2Fire && (bad.asUInt.orR || direct.asUInt.orR)
+  predictor.io.btbRepair.valid := predictorEnabled.B && f2Fire && (bad.asUInt.orR || direct.asUInt.orR)
   predictor.io.btbRepair.bits.pc := Mux(bad.asUInt.orR, w.pc + (PriorityEncoder(bad) << 1), directInstr.eventPc)
   predictor.io.btbRepair.bits.target := directInstr.predictedTarget
   predictor.io.btbRepair.bits.kind := directInstr.kind

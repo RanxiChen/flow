@@ -1,0 +1,5 @@
+case,pass,retired,span,ipc,id_count,ex_count,commit_count,distinct_ex_commit_overlap,load_miss,store_miss,l2_reads,replays
+alu-independent,true,128,128,1.0,147,125,128,122,0,0,0,0
+alu-dependent,true,128,128,1.0,141,125,128,122,0,0,0,0
+load-hit,true,128,158,0.810126582278481,147,125,128,92,0,0,0,0
+alu-compressed,true,128,128,1.0,147,125,128,122,0,0,0,0

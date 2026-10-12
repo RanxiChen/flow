@@ -235,7 +235,19 @@ See `docs/linux/hardware-platform.md`, `docs/linux/buildroot-alpine.md`, and
 `docs/linux/verification-status.md` for the platform contract and current
 evidence boundary.
 
-Generate the baseline core RTL and the standalone ROM image first:
+The following Wishbone instructions describe the historical MCU snapshot.
+The production generator now uses the pipelined frontend and BE2-P backend:
+
+```bash
+cd design
+sbt "runMain flow.top.GenerateBreezeCluster single gshare linux"
+```
+
+It emits `build/rtl/axi-cluster/single/gshare/linux/production/cpu` with
+`filelist.f` and `cluster-profile.txt`; the KCU105 wrapper consumes this AXI
+top. The deleted `GenerateBreezeCoreWishbone` entry below is historical.
+
+Historical MCU procedure:
 
 ```bash
 cd design && sbt elaborate

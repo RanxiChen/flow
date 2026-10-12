@@ -6,7 +6,8 @@ import chisel3.simulator.scalatest.ChiselSim
 import flow.coherence._
 import flow.config.BreezeMemGeometry
 import flow.interface._
-import flow.l1i.{L1ICache, L1IClient, L1IParams}
+import flow.l1i.L1IClient
+import flow.frontend.BreezeFrontendPipeline
 import org.scalatest.freespec.AnyFreeSpec
 
 class RegisteredIRefillHarness extends Module {
@@ -18,12 +19,38 @@ class RegisteredIRefillHarness extends Module {
     val coh = new ReadClientIO(CoherenceParams(g))
     val returned = Output(Bool())
   })
-  val cache = Module(new L1ICache(L1IParams(g)))
+  val frontend = Module(new BreezeFrontendPipeline(g))
   val client = Module(new L1IClient(g))
-  cache.io.dreq <> io.request; io.response <> cache.io.drsp
-  cache.io.flush := io.flush
-  client.io.demand <> cache.io.next_level_req
-  cache.io.next_level_rsp <> client.io.demandRsp
+  val active = RegInit(false.B)
+  val pc = Reg(UInt(64.W))
+  io.request.ready := !active
+  when(io.request.fire) { active := true.B; pc := io.request.bits.vaddr }
+  when(io.response.fire || io.flush) { active := false.B }
+  frontend.io.resetPc := 0x80000000L.U
+  frontend.io.context := 0.U.asTypeOf(frontend.io.context)
+  frontend.io.context.privilege := 3.U
+  frontend.io.context.mpp := 3.U
+  frontend.io.context.pmpRangesValid := true.B
+  frontend.io.block := !active
+  frontend.io.redirect.valid := io.flush || io.request.fire
+  frontend.io.redirect.bits := Mux(io.request.fire, io.request.bits.vaddr, pc)
+  frontend.io.fenceI := io.flush
+  frontend.io.sfence := 0.U.asTypeOf(frontend.io.sfence)
+  frontend.io.resolve.valid := false.B
+  frontend.io.resolve.bits := 0.U.asTypeOf(frontend.io.resolve.bits)
+  frontend.io.committedBranch := 0.U.asTypeOf(frontend.io.committedBranch)
+  frontend.io.ptwMem.req.ready := true.B
+  frontend.io.ptwMem.resp.valid := false.B
+  frontend.io.ptwMem.resp.bits := 0.U.asTypeOf(frontend.io.ptwMem.resp.bits)
+  io.response.valid := active && frontend.io.instruction.valid
+  frontend.io.instruction.ready := active && io.response.ready
+  io.response.bits := 0.U.asTypeOf(io.response.bits)
+  io.response.bits.data := frontend.io.instruction.bits.raw
+  io.response.bits.vaddr := frontend.io.instruction.bits.pc
+  io.response.bits.accessFault := frontend.io.instruction.bits.accessFault
+  io.response.bits.pageFault := frontend.io.instruction.bits.pageFault
+  client.io.demand <> frontend.io.refillReq
+  frontend.io.refillRsp <> client.io.demandRsp
   client.io.prefetch.valid := false.B; client.io.prefetch.bits := 0.U
   io.coh <> client.io.coh
   io.returned := client.io.demandRsp.vld
@@ -63,8 +90,13 @@ class L1IRegisteredReturnSpec extends AnyFreeSpec with ChiselSim {
         d.io.coh.rspDown.valid.poke(true.B); d.io.coh.rspDown.bits.data.poke(0x22220093.U)
         d.clock.step(); d.io.coh.rspDown.valid.poke(false.B)
         d.io.response.valid.expect(false.B); d.clock.step()
-        // Registered client refill, cache selection, then the SOC3e return queue.
-        d.io.response.valid.expect(false.B); d.clock.step()
+        // Preserve the strict registered client boundary above. New F0/F1/F2
+        // instruction delivery has its own bounded latency, not the deleted
+        // cache's legacy internal stage count. Architectural values unchanged.
+        var responseGuard = 0
+        while(!d.io.response.valid.peek().litToBoolean && responseGuard < 8) {
+          d.clock.step(); responseGuard += 1
+        }
         d.io.response.valid.expect(true.B); d.io.response.bits.data.expect(0x22220093.U)
         d.io.response.bits.vaddr.expect(0x80000000L.U)
         d.io.response.bits.accessFault.expect(false.B); d.clock.step(2)

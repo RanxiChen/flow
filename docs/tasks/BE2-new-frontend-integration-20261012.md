@@ -28,4 +28,19 @@
 
 生产接线删除旧BreezeFrontend、BreezeInstrRealigner、BreezeFetchTranslator、FetchTlbClient、FetchBuffer及BreezeFrontendBoundary，及仅为这些旧模块存在的生成/测试入口。旧L1ICache/BTB/PHT在确认无新路径引用后删除；保留L1IClient、新VIPT cache/new predictor、RVC decoder和共用算术/存储原语。当前唯一后端为重构后的BreezeBackend，不另留旧执行后端。
 
-先执行整核吞吐、后端定向合同与必要ISA/异常/kill/Sv39、多核及RVV访存门禁；不放宽前一轮新增0.5 IPC诊断门槛或已有golden。删除时迁移仍有意义的接口/异常覆盖，不能把测试删除当作使失败消失。三配置的RTL/BIOS、routed timing、bitstream与上板结果分别记录，旧时序不能算作新顶层通过。当前本页仅记录接线方案与进行中的源码修改，验证结果待补。
+先执行整核吞吐、后端定向合同与必要ISA/异常/kill/Sv39、多核及RVV访存门禁；不放宽前一轮新增0.5 IPC诊断门槛或已有golden。三配置的RTL/BIOS、routed timing、bitstream与上板结果分别记录，旧时序不能算作新顶层通过。
+
+删除覆盖映射：旧前端/realigner/FetchTlbClient/cache/predictor的14份模块测试随9份废弃RTL移除；混合RVC、跨页第二parcel异常、SFENCE重映射、PMP、权限变化、取消中的refill及历史/RAS恢复由保留的`BreezeFrontendPipelineSpec`覆盖，预测存储/训练冲突由`BreezePipelinePredictorSpec`覆盖，MMU/PMP本体测试保留。`L1IRegisteredReturnSpec`迁移到真实新前端+原L1IClient，仍核对原始地址/指令数据和flush不安装旧返回；仅将被删cache的内部固定拍数替换为新F0/F1/F2的有界交付等待，L1IClient的E+1注册返回断言未变。未删除或放宽ISA/程序golden、后端合同、seed、scale及watchdog。新增`BreezeResolutionReservationSpec`直接压满ID反馈预留，持续条件分支造成实际训练反压，并核对global取消只释放未到EX的预留、已经接受的训练只消费一次。
+
+## 首轮生产接入证据
+
+源SHA `d71b63836ab381be5393125a8bd59870ff65d786`，实际主机Alan（首选cloud连接超时后完成Alan工具/资源/代理预检），cwd `/home/chen/FUN/flow-pipeline-integration-20261012`。执行`bash /home/chen/FUN/flow-runs/be2-env.sh bash records/be2-pipeline-probe-20261012/run.sh <SHA> <cwd> /home/chen/FUN/flow-runs/pipeline-integration-d71b638-20261012`，exit=0。两个suite共2个test，failure/error/skip均为0；[完整日志与CSV/XML/ELF](../../records/be2-pipeline-probe-20261012/d71b638)保留，[审计](../../records/be2-pipeline-probe-20261012/d71b638/analysis.json)核对每条暖窗口写回值、PC顺序及EX/WB不同指令同拍交叠。
+
+| 测量窗口（两次预热后64条） | 退休/窗口周期 | IPC | 不同指令EX/提交交叠次数 |
+|---|---:|---:|---:|
+| 独立32位ALU | 128/128 | 1.0 | 122 |
+| RAW依赖32位ALU | 128/128 | 1.0 | 122 |
+| 真实L1D命中load（四寄存器重复，含WAW） | 128/158 | 0.81012658 | 92 |
+| 16位C.ADDI | 128/128 | 1.0 | 122 |
+
+后端原生三项64条定向流均II=1/退休间隔1拍；整核原0.5IPC门槛未改而全部通过，暖窗口无cache miss/replay/L2/外部内存访问。此证据只覆盖1核Linux/RVC/MMU能力配置运行的M/Bare自检程序，不代表Linux用户态、四核、RVV、删除后最终源码或FPGA时序通过。后续删除后门禁单独补记。
