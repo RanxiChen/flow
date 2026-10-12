@@ -59,6 +59,11 @@ class ClusterProgramSpec extends AnyFreeSpec with Matchers {
     ClusterRunConfig(cfg = linux(BreezeClusterPresets.single), elf = placeholder, harts = 1),
     singlePrograms)
 
+  group("single-hart SFENCE system programs with AXI backpressure",
+    ClusterRunConfig(cfg = linux(BreezeClusterPresets.single), elf = placeholder, harts = 1,
+      axiBackpressure = true, seed = 7),
+    Seq("sv39_basic", "sv39_ptw_cache"))
+
   group("multi-hart programs, dual (2 harts), Linux profile",
     ClusterRunConfig(cfg = linux(BreezeClusterPresets.dual), elf = placeholder, harts = 2,
       maxCycles = 4000000),

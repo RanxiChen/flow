@@ -21,7 +21,7 @@ class PipelineFetchWindow(p: BreezeFrontendPipelineParams) extends Bundle {
   * reads, iTLB request and predictor query. There is no hit transaction FSM.
   */
 class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
-    tlbParams: Sv39TlbParams) extends Module {
+    tlbParams: Sv39TlbParams, quiesceReplayWhenBlocked: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val request = Flipped(Decoupled(new PipelineFetchRequest(p.historyBits)))
     val response = Decoupled(new PipelineFetchWindow(p))
@@ -81,7 +81,8 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   val replay = retryValid || deferredValid
   val selected = Mux(retryValid, retry, Mux(deferredValid, deferred, io.request.bits))
   val freshAllowed = !replay && credit && !io.block
-  val replayAllowed = replay && !qValid && !refillFault
+  val replayAllowed = replay && !qValid && !refillFault &&
+    (!quiesceReplayWhenBlocked.B || !io.block)
   // F2 cancellation clears ownership at the edge. A harmless array read may
   // occur on that edge; its result is invalid. No decode -> cancel -> F0 CE.
   val arrayAllowed = !waiting && !refillWrite && !cancelOutput && !io.stopF0
@@ -215,5 +216,8 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
     assert(reserved <= 2.U)
     when(returns.io.enq.valid) { assert(returns.io.enq.ready, "ICache result lacks reservation") }
     when(io.response.fire) { assert(reserved =/= 0.U) }
+  }
+  when(quiesceReplayWhenBlocked.B && io.block) {
+    assert(!io.tlb.req.fire, "SFENCE block must also stop deferred/retry translation admission")
   }
 }

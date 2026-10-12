@@ -19,11 +19,14 @@ object BreezePipelineLink {
     frontend.io.redirect.valid := restart.valid
     frontend.io.redirect.bits := restart.target
     frontend.io.fenceI := restart.cacheFlush
-    frontend.io.sfence.valid := backend.io.sfence.valid
-    frontend.io.sfence.rs1Nz := backend.io.sfence.useVaddr
-    frontend.io.sfence.rs2Nz := backend.io.sfence.useAsid
-    frontend.io.sfence.vaddr := backend.io.sfence.vaddr
-    frontend.io.sfence.asid := backend.io.sfence.asid
+    // Flush translation and cancel its cache query on the same edge. Backend
+    // observation remains at WB; no younger ID may issue in this restart gap.
+    val sfence = RegNext(backend.io.sfence, 0.U.asTypeOf(backend.io.sfence))
+    frontend.io.sfence.valid := sfence.valid
+    frontend.io.sfence.rs1Nz := sfence.useVaddr
+    frontend.io.sfence.rs2Nz := sfence.useAsid
+    frontend.io.sfence.vaddr := sfence.vaddr
+    frontend.io.sfence.asid := sfence.asid
     frontend.io.resolve <> backend.io.frontendResolve
     frontend.io.resolutionReserve.get := backend.io.frontendResolutionReserve
     backend.io.frontendResolutionAvailable := frontend.io.resolutionAvailable

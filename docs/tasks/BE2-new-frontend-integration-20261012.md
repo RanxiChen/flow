@@ -13,7 +13,7 @@
 | 反馈取消 | 全局恢复释放尚未到EX的预留；已经合法接受的训练保留。与旧C2一致，EX同拍WB kill不产生新的解析记录 |
 | 提交GHR | 只使用WB确实提交的条件分支及保存的actual taken，不用nextPC与fallthrough是否相等猜实际方向 |
 | 全局重启 | 后端给出异常/中断/replay/xret/SATP/FENCE.I/SFENCE及权限CSR写的重启；跨一个寄存边界，与新CSR context及permissionEvent同拍到前端 |
-| FENCE.I及SFENCE | 明确restart PC；SFENCE在WB发出原脉冲，前端block维持BE2-P条件排空；不改变MMU内部刷新与PTW drain规则 |
+| FENCE.I及SFENCE | 明确restart PC；后端SFENCE观察脉冲仍在WB，生产MMU刷新与全局restart一起寄存一拍；前端block覆盖retry/deferred翻译准入，维持BE2-P条件排空；不改变MMU内部刷新与PTW drain规则 |
 | MMU/iTLB/dTLB/PTW | 每核使用新前端内的一份Sv39Mmu；导出真实dTLB及独立mmuIdle。标量L1D与RVV翻译仲裁器接其dTLB；PTW经实际L1D物理读口，不能旁路到L2 |
 | 指令refill | 新VIPT ICache→原L1IClient→共享L2或RVV dataless home；保持已接受miss归属和错误返回、owner probe语义，预取关闭 |
 | HPM | F0 accepted query计ICache access，真实demand refill脉冲计miss；L1D及BE2事件继续接原CSR HPM |
@@ -66,3 +66,5 @@ EX恢复修正源`feb0fca7240d6755634641f2056eaea64be05748`：同一reservation�
 实际面积超限后将部署iTLB/dTLB各由8sets×4ways+4superpage entries改为4sets×2ways+1superpage entry；PTW upper/middle walk-cache从4ways改为2ways（sets仍1/2）。保持16位ASID、4KiB/2MiB/1GiB页型、Svade/PMP/权限、共享PTW接口和F0/F1/F2级数。只缩容量、不裁指令或权限。四核为配置所有者，普通单核和RVV单核由其copy派生；profile新增MMU参数以防单核独立调参，并输出各项到cluster-profile。
 
 另采用已有的32位物理总线边界缩小VIPT物理tag及候选PMP比较输入：原PMA早已以完整64位selected PA拒绝高位非零地址，且在cache hit/refill前阻止授权。对所有可授权PA，缩小前后完全相同；对越界PA，原完整PMA仍必须返回access fault，不能通过截断别名执行低地址行。PMP仍比较完整CSR范围、不改变8项PMP或任何地址/异常接口。新增“预热低地址→Sv39重映射到相同低位的高PA”自检，要求准确access fault、raw=0、不产生refill，验证不能借缓存别名绕过拒绝。现有PMP随机oracle与程序golden保持。
+
+SFENCE生命周期补充裁定：连接后端时，translationBlocked不只阻止fresh F0，还必须阻止已保存的retry/deferred重新进入iTLB；否则MMU空闲后，等待Icache返回的旧fetch可能重新启动翻译。缓存已接受的refill继续独立排空，后端串行等待使用真实MMU idle而非frontend local idle，避免等待被暂停的retry自身造成死锁。独立前端的block-drain行为不变。生产SFENCE控制与全局restart同时寄存到下一拍，防止WB先撤掉iTLB响应而cache尚未取消F1查询；WB观察脉冲/原后端拍号不变，restart gap内没有年轻ID发射。追加原sv39_basic/sv39_ptw_cache在单核seed=7 AXI反压下的原样程序检查；这些是接线规则补充，尚待新源最低门禁，不宣称已复现运行时失效。

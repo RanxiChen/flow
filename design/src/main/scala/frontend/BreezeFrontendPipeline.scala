@@ -109,7 +109,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   }
   io.mmuIdle := mmu.io.idle
   io.ptwMem <> mmu.io.ptwMem
-  val cache = Module(new BreezeViptICache(g, p, mmuParams.itlb))
+  val cache = Module(new BreezeViptICache(g, p, mmuParams.itlb,
+    quiesceReplayWhenBlocked = backendConnected))
   val predictor = Module(new BreezePipelinePredictor(p))
   val queue = Module(new PipelineInstructionQueue(p))
   cache.io.tlb <> mmu.io.itlb
