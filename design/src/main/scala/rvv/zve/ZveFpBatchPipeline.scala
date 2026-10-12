@@ -20,6 +20,7 @@ class ZveFpBatchPipeline(lanes: Int, depth: Int = 8, metadataBits: Int = 32) ext
   val live = RegInit(VecInit(Seq.fill(depth)(false.B)))
   val batches = Reg(Vec(depth, new ZveFpBatch(lanes, metadataBits)))
   val done = Reg(Vec(depth, UInt(lanes.W)))
+  val requested = Reg(Vec(depth, UInt(lanes.W)))
   val data = Reg(Vec(depth, Vec(lanes, UInt(64.W))))
   val flags = Reg(Vec(depth, Vec(lanes, UInt(5.W))))
   val allocate = RegInit(0.U(slotBits.W))
@@ -31,6 +32,7 @@ class ZveFpBatchPipeline(lanes: Int, depth: Int = 8, metadataBits: Int = 32) ext
   when(io.in.fire) {
     live(allocate) := true.B; batches(allocate) := io.in.bits
     done(allocate) := ~io.in.bits.active
+    requested(allocate) := 0.U
     flags(allocate).foreach(_ := 0.U)
     data(allocate).foreach(_ := 0.U)
     allocate := allocate + 1.U
@@ -55,6 +57,7 @@ class ZveFpBatchPipeline(lanes: Int, depth: Int = 8, metadataBits: Int = 32) ext
     val tagSlot = (port.response.bits.tag >> laneBits)(slotBits-1,0)
     when(port.response.fire) {
       assert(live(tagSlot) && batches(tagSlot).active(l) && !done(tagSlot)(l), "unowned or duplicate FP response")
+      assert(requested(tagSlot)(l) || (port.request.fire && tagSlot === selected), "FP returned before request acceptance")
       assert(port.response.bits.tag === ((tagSlot << laneBits) | l.U), "FP response lane/tag mismatch")
       data(tagSlot)(l) := port.response.bits.data; flags(tagSlot)(l) := port.response.bits.flags
     }
@@ -64,6 +67,9 @@ class ZveFpBatchPipeline(lanes: Int, depth: Int = 8, metadataBits: Int = 32) ext
     val received = VecInit((0 until lanes).map(l => io.fp(l).response.fire &&
       (io.fp(l).response.bits.tag >> laneBits) === s.U)).asUInt
     when(received.orR) { done(s) := done(s) | received }
+    when(launch.io.deq.valid && selected === s.U && fires.asUInt.orR) {
+      requested(s) := requested(s) | fires.asUInt
+    }
   }
   val allSent = (sent | fires.asUInt | ~request.active).andR
   launch.io.deq.ready := allSent

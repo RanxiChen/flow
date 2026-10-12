@@ -38,6 +38,15 @@ class ZveCommand(p: ZveParams) extends Bundle {
   val writes = UInt(32.W)
   val slot = UInt(p.slotBits.W)
   val age = UInt(p.ageBits.W)
+  val sew = UInt(2.W)
+  val source1Width = UInt(2.W); val source2Width = UInt(2.W); val destinationWidth = UInt(2.W)
+  val source1Registers = UInt(4.W); val source2Registers = UInt(4.W); val destinationRegisters = UInt(4.W)
+  val source1Bytes = UInt(p.vrf.lengthBits.W); val source2Bytes = UInt(p.vrf.lengthBits.W)
+  val destinationBytes = UInt(p.vrf.lengthBits.W)
+  val vectorSource1 = Bool(); val vectorSource2 = Bool()
+  val maskResult = Bool(); val maskSources = Bool(); val reduction = Bool()
+  val scalarResult = Bool(); val scalarFloating = Bool()
+  val whole = Bool(); val noPredication = Bool()
 }
 
 class ZveVerdict(p: ZveParams) extends Bundle {
