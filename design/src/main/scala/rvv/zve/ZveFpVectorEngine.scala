@@ -129,8 +129,8 @@ class ZveFpVectorEngine(p: ZveParams, lanes: Int) extends Module {
     out.data(l)(0) ^ (op===ZveOp.vmfne.U),preserved(l)))).asUInt
   val packedData=(packed.pad(p.vrf.dlen)<<outStart(log2Ceil(p.vrf.dlen)-1,0))(p.vrf.dlen-1,0)
   val enables=VecInit((0 until p.vrf.rowBytes).map(b => {
-    val regular=(0 until lanes).map(l => out.active(l) && b.U>=offset+(l.U<<d.destinationWidth) &&
-      b.U<offset+((l+1).U<<d.destinationWidth)).reduce(_ || _)
+    val regular=(0 until lanes).map(l => out.active(l) && b.U>=(offset+&(l.U<<d.destinationWidth)) &&
+      b.U<(offset+&((l+1).U<<d.destinationWidth))).reduce(_ || _)
     val maskByte=(0 until lanes).map(l => out.active(l) && ((outStart+l.U)>>3) % p.vrf.rowBytes.U === b.U).reduce(_ || _)
     Mux(d.maskResult,maskByte,regular)
   })).asUInt
