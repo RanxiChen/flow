@@ -128,7 +128,11 @@ object ZveDecode {
     val emul = (e1 >= -3.S && e1 <= 3.S || !d.vectorSource1 || d.reduction || d.maskSources) &&
       (e2 >= -3.S && e2 <= 3.S || !d.vectorSource2 || d.maskSources || d.scalarResult || d.whole) &&
       (ed >= -3.S && ed <= 3.S || d.reduction || d.maskResult || d.whole)
-    val validType = !vt(63,8).orR && sew <= 2.U && vt(2,0) =/= 4.U
+    // ELEN=32: fractional LMUL configurations must have room for one SEW
+    // element relative to ELEN. Reserved SEW/LMUL pairs produce an illegal
+    // operand snapshot here; vset* will set vill in the eventual issuer.
+    val validType = !vt(63,8).orR && sew <= 2.U && vt(2,0) =/= 4.U &&
+      lmul >= sew.zext-2.S
     val v0Legal = x(25) || vd =/= 0.U || d.maskResult || d.reduction || d.scalarResult || (memory && x(6,0) === 0x27.U)
     val floatingWidth = !fp || Mux(op === ZveOp.vfwcvt.U || op === ZveOp.vfncvt.U,sew === 1.U,sew === 2.U)
     val noRestart = !d.reduction && !is(ZveOp.vcpop,ZveOp.vfirst,ZveOp.viota,ZveOp.vmsbf,

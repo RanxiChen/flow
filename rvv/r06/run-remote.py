@@ -111,11 +111,12 @@ java -version > {shlex.quote(evidence)}/java.txt 2>&1
 verilator --version > {shlex.quote(evidence)}/verilator.txt
 set +e
 {generation}
+touch {shlex.quote(evidence)}/test-start-marker
 {command} > {shlex.quote(evidence)}/test.log 2>&1
 rc=$?
 printf '%s\\n' "$rc" > {shlex.quote(evidence)}/exit-code.txt
 mkdir -p {shlex.quote(evidence)}/xml
-cp target/test-reports/*.xml {shlex.quote(evidence)}/xml/ 2>/dev/null
+find target/test-reports -maxdepth 1 -name '*.xml' -newer {shlex.quote(evidence)}/test-start-marker -exec cp {{}} {shlex.quote(evidence)}/xml/ \\;
 tail -55 {shlex.quote(evidence)}/test.log
 exit "$rc"
 '''
