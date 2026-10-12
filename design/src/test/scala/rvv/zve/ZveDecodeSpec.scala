@@ -45,7 +45,7 @@ class ZveDecodeSpec extends AnyFreeSpec with ChiselSim {
       d.io.out.legal.expect(true.B); d.io.out.source2Registers.expect(1.U); d.io.out.source2Bytes.expect(16.U)
       d.io.in.scalar.vtype.poke(14.U); d.io.in.scalar.vl.poke(8.U) // e16,mf4 reserved for ELEN=32
       d.io.out.legal.expect(false.B)
-      d.io.in.scalar.vtype.poke(7.U); d.io.in.scalar.vl.poke(8.U) // mf8 reserved for ELEN=32
+      d.io.in.scalar.vtype.poke(5.U); d.io.in.scalar.vl.poke(8.U) // mf8 reserved for ELEN=32
       d.io.out.legal.expect(false.B)
     }
   }
