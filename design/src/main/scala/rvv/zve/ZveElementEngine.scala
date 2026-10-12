@@ -112,11 +112,14 @@ class ZveElementEngine(p: ZveParams) extends Module {
   when(state===multiply) { product := (mulA*mulB).asUInt; state := execute }
   val carry=(mask>>element)(0)
   val (arithmetic,arithmeticSat)=ZveIntegerArithmetic(d,a,b,old,product,Mux(x(25),false.B,carry))
+  val estimate=Module(new ZveFpEstimate)
+  estimate.io.value := a; estimate.io.rounding := d.issue.scalar.frm
+  estimate.io.reciprocalSqrt := op===ZveOp.vfrsqrt7.U
   val divider=Module(new ZveDivider)
   divider.io.in.valid := state===execute && elementActive && oneOf(ZveOp.vdiv,ZveOp.vdivu,ZveOp.vrem,ZveOp.vremu)
   divider.io.in.bits.a := a; divider.io.in.bits.b := b
   divider.io.in.bits.signed := oneOf(ZveOp.vdiv,ZveOp.vrem)
-  divider.io.in.bits.remainder := oneOf(ZveOp.vrem,ZveOp.vremu); divider.io.in.bits.width := d.sew
+  divider.io.in.bits.remainder := oneOf(ZveOp.vrem,ZveOp.vremu); divider.io.in.bits.sew := d.sew
   divider.io.out.ready := state===divide
   io.fp.request.valid := state===fpSend
   io.fp.request.bits := 0.U.asTypeOf(new ZveFpRequest)
@@ -187,6 +190,10 @@ class ZveElementEngine(p: ZveParams) extends Module {
     }
     when(toScalar) { scalarData := Mux(d.scalarFloating,Cat("hffffffff".U(32.W),a(31,0)),sign(a,d.sew).asUInt) }
     when(fromScalar) { value := scalar }
+    when(oneOf(ZveOp.vfrec7,ZveOp.vfrsqrt7)) {
+      value := estimate.io.result
+      when(elementActive) { flags := flags | estimate.io.flags }
+    }
     when(divider.io.in.valid) { when(divider.io.in.fire) { state := divide } }
       .elsewhen(floatReduction && elementActive) { state := fpSend }
       .otherwise { state := update }

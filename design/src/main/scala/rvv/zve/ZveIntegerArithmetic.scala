@@ -118,7 +118,7 @@ object ZveIntegerArithmetic {
 }
 
 class ZveDivideRequest extends Bundle {
-  val a=UInt(32.W); val b=UInt(32.W); val signed=Bool(); val width=UInt(2.W); val remainder=Bool()
+  val a=UInt(32.W); val b=UInt(32.W); val signed=Bool(); val sew=UInt(2.W); val remainder=Bool()
 }
 class ZveDivider extends Module {
   val io=IO(new Bundle { val in=Flipped(Decoupled(new ZveDivideRequest)); val out=Decoupled(UInt(32.W)) })
@@ -130,9 +130,9 @@ class ZveDivider extends Module {
   when(io.out.fire) { valid := false.B }
   val signsA=VecInit(Seq(io.in.bits.a(7),io.in.bits.a(15),io.in.bits.a(31)))
   val signsB=VecInit(Seq(io.in.bits.b(7),io.in.bits.b(15),io.in.bits.b(31)))
-  val negA=io.in.bits.signed && signsA(io.in.bits.width)
-  val negB=io.in.bits.signed && signsB(io.in.bits.width)
-  val mask=MuxLookup(io.in.bits.width,"hffffffff".U)(Seq(0.U->"hff".U,1.U->"hffff".U))
+  val negA=io.in.bits.signed && signsA(io.in.bits.sew)
+  val negB=io.in.bits.signed && signsB(io.in.bits.sew)
+  val mask=MuxLookup(io.in.bits.sew,"hffffffff".U)(Seq(0.U->"hff".U,1.U->"hffff".U))
   when(io.in.fire) {
     val a=io.in.bits.a & mask; val b=io.in.bits.b & mask
     when(b===0.U) { result := Mux(io.in.bits.remainder,a,mask); valid := true.B }

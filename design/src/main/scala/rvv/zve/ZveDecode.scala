@@ -135,11 +135,23 @@ object ZveDecode {
     val wideOverlap = !(dst & src2).orR || d.destinationWidth === d.source2Width ||
       (d.destinationWidth < d.source2Width && vd === vs2) ||
       (d.destinationWidth > d.source2Width && e2 >= 0.S && vd+&d.destinationRegisters === vs2+&d.source2Registers)
+    val wideOverlap1 = !d.vectorSource1 || !(dst & src1).orR || d.destinationWidth === d.source1Width ||
+      (d.destinationWidth < d.source1Width && vd === vs1) ||
+      (d.destinationWidth > d.source1Width && e1 >= 0.S && vd+&d.destinationRegisters === vs1+&d.source1Registers)
+    val maskOverlap = !d.maskResult || d.maskSources ||
+      ((!(dst & src2).orR || vd===vs2) && (!d.vectorSource1 || !(dst & src1).orR || vd===vs1))
     val segmentOk = !memory || d.whole || (d.destinationRegisters*(x(31,29)+1.U) <= 8.U &&
       vd+& (d.destinationRegisters*(x(31,29)+1.U)) <= 32.U)
     val vlmax = bytes(lmul) >> d.sew
+    val roundingOperation=is(ZveOp.vfadd,ZveOp.vfsub,ZveOp.vfrsub,ZveOp.vfmul,ZveOp.vfdiv,
+      ZveOp.vfrdiv,ZveOp.vfsqrt,ZveOp.vfrec7,ZveOp.vfmacc,ZveOp.vfnmacc,ZveOp.vfmsac,
+      ZveOp.vfnmsac,ZveOp.vfmadd,ZveOp.vfnmadd,ZveOp.vfmsub,ZveOp.vfnmsub,
+      ZveOp.vfredosum,ZveOp.vfredusum) ||
+      (is(ZveOp.vfcvt,ZveOp.vfwcvt,ZveOp.vfncvt) && !x(17))
     d.legal := hits.reduce(_ || _) && widths && groups && emul && floatingWidth && v0Legal &&
-      noRestart && destructiveOverlap && wideOverlap && segmentOk && (validType || (memory && d.whole))
+      noRestart && destructiveOverlap && (d.reduction || d.scalarResult || (wideOverlap && wideOverlap1)) &&
+      maskOverlap && segmentOk && (validType || (memory && d.whole)) &&
+      (!roundingOperation || in.scalar.frm<=4.U)
     when(!d.whole && in.scalar.vl > vlmax) { d.legal := false.B }
     // Segment fields are disjoint groups, so extend the owned range.
     when(memory && !d.whole && !maskMemory) {

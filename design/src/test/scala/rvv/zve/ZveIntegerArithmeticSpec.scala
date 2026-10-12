@@ -7,14 +7,14 @@ import chisel3.simulator.scalatest.ChiselSim
 class ZveIntegerArithmeticHarness extends Module {
   val p=ZveParams()
   val io=IO(new Bundle {
-    val operation=Input(UInt(9.W)); val width=Input(UInt(2.W)); val sourceWide=Input(Bool())
+    val operation=Input(UInt(9.W)); val sew=Input(UInt(2.W)); val sourceWide=Input(Bool())
     val destinationWide=Input(Bool()); val rounding=Input(UInt(2.W)); val carry=Input(Bool())
     val a=Input(UInt(64.W)); val b=Input(UInt(64.W)); val old=Input(UInt(64.W))
     val result=Output(UInt(64.W)); val saturated=Output(Bool())
   })
   val d=WireDefault(0.U.asTypeOf(new ZveCommand(p)))
-  d.operation := io.operation; d.sew := io.width; d.source2Width := io.width+io.sourceWide.asUInt
-  d.destinationWidth := io.width+io.destinationWide.asUInt; d.issue.scalar.vxrm := io.rounding
+  d.operation := io.operation; d.sew := io.sew; d.source2Width := io.sew+io.sourceWide.asUInt
+  d.destinationWidth := io.sew+io.destinationWide.asUInt; d.issue.scalar.vxrm := io.rounding
   val (a,b)=ZveIntegerArithmetic.multiplyOperands(d,io.a,io.b,io.old)
   val product=RegNext((a*b).asUInt)(63,0)
   val (v,s)=ZveIntegerArithmetic(d,io.a,io.b,io.old,product,io.carry)
@@ -25,11 +25,11 @@ class ZveIntegerArithmeticSpec extends AnyFreeSpec with ChiselSim {
     simulate(new ZveIntegerArithmeticHarness) { d =>
       d.io.sourceWide.poke(false.B); d.io.destinationWide.poke(false.B); d.io.rounding.poke(0.U)
       d.io.carry.poke(false.B); d.io.old.poke(0.U); d.io.a.poke(0.U); d.io.b.poke(0.U)
-      d.io.operation.poke(ZveOp.vadd.U); d.io.width.poke(0.U)
+      d.io.operation.poke(ZveOp.vadd.U); d.io.sew.poke(0.U)
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
       def check(op: Int,w: Int,a: BigInt,b: BigInt,expected: BigInt,sat: Boolean=false): Unit = {
         val mask=(BigInt(1)<<w)-1
-        d.io.operation.poke(op.U); d.io.width.poke((if(w==8) 0 else if(w==16) 1 else 2).U)
+        d.io.operation.poke(op.U); d.io.sew.poke((if(w==8) 0 else if(w==16) 1 else 2).U)
         d.io.a.poke((a & ((BigInt(1)<<64)-1)).U); d.io.b.poke((b & ((BigInt(1)<<64)-1)).U)
         d.clock.step(2)
         assert((d.io.result.peek().litValue & mask)==(expected & mask),s"op=$op w=$w a=$a b=$b")
@@ -64,7 +64,7 @@ class ZveIntegerArithmeticSpec extends AnyFreeSpec with ChiselSim {
       d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
       def divide(a: Long,b: Long,signed: Boolean,rem: Boolean,width: Int,expected: Long): Unit = {
         d.io.in.bits.a.poke((a & 0xffffffffL).U); d.io.in.bits.b.poke((b & 0xffffffffL).U)
-        d.io.in.bits.signed.poke(signed.B); d.io.in.bits.remainder.poke(rem.B); d.io.in.bits.width.poke(width.U)
+        d.io.in.bits.signed.poke(signed.B); d.io.in.bits.remainder.poke(rem.B); d.io.in.bits.sew.poke(width.U)
         d.io.in.valid.poke(true.B); d.io.in.ready.expect(true.B); d.clock.step(); d.io.in.valid.poke(false.B)
         var cycles=0
         while(!d.io.out.valid.peek().litToBoolean && cycles<40) { d.clock.step(); cycles+=1 }
