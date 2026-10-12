@@ -97,6 +97,11 @@ class _BreezeClusterCPU(CPU):
     linker_output_format = "elf64-littleriscv"
     nop = "nop"
     expected_marker = {}
+    translation_marker = {
+        'itlbSets': '4', 'itlbWays': '2', 'itlbSuperpages': '1',
+        'dtlbSets': '4', 'dtlbWays': '2', 'dtlbSuperpages': '1',
+        'wcUpperSets': '1', 'wcUpperWays': '2', 'wcMiddleSets': '2', 'wcMiddleWays': '2',
+    }
     debug_enabled = False
     tandem_enabled = False
     coherent_dma = False
@@ -231,7 +236,7 @@ class _BreezeClusterCPU(CPU):
         expected = {"bus": "axi", "profile": cls.cluster_profile, "preset": cls.core_preset,
             "privilege": cls.privilege_profile, "tandem": str(cls.tandem_enabled).lower(),
             "debug": str(cls.debug_enabled).lower(), "platformSha256": platform_hash,
-            "nCores": str(cls.num_harts), **cls.expected_marker}
+            "nCores": str(cls.num_harts), **cls.translation_marker, **cls.expected_marker}
         mismatches = [f"{key}: expected={value} actual={values.get(key)}"
                       for key, value in expected.items() if values.get(key) != value]
         if mismatches:
