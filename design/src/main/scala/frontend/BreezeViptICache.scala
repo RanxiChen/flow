@@ -70,14 +70,16 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   val reserved = RegInit(0.U(2.W))
   val cancelOutput = io.cancel || io.fenceI
   val cancel = cancelOutput || io.cancelYounger
-  val returns = withReset(reset.asBool || cancel) {
-    Module(new flow.util.RegisteredPairQueue(new PipelineFetchWindow(p), pipe = true))
-  }
+  // Two return slots. `reserved` proves a free slot for every F1 result, so
+  // the wide payload CE is registered query ownership and tail only. F2 ready,
+  // redirect and cancellation reach ownership (count/head/tail), never the CE.
+  val slots = Reg(Vec(2, new PipelineFetchWindow(p)))
+  val head = RegInit(false.B); val tail = RegInit(false.B)
+  val count = RegInit(0.U(2.W))
   // F2 consumes its own response while canceling younger queries. Masking
   // this response with cancelYounger would create fire -> redirect -> !fire.
-  io.response.valid := returns.io.deq.valid && !cancelOutput
-  io.response.bits := returns.io.deq.bits
-  returns.io.deq.ready := io.response.ready && !cancelOutput
+  io.response.valid := count =/= 0.U && !cancelOutput
+  io.response.bits := Mux(head, slots(1), slots(0))
   val credit = reserved < 2.U || io.response.fire
   val replay = retryValid || deferredValid
   val selected = Mux(retryValid, retry, Mux(deferredValid, deferred, io.request.bits))
@@ -149,10 +151,22 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   io.f1Prediction.bits.pc := Mux(refillFault, retry.pc, q.pc)
   io.f1Prediction.bits.mask := Mux(refillFault, errorResult.mask, result.mask)
   io.f1Prediction.bits.prediction := Mux(refillFault, refillPrediction, io.prediction)
-  returns.io.enq.valid := !cancel && (complete || refillFault)
-  returns.io.enq.bits := Mux(refillFault, errorResult, result)
-  io.f1.valid := returns.io.enq.fire
-  io.f1.bits := returns.io.enq.bits
+  val produce = complete || refillFault
+  val produced = Mux(refillFault, errorResult, result)
+  // Every query already owns a return credit. Write its private candidate
+  // even on a miss or cancellation; only qualified `enq` makes it visible.
+  // In particular, complete contains iTLB resp.valid, which is kill-qualified:
+  // it must not drive the wide payload CE through F2 -> kill -> resp.valid.
+  val payloadWrite = qValid || refillFault
+  when(payloadWrite && !tail) { slots(0) := produced }
+  when(payloadWrite && tail) { slots(1) := produced }
+  val enq = produce && !cancel
+  io.f1.valid := enq
+  io.f1.bits := produced
+  when(enq) { tail := !tail }
+  when(io.response.fire) { head := !head }
+  count := count + enq.asUInt - io.response.fire.asUInt
+  when(cancel) { head := false.B; tail := false.B; count := 0.U }
   qValid := query && !failedQuery
   when(query && deferredValid && !retryValid) { deferredValid := false.B }
   when(complete || refillFault) { retryValid := false.B; refillFault := false.B }
@@ -220,8 +234,17 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   }
   when(!cancel) {
     assert(reserved <= 2.U)
-    when(returns.io.enq.valid) { assert(returns.io.enq.ready, "ICache result lacks reservation") }
+    assert(count <= 2.U)
+    assert(count <= reserved, "ICache visible windows exceed reserved owners")
+    when(enq) { assert(count =/= 2.U || io.response.fire, "ICache result lacks reservation") }
     when(io.response.fire) { assert(reserved =/= 0.U) }
+  }
+  when(payloadWrite) {
+    // This includes cancellation edges: a private write must not overwrite
+    // the visible head, even if that head is also consumed on this edge.
+    assert(count < 2.U && reserved > count, "ICache private write lacks an unused reserved slot")
+    assert(!qValid || !refillFault, "ICache query and refill fault share a private write")
+    when(count === 1.U) { assert(head =/= tail, "ICache private write aliases the visible head") }
   }
   when(quiesceReplayWhenBlocked.B && io.block) {
     assert(!io.tlb.req.fire, "SFENCE block must also stop deferred/retry translation admission")
