@@ -33,7 +33,8 @@ final case class ClusterRunConfig(
     traceLog: Boolean = false,
     tohostSymbol: String = "tohost",
     passValue: BigInt = 1,
-    observeBackend: Boolean = false)
+    observeBackend: Boolean = false,
+    pipelineLog: Option[Path] = None)
 
 final case class ClusterRunResult(cycles: Long, retired: Seq[Long], tohost: Seq[Option[BigInt]],
     console: String, passed: Boolean, reason: String,
@@ -352,6 +353,14 @@ object ClusterSim extends PeekPokeAPI {
     }
     val agents: Seq[CycleAgent] = Seq(axi, mmio)
 
+    require(c.pipelineLog.isEmpty || c.observeBackend, "pipelineLog requires backend observations")
+    val pipelineWriter = c.pipelineLog.map { p =>
+      Files.createDirectories(p.toAbsolutePath.getParent)
+      val w = new java.io.PrintWriter(Files.newBufferedWriter(p))
+      w.println("cycle,hart,id,ex,ex_pc,commit,commit_pc,retire,pc,inst,rd_write,rd,data,ex_hold,wb_hold,replay,solo,load,store,load_miss,store_miss,l2_read,mem_ar,fatal")
+      w
+    }
+
     idleInputs(dut, c)
     dut.reset.poke(true.B)
     dut.clock.step(5)
@@ -386,6 +395,22 @@ object ClusterSim extends PeekPokeAPI {
         for (h <- 0 until n) { dut.io.msip(h).poke(mmio.msip(h).B); dut.io.mtip(h).poke(mmio.mtip(h).B) }
         agents.foreach(_.decide())
         agents.foreach(_.sample())
+
+        pipelineWriter.foreach { w =>
+          for (h <- 0 until n) {
+            val o = dut.io.backendObservation.get(h)
+            val t = dut.io.retire(h)
+            val d = dut.io.l1dEvents(h)
+            def b(v: Bool): Int = if(v.peek().litToBoolean) 1 else 0
+            def x(v: UInt): String = v.peek().litValue.toString(16)
+            w.println(Seq(cycle.toString, h.toString, b(o.idLeave), b(o.exFire), x(o.exPc),
+              b(o.commit), x(o.commitPc), b(t.valid), x(t.pc), x(t.inst), b(t.rdWriteEn),
+              x(t.rdAddr), x(t.rdData), b(o.exHold), b(o.memHold), b(o.replay), b(o.solo),
+              b(d.load_access), b(d.store_access), b(d.load_miss), b(d.store_miss),
+              b(dut.io.l2Events.memRead), b(dut.io.mem.ar.valid && dut.io.mem.ar.ready),
+              b(dut.io.hartFatal(h))).mkString(","))
+          }
+        }
 
         dut.io.backendObservation.foreach { observations =>
           for(h <- 0 until n) {
@@ -441,6 +466,7 @@ object ClusterSim extends PeekPokeAPI {
         try dut.clock.step() catch { case _: Throwable => throw a }
         verdict = Some((false, report(s"harness check: ${a.getMessage}")))
     }
+    pipelineWriter.foreach(_.close())
     val (ok, why) = verdict.get
     ClusterRunResult(cycle, retired.toSeq, tohost.toSeq, mmio.console.toString, ok, why,
       mmio.unmapped.toSeq, replayCounts.toSeq, soloCycles)
