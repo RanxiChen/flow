@@ -1,0 +1,20 @@
+test_axi_bridge_full_width_slave_both_lanes (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_lower_csr_read (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_lower_read_backpressure_no_duplicate_side_effect (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_upper_csr_read (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_upper_read_targets_only_requested_csr (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_upper_read_with_r_backpressure (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_writes_both_lanes_and_independent_aw_w (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_composed_zero_write_strobes_have_no_csr_side_effect (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_csr_config_mismatch_is_rejected (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_csr_window_edges_and_full_width_devices_with_wb_wait (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_direct_wishbone_csr_both_lanes (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_native_uart_bios_service_clears_irq (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_native_uart_full_tx_fifo_status_reads_one (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_native_uart_pending_and_enable_readback (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+test_native_uart_txfull_read_does_not_pop_rx_fifo (test_mmio_csr_bridge.MmioCsrBridgeTest) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.376s
+
+OK

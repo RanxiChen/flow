@@ -1,0 +1,18 @@
+[
+  {
+    "read_addr": "0x12001010",
+    "axi_data": "0x11223344",
+    "lw_value": "0x11223344",
+    "response": 0
+  },
+  {
+    "read_strobes_by_slot": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  }
+]

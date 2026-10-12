@@ -1,0 +1,20 @@
+[
+  {
+    "write_addr": "0x12001014",
+    "value": "0x3",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001010",
+    "axi_data": "0x3",
+    "lw_value": "0x3",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001014",
+    "axi_data": "0x300000000",
+    "lw_value": "0x3",
+    "response": 0
+  }
+]

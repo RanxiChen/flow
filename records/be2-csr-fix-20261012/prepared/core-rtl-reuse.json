@@ -1,0 +1,8 @@
+{
+  "rtl_origin_source_sha": "b8e62666de08752a96fd27b838a2fcd79536d3da",
+  "new_source_sha": "f88096e6c20f73dd6b76d9b8e5c17f753c46470f",
+  "design_and_cvfpu_git_diff": [],
+  "original_and_snapshot_sources_verified": 129,
+  "reuse_directory": "/home/chen/FUN/flow-be2-csr-fix-20261012/design/build/rtl/axi-cluster/single/gshare/linux/tandem/fpga-debug/coherent-dma",
+  "generator_rerun": false
+}

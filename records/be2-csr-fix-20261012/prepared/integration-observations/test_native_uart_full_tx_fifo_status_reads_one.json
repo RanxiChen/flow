@@ -1,0 +1,18 @@
+[
+  {
+    "write_addr": "0x12001000",
+    "value": "0x51",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001004",
+    "axi_data": "0x100000000",
+    "lw_value": "0x1",
+    "response": 0
+  },
+  {
+    "stored_txfull": 1,
+    "txfull_read": 1
+  }
+]

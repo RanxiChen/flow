@@ -1,0 +1,53 @@
+{
+  "source_sha": "f88096e6c20f73dd6b76d9b8e5c17f753c46470f",
+  "scalar_base_source_sha": "7f7f186b9326fa7329890013ba578e68b68211ba",
+  "source_dirty": false,
+  "source_worktree": "/home/chen/FUN/flow-be2-csr-fix-20261012",
+  "host": "Alan",
+  "target": "xcku040-ffva1156-2-e",
+  "clock_hz": 100000000,
+  "profile": "single",
+  "tandem": true,
+  "debug": true,
+  "ILA": "Xilinx ila6.2; JTAG via native debug hub",
+  "ILA_width": 1896,
+  "ILA_probes": 161,
+  "source_snapshot_files_verified": 129,
+  "bios_matches_rom": true,
+  "functional_config_matches_single": true,
+  "golden_changed": false,
+  "new_user_timing_exceptions": false,
+  "vendor_debug_constraints": "Vivado ILA/debug hub generated IP constraints",
+  "stage": "PREPARED",
+  "board": "NOT_CAPTURED",
+  "files": {
+    "ila-probes.json": {
+      "bytes": 15564,
+      "sha256": "8b625a5536567122e8277bd39634828b22644033464e7a00d4ea28722375b495"
+    },
+    "cluster-profile.txt": {
+      "bytes": 327,
+      "sha256": "a8451d853514137cd9e5e41d656be4c41134dba626d2b59d0f2be2cc989e69f4"
+    },
+    "csr.json": {
+      "bytes": 14827,
+      "sha256": "222155e34feab77ddf20a6c346fde704269409883485c1f9534312d4d87389a7"
+    },
+    "gateware/xilinx_kcu105.v": {
+      "bytes": 1751154,
+      "sha256": "e5b43da94a55dcb38cffc2abf1319ed0f0141a65d2fdf7070a97bface6952189"
+    },
+    "gateware/xilinx_kcu105.tcl": {
+      "bytes": 44528,
+      "sha256": "9939d2ab0ced1f35d41b1467ac1d79c940cb597ca8dd614bba7a4c4418dc17e7"
+    },
+    "gateware/xilinx_kcu105.xdc": {
+      "bytes": 33934,
+      "sha256": "41abd6e4f78d20dabcda6f1f65c6c9320d767639b9b46e27859867ee70c1558e"
+    },
+    "software/bios/bios.bin": {
+      "bytes": 40900,
+      "sha256": "95fecc2e1138e9879d9beeef572ac8c3fe016471ada8e7e052423571a0b0fa7e"
+    }
+  }
+}

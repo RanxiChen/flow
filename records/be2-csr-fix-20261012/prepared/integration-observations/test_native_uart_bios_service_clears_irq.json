@@ -1,0 +1,92 @@
+[
+  {
+    "write_addr": "0x12001014",
+    "value": "0x3",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001010",
+    "axi_data": "0x3",
+    "lw_value": "0x3",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001014",
+    "axi_data": "0x300000000",
+    "lw_value": "0x3",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001008",
+    "axi_data": "0x0",
+    "lw_value": "0x0",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001000",
+    "axi_data": "0x52",
+    "lw_value": "0x52",
+    "response": 0
+  },
+  {
+    "received_byte": 82
+  },
+  {
+    "write_addr": "0x12001010",
+    "value": "0x2",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001008",
+    "axi_data": "0x1",
+    "lw_value": "0x1",
+    "response": 0
+  },
+  {
+    "write_addr": "0x12001014",
+    "value": "0x2",
+    "separation": 0,
+    "response": 0
+  },
+  {
+    "attempt": 0,
+    "stat": 3,
+    "uart_irq": 0
+  },
+  {
+    "read_addr": "0x12001010",
+    "axi_data": "0x1",
+    "lw_value": "0x1",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001014",
+    "axi_data": "0x200000000",
+    "lw_value": "0x2",
+    "response": 0
+  },
+  {
+    "attempt": 1,
+    "stat": 0,
+    "uart_irq": 0
+  },
+  {
+    "read_addr": "0x12001010",
+    "axi_data": "0x1",
+    "lw_value": "0x1",
+    "response": 0
+  },
+  {
+    "read_addr": "0x12001014",
+    "axi_data": "0x200000000",
+    "lw_value": "0x2",
+    "response": 0
+  },
+  {
+    "attempt": 2,
+    "stat": 0,
+    "uart_irq": 0
+  }
+]
