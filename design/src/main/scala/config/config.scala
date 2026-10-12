@@ -255,7 +255,7 @@ object BreezeClusterPresets {
     // Four-hart KCU105 deployment: reduce cache metadata/mux pressure after
     // the full-size design used 94% LUTs. Architectural/test default is intact.
     val small: BreezeClusterConfig = BreezeClusterConfig("small",
-        BreezeMemGeometry.default.copy(l1Sets = 64, l1dWays = 2, l1iWays = 2,
+        BreezeMemGeometry.default.copy(l1Sets = 64, l1dWays = 1, l1iWays = 2,
             l2Ways = 4, l2BytesPerCore = 32768),
         // Retain the original translation capacity in every deployment.
         // Four harts own the configuration; singles copy it below.

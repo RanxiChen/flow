@@ -34,18 +34,26 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
     val empty = Output(Bool())
   })
   val ptrBits = log2Ceil(p.instructionSlots)
-  val storage = Reg(Vec(p.instructionSlots, new PipelineInstruction(p)))
+  // Consecutive lane addresses have opposite parity. Select a lane once
+  // per bank, then each bank writes just one row. This preserves the atomic
+  // 0/1/2 enqueue without a separate wide two-writer mux at every slot.
+  val storage = Seq.fill(2)(Reg(Vec(p.instructionSlots / 2, new PipelineInstruction(p))))
   val head = RegInit(0.U(ptrBits.W)); val tail = RegInit(0.U(ptrBits.W))
   val count = RegInit(0.U((ptrBits + 1).W))
   io.deq.valid := count =/= 0.U && !io.clear
-  io.deq.bits := storage(head)
+  io.deq.bits := Mux(head(0), storage(1)(head(ptrBits - 1, 1)), storage(0)(head(ptrBits - 1, 1)))
   io.enq.ready := !io.clear && (p.instructionSlots.U - count + io.deq.fire.asUInt) >= io.enq.bits.count
   when(io.deq.fire) { head := head + 1.U }
   when(io.enq.fire) {
     assert(io.enq.bits.count <= 2.U)
-    when(io.enq.bits.count >= 1.U) { storage(tail) := io.enq.bits.instructions(0) }
-    when(io.enq.bits.count === 2.U) { storage((tail + 1.U)(ptrBits - 1, 0)) := io.enq.bits.instructions(1) }
     tail := tail + io.enq.bits.count
+  }
+  for (bank <- 0 until 2) {
+    val firstLane = tail(0) === bank.U
+    val row = Mux(firstLane, tail(ptrBits - 1, 1), (tail + 1.U)(ptrBits - 1, 1))
+    val payload = Mux(firstLane, io.enq.bits.instructions(0), io.enq.bits.instructions(1))
+    val writes = io.enq.fire && Mux(firstLane, io.enq.bits.count >= 1.U, io.enq.bits.count === 2.U)
+    when(writes) { storage(bank)(row) := payload }
   }
   count := count + Mux(io.enq.fire, io.enq.bits.count, 0.U) - io.deq.fire.asUInt
   when(io.clear) { head := 0.U; tail := 0.U; count := 0.U }
@@ -239,6 +247,9 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   pfs(2) := w.pageFault(1); afs(2) := w.accessFault(1)
   val availableParcels = Mux(w.mask(1), 2.U, 1.U) + carryValid.asUInt
   val startPc = Mux(carryValid, carryPc, w.pc)
+  // Late parcel-length/fault selection chooses among already computed PCs.
+  // Do not put consecutive 64-bit adders after those late selectors.
+  val parcelPc = VecInit((0 until 5).map(n => if (n == 0) startPc else startPc + (2 * n).U))
   val len0 = Mux(parcels(0)(1, 0) === 3.U && !pfs(0) && !afs(0), 2.U(2.W), 1.U(2.W))
   val have0 = availableParcels >= len0
   val remaining = availableParcels - len0
@@ -268,8 +279,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val inst = Mux(length === 1.U, decoder.io.out, raw)
     val out = outputs(lane)
     out := 0.U.asTypeOf(out)
-    out.pc := startPc + (offset << 1)
-    out.eventPc := out.pc + Mux(length === 2.U, 2.U, 0.U)
+    out.pc := parcelPc(offset)
+    out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
     out.raw := raw; out.instruction := inst; out.length := length << 1
     out.compressed := length === 1.U; out.illegal := out.compressed && decoder.io.illegal
     out.pageFault := pfs(offset) || (length === 2.U && pfs((offset + 1.U)(1, 0)))
@@ -319,7 +330,7 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val afterPop = (groupPtrs(lane) - pop.asUInt)(rasPtrBits - 1, 0)
     val afterCount = groupCounts(lane) - pop.asUInt
     groupStacks(lane + 1) := groupStacks(lane)
-    when(out.rasPush) { groupStacks(lane + 1)(afterPop) := out.pc + out.length }
+    when(out.rasPush) { groupStacks(lane + 1)(afterPop) := parcelPc(offset +& length) }
     groupPtrs(lane + 1) := afterPop + out.rasPush.asUInt
     groupCounts(lane + 1) := Mux(out.rasPush && afterCount < p.rasDepth.U, afterCount + 1.U, afterCount)
   }

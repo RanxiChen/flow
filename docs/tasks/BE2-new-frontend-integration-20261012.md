@@ -81,6 +81,14 @@ PMP 范围计算采用恒等式 `(boundary & ~byteMask) + byteMask == boundary |
 
 ### 四核资源调整裁定（先前缩 TLB 的候选，已由用户决定恢复）
 
+第三轮裁定：564961c 的四核 synth LUT252977（104.36%），相对 b59e9be 多622，place 前 UTLZ-1 exit=1；故将 PHT 有效位读选择与 PMP 前缀/空区间计算恢复到 b59e9be，保留新增独立模型测试。b59e9be 调试单核完成 route/phys_opt，但完整 gate WNS=-0.523ns、TNS=-380.233ns、1703 setup failures，WHS=+0.004ns、WPWS=+0.103ns，exit=1，不生成 bit。最差 sys_clk 路径为返回槽 `first_accessFault_0_reg/C` 至 `refillData_reg[23]/CE`，10.255ns data（logic3.177/route7.078）、26级（9 CARRY8），而非纯队列存储延迟。
+
+cache 后备方案由四核所有：L1D 各2KiB/64sets/1way，ICache各4KiB/64sets/2ways，L2仍4ways/per-core32KiB，完整 TLB/walk-cache 不变；普通单核和 RVV 单核同样派生。只减 D-cache 容量/相联度，不改 ISA、MMU/PMP 或黄金结果；需原程序覆盖冲突替换、dirty/probe、LR/SC/AMO/PTW 及 coherent SD DMA。默认/独立验证几何未改。
+
+指令队列端口裁定：仍8项、原子0/1/2入队、单项出队，按位置奇偶分两组。连续两项分别写不同组，每组仅一套数据选择/行写译码；仅一项时只写对应组，满队列同时出入在沿前消费旧头。head/tail/count、反压与clear规则不变；clear阻止同沿入出且仅清ownership。新增4/8/16项软件FIFO模型逐bit核对任意289-bit记录、满替换、跨尾环绕、零项包与clear，避免依赖生产指令数据的特例。
+
+按实测路径预计算 startPc+0/2/4/6/8，再由长度选择PC/eventPc/RAS返回地址，代替长度/fault选择后的连续宽加法；64-bit溢出、跨页原始PC、RVC/RV32及栈旁路结果保持。refillData只由refillRsp.vld驱动写入；原 killed/error/cancel 条件仍只授权refillWrite，后者在下一沿安装。无资格响应的私有payload不会安装；在install沿数据RAM仍采样旧已授权payload；fence.i优先清valid。此项去除F2 cancel至256-bit payload CE扇出，不延迟cancel，不增加级，不放宽错误或取消golden。
+
 后续 b59e9be 保留完整 TLB/cache 的第一轮：Alan 最小组件/合同回归 56/56、构建接口 7/7，exit=0；三套 RTL/BIOS prepare/binding exit=0。四核与带 ILA 单核并行 Vivado 2022.2：四核 synth LUT252355（104.11%，相对 ab5c0b2 净省7671）、FF116893、BRAM108.5、DSP92，仍在 place 前因 UTLZ-1 exit=1，无 routed/bit；单核 synth LUT84177（34.73%）、FF59401、BRAM264.5、DSP23，继续实现，尚不宣称时序通过。PMP 新测试首次长组合扫描遇到 svsim 双向 pipe 写阻塞（Java stack 保留在 console），测试样本/期望值不变，b59e9be 增加每组同步 peek 后通过；此问题不作为 RTL 死锁或主机不可用证据。
 
 第二轮仍保留完整 TLB、cache、10-bit history/1024 PHT 和 bank 数。PHT 初始化有效位按同一 counter bank/row 查询，共享给该 bank 的训练和所有已获准同索引预测，未获准查询仍由 available 屏蔽；减少四次全表动态读选择，不改变初值、更新、冲突或同址旁路。NAPOT mask bit j 用低 j 位全一前缀表达 `addr ^ (addr + 1)`；NA4/NAPOT 的大小在 56-bit aperture 内恒正，只让 TOR 比较前后编码地址，OFF 仍空。保留原两个预测器测试，新增 1/4/8-bank 独立整数 counter model 检查不同 bank/row 和同 bank 冲突；复用全部 PMP 整数区间/随机权限模型。资源与时序收益仍待新源综合。

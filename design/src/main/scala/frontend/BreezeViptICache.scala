@@ -185,8 +185,12 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   when(io.refillRsp.vld) {
     assert(waiting, "unsolicited ICache refill")
     waiting := false.B; killedRefill := false.B
+    // Private payload may be overwritten even for a rejected response.
+    // Only refillWrite authorizes installation on the following edge.
+    // Keep F2 redirect/cancel out of the 256-bit payload-register CE.
+    refillData := io.refillRsp.data
     when(!killedRefill && !cancel && !io.refillRsp.error) {
-      refillWrite := true.B; refillData := io.refillRsp.data
+      refillWrite := true.B
     }
     when(!killedRefill && !cancel && io.refillRsp.error) { refillFault := true.B }
   }

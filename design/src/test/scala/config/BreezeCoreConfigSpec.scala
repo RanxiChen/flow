@@ -7,6 +7,9 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
     "single deployment inherits the four-hart configuration except profile and hart count" in {
         val four = BreezeClusterPresets.small
         four.mmu mustBe flow.mmu.sv39.Sv39MmuParams()
+        four.mem.l1dWays mustBe 1
+        four.mem.l1Sets * four.mem.lineBytes * four.mem.l1dWays mustBe 2048
+        four.mem.l1Sets * four.mem.lineBytes * four.mem.l1iWays mustBe 4096
         BreezeClusterPresets.single.copy(profileName = four.profileName,
             mem = BreezeClusterPresets.single.mem.copy(nCores = four.nCores)) mustBe four
     }
