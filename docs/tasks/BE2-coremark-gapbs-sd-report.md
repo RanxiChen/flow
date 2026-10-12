@@ -1,5 +1,7 @@
 # CoreMark 与现有 GAPBS 的 SD Linux 镜像
 
+2026-10-12板上结果更新：用户已进入Linux并运行 `./coremark`，回传300次迭代、12.232秒、24.525834 CoreMark及 `Correct operation validated`。按普通单核调试配置100MHz换算0.24525834 CoreMark/MHz。原始日志、产品关联及分析见 [单核CoreMark板上结果](BE2-single-coremark-board-result-20261012.md)。此项是用户回传证据；后文“尚未运行”保留为构建交付当时状态。Linux SD初始化仍报-110/-22，GAPBS结果及第二组CoreMark种子尚未回传。
+
 用户在单核ILA编译期间追加：Linux镜像同时包含CoreMark与现有GAPBS，并已把SD卡接入WSL。
 
 Linux6.18.7的新Image已经编译完成，软件脚本源 `3a2e953b2dd1d2bc3dce39c6451ebeb074536f2a`，实际主机Alan；输出 `/home/chen/FUN/flow-runs/be2-coremark-gapbs-linux-static-20261012/images/Image`，SHA256 `524dfe764cef92e90dfe2634dbbd87e2e2c3ee71ca8052e92415cba7adb74cb7`。新rootfs SHA256 `e382ab7d23ce2fb21fe5f61fcc8416b0d9128e4f3f64eb333927edd1b3a2df6b`；kernel/usr/initramfs_inc_data解压后与新rootfs.cpio逐字节相等，证明实际内嵌镜像包含所打包文件。
