@@ -105,6 +105,7 @@ object ZveDecode {
       d.writes := Mux(x(6,0) === 0x27.U,0.U,dst) }
     val fast=is(ZveOp.vadd,ZveOp.vsub,ZveOp.vand,ZveOp.vsrl) || (op === ZveOp.vmv.U && broadcast)
     val cross=d.reduction || d.maskSources || d.scalarResult || toVectorScalar || d.whole ||
+      (fp && d.maskResult && (p.conversionLanes<8).B) ||
       is(ZveOp.vslideup,ZveOp.vslidedown,ZveOp.vslide1up,ZveOp.vslide1down,ZveOp.vfslide1up,
       ZveOp.vfslide1down,ZveOp.vrgather,ZveOp.vrgatherei16,ZveOp.vcompress,ZveOp.vid,ZveOp.viota)
     val fma=is(ZveOp.vfadd,ZveOp.vfsub,ZveOp.vfrsub,ZveOp.vfmacc,ZveOp.vfnmacc,ZveOp.vfmsac,

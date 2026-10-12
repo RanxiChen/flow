@@ -29,6 +29,7 @@ class ZveFpVectorEngine(p: ZveParams, lanes: Int) extends Module {
     lastConsumed := io.in.bits.issue.scalar.vl === 0.U || io.in.bits.issue.scalar.vstart >= io.in.bits.issue.scalar.vl
     flags := 0.U
     assert(batch.io.drained && writes === 0.U,"FP instruction accepted with old result ownership")
+    if(lanes<8) { assert(!io.in.bits.maskResult,"sub-byte mask results belong to the scalar cross-lane engine") }
   }
   val x=d.issue.scalar.instruction; val op=d.operation
   def is(names: Int*): Bool = names.map(n => op===n.U).reduce(_ || _)

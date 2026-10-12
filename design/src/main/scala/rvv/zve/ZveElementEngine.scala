@@ -35,6 +35,7 @@ class ZveElementEngine(p: ZveParams) extends Module {
   val fromScalar=scalarMove && !d.scalarResult
   val wholeMove=d.whole && op=/=ZveOp.memory.U
   val floatReduction=oneOf(ZveOp.vfredosum,ZveOp.vfredusum,ZveOp.vfredmin,ZveOp.vfredmax)
+  val floatCompare=oneOf(ZveOp.vmfeq,ZveOp.vmfne,ZveOp.vmflt,ZveOp.vmfle,ZveOp.vmfgt,ZveOp.vmfge)
   val limit=Mux(toScalar,1.U,Mux(fromScalar,Mux(d.issue.scalar.vstart<d.issue.scalar.vl,1.U,0.U),
     Mux(wholeMove,d.destinationBytes>>d.sew,d.issue.scalar.vl)))
   val srcARows=Mux(d.vectorSource2,d.source2Registers*p.vrf.rowsPerReg.U,0.U)
@@ -134,11 +135,21 @@ class ZveElementEngine(p: ZveParams) extends Module {
     io.fp.request.bits.a := 0.U; io.fp.request.bits.b := Cat("hffffffff".U(32.W),accumulator(31,0))
   }
   when(oneOf(ZveOp.vfredmin,ZveOp.vfredmax)) { io.fp.request.bits.rounding := Mux(op===ZveOp.vfredmax.U,1.U,0.U) }
+  when(floatCompare) {
+    io.fp.request.bits.operation := BreezeFpOp.CMP.U
+    val swap=oneOf(ZveOp.vmfgt,ZveOp.vmfge)
+    io.fp.request.bits.a := Cat("hffffffff".U(32.W),Mux(swap,b,a)(31,0))
+    io.fp.request.bits.b := Cat("hffffffff".U(32.W),Mux(swap,a,b)(31,0))
+    io.fp.request.bits.rounding := Mux(oneOf(ZveOp.vmfeq,ZveOp.vmfne),2.U,
+      Mux(oneOf(ZveOp.vmflt,ZveOp.vmfgt),1.U,0.U))
+  }
   io.fp.response.ready := state===fpWait
   when(state===fpSend && io.fp.request.fire) { state := fpWait }
   when(state===fpWait && io.fp.response.fire) {
     assert(io.fp.response.bits.tag===element,"FP reduction response has the wrong element")
-    accumulator := io.fp.response.bits.data; flags := flags | io.fp.response.bits.flags; state := update
+    when(floatCompare) { value := io.fp.response.bits.data ^ (op===ZveOp.vmfne.U).asUInt }
+      .otherwise { accumulator := io.fp.response.bits.data }
+    flags := flags | io.fp.response.bits.flags; state := update
   }
   when(state===divide && divider.io.out.fire) { value := divider.io.out.bits; state := update }
   val reduction=WireDefault(accumulator)
@@ -195,7 +206,7 @@ class ZveElementEngine(p: ZveParams) extends Module {
       when(elementActive) { flags := flags | estimate.io.flags }
     }
     when(divider.io.in.valid) { when(divider.io.in.fire) { state := divide } }
-      .elsewhen(floatReduction && elementActive) { state := fpSend }
+      .elsewhen((floatReduction || floatCompare) && elementActive) { state := fpSend }
       .otherwise { state := update }
   }
   val destinationIndex=Mux(op===ZveOp.vcompress.U,prefix,Mux(fromScalar,0.U,element))
