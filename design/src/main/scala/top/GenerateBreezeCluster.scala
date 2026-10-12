@@ -25,10 +25,13 @@ object GenerateBreezeCluster extends App {
         args(0) / corePreset.name / privilegeProfile.name /
         (if(enableTandem) "tandem" else "production") / (if(debug) "fpga-debug" else "cpu")
     private val targetDir = if (cfg.coherentDma) baseDir / "coherent-dma" else baseDir
+    // Keep older generated artifacts intact, but build this manifest only
+    // from a fresh emission. Directory scans must not re-admit deleted RTL.
+    private val emittedDir = targetDir / "emitted" / java.util.UUID.randomUUID().toString
     ChiselStage.emitSystemVerilogFile(
         if (cfg.rvv.nonEmpty) new BreezeRvvAxi(cfg, enableTandem, debug, hangThreshold)
         else new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
-        Array("--target-dir", targetDir.toString, "--full-stacktrace"),
+        Array("--target-dir", emittedDir.toString, "--full-stacktrace"),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
     // emitted, so the LiteX wrapper always loads the exact files of this run.
@@ -49,9 +52,9 @@ object GenerateBreezeCluster extends App {
         line.nonEmpty && !line.startsWith("#") && !line.startsWith("+incdir+")
     ).map(line => os.RelPath(line).last).toSet ++
         Set(fpWrapper.last, "FlowFpnewSources.sv")
-    private val svFiles = os.list(targetDir).filter(path =>
+    private val svFiles = os.list(emittedDir).filter(path =>
         path.ext == "sv" && !fpSourceNames.contains(path.last)
-    ).map(_.last).sorted
+    ).map(_.relativeTo(targetDir).toString).sorted
     require(svFiles.nonEmpty, s"no SystemVerilog files emitted into $targetDir")
     private val fpEntries = os.read.lines(fpManifest).map(_.trim).filter(line =>
         line.nonEmpty && !line.startsWith("#")).map { line =>

@@ -259,6 +259,12 @@ class _BreezeClusterCPU(CPU):
             entries = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
         if not entries:
             raise RuntimeError("Breeze RTL manifest is empty")
+        names = {os.path.basename(entry) for entry in entries if not entry.startswith('+incdir+')}
+        if not {'BreezeFrontendPipeline.sv', 'BreezeBackend.sv'} <= names:
+            raise RuntimeError('Breeze RTL is stale: regenerate the pipelined frontend and BE2 backend')
+        if names & {'BreezeFrontend.sv', 'BreezeFrontendBoundary.sv', 'BreezeFetchTranslator.sv',
+                    'BreezeInstrRealigner.sv', 'FetchTlbClient.sv', 'L1ICache.sv', 'FetchBuffer.sv'}:
+            raise RuntimeError('Breeze RTL manifest mixes deleted blocking frontend modules with the pipeline')
         for entry in entries:
             include = entry.startswith("+incdir+")
             path = entry[len("+incdir+"):] if include else entry

@@ -31,10 +31,12 @@ def _write_production_rtl(root, cpu_cls=Breeze):
     with mock.patch.object(cpu_cls, 'flow_root_dir', return_value=root):
         rtl_dir = cpu_cls.rtl_dir()
     os.makedirs(rtl_dir)
-    with open(os.path.join(rtl_dir, cpu_cls.rtl_module + '.sv'), 'w') as f:
-        f.write('module ' + cpu_cls.rtl_module + '; endmodule\n')
+    modules = (cpu_cls.rtl_module, 'BreezeFrontendPipeline', 'BreezeBackend')
+    for name in modules:
+        with open(os.path.join(rtl_dir, name + '.sv'), 'w') as f:
+            f.write('module ' + name + '; endmodule\n')
     with open(os.path.join(rtl_dir, 'filelist.f'), 'w') as f:
-        f.write(cpu_cls.rtl_module + '.sv\n')
+        f.write(''.join(name + '.sv\n' for name in modules))
     with open(os.path.join(root, 'config/breeze_mcu_platform.json'), 'rb') as f:
         digest = hashlib.sha256(f.read()).hexdigest()
     values = dict(bus='axi', profile=cpu_cls.cluster_profile, preset=cpu_cls.core_preset,
@@ -66,7 +68,8 @@ class BreezeCpuWrapperTest(unittest.TestCase):
                 self.assertIsInstance(cpu.mmio_bridge, BreezeMmioBridge)
                 self.assertEqual(cpu.l2_bytes, cls.num_harts * 65536)
                 self.assertEqual(cpu.id_width, 1)
-                self.assertEqual(platform.sources, [os.path.join(rtl_dir, 'BreezeClusterAxi.sv')])
+                self.assertEqual(platform.sources, [os.path.join(rtl_dir, name + '.sv') for name in
+                    ('BreezeClusterAxi', 'BreezeFrontendPipeline', 'BreezeBackend')])
                 self.assertFalse(any('Wishbone' in p or 'debug' in p for p in cpu.cpu_params))
                 self.assertFalse(hasattr(cpu, 'dma_bus'))
                 cpu.set_reset_address(0x10010000)
@@ -75,6 +78,18 @@ class BreezeCpuWrapperTest(unittest.TestCase):
                 self.assertIn('-march=rv64imafdc_zicsr_zifencei', cpu.gcc_flags)
                 self.assertIn('-mabi=lp64d', cpu.gcc_flags)
                 self.assertIn('-D__riscv_plic__', cpu.gcc_flags)
+
+    def test_stale_or_mixed_blocking_frontend_manifests_are_rejected(self):
+        for mixed in (False, True):
+            with self.subTest(mixed=mixed), tempfile.TemporaryDirectory() as root:
+                rtl_dir, _ = _write_production_rtl(root, BreezeTiny)
+                with open(os.path.join(rtl_dir, 'filelist.f'), 'w') as f:
+                    f.write('BreezeClusterAxi.sv\nBreezeFrontend.sv\n')
+                    if mixed:
+                        f.write('BreezeFrontendPipeline.sv\nBreezeBackend.sv\n')
+                with mock.patch.object(BreezeTiny, 'flow_root_dir', return_value=root):
+                    with self.assertRaisesRegex(RuntimeError, 'stale|deleted blocking'):
+                        BreezeTiny(_Platform())
 
     def test_debug_is_isolated_and_exports_every_retire_field_and_hang(self):
         with tempfile.TemporaryDirectory() as root:
