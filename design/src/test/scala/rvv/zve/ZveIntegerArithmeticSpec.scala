@@ -36,7 +36,7 @@ class ZveIntegerArithmeticSpec extends AnyFreeSpec with ChiselSim {
         d.io.saturated.expect(sat.B)
       }
       for(w<-Seq(8,16,32)) {
-        val mask=(BigInt(1)<<w)-1; val max=(BigInt(1)<<(w-1))-1; val min=-(BigInt(1)<<(w-1))
+        val mask=(BigInt(1)<<w)-1; val max=(BigInt(1)<<(w-1))-1; val min = -(BigInt(1)<<(w-1))
         check(ZveOp.vadd,w,mask,1,0)
         check(ZveOp.vsub,w,0,1,mask)
         check(ZveOp.vmulhu,w,mask,mask,(mask*mask)>>w)
