@@ -103,7 +103,8 @@ object ZveDecode {
     when(memory) { d.reads := Mux(x(6,0) === 0x27.U,dst,0.U) |
       Mux(d.vectorSource2,src2,0.U) | Mux(!x(25),1.U,0.U)
       d.writes := Mux(x(6,0) === 0x27.U,0.U,dst) }
-    val fast=is(ZveOp.vadd,ZveOp.vsub,ZveOp.vand,ZveOp.vsrl) || (op === ZveOp.vmv.U && broadcast)
+    val fast=is(ZveOp.vadd,ZveOp.vsub,ZveOp.vand) ||
+      (op===ZveOp.vsrl.U && scalarOperand) || (op === ZveOp.vmv.U && broadcast)
     val cross=d.reduction || d.maskSources || d.scalarResult || toVectorScalar || d.whole ||
       (fp && d.maskResult && (p.conversionLanes<8).B) ||
       is(ZveOp.vslideup,ZveOp.vslidedown,ZveOp.vslide1up,ZveOp.vslide1down,ZveOp.vfslide1up,

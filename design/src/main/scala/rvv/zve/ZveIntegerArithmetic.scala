@@ -104,8 +104,8 @@ object ZveIntegerArithmetic {
   def multiplyOperands(d: ZveCommand,a: UInt,b: UInt,old: UInt): (SInt,SInt) = {
     val op=d.operation
     def is(names: Int*): Bool = names.map(n=>op===n.U).reduce(_ || _)
-    val unsignedA=is(ZveOp.vmulhu,ZveOp.vwmulu,ZveOp.vwmaccu,ZveOp.vwmaccsu)
-    val unsignedB=is(ZveOp.vmulhu,ZveOp.vmulhsu,ZveOp.vwmulu,ZveOp.vwmulsu,ZveOp.vwmaccu,ZveOp.vwmaccus)
+    val unsignedA=is(ZveOp.vmulhu,ZveOp.vwmulu,ZveOp.vwmaccu,ZveOp.vwmaccus)
+    val unsignedB=is(ZveOp.vmulhu,ZveOp.vmulhsu,ZveOp.vwmulu,ZveOp.vwmulsu,ZveOp.vwmaccu,ZveOp.vwmaccsu)
     val useOld=is(ZveOp.vmadd,ZveOp.vnmsub)
     val aa=Mux(useOld,old,a)
     val pairs=(0 until 3).map { sew =>

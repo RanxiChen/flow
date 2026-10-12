@@ -53,7 +53,7 @@ class ZveCoprocessor(val p: ZveParams = ZveParams(), debug: Boolean = false) ext
   io.translation <> memory.io.translation; memory.io.translated <> io.translated
   io.order <> memory.io.order; io.release <> memory.io.release; io.invalidate <> memory.io.invalidate
   memory.io.scalarWritesVisible := io.scalarWritesVisible; io.axi <> memory.io.axi
-  io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked
+  io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked || window.io.serialActive
   io.drained := window.io.drained && access.io.drained && shared.io.drained &&
     Seq(alu.io.drained,slow.io.drained,conversion.io.drained,fma.io.drained,cross.io.drained,memory.io.drained).reduce(_ && _)
 }

@@ -25,5 +25,5 @@ class ZveMemoryHarness(p: ZveParams = ZveParams()) extends Module {
   io.sharedFp.request.valid := false.B; io.sharedFp.request.bits := 0.U.asTypeOf(new ZveFpRequest)
   io.sharedFp.response.ready := true.B
   io.drained := window.io.drained && memory.io.drained && access.io.drained
-  io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked
+  io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked || window.io.serialActive
 }

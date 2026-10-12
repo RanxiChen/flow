@@ -130,7 +130,7 @@ class ZveMemorySpec extends AnyFreeSpec with ChiselSim {
         debug.returned.ready.poke(true.B); tick(); debug.returned.ready.poke(false.B); v
       }
       def instruction(name: String,vd: Int,base: BigInt,vl: Int,sew: Int=32,stride: BigInt=0,index: Int=8,
-          nf: Int=1,vm: Boolean=true,start: Int=0,exc: Int=0,bad: BigInt=0,shortVl: Option[Int]=None): Unit = {
+          nf: Int=1,vm: Boolean=true,start: Int=0,exc: Int=0,bad: BigInt=0,shortVl: Option[Int]=None,errorStart: Int=2): Unit = {
         val in=io.issue.bits; in.scalar.instruction.poke(encoding(name,vd,index,nf,vm).U)
         in.scalar.rs1.poke(base.U); in.scalar.rs2.poke((stride & ((BigInt(1)<<64)-1)).U)
         in.scalar.vtype.poke((if(sew==8)0 else if(sew==16)8 else 16).U)
@@ -143,10 +143,10 @@ class ZveMemorySpec extends AnyFreeSpec with ChiselSim {
         io.verdict.ready.poke(true.B); tick(); io.verdict.ready.poke(false.B)
         // No translation or bus side effect before commit + Serial permission.
         for(_<-0 until 4) tick(); assert(translatedAddresses.isEmpty && busTransactions==before)
-        io.commit.poke(true.B); io.serialGo.poke(serial.B); tick(); io.commit.poke(false.B); io.serialGo.poke(false.B)
+        io.commit.poke((!serial).B); io.serialGo.poke(serial.B); tick(); io.commit.poke(false.B); io.serialGo.poke(false.B)
         waitFor(io.completion.valid.peek().litToBoolean)
         io.completion.bits.exception.expect((exc!=0).B)
-        if(exc!=0) { io.completion.bits.cause.expect(exc.U); io.completion.bits.tval.expect(bad.U); io.completion.bits.vstart.expect(2.U) }
+        if(exc!=0) { io.completion.bits.cause.expect(exc.U); io.completion.bits.tval.expect(bad.U); io.completion.bits.vstart.expect(errorStart.U) }
         io.completion.bits.changeVl.expect(shortVl.nonEmpty.B); shortVl.foreach(v=>io.completion.bits.newVl.expect(v.U))
         assert(lease.isEmpty && pendingRead.isEmpty && pendingB.isEmpty && pendingTranslation.isEmpty)
         def status=(io.completion.bits.age.peek().litValue,io.completion.bits.exception.peek().litToBoolean,
@@ -154,7 +154,7 @@ class ZveMemorySpec extends AnyFreeSpec with ChiselSim {
           io.completion.bits.vstart.peek().litValue,io.completion.bits.changeVl.peek().litToBoolean,
           io.completion.bits.newVl.peek().litValue)
         val snapshot=status
-        for(_<-0 until 3) { tick(); assert(status==snapshot) }
+        for(_<-0 until 3) { tick(); assert(status==snapshot); io.scalarMemoryBlocked.expect(serial.B) }
         io.completion.ready.poke(true.B); tick(); io.completion.ready.poke(false.B); waitFor(io.drained.peek().litToBoolean)
       }
       val sentinel=pack(Seq.fill(16)(BigInt("deadbeef",16)),32)
@@ -189,9 +189,13 @@ class ZveMemorySpec extends AnyFreeSpec with ChiselSim {
       instruction("vle32ff.v",16,0x1000,4,shortVl=Some(2))
       assert((read(16)&((BigInt(1)<<128)-1))==pack(Seq(BigInt(100),BigInt(101),BigInt("deadbeef",16),BigInt("deadbeef",16)),32))
       instruction("vle32.v",16,0x1000,4,exc=13,bad=0x1008)
+      pageFault=Some(BigInt(0x1000)); instruction("vle32ff.v",16,0x1000,4,exc=13,bad=0x1000,errorStart=0)
+      // A fault in an unaligned element's last byte must not publish its prefix.
+      write(16,sentinel); pageFault=Some(BigInt(0x2000))
+      instruction("vle32.v",16,0x1ffd,1,exc=13,bad=0x2000,errorStart=0); assert(read(16)==sentinel)
       pageFault=None; instruction("vle32.v",16,0x1000,4,start=2)
       assert(translatedAddresses.toSeq==Seq(BigInt(0x1008),BigInt(0x100c)))
-      assert((read(16)&((BigInt(1)<<128)-1))==pack((100 until 104).map(BigInt(_)),32))
+      assert((read(16)>>64 & ((BigInt(1)<<64)-1))==pack(Seq(BigInt(102),BigInt(103)),32))
       busFault=Some(physical(0x1008)); instruction("vle32.v",16,0x1000,4,exc=5,bad=0x1008); busFault=None
       write(0,10); pageFault=Some(BigInt(0x1000)); instruction("vle32.v",16,0x1000,4,vm=false)
       assert(translatedAddresses.toSeq==Seq(BigInt(0x1004),BigInt(0x100c))); pageFault=None
