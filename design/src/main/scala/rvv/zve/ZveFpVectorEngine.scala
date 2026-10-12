@@ -122,7 +122,10 @@ class ZveFpVectorEngine(p: ZveParams, lanes: Int) extends Module {
       0.U->out.data(l)(7,0).pad(32),1.U->out.data(l)(15,0).pad(32)))
     (v.pad(p.vrf.dlen)<<((offset+(l.U<<d.destinationWidth))<<3))(p.vrf.dlen-1,0)
   }).reduce(_ | _)
-  val packed=VecInit((0 until lanes).map(l => Mux(out.active(l),
+  // A one-element Vec[Bool].asUInt can retain Bool's one-bit runtime type.
+  // Give the packed mask a UInt type before widening and shifting it.
+  val packed=Wire(UInt(lanes.W))
+  packed := VecInit((0 until lanes).map(l => Mux(out.active(l),
     out.data(l)(0) ^ (op===ZveOp.vmfne.U),preserved(l)))).asUInt
   val packedData=(packed.pad(p.vrf.dlen)<<outStart(log2Ceil(p.vrf.dlen)-1,0))(p.vrf.dlen-1,0)
   val enables=VecInit((0 until p.vrf.rowBytes).map(b => {
