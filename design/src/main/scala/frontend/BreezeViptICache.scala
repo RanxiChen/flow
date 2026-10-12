@@ -35,7 +35,8 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
     val prediction = Input(new PipelinePrediction(p.historyBits))
     val historyAfter = Input(UInt(p.historyBits.W))
     val f1 = Valid(new PipelineFetchWindow(p))
-    val f1Prediction = Valid(new PipelineFetchWindow(p)) // raw query owner, before permission/kill
+    val f1Prediction = Valid(new PipelineFetchWindow(p)) // preview qualified by older cancellation
+    val f1PredictionPending = Output(Bool()) // registered owner, for payload selection only
     val refillReq = new L1CacheMissReqIO(64)
     val refillRsp = new L1CacheMissRespIO(g.lineBytes * 8)
     val idle = Output(Bool())
@@ -142,7 +143,8 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   errorResult.mask := Mux(retry.pc(offBits - 1, 0) === (g.lineBytes - 2).U, 1.U, 3.U)
   errorResult.accessFault := VecInit(Seq.fill(2)(true.B))
   errorResult.prediction := refillPrediction
-  io.f1Prediction.valid := (qValid || refillFault) && !cancelOutput
+  io.f1PredictionPending := qValid || refillFault
+  io.f1Prediction.valid := io.f1PredictionPending && !cancelOutput
   io.f1Prediction.bits := 0.U.asTypeOf(io.f1Prediction.bits)
   io.f1Prediction.bits.pc := Mux(refillFault, retry.pc, q.pc)
   io.f1Prediction.bits.mask := Mux(refillFault, errorResult.mask, result.mask)

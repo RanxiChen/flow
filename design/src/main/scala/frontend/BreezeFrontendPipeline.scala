@@ -420,7 +420,16 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   // Keep the latest stream-tail preview through stalls; a queued F2 head
   // precedes other windows and cannot supply the next query's history.
   // F2/EX/global repair overrides this register and kills this edge's query.
-  cache.io.request.bits.history := Mux(cache.io.f1Prediction.valid, earlyHistory, forecastHistory)
+  // A canceled edge cannot accept a predictor query. Select its private
+  // payload from registered ownership, keeping WB/EX cancellation out of
+  // the history -> PHT address mux. Preview state/redirect side effects
+  // still use f1Prediction.valid; admission and cancellation are unchanged.
+  cache.io.request.bits.history := Mux(cache.io.f1PredictionPending, earlyHistory, forecastHistory)
+  when(cache.io.predictorQuery.valid) {
+    assert(cache.io.request.bits.history ===
+      Mux(cache.io.f1Prediction.valid, earlyHistory, forecastHistory),
+      "accepted history differs from cancellation-qualified preview")
+  }
   when(f2Fire && carryValid) { assert(w.pc === carryPc + 2.U, "noncontiguous RVC continuation") }
   io.idle := cache.io.idle && mmu.io.idle && queue.io.empty && !carryValid
   io.hpm := 0.U.asTypeOf(io.hpm)

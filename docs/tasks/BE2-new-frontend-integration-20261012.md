@@ -2,6 +2,18 @@
 
 用户2026-10-12授权：生产顶层改为最近完成的流水前端及BE2-P重构后端，删除旧前端模块及接线路径。工作分支refactor/be2-backend-decoupling，集成起点2746032。历史板上bit及证据保留；源码删除不删除已有交付文件。
 
+## 当前执行状态（51d49cf，2026-10-12）
+
+基础配置由四核所有：100MHz、完整 i/dTLB 8sets×4ways+4superpage、upper/middle walk-cache 4ways；L1I 4KiB/2ways、L1D 2KiB/1way、四核 L2 128KiB/4ways。普通单核与 RVV 单核继承同一基础配置。先前缩 TLB 的候选已撤销，以下历史记录不代表当前部署配置。
+
+源 `51d49cfd09f13720cc02e3e076e4b32992426c54` 的 Alan 最小组件/前端门禁 exit=0，58个 RTL tests、11份 XML，以及7个构建接口 tests，无 error/failure/skip；[原证据](../../records/be2-pipeline-probe-20261012/queue-minimum-51d49cf)。原整核/后端/最小ISA/单核与四核系统程序/反压SFENCE/RVV门禁 exit=0，12 tests、6份XML；[原证据](../../records/be2-pipeline-probe-20261012/system-51d49cf)。独立和RAW ALU、C.ADDI暖窗口退休 IPC仍1.0，L1D命中load为0.81012658；仅为M/Bare仿真证据，不是新Linux或上板性能。三套RTL/BIOS的prepare/binding均exit=0。
+
+默认综合策略四核 LUT244644（100.93%）、FF114426、BRAM104.5、DSP92，面积门禁exit=1，无route/bit。调试单核最终routed WNS=-0.385ns、TNS=-65.493ns、483条setup失败，WHS=+0.004ns、WPWS=+0.103ns，exit=1，不生成bit。最差路径为L1D probe地址→reservation冲突/响应→WB取消→EX恢复→F1历史选择→PHT initialized查询，25级、data10.316ns（logic2.648/route7.668）。原始路径保留于Alan `/home/chen/FUN/flow-runs/pipeline-51d49cf-20261012/single/gateware/routed-generation-gate.rpt`。
+
+同一源/RTL/BIOS/XDC的全新 `AreaOptimized_high` 综合四核 LUT229606（94.72%）、FF114083、BRAM105、DSP92，净省15038 LUT，已完成布局并进入布线；这只是面积通过，不是时序通过。四核和带ILA调试单核独立工程并行；物理输入位于Alan `/home/chen/FUN/flow-runs/pipeline-51d49cf-area-high-20261012/{four,single}`。拷贝后的每个SV hash及XDC字节均核对，build-binding记录原输入、原/新Tcl hash和directive，未复用旧DCP或bit。
+
+下一项等价路径裁定：`f1PredictionPending=qValid||refillFault`仅供request历史payload选择，不含older cancel；`f1Prediction.valid`仍为pending且未取消，用于forecast寄存更新、redirect和观察。所有查询准入、iTLB kill、返回valid、队列clear、EX/global恢复优先级不变；cancel沿没有predictorQuery.valid，因此历史payload可以变化但不能生效。增加每个实际query沿的新旧历史选择相等断言，复用原前端取消/历史/回压及真实系统golden，待新源门禁及物理结果，不提前宣称通过。
+
 ## 接线与生命周期
 
 | 接口 | 所有者与规则 |
@@ -97,4 +109,4 @@ cache 后备方案由四核所有：L1D 各2KiB/64sets/1way，ICache各4KiB/64se
 
 另采用已有的32位物理总线边界缩小VIPT物理tag及候选PMP比较输入：原PMA早已以完整64位selected PA拒绝高位非零地址，且在cache hit/refill前阻止授权。对所有可授权PA，缩小前后完全相同；对越界PA，原完整PMA仍必须返回access fault，不能通过截断别名执行低地址行。PMP仍比较完整CSR范围、不改变8项PMP或任何地址/异常接口。新增“预热低地址→Sv39重映射到相同低位的高PA”自检，要求准确access fault、raw=0、不产生refill，验证不能借缓存别名绕过拒绝。现有PMP随机oracle与程序golden保持。
 
-SFENCE生命周期补充裁定：连接后端时，translationBlocked不只阻止fresh F0，还必须阻止已保存的retry/deferred重新进入iTLB；否则MMU空闲后，等待Icache返回的旧fetch可能重新启动翻译。缓存已接受的refill继续独立排空，后端串行等待使用真实MMU idle而非frontend local idle，避免等待被暂停的retry自身造成死锁。独立前端的block-drain行为不变。生产SFENCE控制与全局restart同时寄存到下一拍，防止WB先撤掉iTLB响应而cache尚未取消F1查询；WB观察脉冲/原后端拍号不变，restart gap内没有年轻ID发射。追加原sv39_basic/sv39_ptw_cache在单核seed=7 AXI反压下的原样程序检查；这些是接线规则补充，尚待新源最低门禁，不宣称已复现运行时失效。
+SFENCE生命周期补充裁定：连接后端时，translationBlocked不只阻止fresh F0，还必须阻止已保存的retry/deferred重新进入iTLB；否则MMU空闲后，等待Icache返回的旧fetch可能重新启动翻译。缓存已接受的refill继续独立排空，后端串行等待使用真实MMU idle而非frontend local idle，避免等待被暂停的retry自身造成死锁。独立前端的block-drain行为不变。生产SFENCE控制与全局restart同时寄存到下一拍，防止WB先撤掉iTLB响应而cache尚未取消F1查询；WB观察脉冲/原后端拍号不变，restart gap内没有年轻ID发射。追加原sv39_basic/sv39_ptw_cache在单核seed=7 AXI反压下的原样程序检查；这些是接线规则补充，36fddea、b59e9be及51d49cf的系统最小门禁均通过；不宣称曾复现运行时失效。
