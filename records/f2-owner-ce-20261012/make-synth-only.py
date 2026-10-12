@@ -32,7 +32,7 @@ set starts [all_fanin -flat -startpoints_only -to $ce_pins]
 set unexpected {}
 foreach pin $starts {
     puts $stream "CE_STARTPOINT $pin"
-    if {![regexp {/(qValid|refillFault|tail)_reg[^/]*/Q$} $pin]} {
+    if {![regexp {/(qValid|refillFault|tail)_reg[^/]*/(C|Q)$} $pin]} {
         lappend unexpected $pin
     }
 }

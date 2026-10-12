@@ -1,0 +1,9 @@
+{
+  "production_tcl": "/home/chen/FUN/flow-runs/f2-wholecore-v2-7820bf6-20261012/single/gateware/xilinx_kcu105.tcl",
+  "production_tcl_sha256": "26d563ecefa4d06a407a0147a9c221470a1b07e3fd857ea4d1850ab3e53b683d",
+  "synth_only_tcl": "/home/chen/FUN/flow-runs/f2-wholecore-v2-7820bf6-20261012/single/gateware/f2-synth-only.tcl",
+  "synth_only_tcl_sha256": "b05f4194746a511c67dd44e9bcc457f19d7d3c4bb89fe9c7898dabb62d358a91",
+  "identical_production_prefix": true,
+  "stop_before": "opt_design/place_design/route_design/write_bitstream",
+  "new_timing_exceptions": false
+}

@@ -1,0 +1,321 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-f2-owner-ce-20261012/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-f2-owner-ce-20261012/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-f2-owner-ce-20261012/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-f2-owner-ce-20261012/design/target/scala-2.13/classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BreezeResolutionReservationSpec:
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - reserved EX feedback never waits for training and global restart releases only unfilled records (true)
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - reserved EX feedback never waits for training and global restart releases only unfilled records (false)
+[info] PipelineInstructionQueueSpec:
+[info] - atomic 0/1/2 enqueue preserves every payload bit through wrap, full replacement and cancellation (4 slots)
+[info] - atomic 0/1/2 enqueue preserves every payload bit through wrap, full replacement and cancellation (8 slots)
+[info] - atomic 0/1/2 enqueue preserves every payload bit through wrap, full replacement and cancellation (16 slots)
+[info] BreezeCompressedDecoderSpec:
+[info] - expand representative RV64C integer instructions and reject reserved encodings
+[info] BreezeViptICacheOwnerSpec:
+[info] - reserved private writes preserve both stalled windows and full-queue replacement
+[info] - same-edge F1 completion and all cancellation kinds cannot leak or overwrite the consumed head
+[info] - miss candidates stay private and a canceled refill fault does not become a later response
+[info] BreezePipelinePredictorSpec:
+[info] - PHT bank-local initialized reads preserve independent row counters (1 banks)
+[info] - PHT bank-local initialized reads preserve independent row counters (4 banks)
+[info] - PHT bank-local initialized reads preserve independent row counters (8 banks)
+[info] - PHT broadcasts identical indices, reports bank conflicts and trains current counters
+[info] - BTB PC+2 crosses bank and set, updates are associative and invalidation preserves its neighbor
+[info] BreezeFrontendPipelineSpec:
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - VIPT streams mixed RVC/RV32 through line boundaries and random consumer stalls
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - cross-page RV32 reassembles after two real Sv39 walks
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - PMP allows a final RVC but faults the second parcel of a straddling RV32
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - redirect drains a killed refill and same-address reuse returns fresh data
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - F2 direct call and return use instruction length and speculative RAS
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - F2 repairs missing NT branch history and global cancellation restores committed history
+[info] - split PMP matches integer first-overlap rules on page and region boundaries
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - warm RV32 hits accept a new fetch window every cycle
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - missing second page faults the original straddling instruction precisely
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - resolution overrides younger decode and restores before-history plus actual direction
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - stale BTB at a RV32 head is invalidated without losing its second parcel
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - RAS recovery includes the resolving call before a new return uses it
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - sfence remapping preserves VIPT index but compares the new physical tag
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - a high physical alias faults before using a low-address cached instruction
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - 2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - taken prediction on a missed group discards its deferred sequential request
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - instruction output remains stable while stalled and resumes in order
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - permission CSR restart drops all previously authorized queued instructions
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - refill errors return a precise fault and do not install an executable line
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - two RVC branches select NT-shifted history and discard the younger slot after T
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - compressed JALR, JR and J predecode alongside expansion and preserve return length
+[info] - registered timing-boundary FIFO preserves ordering under stalls and cancellation
+[info] - pipelined iTLB kill discards a sampled query without feeding kill into request ready
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - refill acceptance handles same-edge kill, later cancellation and fence during installation
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - timing harness clock and registered interfaces deliver an ordered stream with stalls
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - taken first-slot prefix preserves the unconsumed second-slot BTB entry
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - sequential indirect misses apply both RAS hints and forward a first-slot push to a return
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - history survives a full two-window return queue and long consumer backpressure
+[info] L1IRegisteredReturnSpec:
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - SOC3d flush at registered refill offset 0 drains once without installing stale data
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] There were 2 warning(s) during hardware elaboration.
+[info] - SOC3d flush at registered refill offset 1 drains once without installing stale data
+[info] L1IClientSpec:
+[info] - two Read IDs stay stable under backpressure and demultiplex reordered data and errors
+[info] - a high physical address returns an error without a wrapped coherence request
+[info] RegisteredPairQueueSpec:
+[info] - pair FIFO preserves original Queue cycles, order and cancellation pipe=false
+[info] - pair FIFO preserves original Queue cycles, order and cancellation pipe=true
+[info] Run completed in 6 minutes, 40 seconds.
+[info] Total number of tests run: 48
+[info] Suites: completed 9, aborted 0
+[info] Tests: succeeded 48, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 406 s (06:46), completed Oct 12, 2026, 10:18:18 PM
