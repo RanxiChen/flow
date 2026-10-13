@@ -1,0 +1,50 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013/src/design/)
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ZveSystemSmokeSpec:
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - single-zve32f runs the vector smoke and unchanged scalar programs
+[info]   + zve_smoke.elf: PASS cycles=6881 replay=0,0,0,13,0,0,0 tohost=ArraySeq(Some(1)) zve_smoke.elf: all 1 hart(s) passed at cycle 6880
+[info] fencei_smc.elf: PASS cycles=3176 replay=1,0,2,5,0,0,0 tohost=ArraySeq(Some(1)) fencei_smc.elf: all 1 hart(s) passed at cycle 3175
+[info] sv39_basic.elf: PASS cycles=4825 replay=2,13,6,4,0,0,0 tohost=ArraySeq(Some(1)) sv39_basic.elf: all 1 hart(s) passed at cycle 4824
+[info] sv39_ptw_cache.elf: PASS cycles=6164 replay=16,21,2,25,0,0,0 tohost=ArraySeq(Some(1)) sv39_ptw_cache.elf: all 1 hart(s) passed at cycle 6163
+[info] trap_misc.elf: PASS cycles=9620 replay=0,0,5,2,0,0,0 tohost=ArraySeq(Some(1)) trap_misc.elf: all 1 hart(s) passed at cycle 9619
+[info] lrsc_amo_single.elf: PASS cycles=6369 replay=0,0,3,2,0,1,0 tohost=ArraySeq(Some(1)) lrsc_amo_single.elf: all 1 hart(s) passed at cycle 6368
+[info] rv64ui-p-add: PASS cycles=2236 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-add: all 1 hart(s) passed at cycle 2235
+[info] rv64ui-p-ld: PASS cycles=2106 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-ld: all 1 hart(s) passed at cycle 2105
+[info] rv64ui-p-sd: PASS cycles=2788 replay=0,0,2,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-sd: all 1 hart(s) passed at cycle 2787
+[info] rv64ui-p-sb: PASS cycles=2175 replay=0,0,1,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-sb: all 1 hart(s) passed at cycle 2174
+[info] rv64ui-p-lbu: PASS cycles=1509 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-lbu: all 1 hart(s) passed at cycle 1508
+[info] rv64um-p-mul: PASS cycles=2213 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64um-p-mul: all 1 hart(s) passed at cycle 2212
+[info] rv64um-p-div: PASS cycles=1070 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64um-p-div: all 1 hart(s) passed at cycle 1069
+[info] rv64ua-p-amoadd_d: PASS cycles=900 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ua-p-amoadd_d: all 1 hart(s) passed at cycle 899
+[info] rv64ua-p-lrsc: PASS cycles=19463 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ua-p-lrsc: all 1 hart(s) passed at cycle 19462
+[info] rv64uf-p-fadd: PASS cycles=1381 replay=0,0,5,0,0,0,0 tohost=ArraySeq(Some(1)) rv64uf-p-fadd: all 1 hart(s) passed at cycle 1380
+[info] rv64ud-p-fmadd: PASS cycles=1633 replay=0,0,12,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ud-p-fmadd: all 1 hart(s) passed at cycle 1632
+[info] rv64si-p-csr: PASS cycles=1270 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64si-p-csr: all 1 hart(s) passed at cycle 1269
+[info] rv64mi-p-csr: PASS cycles=1686 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64mi-p-csr: all 1 hart(s) passed at cycle 1685 
+[info] Run completed in 36 seconds, 642 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 37 s, completed Oct 13, 2026, 3:32:07 PM

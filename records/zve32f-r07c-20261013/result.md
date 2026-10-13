@@ -1,5 +1,38 @@
 # Zve32f R07c 执行记录（2026-10-13）
 
+## R07c-2 修复与复跑（当前结果）
+
+工作树 `/home/chen/leisure/flow/.worktrees/zve32f-single`，分支 `feat/zve32f-single-20261013`。Flow 实现提交 `215f18f9a3e0bf32ccd1d00e1937aa32fbce9dd0` 同时包含 §5/§11.4a 文档、差分测试、CVFPU 子模块指针；CVFPU fork 本地提交 `d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e`，尚未推送。未跟踪的 llama agent 文件未触碰。远端证据根 `/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013`，实际执行主机 Alan；本目录保存日志和报告副本。
+
+### 根因与契约
+
+§11.2 第 2 条对 THMULTI 补位的推断有误。`fpnew_divsqrt_th_64_multi.sv` 原来把 WIDTH=32 操作数高 32 位补 0，`ct_vfdsu_prepare.v` 的 FP32 分支把它视为未 NaN-box 的输入并产生 canonical NaN。首个 DIV 反例见下方历史记录。fork 只把送往 C910 的两处补位改为 1；WIDTH=64 时补位宽度为 0。FP32-only、wrapper 接口、运算类别和标量 FPU 均未改变。CVFPU 修复文件的本地与 Alan 源快照 SHA256 均为 `3c149b1ec509de2195ea2938f8f03ebc01642fd18f787f5964759628d76cfd7e`；差分测试文件均为 `f192a8e43172bb5e74522c69ea048d5c5d9b02ea533370a7bd98033b73c1d007`。
+
+§11.2 五条依据经重新核对：① slow/cross 两个客户端只发 FP32 的指定操作，且 R07c-1 断言覆盖服务入口；② FP32 ADDMUL/NONCOMP 保持原 slice，DIVSQRT 的原补 0 假设已按上文修正，差分结果见下；③ 高 32 位结果在 cross 的 CMP/元素写回消费点不可见；④ KIND=3 输入仅取低 32 位，boxed/unboxed 高位均经实际差分验证；⑤ 标量 FPU 未改，`single`/`single-rvv` E1 逐文件一致。静态依据与运行证据分别陈述，不将差分或 E1 外推为整机功能证明。
+
+### §11.4 顺序执行
+
+每次开始仿真、编译或 RTL 生成前重新读取 `docs/cross-project/simulation-host.md`。首选 `cloud_chen@47.96.71.231:22` 用 `BatchMode=yes, ConnectTimeout=8` 预检均超时；Alan `chen@localhost:2286` 经 `clawbot` 可用，Java 11.0.32.1、Verilator 5.028，SBT 用现存 1.9.7 launcher。Vivado 2022.2 也在 Alan。测试失败不被视为主机不可用。
+
+| 步骤 | 固定源/命令范围 | 结果与本地证据 |
+|---|---|---|
+| 2 差分 | `testOnly flow.rvv.zve.ZveSlowFpKindSpec`，KIND=2/3 同请求 | exit 0；10,602 个请求，其中 600 个 directed boxed/unboxed、10,000 个随机；五种舍入、指定特殊值、随机反压和 tag/status/result 检查通过。独立 DIV 和 SQRT 的 KIND2/KIND3 请求到返回延迟均为 11/11 周期。[日志](slow-fp-kind-fixed.log)。 |
+| 3 Zve 回归 | `testOnly flow.rvv.zve.*` | exit 0；16 suites、21 tests，含 ZveWindowSpec 和 ZveMountVerdictSpec。[日志](zve-regression-fixed.log)。 |
+| 3 系统冒烟 | `testOnly flow.cluster.ZveSystemSmokeSpec` | SBT 日志显示全部通过，含 13 个 riscv-tests，verdict replay 0，`[success] Total time: 37 s`。外层 SSH 在 SBT 结束后未正常回收，手动断开得到传输 exit 255；不把此 transport 状态写成 SBT exit 0。[日志](system-smoke-fixed.log)。 |
+| 3 gemv | `testOnly flow.cluster.ZveGemvQ4Spec` | exit 0；4 个 ELF 均通过、maxErrorBits 0、verdict replay 0；周期 scalar 957356、vector 116520、vector_n64 27811、vector_4acc 114176，与 R07b 相同。[日志](gemv-fixed.log)。 |
+| 1 复核 RTL/E1 | 三个 profile 重新生成；R07b E1 比较器只归一化绝对源路径和 Scala 断言行号 | 三项 exit 0；`single` 85/85、`single-rvv` 118/118 逐文件相同。[日志](rtl-gen-fixed.log)、[E1](e1-fixed.json)。此项为修复后的 E1 复核，不改变从第 2 步继续的执行顺序。 |
+| 4 综合 | 同一生成目录 `kcu105-r07c-01/gateware` 的生产 source prefix 生成 synth-only Tcl；Vivado 2022.2 | exit 0；LUT 175305（72.32%）、FF 73726、DSP 65、BRAM36 167、BRAM18 3；`ZveMount` 101381 LUT、`slowFp` 4634 LUT；综合 WNS −0.259 ns/TNS −21.070 ns/129 端点。最差 10 个不同端点均是标量 L1D `internal3_req_src_reg[1]` 到 frontend cache WEBWE。[利用率](utilization-synth-fixed.rpt)、[层次](utilization-hierarchical-synth-fixed.rpt)、[时序](timing-synth-fixed.rpt)、[路径](worst10-distinct-synth-fixed.rpt)、[绑定](synth-script-binding-fixed.json)。 |
+| 5 默认布线 | 从 `r07c-synth.dcp` 出发，place Default、route Default、post-route phys_opt Default | Vivado 报告已完成：WNS −0.471 ns、TNS −355.949 ns、2020 个 setup 违例端点；WHS +0.030 ns、WPWS +0.108 ns，0 个 hold/pulse width 违例；0 个 routing errors。最差路径 frontend BTB→PHT。拥塞 peak 为 North Global level 5、107%，窗口以 backend/csrFile 71%、zveMount/translator 14%、L1D 10% 为主。详见 [时序](route-default/routed-timing.rpt)、[30 条不同端点路径](route-default/worst-30-distinct.rpt)、[拥塞](route-default/congestion.rpt)、[路由状态](route-default/route-status.rpt)。SD IO budget 检查 PASS，但板级假设仍待确认。 |
+| 5 Explore 布线 | 从同一综合 DCP 出发，place Explore、pre-route phys_opt AggressiveExplore、route Explore、post-route phys_opt Default | Vivado 报告完成：WNS **−0.001 ns**、TNS −0.001 ns、**1 个 setup 违例端点**；WHS +0.030 ns、WPWS +0.108 ns，hold/pulse width 违例均为 0；0 个 routing errors。拥塞 peak 为 North Global level 5、110%，窗口以 backend/csrFile 69%、zveMount/translator 15%、L1D 10% 为主。最差路径是 `zveMount/unit/window/issued_12_reg` → `zveMount/unit/memory/va5__1/.../CEA1`，属于向量内部的发射控制到 DSP 使能，slack −0.001 ns、13 级逻辑、数据路径延迟 8.861 ns（布线 7.219 ns）。[时序](route-explore/routed-timing.rpt)、[30 条不同端点路径](route-explore/worst-30-distinct.rpt)、[拥塞](route-explore/congestion.rpt)、[路由状态](route-explore/route-status.rpt)。SD IO budget 检查 PASS，但板级假设仍待确认。 |
+
+生成快照共有 140 个 `.sv` 与综合 source snapshot 逐文件一致，[清单](synth-snapshot-fixed.json)；使用的流程脚本为 [综合脚本生成器](make_synth.py)、[布线脚本](route_impl.tcl)及[bitstream 门控脚本](make_bitstream.tcl)。综合、布线和 bitstream 属于不同证据层级。
+
+两种布线策略分别从 SHA256 `e4195bccd48775b7831068ef51e97738f9166cf802e8e47cffd73729f7afd998` 的同一 `r07c-synth.dcp` 起跑，所用 `route_impl.tcl` SHA256 均为 `8db7414e288cf8fd4709b9164bea4d5e1176a719d4c9aea89f9f7583dc2a8d7a`；[默认绑定](route-default/input-checkpoint-sha256.txt)、[Explore 绑定](route-explore/input-checkpoint-sha256.txt)。Alan 上调用为 `vivado -mode batch -source $root/route_impl.tcl -tclargs $gateware default` 和相同调用的 `explore` 版本，均完成并正常退出 Vivado。生成 target 的命令为 `python3 fpga/kcu105/target.py --cpu-type breeze-zve32f --with-sdcard --sys-clk-freq 100000000 --vivado-threads 4 --output-dir $root/kcu105-r07c-01`，exit 0；[target 日志](target-fixed.log)。
+
+**§11.5 停点：两种布线策略的 WNS 都小于 0，100 MHz 尚未收敛，未生成 bitstream。** Explore 的 1 ps 缺口仍是违例，不能按显示精度或不确定度四舍五入为通过。Explore 最差 30 条不同端点中，11 条为向量内部（window、cross），19 条为标量既有路径（frontend/ITLB/cache 或 backend→frontend cache WEBWE），无向量到标量路径；只有第 1 条 slack 为负，后续 29 条为 0.000–0.050 ns。默认策略的 30 条中，19 条向量内部、2 条标量到向量、9 条标量既有；其最差路径是 frontend BTB→PHT，slack −0.471 ns。完整层次路径分别见两份 30 条报告。拥塞数值见两份 `congestion.rpt`。按 §11.5 停下，不改频率、frontend cache WEBWE、ZveParams 或流水；由用户决定降频或微架构方案。
+
+## R07c-2 初次失败记录（保留历史）
+
 工作树 `/home/chen/leisure/flow/.worktrees/zve32f-single`，分支 `feat/zve32f-single-20261013`。R07c RTL 和任务书提交 `eb12b24`；差分测试及 R07c-1 仿真断言提交 `b585c9a93a115ab167ce1b57d0dbeadc5b2d3ac2`。远端执行目录 `/home/chen/FUN/flow-runs/zve32f-r07c-20261013/src` 是从 R07b `4cbc473` 的独立源快照复制后同步 R07c 改动；wrapper、service、差分测试的本地与远端 SHA256 逐个一致。远端证据根为 `/home/chen/FUN/flow-runs/zve32f-r07c-20261013`，本目录保存日志副本。
 
 按 `docs/cross-project/simulation-host.md` 在执行前重新预检：首选 `cloud_chen@47.96.71.231:22` 的 `BatchMode=yes, ConnectTimeout=8` SSH 超时（exit 255）；备用 Alan `chen@localhost:2286` 经 `clawbot` 免密连接成功。实际编译、RTL 生成、仿真主机均为 Alan。其 `flow` 环境激活成功，Java 11.0.32.1、SBT 1.9.7、Verilator 5.028，预检时 `/home/chen/FUN` 可用 68 GiB、内存 available 57 GiB，无在运行的 sbt/Vivado/Verilator 任务。Alan 的 `sbt` shell 入口指向已不存在的 1.11.2 安装，使用现存 `/home/chen/FUN/flow-runs/be2-tools/sbt-launch-1.9.7.jar`，`show sbtVersion` exit 0。未启动 Vivado。

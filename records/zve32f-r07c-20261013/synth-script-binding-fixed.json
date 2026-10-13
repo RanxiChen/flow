@@ -1,0 +1,8 @@
+{
+  "production_tcl": "/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013/kcu105-r07c-01/gateware/xilinx_kcu105.tcl",
+  "production_sha256": "678e22cfe870b09a50f417895d34488df229f3f7cd1e072696050692fb827393",
+  "synth_tcl": "/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013/kcu105-r07c-01/gateware/r07c-synth-only.tcl",
+  "synth_sha256": "1576d412f05b5698bbd22144440e8e24d32a7fef3d097cddcc48b8b78a548001",
+  "same_production_prefix": true,
+  "stop_before": "opt_design/place_design/route_design/write_bitstream"
+}
