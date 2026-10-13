@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--images', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--cross-prefix', default='riscv64-unknown-elf-')
-    parser.add_argument('--profile', choices=('four', 'single', 'single-rvv'), default='single')
+    parser.add_argument('--profile', choices=('four', 'single', 'single-rvv', 'single-zve32f'), default='single')
     parser.add_argument('--hardware-dir', type=Path,
                         help='bind boot files to this generated SoC CSR map and BIOS')
     parser.add_argument('--verified-legacy', action='store_true',
@@ -95,7 +95,8 @@ def main():
     binding = {'profile': args.profile, 'harts': 4 if args.profile == 'four' else 1,
                'hardware': hardware, 'hardware_build': hardware_build,
                'software_images': str(args.images.resolve()),
-               'rvv_scope': 'R04 integer and unit-stride subset; unsupported encodings trap' if args.profile == 'single-rvv' else None}
+               'rvv_scope': 'R04 integer and unit-stride subset; unsupported encodings trap' if args.profile == 'single-rvv' else None,
+               'zve_scope': 'Zve32f candidate; system conformance and board boot unverified' if args.profile == 'single-zve32f' else None}
     (args.output / 'product-binding.json').write_text(json.dumps(binding, indent=2) + '\n')
     print(f'Prepared FAT files in {args.output}; no SD card was written.')
 

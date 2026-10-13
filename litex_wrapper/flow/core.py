@@ -340,3 +340,11 @@ class BreezeRvvDma(BreezeTinyDma):
     cluster_profile = 'single-rvv'
     rtl_module = 'BreezeRvvAxi'
     expected_marker = {'rvv': 'true', 'memoryBits': '512', 'idBits': '2'}
+
+
+class BreezeZve32fDma(BreezeTinyDma):
+    name = 'breeze-zve32f'
+    human_name = 'Breeze RV64GC Zve32f (1 hart, coherent SD DMA)'
+    cluster_profile = 'single-zve32f'
+    expected_marker = {'rvv': 'false', 'memoryBits': '64', 'zve': 'zve32f',
+                       'vlen': '512', 'vectorL2Ids': '8'}

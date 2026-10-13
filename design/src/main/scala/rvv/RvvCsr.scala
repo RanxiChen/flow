@@ -61,8 +61,12 @@ object RvvSetVl {
     }
     val maxVl = maximum(requestedType)
     val keep = !ivli && instruction(19, 15) === 0.U && instruction(11, 7) === 0.U
+    // ELEN=32 (Zve32*): SEW<=32 and LMUL>=SEW/ELEN; reserved pairs set vill.
+    val elenInvalid = if (p.elen == 64) false.B else
+      requestedType(5, 3) > 2.U || (requestedType(2) && requestedType(2, 0) =/= 0.U &&
+        (8.U - requestedType(2, 0)) > (2.U - requestedType(5, 3)))
     val invalid = requestedType(63, 8).orR || requestedType(5, 3) > 3.U ||
-      requestedType(2, 0) === 4.U || maxVl === 0.U || (keep && maximum(oldType) =/= maxVl)
+      requestedType(2, 0) === 4.U || maxVl === 0.U || (keep && maximum(oldType) =/= maxVl) || elenInvalid
     val avl = Mux(ivli, instruction(19, 15).pad(64),
       Mux(instruction(19, 15) === 0.U, Mux(keep, oldVl.pad(64), maxVl.pad(64)), rs1))
     val newVl = Mux(invalid, 0.U, Mux(avl < maxVl, avl, maxVl))(p.lengthBits - 1, 0)

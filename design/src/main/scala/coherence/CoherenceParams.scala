@@ -24,14 +24,22 @@ final case class CoherenceParams(g: BreezeMemGeometry) {
   val slotBits: Int = log2Ceil(l2Slots) max 1
   val memDataBits: Int = 64
   val memBeats: Int = lineBits / memDataBits
-  /** REQ ports: L1D(0..n-1), L1I(0..n-1), DMA. */
-  val nReqPorts: Int = 2 * nCores + 1
+  /** Optional Zve32f client: a coherent Read/MaskWrite port with
+    * `vectorIds` outstanding request IDs, echoed in RSP↓ (zve32f-single §6). */
+  val vectorPort: Boolean = g.vectorL2Ids > 0
+  val vectorIds: Int = g.vectorL2Ids
+  /** REQ/RSP↓ owner ID. The original protocol needs one bit (L1I demand/prefetch). */
+  val reqIdBits: Int = if (vectorPort) log2Ceil(vectorIds) max 1 else 1
+  /** REQ ports: L1D(0..n-1), L1I(0..n-1), DMA, then the optional vector client. */
+  val nReqPorts: Int = 2 * nCores + 1 + (if (vectorPort) 1 else 0)
   def l1dPort(c: Int): Int = c
   def l1iPort(c: Int): Int = nCores + c
   val dmaPort: Int = 2 * nCores
+  val vecPort: Int = 2 * nCores + 1
   val portBits: Int = log2Ceil(nReqPorts) max 1
-  /** RSP↓ FIFO depth per client (§2.2): L1D 2, L1I 2, DMA 1. */
-  def rspDownDepth(port: Int): Int = if (port == dmaPort) 1 else 2
+  /** RSP↓ FIFO depth per client (§2.2): L1D 2, L1I 2, DMA 1, vector = its ID count. */
+  def rspDownDepth(port: Int): Int =
+    if (port == dmaPort) 1 else if (vectorPort && port == vecPort) vectorIds else 2
 
   def setOf(lineAddr: UInt): UInt =
     if (l2Sets == 1) 0.U(1.W) else lineAddr(log2Ceil(l2Sets) - 1, 0)

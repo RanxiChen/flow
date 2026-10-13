@@ -242,7 +242,7 @@ class CSRFile(XLEN:Int=64,val dumplog:Boolean=false, val enabledebug:Boolean=fal
     private val enableSupervisorUser = privilegeProfile.enableSupervisorUser
     val misa_value = (BigInt(2) << 62) | (BigInt(1) << 12) | (BigInt(1) << 8) |
         (BigInt(1) << 5) | (BigInt(1) << 3) | BigInt(1) |
-        (if (rvv.nonEmpty) BigInt(1) << 21 else BigInt(0)) |
+        (if (rvv.exists(_.fullV)) BigInt(1) << 21 else BigInt(0)) |
         (if (enableCompressed) BigInt(1) << 2 else BigInt(0)) |
         (if (enableSupervisorUser) (BigInt(1) << 18) | (BigInt(1) << 20) else BigInt(0))
     val misa = WireDefault(misa_value.U(XLEN.W))

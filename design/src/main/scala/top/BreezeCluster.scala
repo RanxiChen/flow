@@ -45,6 +45,9 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
   io.mem <> l2.io.mem
   io.mmio <> mmio.io.out
   l2.io.dma <> io.dma
+  // Zve32f: one coherent L2 vector client shared by the stream and element VLSUs.
+  val vectorClient = cfg.zve.map(zp => Module(new flow.rvv.zve.ZveL2Client(zp, p)))
+  vectorClient.foreach(c => l2.io.vector.get <> c.io.l2)
 
   for (h <- 0 until p.nCores) {
     val backend = Module(new BreezeBackend(coreCfg.backendCfg, hartId = h))
@@ -63,11 +66,20 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     backend.io.externalInterrupts := io.externalInterrupts(h)
     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
     backend.io.l1d <> l1d.io.core
-    backend.io.mmuIdle := frontend.io.mmuIdle
+    backend.io.mmuIdle := frontend.io.mmuIdle && backend.io.zve.map(_.mmuIdle).getOrElse(true.B)
     BreezePipelineLink(backend, frontend)
 
     val context = backend.io.mmuContext
-    l1d.io.tlb <> frontend.io.dtlb.get
+    backend.io.zve match {
+      case Some(z) =>
+        val share = Module(new flow.rvv.zve.ZveTlbShare)
+        share.io.tlb <> frontend.io.dtlb.get
+        share.io.scalar <> l1d.io.tlb
+        share.io.vector <> z.tlb
+        vectorClient.get.io.stream <> z.stream
+        vectorClient.get.io.axi <> z.axi
+      case None => l1d.io.tlb <> frontend.io.dtlb.get
+    }
     l1d.io.ptw <> frontend.io.ptwMem
     l1i.io.demand <> frontend.io.refillReq
     frontend.io.refillRsp <> l1i.io.demandRsp

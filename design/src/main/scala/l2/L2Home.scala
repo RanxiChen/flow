@@ -17,6 +17,8 @@ class L2Home(g: BreezeMemGeometry, reportDmaErrors: Boolean = false) extends Mod
     val l1d = Vec(p.nCores, Flipped(new L1DCoherenceIO(p)))
     val l1i = Vec(p.nCores, Flipped(new ReadClientIO(p)))
     val dma = Flipped(new ReadClientIO(p))
+    /** Zve32f coherent client (Read/MaskWrite only, multiple tagged requests). */
+    val vector = if (p.vectorPort) Some(Flipped(new ReadClientIO(p))) else None
     val mem = new Axi4MasterIO(Axi4Params(p.paddrBits, p.memDataBits, p.slotBits))
     val events = Output(new L2Events(p))
   })
@@ -24,8 +26,15 @@ class L2Home(g: BreezeMemGeometry, reportDmaErrors: Boolean = false) extends Mod
   // ===========================================================================
   // Port views: REQ port order L1D(0..n-1), L1I(0..n-1), DMA (§4.1)
   // ===========================================================================
-  val reqPorts: Seq[DecoupledIO[CoherenceReq]] = io.l1d.map(_.req) ++ io.l1i.map(_.req) :+ io.dma.req
-  val rspPorts: Seq[DecoupledIO[CoherenceRspDown]] = io.l1d.map(_.rspDown) ++ io.l1i.map(_.rspDown) :+ io.dma.rspDown
+  val reqPorts: Seq[DecoupledIO[CoherenceReq]] = io.l1d.map(_.req) ++ io.l1i.map(_.req) ++
+    (io.dma.req +: io.vector.map(_.req).toSeq)
+  val rspPorts: Seq[DecoupledIO[CoherenceRspDown]] = io.l1d.map(_.rspDown) ++ io.l1i.map(_.rspDown) ++
+    (io.dma.rspDown +: io.vector.map(_.rspDown).toSeq)
+  // The vector client only issues Read/MaskWrite; its own credits bound the
+  // responses outstanding to its RSP↓ FIFO depth (CoherenceParams.vectorIds).
+  io.vector.foreach(v => when(v.req.valid) {
+    assert(v.req.bits.op === ReqOp.Read || v.req.bits.op === ReqOp.MaskWrite, "vector client issued a cached request")
+  })
 
   // ===========================================================================
   // Arrays (§2.1)
@@ -394,6 +403,7 @@ class L2Home(g: BreezeMemGeometry, reportDmaErrors: Boolean = false) extends Mod
         dataWrMask := s2.e.req.mask.asBools
         metaWrEn := true.B; metaWrWay := s2.hitWay; metaWrVal.dirty := true.B
         rspEn := true.B; rsp.op := RspDownOp.WriteAck
+        if (p.vectorPort) rsp.id := s2.e.req.id
         reqReady := true.B
         plruWrEn := true.B
       }
@@ -472,7 +482,8 @@ class L2Home(g: BreezeMemGeometry, reportDmaErrors: Boolean = false) extends Mod
               rsp.op := MuxCase(RspDownOp.DataE, Seq(
                 (s2.e.req.op === ReqOp.Read) -> RspDownOp.ReadData,
                 (s2.e.req.op === ReqOp.MaskWrite) -> RspDownOp.WriteAck))
-              rsp.error := s2.e.req.op =/= ReqOp.MaskWrite || reportDmaErrors.B
+              rsp.error := s2.e.req.op =/= ReqOp.MaskWrite || reportDmaErrors.B ||
+                (if (p.vectorPort) s2.e.port === p.vecPort.U else false.B)
               when(s2.e.req.op === ReqOp.MaskWrite) { printf(p"DMA refill error at ${s2.e.req.addr}\n") }
             }.otherwise {
               val installed = Wire(new L2MetaEntry(p))

@@ -2,7 +2,7 @@
 # Run on the selected, preflighted hardware host. Build only; no programmer/SD writes.
 set -Eeuo pipefail
 flow_root=$(cd -- "$(dirname -- "$0")/../.." && pwd)
-profile=${1:?usage: build_sd.sh four|single|single-rvv ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only] [--debug]}
+profile=${1:?usage: build_sd.sh four|single|single-rvv|single-zve32f ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only] [--debug]}
 output=${2:?absolute fresh output required}
 mode=${3:---all}
 debug=${4:-}
@@ -10,6 +10,7 @@ case "$profile" in
     four) rtl_profile=small; cpu=breeze;;
     single) rtl_profile=single; cpu=breeze-tiny;;
     single-rvv) rtl_profile=single-rvv; cpu=breeze-rvv;;
+    single-zve32f) rtl_profile=single-zve32f; cpu=breeze-zve32f;;
     *) echo "Unknown product: $profile" >&2; exit 2;;
 esac
 case "$output" in /*) ;; *) echo 'Output must be absolute' >&2; exit 2;; esac

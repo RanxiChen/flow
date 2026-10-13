@@ -83,8 +83,10 @@ case class BackendConfig(
     val coprocessorStub: Option[Int] = scala.None,
     val rvv: Option[flow.rvv.RvvParams] = scala.None,
     val writeThrough: Boolean = false,
-    val fpTagEntries: Int = 32
-){ require(fpTagEntries >= 8 && isPow2(fpTagEntries)) }
+    val fpTagEntries: Int = 32,
+    val zve: Option[flow.rvv.zve.ZveParams] = scala.None
+){ require(fpTagEntries >= 8 && isPow2(fpTagEntries))
+   require(zve.isEmpty || (rvv == zve.map(_.vrf) && !writeThrough), "Zve reuses the vector CSR state over a write-back L1D") }
 
 /** Compile-time privileged-architecture profile.  `mcu` preserves the
   * machine-only core used by the existing firmware.  `linux` enables the
@@ -122,7 +124,8 @@ case class BreezeCoreConfig(
     val coprocessorStub: Option[Int] = scala.None,
     val rvv: Option[flow.rvv.RvvParams] = scala.None,
     val writeThrough: Boolean = false,
-    val fpTagEntries: Int = 32
+    val fpTagEntries: Int = 32,
+    val zve: Option[flow.rvv.zve.ZveParams] = scala.None
 ){
     private val branchPredCfg: FrontendBranchPredictorConfig =
         if (useGShare) {
@@ -151,7 +154,7 @@ case class BreezeCoreConfig(
         enableMmu = enableMmu,
         loadUseBypass = loadUseBypass,
         coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = writeThrough,
-        fpTagEntries = fpTagEntries
+        fpTagEntries = fpTagEntries, zve = zve
     )
 }
 
@@ -242,13 +245,17 @@ final case class BreezeClusterConfig(
     coherentDma: Boolean = false,
     rvv: Option[flow.rvv.RvvParams] = scala.None,
     mmu: flow.mmu.sv39.Sv39MmuParams = flow.mmu.sv39.Sv39MmuParams(),
-    fpTagEntries: Int = 32
+    fpTagEntries: Int = 32,
+    /** Decoupled Zve32f backend (post-commit issue, real L2 client). */
+    zve: Option[flow.rvv.zve.ZveParams] = scala.None
 ) {
     val nCores: Int = mem.nCores
+    require(zve.isEmpty || (rvv == zve.map(_.vrf) && mem.vectorL2Ids > 0 && nCores == 1),
+        "Zve32f profile: rvv = zve.vrf, vector L2 client, single hart")
 
     /** Per-core configuration for this profile. */
     def coreCfg(enableTandem: Boolean = false): BreezeCoreConfig =
-        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = rvv.nonEmpty, fpTagEntries = fpTagEntries)
+        BreezeCoreConfigs.fromPreset(corePreset, enableTandem, privilegeProfile).copy(loadUseBypass = loadUseBypass, coprocessorStub = coprocessorStub, rvv = rvv, writeThrough = rvv.nonEmpty && zve.isEmpty, fpTagEntries = fpTagEntries, zve = zve)
 }
 
 /** Named cluster profiles. `single`/`dual`/`small` are the deployment sizes;
@@ -269,13 +276,21 @@ object BreezeClusterPresets {
     val single: BreezeClusterConfig = BreezeSingleFullConfig.cluster
     val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
         rvv = Some(flow.rvv.RvvParams(paBits = single.mem.paddrBits, cacheLineBytes = single.mem.lineBytes)))
+    // 2026-10-13: frozen single hart + decoupled Zve32f backend. Caches,
+    // L2 slots, TLB capacity and the 64-bit memory port are unchanged.
+    val singleZve32f: BreezeClusterConfig = {
+        val zp = flow.rvv.zve.ZveParams.soc(single.mem.paddrBits, single.mem.lineBytes)
+        single.copy(profileName = "single-zve32f",
+            mem = single.mem.copy(vectorL2Ids = flow.rvv.zve.ZveParams.l2Ids),
+            rvv = Some(zp.vrf), zve = Some(zp))
+    }
     val dual: BreezeClusterConfig = BreezeClusterConfig("dual", BreezeMemGeometry(nCores = 2))
     val stress: BreezeClusterConfig = BreezeClusterConfig("stress", BreezeMemGeometry.stress)
     val smokeL2w4: BreezeClusterConfig = BreezeClusterConfig("smoke-l2w4", BreezeMemGeometry.l2FourWay)
     val smokeL1dw2: BreezeClusterConfig = BreezeClusterConfig("smoke-l1dw2", BreezeMemGeometry.l1dTwoWay)
     val smoke1core: BreezeClusterConfig = BreezeClusterConfig("smoke-1core", BreezeMemGeometry.singleCore)
 
-    val all: Seq[BreezeClusterConfig] = Seq(single, singleRvv, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
+    val all: Seq[BreezeClusterConfig] = Seq(single, singleRvv, singleZve32f, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
 
     /** Resolve a generator CLI profile name; unknown names fail fast. */
     def fromName(name: String): BreezeClusterConfig =

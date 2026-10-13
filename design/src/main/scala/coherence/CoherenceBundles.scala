@@ -17,7 +17,7 @@ object DirState extends ChiselEnum { val NONE, SHARED, UNIQUE = Value }
 class CoherenceReq(p: CoherenceParams) extends Bundle {
   val op = ReqOp()
   val addr = UInt(p.lineAddrBits.W)
-  val id = UInt(1.W)
+  val id = UInt(p.reqIdBits.W)
   val mask = UInt(p.lineBytes.W)
   val data = UInt(p.lineBits.W)
 }
@@ -37,7 +37,7 @@ class CoherenceSnp(p: CoherenceParams) extends Bundle {
 
 class CoherenceRspDown(p: CoherenceParams) extends Bundle {
   val op = RspDownOp()
-  val id = UInt(1.W)
+  val id = UInt(p.reqIdBits.W)
   val error = Bool()
   val data = UInt(p.lineBits.W)
 }

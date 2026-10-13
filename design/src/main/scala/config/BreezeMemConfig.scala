@@ -16,7 +16,9 @@ final case class BreezeMemGeometry(
     l2Ways: Int = 8,
     l2BytesPerCore: Int = 65536,
     l2Slots: Int = 2,
-    paddrBits: Int = 32
+    paddrBits: Int = 32,
+    /** Zve32f: number of request IDs on the L2 vector client port; 0 = no port. */
+    vectorL2Ids: Int = 0
 ) {
   require(nCores >= 1 && nCores <= 8, s"nCores=$nCores")
   require(lineBytes == 32, "memory links support lineBytes=32 (one 256-bit beat)")
@@ -27,6 +29,8 @@ final case class BreezeMemGeometry(
   require(isPow2(nCores * l2BytesPerCore / (l2Ways * lineBytes)), "l2Sets must be a power of two")
   require(l2Slots >= 1)
   require(paddrBits == 32, "cache/coherence addresses support paddrBits=32")
+  require(vectorL2Ids == 0 || (isPow2(vectorL2Ids) && vectorL2Ids >= 2 && nCores == 1),
+    "vector L2 client: power-of-two ID count, single hart")
 }
 
 object BreezeMemGeometry {

@@ -84,8 +84,9 @@ class L1IClient(g: BreezeMemGeometry) extends Module {
   when(io.demand.req) { bad(0) := io.demand.paddr(63,p.paddrBits).orR }
   when(io.prefetch.fire) { bad(1) := io.prefetch.bits(63,p.paddrBits).orR }
   when(io.coh.rspDown.fire) {
-    assert(flight(io.coh.rspDown.bits.id), "unsolicited L1I response")
+    assert(flight(io.coh.rspDown.bits.id(0)), "unsolicited L1I response")
+    if (p.reqIdBits > 1) assert(io.coh.rspDown.bits.id <= 1.U, "L1I response ID outside demand/prefetch")
     assert(io.coh.rspDown.bits.op === RspDownOp.ReadData, "L1I requires ReadData")
-    flight(io.coh.rspDown.bits.id) := false.B
+    flight(io.coh.rspDown.bits.id(0)) := false.B
   }
 }

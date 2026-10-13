@@ -10,6 +10,7 @@ case "$profile" in
     four) config=flow_be2_quad_defconfig;;
     single) config=flow_be2_single_defconfig;;
     single-rvv) config=flow_be2_single_rvv_defconfig;;
+    single-zve32f) config=flow_be2_single_zve32f_defconfig;;
     *) echo "Unknown SD_GAPBS_PROFILE: $profile" >&2; exit 2;;
 esac
 make -C "$BUILDROOT_DIR" O="$out" BR2_EXTERNAL="$repo/linux/buildroot-external" "$config"

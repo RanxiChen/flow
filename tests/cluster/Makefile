@@ -13,8 +13,13 @@ MULTI := mh_amo_lock mh_lrsc_counter mh_message_pass mh_ipi mh_sv39 mh_fencei
 HARTS := 2 4
 
 ELFS := $(SINGLE:%=build/%.elf) $(foreach n,$(HARTS),$(MULTI:%=build/%_$(n).elf))
+ZVE_CFLAGS := $(filter-out -march=% -mabi=%,$(CFLAGS)) -march=rv64gc_zve32f -mabi=lp64d
 
 all: $(ELFS) $(ELFS:.elf=.dump)
+
+# Directed Zve32f integration smoke; keep the frozen scalar suite's ISA flags.
+build/zve_smoke.elf: zve_smoke.S link.ld | build
+	$(CC) $(ZVE_CFLAGS) -o $@ $<
 
 build/%.elf: %.S common.h link.ld | build
 	$(CC) $(CFLAGS) -DNHARTS=1 -o $@ $<
