@@ -1,5 +1,9 @@
 # Breeze BE2 on KCU105
 
+`single-zve32f` 原 RTL 的 100 MHz KCU105 构建需按仓库根
+[README 的分阶段综合、布线与 bitstream 策略](../../README.md#single-zve32f-原-rtl-的-100-mhz-fpga-构建)
+执行；本页下面的早期 `--build`/ILA 命令不复现该版本的已归档 bitstream。
+
 当前交付是四核、继承相同配置的普通单核、以及写穿访存/512-bit AXI/RVV 单核三种 SD 产品。参数、BIOS 自动启动、Linux/GAPBS 软件编译和部署入口见 [三产品 SD 指南](sd-bringup.md)。准确物理状态见 [BE2 实施报告](../../docs/tasks/BE2-report.md)；生成工程、综合、routed timing、bitstream 和上板证据分别记录。
 
 以下保留早期调试/DDR说明，旧生成器和 Wishbone 路径不作为 BE2 三产品构建命令。

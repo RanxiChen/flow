@@ -2,7 +2,7 @@
 
 ## R07c-2 修复与复跑（当前结果）
 
-工作树 `/home/chen/leisure/flow/.worktrees/zve32f-single`，分支 `feat/zve32f-single-20261013`。Flow 实现提交 `215f18f9a3e0bf32ccd1d00e1937aa32fbce9dd0` 同时包含 §5/§11.4a 文档、差分测试、CVFPU 子模块指针；CVFPU fork 本地提交 `d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e`，尚未推送。未跟踪的 llama agent 文件未触碰。远端证据根 `/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013`，实际执行主机 Alan；本目录保存日志和报告副本。
+工作树 `/home/chen/leisure/flow/.worktrees/zve32f-single`，分支 `feat/zve32f-single-20261013`。Flow 实现提交 `215f18f9a3e0bf32ccd1d00e1937aa32fbce9dd0` 同时包含 §5/§11.4a 文档、差分测试、CVFPU 子模块指针；CVFPU fork 提交 `d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e` 已在用户明确授权后无强推地推送到 `RanxiChen/cvfpu` 的 `flow-zve32f-r07c` 专用分支，并由 `git ls-remote` 核对该分支头。Flow 分支尚未推送。未跟踪的 llama agent 文件未触碰。远端证据根 `/home/chen/FUN/flow-runs/zve32f-r07c-fix-20261013`，实际执行主机 Alan；本目录保存日志和报告副本。
 
 ### 根因与契约
 
@@ -29,7 +29,15 @@
 
 两种布线策略分别从 SHA256 `e4195bccd48775b7831068ef51e97738f9166cf802e8e47cffd73729f7afd998` 的同一 `r07c-synth.dcp` 起跑，所用 `route_impl.tcl` SHA256 均为 `8db7414e288cf8fd4709b9164bea4d5e1176a719d4c9aea89f9f7583dc2a8d7a`；[默认绑定](route-default/input-checkpoint-sha256.txt)、[Explore 绑定](route-explore/input-checkpoint-sha256.txt)。Alan 上调用为 `vivado -mode batch -source $root/route_impl.tcl -tclargs $gateware default` 和相同调用的 `explore` 版本，均完成并正常退出 Vivado。生成 target 的命令为 `python3 fpga/kcu105/target.py --cpu-type breeze-zve32f --with-sdcard --sys-clk-freq 100000000 --vivado-threads 4 --output-dir $root/kcu105-r07c-01`，exit 0；[target 日志](target-fixed.log)。
 
-**§11.5 停点：两种布线策略的 WNS 都小于 0，100 MHz 尚未收敛，未生成 bitstream。** Explore 的 1 ps 缺口仍是违例，不能按显示精度或不确定度四舍五入为通过。Explore 最差 30 条不同端点中，11 条为向量内部（window、cross），19 条为标量既有路径（frontend/ITLB/cache 或 backend→frontend cache WEBWE），无向量到标量路径；只有第 1 条 slack 为负，后续 29 条为 0.000–0.050 ns。默认策略的 30 条中，19 条向量内部、2 条标量到向量、9 条标量既有；其最差路径是 frontend BTB→PHT，slack −0.471 ns。完整层次路径分别见两份 30 条报告。拥塞数值见两份 `congestion.rpt`。按 §11.5 停下，不改频率、frontend cache WEBWE、ZveParams 或流水；由用户决定降频或微架构方案。
+**当时的 §11.5 停点：两种布线策略的 WNS 都小于 0，尚不能生成 bitstream。** 此结论仅描述上表的第一次布线；后续原 RTL 的 post-route 物理优化已通过门槛并生成 bitstream，见下一节。Explore 的 1 ps 缺口仍是违例，不能按显示精度或不确定度四舍五入为通过。Explore 最差 30 条不同端点中，11 条为向量内部（window、cross），19 条为标量既有路径（frontend/ITLB/cache 或 backend→frontend cache WEBWE），无向量到标量路径；只有第 1 条 slack 为负，后续 29 条为 0.000–0.050 ns。默认策略的 30 条中，19 条向量内部、2 条标量到向量、9 条标量既有；其最差路径是 frontend BTB→PHT，slack −0.471 ns。完整层次路径分别见两份 30 条报告。拥塞数值见两份 `congestion.rpt`。按 §11.5 停下，不改频率、frontend cache WEBWE、ZveParams 或流水；由用户决定降频或微架构方案。
+
+## 后续 100 MHz 物理优化与可烧录 bitstream
+
+用户确认保持 100 MHz、先优化实现。此轮 **没有修改 RTL**，从上述 Explore 的已布线 DCP（SHA256 `47903fd2ad146d8f72b92575bae13ae4501fdc69f5ce640a78de591b93784f20`）在 Alan 的独立目录 `/home/chen/FUN/flow-runs/zve32f-r07c-postopt-20261013` 运行 [后布线脚本](route_postopt.tcl)：`phys_opt_design -directive AggressiveExplore`，随后 `route_design -directive NoTimingRelaxation`。脚本 SHA256 为 `29165737800cdd43c7b4913139ce0e573be49a796805e246c155b8ce153aff6e`；输出 DCP SHA256 为 `d0bde33e12e75841a88f01464975cacee6164339667b9ce4dcb3edcc81c3a122`。所用器件、Vivado 2022.2、源快照、100 MHz 约束均与上节一致。
+
+最终 [时序](route-postopt/after-timing.rpt)为 WNS **0.000 ns**、TNS 0、0 个 setup 违例端点，WHS +0.030 ns、WPWS +0.108 ns，hold/pulse-width 违例均为 0；[路由状态](route-postopt/route-status.rpt)为 0 个错误。另存 [最差 30 条路径](route-postopt/worst-30-distinct.rpt)、[拥塞](route-postopt/congestion.rpt)、[时序检查](route-postopt/check-timing.rpt)及[物理优化日志](route-postopt/postopt-console.log)。bitstream 前置门槛重新检查同样通过，[门控时序](route-postopt/bitstream-timing-gate.rpt)；Vivado `write_bitstream` 成功，DRC 为 0 errors、204 warnings、12 advisories，[生成日志](route-postopt/bitstream-console.log)。
+
+**Alan 可烧录文件**：`/home/chen/FUN/flow-runs/zve32f-r07c-postopt-20261013/bitstream/xilinx_kcu105.bit`，SHA256 `9b38ab07e6bb0ef0e3661a69db919b2d1a4619fedb2b4ec2f0440b686ef0f1aa`。这版对应原 RTL `215f18f9a3e0bf32ccd1d00e1937aa32fbce9dd0`，没有 ILA；时序在报告精度下余量为零，上板功能和加入 ILA 后的时序尚未验证。后续 Window RTL 实验单独保存在 `experiment/zve32f-window-resource-20261013` 分支，不包含在此 bitstream 或展示分支中。
 
 ## R07c-2 初次失败记录（保留历史）
 

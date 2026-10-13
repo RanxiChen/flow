@@ -5,6 +5,9 @@ Breeze 是用 Chisel 实现的 RV64GC 顺序单发射处理器。当前版本在
 SoC 使用 LiteX 集成 DDR、串口和 SD 控制器，FASE 提供独立的 JTAG 调试入口。
 
 本文介绍已上板验证的单核配置。仓库也保留多核配置，本文的性能数据均来自单核。
+另有 `single-zve32f` 的 100 MHz 原 RTL 实现：已生成通过时序门槛的 KCU105
+bitstream，尚未完成上板验证。其构建策略见下文，不能把已有单核的上板结果算作
+Zve32f 的上板结果。
 
 ## 下载与启动
 
@@ -111,6 +114,84 @@ python3 fpga/kcu105/target.py \
 目标脚本会先通过 sbt 生成 RTL，再构建 LiteX BIOS 并运行 Vivado。
 产物为 `build/fpga/kcu105-sd-fase-100mhz/gateware/xilinx_kcu105.bit`。
 上述命令启用 FASE 与硬件记录器，不启用 ILA。重新构建后需检查实现时序报告再上板。
+
+### `single-zve32f` 原 RTL 的 100 MHz FPGA 构建
+
+对外展示版本使用原 RTL `215f18f9a3e0bf32ccd1d00e1937aa32fbce9dd0`，
+Window 资源实验保存在独立分支，不属于本构建。CVFPU 子模块提交
+`d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e` 可从 fork 的
+`flow-zve32f-r07c` 分支取得。以下在 Alan 的 Vivado 2022.2 和项目 `flow`
+环境中执行；每次使用新的 `R07C_RUN` 目录。先准备子模块，并使可用的 sbt
+位于 `PATH`（Alan 的 Coursier 旧入口可能指向已不存在的安装）：
+
+```sh
+git submodule update --init third_party/cvfpu
+source /home/chen/miniforge3/bin/activate flow
+export PATH="/home/chen/.sdkman/candidates/sbt/current/bin:$PATH"
+FLOW_ROOT="$PWD"
+R07C_RUN="/home/chen/FUN/flow-runs/zve32f-r07c-rebuild"
+VIVADO="/home/chen/Tool/FPGA/Vivado/2022.2/bin/vivado"
+mkdir -p "$R07C_RUN"
+
+python3 fpga/kcu105/target.py --cpu-type breeze-zve32f \
+    --with-sdcard --sys-clk-freq 100000000 --vivado-threads 4 \
+    --output-dir "$R07C_RUN/kcu105"
+GATEWARE="$R07C_RUN/kcu105/gateware"
+python3 records/zve32f-r07c-20261013/make_synth.py "$GATEWARE"
+cd "$GATEWARE"
+"$VIVADO" -mode batch -source r07c-synth-only.tcl
+```
+
+`target.py` 生成 `single-zve32f` RTL、LiteX BIOS 和生产 Vivado 工程；
+`make_synth.py` 取生产 Tcl 中相同的综合/XDC 前缀，在布局前停下并输出
+`r07c-synth.dcp`、资源和综合时序报告。不要用 `target.py --build` 的默认实现
+结果代替下面的策略。保持 `FLOW_ROOT`、`R07C_RUN`、`GATEWARE`、`VIVADO`
+四个变量在同一 shell 中，继续从同一个综合 DCP 分别运行默认和 Explore：
+
+```sh
+mkdir -p "$R07C_RUN/route-default" "$R07C_RUN/route-explore"
+cd "$R07C_RUN/route-default"
+"$VIVADO" -mode batch \
+    -source "$FLOW_ROOT/records/zve32f-r07c-20261013/route_impl.tcl" \
+    -tclargs "$GATEWARE" default
+cd "$R07C_RUN/route-explore"
+"$VIVADO" -mode batch \
+    -source "$FLOW_ROOT/records/zve32f-r07c-20261013/route_impl.tcl" \
+    -tclargs "$GATEWARE" explore
+```
+
+默认策略为 `opt_design Default → place_design Default → route_design Default →
+post-route phys_opt_design Default`；Explore 为 `opt_design Default →
+place_design Explore → pre-route phys_opt_design AggressiveExplore →
+route_design Explore → post-route phys_opt_design Default`。已归档的原 RTL
+运行分别得到 WNS −0.471 ns 和 −0.001 ns，均不能直接生成 bitstream。
+这次可烧录文件使用 Explore 的已布线 DCP，再执行一次后布线优化与重布线：
+
+```sh
+mkdir -p "$R07C_RUN/postopt" "$R07C_RUN/bitstream"
+cd "$R07C_RUN/postopt"
+"$VIVADO" -mode batch \
+    -source "$FLOW_ROOT/records/zve32f-r07c-20261013/route_postopt.tcl" \
+    -tclargs "$R07C_RUN/route-explore/routed.dcp" "$GATEWARE"
+cd "$R07C_RUN/bitstream"
+ln -s "$R07C_RUN/postopt/postopt-routed.dcp" routed.dcp
+"$VIVADO" -mode batch \
+    -source "$FLOW_ROOT/records/zve32f-r07c-20261013/make_bitstream.tcl" \
+    -tclargs "$GATEWARE"
+sha256sum xilinx_kcu105.bit
+```
+
+后布线脚本依次运行 `phys_opt_design -directive AggressiveExplore` 和
+`route_design -directive NoTimingRelaxation`。先查看 `postopt/after-timing.rpt`
+的 WNS/TNS、hold 违例数及 `postopt/route-status.rpt` 的路由错误数；bitstream
+脚本也会重新检查完整时序、
+实际最差 setup/hold slack，并在门槛失败时拒绝写出。归档运行的最终结果为
+WNS 0.000 ns、TNS 0、零 setup/hold 违例、零路由错误；bitstream SHA256 为
+`9b38ab07e6bb0ef0e3661a69db919b2d1a4619fedb2b4ec2f0440b686ef0f1aa`，
+在 Alan 的 `/home/chen/FUN/flow-runs/zve32f-r07c-postopt-20261013/bitstream/`
+下。余量接近零，新的运行必须以自己的路由和门控报告为准；本产物没有 ILA，
+也尚未证明板级启动。命令、DCP SHA 和报告见
+[R07c 记录](records/zve32f-r07c-20261013/result.md)。
 
 ### Linux、GAPBS 与 Python
 
