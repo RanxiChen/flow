@@ -2,7 +2,7 @@ package flow.rvv.zve
 
 import chisel3._
 import chisel3.util._
-import flow.fpu.BreezeFpSources
+import flow.fpu.{BreezeFpOp,BreezeFpSources}
 
 class ZveFpnewBlackBox(kind: Int) extends BlackBox(Map("TAG_WIDTH" -> 16,"KIND" -> kind)) with HasBlackBoxPath {
   override def desiredName = "ZveFpnewWrapper"
@@ -35,6 +35,14 @@ class ZveFpnewService(kind: Int = 3) extends Module {
   io.service.response <> output.io.deq
   fp.io.clk_i := clock; fp.io.reset_i := reset.asBool; fp.io.flush_i := false.B
   val q=input.io.deq.bits
+  if(kind==3) {
+    when(input.io.deq.fire) {
+      assert(q.sourceFormat===0.U && q.destinationFormat===0.U &&
+        Seq(BreezeFpOp.ADD,BreezeFpOp.MUL,BreezeFpOp.DIV,BreezeFpOp.SQRT,
+          BreezeFpOp.MINMAX,BreezeFpOp.CMP).map(op=>q.operation===op.U).reduce(_ || _),
+        "R07c-1: slow FP request must be an FP32 arithmetic or compare operation")
+    }
+  }
   fp.io.in_valid_i := input.io.deq.valid; input.io.deq.ready := fp.io.in_ready_o
   fp.io.tag_i := q.tag; fp.io.operand_a_i := q.a; fp.io.operand_b_i := q.b; fp.io.operand_c_i := q.c
   fp.io.rnd_mode_i := q.rounding; fp.io.op_i := q.operation; fp.io.op_mod_i := q.modifier
