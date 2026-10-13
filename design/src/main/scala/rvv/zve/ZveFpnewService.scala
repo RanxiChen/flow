@@ -21,9 +21,9 @@ class ZveFpnewBlackBox(kind: Int) extends BlackBox(Map("TAG_WIDTH" -> 16,"KIND" 
 }
 
 /** Arithmetic service, independent of scalar rd/commit tables. Production
-  * conversion/FMA instances disable unused operation groups. A SoC can attach
-  * the external slow service to its shared scalar arithmetic implementation. */
-class ZveFpnewService(kind: Int = 2) extends Module {
+  * conversion/FMA instances disable unused operation groups. The slow service
+  * is FP32-only (kind 3); kind 2 (RV64D) is kept only for reference. */
+class ZveFpnewService(kind: Int = 3) extends Module {
   val io = IO(new Bundle {
     val service = Flipped(new ZveFpService)
     val drained = Output(Bool())

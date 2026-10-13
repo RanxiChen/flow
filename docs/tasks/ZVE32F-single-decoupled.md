@@ -19,6 +19,8 @@
 
 **2026-10-13 R07（用户批准）**：为装进 KCU105 并让 llama 热点真正走全行流水，`single-zve32f` 改为 DLEN 256、FMA/转换各 4 lane，新增全行加宽乘加单元，ALU 增加 vor/vxor/vsll/vsra。见 §8（改动）和 §9（性能微基准）。R07 RTL 尚未编译或仿真。
 
+**2026-10-13 R07c（用户批准）**：R07b（`4cbc473`）的最差路径是 slowFp 里从不使用的 FP64 FMA slice。slowFp 改为只支持 FP32（KIND=3），之后不论 LUT 门槛如何都去布线。见 §11。R07c RTL 尚未编译。
+
 ## 1. 为什么这样设计
 
 目标是让单核 llama.cpp（Q4_0/Q8_0）通过向量化获得加速。Qwen2.5-0.5B Q4_0 每生成一个 token 要读约 0.4 GB 权重。向量化之后，decode 的上限由 L2 的 2 个 miss 槽、32 B line 和 AXI64 决定，计算侧再怎么流水化也越不过这个上限。因此这次的取舍是：
@@ -279,3 +281,63 @@ vsetvli e8,m4    ; vle8 v8, (qs)        256 B，j=0..3（共 4 次覆盖 j=0..15
    - b. 多累加器版：4 个独立的 e16 m2 累加器（例如 v4、v6、v12、v14），每个 j 轮换使用；临时寄存器用两组（v1/v2、v3/v5）交替；block 末尾先把 4 个累加器加起来再做 vfwcvt。
    - 两组都报告每个 block 的周期数、B/拍，以及 perfBusy 里每个单元的忙周期占比。
 5. 注意：现在的内核对所有 block 都用同一个 fa0 作为 Q8 scale，作为基准可以接受；移植到 llama 时要改成逐 block 载入 da。
+
+## 11. R07c：slowFp 改为只支持 FP32，然后布线（2026-10-13，用户批准）
+
+### 11.1 R07b 的证据（SHA `4cbc473`，`records/zve32f-r07-20261013/`）
+
+- 综合：LUT 180,894（74.63%），综合 WNS −0.380 ns，130 个端点违例。
+- 最差路径（−0.380 ns，35 级）：`zveMount/slowFp/fp/i_fpnew/gen_operation_groups[0]/gen_parallel_slices[1]/.../i_fma`，`mid_pipe_sum_q` → `out_pipe_status_q[UF]`，信号 `mantissa[51]`。slice 1 是 **FP64** 的 FMA。slowFp 用的是 `ZveFpnewService(2)`，wrapper 里 KIND=2 是 `Features RV64D`。Zve32f 的 ELEN=32，这个 slice 从来不会被用到，但仍然被综合进来。
+- 第 2–10 条（−0.259 ns，27 级）：`l1d/internal3_req_src` → `frontend/cache/data_*_ext/Memory_reg_*/WEBWE`。这是标量侧本来就有的弱端点：冻结基线 `records/f2-owner-ce-20261012/route-default/soc-worst-30.rpt` 里，同一个 WEBWE 端点在默认布线后就已经是 −0.460 ns（起点 `fpUnit`），基线最差是 frontend cache 内部的 −0.481 ns，用 Explore 收到 +0.021。
+
+### 11.2 改动（Claude 已写，未编译）
+
+| 文件 | 内容 |
+|---|---|
+| `ZveFpnewWrapper.sv` | 新增 `KIND=3`：WIDTH 32，`ZveFeatures`（只开 FP32），ADDMUL 用 PARALLEL，DIVSQRT 用 MERGED（THMULTI），NONCOMP 用 PARALLEL，CONV 关闭。KIND 0/1/2 的展开不变 |
+| `ZveMount.scala` | `slowFp` 由 `ZveFpnewService(2)` 改为 `(3)` |
+| `ZveCoprocessor.scala` | `ZveStandaloneHarness` 的共享 FP 服务同样改为 `(3)`，单测和产品保持一致 |
+| `ZveFpnewService.scala` | 默认 kind 由 2 改为 3，并更新注释 |
+
+**为什么可以这样改**（codex 要逐条复核，任何一条不成立就上报）：
+
+1. slowFp 只有两个客户端，经由 `ZveSharedFpMux` 接入。
+   - `ZveSlowUnit`：断言只放行 vfmul、vfdiv、vfrdiv、vfsqrt。格式在 `ZveFpVectorEngine.scala:74` 固定为 src/dst=0（FP32）。
+   - cross 单元的 `ZveElementEngine`：`:134-135` 格式固定为 FP32，操作只有 ADD（vfred[ou]sum）、MINMAX（vfredmin/max）、CMP（vmf*）。
+   - 两个客户端都不发 I2F、F2I、F2F，也不发 FP64。
+2. 在 RV64D 配置下，FP32 的 ADDMUL 和 NONCOMP 本来就走各自独立的 FP32 slice（PARALLEL，PipeRegs 3/1）。所以去掉 FP64 slice 以后，FP32 的运算和延迟应当不变。只有 DIVSQRT 从 FP32+FP64 的 MERGED 变成只有 FP32 的 MERGED。THMULTI 的 `fpnew_divsqrt_th_64_multi` 支持任意 WIDTH，内部补零到 64 位，所以算法本身不变，但延迟可能有变化。
+3. 输出：KIND=3 走 wrapper 里已有的 `{32'hffffffff, result[31:0]}` 分支，和 RV64D 对 FP32 结果做的 NaN-box 一致。CMP 的结果在 RV64D 下高 32 位是 0，现在变成全 1。两个消费方都只用 bit 0（`ZveElementEngine.scala:230` 的 `value(0)`）或低 32 位（`:247` 按 mask 截取），因此不受影响。
+4. 输入：`ZveFeatures` 的 `EnableNanBox=0`，只取 operand 的 `[31:0]`。客户端本来就送 NaN-boxed 的 FP32，低 32 位就是原值。
+5. 标量 FPU（`backend/fpUnit`，`FlowFpnewBlackBox`）完全不动，标量 D 扩展保持不变。`single`、`single-rvv` 不实例化 Zve，E1 必须继续逐文件一致。
+
+### 11.3 新增不变量
+
+- R07c-1：slowFp 的每个请求都满足 `sourceFormat==0 && destinationFormat==0`，并且 operation ∈ {ADD, MUL, DIV, SQRT, MINMAX, CMP}。codex 可以在 `ZveFpnewService` 加一条仅在仿真中检查的断言（kind=3 时生效）。
+- R07c-2：对相同的 FP32 输入，KIND=3 与 KIND=2 的 `result[31:0]` 和 `status` 逐位相同（CMP 只比较 bit 0）。
+
+### 11.4 codex 要做的事（主机按 `docs/cross-project/simulation-host.md`）
+
+1. 编译；三个 profile 的 RTL 生成；E1（`single` 85 个文件、`single-rvv` 118 个文件逐文件一致）。
+2. 新增差分单测 `ZveSlowFpKindSpec`：同时实例化 `ZveFpnewService(2)` 和 `(3)`，送同一串请求，比较 R07c-2。覆盖要求：
+   - 操作：ADD、MUL、DIV、SQRT、MINMAX（rm 0/1）、CMP（rm 0/1/2）。
+   - 5 种舍入模式。
+   - 特殊值：±0、±inf、qNaN、sNaN、最小和最大 subnormal、最大 normal、除以 0、对负数开方。
+   - 随机值至少 10k 个。
+   - 每个请求带不同 tag，下游随机反压，并检查乱序返回时 tag 是否对应。
+   - 另外报告两种 kind 的 DIV/SQRT 延迟。延迟可以不同，但必须如实记录。
+3. 重跑：`flow.rvv.zve.*` 全部、`ZveWindowSpec`/T4、`ZveSystemSmokeSpec`（含 riscv-tests）、`ZveGemvQ4Spec`（4 个 ELF）。gemv 的周期数应与 R07b 相同或只差几拍，误差为 0，verdict replay 为 0。
+4. 综合，报告：LUT、DSP、`ZveMount`/`slowFp` 的层次 LUT、最差 10 条不同端点的路径（带层次）。
+5. **不再用 §10.4 的 LUT 70% 门槛挡住布线**。只要综合成功，就依次做：
+   - a. `place_design` + `route_design`（默认策略），之后 `phys_opt_design`。报告布线 WNS/TNS、违例端点数、最差 30 条路径、拥塞报告（`report_design_analysis -congestion`）。
+   - b. 默认策略 WNS < 0 时，用 Explore（`place_design -directive Explore`、`phys_opt -directive AggressiveExplore`、`route_design -directive Explore`）再跑一次。基线就是这样收到 +0.021 的，脚本沿用 f2-owner-ce 的 route 流程。
+   - c. 任一策略布线 WNS ≥ 0：生成 bitstream，记录 SHA256，并说明用的是哪个策略。
+6. 记录：`records/zve32f-r07c-20261013/result.md`，格式同 R07b，写明实际执行主机。
+
+### 11.5 codex 的修改权限（在 §5、§8.5 之外补充）
+
+- 可以自行修改：差分单测和断言；Vivado 脚本、策略和 directive；R07c-1 断言触发后对 wrapper 的修正（必须保持 FP32-only）。
+- 必须上报，不得自行处理：
+  - R07c-1 或 R07c-2 失败，说明 §11.2 的前提不成立。**不要改回 KIND=2。**
+  - 布线 WNS < 0：按路径分类（向量内部、向量到标量、标量既有路径），附上最差 30 条和拥塞数据，由用户决定降频（例如 90 MHz）还是改微架构。
+  - 尤其不要自行修改 frontend cache 的 WEBWE 路径（例如给 refill 写打一拍）。那是标量共享代码，会破坏 E1，需要用户批准。
+  - 不要通过改 `ZveParams` 缩配、删单元或改流水来换取时序。

@@ -90,7 +90,7 @@ class ZveStandaloneHarness(p: ZveParams = ZveParams()) extends Module {
     val axi=new RvvAxi(p.vrf); val debugVrf=Flipped(new ZveVrfPort(p))
     val drained=Output(Bool()); val scalarMemoryBlocked=Output(Bool())
   })
-  val core=Module(new ZveCoprocessor(p,true)); val service=Module(new ZveFpnewService(2))
+  val core=Module(new ZveCoprocessor(p,true)); val service=Module(new ZveFpnewService(3))
   core.io.issue <> io.issue; io.verdict <> core.io.verdict; io.completion <> core.io.completion
   core.io.commit := io.commit; core.io.kill := io.kill; core.io.serialGo := io.serialGo
   io.translation <> core.io.translation; core.io.translated <> io.translated

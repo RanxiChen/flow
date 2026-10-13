@@ -49,7 +49,10 @@ module ZveFpnewWrapper #(parameter int TAG_WIDTH=16, KIND=2) (
       selection_held <= 1'b1; held_cast <= choose_cast;
     end
   end
-  // KIND=0: ADDMUL only; KIND=1: conversions/non-computational; KIND=2: general.
+  // KIND=0: ADDMUL only; KIND=1: conversions/non-computational; KIND=2: general
+  // RV64D; KIND=3: FP32-only ADDMUL/DIVSQRT/NONCOMP for the vector slow path.
+  // Zve32f has ELEN=32, so KIND=3 drops the FP64 slices (R07b worst path was
+  // the never-used FP64 FMA slice) and CONV, which its clients never request.
   // Based on CVA6's per-operation pipeline configuration (6348e9e68467).
   // FP32 ADDMUL uses input + internal + output stages, separating its
   // normalization/rounding/status path from outer result arbitration.
@@ -64,7 +67,7 @@ module ZveFpnewWrapper #(parameter int TAG_WIDTH=16, KIND=2) (
                   '{default: 1},    // NONCOMP
                   '{default: 4}},   // CONV: input + internal + pre-round + output
     UnitTypes:  '{'{default: (KIND == 1 ? fpnew_pkg::DISABLED : fpnew_pkg::PARALLEL)},
-                  '{default: (KIND == 2 ? fpnew_pkg::MERGED : fpnew_pkg::DISABLED)},
+                  '{default: (KIND >= 2 ? fpnew_pkg::MERGED : fpnew_pkg::DISABLED)},
                   '{default: (KIND == 0 ? fpnew_pkg::DISABLED : fpnew_pkg::PARALLEL)},
                   '{default: (KIND == 2 ? fpnew_pkg::MERGED : fpnew_pkg::DISABLED)}},
     PipeConfig: fpnew_pkg::DISTRIBUTED

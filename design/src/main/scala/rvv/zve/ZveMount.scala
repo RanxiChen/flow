@@ -237,7 +237,8 @@ class ZveMount(p: ZveParams) extends Module {
   })
   val unit = Module(new ZveCoprocessor(p))
   val translator = Module(new ZveTranslator(p))
-  val slowFp = Module(new ZveFpnewService(2))
+  // FP32-only (KIND=3): slow lane and cross reductions/compares never send FP64.
+  val slowFp = Module(new ZveFpnewService(3))
   slowFp.io.service <> unit.io.sharedFp
   io.tlb <> translator.io.tlb; translator.io.context := io.context
   io.stream <> unit.io.stream; io.axi <> unit.io.axi
