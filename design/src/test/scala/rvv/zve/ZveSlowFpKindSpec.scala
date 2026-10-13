@@ -37,7 +37,8 @@ class ZveSlowFpKindSpec extends AnyFreeSpec with ChiselSim {
     }
   }
 
-  private case class Request(op: Int, rm: Int, a: Long, b: Long, c: Long)
+  private case class Request(op: Int, rm: Int, a: Long, b: Long, c: Long,
+    kind3Unboxed: Boolean = false)
   private val fp32Mask=BigInt("ffffffff",16)
   private def boxed(bits: Long): BigInt=(BigInt("ffffffff",16)<<32) | BigInt(bits & 0xffffffffL)
 
@@ -47,17 +48,20 @@ class ZveSlowFpKindSpec extends AnyFreeSpec with ChiselSim {
     val specials=Seq(0x00000000L,0x80000000L,0x7f800000L,0xff800000L,
       0x7fc00000L,0x7f800001L,0x00000001L,0x007fffffL,0x7f7fffffL,
       0x00800000L,0xbf800000L,0x3f800000L)
-    val directed=for(op<-operations; rm<- (if(op==BreezeFpOp.MINMAX) 0 to 1
+    val directedBase=for(op<-operations; rm<- (if(op==BreezeFpOp.MINMAX) 0 to 1
       else if(op==BreezeFpOp.CMP) 0 to 2 else 0 to 4);
       i<-specials.indices) yield Request(op,rm,specials(i),
         specials((i+3)%specials.size),specials((i+7)%specials.size))
+    // KIND=2 always receives valid NaN-boxed FP32. KIND=3 receives both
+    // encodings for identical low bits; its result must match the boxed case.
+    val directed=directedBase.flatMap(r=>Seq(r,r.copy(kind3Unboxed=true)))
     val rng=new Random(0x707c32fL)
     val random=Vector.fill(10000) {
       val op=operations(rng.nextInt(operations.size))
       val rm=if(op==BreezeFpOp.MINMAX)rng.nextInt(2)
         else if(op==BreezeFpOp.CMP)rng.nextInt(3) else rng.nextInt(5)
       Request(op,rm,rng.nextInt()&0xffffffffL,rng.nextInt()&0xffffffffL,
-        rng.nextInt()&0xffffffffL)
+        rng.nextInt()&0xffffffffL,rng.nextBoolean())
     }
     // Isolated first requests give comparable acceptance-to-return latency.
     val requests=(Seq(Request(BreezeFpOp.DIV,0,0x3f800000L,0x40000000L,0L),
@@ -84,8 +88,10 @@ class ZveSlowFpKindSpec extends AnyFreeSpec with ChiselSim {
           p.valid.poke(valid.B)
           if(valid) {
             val t=sent(i); val r=requests(t)
-            p.bits.tag.poke(t.U); p.bits.a.poke(boxed(r.a).U)
-            p.bits.b.poke(boxed(r.b).U); p.bits.c.poke(boxed(r.c).U)
+            def operand(bits: Long): BigInt = if(i==1 && r.kind3Unboxed)
+              BigInt(bits & 0xffffffffL) else boxed(bits)
+            p.bits.tag.poke(t.U); p.bits.a.poke(operand(r.a).U)
+            p.bits.b.poke(operand(r.b).U); p.bits.c.poke(operand(r.c).U)
             p.bits.operation.poke(r.op.U); p.bits.modifier.poke(false.B)
             p.bits.rounding.poke(r.rm.U); p.bits.sourceFormat.poke(0.U)
             p.bits.destinationFormat.poke(0.U); p.bits.integerFormat.poke(2.U)
