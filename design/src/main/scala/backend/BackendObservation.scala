@@ -31,4 +31,5 @@ class BackendObservation extends Bundle {
   val killD = Bool()
   val busySet = Valid(new flow.interface.L1DDestination)
   val busyClear = Valid(new flow.interface.L1DDestination)
+  val zve = new flow.rvv.zve.ZvePerfObservation
 }

@@ -3,8 +3,10 @@ package flow.rvv.zve
 import chisel3._
 import chisel3.util._
 
-/** One queue endpoint owns either the narrow integer engine or the external
-  * single-element floating-point path. Other queue endpoints are independent. */
+/** Single-lane floating-point queue endpoint (vfmul, vfdiv, vfrdiv, vfsqrt)
+  * on the shared scalar FPU. R07: the narrow integer engine that used to sit
+  * here was a second full ZveElementEngine; that work now goes to the cross
+  * unit. */
 class ZveSlowUnit(p: ZveParams) extends Module {
   val io=IO(new Bundle {
     val in=Flipped(Decoupled(new ZveCommand(p)))
@@ -12,35 +14,15 @@ class ZveSlowUnit(p: ZveParams) extends Module {
     val fp=new ZveFpService
     val complete=Decoupled(new ZveCompletion(p)); val drained=Output(Bool())
   })
-  val integer=Module(new ZveElementEngine(p)); val floating=Module(new ZveFpVectorEngine(p,1))
-  val useFloat=RegInit(false.B)
-  val requestFloat=Seq(ZveOp.vfmul,ZveOp.vfdiv,ZveOp.vfrdiv,ZveOp.vfsqrt).map(n=>io.in.bits.operation===n.U).reduce(_ || _)
-  io.in.ready := integer.io.drained && floating.io.drained
-  integer.io.in.valid := io.in.valid && !requestFloat && floating.io.drained
-  floating.io.in.valid := io.in.valid && requestFloat && integer.io.drained
-  integer.io.in.bits := io.in.bits; floating.io.in.bits := io.in.bits
-  when(io.in.fire) { useFloat := requestFloat }
-  integer.io.mask := io.mask; floating.io.mask := io.mask
-  io.vrf.read.valid := Mux(useFloat,floating.io.vrf.read.valid,integer.io.vrf.read.valid)
-  io.vrf.read.bits := Mux(useFloat,floating.io.vrf.read.bits,integer.io.vrf.read.bits)
-  io.vrf.write.valid := Mux(useFloat,floating.io.vrf.write.valid,integer.io.vrf.write.valid)
-  io.vrf.write.bits := Mux(useFloat,floating.io.vrf.write.bits,integer.io.vrf.write.bits)
-  for((unit,choose)<-Seq((floating.io.vrf,useFloat),(integer.io.vrf,!useFloat))) {
-    unit.read.ready := choose && io.vrf.read.ready; unit.write.ready := choose && io.vrf.write.ready
-    unit.returned.valid := choose && io.vrf.returned.valid; unit.returned.bits := io.vrf.returned.bits
-    unit.written.valid := choose && io.vrf.written.valid; unit.written.bits := io.vrf.written.bits
+  val floating=Module(new ZveFpVectorEngine(p,1))
+  when(io.in.fire) {
+    assert(Seq(ZveOp.vfmul,ZveOp.vfdiv,ZveOp.vfrdiv,ZveOp.vfsqrt).map(n=>io.in.bits.operation===n.U).reduce(_ || _),
+      "non-FP instruction routed to the slow FP queue")
   }
-  io.vrf.returned.ready := Mux(useFloat,floating.io.vrf.returned.ready,integer.io.vrf.returned.ready)
-  io.vrf.written.ready := Mux(useFloat,floating.io.vrf.written.ready,integer.io.vrf.written.ready)
-  io.complete.valid := Mux(useFloat,floating.io.complete.valid,integer.io.complete.valid)
-  io.complete.bits := Mux(useFloat,floating.io.complete.bits,integer.io.complete.bits)
-  floating.io.complete.ready := io.complete.ready && useFloat
-  integer.io.complete.ready := io.complete.ready && !useFloat
-  io.fp <> floating.io.fp(0)
-  integer.io.fp.request.ready := false.B; integer.io.fp.response.valid := false.B
-  integer.io.fp.response.bits := 0.U.asTypeOf(new ZveFpResponse)
-  assert(!integer.io.fp.request.valid,"FP reduction routed to integer queue")
-  io.drained := integer.io.drained && floating.io.drained
+  floating.io.in <> io.in; floating.io.mask := io.mask
+  io.vrf <> floating.io.vrf; io.fp <> floating.io.fp(0)
+  io.complete <> floating.io.complete
+  io.drained := floating.io.drained
 }
 
 /** Vector clients share a future SoC-owned FPU. Their local tags are kept

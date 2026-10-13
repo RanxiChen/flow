@@ -52,6 +52,7 @@ class ZveTranslator(p: ZveParams) extends Module {
     val tlb = Flipped(new TlbPortIO(withPmpCandidate = true))
     val context = Input(new BreezeMmuContext(64))
     val idle = Output(Bool())
+    val perfPreBusy = Output(Bool())
   })
   val sIdle :: sSend :: sWait :: sCheck :: sRespond :: Nil = Enum(5)
   val state = RegInit(sIdle)
@@ -62,6 +63,7 @@ class ZveTranslator(p: ZveParams) extends Module {
   val fast = Reg(Bool()); val response = Reg(new ZveTranslationResponse(p))
   val context = Reg(new BreezeMmuContext(64))
   io.idle := state === sIdle
+  io.perfPreBusy := state =/= sIdle && !isChunk
   io.chunk.ready := state === sIdle
   io.pre.ready := state === sIdle && !io.chunk.valid
   when(io.chunk.fire) {
@@ -231,6 +233,7 @@ class ZveMount(p: ZveParams) extends Module {
     val stream = new ZveLineIO(p)
     val axi = new flow.rvv.RvvAxi(p.vrf)
     val mmuIdle = Output(Bool())
+    val perf = Output(new ZvePerfObservation)
   })
   val unit = Module(new ZveCoprocessor(p))
   val translator = Module(new ZveTranslator(p))
@@ -245,6 +248,15 @@ class ZveMount(p: ZveParams) extends Module {
   unit.io.order.ready := true.B; unit.io.release.ready := true.B
   unit.io.invalidate.ready := true.B; unit.io.scalarWritesVisible := true.B
   io.mmuIdle := translator.io.idle
+  io.perf := 0.U.asTypeOf(new ZvePerfObservation)
+  io.perf.preStart := translator.io.pre.fire
+  io.perf.preBusy := translator.io.perfPreBusy
+  io.perf.preDone := translator.io.preDone.valid
+  io.perf.streamLoadStart := unit.io.perfStreamLoadStart
+  io.perf.streamLoadDone := unit.io.perfStreamLoadDone
+  io.perf.streamIdCount := unit.io.perfStreamIdCount
+  io.perf.streamReqStall := unit.io.stream.request.valid && !unit.io.stream.request.ready
+  io.perf.unitBusy := unit.io.perfBusy
 
   // ---- Ingress and pretranslation stage (program order into the window).
   val ingress = withReset(reset.asBool || io.killD) { Module(new Queue(new ZveIssue(p), p.window)) }
@@ -263,6 +275,10 @@ class ZveMount(p: ZveParams) extends Module {
   val stagedKilled = RegInit(false.B)
   when(io.killD && staged) { stagedKilled := true.B }
   val windowIssue = unit.io.issue
+  val issueOpcode = windowIssue.bits.scalar.instruction(6,0)
+  val issueMemory = issueOpcode === 7.U || issueOpcode === 0x27.U
+  io.perf.fastMemory := windowIssue.fire && issueMemory && windowIssue.bits.pre.valid
+  io.perf.serialMemory := windowIssue.fire && issueMemory && !windowIssue.bits.pre.valid
   windowIssue.valid := !io.killD && Mux(staged, stagedDone && !stagedKilled, ingress.io.deq.valid && !wantsFast)
   windowIssue.bits := Mux(staged, stagedIssue, head)
   when(!staged) { windowIssue.bits.pre := 0.U.asTypeOf(windowIssue.bits.pre) }
@@ -274,18 +290,19 @@ class ZveMount(p: ZveParams) extends Module {
   io.available := RegNext(inFlight < (p.window - 1).U, false.B)
   when(io.reserve) { assert(io.available, "vector reservation without credit") }
 
-  // ---- Verdicts -> WB decisions, in program order.
+  // ---- Verdicts -> WB decisions, in program order. R07: no flow-through.
+  // The window's oldest/judgement logic must not reach WB kill and the
+  // frontend redirect in the same cycle (synthesis WNS -0.948 ns, 29 levels).
+  // The verdict of an instruction judged at PERM is still visible at WB.
   val verdicts = withReset(reset.asBool || io.killD) {
-    Module(new Queue(new ZveVerdict(p), p.window, pipe = false, flow = true)) }
+    Module(new Queue(new ZveVerdict(p), p.window, pipe = false, flow = false)) }
   verdicts.io.enq <> unit.io.verdict
   val v = verdicts.io.deq.bits
   val serialStarted = RegInit(false.B); val serialDone = RegInit(false.B)
   val serialResult = Reg(new ZveCompletion(p))
   val commitPending = RegInit(false.B)
   val isSerial = v.kind === 3.U
-  // With flow-through enabled, deq.valid may precede the window's judged
-  // register by one edge. Serial execution needs the stored verdict owner.
-  unit.io.serialGo := verdicts.io.deq.valid && verdicts.io.count =/= 0.U && isSerial &&
+  unit.io.serialGo := verdicts.io.deq.valid && isSerial &&
     io.serialHold && !serialStarted &&
     !commitPending && !io.killD
   when(unit.io.serialGo) { serialStarted := true.B }

@@ -1,7 +1,8 @@
 package flow.rvv.zve
 
-/** Production RTL: default 512-bit VRF, 16 conversions, 8 FMA lanes, and
-  * external scalar-FPU/translation/memory-order services. No debug VRF port. */
+/** Standalone RTL at the default parameters (512-bit VRF, 16 conversions,
+  * 8 FMA lanes) with external scalar-FPU/translation/memory-order services.
+  * No debug VRF port. The SoC instance uses ZveParams.soc (256-bit rows). */
 object GenerateZve extends App {
   require(args.length<=1,"usage: runMain flow.rvv.zve.GenerateZve [output-directory]")
   _root_.circt.stage.ChiselStage.emitSystemVerilogFile(new ZveCoprocessor(),

@@ -915,6 +915,13 @@ class BreezeBackend(
   io.observe.busySet.valid := scoreboard.io.set.valid && wb.writes && (wb.rd.isFp || wb.rd.idx =/= 0.U)
   io.observe.busySet.bits := wb.rd
   io.observe.busyClear := writeback.io.clear
+  io.observe.zve := 0.U.asTypeOf(new flow.rvv.zve.ZvePerfObservation)
+  if (isZve) {
+    io.observe.zve := zveMount.get.io.perf
+    io.observe.zve.soloWait := idVectorMemory && soloIdWait
+    io.observe.zve.wbWait := wb.valid && wb.copro && wb.solo && downHold
+    io.observe.zve.creditWait := vectorCreditWait
+  }
   io.tandem.foreach { t =>
     t := 0.U.asTypeOf(t)
     t.valid := wbCommit

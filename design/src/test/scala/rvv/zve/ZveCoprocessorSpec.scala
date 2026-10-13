@@ -130,7 +130,8 @@ class ZveCoprocessorSpec extends AnyFreeSpec with ChiselSim {
       // Widening mixed signed products distinguish vs2 from vs1 signedness.
       write(8,packed(Seq.fill(32)(BigInt(65534)),16)); write(12,packed(Seq.fill(32)(BigInt(65535)),16))
       write(16,0); write(17,0)
-      instruction("vwmaccsu.vv",sew=16); assert(read(16)==packed(Seq.fill(16)(BigInt(-131070)),32))
+      // R07-1: vwmaccsu = signed(vs1=-1) * unsigned(vs2=65534).
+      instruction("vwmaccsu.vv",sew=16); assert(read(16)==packed(Seq.fill(16)(BigInt(-65534)),32))
       instruction("vwmul.vv",sew=16); assert(read(16)==packed(Seq.fill(16)(BigInt(2)),32))
       write(8,packed(a,32)); write(9,0); write(12,packed(Seq.fill(32)(BigInt(1)),16))
       instruction("vnsrl.wv",sew=16)

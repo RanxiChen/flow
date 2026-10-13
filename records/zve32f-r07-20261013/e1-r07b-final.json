@@ -1,0 +1,29 @@
+{
+  "baseline": "/home/chen/FUN/flow-runs/zve32f-20261013/baseline-94636/src",
+  "candidate": "/home/chen/FUN/flow-runs/zve32f-r07-20261013/src",
+  "normalization": [
+    "absolute source root",
+    "Scala assertion line number"
+  ],
+  "profiles": {
+    "single": {
+      "baseline_run": "/home/chen/FUN/flow-runs/zve32f-20261013/baseline-94636/src/design/build/rtl/axi-cluster/single/gshare/linux/production/cpu/coherent-dma/emitted/e5a39e35-7f3a-40f3-9318-e134930d4f50",
+      "candidate_run": "/home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/build/rtl/axi-cluster/single/gshare/linux/production/cpu/coherent-dma/emitted/d4eb2c02-9077-43a6-8909-b35b5f3a74eb",
+      "files": 85,
+      "missing": [],
+      "extra": [],
+      "changed": [],
+      "baseline_normalized_sha256": "02e7a86ed3f45fba55784030db6702e17d5ea68f94a43b0e606801e0ca80df2d"
+    },
+    "single-rvv": {
+      "baseline_run": "/home/chen/FUN/flow-runs/zve32f-20261013/baseline-94636/src/design/build/rtl/axi-cluster/single-rvv/gshare/linux/production/cpu/coherent-dma/emitted/7c8c7b3c-1287-472a-907c-8a0d983fdca5",
+      "candidate_run": "/home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/build/rtl/axi-cluster/single-rvv/gshare/linux/production/cpu/coherent-dma/emitted/fe5c43e4-f39a-4a8f-9307-3b3538e3430a",
+      "files": 118,
+      "missing": [],
+      "extra": [],
+      "changed": [],
+      "baseline_normalized_sha256": "0bdea8660c9565837fb60c6c9f13b65e39cf4a5ea540cec9cffdcaa2a374edbc"
+    }
+  },
+  "pass": true
+}

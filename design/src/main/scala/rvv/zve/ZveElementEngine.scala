@@ -20,6 +20,11 @@ class ZveElementEngine(p: ZveParams) extends Module {
   val idle::capture::initialize::select::operands::multiply::execute::divide::fpSend::fpWait::update::finalizeResult::write::finish::Nil=Enum(14)
   val state=RegInit(idle); val d=Reg(new ZveCommand(p)); val mask=Reg(UInt(p.vrf.vlen.W))
   val aRows=Mem(maxRows,UInt(p.vrf.dlen.W)); val bRows=Mem(maxRows,UInt(p.vrf.dlen.W)); val resultRows=Mem(maxRows,UInt(p.vrf.dlen.W))
+  // One write port (capture, update and finalize are exclusive states), so
+  // the scratch maps to distributed RAM instead of 16 x DLEN flip-flops.
+  val resultWrite=WireDefault(false.B)
+  val resultWriteRow=WireDefault(0.U(scratchBits.W)); val resultWriteData=WireDefault(0.U(p.vrf.dlen.W))
+  when(resultWrite) { resultRows.write(resultWriteRow,resultWriteData) }
   val sendRow=RegInit(0.U((scratchBits+1).W)); val received=RegInit(0.U((scratchBits+1).W))
   val element=Reg(UInt((p.vrf.lengthBits+1).W)); val selectedIndex=Reg(UInt(64.W)); val selectedValid=Reg(Bool())
   val elementActive=Reg(Bool()); val a=Reg(UInt(64.W)); val b=Reg(UInt(64.W)); val old=Reg(UInt(64.W))
@@ -62,7 +67,8 @@ class ZveElementEngine(p: ZveParams) extends Module {
     val r=io.vrf.returned.bits.tag(scratchBits-1,0)
     assert(io.vrf.returned.bits.tag===received,"snapshot read changed ownership/order")
     aRows.write(r,io.vrf.returned.bits.data(0)); bRows.write(r,io.vrf.returned.bits.data(1))
-    resultRows.write(r,io.vrf.returned.bits.data(2)); received := received+1.U
+    resultWrite := true.B; resultWriteRow := r; resultWriteData := io.vrf.returned.bits.data(2)
+    received := received+1.U
     when(received+1.U===captureRows) { state := initialize }
   }
   when(state===capture && captureRows===0.U) { state := initialize }
@@ -225,8 +231,9 @@ class ZveElementEngine(p: ZveParams) extends Module {
   when(state===update) {
     val compressSelected=op=/=ZveOp.vcompress.U || b(0)
     when(elementActive && !d.scalarResult && !d.reduction && compressSelected) {
-      when(d.maskResult) { resultRows.write(packedRow,packedUpdated) }
-        .otherwise { resultRows.write(destinationRow,updated) }
+      resultWrite := true.B
+      resultWriteRow := Mux(d.maskResult,packedRow,destinationRow)
+      resultWriteData := Mux(d.maskResult,packedUpdated,updated)
       anyWrite := true.B
       when(op===ZveOp.vcompress.U) { prefix := prefix+1.U }
     }
@@ -236,7 +243,8 @@ class ZveElementEngine(p: ZveParams) extends Module {
   when(state===finalizeResult) {
     when(d.reduction && limit=/=0.U) {
       val m=(1.U((p.vrf.dlen+1).W)<<destinationBits)-1.U
-      resultRows.write(0.U,(resultRows.read(0.U) & ~m(p.vrf.dlen-1,0)) | (accumulator.pad(p.vrf.dlen+1) & m)(p.vrf.dlen-1,0))
+      resultWrite := true.B; resultWriteRow := 0.U
+      resultWriteData := (resultRows.read(0.U) & ~m(p.vrf.dlen-1,0)) | (accumulator.pad(p.vrf.dlen+1) & m)(p.vrf.dlen-1,0)
       anyWrite := true.B
     }
     writeRow := 0.U; acknowledgements := 0.U; state := write

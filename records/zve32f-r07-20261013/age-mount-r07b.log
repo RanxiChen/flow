@@ -1,0 +1,21 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/)
+[info] compiling 3 Scala sources to /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ZveWindowSpec:
+[info] - queued WAR ownership blocks a young writer while unrelated units execute
+[info] - reused lower-numbered slot stays younger than a live older slot
+[info] - commit wins over same-cycle kill, and buffered state events keep drained low
+[info] ZveMountVerdictSpec:
+[info] - registered verdict queue clears on kill before the slot is reused
+[info] Run completed in 23 seconds, 157 milliseconds.
+[info] Total number of tests run: 4
+[info] Suites: completed 2, aborted 0
+[info] Tests: succeeded 4, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 27 s, completed Oct 13, 2026, 1:40:10 PM

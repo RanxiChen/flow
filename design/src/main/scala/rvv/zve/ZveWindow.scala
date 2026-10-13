@@ -36,12 +36,17 @@ class ZveWindow(p: ZveParams) extends Module {
   val free = PriorityEncoder(~live.asUInt)
   io.issue.ready := !live.asUInt.andR && ageFits && !io.kill
   io.occupancy := PopCount(live)
-  def oldest(eligible: Seq[Bool]): UInt = {
-    val wins = (0 until p.window).map(i => eligible(i) &&
-      (0 until p.window).filter(_ != i).map(j => !eligible(j) ||
-        RvvAge.older(commands(i).age, commands(j).age)).reduce(_ && _))
-    PriorityEncoder(VecInit(wins).asUInt)
-  }
+  // Age matrix: before(i)(j) = live slot i was allocated before slot j. Ages
+  // are handed out in allocation order, so among live slots this equals
+  // RvvAge.older(age(i), age(j)) but needs no age comparator. R07: the
+  // comparator trees were the synthesis critical path and ~half the window.
+  val before = RegInit(VecInit(Seq.fill(p.window)(VecInit(Seq.fill(p.window)(false.B)))))
+  def oldestOH(eligible: Seq[Bool]): UInt = VecInit((0 until p.window).map(i => eligible(i) &&
+    !(0 until p.window).filter(_ != i).map(j => eligible(j) && before(j)(i)).reduce(_ || _))).asUInt
+  def oldest(eligible: Seq[Bool]): UInt = OHToUInt(oldestOH(eligible))
+  /** Live slots allocated before the one-hot slot `oh`. */
+  def olderThan(oh: UInt): Seq[Bool] = (0 until p.window).map(i =>
+    live(i) && (0 until p.window).filter(_ != i).map(j => oh(j) && before(i)(j)).foldLeft(false.B)(_ || _))
   val pending = (0 until p.window).map(i => live(i) && !committed(i))
   val oldestPending = oldest(pending)
   val unjudged = (0 until p.window).map(i => pending(i) && !judged(i))
@@ -79,15 +84,15 @@ class ZveWindow(p: ZveParams) extends Module {
     when(io.execute(u).fire) { mailboxValid(u) := false.B; executed(mailbox(u).slot) := true.B }
     val inUnit = (0 until p.window).map(i => live(i) && committed(i) &&
       !issued(i) && commands(i).unit === u.U)
-    val selected = oldest(inUnit)
-    val c = commands(selected)
-    val conflicts = (0 until p.window).map(i => live(i) && i.U =/= selected &&
-      RvvAge.older(commands(i).age, c.age) &&
-      (((c.reads & commands(i).writes) | (c.writes & commands(i).reads) |
-        (c.writes & commands(i).writes)).orR))
+    val selectedOH = oldestOH(inUnit)
+    val selected = OHToUInt(selectedOH)
+    val c = Mux1H(selectedOH, commands)
     // A serial instruction is a barrier until final completion. It waits only
     // for older live instructions, never for its own occupancy or young work.
-    val olderLive = (0 until p.window).map(i => live(i) && RvvAge.older(commands(i).age,c.age))
+    val olderLive = olderThan(selectedOH)
+    val conflicts = (0 until p.window).map(i => olderLive(i) &&
+      (((c.reads & commands(i).writes) | (c.writes & commands(i).reads) |
+        (c.writes & commands(i).writes)).orR))
     val olderSerial = (0 until p.window).map(i => olderLive(i) && commands(i).serial)
     val ready = !conflicts.reduce(_ || _) && !olderSerial.reduce(_ || _) &&
       !(serialPending && RvvAge.older(serialAge,c.age)) &&
@@ -115,6 +120,10 @@ class ZveWindow(p: ZveParams) extends Module {
     assert(io.issue.bits.unit < p.units.U)
     commands(free) := io.issue.bits
     commands(free).slot := free; commands(free).age := nextAge
+    for(j <- 0 until p.window) {
+      before(free)(j) := false.B
+      before(j)(free) := live(j) && j.U =/= free
+    }
     live(free) := true.B; committed(free) := false.B; judged(free) := false.B; issued(free) := false.B; executed(free) := false.B
     nextAge := nextAge + 1.U
   }

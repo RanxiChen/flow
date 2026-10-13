@@ -27,6 +27,9 @@ class ZveMemoryHarness(p: ZveParams = ZveParams()) extends Module {
   io.stream.request.valid := false.B; io.stream.request.bits := 0.U.asTypeOf(io.stream.request.bits)
   io.stream.response.ready := true.B
   io.memoryLive := window.io.memoryLive; io.storeLive := window.io.storeLive; io.fatal := false.B; io.occupancy := window.io.occupancy
+  io.perfBusy := VecInit(Seq.fill(5)(false.B))
+  io.perfStreamIdCount := 0.U
+  io.perfStreamLoadStart := false.B; io.perfStreamLoadDone := false.B
   io.drained := window.io.drained && memory.io.drained && access.io.drained
   io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked || window.io.serialActive
 }

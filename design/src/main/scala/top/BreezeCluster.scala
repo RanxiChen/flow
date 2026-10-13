@@ -38,6 +38,7 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
       Some(Output(Vec(p.nCores, new flow.backend.BackendObservation))) else None
     val l1dEvents = Output(Vec(p.nCores, new L1DEvents))
     val l2Events = Output(new L2Events(p))
+    val vectorReqStall = if (enableBackendObservation && cfg.zve.nonEmpty) Some(Output(Bool())) else None
   })
   val l2 = Module(new L2Home(mem, reportDmaErrors = cfg.coherentDma))
   io.l2Events := l2.io.events
@@ -48,6 +49,7 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
   // Zve32f: one coherent L2 vector client shared by the stream and element VLSUs.
   val vectorClient = cfg.zve.map(zp => Module(new flow.rvv.zve.ZveL2Client(zp, p)))
   vectorClient.foreach(c => l2.io.vector.get <> c.io.l2)
+  io.vectorReqStall.foreach(_ := vectorClient.get.io.l2.req.valid && !vectorClient.get.io.l2.req.ready)
 
   for (h <- 0 until p.nCores) {
     val backend = Module(new BreezeBackend(coreCfg.backendCfg, hartId = h))

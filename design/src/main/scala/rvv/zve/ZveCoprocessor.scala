@@ -21,6 +21,9 @@ class ZveCoprocessorIO(p: ZveParams, debug: Boolean) extends Bundle {
   val occupancy=Output(UInt(log2Ceil(p.window+1).W))
   /** Post-commit bus error on the stream VLSU (cannot trap precisely). */
   val fatal=Output(Bool())
+  val perfBusy=Output(Vec(5,Bool()))
+  val perfStreamIdCount=Output(UInt(3.W))
+  val perfStreamLoadStart=Output(Bool()); val perfStreamLoadDone=Output(Bool())
   val debugVrf=if(debug) Some(Flipped(new ZveVrfPort(p))) else None
 }
 
@@ -38,16 +41,23 @@ class ZveCoprocessor(val p: ZveParams = ZveParams(), debug: Boolean = false) ext
   val conversion=Module(new ZveFpVectorEngine(p,p.conversionLanes))
   val fma=Module(new ZveFpVectorEngine(p,p.fmaLanes))
   val cross=Module(new ZveElementEngine(p)); val memory=Module(new ZveMemoryEngine(p))
-  val stream=Module(new ZveStreamEngine(p))
-  val inputs=Seq(alu.io.in,slow.io.in,conversion.io.in,fma.io.in,cross.io.in,memory.io.in,stream.io.in)
-  val completions=Seq(alu.io.complete,slow.io.complete,conversion.io.complete,fma.io.complete,cross.io.complete,memory.io.complete,stream.io.complete)
-  val ports=Seq(alu.io.vrf,slow.io.vrf,conversion.io.vrf,fma.io.vrf,cross.io.vrf,memory.io.vrf,stream.io.vrf)
+  val stream=Module(new ZveStreamEngine(p)); val mac=Module(new ZveMacVectorEngine(p))
+  io.perfBusy := VecInit(Seq(!alu.io.drained,!mac.io.drained,!conversion.io.drained,
+    !fma.io.drained,!stream.io.drained))
+  io.perfStreamIdCount := stream.io.perfIdCount
+  io.perfStreamLoadStart := stream.io.in.fire && stream.io.in.bits.issue.scalar.instruction(6,0) === 7.U
+  io.perfStreamLoadDone := stream.io.perfLoadDone
+  // Order follows ZveUnit.
+  val inputs=Seq(alu.io.in,slow.io.in,conversion.io.in,fma.io.in,cross.io.in,memory.io.in,stream.io.in,mac.io.in)
+  val completions=Seq(alu.io.complete,slow.io.complete,conversion.io.complete,fma.io.complete,cross.io.complete,memory.io.complete,stream.io.complete,mac.io.complete)
+  val ports=Seq(alu.io.vrf,slow.io.vrf,conversion.io.vrf,fma.io.vrf,cross.io.vrf,memory.io.vrf,stream.io.vrf,mac.io.vrf)
+  require(inputs.length==p.units)
   for(u<-0 until p.units) {
     inputs(u) <> window.io.execute(u); window.io.complete(u) <> completions(u)
     access.io.ports(u) <> ports(u)
   }
   io.debugVrf.foreach(access.io.ports(p.units) <> _)
-  Seq(alu.io.mask,slow.io.mask,conversion.io.mask,fma.io.mask,cross.io.mask,memory.io.mask,stream.io.mask).foreach(_ := access.io.mask)
+  Seq(alu.io.mask,slow.io.mask,conversion.io.mask,fma.io.mask,cross.io.mask,memory.io.mask,stream.io.mask,mac.io.mask).foreach(_ := access.io.mask)
   io.stream <> stream.io.line; io.fatal := stream.io.fatal
   io.memoryLive := window.io.memoryLive; io.storeLive := window.io.storeLive; io.occupancy := window.io.occupancy
   for(l<-0 until p.conversionLanes) {
@@ -64,7 +74,7 @@ class ZveCoprocessor(val p: ZveParams = ZveParams(), debug: Boolean = false) ext
   memory.io.scalarWritesVisible := io.scalarWritesVisible; io.axi <> memory.io.axi
   io.scalarMemoryBlocked := memory.io.scalarMemoryBlocked || window.io.serialActive
   io.drained := window.io.drained && access.io.drained && shared.io.drained &&
-    Seq(alu.io.drained,slow.io.drained,conversion.io.drained,fma.io.drained,cross.io.drained,memory.io.drained,stream.io.drained).reduce(_ && _)
+    Seq(alu.io.drained,slow.io.drained,conversion.io.drained,fma.io.drained,cross.io.drained,memory.io.drained,stream.io.drained,mac.io.drained).reduce(_ && _)
 }
 
 /** The only additional arithmetic in this shell replaces the future shared

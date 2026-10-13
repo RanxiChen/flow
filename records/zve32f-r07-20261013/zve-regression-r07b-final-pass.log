@@ -1,0 +1,48 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/)
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ZveDecodeSpec:
+[info] - independent EEW/EMUL, FPR scalar capture and rejected FP64/overlap encodings
+[info] ZveFpArithmeticSpec:
+[info] - real FPnew FMA preserves fused precision and suppresses inactive invalid operations
+[info] ZveR07MacSpec:
+[info] - R07 MAC matches element model under return and write backpressure
+[info] ZveMemorySpec:
+[info] - memory service ownership, address modes, page faults, FOF and restart survive random backpressure
+[info] ZveFpBatchSpec:
+[info] - out-of-order lane responses, inactive exceptions and full output backpressure retain ownership
+[info] ZveR07StreamSpec:
+[info] - R07 32-byte rows use the byte reference model
+[info] - default 64-byte rows retain the byte reference behavior
+[info] ZveFpEstimateSpec:
+[info] - ISA estimate examples and IEEE special values have the prescribed bits and flags
+[info] ZveIntegerArithmeticSpec:
+[info] - integer element boundaries, high products and four fixed-point rounding modes
+[info] - iterative division retains results through backpressure including div0 and signed overflow
+[info] ZveCoprocessorSpec:
+[info] - independent coprocessor executes integer, conversion, half-width FMA, mask and slow paths through physical VRF
+[info] ZveProductionSpec:
+[info] - production top without debug VRF or local slow FPU compiles and drains after reset
+[info] ZveWindowSpec:
+[info] - queued WAR ownership blocks a young writer while unrelated units execute
+[info] - reused lower-numbered slot stays younger than a live older slot
+[info] - commit wins over same-cycle kill, and buffered state events keep drained low
+[info] ZveVrfAccessSpec:
+[info] - triplet ownership survives arbitration and backpressure; write ack follows physical BRAM
+[info] ZveR07AluSpec:
+[info] - R07 ALU logic and shifts match an element model
+[info] ZveMountVerdictSpec:
+[info] - registered verdict queue clears on kill before the slot is reused
+[info] ZveConversionSpec:
+[info] - local conversion services preserve signed INT16 and INT32 boundaries
+[info] - conversion and non-computational results keep their tags and held payload under stalls
+[info] Run completed in 1 minute, 30 seconds.
+[info] Total number of tests run: 20
+[info] Suites: completed 15, aborted 0
+[info] Tests: succeeded 20, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 91 s (01:31), completed Oct 13, 2026, 2:39:11 PM

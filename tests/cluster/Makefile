@@ -14,12 +14,27 @@ HARTS := 2 4
 
 ELFS := $(SINGLE:%=build/%.elf) $(foreach n,$(HARTS),$(MULTI:%=build/%_$(n).elf))
 ZVE_CFLAGS := $(filter-out -march=% -mabi=%,$(CFLAGS)) -march=rv64gc_zve32f -mabi=lp64d
+GEMV_FLAGS := -O2 -msmall-data-limit=0 -fno-builtin -ffreestanding
+GEMV_SCALAR_CFLAGS := $(filter-out -march=% -mabi=%,$(CFLAGS)) -march=rv64gc -mabi=lp64d $(GEMV_FLAGS)
+GEMV_VECTOR_CFLAGS := $(ZVE_CFLAGS) $(GEMV_FLAGS)
 
 all: $(ELFS) $(ELFS:.elf=.dump)
 
 # Directed Zve32f integration smoke; keep the frozen scalar suite's ISA flags.
 build/zve_smoke.elf: zve_smoke.S link.ld | build
 	$(CC) $(ZVE_CFLAGS) -o $@ $<
+
+build/zve_gemv_q4_scalar.elf: zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S link.ld | build
+	$(CC) $(GEMV_SCALAR_CFLAGS) -o $@ zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S
+
+build/zve_gemv_q4_vector.elf: zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S link.ld | build
+	$(CC) $(GEMV_VECTOR_CFLAGS) -DVECTOR_MODE -o $@ zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S
+
+build/zve_gemv_q4_vector_n64.elf: zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S link.ld | build
+	$(CC) $(GEMV_VECTOR_CFLAGS) -DVECTOR_MODE -DGEMV_N=64 -o $@ zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S
+
+build/zve_gemv_q4_vector_4acc.elf: zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S link.ld | build
+	$(CC) $(GEMV_VECTOR_CFLAGS) -DVECTOR_MODE -DFOUR_ACC -o $@ zve_gemv_q4.c zve_gemv_q4_start.S zve_gemv_q4_data.S zve_gemv_q4_vector.S
 
 build/%.elf: %.S common.h link.ld | build
 	$(CC) $(CFLAGS) -DNHARTS=1 -o $@ $<

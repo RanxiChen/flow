@@ -37,10 +37,11 @@ class ZveSystemSmokeSpec extends AnyFreeSpec with Matchers {
     }
     val results = ClusterSim.runMany(runs, tag = "zve-smoke").map { case (c, r) => c.elf -> r }
     val lines = results.map { case (p, r) =>
-      s"${p.getFileName}: ${if (r.passed) "PASS" else "FAIL"} cycles=${r.cycles} tohost=${r.tohost.map(_.map(_.toString(16)))} ${r.reason}"
+      s"${p.getFileName}: ${if (r.passed) "PASS" else "FAIL"} cycles=${r.cycles} replay=${r.replayCounts.mkString(",")} tohost=${r.tohost.map(_.map(_.toString(16)))} ${r.reason}"
     }
     info(lines.mkString("\n"))
     val failed = results.collect { case (p, r) if !r.passed => s"${p.getFileName}: ${r.reason}\n${r.console}" }
     withClue(failed.mkString("\n\n")) { failed mustBe empty }
+    withClue("vector smoke verdict replay") { results.head._2.replayCounts(6) mustBe 0L }
   }
 }

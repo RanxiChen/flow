@@ -60,6 +60,64 @@ class ZveWindowSpec extends AnyFreeSpec with ChiselSim {
     }
   }
 
+  "reused lower-numbered slot stays younger than a live older slot" in {
+    simulate(new ZveWindow(p)) { d =>
+      d.io.issue.valid.poke(false.B); d.io.commit.poke(false.B); d.io.kill.poke(false.B)
+      d.io.serialGo.poke(false.B); d.io.verdict.ready.poke(true.B)
+      d.io.completion.ready.poke(true.B)
+      d.io.execute.foreach(_.ready.poke(false.B)); d.io.complete.foreach(_.valid.poke(false.B))
+      d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+      def send(unit: Int, reads: BigInt, writes: BigInt): (Int, Int) = {
+        val c = d.io.issue.bits
+        c.issue.scalar.instruction.poke(0x57.U); c.issue.scalar.rs1.poke(0.U)
+        c.issue.scalar.rs2.poke(0.U); c.issue.scalar.vl.poke(16.U)
+        c.issue.scalar.vtype.poke(16.U); c.issue.scalar.vstart.poke(0.U)
+        c.issue.scalar.vxrm.poke(0.U); c.issue.scalar.frm.poke(0.U)
+        c.issue.scalar.rd.poke(0.U); c.issue.fpScalar.poke(0.U)
+        c.unit.poke(unit.U); c.operation.poke(0.U); c.legal.poke(true.B)
+        c.serial.poke(false.B); c.reads.poke(reads.U); c.writes.poke(writes.U)
+        c.slot.poke(0.U); c.age.poke(0.U)
+        d.io.issue.valid.poke(true.B); d.io.issue.ready.expect(true.B); d.clock.step()
+        d.io.issue.valid.poke(false.B); d.io.verdict.valid.expect(true.B)
+        val item = (d.io.verdict.bits.slot.peek().litValue.toInt,
+          d.io.verdict.bits.age.peek().litValue.toInt)
+        d.clock.step(); d.io.commit.poke(true.B); d.clock.step()
+        d.io.commit.poke(false.B); item
+      }
+      def finish(unit: Int, item: (Int, Int)): Unit = {
+        d.io.execute(unit).valid.expect(true.B)
+        d.io.execute(unit).ready.poke(true.B); d.clock.step()
+        d.io.execute(unit).ready.poke(false.B)
+        val r = d.io.complete(unit)
+        r.bits.slot.poke(item._1.U); r.bits.age.poke(item._2.U)
+        r.bits.flags.poke(0.U); r.bits.saturated.poke(false.B)
+        r.bits.scalarValid.poke(false.B); r.bits.scalarFloating.poke(false.B)
+        r.bits.scalarRd.poke(0.U); r.bits.scalarData.poke(0.U)
+        r.bits.exception.poke(false.B); r.bits.cause.poke(0.U)
+        r.bits.tval.poke(0.U); r.bits.vstart.poke(0.U)
+        r.bits.changeVl.poke(false.B); r.bits.newVl.poke(0.U)
+        r.valid.poke(true.B); r.ready.expect(true.B); d.clock.step()
+        r.valid.poke(false.B)
+      }
+      val first = send(ZveUnit.conversion, 0, bit(3))
+      val older = send(ZveUnit.integer, bit(8), bit(12))
+      assert(first._1 == 0 && older._1 == 1)
+      finish(ZveUnit.conversion, first)
+      d.io.occupancy.expect(1.U)
+      val reused = send(ZveUnit.alu, bit(1), bit(8))
+      assert(reused._1 == 0)
+      assert(reused._2 > older._2)
+      d.clock.step(3)
+      d.io.execute(ZveUnit.alu).valid.expect(false.B)
+      finish(ZveUnit.integer, older)
+      d.clock.step(2)
+      d.io.execute(ZveUnit.alu).valid.expect(true.B)
+      d.io.execute(ZveUnit.alu).bits.age.expect(reused._2.U)
+      finish(ZveUnit.alu, reused)
+      d.clock.step(3); d.io.drained.expect(true.B)
+    }
+  }
+
   "commit wins over same-cycle kill, and buffered state events keep drained low" in {
     simulate(new ZveWindow(p)) { d =>
       d.io.issue.valid.poke(false.B); d.io.commit.poke(false.B); d.io.kill.poke(false.B); d.io.serialGo.poke(false.B)

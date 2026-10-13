@@ -34,14 +34,17 @@ final case class ClusterRunConfig(
     tohostSymbol: String = "tohost",
     passValue: BigInt = 1,
     observeBackend: Boolean = false,
-    pipelineLog: Option[Path] = None)
+    pipelineLog: Option[Path] = None,
+    readSymbols: Seq[String] = Seq.empty)
 
 final case class ClusterRunResult(cycles: Long, retired: Seq[Long], tohost: Seq[Option[BigInt]],
     console: String, passed: Boolean, reason: String,
     /** Accesses to MMIO addresses with no model (read 0 / write dropped). */
     unmappedMmio: Seq[String] = Seq.empty,
     replayCounts: Seq[Long] = Seq.empty,
-    soloCycles: Long = 0L)
+    soloCycles: Long = 0L,
+    readback: Map[String, BigInt] = Map.empty,
+    zvePerf: Map[String, Long] = Map.empty)
 
 // =============================================================================
 // ELF64 little-endian loader (PT_LOAD segments and the symbol table)
@@ -369,6 +372,15 @@ object ClusterSim extends PeekPokeAPI {
     val retired = Array.fill(n)(0L)
     val replayCounts = Array.fill(7)(0L)
     var soloCycles = 0L
+    val readbackStores = mutable.Map.empty[String, BigInt]
+    val readbackAddresses = c.readSymbols.map(name => name -> image.symbol(name)).toMap
+    val phaseAddress = image.symbols.get("benchmark_phase")
+    val perf = mutable.Map.empty[String, Long].withDefaultValue(0L)
+    var benchmarkPhase = 0
+    var preStartCycle: Option[Long] = None
+    var lastLoadDone: Option[Long] = None
+    var lastL2Accept: Option[Long] = None
+    def count(name: String, delta: Long = 1L): Unit = perf(name) += delta
     val tohost = Array.fill[Option[BigInt]](n)(None)
     val ring = Array.fill(n)(mutable.Queue.empty[String])
     val lastPc = Array.fill[BigInt](n)(-1)
@@ -417,6 +429,50 @@ object ClusterSim extends PeekPokeAPI {
             val o = observations(h)
             if(o.replay.peek().litToBoolean) replayCounts(o.replayReason.peek().litValue.toInt) += 1
             if(o.solo.peek().litToBoolean) soloCycles += 1
+            if (benchmarkPhase == 1 && h == 0 && c.cfg.zve.nonEmpty) {
+              val z = o.zve
+              def is(v: Bool): Boolean = v.peek().litToBoolean
+              count("phase_cycles")
+              if (is(z.soloWait)) count("solo_wait_cycles")
+              if (is(z.wbWait)) count("pre_wb_wait_cycles")
+              if (is(z.creditWait)) count("credit_wait_cycles")
+              if (is(z.preBusy)) count("pre_busy_cycles")
+              if (is(z.streamReqStall)) count("stream_request_stall_cycles")
+              if (dut.io.vectorReqStall.exists(v => is(v))) count("l2_vector_request_stall_cycles")
+              if (is(z.fastMemory)) count("fast_memory_instructions")
+              if (is(z.serialMemory)) count("serial_memory_instructions")
+              if (is(o.replay) && o.replayReason.peek().litValue == 6) count("vector_verdict_replay")
+              for ((name, index) <- Seq("alu", "mac", "conversion", "fma", "stream").zipWithIndex)
+                if (is(z.unitBusy(index))) count(s"${name}_busy_cycles")
+              val ids = z.streamIdCount.peek().litValue.toInt
+              count(s"stream_id_$ids")
+              if (is(z.preStart)) preStartCycle = Some(cycle)
+              if (is(z.preDone)) preStartCycle.foreach { start =>
+                val delay = cycle - start + 1
+                count("pre_count"); count("pre_cycles_sum", delay)
+                count(s"pre_latency_$delay")
+                preStartCycle = None
+              }
+              if (is(z.streamLoadStart)) lastLoadDone.foreach { done =>
+                val gap = cycle - done - 1
+                count("adjacent_vle_count"); count("adjacent_vle_idle_sum", gap)
+                count(s"adjacent_vle_idle_$gap")
+              }
+              if (is(z.streamLoadDone)) lastLoadDone = Some(cycle)
+              val vecPort = 2 * c.cfg.nCores + 1
+              if (is(dut.io.l2Events.slotFullStall(vecPort))) count("l2_slot_full_cycles")
+              if (is(dut.io.l2Events.setWait(vecPort))) count("l2_set_wait_cycles")
+              if (is(dut.io.l2Events.miss(vecPort))) count("l2_vector_misses")
+              if (is(dut.io.l2Events.req(vecPort))) {
+                count("l2_vector_requests")
+                lastL2Accept.foreach { prev =>
+                  val interval = cycle - prev
+                  count("l2_request_interval_count"); count("l2_request_interval_sum", interval)
+                  count(s"l2_request_interval_$interval")
+                }
+                lastL2Accept = Some(cycle)
+              }
+            }
           }
         }
 
@@ -438,6 +494,12 @@ object ClusterSim extends PeekPokeAPI {
               val off = e.memWMask.lowestSetBit
               val bytes = e.memWMask.bitCount
               val addr = e.memAlignedAddr + off
+              if (phaseAddress.contains(addr) && bytes == 8)
+                benchmarkPhase = ((e.memWData >> (8 * off)) & mask(64)).toInt
+              for ((name, target) <- readbackAddresses if addr == target) {
+                val width = if (name == "benchmark_max_error") 4 else 8
+                if (bytes == width) readbackStores(name) = (e.memWData >> (8 * off)) & mask(8 * width)
+              }
               if (addr >= slot && addr < slot + 8) {
                 val v = ((e.memWData >> (8 * off)) & mask(8 * bytes)) << (8 * (addr - slot).toInt)
                 if (v != 0) {
@@ -468,7 +530,11 @@ object ClusterSim extends PeekPokeAPI {
     }
     pipelineWriter.foreach(_.close())
     val (ok, why) = verdict.get
+    val readback = c.readSymbols.map { name =>
+      name -> readbackStores.getOrElse(name,
+        mem.read(image.symbol(name), if (name == "benchmark_max_error") 4 else 8))
+    }.toMap
     ClusterRunResult(cycle, retired.toSeq, tohost.toSeq, mmio.console.toString, ok, why,
-      mmio.unmapped.toSeq, replayCounts.toSeq, soloCycles)
+      mmio.unmapped.toSeq, replayCounts.toSeq, soloCycles, readback, perf.toMap)
   }
 }

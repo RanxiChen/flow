@@ -45,13 +45,17 @@ class ZveAluVectorEngine(p: ZveParams) extends Module {
     }
     (byteBase(j)(7,0)+VecInit(carries)(d.sew).asUInt)(7,0)
   }
-  val shifts=(0 until 3).map { sew =>
+  // Shifts take one scalar amount (.vx/.vi); .vv shifts stay in the element engine.
+  def shifts(f: (UInt,UInt,Int) => UInt): UInt = VecInit((0 until 3).map { sew =>
     val w=8<<sew
-    Cat((0 until p.vrf.dlen/w).reverse.map(e => a((e+1)*w-1,e*w)>>d.issue.scalar.rs1(log2Ceil(w)-1,0)))
-  }
+    Cat((0 until p.vrf.dlen/w).reverse.map(e => f(a((e+1)*w-1,e*w),d.issue.scalar.rs1(log2Ceil(w)-1,0),w)))
+  })(d.sew)
   val moved=Mux(d.vectorSource1,a,scalar)
   val result=MuxLookup(d.operation,moved)(Seq(ZveOp.vadd.U->Cat(sums.reverse),
-    ZveOp.vsub.U->Cat(sums.reverse),ZveOp.vand.U->(a & b),ZveOp.vsrl.U->VecInit(shifts)(d.sew)))
+    ZveOp.vsub.U->Cat(sums.reverse),ZveOp.vand.U->(a & b),ZveOp.vor.U->(a | b),ZveOp.vxor.U->(a ^ b),
+    ZveOp.vsrl.U->shifts((v,n,_) => v>>n),
+    ZveOp.vsll.U->shifts((v,n,w) => (v<<n)(w-1,0)),
+    ZveOp.vsra.U->shifts((v,n,_) => (v.asSInt>>n).asUInt)))
   q.io.enq.valid := io.vrf.returned.valid
   io.vrf.returned.ready := q.io.enq.ready
   q.io.enq.bits.tag := r.tag; q.io.enq.bits.age := d.age

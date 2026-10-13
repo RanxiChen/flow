@@ -103,8 +103,14 @@ object ZveDecode {
     when(memory) { d.reads := Mux(x(6,0) === 0x27.U,dst,0.U) |
       Mux(d.vectorSource2,src2,0.U) | Mux(!x(25),1.U,0.U)
       d.writes := Mux(x(6,0) === 0x27.U,0.U,dst) }
-    val fast=is(ZveOp.vadd,ZveOp.vsub,ZveOp.vand) ||
-      (op===ZveOp.vsrl.U && scalarOperand) || (op === ZveOp.vmv.U && broadcast)
+    val fast=is(ZveOp.vadd,ZveOp.vsub,ZveOp.vand,ZveOp.vor,ZveOp.vxor) ||
+      (is(ZveOp.vsrl,ZveOp.vsll,ZveOp.vsra) && scalarOperand) || (op === ZveOp.vmv.U && broadcast)
+    // R07: one element engine. Non-hot integer work shares it with the
+    // permute/reduction ops; the integer queue keeps only single-lane FP.
+    val slowFloat=is(ZveOp.vfmul,ZveOp.vfdiv,ZveOp.vfrdiv,ZveOp.vfsqrt)
+    // Widening integer multiply(-add), SEW 8/16 -> 16/32: full-row DSP lanes.
+    val mac=is(ZveOp.vwmul,ZveOp.vwmulu,ZveOp.vwmulsu,
+      ZveOp.vwmacc,ZveOp.vwmaccu,ZveOp.vwmaccsu,ZveOp.vwmaccus)
     val cross=d.reduction || d.maskSources || d.scalarResult || toVectorScalar || d.whole ||
       (fp && d.maskResult && (p.conversionLanes<8).B) ||
       is(ZveOp.vslideup,ZveOp.vslidedown,ZveOp.vslide1up,ZveOp.vslide1down,ZveOp.vfslide1up,
@@ -115,7 +121,8 @@ object ZveDecode {
       ZveOp.vfsgnj,ZveOp.vfsgnjn,ZveOp.vfsgnjx,ZveOp.vfclass,ZveOp.vmfeq,ZveOp.vmfne,
       ZveOp.vmflt,ZveOp.vmfle,ZveOp.vmfgt,ZveOp.vmfge)
     d.unit := Mux(memory,Mux(in.pre.valid,ZveUnit.stream.U,ZveUnit.memory.U),Mux(cross,ZveUnit.cross.U,
-      Mux(fma,ZveUnit.fma.U,Mux(conversion,ZveUnit.conversion.U,Mux(fast,ZveUnit.alu.U,ZveUnit.integer.U)))))
+      Mux(fma,ZveUnit.fma.U,Mux(conversion,ZveUnit.conversion.U,Mux(fast,ZveUnit.alu.U,
+      Mux(mac,ZveUnit.mac.U,Mux(slowFloat,ZveUnit.integer.U,ZveUnit.cross.U)))))))
     val memoryVl=Mux(d.whole,(x(31,29)+&1.U)*p.vrf.regBytes.U>>memoryWidth,
       Mux(maskMemory,(in.scalar.vl+&7.U)>>3,in.scalar.vl))
     // Pre-translated unit-stride accesses cannot trap after commit.

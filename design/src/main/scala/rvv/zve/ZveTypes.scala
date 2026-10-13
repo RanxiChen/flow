@@ -13,7 +13,7 @@ case class ZveParams(vrf: RvvParams = RvvParams(), window: Int = 16,
   require(isPow2(conversionLanes) && conversionLanes <= vrf.dlen / 32)
   require(isPow2(fpBatches) && fpBatches >= 2)
   require(isPow2(streamCredits) && streamCredits >= 2)
-  val units = 7
+  val units = 8
   val slotBits = log2Ceil(window)
   val ageBits = vrf.ageBits
   val fpTagBits = 16
@@ -23,10 +23,14 @@ case class ZveParams(vrf: RvvParams = RvvParams(), window: Int = 16,
 object ZveParams {
   /** L2 vector-client IDs: stream credits, one element-engine ID, spare. */
   val l2Ids = 8
-  /** SoC instance: ELEN=32, no misa.V, element AXI beat = one L2 line. */
+  /** SoC instance: ELEN=32, no misa.V, element AXI beat = one L2 line.
+    * 2026-10-13 resize: one VRF row = one L2 line (DLEN = 8 * lineBytes),
+    * 4 FMA / 4 conversion lanes. Decode is capped near 2 B/cycle by the two
+    * L2 miss slots, so a 512-bit row bought area, not llama throughput. */
   def soc(paBits: Int, lineBytes: Int): ZveParams = ZveParams(vrf = RvvParams(
+    vlen = 512, dlen = lineBytes * 8,
     paBits = paBits, cacheLineBytes = lineBytes, memoryBits = lineBytes * 8,
-    elen = 32, fullV = false))
+    elen = 32, fullV = false), fmaLanes = 4, conversionLanes = 4)
 }
 
 object ZveUnit {
@@ -34,6 +38,19 @@ object ZveUnit {
   val fma = 3; val cross = 4; val memory = 5
   /** Pre-translated unit-stride line VLSU (non-Serial). */
   val stream = 6
+  /** Full-row widening integer multiply / multiply-accumulate (SEW 8, 16). */
+  val mac = 7
+}
+
+/** Observation only. None of these signals feed admission, issue or commit. */
+class ZvePerfObservation extends Bundle {
+  val preStart = Bool(); val preBusy = Bool(); val preDone = Bool()
+  val fastMemory = Bool(); val serialMemory = Bool()
+  val streamLoadStart = Bool(); val streamLoadDone = Bool()
+  val streamIdCount = UInt(3.W); val streamReqStall = Bool()
+  // alu, mac, conversion, fma, stream
+  val unitBusy = Vec(5, Bool())
+  val soloWait = Bool(); val wbWait = Bool(); val creditWait = Bool()
 }
 
 /** Pre-commit translation result for a unit-stride access of at most two

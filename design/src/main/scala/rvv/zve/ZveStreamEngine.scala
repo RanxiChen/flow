@@ -8,9 +8,10 @@ import chisel3.util._
   * byte before commit, so no request here can trap; bus errors are fatal.
   *
   * Loads: one coherent L2 Read per touched 32 B line, up to `streamCredits`
-  * outstanding, returned in any order. A returned line covers at most two VRF
-  * rows; each becomes a byte-enabled write, so tail/masked bytes stay
-  * undisturbed and no row assembly buffer is needed.
+  * outstanding, returned in any order. Rows are at least one line wide, so a
+  * returned line covers at most two VRF rows; each becomes a byte-enabled
+  * write, so tail/masked bytes stay undisturbed and no row assembly buffer is
+  * needed. The SoC instance has row == line (32 B); 64 B rows also work.
   *
   * Stores: per line, read the (at most two) source rows, rotate them into the
   * line and send one MaskWrite with the active-byte mask. The L2 serializes
@@ -24,10 +25,13 @@ class ZveStreamEngine(p: ZveParams) extends Module {
     val line = new ZveLineIO(p)
     val complete = Decoupled(new ZveCompletion(p)); val drained = Output(Bool())
     val fatal = Output(Bool())
+    val perfIdCount = Output(UInt(log2Ceil(p.streamCredits + 1).W))
+    val perfLoadDone = Output(Bool())
   })
-  require(p.vrf.rowBytes == 64 && p.lineBytes == 32, "stream VLSU is written for 64 B rows and 32 B lines")
+  require(isPow2(p.vrf.rowBytes) && isPow2(p.lineBytes) && p.vrf.rowBytes >= p.lineBytes,
+    "stream VLSU needs power-of-two rows at least one line wide")
   val R = p.vrf.rowBytes; val L = p.lineBytes; val C = p.streamCredits
-  val lineBits = log2Ceil(L); val pageBits = p.pageBits
+  val lineBits = log2Ceil(L); val rowBits = log2Ceil(R); val pageBits = p.pageBits
   val countBits = log2Ceil(p.vrf.maxBytes / L + 2)
 
   val active = RegInit(false.B); val d = Reg(new ZveCommand(p)); val mask = Reg(UInt(p.vrf.vlen.W))
@@ -54,7 +58,7 @@ class ZveStreamEngine(p: ZveParams) extends Module {
     assert(c.issue.pre.valid && n =/= 0.U && c.issue.scalar.vstart === 0.U, "stream VLSU needs a non-empty pre-translated access")
   }
 
-  // Line k: start offset s = 32k - offset relative to the first access byte.
+  // Line k: start offset s = L*k - offset relative to the first access byte.
   def lineStart(k: UInt): SInt = ((k << lineBits).zext - offset.zext)
   def linePa(k: UInt): UInt = {
     val lineVa = (va >> lineBits) + k
@@ -63,9 +67,9 @@ class ZveStreamEngine(p: ZveParams) extends Module {
   }
   // Byte-expanded v0 for relative row r: one bit per row byte.
   def rowActive(r: UInt): UInt = {
-    val e0 = (mask >> (r << 6))(63, 0)
-    val e1 = Cat((0 until 32).reverse.map(j => Fill(2, (mask >> (r << 5))(j))))
-    val e2 = Cat((0 until 16).reverse.map(j => Fill(4, (mask >> (r << 4))(j))))
+    val e0 = (mask >> (r << rowBits))(R - 1, 0)
+    val e1 = Cat((0 until R / 2).reverse.map(j => Fill(2, (mask >> (r << (rowBits - 1)))(j))))
+    val e2 = Cat((0 until R / 4).reverse.map(j => Fill(4, (mask >> (r << (rowBits - 2)))(j))))
     Mux(unmasked, Fill(R, 1.U(1.W)), MuxLookup(eew, e0)(Seq(1.U -> e1, 2.U -> e2)))
   }
   // Rows touched by a line: [lo, hi] relative to the destination group.
@@ -73,11 +77,12 @@ class ZveStreamEngine(p: ZveParams) extends Module {
     val s = lineStart(k)
     val first = Mux(s < 0.S, 0.U, s.asUInt)
     val last = Mux((s + (L - 1).S).asUInt >= total, total - 1.U, (s + (L - 1).S).asUInt)
-    (first >> log2Ceil(R), last >> log2Ceil(R))
+    (first >> rowBits, last >> rowBits)
   }
 
   // ---- ID ownership: free list; an ID lives from request to response.
   val busy = RegInit(0.U(C.W)); val owner = Reg(Vec(C, UInt(countBits.W)))
+  io.perfIdCount := PopCount(busy)
   val freeId = PriorityEncoder(~busy); val hasFree = !busy.andR
   // A load request can wait in the L2 input pipeline while an older response
   // releases another ID. Pin its ID until the request handshake.
@@ -114,7 +119,7 @@ class ZveStreamEngine(p: ZveParams) extends Module {
   when(io.vrf.returned.fire) {
     val s = lineStart(storeLine)
     val (lo, _) = rowRange(storeLine)
-    val u = (s - (lo << log2Ceil(R)).zext)(log2Ceil(2 * R) - 1, 0) // (s - 64*lo) mod 128
+    val u = (s - (lo << rowBits).zext)(rowBits, 0) // (s - R*lo) mod 2R
     val both = Cat(io.vrf.returned.bits.data(1), io.vrf.returned.bits.data(0))
     val bothActive = Cat(rowActive(lo + 1.U), rowActive(lo))
     val rot = ((Cat(both, both) >> (u << 3))(8 * L - 1, 0))
@@ -162,13 +167,13 @@ class ZveStreamEngine(p: ZveParams) extends Module {
   val (wLo, wHi) = rowRange(pendLine)
   val wRow = wLo + phase.asUInt
   val ps = lineStart(pendLine)
-  // Row byte b of any row holds line byte (b + offset) mod 32 (64R - 32k is
-  // a multiple of 32); enables select the bytes this line really covers.
+  // Row byte b of any row holds line byte (b + offset) mod L (R*r - L*k is
+  // a multiple of L); enables select the bytes this line really covers.
   val rotLine = (Cat(pendData, pendData) >> (offset << 3))(8 * L - 1, 0)
-  val rowData = Cat(rotLine, rotLine)
+  val rowData = Fill(R / L, rotLine)
   val rowAct = rowActive(wRow)
   val enables = VecInit((0 until R).map { b =>
-    val i = (wRow << log2Ceil(R)).zext + b.S
+    val i = (wRow << rowBits).zext + b.S
     i >= ps && i < ps + L.S && i.asUInt < total && rowAct(b)
   }).asUInt
   io.vrf.write.valid := pending && enables.orR
@@ -190,6 +195,7 @@ class ZveStreamEngine(p: ZveParams) extends Module {
 
   io.complete.valid := active && finished === lines && issued === lines && acks === writes &&
     !pending && !built && busy === 0.U
+  io.perfLoadDone := io.complete.fire && !store
   io.complete.bits := 0.U.asTypeOf(new ZveCompletion(p))
   io.complete.bits.slot := d.slot; io.complete.bits.age := d.age
   when(io.complete.fire) { active := false.B }

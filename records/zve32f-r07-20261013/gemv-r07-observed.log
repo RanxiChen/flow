@@ -1,0 +1,55 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] compiling 3 Scala sources to /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/target/scala-2.13/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 13, 2026, 1:28:32 PM
+[info] compiling 1 Scala source to /home/chen/FUN/flow-runs/zve32f-r07-20261013/src/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ZveGemvQ4Spec:
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - scalar and R07 vector Q4_0 x Q8_0 GEMV agree with the f32 reference
+[info]   + scalar pass=true totalCycles=1016472 kernelCycles=957356 blocks=28 weightBytes=35840 maxErrorBits=0 replay=25,0,224,1,0,0,0 soloCycles=269 zvePerf= zve_gemv_q4_scalar.elf: all 1 hart(s) passed at cycle 1016471 
+[info]   + vector pass=true totalCycles=182897 kernelCycles=116387 blocks=112 weightBytes=143360 maxErrorBits=0 replay=12,0,43,3,0,0,0 soloCycles=7539 zvePerf=(adjacent_vle_count,559),(adjacent_vle_idle_0,99),(adjacent_vle_idle_166,1),(adjacent_vle_idle_168,328),(adjacent_vle_idle_169,3),(adjacent_vle_idle_170,2),(adjacent_vle_idle_171,3),(adjacent_vle_idle_174,1),(adjacent_vle_idle_185,1),(adjacent_vle_idle_2,4),(adjacent_vle_idle_3,2),(adjacent_vle_idle_4,1),(adjacent_vle_idle_5,1),(adjacent_vle_idle_6,1),(adjacent_vle_idle_94,105),(adjacent_vle_idle_96,7),(adjacent_vle_idle_sum,67560),(alu_busy_cycles,62599),(conversion_busy_cycles,3696),(credit_wait_cycles,79137),(fast_memory_instructions,564),(fma_busy_cycles,6980),(l2_request_interval_10,38),(l2_request_interval_106,1),(l2_request_interval_11,143),(l2_request_interval_110,1),(l2_request_interval_112,1),(l2_request_interval_115,1),(l2_request_interval_116,5),(l2_request_interval_117,6),(l2_request_interval_118,18),(l2_request_interval_119,20),(l2_request_interval_12,183),(l2_request_interval_120,18),(l2_request_interval_121,22),(l2_request_interval_122,18),(l2_request_interval_123,2),(l2_request_interval_13,334),(l2_request_interval_133,1),(l2_request_interval_134,2),(l2_request_interval_14,340),(l2_request_interval_15,319),(l2_request_interval_16,172),(l2_request_interval_17,147),(l2_request_interval_18,13),(l2_request_interval_189,1),(l2_request_interval_19,10),(l2_request_interval_190,16),(l2_request_interval_191,22),(l2_request_interval_192,31),(l2_request_interval_193,65),(l2_request_interval_194,61),(l2_request_interval_195,62),(l2_request_interval_196,63),(l2_request_interval_197,1),(l2_request_interval_199,1),(l2_request_interval_20,13),(l2_request_interval_206,3),(l2_request_interval_207,2),(l2_request_interval_208,4),(l2_request_interval_209,2),(l2_request_interval_21,11),(l2_request_interval_210,1),(l2_request_interval_212,1),(l2_request_interval_22,6),(l2_request_interval_23,8),(l2_request_interval_24,14),(l2_request_interval_25,27),(l2_request_interval_26,24),(l2_request_interval_27,21),(l2_request_interval_28,23),(l2_request_interval_29,8),(l2_request_interval_3,823),(l2_request_interval_30,4),(l2_request_interval_31,2),(l2_request_interval_32,1),(l2_request_interval_34,3),(l2_request_interval_37,1),(l2_request_interval_38,2),(l2_request_interval_39,1),(l2_request_interval_4,1023),(l2_request_interval_40,1),(l2_request_interval_5,197),(l2_request_interval_7,44),(l2_request_interval_8,75),(l2_request_interval_9,32),(l2_request_interval_count,4515),(l2_request_interval_sum,116040),(l2_set_wait_cycles,20),(l2_slot_full_cycles,13674),(l2_vector_misses,4513),(l2_vector_request_stall_cycles,31108),(l2_vector_requests,4516),(mac_busy_cycles,53760),(phase_cycles,116435),(pre_busy_cycles,6842),(pre_count,564),(pre_cycles_sum,7406),(pre_latency_13,525),(pre_latency_14,4),(pre_latency_15,35),(pre_wb_wait_cycles,6842),(solo_wait_cycles,2815),(stream_busy_cycles,48142),(stream_id_0,72863),(stream_id_1,11331),(stream_id_2,31967),(stream_id_3,79),(stream_id_4,195),(stream_request_stall_cycles,31108) zve_gemv_q4_vector.elf: all 1 hart(s) passed at cycle 182896 
+[info] Run completed in 3 minutes, 45 seconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 226 s (03:46), completed Oct 13, 2026, 1:32:19 PM
