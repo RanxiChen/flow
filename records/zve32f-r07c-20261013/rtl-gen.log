@@ -1,0 +1,57 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/)
+[info] running flow.top.GenerateBreezeCluster single gshare linux coherent-dma
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[success] Total time: 4 s, completed Oct 13, 2026, 3:12:45 PM
+[info] running flow.top.GenerateBreezeCluster single-rvv gshare linux coherent-dma
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 4 warning(s) during hardware elaboration.
+[success] Total time: 6 s, completed Oct 13, 2026, 3:12:51 PM
+[info] running flow.top.GenerateBreezeCluster single-zve32f gshare linux coherent-dma
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 283:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 282:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[success] Total time: 5 s, completed Oct 13, 2026, 3:12:57 PM

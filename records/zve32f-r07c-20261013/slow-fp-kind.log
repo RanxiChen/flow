@@ -1,0 +1,23 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/)
+[info] compiling 1 Scala source to /home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /home/chen/FUN/flow-runs/zve32f-r07c-20261013/src/design/target/scala-2.13/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ZveSlowFpKindSpec:
+[info] - FP32 KIND=3 matches RV64D KIND=2 through tags, flags and backpressure *** FAILED ***
+[info]   1056964608 did not equal 2143289344 FP result mismatch tag=0 op=4 rm=0 kind2=(18446744070471548928,0) kind3=(18446744071557873664,0) (ZveSlowFpKindSpec.scala:120)
+[info] Run completed in 4 seconds, 126 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 0, failed 1, canceled 0, ignored 0, pending 0
+[info] *** 1 TEST FAILED ***
+[error] Failed tests:
+[error] 	flow.rvv.zve.ZveSlowFpKindSpec
+[error] (Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 8 s, completed Oct 13, 2026, 3:15:31 PM
