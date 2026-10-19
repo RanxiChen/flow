@@ -1,5 +1,9 @@
 # Breeze RISC-V 处理器
 
+当前源码的标量/RVV 配置、生成入口和顶层接线见
+[源码入口与清理索引](docs/breeze-entrypoints-and-cleanup-audit.md)。下文早期发布版的
+五级流水线、Wishbone 与 FASE 描述属于对应历史镜像，阅读当前 RTL 请先看该索引。
+
 Breeze 是用 Chisel 实现的 RV64GC 顺序单发射处理器。当前版本在 KCU105 上以
 100 MHz 运行，配备 2 GiB DDR4，已启动 Buildroot Linux，并运行 Python 和 GAPBS。
 SoC 使用 LiteX 集成 DDR、串口和 SD 控制器，FASE 提供独立的 JTAG 调试入口。
