@@ -21,7 +21,7 @@
 | `litex_wrapper/flow/core.py` | `_BreezeClusterCPU`：`memory_bus`、`mmio_bus` 两个 64 bit Wishbone 主口（都挂主总线），可选 `dma_bus`；io_regions CLINT 0x0200_0000、PLIC 0x0C00_0000、LiteX 0x1200_0000；产品类 `Breeze`（4 核）、`BreezeTiny`（单核）、Dma/Fase 变体 |
 | `sim/litex/multicore_sim.py` | `MulticoreSimSoC`（CPU `flow_cluster`，`cluster.py`），`--with-litedram` 用 `SDRAMPHYModel`；`linux_sim.py`、`act4_linux_soc.py` 都用它 |
 | `fpga/kcu105/target.py` | `breeze` CPU，LiteDRAM DDR4 2 GiB @0x8000_0000，SD 卡 DMA 与 PCIe 挂 `cpu.dma_bus` |
-| PMA | `platform/BreezeMcuPlatform.scala` + `PMAChecker.scala`，数据来自 `config/breeze_mcu_platform.json`：timer 0x0200_0000、plic 0x0C00_0000、boot_rom 0x1000_0000、linux_boot_rom 0x1001_0000、sram 0x1100_0000（64 KiB）、litex_mmio 0x1200_0000、main_ram 0x8000_0000（2 GiB） |
+| PMA | `platform/BreezeMcuPlatform.scala` + `PMAChecker.scala`，数据来自 `config/breeze_platform.json`：timer 0x0200_0000、plic 0x0C00_0000、boot_rom 0x1000_0000、linux_boot_rom 0x1001_0000、sram 0x1100_0000（64 KiB）、litex_mmio 0x1200_0000、main_ram 0x8000_0000（2 GiB） |
 | PMP | 唯一实现 `mmu/BreezePmpChecker.scala`（8 项生效，TOR/NA4/NAPOT），CSR 在 `BreezeMmuContext.pmpcfg/pmpaddr` |
 | CSR | `core/RegFile.scala` `CSRFile`：`mmu_context`（satp、privilege、mprv、mpp、sum、mxr、adue、pmp）、`fp_enabled`、`frm`、`fp_commit_valid/fp_flags` |
 | 仿真 | `sim/BreezeCoreSimSupport.scala` 直接驱动核心的 `nextLevelRsp` 与 `dmem.rsp`（标量内存模型），约 30 个核心级 spec 依赖它 |
@@ -41,7 +41,7 @@
 | MMU | 换成 `Sv39Mmu`，删除旧 `BreezeMmu`、`BreezeDataTranslator`、`BreezeFetchTranslator`。 |
 | A/D 位 | Svade：硬件不更新 A/D，`menvcfg.ADUE` 改为只读 0；设备树 ISA 串加 `svade`。 |
 | PMP | 数据访问：L1D S2 用最终 PA 与有效特权（含 MPRV）检查；PTW 读：L1D 以 S 特权检查；取指：L1I 在命中判断时检查。复用 `BreezePmpChecker`。 |
-| PMA | L1D S2、L1I 命中判断各一份 `PMAChecker`；PA ≥ 2^32 判为不存在（access fault）。`breeze_mcu_platform.json` 每区域显式增加 `mainMemory`、`amo`（`arithmetic`/`none`）、`reservability`（`eventual`/`none`），`PMAChecker` 增加 `amoOk`、`rsrvOk` 输出：main_ram、sram = main memory、可缓存、AMOArithmetic、RsrvEventual；boot_rom、linux_boot_rom = I/O（只读 ROM，可缓存，特权规范允许只读区缓存）、AMONone、RsrvNone；timer、plic、litex_mmio = I/O、不可缓存、AMONone、RsrvNone。 |
+| PMA | L1D S2、L1I 命中判断各一份 `PMAChecker`；PA ≥ 2^32 判为不存在（access fault）。`breeze_platform.json` 每区域显式增加 `mainMemory`、`amo`（`arithmetic`/`none`）、`reservability`（`eventual`/`none`），`PMAChecker` 增加 `amoOk`、`rsrvOk` 输出：main_ram、sram = main memory、可缓存、AMOArithmetic、RsrvEventual；boot_rom、linux_boot_rom = I/O（只读 ROM，可缓存，特权规范允许只读区缓存）、AMONone、RsrvNone；timer、plic、litex_mmio = I/O、不可缓存、AMONone、RsrvNone。 |
 | Ziccrse / Ziccamoa | 设计按两者实现（无新指令，只是主存属性承诺）。设备树 `riscv,isa` 加 `_ziccrse_ziccamoa` 的时间点：4 核 LR/SC 争用压力测试（含 watchdog）与 main_ram/sram 全部 AMO 测试通过之后。 |
 | FENCE.I | 不再需要 D$ 写回：L1I 经 L2 一致性 Read 取最新数据（L2 对 owner 发 Down）。后端在 WB 等 L1D 的 MSHR 与 pending-store 为空后清 L1I 并重定向；删除 `dcacheFlushReq/Done`。 |
 | FENCE | 作为 L1D 请求，MSHR 与 pending-store 为空时完成。 |

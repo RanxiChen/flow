@@ -231,7 +231,7 @@ class _BreezeClusterCPU(CPU):
     @classmethod
     def _validate_profile_marker(cls, marker_path):
         values = cls._read_profile_marker(marker_path)
-        with open(os.path.join(cls.flow_root_dir(), "config", "breeze_mcu_platform.json"), "rb") as f:
+        with open(os.path.join(cls.flow_root_dir(), "config", "breeze_platform.json"), "rb") as f:
             platform_hash = hashlib.sha256(f.read()).hexdigest()
         expected = {"bus": "axi", "profile": cls.cluster_profile, "preset": cls.core_preset,
             "privilege": cls.privilege_profile, "tandem": str(cls.tandem_enabled).lower(),

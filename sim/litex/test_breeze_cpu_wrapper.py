@@ -26,8 +26,8 @@ class _Platform:
 
 def _write_production_rtl(root, cpu_cls=Breeze):
     os.makedirs(os.path.join(root, 'config'), exist_ok=True)
-    shutil.copyfile(os.path.join(FLOW_ROOT, 'config/breeze_mcu_platform.json'),
-                    os.path.join(root, 'config/breeze_mcu_platform.json'))
+    shutil.copyfile(os.path.join(FLOW_ROOT, 'config/breeze_platform.json'),
+                    os.path.join(root, 'config/breeze_platform.json'))
     with mock.patch.object(cpu_cls, 'flow_root_dir', return_value=root):
         rtl_dir = cpu_cls.rtl_dir()
     os.makedirs(rtl_dir)
@@ -37,7 +37,7 @@ def _write_production_rtl(root, cpu_cls=Breeze):
             f.write('module ' + name + '; endmodule\n')
     with open(os.path.join(rtl_dir, 'filelist.f'), 'w') as f:
         f.write(''.join(name + '.sv\n' for name in modules))
-    with open(os.path.join(root, 'config/breeze_mcu_platform.json'), 'rb') as f:
+    with open(os.path.join(root, 'config/breeze_platform.json'), 'rb') as f:
         digest = hashlib.sha256(f.read()).hexdigest()
     values = dict(bus='axi', profile=cpu_cls.cluster_profile, preset=cpu_cls.core_preset,
         privilege=cpu_cls.privilege_profile, tandem=str(cpu_cls.tandem_enabled).lower(),

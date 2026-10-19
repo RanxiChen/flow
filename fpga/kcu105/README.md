@@ -114,7 +114,7 @@ cluster and DDR. The build uses Vivado's
 area-oriented synthesis/implementation directives because the fixed four-hart
 RV64GC cluster is close to the KCU105's KU040 LUT limit.
 
-The shared Chisel PMA input in `config/breeze_mcu_platform.json` and the
+The shared Chisel PMA input in `config/breeze_platform.json` and the
 KCU105 single-hart DTS now also describe 2 GiB. The target rejects a mismatch
 between the actual LiteDRAM region and that PMA input. Simulation targets may
 still implement smaller RAM windows inside this PMA range.

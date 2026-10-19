@@ -42,7 +42,7 @@ def _platform_int(value):
     raise TypeError(f"Platform integer must be an int or string, got {type(value)}")
 
 
-with open(os.path.join(FLOW_ROOT, "config", "breeze_mcu_platform.json"),
+with open(os.path.join(FLOW_ROOT, "config", "breeze_platform.json"),
           encoding="utf-8") as platform_config_file:
     PLATFORM_CONFIG = json.load(platform_config_file)
 
@@ -572,7 +572,7 @@ class McuCompletionMonitor(Module):
 
 
 class BreezeSimSoC(SoCCore):
-    """Minimal Breeze MCU SoC matching breeze_mcu_platform.json."""
+    """Minimal Breeze MCU SoC matching breeze_platform.json."""
 
     mem_map = {
         "rom"      : 0x1000_0000,

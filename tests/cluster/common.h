@@ -38,7 +38,7 @@
 
 #define MAX_HARTS 4
 
-// Platform (config/breeze_mcu_platform.json)
+// Platform (config/breeze_platform.json)
 #define CLINT_BASE    0x02000000
 #define CLINT_MTIMECMP 0x02004000
 #define CLINT_MTIME   0x0200bff8

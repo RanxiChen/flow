@@ -152,7 +152,9 @@ Scala 命名配置注册表、KCU105 CPU 菜单、SD 硬件/软件构建与打�
 
 - 外部输入在 Chisel 生成前校验，包括 CVFPU include 目录、逐项源码、FP wrapper 和平台 JSON。FP 清单只解析一次，保持原有包与模块的依赖顺序。
 - 每次仍使用独立 UUID emission 目录；源码清单只扫描当次生成文件，排除 ChiselSim 的 FP 副本。旧生成目录不会重新进入清单。
-- 配置字段集中列出，一次序列化、一次写入，替代长字符串和多次追加。保留现有目录、字段顺序和值，包括历史命名的 `breeze_mcu_platform.json` 与旧 RVV 标记 `rvv=false`。
+- 配置字段集中列出，一次序列化、一次写入，替代长字符串和多次追加。保留现有目录、字段顺序和值，平台配置文件现为 `breeze_platform.json`，旧 RVV 标记仍为 `rvv=false`。
 - 发布前完成清单检查与配置序列化；空 emission 不覆盖已有清单。两个输出文件分别写入，不承诺跨文件事务或并发生成安全。
 
 本次整理不改 `BreezeClusterAxi` 及其子模块的硬件逻辑。按当次共享配置预检后，cloud_chen 连接超时，回退 Alan；140 个主源码、115 个测试源码编译通过，Scala 19/19、Python 23/23 通过。新增测试覆盖 24 种公开 profile/功能组合、依赖缺失、旧 RTL 与重复 FP 文件排除、空生成目录不覆盖旧记录。未执行 RTL 生成、RTL 功能仿真或 Vivado。输入散列、实际 cwd、命令及日志见 [生成辅助逻辑验证](../records/build-artifacts-20261019/result.json)。
+
+平台配置文件随后统一更名为 `config/breeze_platform.json`，同步更新 Chisel、LiteX、SD 构建与测试的读取路径。JSON 内容逐字节保持一致，既有 `platformSha256` 不变；历史运行记录继续保留当时的路径。更名后的编译与接口检查见 [验证记录](../records/platform-rename-20261019/result.json)。

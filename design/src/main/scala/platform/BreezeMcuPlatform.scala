@@ -45,14 +45,14 @@ final case class BreezeMcuPlatformConfig(
     pmaRegions: Seq[PMARegionConst]
 )
 
-/** Elaboration-time view of config/breeze_mcu_platform.json.
+/** Elaboration-time view of config/breeze_platform.json.
   *
   * The JSON file remains the shared source of truth for the core and the future
   * LiteX integration. This object converts its fixed platform conventions into
   * Scala constants used to elaborate hardware.
   */
 object BreezeMcuPlatform {
-  private val ConfigFileName = "breeze_mcu_platform.json"
+  private val ConfigFileName = "breeze_platform.json"
   private val mapper = new ObjectMapper()
 
   private def locateConfig(): File = {

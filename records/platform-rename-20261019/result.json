@@ -1,0 +1,36 @@
+{
+  "host": "chen@localhost",
+  "jump": "clawbot",
+  "workspace": "/home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d",
+  "evidence": "/home/chen/FUN/flow-runs/platform-rename-20261019-89f4325d",
+  "base_sha": "1e3b808cfba16f4fbd88669abd8af1707d053179",
+  "source_archive_sha256": "89f4325df9126fe006ad64f976afd4b34acf3ed1ff1b8bcf77b4fc56433f95a0",
+  "scala_command": "java -Xmx8G -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -jar /home/chen/FUN/flow-runs/platform-rename-20261019-89f4325d/sbt-launch-1.9.7.jar 'Compile / compile' 'Test / compile' 'testOnly flow.config.BreezeCoreConfigSpec flow.config.BreezeBuildOptionsSpec flow.top.BreezeBuildArtifactsSpec'",
+  "python_command": "python3 -m unittest sim.litex.test_breeze_cpu_wrapper sim.litex.test_public_build_options sim.litex.test_run_multicore sim.litex.test_liteuart_contract.LiteUartContractTest.test_platform_uses_native_liteuart_page -v",
+  "scala_exit": 0,
+  "python_exit": 0,
+  "main_sources_compiled": 140,
+  "test_sources_compiled": 115,
+  "scala_tests": {
+    "passed": 19,
+    "failed": 0,
+    "canceled": 0,
+    "ignored": 0,
+    "pending": 0
+  },
+  "python_tests": {
+    "passed": 24,
+    "failed": 0
+  },
+  "artifact_feature_combinations": 24,
+  "rtl_generation": false,
+  "rtl_functional_simulation": false,
+  "vivado": false,
+  "platform_sha256": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68",
+  "platform_content_unchanged": true,
+  "note": "Snapshot includes pre-existing untracked FlowZveGemvSpec.scala; no CVFPU elaboration or hardware simulation was run. cloud_chen SSH timed out; Alan used after fresh shared-config preflight.",
+  "logs_sha256": {
+    "scala.txt": "e7b42d24b467600275f0f9c01c47f1a700c45ca34013ae96d0ea63b6525c972d",
+    "python.txt": "3bcec603456e5c5f57a1cedc6d091c5217fd3d9714a7c786d5a29adf12330767"
+  }
+}

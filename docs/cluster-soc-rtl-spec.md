@@ -43,7 +43,7 @@ LiteX SoC 内部总线仍可用 Wishbone（BIOS ROM、SRAM、CSR 都是 LiteX �
 
 | 地址 | 去向 | 要求 |
 | --- | --- | --- |
-| main_ram（`0x8000_0000`，2 GiB，取自 `config/breeze_mcu_platform.json`） | LiteDRAM crossbar 的 AXI 端口（LiteDRAM 自带的 AXI→native 转换，含必要的位宽转换） | 保留 INCR burst，不拆成单拍 |
+| main_ram（`0x8000_0000`，2 GiB，取自 `config/breeze_platform.json`） | LiteDRAM crossbar 的 AXI 端口（LiteDRAM 自带的 AXI→native 转换，含必要的位宽转换） | 保留 INCR burst，不拆成单拍 |
 | boot_rom、linux_boot_rom、sram | LiteX 主总线（用 LiteX 自带 AXI→Wishbone 转换） | 低带宽可接受 |
 | 其他 | 路由器本地返回 DECERR | 不得挂死 |
 
@@ -54,7 +54,7 @@ LiteX SoC 内部总线仍可用 Wishbone（BIOS ROM、SRAM、CSR 都是 LiteX �
 - R1 读顺序：路由器保证 R 按 AR 接受顺序返回，跨两路也是。最简单的合格实现：有读在途时，不向另一路发出新 AR（写通道同理，按 AW 顺序返回 B）。若改用重排序缓冲，要能证明满足同样性质。
 - R2 W 数据跟随其 AW 的去向，不得错路；B/R 的 resp 原样传回（错误不被吞掉）。
 - R3 路由按 burst 首地址决定；一行 32 B 对齐访问不会跨区域，路由器对跨区域 burst 返回错误而不是拆分。
-- R4 地址表只从 `config/breeze_mcu_platform.json` 读取（`target.py` 已有 sram 一致性检查，扩展到 main_ram/rom），不手写第二份。
+- R4 地址表只从 `config/breeze_platform.json` 读取（`target.py` 已有 sram 一致性检查，扩展到 main_ram/rom），不手写第二份。
 
 `core.py`：`_BreezeClusterCPU` 改为 AXI：`memory_bus`（AXI4）只接上述路由器，`mmio_bus`（AXI-Lite）挂主总线；删除 Wishbone 接口、`dma_bus` 与 FASE/Dma 产品类。保留 `Breeze`（small，4 hart）、`BreezeTiny`（single）、`BreezeTinyDebug`。复位地址、mem_map、CLINT/PLIC 不变。
 

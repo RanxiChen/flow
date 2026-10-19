@@ -16,7 +16,7 @@ def read_text(relative_path):
 
 class LiteUartContractTest(unittest.TestCase):
     def test_platform_uses_native_liteuart_page(self):
-        with open(os.path.join(FLOW_ROOT, "config", "breeze_mcu_platform.json"),
+        with open(os.path.join(FLOW_ROOT, "config", "breeze_platform.json"),
                   encoding="utf-8") as handle:
             platform = json.load(handle)
         pages = {page["name"]: int(page["origin"], 0)

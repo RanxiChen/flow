@@ -19,7 +19,7 @@ class FlowClintVerilogContractTest(unittest.TestCase):
         linux_sim = read_text("sim/litex/linux_sim.py")
         multicore_sim = read_text("sim/litex/multicore_sim.py")
         rtl = read_text("litex_wrapper/flow/rtl/FlowClint.sv")
-        with open(os.path.join(FLOW_ROOT, "config", "breeze_mcu_platform.json"),
+        with open(os.path.join(FLOW_ROOT, "config", "breeze_platform.json"),
                   encoding="utf-8") as handle:
             platform = json.load(handle)
 

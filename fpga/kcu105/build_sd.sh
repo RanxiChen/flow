@@ -41,7 +41,7 @@ if [[ "$mode" != --vivado-only ]]; then
     git -C "$flow_root" rev-parse HEAD > "$output/source-commit.txt"
     git -C "$flow_root" status --short > "$output/source-status.txt"
     git -C "$flow_root" diff --binary > "$output/source.patch"
-    cp "$flow_root/config/breeze_mcu_platform.json" "$output/platform.json"
+    cp "$flow_root/config/breeze_platform.json" "$output/platform.json"
     printf '%s\n' "$profile" > "$output/product-profile.txt"
     cd "$flow_root/design"
     "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile $features" \

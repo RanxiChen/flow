@@ -15,7 +15,7 @@ from litex.soc.interconnect import axi, wishbone
 
 def platform_regions(root=None):
     root = root or os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-    with open(os.path.join(root, "config", "breeze_mcu_platform.json"), encoding="utf-8") as f:
+    with open(os.path.join(root, "config", "breeze_platform.json"), encoding="utf-8") as f:
         config = json.load(f)
     return {r["name"]: {**r, "origin": int(r["origin"], 0), "size": int(r["size"], 0)}
             for r in config["regions"]}

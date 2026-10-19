@@ -18,7 +18,7 @@ class BreezeBuildArtifactsSpec extends AnyFreeSpec with Matchers {
             os.write(fp / "FlowFpnewWrapper.sv", "// wrapper\n")
             os.write(cvfpu / "pkg.sv", "// package\n")
             os.write(cvfpu / "unit.v", "// unit\n")
-            os.write(root / "config" / "breeze_mcu_platform.json", "{}", createFolders = true)
+            os.write(root / "config" / "breeze_platform.json", "{}", createFolders = true)
             test(design, cvfpu)
         } finally os.remove.all(root)
     }
@@ -34,7 +34,7 @@ class BreezeBuildArtifactsSpec extends AnyFreeSpec with Matchers {
     "missing sources, include directories, wrapper or platform fail before creating outputs" in {
         for (relative <- Seq("third_party/cvfpu/include", "third_party/cvfpu/unit.v",
             "design/src/main/resources/vsrc/fpnew/FlowFpnewWrapper.sv",
-            "config/breeze_mcu_platform.json")) fixture { (design, _) =>
+            "config/breeze_platform.json")) fixture { (design, _) =>
             os.remove.all((design / os.up) / os.RelPath(relative))
             val error = intercept[IllegalArgumentException](BreezeBuildArtifacts.prepare(design))
             error.getMessage must include ("missing")

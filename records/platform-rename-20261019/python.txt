@@ -1,0 +1,29 @@
+test_all_three_sd_products_use_the_same_csr_bridge (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_axilite_b_and_axi_r_port_directions_and_ids (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_debug_is_isolated_and_exports_every_retire_field_and_hang (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_each_required_marker_mismatch_is_rejected (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_fixed_public_profiles_and_memory_map (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_production_products_use_axi_and_only_dram_exit_is_direct (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_stale_or_mixed_blocking_frontend_manifests_are_rejected (sim.litex.test_breeze_cpu_wrapper.BreezeCpuWrapperTest) ... ok
+test_collector_keeps_base_configuration_checks_for_the_zve_product (sim.litex.test_public_build_options.PublicBuildOptionsTest) ... ok
+test_fpga_and_sd_help_only_advertise_current_vector_product (sim.litex.test_public_build_options.PublicBuildOptionsTest) ... ok
+test_legacy_simulation_wrapper_only_accepts_gshare_linux (sim.litex.test_public_build_options.PublicBuildOptionsTest) ... ok
+test_retired_vector_choices_fail_without_creating_output_directories (sim.litex.test_public_build_options.PublicBuildOptionsTest) ... ok
+test_cluster_profile_mismatch (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_cluster_profile_missing (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_dual_only_test_rejected_for_small (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_fail_marker (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_fatal_assertion_text (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_missing_pass_marker (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_nonzero_child_exit (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_small_profile_file_mismatch (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_small_profile_file_missing (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_small_profile_marker_and_fake_child (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_success_exit_zero (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_watchdog_timeout_kills_child (sim.litex.test_run_multicore.RunMulticoreTest) ... ok
+test_platform_uses_native_liteuart_page (sim.litex.test_liteuart_contract.LiteUartContractTest) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 2.839s
+
+OK

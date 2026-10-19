@@ -15,7 +15,7 @@ private[top] object BreezeBuildArtifacts {
         val fpRoot = designRoot / "src" / "main" / "resources" / "vsrc" / "fpnew"
         val manifest = fpRoot / "cvfpu-files.f"
         val wrapper = fpRoot / "FlowFpnewWrapper.sv"
-        val platform = flowRoot / "config" / "breeze_mcu_platform.json"
+        val platform = flowRoot / "config" / "breeze_platform.json"
         require(os.isDir(cvfpuRoot), s"CVFPU submodule is missing: $cvfpuRoot")
         for (path <- Seq(manifest, wrapper, platform))
             require(os.isFile(path), s"build input is missing: $path")

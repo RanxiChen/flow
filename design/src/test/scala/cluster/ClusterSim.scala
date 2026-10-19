@@ -94,7 +94,7 @@ object Elf64 {
 // =============================================================================
 
 /** AXI-Lite slave behind the cluster's MMIO arbiter. Platform addresses come
-  * from config/breeze_mcu_platform.json: machine_timer 0x0200_0000 (msip[h]
+  * from config/breeze_platform.json: machine_timer 0x0200_0000 (msip[h]
   * at +4h, mtimecmp[h] at +0x4000+8h, mtime at +0xBFF8) and soc_ctrl
   * 0x1200_0000 (every strobed written byte is a console character).
   */

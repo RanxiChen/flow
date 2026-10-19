@@ -1,0 +1,43 @@
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d/design/)
+[info] compiling 140 Scala sources to /home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d/design/target/scala-2.13/classes ...
+[info] done compiling
+[success] Total time: 19 s, completed Oct 19, 2026, 4:00:37 PM
+[info] compiling 115 Scala sources to /home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d/design/target/scala-2.13/test-classes ...
+[warn] /home/chen/FUN/flow-platform-rename-validation-20261019-89f4325d/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+[success] Total time: 11 s, completed Oct 19, 2026, 4:00:48 PM
+[info] BreezeCoreConfigSpec:
+[info] - resource-rich single keeps full memory geometry and thirty-two FP tags independently of quad
+[info] - Linux is the only named privilege profile and the build default
+[info] - isolated no-predictor module parameters remain available without a named build preset
+[info] - BreezeCoreConfig should derive gshare frontend and backend branch predictor settings
+[info] - parameterless defaults select GShare at every Scala layer
+[info] - cluster presets carry the memory geometry as the single entry point
+[info] - default geometry derives the l1d-rtl-spec §0.2 constants
+[info] - legacy RVV is excluded from named builds while current deployment geometry is preserved
+[info] - geometry outside the v1 constraints is rejected at construction
+[info] BreezeBuildOptionsSpec:
+[info] - each deployed profile defaults to the same explicit GShare/Linux hardware configuration
+[info] - debug enables retirement traces and coherent DMA preserves the selected memory geometry
+[info] - tandem alone keeps FPGA debug disabled
+[info] - removed profiles, predictor options and privilege options fail before RTL generation
+[info] - missing profile and duplicate optional features are rejected
+[info] BreezeBuildArtifactsSpec:
+[info] - preflight preserves dependency order, Verilog sources and the raw platform hash
+[info] - missing sources, include directories, wrapper or platform fail before creating outputs
+[info] - filelist ignores stale runs and duplicate FP copies and keeps generated sources sorted
+[info] - an empty emission leaves existing manifests untouched
+[info] - all public profiles and feature combinations retain the LiteX path and marker contract
+[info] Run completed in 541 milliseconds.
+[info] Total number of tests run: 19
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 19, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 1 s, completed Oct 19, 2026, 4:00:49 PM
