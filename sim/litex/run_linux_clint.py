@@ -102,7 +102,7 @@ def main():
     parser.add_argument("--profile", choices=sorted(PROFILE_HARTS),
         default="single")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-")
-    parser.add_argument("--core-preset", choices=("baseline", "gshare"),
+    parser.add_argument("--core-preset", choices=("gshare",),
         default="gshare")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the selected Linux-profile cluster RTL.")

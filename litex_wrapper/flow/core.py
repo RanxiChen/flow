@@ -257,7 +257,7 @@ class _BreezeClusterCPU(CPU):
         marker = os.path.join(rtl_dir, "cluster-profile.txt")
         if not os.path.isfile(filelist) or not os.path.isfile(marker):
             raise FileNotFoundError("Breeze RTL missing; cd design && sbt 'runMain flow.top.GenerateBreezeCluster " +
-                f"{cls.cluster_profile} {cls.core_preset} {cls.privilege_profile}" +
+                f"{cls.cluster_profile}" +
                 (" tandem" if cls.tandem_enabled else "") + (" fpga-debug" if cls.debug_enabled else "") +
                 (" coherent-dma" if cls.coherent_dma else "") + "'")
         cls._validate_profile_marker(marker)

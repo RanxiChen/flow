@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--dtb", required=True, help="Flow device tree blob.")
     parser.add_argument("--bootrom", required=True, help="Flow reset ROM raw binary.")
     parser.add_argument("--profile", choices=("single", "dual", "small"), default="small")
-    parser.add_argument("--core-preset", choices=("gshare", "baseline"), default="gshare")
+    parser.add_argument("--core-preset", choices=("gshare",), default="gshare")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--elaborate", action="store_true")
     parser.add_argument("--rtl-mode", choices=("production", "debug"),

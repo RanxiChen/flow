@@ -1,3 +1,10 @@
+当前构建配置已收敛为纯标量 `four` / `single` 和 `single-zve32f`，固定 GShare/Linux。
+`build_sd.sh`、`prepare_sd_boot.py`、`linux/sd-gapbs/build.sh` 和 `collect_sd_products.py`
+均不再接受 `single-rvv`。收集器的向量参数现为 `--single-zve32f`、
+`--single-zve32f-software` 和可选 `--zve-source-sha`。
+
+以下保留早期三产品交付记录，其中 `single-rvv` 命令只适用于对应历史版本。
+
 # BE2 KCU105 三产品 SD 启动
 
 2026-10-11。交付范围是 JTAG 加载的 FPGA bitstream、其中初始化的 BIOS、FAT SD 软件文件。SD 只存 Linux/OpenSBI/DTB/软件镜像；不存或加载 bitstream，不追加 Flash 配置镜像。

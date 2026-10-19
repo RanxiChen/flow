@@ -71,9 +71,9 @@ def main():
         default="direct", help="Trap mode used by the runtime (default: direct).")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-",
         help="Bare-metal tool prefix (default: riscv64-unknown-elf-).")
-    parser.add_argument("--core-preset", choices=("baseline", "gshare"),
+    parser.add_argument("--core-preset", choices=("gshare",),
         default="gshare",
-        help="Core RTL preset (default: gshare; baseline is explicit).")
+        help="Core RTL preset (fixed: gshare).")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the single-profile cluster RTL before simulation.")
     parser.add_argument("--trace", action="store_true",

@@ -59,7 +59,7 @@ VALID_PROFILE_VALUES = {
     "l1Ways": "4",
     "l2Ways": "8",
     "corePreset": "gshare",
-    "privilegeProfile": "mcu",
+    "privilegeProfile": "linux",
 }
 
 # Matches expected_cluster_profile("small", "gshare") in the runner.
@@ -73,7 +73,7 @@ SMALL_PROFILE_VALUES = {
     "l1Ways": "4",
     "l2Ways": "8",
     "corePreset": "gshare",
-    "privilegeProfile": "mcu",
+    "privilegeProfile": "linux",
 }
 
 
@@ -103,7 +103,7 @@ class RunMulticoreTest(unittest.TestCase):
 
     def profile_file_path(self, profile="single", preset="gshare"):
         return os.path.join(
-            self.design_dir, "build", "rtl", "cluster", profile, preset,
+            self.design_dir, "build", "rtl", "cluster", profile, preset, "linux",
             "cluster-profile.txt")
 
     def write_cluster_profile(self, values, profile="single", preset="gshare"):

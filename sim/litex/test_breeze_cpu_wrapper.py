@@ -10,7 +10,7 @@ from unittest import mock
 FLOW_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(FLOW_ROOT, 'litex_wrapper'))
 from flow import Breeze, BreezeTiny
-from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeRvvDma, RETIRE_LAYOUT
+from flow.core import BreezeTinyDebug, BreezeDma, BreezeTinyDma, BreezeZve32fDma, RETIRE_LAYOUT
 from flow.mmio_bridge import BreezeMmioBridge
 from litex.soc.interconnect import axi, wishbone
 
@@ -108,7 +108,7 @@ class BreezeCpuWrapperTest(unittest.TestCase):
             self.assertIn('o_io_debug_l2Events_memReadsInFlight', cpu.cpu_params)
 
     def test_all_three_sd_products_use_the_same_csr_bridge(self):
-        for cls in (BreezeDma, BreezeTinyDma, BreezeRvvDma):
+        for cls in (BreezeDma, BreezeTinyDma, BreezeZve32fDma):
             with self.subTest(product=cls.cluster_profile), tempfile.TemporaryDirectory() as root:
                 _write_production_rtl(root, cls)
                 with mock.patch.object(cls, 'flow_root_dir', return_value=root):

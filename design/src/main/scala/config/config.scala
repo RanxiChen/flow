@@ -76,7 +76,7 @@ case class BackendConfig(
     val branchPredKind: FrontendBranchPredictorKind = FrontendBranchPredictorKind.GShare,
     val ghrLength: Int = 10,
     val enableTandem: Boolean = false,
-    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Linux,
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
@@ -88,25 +88,25 @@ case class BackendConfig(
 ){ require(fpTagEntries >= 8 && isPow2(fpTagEntries))
    require(zve.isEmpty || (rvv == zve.map(_.vrf) && !writeThrough), "Zve reuses the vector CSR state over a write-back L1D") }
 
-/** Compile-time privileged-architecture profile.  `mcu` preserves the
-  * machine-only core used by the existing firmware.  `linux` enables the
-  * M/S/U trap and CSR architecture while address translation remains Bare;
-  * Sv39 is a later, orthogonal extension.
+/** Linux is the sole named build profile; the machine-only value remains
+  * package-private for isolated legacy CSR tests. Translation is configured
+  * independently by the core/MMU parameters.
   */
 sealed abstract class PrivilegeProfile(
     val name: String,
     val enableSupervisorUser: Boolean
 )
 object PrivilegeProfile {
-    case object Mcu extends PrivilegeProfile("mcu", enableSupervisorUser = false)
+    // Internal legacy CSR tests only; excluded from named build configurations.
+    private[flow] case object Mcu extends PrivilegeProfile("mcu", enableSupervisorUser = false)
     case object Linux extends PrivilegeProfile("linux", enableSupervisorUser = true)
 
-    val all: Seq[PrivilegeProfile] = Seq(Mcu, Linux)
+    val all: Seq[PrivilegeProfile] = Seq(Linux)
 
     def fromName(name: String): PrivilegeProfile =
         all.find(_.name == name).getOrElse(
             throw new IllegalArgumentException(
-                s"unsupported privilege profile: $name (expected mcu or linux)"))
+                s"unsupported privilege profile: $name (expected linux)"))
 }
 
 case class BreezeCoreConfig(
@@ -117,7 +117,7 @@ case class BreezeCoreConfig(
     val useGShare: Boolean = true,
     val gshareGhrLength: Int = 10,
     val gshareBtbEntryNum: Int = 16,
-    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    val privilegeProfile: PrivilegeProfile = PrivilegeProfile.Linux,
     val enableCompressed: Boolean = false,
     val enableMmu: Boolean = false,
     val loadUseBypass: Boolean = false,
@@ -158,40 +158,23 @@ case class BreezeCoreConfig(
     )
 }
 
-/** The two supported core presets. Every generator, wrapper and runner
-  * defaults to GShare; `baseline` (no branch predictor) is only reachable by
-  * naming it explicitly. Name parsing lives here and nowhere else.
-  */
+/** GShare is the sole named core preset. */
 sealed abstract class CorePreset(val name: String)
 object CorePreset {
     case object Gshare extends CorePreset("gshare")
-    case object Baseline extends CorePreset("baseline")
 
-    val all: Seq[CorePreset] = Seq(Gshare, Baseline)
+    val all: Seq[CorePreset] = Seq(Gshare)
 
     def fromName(name: String): CorePreset =
         all.find(_.name == name).getOrElse(
             throw new IllegalArgumentException(
-                s"unsupported core preset: $name (expected gshare or baseline)"))
+                s"unsupported core preset: $name (expected gshare)"))
 }
 
 object BreezeCoreConfigs {
-    def baseline(
-        enableTandem: Boolean = false,
-        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
-    ): BreezeCoreConfig =
-        BreezeCoreConfig(
-            useFASE = false,
-            enableTandem = enableTandem,
-            useGShare = false,
-            privilegeProfile = privilegeProfile,
-            enableCompressed = privilegeProfile.enableSupervisorUser,
-            enableMmu = privilegeProfile.enableSupervisorUser
-        )
-
     def gshare(
         enableTandem: Boolean = false,
-        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Linux
     ): BreezeCoreConfig =
         BreezeCoreConfig(
             useFASE = false,
@@ -208,21 +191,17 @@ object BreezeCoreConfigs {
         privilegeProfile: PrivilegeProfile
     ): BreezeCoreConfig =
         preset match {
-            case CorePreset.Baseline => baseline(enableTandem, privilegeProfile)
             case CorePreset.Gshare   => gshare(enableTandem, privilegeProfile)
         }
 
     def fromPreset(preset: CorePreset, enableTandem: Boolean): BreezeCoreConfig =
-        fromPreset(preset, enableTandem, PrivilegeProfile.Mcu)
+        fromPreset(preset, enableTandem, PrivilegeProfile.Linux)
 
-    /** Resolve a generator/CLI core preset name to a core configuration; a
-      * default-less caller always lands on GShare and `baseline` is only
-      * reachable explicitly.
-      */
+    /** Resolve the sole named GShare preset. */
     def fromPreset(
         preset: String,
         enableTandem: Boolean = false,
-        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu
+        privilegeProfile: PrivilegeProfile = PrivilegeProfile.Linux
     ): BreezeCoreConfig =
         fromPreset(CorePreset.fromName(preset), enableTandem, privilegeProfile)
 }
@@ -239,7 +218,7 @@ final case class BreezeClusterConfig(
     profileName: String,
     mem: BreezeMemGeometry,
     corePreset: CorePreset = CorePreset.Gshare,
-    privilegeProfile: PrivilegeProfile = PrivilegeProfile.Mcu,
+    privilegeProfile: PrivilegeProfile = PrivilegeProfile.Linux,
     loadUseBypass: Boolean = false,
     coprocessorStub: Option[Int] = scala.None,
     coherentDma: Boolean = false,
@@ -274,7 +253,8 @@ object BreezeClusterPresets {
     // User 2026-10-12: resource-rich scalar single is independent of quad.
     // Original full geometry: private 16KiB I/D, 64KiB eight-way L2.
     val single: BreezeClusterConfig = BreezeSingleFullConfig.cluster
-    val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
+    // Internal legacy RVV module tests only; not part of the public registry.
+    private[flow] val singleRvv: BreezeClusterConfig = single.copy(profileName = "single-rvv",
         rvv = Some(flow.rvv.RvvParams(paBits = single.mem.paddrBits, cacheLineBytes = single.mem.lineBytes)))
     // 2026-10-13: frozen single hart + decoupled Zve32f backend. Caches,
     // L2 slots, TLB capacity and the 64-bit memory port are unchanged.
@@ -290,9 +270,11 @@ object BreezeClusterPresets {
     val smokeL1dw2: BreezeClusterConfig = BreezeClusterConfig("smoke-l1dw2", BreezeMemGeometry.l1dTwoWay)
     val smoke1core: BreezeClusterConfig = BreezeClusterConfig("smoke-1core", BreezeMemGeometry.singleCore)
 
-    val all: Seq[BreezeClusterConfig] = Seq(single, singleRvv, singleZve32f, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
+    val all: Seq[BreezeClusterConfig] = Seq(single, singleZve32f, dual, small, stress, smokeL2w4, smokeL1dw2, smoke1core)
 
-    /** Resolve a generator CLI profile name; unknown names fail fast. */
+    val deployment: Seq[BreezeClusterConfig] = Seq(single, small, singleZve32f)
+
+    /** Resolve registered configurations; legacy RVV is deliberately excluded. */
     def fromName(name: String): BreezeClusterConfig =
         all.find(_.profileName == name).getOrElse(
             throw new IllegalArgumentException(

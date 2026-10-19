@@ -1,3 +1,6 @@
+当前生产配置固定 GShare/Linux，仅公开 `single`、`small`、`single-zve32f`。
+旧 baseline/MCU 对比入口已退役；下文早期仿真用法按其历史版本阅读。
+
 # BreezeCore LiteX Simulation
 
 This directory owns the concrete LiteX simulation SoC. The reusable CPU API
@@ -240,7 +243,7 @@ The production generator now uses the pipelined frontend and BE2-P backend:
 
 ```bash
 cd design
-sbt "runMain flow.top.GenerateBreezeCluster single gshare linux"
+sbt "runMain flow.top.GenerateBreezeCluster single"
 ```
 
 It emits `build/rtl/axi-cluster/single/gshare/linux/production/cpu` with

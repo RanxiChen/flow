@@ -4,6 +4,10 @@
 [源码入口与清理索引](docs/breeze-entrypoints-and-cleanup-audit.md)。下文早期发布版的
 五级流水线、Wishbone 与 FASE 描述属于对应历史镜像，阅读当前 RTL 请先看该索引。
 
+当前公开 profile 为 `single`、`small`、`single-zve32f`，固定 GShare / Linux；例如
+在 `design/` 执行 `sbt 'runMain flow.top.GenerateBreezeCluster single'`。旧 RVV 模块保留，
+`single-rvv`、`baseline` 和 `mcu` 已从配置入口移除。
+
 Breeze 是用 Chisel 实现的 RV64GC 顺序单发射处理器。当前版本在 KCU105 上以
 100 MHz 运行，配备 2 GiB DDR4，已启动 Buildroot Linux，并运行 Python 和 GAPBS。
 SoC 使用 LiteX 集成 DDR、串口和 SD 控制器，FASE 提供独立的 JTAG 调试入口。

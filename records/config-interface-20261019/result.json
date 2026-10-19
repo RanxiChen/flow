@@ -1,0 +1,39 @@
+{
+  "result": "PASS",
+  "base_sha": "675aaf7f9829cc5c1250e23dc4776d3b4c977cfa",
+  "source_archive_sha256": "ba69c4bf1ced94926735328528e210d3a162e104a3a8d83ba3e80e2aec1aa51e",
+  "actual_host": "Alan",
+  "remote_workspace": "/home/chen/FUN/flow-config-validation-20261019-ba69c4bf",
+  "remote_evidence": "/home/chen/FUN/flow-runs/config-interface-20261019-ba69c4bf",
+  "scala_compile": {
+    "main_sources": 139,
+    "test_sources": 114
+  },
+  "scala_config_tests": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0
+  },
+  "python_tests": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "retained_legacy_rvv_files_unchanged": 38,
+  "public_profiles": [
+    "single",
+    "small",
+    "single-zve32f"
+  ],
+  "predictor": "gshare",
+  "privilege": "linux",
+  "retired_cli_options": [
+    "single-rvv",
+    "baseline",
+    "mcu"
+  ],
+  "drawio_structure": "PASS",
+  "drawio_visual_review": "PASS",
+  "hardware_simulation_run": false,
+  "rtl_generation_run": false
+}

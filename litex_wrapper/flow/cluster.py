@@ -17,7 +17,7 @@ from .core import (
 CLUSTER_PROFILES = ("single", "dual", "small")
 CLUSTER_NUM_HARTS = {"single": 1, "dual": 2, "small": 4}
 CLUSTER_L2_BYTES = {"single": 16384, "dual": 32768, "small": 65536}
-CORE_PRESETS = ("baseline", "gshare")
+CORE_PRESETS = ("gshare",)
 
 
 class FlowCluster(_BreezeClusterCPU):
@@ -30,14 +30,14 @@ class FlowCluster(_BreezeClusterCPU):
     num_harts = 1
     l2_bytes = CLUSTER_L2_BYTES["single"]
     core_preset = "gshare"
-    privilege_profile = "mcu"
+    privilege_profile = "linux"
     rtl_mode = "debug"
     tandem_enabled = True
     debug_enabled = True
     gcc_arch = "rv64i2p0"
     gcc_abi = "lp64"
     gcc_defines = "-D__flow__"
-    reset_vector = 0x1000_0000
+    reset_vector = 0x1001_0000
     expected_marker = {}
     mem_map = {
         "rom": reset_vector,
@@ -51,7 +51,7 @@ class FlowCluster(_BreezeClusterCPU):
 
     @classmethod
     def set_cluster_config(
-            cls, cluster_profile, core_preset, privilege_profile="mcu"):
+            cls, cluster_profile, core_preset, privilege_profile="linux"):
         if cluster_profile not in CLUSTER_PROFILES:
             raise ValueError(
                 f"Unsupported cluster profile {cluster_profile!r}; "
@@ -60,8 +60,8 @@ class FlowCluster(_BreezeClusterCPU):
             raise ValueError(
                 f"Unsupported core preset {core_preset!r}; "
                 f"expected {' or '.join(CORE_PRESETS)}")
-        if privilege_profile not in ("mcu", "linux"):
-            raise ValueError("privilege profile must be 'mcu' or 'linux'")
+        if privilege_profile != "linux":
+            raise ValueError("privilege profile must be 'linux'")
 
         cls.cluster_profile = cluster_profile
         cls.num_harts = CLUSTER_NUM_HARTS[cluster_profile]
@@ -91,4 +91,4 @@ class Flow(FlowCluster):
 
     @classmethod
     def set_core_preset(cls, core_preset):
-        cls.set_cluster_config("single", core_preset, "mcu")
+        cls.set_cluster_config("single", core_preset, "linux")

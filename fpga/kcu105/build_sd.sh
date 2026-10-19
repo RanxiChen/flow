@@ -2,14 +2,13 @@
 # Run on the selected, preflighted hardware host. Build only; no programmer/SD writes.
 set -Eeuo pipefail
 flow_root=$(cd -- "$(dirname -- "$0")/../.." && pwd)
-profile=${1:?usage: build_sd.sh four|single|single-rvv|single-zve32f ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only] [--debug]}
+profile=${1:?usage: build_sd.sh four|single|single-zve32f ABSOLUTE_FRESH_OUTPUT [--prepare-only|--vivado-only] [--debug]}
 output=${2:?absolute fresh output required}
 mode=${3:---all}
 debug=${4:-}
 case "$profile" in
     four) rtl_profile=small; cpu=breeze;;
     single) rtl_profile=single; cpu=breeze-tiny;;
-    single-rvv) rtl_profile=single-rvv; cpu=breeze-rvv;;
     single-zve32f) rtl_profile=single-zve32f; cpu=breeze-zve32f;;
     *) echo "Unknown product: $profile" >&2; exit 2;;
 esac
@@ -45,7 +44,7 @@ if [[ "$mode" != --vivado-only ]]; then
     cp "$flow_root/config/breeze_mcu_platform.json" "$output/platform.json"
     printf '%s\n' "$profile" > "$output/product-profile.txt"
     cd "$flow_root/design"
-    "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile gshare linux $features" \
+    "${SBT:-sbt}" "runMain flow.top.GenerateBreezeCluster $rtl_profile $features" \
         2>&1 | tee "$output/rtl-generation.log"
     cd "$flow_root"
     "${PYTHON:-python3}" fpga/kcu105/target.py --cpu-type "$cpu" --with-sdcard \

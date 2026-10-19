@@ -20,18 +20,21 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         single.mem.l2BytesPerCore mustBe 65536
         single.mem.l2Ways mustBe 8
     }
-    "privilege profiles should keep MCU as default and enable Linux Bare mode explicitly" in {
-        PrivilegeProfile.fromName("mcu") mustBe PrivilegeProfile.Mcu
+    "Linux is the only named privilege profile and the build default" in {
+        PrivilegeProfile.all mustBe Seq(PrivilegeProfile.Linux)
         PrivilegeProfile.fromName("linux") mustBe PrivilegeProfile.Linux
+        an[IllegalArgumentException] must be thrownBy PrivilegeProfile.fromName("mcu")
         an[IllegalArgumentException] must be thrownBy PrivilegeProfile.fromName("sv39")
-        BreezeCoreConfig().privilegeProfile mustBe PrivilegeProfile.Mcu
-        BreezeCoreConfig(privilegeProfile = PrivilegeProfile.Linux)
-            .backendCfg.privilegeProfile mustBe PrivilegeProfile.Linux
-        BreezeClusterPresets.small.copy(privilegeProfile = PrivilegeProfile.Linux)
-            .coreCfg().privilegeProfile mustBe PrivilegeProfile.Linux
+        BreezeCoreConfig().privilegeProfile mustBe PrivilegeProfile.Linux
+        BackendConfig().privilegeProfile mustBe PrivilegeProfile.Linux
+        BreezeCoreConfigs.gshare().privilegeProfile mustBe PrivilegeProfile.Linux
+        for (cfg <- BreezeClusterPresets.all) {
+            cfg.privilegeProfile mustBe PrivilegeProfile.Linux
+            cfg.coreCfg().backendCfg.privilegeProfile mustBe PrivilegeProfile.Linux
+        }
     }
 
-    "BreezeCoreConfig should derive baseline frontend and backend branch predictor settings when requested" in {
+    "isolated no-predictor module parameters remain available without a named build preset" in {
         val cfg = BreezeCoreConfig(useFASE = false, useGShare = false)
 
         cfg.frontendCfg.branchPredCfg mustBe NoBranchPredictorConfig
@@ -71,10 +74,11 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         // Preset resolution: the string form and the sealed form agree, the
         // default is GShare and unknown names fail fast.
         CorePreset.fromName("gshare") mustBe CorePreset.Gshare
-        CorePreset.fromName("baseline") mustBe CorePreset.Baseline
+        CorePreset.all mustBe Seq(CorePreset.Gshare)
+        an[IllegalArgumentException] must be thrownBy CorePreset.fromName("baseline")
         an[IllegalArgumentException] must be thrownBy CorePreset.fromName("max")
         BreezeCoreConfigs.fromPreset("gshare").useGShare mustBe true
-        BreezeCoreConfigs.fromPreset("baseline").useGShare mustBe false
+        an[IllegalArgumentException] must be thrownBy BreezeCoreConfigs.fromPreset("baseline")
         BreezeCoreConfigs.fromPreset(CorePreset.Gshare, enableTandem = false).useGShare mustBe true
         an[IllegalArgumentException] must be thrownBy BreezeCoreConfigs.fromPreset("max")
     }
@@ -124,11 +128,13 @@ class BreezeCoreConfigSpec extends AnyFreeSpec with Matchers {
         l1i.ICACHE_SET_NUM mustBe 128
     }
 
-    "cluster presets keep explicit baseline without changing geometry" in {
-        val dualBaseline = BreezeClusterPresets.dual.copy(corePreset = CorePreset.Baseline)
-        dualBaseline.corePreset mustBe CorePreset.Baseline
-        dualBaseline.coreCfg().useGShare mustBe false
-        dualBaseline.mem mustBe BreezeClusterPresets.dual.mem
+    "legacy RVV is excluded from named builds while current deployment geometry is preserved" in {
+        BreezeClusterPresets.deployment.map(_.profileName) mustBe Seq("single", "small", "single-zve32f")
+        BreezeClusterPresets.all.map(_.profileName) must not contain ("single-rvv")
+        an[IllegalArgumentException] must be thrownBy BreezeClusterPresets.fromName("single-rvv")
+        // Legacy module tests can still construct the retained implementation.
+        BreezeClusterPresets.singleRvv.rvv.nonEmpty mustBe true
+        BreezeClusterPresets.singleRvv.mem mustBe BreezeClusterPresets.single.mem
     }
 
     "geometry outside the v1 constraints is rejected at construction" in {

@@ -1,36 +1,28 @@
 package flow.top
 
 import _root_.circt.stage.ChiselStage
-import flow.config.{BreezeClusterPresets, CorePreset, PrivilegeProfile}
+import flow.config.BreezeBuildOptions
 
 /** AXI SoC generator; optional debug is passive and enables retirement traces. */
 object GenerateBreezeCluster extends App {
-    require(args.length >= 3 && args.length <= 6,
-        "usage: GenerateBreezeCluster <single|small|single-rvv|single-zve32f> <gshare|baseline> <mcu|linux> [tandem] [fpga-debug] [coherent-dma]")
-    require(Set("single", "small", "single-rvv", "single-zve32f").contains(args(0)), "未支持的 SoC profile")
-    require(args.drop(3).forall(Set("tandem", "fpga-debug", "coherent-dma")), "未支持：FASE 或未知选项")
-    require(args.drop(3).distinct.length == args.drop(3).length, "duplicate optional feature")
-    private val corePreset = CorePreset.fromName(args(1))
-    private val privilegeProfile = PrivilegeProfile.fromName(args(2))
-    private val debug = args.drop(3).contains("fpga-debug")
-    // Generation parameter without extending the frozen positional CLI.
+    private val options = BreezeBuildOptions.parse(args.toSeq)
+    private val cfg = options.config
+    private val corePreset = cfg.corePreset
+    private val privilegeProfile = cfg.privilegeProfile
+    private val debug = options.debug
+    private val enableTandem = options.enableTandem
     private val hangThreshold = sys.env.getOrElse("BREEZE_HANG_CYCLES", "10000000").toInt
     require(hangThreshold > 0, "BREEZE_HANG_CYCLES must be positive")
-    private val enableTandem = args.drop(3).contains("tandem") || debug
-    private val cfg = BreezeClusterPresets.fromName(args(0))
-        .copy(corePreset = corePreset, privilegeProfile = privilegeProfile,
-          coherentDma = args.drop(3).contains("coherent-dma"))
     private val mem = cfg.mem
     private val baseDir = os.pwd / "build" / "rtl" / "axi-cluster" /
-        args(0) / corePreset.name / privilegeProfile.name /
+        cfg.profileName / corePreset.name / privilegeProfile.name /
         (if(enableTandem) "tandem" else "production") / (if(debug) "fpga-debug" else "cpu")
     private val targetDir = if (cfg.coherentDma) baseDir / "coherent-dma" else baseDir
     // Keep older generated artifacts intact, but build this manifest only
     // from a fresh emission. Directory scans must not re-admit deleted RTL.
     private val emittedDir = targetDir / "emitted" / java.util.UUID.randomUUID().toString
     ChiselStage.emitSystemVerilogFile(
-        if (cfg.rvv.nonEmpty && cfg.zve.isEmpty) new BreezeRvvAxi(cfg, enableTandem, debug, hangThreshold)
-        else new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
+        new BreezeClusterAxi(cfg, enableTandem, debug, hangThreshold),
         Array("--target-dir", emittedDir.toString, "--full-stacktrace"),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "-default-layer-specialization=enable"))
     // The split SystemVerilog manifest is generated from what firtool actually
@@ -73,8 +65,8 @@ object GenerateBreezeCluster extends App {
     private val platformHash = java.security.MessageDigest.getInstance("SHA-256")
         .digest(platformBytes).map(b => f"${b & 0xff}%02x").mkString
     os.write.over(targetDir / "cluster-profile.txt",
-        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${if (cfg.rvv.nonEmpty && cfg.zve.isEmpty) 2 else flow.coherence.CoherenceParams(mem).slotBits}\n")
-    os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\nrvv=${cfg.rvv.nonEmpty && cfg.zve.isEmpty}\nmemoryBits=${if (cfg.zve.nonEmpty) 64 else cfg.rvv.map(_.memoryBits).getOrElse(64)}\n" +
+        s"hangThresholdCycles=$hangThreshold\nbus=axi\nprofile=${cfg.profileName}\npreset=${corePreset.name}\nprivilege=${privilegeProfile.name}\ntandem=$enableTandem\ndebug=$debug\nplatformSha256=$platformHash\nnCores=${mem.nCores}\nlineBytes=${mem.lineBytes}\nl1Sets=${mem.l1Sets}\nl1dWays=${mem.l1dWays}\nl1iWays=${mem.l1iWays}\nl2Ways=${mem.l2Ways}\nl2BytesPerCore=${mem.l2BytesPerCore}\nl2Slots=${mem.l2Slots}\nidBits=${flow.coherence.CoherenceParams(mem).slotBits}\n")
+    os.write.append(targetDir / "cluster-profile.txt", s"coherentDma=${cfg.coherentDma}\nrvv=false\nmemoryBits=64\n" +
       (if (cfg.zve.nonEmpty) s"zve=zve32f\nvlen=${cfg.zve.get.vrf.vlen}\nvectorL2Ids=${mem.vectorL2Ids}\n" else ""))
     os.write.append(targetDir / "cluster-profile.txt",
         s"fpTagEntries=${cfg.fpTagEntries}\n")

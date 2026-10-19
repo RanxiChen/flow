@@ -45,5 +45,5 @@ lazy val root = (project in file("."))
 addCommandAlias("build", ";Compile / compile;Test / compile")
 addCommandAlias(
   "elaborate",
-  "Compile / runMain flow.top.GenerateBreezeCluster single gshare linux"
+  "Compile / runMain flow.top.GenerateBreezeCluster single"
 )

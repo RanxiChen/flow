@@ -74,11 +74,11 @@ def read_symbol(symbol_file, name):
 def main():
     parser = argparse.ArgumentParser(
         description="Build and run one cluster MCU test application.")
-    parser.add_argument("--profile", required=True,
+    parser.add_argument("--profile", choices=("single", "dual", "small"), required=True,
         help="Cluster profile (single/dual/small).")
-    parser.add_argument("--core-preset", default="gshare",
+    parser.add_argument("--core-preset", choices=("gshare",), default="gshare",
         help="Core RTL preset (default: gshare).")
-    parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
+    parser.add_argument("--privilege", choices=("linux",), default="linux")
     parser.add_argument("--test", required=True, choices=sorted(TEST_APPS),
         help="Registered test name.")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-",

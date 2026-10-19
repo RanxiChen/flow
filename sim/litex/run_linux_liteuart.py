@@ -50,7 +50,7 @@ def main():
     parser.add_argument("--test", choices=sorted(TESTS), default="csr",
         help="CSR data-path or PLIC source-10 interrupt test (default: csr).")
     parser.add_argument("--cross-compile", default="riscv64-unknown-elf-")
-    parser.add_argument("--core-preset", choices=("baseline", "gshare"),
+    parser.add_argument("--core-preset", choices=("gshare",),
         default="gshare")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the single-hart Linux-profile cluster RTL.")

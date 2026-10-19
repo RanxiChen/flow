@@ -4,7 +4,7 @@
 
 ## 1. 唯一工作区与整合前记录
 
-当前唯一开发工作区为 `/home/chen/leisure/flow`，使用 `main`。纯标量、早期 RVV 与 Zve32f 配置都在同一套源码中保留。清理代码对应提交 `c8eb0e152d91e3e16262b856ef5dfd647e38319d`，已 push 到 `origin/main`。
+当前唯一开发工作区为 `/home/chen/leisure/flow`，使用 `main`。当前公开配置为纯标量 `single` / `small` 和 `single-zve32f`，固定使用 GShare / Linux。旧 RVV 仅保留实现与模块测试，不再提供配置入口。清理代码对应提交 `c8eb0e152d91e3e16262b856ef5dfd647e38319d`，已 push 到 `origin/main`。
 
 下表是整合前的核对记录，表内其他工作区已归档并移除：
 
@@ -26,21 +26,19 @@
 | --- | --- | --- | --- |
 | `single` | 单核纯标量 | `BreezeClusterAxi` | `BreezeCluster` |
 | `small` | 四核纯标量 | `BreezeClusterAxi` | `BreezeCluster` |
-| `single-rvv` | 早期 RVV 单核路径 | `BreezeRvvAxi` | `BreezeRvvSystem` |
 | `single-zve32f` | Zve32f 单核路径 | `BreezeClusterAxi` | `BreezeCluster`，启用 `ZveMount` / `ZveL2Client` |
 
-profile 定义见 [config.scala](../design/src/main/scala/config/config.scala) 的 `BreezeClusterConfig` 和 `BreezeClusterPresets`。`single-rvv` 与 `single-zve32f` 是两条不同访存/执行路径；两者都保留，不能因为名称相近而合并或删除。profile 存在不等于完整 ISA、时序或上板已经验证。
+profile 定义见 [config.scala](../design/src/main/scala/config/config.scala) 的 `BreezeClusterConfig` 和 `BreezeClusterPresets`。公开配置只有 `single`、`small`、`single-zve32f`；`baseline`、`mcu` 和旧 `single-rvv` 均被拒绝。旧 RVV 的 `BreezeRvvAxi` / `BreezeRvvSystem` / `RvvMount` 等源码和内部模块测试保留。配置存在不等于完整 ISA、时序或上板已经验证。
 
 下面是源码生成命令索引，执行目录为选定工作区的 `design/`。实际编译和生成前，仍须重新读取共享 [simulation-host.md](/home/chen/leisure/flow/docs/cross-project/simulation-host.md)，校验 cloud_chen，不可用再使用 Alan。
 
 ```sh
-sbt 'runMain flow.top.GenerateBreezeCluster single gshare linux'
-sbt 'runMain flow.top.GenerateBreezeCluster small gshare linux'
-sbt 'runMain flow.top.GenerateBreezeCluster single-rvv gshare linux'
-sbt 'runMain flow.top.GenerateBreezeCluster single-zve32f gshare linux'
+sbt 'runMain flow.top.GenerateBreezeCluster single'
+sbt 'runMain flow.top.GenerateBreezeCluster small'
+sbt 'runMain flow.top.GenerateBreezeCluster single-zve32f'
 ```
 
-可选参数为 `tandem`、`fpga-debug`、`coherent-dma`。`design/build.sbt` 的 `elaborate` 在本基线只生成 `single gshare linux`，不自动覆盖 RVV 产品。
+可选参数为 `tandem`、`fpga-debug`、`coherent-dma`。不再传入预测器或特权模式的两个位置参数。`design/build.sbt` 的 `elaborate` 生成 `single`；生成目录和 marker 仍保留固定的 `gshare/linux` 标识，避免混用旧产物。
 
 入口关系图（箭头表示生成选择与实例化层次）：
 
@@ -59,12 +57,6 @@ sbt 'runMain flow.top.GenerateBreezeCluster single-zve32f gshare linux'
         每 hart：BreezeFrontendPipeline、BreezeBackend、L1DCache、L1IClient
         Zve32f 配置：ZveL2Client、ZveTlbShare
       可选：CoherentDmaWishbone、BreezeHangMonitor
-  single-rvv
-    BreezeRvvAxi
-      BreezeRvvSystem
-        BreezeFrontendPipeline、BreezeBackend、L1DCache（write-through）
-        L1IClient、RvvDatalessHome、RvvAxiArbiter
-        RvvTranslationClient、RvvTlbArbiter、Axi4LiteArbiter
 ```
 
 这个树只列主要实例化层次。`BreezePipelineLink` 是 Scala 接线辅助对象，不是一个额外硬件流水级：它连接前后端的指令、解析、提交和恢复信号。
@@ -73,13 +65,13 @@ sbt 'runMain flow.top.GenerateBreezeCluster single-zve32f gshare linux'
 
 早期 `single-rvv` 使用 `RvvMount`、写穿 L1D、`RvvDatalessHome` 和宽 AXI 路径。它不是 Zve32f 的 L2 连接方式。
 
-建议分析顺序：`GenerateBreezeCluster` 的配置选择 → `BreezeClusterAxi` 的外部接口 → `BreezeCluster` 的模块接线 → `BreezeFrontendPipeline` → 后端 → L1D/MMU/L2 → 两条向量路径。每个模块再单独补内部结构和逐拍场景。
+建议分析顺序：`GenerateBreezeCluster` 的配置选择 → `BreezeClusterAxi` 的外部接口 → `BreezeCluster` 的模块接线 → `BreezeFrontendPipeline` → 后端 → L1D/MMU/L2 → Zve32f 路径。每个模块再单独补内部结构和逐拍场景。
 
 ## 4. FPGA 层次
 
 KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `BreezeKCU105SoC`，由 LiteX/Migen 组织 DDR、外设及 CPU wrapper。CPU wrapper 位于 [litex_wrapper/flow/core.py](../litex_wrapper/flow/core.py)，加载 `filelist.f`，校验 `cluster-profile.txt` 并实例化相应 RTL 顶层。
 
-因此要区分三个概念：生成程序 `GenerateBreezeCluster`；CPU/集群硬件顶层 `BreezeClusterAxi` 或 `BreezeRvvAxi`；完整 FPGA 工程的板级顶层（KCU105 构建通常为 `xilinx_kcu105`，具体以该次工程为准）。
+因此要区分三个概念：生成程序 `GenerateBreezeCluster`；当前公开配置的 CPU/集群硬件顶层 `BreezeClusterAxi`；完整 FPGA 工程的板级顶层（KCU105 构建通常为 `xilinx_kcu105`，具体以该次工程为准）。
 
 ## 5. 第一轮已删除的文件
 
@@ -100,7 +92,7 @@ KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `Br
 | 对象 | 本轮处理与原因 |
 | --- | --- |
 | `BreezeFrontendPipeline`、`BreezePipelinePredictor`、`BreezeViptICache`、`BreezeCompressedDecoder` | 保留，生产前端使用 |
-| `rvv/` 与 `rvv/zve/` | 保留两套向量入口和共享依赖；不能整目录判废 |
+| `rvv/` 与 `rvv/zve/` | 保留新旧向量模块及共享依赖；只有 Zve32f 提供公开配置入口 |
 | `BreezeFrontendL2System`、`BreezeFrontendTimingHarness` | 保留，独立集成/时序验证入口；不是完整 CPU 顶层 |
 | `mmu/BreezeMmu.scala` | 保留，旧 MMU 仍被 `BreezeMmuSpec`、`BreezeMmuAdSpec`、`BreezePmpSharingSpec` 引用；退役需连同测试职责一起审查 |
 | `core/`、`interface/`、`cache/` | 保留，目录名旧但仍包含活动后端、CSR、译码、PMP、AMO 等共享定义 |
@@ -144,3 +136,12 @@ KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `Br
 仓库外备份目录：`/home/chen/leisure/flow-worktree-archives/20261019T045214Z`。目录内 `inventory-before.json`、`verified-archives.json`、各目录 `.files.json`、`migration.json` 和 `removals.json` 记录来源、SHA、文件散列、迁移及删除结果。压缩归档是恢复资料，不是保留的开发工作区。
 
 本次交付摘要与编译证据索引见 [delivery-summary.json](../records/breeze-cleanup-20261019/delivery-summary.json)。
+
+
+## 9. 公开配置简化
+
+2026-10-19，按用户要求关闭旧 RVV、baseline 和 MCU 的配置入口。`BreezeBuildOptions` 统一解析三个公开 profile 和三个可选功能，生产生成器只实例化 `BreezeClusterAxi`。GShare 和 Linux 为固定默认；省略预测器、特权位置参数。旧位置参数写法会报错，应使用第 2 节新命令。
+
+Scala 命名配置注册表、KCU105 CPU 菜单、SD 硬件/软件构建与打包菜单、旧仿真 wrapper 的可选值一并收敛。旧 RVV 实现保留；机器态 CSR 的隔离测试参数保持内部可用，不在命名配置中注册。无预测器的模块级参数同样保留，`baseline` 不再是命名构建 preset。
+
+本轮验证在 Alan 的独立目录执行：139 个主源码、114 个测试源码编译通过；Scala 配置测试 14/14、Python wrapper/公开选项/runner 测试 23/23 通过。旧选项在创建硬件输出前被拒绝，Zve32f 收集器仍拒绝基础配置或身份不匹配的产物。旧 RVV 模块逐文件核对未修改，图的原生结构和渲染检查通过。未运行 RTL 功能仿真、RTL 生成或 Vivado。验证输入散列、命令及原始结果见 [本轮验证记录](../records/config-interface-20261019/result.json)。

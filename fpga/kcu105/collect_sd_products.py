@@ -8,7 +8,7 @@ import re
 import shutil
 
 
-PROFILES = ('four', 'single', 'single-rvv')
+PROFILES = ('four', 'single', 'single-zve32f')
 REPORTS = ('xilinx_kcu105_timing.rpt', 'xilinx_kcu105_route_status.rpt',
            'xilinx_kcu105_drc.rpt', 'soc-utilization.rpt', 'soc-worst-10.rpt',
            'sd_input_paths.rpt', 'sd_output_paths.rpt', 'sd_output_min_paths.rpt')
@@ -44,22 +44,46 @@ def profile_config(path):
     return dict(line.split('=', 1) for line in path.read_text().splitlines() if '=' in line)
 
 
+def validate_product_configs(configs):
+    # User 2026-10-12 explicitly allows independent scalar resource profiles.
+    scalar_derived = {'profile', 'nCores', 'idBits', 'fpTagEntries',
+                      'l1Sets', 'l1dWays', 'l1iWays', 'l2Ways',
+                      'l2BytesPerCore', 'l2Slots'}
+    zve_changes = {'profile', 'zve', 'vlen', 'vectorL2Ids'}
+    # User requested ILA/tandem on the ordinary single hart. These flags
+    # describe passive observation; all compute/cache/clock fields still match.
+    if configs['single'].get('debug') == 'true':
+        scalar_derived |= {'debug', 'tandem'}
+        zve_changes |= {'debug', 'tandem'}
+    for key in configs['four'].keys() | configs['single'].keys():
+        if key not in scalar_derived and configs['four'].get(key) != configs['single'].get(key):
+            raise ValueError(f'Ordinary single hart differs from the four-hart configuration: {key}')
+    for key in configs['single'].keys() | configs['single-zve32f'].keys():
+        if key not in zve_changes and configs['single'].get(key) != configs['single-zve32f'].get(key):
+            raise ValueError(f'Zve32f changed an unapproved base configuration: {key}')
+    expected = {'profile': 'single-zve32f', 'zve': 'zve32f',
+                'rvv': 'false', 'memoryBits': '64'}
+    for key, value in expected.items():
+        if configs['single-zve32f'].get(key) != value:
+            raise ValueError(f'Zve32f product identity mismatch: {key}')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for profile in PROFILES:
         parser.add_argument('--' + profile, required=True, type=Path)
         parser.add_argument('--' + profile + '-software', required=True, type=Path)
     parser.add_argument('--source-sha', required=True)
-    parser.add_argument('--rvv-source-sha',
-                        help='RVV-only revision whose scalar base is the supplied source SHA')
+    parser.add_argument('--zve-source-sha',
+                        help='Zve32f-only revision whose scalar base is the supplied source SHA')
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit('Refusing to reuse the release directory')
     if not re.fullmatch('[0-9a-f]{40}', args.source_sha):
         raise SystemExit('A complete exact source SHA is required')
-    if args.rvv_source_sha and not re.fullmatch('[0-9a-f]{40}', args.rvv_source_sha):
-        raise SystemExit('A complete exact RVV source SHA is required')
+    if args.zve_source_sha and not re.fullmatch('[0-9a-f]{40}', args.zve_source_sha):
+        raise SystemExit('A complete exact Zve32f source SHA is required')
     products = {}
     configs = {}
     # Validate every input before creating a release directory.
@@ -67,11 +91,11 @@ def main():
         hardware = getattr(args, profile.replace('-', '_'))
         software = getattr(args, profile.replace('-', '_') + '_software')
         binding = json.loads((hardware / 'build-binding.json').read_text())
-        expected_source = args.rvv_source_sha if profile == 'single-rvv' and args.rvv_source_sha else args.source_sha
+        expected_source = args.zve_source_sha if profile == 'single-zve32f' and args.zve_source_sha else args.source_sha
         if binding['source_sha'] != expected_source or binding['source_dirty']:
             raise ValueError(f'{profile}: source identity mismatch')
         if expected_source != args.source_sha and binding.get('scalar_base_source_sha') != args.source_sha:
-            raise ValueError(f'{profile}: RVV revision lacks the matching scalar base identity')
+            raise ValueError(f'{profile}: Zve32f revision lacks the matching scalar base identity')
         if binding['clock_hz'] != 100000000 or binding['target'] != 'xcku040-ffva1156-2-e':
             raise ValueError(f'{profile}: target/clock mismatch')
         gateware = hardware / 'gateware'
@@ -143,22 +167,7 @@ def main():
                     candidate['input_checkpoint_sha256']):
                 raise ValueError(f'{profile}: physical candidate input identity mismatch')
             products[profile]['physical_candidate'] = candidate
-    # User 2026-10-12 explicitly allows independent scalar resource profiles.
-    scalar_derived = {'profile', 'nCores', 'idBits', 'fpTagEntries',
-                      'l1Sets', 'l1dWays', 'l1iWays', 'l2Ways',
-                      'l2BytesPerCore', 'l2Slots'}
-    rvv_changes = {'profile', 'idBits', 'rvv', 'memoryBits'}
-    # User requested ILA/tandem on the ordinary single hart. These flags
-    # describe passive observation; all compute/cache/clock fields still match.
-    if configs['single'].get('debug') == 'true':
-        scalar_derived |= {'debug', 'tandem'}
-        rvv_changes |= {'debug', 'tandem'}
-    for key in configs['four'].keys() | configs['single'].keys():
-        if key not in scalar_derived and configs['four'].get(key) != configs['single'].get(key):
-            raise ValueError(f'Ordinary single hart differs from the four-hart configuration: {key}')
-    for key in configs['single'].keys() | configs['single-rvv'].keys():
-        if key not in rvv_changes and configs['single'].get(key) != configs['single-rvv'].get(key):
-            raise ValueError(f'RVV changed an unapproved base configuration: {key}')
+    validate_product_configs(configs)
     args.output.mkdir(parents=True)
     for profile in PROFILES:
         hardware = getattr(args, profile.replace('-', '_'))
@@ -187,7 +196,7 @@ def main():
         'to the FAT partition root. SD stores software images only.\n'
         'UART: 115200 baud. BIOS automatically loads SD software after DDR initialization.\n'
         'Linux embeds the GAPBS initramfs; software can be rebuilt independently.\n'
-        'RVV supports the implemented R04 integer/unit-stride subset; unsupported operations trap.\n'
+        'The vector product is the configured Zve32f implementation; inspect its recorded validation scope.\n'
         'Routed internal timing and SD IO transport budgets pass. Board boot and complete '
         'external SD timing have not been verified; inspect the recorded console on hardware.\n')
     print(args.output)

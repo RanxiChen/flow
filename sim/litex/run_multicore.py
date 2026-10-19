@@ -43,7 +43,7 @@ PROFILES = {
     "dual": {"numHarts": 2, "l2Bytes": 32768},
     "small": {"numHarts": 4, "l2Bytes": 65536},
 }
-CORE_PRESETS = ("gshare", "baseline")
+CORE_PRESETS = ("gshare",)
 
 CLUSTER_MARKER_PATTERN = re.compile(
     r"BREEZE_CLUSTER profile=(\S+) harts=(\d+) core_preset=(\S+) "
@@ -273,7 +273,7 @@ def validate_marker(marker, profile, core_preset):
     return fields
 
 
-def read_cluster_profile(profile, core_preset, privilege="mcu"):
+def read_cluster_profile(profile, core_preset, privilege="linux"):
     suffix = [] if privilege == "mcu" else [privilege]
     profile_file = os.path.join(
         DESIGN_DIR, "build", "rtl", "cluster", profile, core_preset, *suffix,
@@ -298,7 +298,7 @@ def read_cluster_profile(profile, core_preset, privilege="mcu"):
     return values
 
 
-def expected_cluster_profile(profile, core_preset, privilege="mcu"):
+def expected_cluster_profile(profile, core_preset, privilege="linux"):
     """Expected cluster-profile.txt contents for a profile/preset pair."""
     return {
         "profile": profile,
@@ -314,7 +314,7 @@ def expected_cluster_profile(profile, core_preset, privilege="mcu"):
     }
 
 
-def validate_cluster_profile_file(profile, core_preset, privilege="mcu"):
+def validate_cluster_profile_file(profile, core_preset, privilege="linux"):
     """The elaborated cluster-profile.txt must match this invocation exactly.
 
     Shared by the --elaborate path (post-generation check) and the plain
@@ -345,8 +345,8 @@ def main():
         help="Cluster profile: single (1 hart), dual (2 harts) or small (4 harts).")
     parser.add_argument("--test", help="Registered test name (see TEST_REGISTRY).")
     parser.add_argument("--core-preset", choices=CORE_PRESETS, default="gshare",
-        help="Core RTL preset (default: gshare; baseline is explicit).")
-    parser.add_argument("--privilege", choices=("mcu", "linux"), default="mcu")
+        help="Core RTL preset (fixed: gshare).")
+    parser.add_argument("--privilege", choices=("linux",), default="linux")
     parser.add_argument("--elaborate", action="store_true",
         help="Regenerate the cluster RTL for the profile/preset before running.")
     parser.add_argument("--trace", action="store_true",
