@@ -1,0 +1,7 @@
+{
+  "svgCount": 1,
+  "text": "BreezeClusterAxi · 黑箱接口\n只展示模块边界与外部接口；不展开内部 CPU、缓存及互连\nINTERFACE VIEW / 01\nBreezeClusterAxi\nChisel RTL top\n内部实现省略\n参数由 cfg 决定\nN = 核心数\nI = max(1, ⌈log₂(l2Slots)⌉)\n时钟与复位 / CLOCK & RESET\nclock [1]\nreset [1]\n启动与时间 / BOOT & TIME\nresetAddr [64]\ntime [64]\n每核心中断 / PER-HART IRQ\nmsip [N × 1]\nmtip [N × 1]\nexternalInterrupts [N × 8]\nsupervisorExternalInterrupts [N × 1]\n一致性 DMA / OPTIONAL\ndmaWishbone · Wishbone slave\nD = 64 · adr = A − 3 位（字地址）\n仅 cfg.coherentDma = true 时存在\n主存总线 / AXI4 MASTER\nmem\nA = cfg.mem.paddrBits · D = 64 · ID = I\nAW / W / AR → R / B ←\n外设总线 / AXI4-LITE MASTER\nmmio\nA = cfg.mem.paddrBits · D = 64\nAW / W / AR → R / B ←\n每核心状态 / STATUS\nhartFatal [N × 1]\nhartEStop [N × 1]\n调试与观测 / OPTIONAL\ndebug · BreezeAxiDebug\nretire · lastRetirePc/Inst · hang · events\n仅 debug = true；retire 与 L1D 观测核心 0\n读图：细箭头 = 单向信号组 粗双箭头 = 含输入与输出的总线 Bundle 虚线 = 编译配置可选\n[N × W] = N 个核心、每核心 W 位；总线通道箭头表示 payload / valid 方向，ready 方向相反。clock / reset 为 Chisel 隐含端口。\nSOURCE top/BreezeClusterAxi.scala · bus/Axi4.scala · bus/LiteXWishbone.scala | main @ dedcd4e | 2026-10-19",
+  "width": 1600,
+  "height": 1040,
+  "pageErrors": []
+}

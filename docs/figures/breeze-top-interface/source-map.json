@@ -1,0 +1,93 @@
+{
+  "source_sha": "dedcd4ed34e7cfe6882781361d2705459445c4f9",
+  "scope": "Parameterized source interface view; not an elaborated netlist. No internal implementation shown.",
+  "sources": {
+    "design/src/main/scala/top/BreezeClusterAxi.scala": "a51c77996fc41371d66afbf3d78b7bc52a92dcc8e24627798a3be8c07b32183d",
+    "design/src/main/scala/bus/Axi4.scala": "d235ae84b985c6f86f474cfe785ab3799de935c7faeb3b8cde465ee5abce2fde",
+    "design/src/main/scala/bus/LiteXWishbone.scala": "d01ecd6a8c78a9ad0e7d061a1d81d41046c22e427917bc6fc076dbe754af669f",
+    "design/src/main/scala/coherence/CoherenceParams.scala": "b9deb0a1dd6c7e25802ddb60d64f4ab7bbcd0db99d8c510c05f74909a1855752",
+    "config/breeze_platform.json": "acb7e0a8c327bb5c6b61725740cbf2bb693683eb92a6152bddca1375369a1a68"
+  },
+  "ports": [
+    {
+      "id": "clock",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "reset",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "resetAddr",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "time",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "msip",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "mtip",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "externalInterrupts",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "supervisorExternalInterrupts",
+      "direction": "in",
+      "optional": false
+    },
+    {
+      "id": "dmaWishbone",
+      "direction": "mixed",
+      "optional": true
+    },
+    {
+      "id": "mem",
+      "direction": "mixed",
+      "optional": false
+    },
+    {
+      "id": "mmio",
+      "direction": "mixed",
+      "optional": false
+    },
+    {
+      "id": "hartFatal",
+      "direction": "out",
+      "optional": false
+    },
+    {
+      "id": "hartEStop",
+      "direction": "out",
+      "optional": false
+    },
+    {
+      "id": "debug",
+      "direction": "out",
+      "optional": true
+    }
+  ],
+  "references": [
+    {
+      "title": "Harris DDCA RISC-V, chapter 4, slide 8",
+      "url": "https://pages.hmc.edu/harris/class/e85/DDCArv_Ch4.pdf#page=8"
+    },
+    {
+      "title": "Cheshire, figures 1–2",
+      "url": "https://arxiv.org/pdf/2305.04760#page=2"
+    }
+  ]
+}

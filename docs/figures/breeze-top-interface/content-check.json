@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "visible_port_groups": 14,
+  "missing": [],
+  "extra": [],
+  "optional": [
+    "dmaWishbone",
+    "debug"
+  ],
+  "mixed_direction": [
+    "mem",
+    "mmio",
+    "dmaWishbone"
+  ],
+  "implicit_chisel_ports": [
+    "clock",
+    "reset"
+  ],
+  "validation_scope": "Source mapping and native diagram structure; no hardware elaboration or simulation."
+}
