@@ -1,0 +1,9 @@
+{
+  "svgCount": 1,
+  "text": "BreezeClusterAxi · 模块组成与互连\n展开一层：一个集群、一个可选 DMA 协议桥、一个可选监控器；子模块内部保持黑箱\nBreezeClusterAxi\n父模块边界\ncluster\nBreezeCluster\n必选 · 内部实现省略\nbridge\nCoherentDmaWishbone\nWishbone ↔ 一致性访问\ncfg.coherentDma = true\n未启用时：内部 DMA 口接成无请求\ndebug = true（可选）\nmonitor\nBreezeHangMonitor\n顶层 glue logic\n最近退休 PC / 指令记录\ntrace 与事件直通\n汇集为 debug Bundle\n共享时钟与复位：连接所有已实例化子模块（省略扇出线）\ndebug 时计算观测事件\nstalled / request / complete\nretire(0).valid\nretire(0) / L1D(0) / L2 events\nclock / reset\nresetAddr [64]\ntime [64]\nmsip / mtip [N]\nexternalInterrupts [N × 8]\nsupervisorExternalInterrupts [N]\ndmaWishbone\nWishbone 从接口 · 64-bit\nhome ↔ dma\nmem · AXI4 Master\nA = PA 位宽 · D = 64 · ID = I\nmmio · AXI4-Lite Master\nA = PA 位宽 · D = 64\nhartFatal [N]\nhartEStop [N]\ndebug · BreezeAxiDebug\ntrace / 最近退休记录\n停顿与事务超时告警 / 缓存事件\n实线：功能连接 粗双箭头：含输入与输出的总线 Bundle 紫色单箭头：观察 / 调试信息 虚线边框：配置可选\nN = 核心数；I = max(1, ceil(log2(l2Slots)))。图为参数化源码视图，顶层组合与寄存逻辑作概括，不代表额外 Module 实例。\nSOURCE top/BreezeClusterAxi.scala:44–89 · bus/CoherentDmaWishbone.scala · top/BreezeHangMonitor.scala | main @ a0a1aaa",
+  "width": 1800,
+  "height": 1150,
+  "pageErrors": [],
+  "input": "/home/chen/leisure/flow/docs/figures/breeze-top-composition/breeze-top-composition.drawio",
+  "output": "/home/chen/leisure/flow/docs/figures/breeze-top-composition/breeze-top-composition.png"
+}

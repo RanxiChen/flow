@@ -1,0 +1,189 @@
+{
+  "source_sha": "a0a1aaa014daf3779a8e675ef024646c6e1c016b",
+  "view": "one-level module composition, parameterized source view",
+  "modules": {
+    "cluster": "always",
+    "bridge": "cfg.coherentDma",
+    "monitor": "debug"
+  },
+  "sources": {
+    "design/src/main/scala/top/BreezeClusterAxi.scala": "a51c77996fc41371d66afbf3d78b7bc52a92dcc8e24627798a3be8c07b32183d",
+    "design/src/main/scala/bus/CoherentDmaWishbone.scala": "69f8cdf1779fa5cbbe96135cc1468d653168ada3446fda7fdf892666453e99eb",
+    "design/src/main/scala/top/BreezeHangMonitor.scala": "3ea9dcfb9233d6f1915e5f4100b2529e77d3f134f28e1b53fe342bace75742ab"
+  },
+  "edge_semantics": [
+    {
+      "id": "clock-external",
+      "source": "clock-reset-outside",
+      "target": "clock-reset-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "clock-internal",
+      "source": "clock-reset-pin",
+      "target": "clock-fanout",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "boot-external",
+      "source": "boot-time-outside",
+      "target": "boot-time-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "boot-cluster",
+      "source": "boot-time-pin",
+      "target": "cluster",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "irq-external",
+      "source": "irqs-outside",
+      "target": "irqs-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "irq-cluster",
+      "source": "irqs-pin",
+      "target": "cluster",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "dma-external",
+      "source": "dmaWishbone-outside",
+      "target": "dmaWishbone-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "dma-to-bridge",
+      "source": "dmaWishbone-pin",
+      "target": "bridge",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "bridge-to-cluster",
+      "source": "bridge",
+      "target": "cluster",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "mem-direct",
+      "source": "cluster",
+      "target": "mem-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "mem-external",
+      "source": "mem-pin",
+      "target": "mem-outside",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "mmio-direct",
+      "source": "cluster",
+      "target": "mmio-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "mmio-external",
+      "source": "mmio-pin",
+      "target": "mmio-outside",
+      "semantic": "connection",
+      "bidirectional_bundle": true
+    },
+    {
+      "id": "status-direct",
+      "source": "cluster",
+      "target": "status-pin",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "status-external",
+      "source": "status-pin",
+      "target": "status-outside",
+      "semantic": "connection",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "observe-mem",
+      "source": "mem-tap",
+      "target": "observe-glue",
+      "semantic": "read-only observation",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "observe-mmio",
+      "source": "mmio-tap",
+      "target": "observe-glue",
+      "semantic": "read-only observation",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "events-to-monitor",
+      "source": "observe-glue",
+      "target": "monitor",
+      "semantic": "computed monitor inputs",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "retire-valid",
+      "source": "cluster",
+      "target": "monitor",
+      "semantic": "retire(0).valid",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "cluster-debug-direct",
+      "source": "cluster",
+      "target": "trace-input",
+      "semantic": "retire(0), l1dEvents(0), l2Events plus retirement record",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "trace-to-debug",
+      "source": "trace-input",
+      "target": "debug-assembly",
+      "semantic": "trace and top-level registers",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "monitor-to-debug",
+      "source": "monitor",
+      "target": "debug-assembly",
+      "semantic": "noRetireCycles, hang, reasons",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "debug-bundle",
+      "source": "debug-assembly",
+      "target": "debug-pin",
+      "semantic": "debug bundle assembly",
+      "bidirectional_bundle": false
+    },
+    {
+      "id": "debug-external",
+      "source": "debug-pin",
+      "target": "debug-outside",
+      "semantic": "optional debug output",
+      "bidirectional_bundle": false
+    }
+  ],
+  "notes": [
+    "debug-scope is a conditional region, not a Module",
+    "observe-glue and retirement record are top-level glue logic",
+    "debug traces bypass the monitor; only hang-related outputs originate there"
+  ]
+}

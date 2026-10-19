@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "module_instances": [
+    "cluster",
+    "bridge",
+    "monitor"
+  ],
+  "conditional_instances": {
+    "cluster": "always",
+    "bridge": "cfg.coherentDma",
+    "monitor": "debug"
+  },
+  "functional_mem_mmio_bypass_monitor": true,
+  "monitor_output_only_to_debug": true,
+  "trace_bypasses_monitor": true,
+  "source_sha256_match": true,
+  "scope": "Native diagram and source connection checks; not RTL elaboration or simulation."
+}
