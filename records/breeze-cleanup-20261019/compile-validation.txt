@@ -1,0 +1,32 @@
+5244e932db91ea6bd4d1ffb7f9bc7c451c277ed552b94f266a03c09200a56ed4  /home/chen/FUN/flow-runs/breeze-cleanup-20261019-90bd6f35/sbt-launch-1.9.7.jar
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-cleanup-20261019-90bd6f35/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-cleanup-20261019-90bd6f35/design/)
+[info] compiling 138 Scala sources to /home/chen/FUN/flow-cleanup-20261019-90bd6f35/design/target/scala-2.13/classes ...
+[info] done compiling
+[success] Total time: 19 s, completed Oct 19, 2026, 12:43:18 PM
+[info] compiling 113 Scala sources to /home/chen/FUN/flow-cleanup-20261019-90bd6f35/design/target/scala-2.13/test-classes ...
+[warn] /home/chen/FUN/flow-cleanup-20261019-90bd6f35/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+[success] Total time: 11 s, completed Oct 19, 2026, 12:43:29 PM
+[info] BreezeCoreConfigSpec:
+[info] - resource-rich single keeps full memory geometry and thirty-two FP tags independently of quad
+[info] - privilege profiles should keep MCU as default and enable Linux Bare mode explicitly
+[info] - BreezeCoreConfig should derive baseline frontend and backend branch predictor settings when requested
+[info] - BreezeCoreConfig should derive gshare frontend and backend branch predictor settings
+[info] - parameterless defaults select GShare at every Scala layer
+[info] - cluster presets carry the memory geometry as the single entry point
+[info] - default geometry derives the l1d-rtl-spec §0.2 constants
+[info] - cluster presets keep explicit baseline without changing geometry
+[info] - geometry outside the v1 constraints is rejected at construction
+[info] Run completed in 454 milliseconds.
+[info] Total number of tests run: 9
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 9, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 1 s, completed Oct 19, 2026, 12:43:29 PM

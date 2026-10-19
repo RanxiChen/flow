@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-19",
+  "canonical_root": "/home/chen/leisure/flow",
+  "branch": "main",
+  "cleanup_commit": "c8eb0e152d91e3e16262b856ef5dfd647e38319d",
+  "source_baseline": "452937a42ecae8f8592ebc3482feec93de31ca20",
+  "source_archive_sha256": "90bd6f35406c04a27bb52c0debb49be7adb230cd57d5b3988e698b0a9d116671",
+  "deleted_legacy_files": 3,
+  "deleted_lines": 332,
+  "compile_validation": {
+    "host": "Alan",
+    "main_sources": 138,
+    "test_sources": 113,
+    "config_tests_passed": 9,
+    "config_tests_failed": 0,
+    "exit_code": 0
+  },
+  "worktree_count_after": 1,
+  "removed_checkouts": 13,
+  "removed_paths": [
+    "/home/chen/flow-mem",
+    "/home/chen/flow-soc",
+    "/home/chen/leisure/flow-be2",
+    "/home/chen/leisure/flow-rvv",
+    "/home/chen/leisure/flow-rvv-full",
+    "/home/chen/leisure/flow/.worktrees/f2-owner-ce-20261012",
+    "/home/chen/leisure/flow/.worktrees/f2-wholecore-v2-20261012",
+    "/home/chen/leisure/flow/.worktrees/rvv-single",
+    "/home/chen/leisure/flow/.worktrees/rvv-zve32f",
+    "/home/chen/leisure/flow/.worktrees/zve32f-single",
+    "/home/chen/leisure/flow/.worktrees/zve32f-window-exp",
+    "/home/chen/leisure/flow/.worktrees/pipeline-closure-20261012",
+    "/home/chen/leisure/flow/.worktrees/single-full-20261012"
+  ],
+  "verified_backup": "/home/chen/leisure/flow-worktree-archives/20261019T045214Z",
+  "migrated_preexisting_untracked_files": 8,
+  "preexisting_linux_changes_preserved": true,
+  "cvfpu": "d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e",
+  "retained_profiles": [
+    "single",
+    "small",
+    "single-rvv",
+    "single-zve32f"
+  ]
+}

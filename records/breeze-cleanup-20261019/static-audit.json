@@ -1,0 +1,22 @@
+{
+  "scanned_code_and_build_files": 570,
+  "deleted_symbol_references": {
+    "DCacheWishboneBridge": [],
+    "DCacheWishboneBridgeState": [],
+    "BreezeMmioArbiter": [],
+    "BreezeMmioArbiterState": [],
+    "BreezeDataTranslator": []
+  },
+  "retained_entrypoints_unchanged": [
+    "design/src/main/scala/top/GenerateBreezeCluster.scala",
+    "design/src/main/scala/top/BreezeCluster.scala",
+    "design/src/main/scala/top/BreezeClusterAxi.scala",
+    "design/src/main/scala/top/BreezeRvvSystem.scala",
+    "design/src/main/scala/top/BreezeRvvAxi.scala",
+    "design/src/main/scala/backend/BreezeBackend.scala",
+    "design/src/main/scala/config/config.scala",
+    "fpga/kcu105/target.py",
+    "litex_wrapper/flow/core.py"
+  ],
+  "result": "PASS"
+}

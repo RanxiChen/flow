@@ -2,7 +2,11 @@
 
 核对日期：2026-10-19。目标：同一套源码保留纯标量和 RVV 配置，明确生成入口、硬件顶层和模块边界，再逐批删除无引用实现。
 
-## 1. 本次使用哪套源码
+## 1. 唯一工作区与整合前记录
+
+当前唯一开发工作区为 `/home/chen/leisure/flow`，使用 `main`。纯标量、早期 RVV 与 Zve32f 配置都在同一套源码中保留。清理代码对应提交 `c8eb0e152d91e3e16262b856ef5dfd647e38319d`，已 push 到 `origin/main`。
+
+下表是整合前的核对记录，表内其他工作区已归档并移除：
 
 | 工作区 | 分支与 HEAD | 整核使用的前端 | 定位 |
 | --- | --- | --- | --- |
@@ -10,9 +14,9 @@
 | `/home/chen/leisure/flow-be2` | `refactor/be2-backend-decoupling` / `99c7e8d9adf324de3e1e35a990832029674e2c3e` | `BreezeFrontendPipeline` | BE2、新前端整核集成及早期 RVV 路径 |
 | `/home/chen/leisure/flow/.worktrees/zve32f-single` | `feat/zve32f-single-20261013` / `452937a42ecae8f8592ebc3482feec93de31ca20` | `BreezeFrontendPipeline` | 本次清理基线，保留标量、早期 RVV 和 Zve32f 配置 |
 
-已用 `git merge-base --is-ancestor` 核对：`2051dd0` 是 `99c7e8d` 的祖先，后者是 `452937a` 的祖先。主目录不等于最新实现。本次不切换主目录分支、不合并 worktree，也不删除其他工作区。
+已用 `git merge-base --is-ancestor` 核对：`2051dd0` 是 `99c7e8d` 的祖先，后者是 `452937a` 的祖先。整合前主目录不等于最新实现；现已将保留版本收敛到主目录的 `main`，其他工作区已备份移除。
 
-清理改动位于第三行工作区，是该 SHA 之上的未提交改动。该工作区原有未跟踪的 GEMV 测试、汇编及 Window 实验记录均保留。
+第一轮清理最初在第三行工作区进行，随后提交并迁回主目录。该工作区原有的 8 个未跟踪 GEMV/Window 文件均已按内容散列迁回；原主目录的 Linux 改动与其他未跟踪资料也保留。
 
 ## 2. 顶层与生成入口
 
@@ -79,7 +83,7 @@ KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `Br
 
 ## 5. 第一轮已删除的文件
 
-仅在本次基线工作区删除以下三个旧模块；未修改任何活动实例、配置、接口或测试期望。
+在当前主线删除以下三个旧模块；未修改任何活动实例、配置、接口或测试期望。
 
 | 文件 | 删除依据 |
 | --- | --- |
@@ -105,11 +109,11 @@ KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `Br
 | Air、Wisp、matrix 及其 FPGA 工程 | 独立产品/实验，未进入本次 Breeze 清理范围 |
 | `records/`、旧 `.bit`/`.ltx`/报告、其他 worktree | 保留，既有证据和工作区不因模块未进入当前配置而删除 |
 
-主目录 `2051dd0` 中仍存在的旧前端文件，包括 `BreezeFrontend`、`BreezeBTB`、`BreezePHT`、`BreezeFetchTranslator`、`BreezeInstrRealigner`、`BreezeFrontendBoundary`，以及 `FetchBuffer`、`FetchTlbClient`、旧 `L1ICache`，在 `99c7e8d` 后的基线已经删除。不要在旧主目录再次照单删除：旧整核仍实例化它们。应在选定主线工作区继续整理。
+整合前主目录 `2051dd0` 中仍存在的旧前端文件，包括 `BreezeFrontend`、`BreezeBTB`、`BreezePHT`、`BreezeFetchTranslator`、`BreezeInstrRealigner`、`BreezeFrontendBoundary`，以及 `FetchBuffer`、`FetchTlbClient`、旧 `L1ICache`，在 `99c7e8d` 后的基线已经删除。这是版本替换的记录；当前主目录已采用新主线，不再使用这些旧前端文件。
 
 ## 7. 文档过期点与验证范围
 
-主目录 `2051dd0` 的 `design/build.sbt` 指向不存在的 `GenerateBreezeCoreWishbone`；其 KCU105 README 使用不存在的 `GenerateBreezeMulticoreClusterWishbone`，根 README 也仍链接不存在的 `core/BreezeCore.scala`。这些是过期入口。当前任务用上述源代码索引替代它们；历史发布镜像的说明与验证结论不迁移到新源码。
+整合前主目录 `2051dd0` 的 `design/build.sbt` 指向不存在的 `GenerateBreezeCoreWishbone`；其 KCU105 README 使用不存在的 `GenerateBreezeMulticoreClusterWishbone`，根 README 也仍链接不存在的 `core/BreezeCore.scala`。这些是过期入口。当前任务用上述源代码索引替代它们；历史发布镜像的说明与验证结论不迁移到新源码。
 
 本报告的层次和候选判定来自静态源码核对。共扫描 570 个代码与构建文件，已删除的三个类及两个状态枚举均无剩余引用。生成入口、两套系统顶层、后端、配置及 LiteX/KCU105 接线文件与基线逐字节一致。
 
@@ -123,4 +127,20 @@ KCU105 板级入口是 [fpga/kcu105/target.py](../fpga/kcu105/target.py) 的 `Br
 - 结果：138 个主源码文件编译通过；113 个测试源码文件编译通过；配置测试 9/9，通过、失败/取消/忽略/pending 均为 0；最终 exit 0。`ClusterIsaSpec.scala:59` 有一个外部引用类型检查警告。
 - Alan evidence：`/home/chen/FUN/flow-runs/breeze-cleanup-20261019-90bd6f35/`；日志已取回本地 `records/breeze-cleanup-20261019/alan-logs.tgz`。
 
-这些结果覆盖删除后的编译依赖和配置测试，不是四种产品的 RTL 功能回归。未执行 RTL 生成、Vivado、bitstream 生成或上板验证。全部改动保持未提交；既有工作区和实验文件保留。
+这些结果覆盖删除后的编译依赖和配置测试，不是四种产品的 RTL 功能回归。未执行 RTL 生成、Vivado、bitstream 生成或上板验证。清理代码和图文已提交并 push。随后工作区整合只改变目录布局与本文记录，没有增加硬件代码改动。
+
+
+## 8. 工作区收敛记录
+
+2026-10-19，按用户“push，把其他工作区删了，就留这一个”的要求完成：
+
+- 唯一 Git 工作区：`/home/chen/leisure/flow`，分支 `main`。`git worktree list --porcelain` 已核对只有这一项。
+- 已移除 11 个 linked worktree 和 2 个独立源码副本，`.worktrees/` 目录已移除。两份独立副本为 `pipeline-closure-20261012` 与 `single-full-20261012`，它们此前没有登记在主仓库的 worktree 列表中。
+- 每个移除目录均先完整归档（包括未提交、未跟踪、忽略文件和其中独立 Git 数据），逐文件验证归档内容，并在删除前再次核对文件散列和活动进程引用。
+- 主仓库全部 refs 已另存并验证 Git bundle；CVFPU 也有独立 bundle。保留所有本地历史分支，不删除远端分支。
+- 原主目录的 Linux 修改已恢复为未提交状态；Buildroot 配置同时保留新主线的 `flow-coremark` 与用户原有的 `flow-llama` 条目。
+- CVFPU 已在主目录切到匹配主线的 `d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e`；共享仿真主机配置内容与整合前一致。
+
+仓库外备份目录：`/home/chen/leisure/flow-worktree-archives/20261019T045214Z`。目录内 `inventory-before.json`、`verified-archives.json`、各目录 `.files.json`、`migration.json` 和 `removals.json` 记录来源、SHA、文件散列、迁移及删除结果。压缩归档是恢复资料，不是保留的开发工作区。
+
+本次交付摘要与编译证据索引见 [delivery-summary.json](../records/breeze-cleanup-20261019/delivery-summary.json)。
