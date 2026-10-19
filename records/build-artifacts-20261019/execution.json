@@ -1,0 +1,10 @@
+{
+  "host": "chen@localhost",
+  "jump": "clawbot",
+  "workspace": "/home/chen/FUN/flow-artifacts-validation-20261019-e195f5be",
+  "evidence": "/home/chen/FUN/flow-runs/build-artifacts-20261019-e195f5be",
+  "base_sha": "759f39d88c8a88541099e545648284a2f2f76f68",
+  "source_archive_sha256": "e195f5be36c67b04bbf68f000ad6cc5824109cb966963cf299be637a1ddc52f1",
+  "scala_command": "java -Xmx8G -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -jar /home/chen/FUN/flow-runs/build-artifacts-20261019-e195f5be/sbt-launch-1.9.7.jar 'Compile / compile' 'Test / compile' 'testOnly flow.config.BreezeCoreConfigSpec flow.config.BreezeBuildOptionsSpec flow.top.BreezeBuildArtifactsSpec'",
+  "python_command": "python3 -m unittest sim.litex.test_breeze_cpu_wrapper sim.litex.test_public_build_options sim.litex.test_run_multicore -v"
+}
