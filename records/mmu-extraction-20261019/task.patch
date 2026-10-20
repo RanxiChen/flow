@@ -1,0 +1,548 @@
+diff --git a/design/src/main/scala/frontend/BreezeFrontendPipeline.scala b/design/src/main/scala/frontend/BreezeFrontendPipeline.scala
+index e9416be..1c7dcd9 100644
+--- a/design/src/main/scala/frontend/BreezeFrontendPipeline.scala
++++ b/design/src/main/scala/frontend/BreezeFrontendPipeline.scala
+@@ -62,12 +62,12 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
+ }
+ 
+ /** Production/standalone frontend boundary: genuine VIPT F0/F1, streaming RVC F2.
+-  * Backend implementation is outside this module. Connected mode exposes
+-  * the shared data TLB and reserves training capacity before backend EX.
++  * Translation is an external per-core service. Connected mode reserves
++  * training capacity before backend EX.
+   */
+ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
+     p: BreezeFrontendPipelineParams = BreezeFrontendPipelineParams(),
+-    mmuParams: Sv39MmuParams = Sv39MmuParams(), backendConnected: Boolean = false,
++    itlbParams: Sv39TlbParams = Sv39MmuParams().itlb, backendConnected: Boolean = false,
+     predictorEnabled: Boolean = true) extends Module {
+   val io = IO(new Bundle {
+     val resetPc = Input(UInt(64.W))
+@@ -75,7 +75,6 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
+     val block = Input(Bool())
+     val redirect = Flipped(Valid(UInt(64.W))) // global exception/context restart
+     val fenceI = Input(Bool())
+-    val sfence = Input(new SfenceIO)
+     val resolve = Flipped(Decoupled(new PipelineResolution(p)))
+     val resolutionReserve = if(backendConnected) Some(Input(Bool())) else None
+     val resolutionAvailable = Output(Bool())
+@@ -83,9 +82,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
+     val instruction = Decoupled(new PipelineInstruction(p))
+     val refillReq = new L1CacheMissReqIO(64)
+     val refillRsp = new L1CacheMissRespIO(g.lineBytes * 8)
+-    val ptwMem = new PtwMemIO
+-    val dtlb = if(backendConnected) Some(new TlbPortIO(withPmpCandidate = true)) else None
+-    val mmuIdle = Output(Bool())
++    val itlb = Flipped(new TlbPortIO(withPmpCandidate = true,
++      fetchCandidates = itlbParams.ways + itlbParams.superpages + 1))
+     val hpm = Output(new BreezeHpmEvents)
+     val idle = Output(Bool())
+     val debug = Output(new Bundle {
+@@ -102,26 +100,11 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
+   val forecastHistory = RegInit(0.U(p.historyBits.W))
+   val committedHistory = RegInit(0.U(p.historyBits.W))
+   val faultStop = RegInit(false.B)
+-  val mmu = Module(new Sv39Mmu(mmuParams, withPmpCandidate = true, withFetchCandidates = true,
+-    pipelinedFetchKill = true))
+-  mmu.io.csr.sv39 := io.context.satp(63, 60) === 8.U
+-  mmu.io.csr.asid := io.context.satp(59, 44); mmu.io.csr.rootPpn := io.context.satp(43, 0)
+-  mmu.io.csr.priv := io.context.privilege; mmu.io.csr.mprv := io.context.mprv
+-  mmu.io.csr.mpp := io.context.mpp; mmu.io.csr.sum := io.context.sum; mmu.io.csr.mxr := io.context.mxr
+-  mmu.io.sfence := io.sfence
+-  if(backendConnected) { io.dtlb.get <> mmu.io.dtlb }
+-  else {
+-    mmu.io.dtlb.req.valid := false.B
+-    mmu.io.dtlb.req.bits := 0.U.asTypeOf(new TlbReq)
+-    mmu.io.dtlb.kill := false.B
+-  }
+-  io.mmuIdle := mmu.io.idle
+-  io.ptwMem <> mmu.io.ptwMem
+-  val cache = Module(new BreezeViptICache(g, p, mmuParams.itlb,
++  val cache = Module(new BreezeViptICache(g, p, itlbParams,
+     quiesceReplayWhenBlocked = backendConnected))
+   val predictor = Module(new BreezePipelinePredictor(p))
+   val queue = Module(new PipelineInstructionQueue(p))
+-  cache.io.tlb <> mmu.io.itlb
++  cache.io.tlb <> io.itlb
+   cache.io.context := io.context; cache.io.fenceI := io.fenceI
+   io.refillReq <> cache.io.refillReq; cache.io.refillRsp <> io.refillRsp
+   io.instruction <> queue.io.deq
+@@ -431,7 +414,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
+       "accepted history differs from cancellation-qualified preview")
+   }
+   when(f2Fire && carryValid) { assert(w.pc === carryPc + 2.U, "noncontiguous RVC continuation") }
+-  io.idle := cache.io.idle && mmu.io.idle && queue.io.empty && !carryValid
++  // Local frontend drain only; the integration layer observes MMU idle separately.
++  io.idle := cache.io.idle && queue.io.empty && !carryValid
+   io.hpm := 0.U.asTypeOf(io.hpm)
+   io.hpm.icacheAccess := cache.io.request.fire
+   io.hpm.icacheMiss := cache.io.refillReq.req
+diff --git a/design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala b/design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala
+index 9f5bcfb..46eb914 100644
+--- a/design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala
++++ b/design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala
+@@ -63,7 +63,7 @@ class BreezeFrontendTimingHarness extends Module {
+   private val globalClock = Module(new FrontendGlobalClock)
+   globalClock.io.in := clock
+   withClock(globalClock.io.out) {
+-  val frontend = Module(new BreezeFrontendPipeline())
++  val frontend = Module(new BreezeFrontendMmuHarness())
+   frontend.io.resetPc := RegNext(io.resetPc)
+   val context = RegNext(io.context)
+   frontend.io.context := context
+diff --git a/design/src/main/scala/top/BreezeCluster.scala b/design/src/main/scala/top/BreezeCluster.scala
+index a51988f..1e57d84 100644
+--- a/design/src/main/scala/top/BreezeCluster.scala
++++ b/design/src/main/scala/top/BreezeCluster.scala
+@@ -10,6 +10,7 @@ import flow.interface.TracePayload
+ import flow.l1d.{L1DCache, L1DEvents}
+ import flow.l1i.L1IClient
+ import flow.l2.{L2Events, L2Home}
++import flow.mmu.sv39.Sv39Mmu
+ import flow.platform.BreezeMcuPlatform
+ 
+ /** Native memory-system connection boundary. Cache miss/replay execution is
+@@ -56,7 +57,9 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
+     io.backendObservation.foreach(_(h) := backend.io.observe)
+     val frontend = Module(new BreezeFrontendPipeline(mem,
+       BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)),
+-      mmuParams = cfg.mmu, backendConnected = true, predictorEnabled = coreCfg.useGShare))
++      itlbParams = cfg.mmu.itlb, backendConnected = true, predictorEnabled = coreCfg.useGShare))
++    val mmu = Module(new Sv39Mmu(cfg.mmu, withPmpCandidate = true,
++      withFetchCandidates = true, pipelinedFetchKill = true))
+     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, withEarlyCancel = true))
+     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
+     val l1i = Module(new L1IClient(mem))
+@@ -68,21 +71,20 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
+     backend.io.externalInterrupts := io.externalInterrupts(h)
+     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
+     backend.io.l1d <> l1d.io.core
+-    backend.io.mmuIdle := frontend.io.mmuIdle && backend.io.zve.map(_.mmuIdle).getOrElse(true.B)
+-    BreezePipelineLink(backend, frontend)
++    backend.io.mmuIdle := mmu.io.idle && backend.io.zve.map(_.mmuIdle).getOrElse(true.B)
++    BreezePipelineLink(backend, frontend, mmu)
+ 
+-    val context = backend.io.mmuContext
+     backend.io.zve match {
+       case Some(z) =>
+         val share = Module(new flow.rvv.zve.ZveTlbShare)
+-        share.io.tlb <> frontend.io.dtlb.get
++        share.io.tlb <> mmu.io.dtlb
+         share.io.scalar <> l1d.io.tlb
+         share.io.vector <> z.tlb
+         vectorClient.get.io.stream <> z.stream
+         vectorClient.get.io.axi <> z.axi
+-      case None => l1d.io.tlb <> frontend.io.dtlb.get
++      case None => l1d.io.tlb <> mmu.io.dtlb
+     }
+-    l1d.io.ptw <> frontend.io.ptwMem
++    l1d.io.ptw <> mmu.io.ptwMem
+     l1i.io.demand <> frontend.io.refillReq
+     frontend.io.refillRsp <> l1i.io.demandRsp
+     // No prefetch trigger or installation contract exists in the frontend.
+diff --git a/design/src/main/scala/top/BreezeFrontendL2System.scala b/design/src/main/scala/top/BreezeFrontendL2System.scala
+index 1f8ce79..4bc7647 100644
+--- a/design/src/main/scala/top/BreezeFrontendL2System.scala
++++ b/design/src/main/scala/top/BreezeFrontendL2System.scala
+@@ -10,7 +10,7 @@ import flow.frontend.{BreezeFrontendPipeline, BreezeFrontendPipelineParams, Pipe
+ import flow.interface.BreezeMmuContext
+ import flow.l1i.L1IClient
+ import flow.l2.{L2Events, L2Home}
+-import flow.mmu.sv39.{PtwMemIO, SfenceIO, Sv39MmuParams}
++import flow.mmu.sv39.{PtwMemIO, SfenceIO, Sv39Mmu, Sv39MmuContextLink, Sv39MmuParams}
+ 
+ /** Per-hart boundary for the new backend and the future D-cache PTW path.
+   * Instruction refills are internal to BreezeFrontendL2System.
+@@ -33,7 +33,7 @@ class BreezeFrontendL2Port(p: BreezeFrontendPipelineParams) extends Bundle {
+ /** New frontend -> VIPT I-cache -> L1I Read client -> shared L2 -> AXI.
+   * This is an integration top with no dependency on the legacy backend.
+   * External L1D clients retain their real coherence ports, including probes;
+-  * page-table reads retain the frontend's external physical PTW interface.
++  * page-table reads use the per-hart MMU's external physical PTW interface.
+   */
+ class BreezeFrontendL2System(
+     g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
+@@ -54,7 +54,14 @@ class BreezeFrontendL2System(
+   io.l2Events := l2.io.events
+ 
+   for (h <- 0 until p.nCores) {
+-    val frontend = Module(new BreezeFrontendPipeline(g, frontendParams, mmuParams))
++    val frontend = Module(new BreezeFrontendPipeline(g, frontendParams, mmuParams.itlb))
++    val mmu = Module(new Sv39Mmu(mmuParams, withPmpCandidate = true,
++      withFetchCandidates = true, pipelinedFetchKill = true))
++    frontend.io.itlb <> mmu.io.itlb
++    Sv39MmuContextLink(mmu, io.harts(h).context)
++    mmu.io.dtlb.req.valid := false.B
++    mmu.io.dtlb.req.bits := 0.U.asTypeOf(mmu.io.dtlb.req.bits)
++    mmu.io.dtlb.kill := false.B
+     val refill = Module(new L1IClient(g))
+     val hart = io.harts(h)
+ 
+@@ -63,12 +70,12 @@ class BreezeFrontendL2System(
+     frontend.io.block := hart.block
+     frontend.io.redirect := hart.redirect
+     frontend.io.fenceI := hart.fenceI
+-    frontend.io.sfence := hart.sfence
++    mmu.io.sfence := hart.sfence
+     frontend.io.resolve <> hart.resolve
+     frontend.io.committedBranch := hart.committedBranch
+     hart.instruction <> frontend.io.instruction
+-    hart.ptwMem <> frontend.io.ptwMem
+-    hart.idle := frontend.io.idle
++    hart.ptwMem <> mmu.io.ptwMem
++    hart.idle := frontend.io.idle && mmu.io.idle
+ 
+     // Capture every single-cycle miss pulse before L2 can backpressure it.
+     // L1IClient holds Read(id=0) until accepted, then consumes ReadData/error
+diff --git a/design/src/main/scala/top/BreezePipelineLink.scala b/design/src/main/scala/top/BreezePipelineLink.scala
+index cb6ca4a..e345b1e 100644
+--- a/design/src/main/scala/top/BreezePipelineLink.scala
++++ b/design/src/main/scala/top/BreezePipelineLink.scala
+@@ -5,15 +5,18 @@ import chisel3.util._
+ import flow.backend.BreezeBackend
+ import flow.frontend.BreezeFrontendPipeline
+ import flow.interface.FrontendPredType
++import flow.mmu.sv39.{Sv39Mmu, Sv39MmuContextLink}
+ 
+ /** Wires only: no legacy frontend, fetch FIFO, skid or translation adapter.
+   * Global restart is registered with the committed CSR permission event.
+   * EX resolution is accepted directly in its reserved slot, without delay.
+   */
+ object BreezePipelineLink {
+-  def apply(backend: BreezeBackend, frontend: BreezeFrontendPipeline): Unit = {
++  def apply(backend: BreezeBackend, frontend: BreezeFrontendPipeline, mmu: Sv39Mmu): Unit = {
+     frontend.io.resetPc := backend.io.resetAddr
+     frontend.io.context := backend.io.mmuContext
++    Sv39MmuContextLink(mmu, backend.io.mmuContext)
++    frontend.io.itlb <> mmu.io.itlb
+     frontend.io.block := backend.io.translationBlocked
+     val restart = RegNext(backend.io.frontendRestart, 0.U.asTypeOf(backend.io.frontendRestart))
+     frontend.io.redirect.valid := restart.valid
+@@ -22,11 +25,11 @@ object BreezePipelineLink {
+     // Flush translation and cancel its cache query on the same edge. Backend
+     // observation remains at WB; no younger ID may issue in this restart gap.
+     val sfence = RegNext(backend.io.sfence, 0.U.asTypeOf(backend.io.sfence))
+-    frontend.io.sfence.valid := sfence.valid
+-    frontend.io.sfence.rs1Nz := sfence.useVaddr
+-    frontend.io.sfence.rs2Nz := sfence.useAsid
+-    frontend.io.sfence.vaddr := sfence.vaddr
+-    frontend.io.sfence.asid := sfence.asid
++    mmu.io.sfence.valid := sfence.valid
++    mmu.io.sfence.rs1Nz := sfence.useVaddr
++    mmu.io.sfence.rs2Nz := sfence.useAsid
++    mmu.io.sfence.vaddr := sfence.vaddr
++    mmu.io.sfence.asid := sfence.asid
+     frontend.io.resolve <> backend.io.frontendResolve
+     frontend.io.resolutionReserve.get := backend.io.frontendResolutionReserve
+     backend.io.frontendResolutionAvailable := frontend.io.resolutionAvailable
+diff --git a/design/src/main/scala/top/BreezeRvvSystem.scala b/design/src/main/scala/top/BreezeRvvSystem.scala
+index 8ed2748..8f2796b 100644
+--- a/design/src/main/scala/top/BreezeRvvSystem.scala
++++ b/design/src/main/scala/top/BreezeRvvSystem.scala
+@@ -10,6 +10,7 @@ import flow.interface.TracePayload
+ import flow.l1d.{L1DCache, L1DEvents}
+ import flow.l1i.L1IClient
+ import flow.l2.{L2Events, L2Home}
++import flow.mmu.sv39.Sv39Mmu
+ import flow.platform.BreezeMcuPlatform
+ import flow.rvv._
+ 
+@@ -54,7 +55,9 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
+     io.backendObservation.foreach(_(h) := backend.io.observe)
+     val frontend = Module(new BreezeFrontendPipeline(mem,
+       BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)),
+-      mmuParams = cfg.mmu, backendConnected = true, predictorEnabled = coreCfg.useGShare))
++      itlbParams = cfg.mmu.itlb, backendConnected = true, predictorEnabled = coreCfg.useGShare))
++    val mmu = Module(new Sv39Mmu(cfg.mmu, withPmpCandidate = true,
++      withFetchCandidates = true, pipelinedFetchKill = true))
+     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, writeThrough = true, withEarlyCancel = true))
+     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
+     val l1i = Module(new L1IClient(mem))
+@@ -68,11 +71,11 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
+     backend.io.externalInterrupts := io.externalInterrupts(h)
+     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
+     backend.io.l1d <> l1d.io.core
+-    backend.io.mmuIdle := frontend.io.mmuIdle && vectorTranslation.io.idle
+-    BreezePipelineLink(backend, frontend)
++    backend.io.mmuIdle := mmu.io.idle && vectorTranslation.io.idle
++    BreezePipelineLink(backend, frontend, mmu)
+ 
+     val context = backend.io.mmuContext
+-    dtlbArb.io.tlb <> frontend.io.dtlb.get
++    dtlbArb.io.tlb <> mmu.io.dtlb
+     dtlbArb.io.scalar <> l1d.io.tlb
+     dtlbArb.io.scalarWants := l1d.tlbWants.get
+     dtlbArb.io.vector <> vectorTranslation.io.tlb
+@@ -99,7 +102,7 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
+     va.r.bits.resp := fa.r.bits.resp; va.r.bits.last := fa.r.bits.last
+     va.b.valid := fa.b.valid; fa.b.ready := va.b.ready
+     va.b.bits.id := fa.b.bits.id; va.b.bits.resp := fa.b.bits.resp
+-    l1d.io.ptw <> frontend.io.ptwMem
++    l1d.io.ptw <> mmu.io.ptwMem
+     l1i.io.demand <> frontend.io.refillReq
+     frontend.io.refillRsp <> l1i.io.demandRsp
+     // No prefetch trigger or installation contract exists in the frontend.
+diff --git a/design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala b/design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala
+index 01a5341..32de86d 100644
+--- a/design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala
++++ b/design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala
+@@ -35,7 +35,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   private val base = BigInt("80000000", 16)
+   private case class Seen(pc: BigInt, raw: BigInt, instruction: BigInt, length: Int,
+       pageFault: Boolean, accessFault: Boolean, secondFault: Boolean)
+-  private class Driver(d: BreezeFrontendPipeline, start: BigInt, seed: Int = 73) {
++  private class Driver(d: BreezeFrontendMmuHarness, start: BigInt, seed: Int = 73) {
+     val memory = mutable.Map.empty[BigInt, Int].withDefaultValue(0)
+     val ptes = mutable.Map.empty[BigInt, BigInt].withDefaultValue(BigInt(0))
+     val random = new scala.util.Random(seed)
+@@ -127,7 +127,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "VIPT streams mixed RVC/RV32 through line boundaries and random consumer stalls" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base + 2)
+       var address = base + 2
+       val expected = (0 until 120).map { i =>
+@@ -144,7 +144,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "cross-page RV32 reassembles after two real Sv39 walks" in {
+     val va = BigInt("40000ffe", 16)
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, va)
+       h.executableTor(base + 0x2000)
+       d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+@@ -160,7 +160,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "PMP allows a final RVC but faults the second parcel of a straddling RV32" in {
+     for (compressed <- Seq(true, false)) {
+-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+         val h = new Driver(d, base + 2)
+         h.executableTor(base + 4)
+         if (compressed) h.put16(base + 2, 1) else h.put32(base + 2, BigInt("12300193", 16))
+@@ -175,7 +175,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "redirect drains a killed refill and same-address reuse returns fresh data" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("11100193", 16)); h.put16(base + 4, 1)
+       while (h.refills.isEmpty) h.tick()
+@@ -189,7 +189,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "F2 direct call and return use instruction length and speculative RAS" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("040000ef", 16)) // jal ra,+64
+       h.put16(base + 4, 1); h.put16(base + 6, 1)
+@@ -201,7 +201,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "F2 repairs missing NT branch history and global cancellation restores committed history" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("00001463", 16)); h.put16(base + 4, 1)
+       d.io.committedBranch.valid.poke(true.B); d.io.committedBranch.bits.poke(true.B)
+@@ -250,7 +250,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "warm RV32 hits accept a new fetch window every cycle" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       for (i <- 0 until 100) h.put32(base + i * 4, 0x13)
+       h.collect(64)
+@@ -265,7 +265,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "missing second page faults the original straddling instruction precisely" in {
+     val va = BigInt("40000ffe", 16)
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, va)
+       h.executableTor(base + 0x2000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+       h.mapPage(va, base); h.put16(base + 0xffe, 0x193)
+@@ -276,7 +276,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "resolution overrides younger decode and restores before-history plus actual direction" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("04000063", 16)); h.put16(base + 4, 1); h.put16(base + 64, 1)
+       assert(h.collect(1).head.pc == base)
+@@ -295,7 +295,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "stale BTB at a RV32 head is invalidated without losing its second parcel" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       d.io.block.poke(true.B)
+       d.io.resolve.bits.eventPc.poke(base.U); d.io.resolve.bits.kind.poke(2.U)
+@@ -312,7 +312,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "RAS recovery includes the resolving call before a new return uses it" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("040000ef", 16)); h.put16(base + 4, 1)
+       h.put32(base + 64, BigInt("00008067", 16)); h.put32(base + 128, BigInt("00008067", 16))
+@@ -331,7 +331,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "sfence remapping preserves VIPT index but compares the new physical tag" in {
+     val va = BigInt("40000000", 16)
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, va)
+       h.executableTor(base + 0x3000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+       h.mapPage(va, base)
+@@ -354,7 +354,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   "a high physical alias faults before using a low-address cached instruction" in {
+     val va = BigInt("40000000", 16)
+     val high = base + (BigInt(1) << geometry.paddrBits)
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, va)
+       h.executableTor(high + 0x1000)
+       d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+@@ -378,7 +378,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   "2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons" in {
+     val va = BigInt("40000002", 16)
+     for (level <- Seq(1, 2)) {
+-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+         val h = new Driver(d, va)
+         h.executableTor(base + 0x2000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
+         val leaf = ((base >> 12) << 10) | 0x4b
+@@ -395,7 +395,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "taken prediction on a missed group discards its deferred sequential request" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       d.io.block.poke(true.B)
+       d.io.resolve.bits.eventPc.poke((base + 2).U); d.io.resolve.bits.kind.poke(2.U)
+@@ -410,7 +410,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "instruction output remains stable while stalled and resumes in order" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       for (i <- 0 until 32) h.put16(base + i * 2, 1)
+       d.io.instruction.ready.poke(false.B)
+@@ -427,7 +427,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "permission CSR restart drops all previously authorized queued instructions" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.executableTor(base + 0x1000)
+       for (i <- 0 until 32) h.put32(base + i * 4, 0x13)
+@@ -447,7 +447,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "refill errors return a precise fault and do not install an executable line" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       h.put32(base, BigInt("12300193", 16)); h.refillError = true
+       val fault = h.collect(1).head
+@@ -463,7 +463,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "two RVC branches select NT-shifted history and discard the younger slot after T" in {
+     for (firstTaken <- Seq(false, true)) {
+-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+         val h = new Driver(d, base)
+         d.io.block.poke(true.B)
+         def train(pc: BigInt, before: Int, taken: Boolean, target: BigInt): Unit = {
+@@ -515,7 +515,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "compressed JALR, JR and J predecode alongside expansion and preserve return length" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       d.io.block.poke(true.B)
+       d.io.resolve.bits.eventPc.poke(base.U); d.io.resolve.bits.kind.poke(3.U)
+@@ -589,7 +589,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "refill acceptance handles same-edge kill, later cancellation and fence during installation" in {
+     for (mode <- 0 until 3) {
+-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+         val h = new Driver(d, base)
+         val old = BigInt("11100193", 16); val fresh = BigInt("22200193", 16)
+         h.put32(base, old); h.put16(base + 4, 1)
+@@ -651,7 +651,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "taken first-slot prefix preserves the unconsumed second-slot BTB entry" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       d.io.block.poke(true.B)
+       for ((pc, target) <- Seq((base, base + 16), (base + 2, base + 66))) {
+@@ -683,7 +683,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+ 
+   "sequential indirect misses apply both RAS hints and forward a first-slot push to a return" in {
+     for (secondIsReturn <- Seq(true, false)) {
+-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+         val h = new Driver(d, base)
+         h.put16(base, 0x9502) // c.jalr a0: no target entry, predict sequentially.
+         h.put16(base + 2, if (secondIsReturn) 0x8082 else 0x9502)
+@@ -713,7 +713,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
+   }
+ 
+   "history survives a full two-window return queue and long consumer backpressure" in {
+-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
++    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+       val h = new Driver(d, base)
+       d.io.block.poke(true.B)
+       for (off <- 0 until 128 by 2) h.put16(base + off, 1)
+diff --git a/design/src/test/scala/frontend/BreezeResolutionReservationSpec.scala b/design/src/test/scala/frontend/BreezeResolutionReservationSpec.scala
+index cd3b8e0..2667ff4 100644
+--- a/design/src/test/scala/frontend/BreezeResolutionReservationSpec.scala
++++ b/design/src/test/scala/frontend/BreezeResolutionReservationSpec.scala
+@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
+ class BreezeResolutionReservationSpec extends AnyFreeSpec with ChiselSim {
+   for (enabled <- Seq(true, false)) {
+     s"reserved EX feedback never waits for training and global restart releases only unfilled records ($enabled)" in {
+-      simulate(new BreezeFrontendPipeline(backendConnected = true, predictorEnabled = enabled)) { d =>
++      simulate(new BreezeFrontendMmuHarness(backendConnected = true, predictorEnabled = enabled)) { d =>
+         d.io.resetPc.poke(0x80000000L.U)
+         d.io.context.poke(0.U.asTypeOf(d.io.context))
+         d.io.context.privilege.poke(3.U); d.io.context.mpp.poke(3.U)
+diff --git a/design/src/test/scala/memsys/L1IRegisteredReturnSpec.scala b/design/src/test/scala/memsys/L1IRegisteredReturnSpec.scala
+index d0cbda7..6569425 100644
+--- a/design/src/test/scala/memsys/L1IRegisteredReturnSpec.scala
++++ b/design/src/test/scala/memsys/L1IRegisteredReturnSpec.scala
+@@ -7,7 +7,7 @@ import flow.coherence._
+ import flow.config.BreezeMemGeometry
+ import flow.interface._
+ import flow.l1i.L1IClient
+-import flow.frontend.BreezeFrontendPipeline
++import flow.frontend.BreezeFrontendMmuHarness
+ import org.scalatest.freespec.AnyFreeSpec
+ 
+ class RegisteredIRefillHarness extends Module {
+@@ -19,7 +19,7 @@ class RegisteredIRefillHarness extends Module {
+     val coh = new ReadClientIO(CoherenceParams(g))
+     val returned = Output(Bool())
+   })
+-  val frontend = Module(new BreezeFrontendPipeline(g))
++  val frontend = Module(new BreezeFrontendMmuHarness(g))
+   val client = Module(new L1IClient(g))
+   val active = RegInit(false.B)
+   val pc = Reg(UInt(64.W))

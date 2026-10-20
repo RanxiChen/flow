@@ -10,7 +10,7 @@ import flow.frontend.{BreezeFrontendPipeline, BreezeFrontendPipelineParams, Pipe
 import flow.interface.BreezeMmuContext
 import flow.l1i.L1IClient
 import flow.l2.{L2Events, L2Home}
-import flow.mmu.sv39.{PtwMemIO, SfenceIO, Sv39MmuParams}
+import flow.mmu.sv39.{PtwMemIO, SfenceIO, Sv39Mmu, Sv39MmuContextLink, Sv39MmuParams}
 
 /** Per-hart boundary for the new backend and the future D-cache PTW path.
   * Instruction refills are internal to BreezeFrontendL2System.
@@ -33,7 +33,7 @@ class BreezeFrontendL2Port(p: BreezeFrontendPipelineParams) extends Bundle {
 /** New frontend -> VIPT I-cache -> L1I Read client -> shared L2 -> AXI.
   * This is an integration top with no dependency on the legacy backend.
   * External L1D clients retain their real coherence ports, including probes;
-  * page-table reads retain the frontend's external physical PTW interface.
+  * page-table reads use the per-hart MMU's external physical PTW interface.
   */
 class BreezeFrontendL2System(
     g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
@@ -54,7 +54,14 @@ class BreezeFrontendL2System(
   io.l2Events := l2.io.events
 
   for (h <- 0 until p.nCores) {
-    val frontend = Module(new BreezeFrontendPipeline(g, frontendParams, mmuParams))
+    val frontend = Module(new BreezeFrontendPipeline(g, frontendParams, mmuParams.itlb))
+    val mmu = Module(new Sv39Mmu(mmuParams, withPmpCandidate = true,
+      withFetchCandidates = true, pipelinedFetchKill = true))
+    frontend.io.itlb <> mmu.io.itlb
+    Sv39MmuContextLink(mmu, io.harts(h).context)
+    mmu.io.dtlb.req.valid := false.B
+    mmu.io.dtlb.req.bits := 0.U.asTypeOf(mmu.io.dtlb.req.bits)
+    mmu.io.dtlb.kill := false.B
     val refill = Module(new L1IClient(g))
     val hart = io.harts(h)
 
@@ -63,12 +70,12 @@ class BreezeFrontendL2System(
     frontend.io.block := hart.block
     frontend.io.redirect := hart.redirect
     frontend.io.fenceI := hart.fenceI
-    frontend.io.sfence := hart.sfence
+    mmu.io.sfence := hart.sfence
     frontend.io.resolve <> hart.resolve
     frontend.io.committedBranch := hart.committedBranch
     hart.instruction <> frontend.io.instruction
-    hart.ptwMem <> frontend.io.ptwMem
-    hart.idle := frontend.io.idle
+    hart.ptwMem <> mmu.io.ptwMem
+    hart.idle := frontend.io.idle && mmu.io.idle
 
     // Capture every single-cycle miss pulse before L2 can backpressure it.
     // L1IClient holds Read(id=0) until accepted, then consumes ReadData/error

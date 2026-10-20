@@ -1,0 +1,24 @@
+{
+  "base_sha": "f058e3bc7292973a41cd3a766e8d872db2571357",
+  "identity": "base SHA plus exact task file overlay and submodule working trees",
+  "overlay": {
+    "design/src/main/scala/frontend/BreezeFrontendPipeline.scala": "4d93c2fdca9788ebe4a8be3bdb4e3bd6ff53016a35dd8cd6c5a258d363484e36",
+    "design/src/main/scala/frontend/BreezeFrontendTimingHarness.scala": "2c76bcf9834512ff6ebff66ba728c21f10a2bf7ec6204d1e0b3b53cf27a7ad98",
+    "design/src/main/scala/top/BreezeCluster.scala": "e7fc38b764d0f2cfe8368d86ef39e50a1982b54213298b23cd60ed49a86f6fe4",
+    "design/src/main/scala/top/BreezeFrontendL2System.scala": "b609d7a8175523b38a0452eaad9f7f4363e475512fc34d1b7499adba28d0319f",
+    "design/src/main/scala/top/BreezePipelineLink.scala": "6d1778794979a73ac9142aa3ac37b5925af1cc21be8924b3a51830f50da84df4",
+    "design/src/main/scala/top/BreezeRvvSystem.scala": "f5c62948d6841e4089528cb8e28beeda78ec32b65bb3b77a7448897b1d1dd45f",
+    "design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala": "dcdbeba1b69b949047edd451dec988c31a22f98b3b431b3f45ffe0a3d1f85971",
+    "design/src/test/scala/frontend/BreezeResolutionReservationSpec.scala": "235c2ffc70eeaa7d66727d91a5fe02a51323dc38bdf844e898b088e33bb1b7ef",
+    "design/src/test/scala/memsys/L1IRegisteredReturnSpec.scala": "5819391e92a0d49deccf595858d42887e62ee5122d5f2a7ba619fa2b40ec4cc2",
+    "design/src/main/scala/frontend/BreezeFrontendMmuHarness.scala": "62dd0214694722ca0952ca88ff4575713e296bc74f7d2b6a11813a90970e7491",
+    "design/src/main/scala/mmu/sv39/Sv39MmuContextLink.scala": "d9c62bc11cc20d4f1a88dc6f70a37353a85c0913ff41d1a81cc575bf3b43afb2"
+  },
+  "third_party/cvfpu": "d0ed6e548bfd298a03f2f8c62e610a5fd1afa91e",
+  "third_party/riscv-tests": "bcffa2b3188b040c611f90dc0b6e422f54775a09",
+  "archive_sha256": "224fd7d268d278793d566efa633da8051f78c47eafcf5ff1986740cf9a01dcb1",
+  "supplemental_files": {
+    "design/src/test/scala/top/MmuExtractionElabSpec.scala": "0b54d6391e275cc5703655b57d0ea246b66f5f52611f98f61e580b4f61c18273"
+  },
+  "supplement_archive_sha256": "b77bdbeca887d0f64d50b970ad0eb44c4715ec6908a57490a6474f461309ec62"
+}

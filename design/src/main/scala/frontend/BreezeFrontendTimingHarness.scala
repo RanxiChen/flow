@@ -63,7 +63,7 @@ class BreezeFrontendTimingHarness extends Module {
   private val globalClock = Module(new FrontendGlobalClock)
   globalClock.io.in := clock
   withClock(globalClock.io.out) {
-  val frontend = Module(new BreezeFrontendPipeline())
+  val frontend = Module(new BreezeFrontendMmuHarness())
   frontend.io.resetPc := RegNext(io.resetPc)
   val context = RegNext(io.context)
   frontend.io.context := context

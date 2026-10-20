@@ -1,0 +1,13 @@
+chen-System-Product-Name
+/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/design
+Mon Oct 19 14:17:06 UTC 2026
+openjdk version "11.0.32.1" 2026-08-18
+OpenJDK Runtime Environment (build 11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu)
+OpenJDK 64-Bit Server VM (build 11.0.32.1+1-post-1ubuntu1-24.04-Ubuntu, mixed mode, sharing)
+Verilator 5.028 2024-08-21 rev v5.028
+riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+5244e932db91ea6bd4d1ffb7f9bc7c451c277ed552b94f266a03c09200a56ed4  /home/chen/FUN/flow-runs/mmu-extraction-20261019-f058e3b/sbt-launch.jar

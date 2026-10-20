@@ -1,0 +1,4 @@
+{
+  "preferred": {"host": "cloud_chen@47.96.71.231:22", "exit": 255, "reason": "Connection timed out"},
+  "selected": {"host": "chen@localhost:2286 via clawbot", "hostname": "chen-System-Product-Name", "environment": "source /home/chen/miniforge3/bin/activate flow", "java": "11.0.32.1", "verilator": "5.028", "available_memory": "56 GiB", "available_disk": "141 GiB", "sbt_launcher": "/home/chen/FUN/flow-runs/breeze-cleanup-20261019-90bd6f35/sbt-launch-1.9.7.jar", "existing_hardware_tasks": "none shown by bounded ps/rg check"}
+}

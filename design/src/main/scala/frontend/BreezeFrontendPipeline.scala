@@ -62,12 +62,12 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
 }
 
 /** Production/standalone frontend boundary: genuine VIPT F0/F1, streaming RVC F2.
-  * Backend implementation is outside this module. Connected mode exposes
-  * the shared data TLB and reserves training capacity before backend EX.
+  * Translation is an external per-core service. Connected mode reserves
+  * training capacity before backend EX.
   */
 class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1),
     p: BreezeFrontendPipelineParams = BreezeFrontendPipelineParams(),
-    mmuParams: Sv39MmuParams = Sv39MmuParams(), backendConnected: Boolean = false,
+    itlbParams: Sv39TlbParams = Sv39MmuParams().itlb, backendConnected: Boolean = false,
     predictorEnabled: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val resetPc = Input(UInt(64.W))
@@ -75,7 +75,6 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val block = Input(Bool())
     val redirect = Flipped(Valid(UInt(64.W))) // global exception/context restart
     val fenceI = Input(Bool())
-    val sfence = Input(new SfenceIO)
     val resolve = Flipped(Decoupled(new PipelineResolution(p)))
     val resolutionReserve = if(backendConnected) Some(Input(Bool())) else None
     val resolutionAvailable = Output(Bool())
@@ -83,9 +82,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val instruction = Decoupled(new PipelineInstruction(p))
     val refillReq = new L1CacheMissReqIO(64)
     val refillRsp = new L1CacheMissRespIO(g.lineBytes * 8)
-    val ptwMem = new PtwMemIO
-    val dtlb = if(backendConnected) Some(new TlbPortIO(withPmpCandidate = true)) else None
-    val mmuIdle = Output(Bool())
+    val itlb = Flipped(new TlbPortIO(withPmpCandidate = true,
+      fetchCandidates = itlbParams.ways + itlbParams.superpages + 1))
     val hpm = Output(new BreezeHpmEvents)
     val idle = Output(Bool())
     val debug = Output(new Bundle {
@@ -102,26 +100,11 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   val forecastHistory = RegInit(0.U(p.historyBits.W))
   val committedHistory = RegInit(0.U(p.historyBits.W))
   val faultStop = RegInit(false.B)
-  val mmu = Module(new Sv39Mmu(mmuParams, withPmpCandidate = true, withFetchCandidates = true,
-    pipelinedFetchKill = true))
-  mmu.io.csr.sv39 := io.context.satp(63, 60) === 8.U
-  mmu.io.csr.asid := io.context.satp(59, 44); mmu.io.csr.rootPpn := io.context.satp(43, 0)
-  mmu.io.csr.priv := io.context.privilege; mmu.io.csr.mprv := io.context.mprv
-  mmu.io.csr.mpp := io.context.mpp; mmu.io.csr.sum := io.context.sum; mmu.io.csr.mxr := io.context.mxr
-  mmu.io.sfence := io.sfence
-  if(backendConnected) { io.dtlb.get <> mmu.io.dtlb }
-  else {
-    mmu.io.dtlb.req.valid := false.B
-    mmu.io.dtlb.req.bits := 0.U.asTypeOf(new TlbReq)
-    mmu.io.dtlb.kill := false.B
-  }
-  io.mmuIdle := mmu.io.idle
-  io.ptwMem <> mmu.io.ptwMem
-  val cache = Module(new BreezeViptICache(g, p, mmuParams.itlb,
+  val cache = Module(new BreezeViptICache(g, p, itlbParams,
     quiesceReplayWhenBlocked = backendConnected))
   val predictor = Module(new BreezePipelinePredictor(p))
   val queue = Module(new PipelineInstructionQueue(p))
-  cache.io.tlb <> mmu.io.itlb
+  cache.io.tlb <> io.itlb
   cache.io.context := io.context; cache.io.fenceI := io.fenceI
   io.refillReq <> cache.io.refillReq; cache.io.refillRsp <> io.refillRsp
   io.instruction <> queue.io.deq
@@ -431,7 +414,8 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
       "accepted history differs from cancellation-qualified preview")
   }
   when(f2Fire && carryValid) { assert(w.pc === carryPc + 2.U, "noncontiguous RVC continuation") }
-  io.idle := cache.io.idle && mmu.io.idle && queue.io.empty && !carryValid
+  // Local frontend drain only; the integration layer observes MMU idle separately.
+  io.idle := cache.io.idle && queue.io.empty && !carryValid
   io.hpm := 0.U.asTypeOf(io.hpm)
   io.hpm.icacheAccess := cache.io.request.fire
   io.hpm.icacheMiss := cache.io.refillReq.req

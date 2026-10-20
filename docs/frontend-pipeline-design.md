@@ -62,3 +62,7 @@ RAS 深度 8，推测/解析两份。F2 对有效完整 call/return 做一次推
 ## 6. 2026-10-11 新前端与 L2 接线
 
 新增 `BreezeFrontendL2System`：每 hart 的新前端 refill 经 `L1IClient` 接入共享真实 `L2Home`，下级暴露 AXI4；指令、解析/提交和控制直接暴露给后续新后端。需求请求捕获、L2 反压、完整行/error 返回和取消排空沿用现有协议，不改变本体命中流水，不开启预取。PTW 内存口和 L1D 一致性口仍在集成边界外。本阶段按用户要求只完成 RTL 接线，不运行编译/仿真/物理验证；以上独立前端验收不覆盖该集成顶层。接口与证据范围见 [frontend-l2-integration.md](frontend-l2-integration.md)。
+
+## 2026-10-19 MMU 独立迁移
+
+按用户决定，frontend 不再拥有 MMU；生产每核集成层实例化原参数的 `Sv39Mmu`，通过完整 iTLB 接口连接 frontend 的 VIPT ICache。CSR context 仍供 frontend 的 PMP/权限逻辑使用；sfence、dTLB、PTW 和 MMU idle 归集成层。F0/F1/F2、候选 PA/独热选择/kill、restart/sfence 的既有寄存边界不变。独立测试通过 `BreezeFrontendMmuHarness` 提供真实 MMU/PTW。frontend `idle` 为本地排空，包装器显式合并 MMU idle。本次不实现预取。验证证据见 [实施记录](tasks/MMU-extraction-20261019.md)。

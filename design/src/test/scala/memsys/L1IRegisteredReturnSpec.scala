@@ -7,7 +7,7 @@ import flow.coherence._
 import flow.config.BreezeMemGeometry
 import flow.interface._
 import flow.l1i.L1IClient
-import flow.frontend.BreezeFrontendPipeline
+import flow.frontend.BreezeFrontendMmuHarness
 import org.scalatest.freespec.AnyFreeSpec
 
 class RegisteredIRefillHarness extends Module {
@@ -19,7 +19,7 @@ class RegisteredIRefillHarness extends Module {
     val coh = new ReadClientIO(CoherenceParams(g))
     val returned = Output(Bool())
   })
-  val frontend = Module(new BreezeFrontendPipeline(g))
+  val frontend = Module(new BreezeFrontendMmuHarness(g))
   val client = Module(new L1IClient(g))
   val active = RegInit(false.B)
   val pc = Reg(UInt(64.W))

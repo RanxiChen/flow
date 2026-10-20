@@ -10,6 +10,7 @@ import flow.interface.TracePayload
 import flow.l1d.{L1DCache, L1DEvents}
 import flow.l1i.L1IClient
 import flow.l2.{L2Events, L2Home}
+import flow.mmu.sv39.Sv39Mmu
 import flow.platform.BreezeMcuPlatform
 
 /** Native memory-system connection boundary. Cache miss/replay execution is
@@ -56,7 +57,9 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     io.backendObservation.foreach(_(h) := backend.io.observe)
     val frontend = Module(new BreezeFrontendPipeline(mem,
       BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)),
-      mmuParams = cfg.mmu, backendConnected = true, predictorEnabled = coreCfg.useGShare))
+      itlbParams = cfg.mmu.itlb, backendConnected = true, predictorEnabled = coreCfg.useGShare))
+    val mmu = Module(new Sv39Mmu(cfg.mmu, withPmpCandidate = true,
+      withFetchCandidates = true, pipelinedFetchKill = true))
     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, withEarlyCancel = true))
     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
     val l1i = Module(new L1IClient(mem))
@@ -68,21 +71,20 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     backend.io.externalInterrupts := io.externalInterrupts(h)
     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
     backend.io.l1d <> l1d.io.core
-    backend.io.mmuIdle := frontend.io.mmuIdle && backend.io.zve.map(_.mmuIdle).getOrElse(true.B)
-    BreezePipelineLink(backend, frontend)
+    backend.io.mmuIdle := mmu.io.idle && backend.io.zve.map(_.mmuIdle).getOrElse(true.B)
+    BreezePipelineLink(backend, frontend, mmu)
 
-    val context = backend.io.mmuContext
     backend.io.zve match {
       case Some(z) =>
         val share = Module(new flow.rvv.zve.ZveTlbShare)
-        share.io.tlb <> frontend.io.dtlb.get
+        share.io.tlb <> mmu.io.dtlb
         share.io.scalar <> l1d.io.tlb
         share.io.vector <> z.tlb
         vectorClient.get.io.stream <> z.stream
         vectorClient.get.io.axi <> z.axi
-      case None => l1d.io.tlb <> frontend.io.dtlb.get
+      case None => l1d.io.tlb <> mmu.io.dtlb
     }
-    l1d.io.ptw <> frontend.io.ptwMem
+    l1d.io.ptw <> mmu.io.ptwMem
     l1i.io.demand <> frontend.io.refillReq
     frontend.io.refillRsp <> l1i.io.demandRsp
     // No prefetch trigger or installation contract exists in the frontend.

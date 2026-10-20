@@ -5,15 +5,18 @@ import chisel3.util._
 import flow.backend.BreezeBackend
 import flow.frontend.BreezeFrontendPipeline
 import flow.interface.FrontendPredType
+import flow.mmu.sv39.{Sv39Mmu, Sv39MmuContextLink}
 
 /** Wires only: no legacy frontend, fetch FIFO, skid or translation adapter.
   * Global restart is registered with the committed CSR permission event.
   * EX resolution is accepted directly in its reserved slot, without delay.
   */
 object BreezePipelineLink {
-  def apply(backend: BreezeBackend, frontend: BreezeFrontendPipeline): Unit = {
+  def apply(backend: BreezeBackend, frontend: BreezeFrontendPipeline, mmu: Sv39Mmu): Unit = {
     frontend.io.resetPc := backend.io.resetAddr
     frontend.io.context := backend.io.mmuContext
+    Sv39MmuContextLink(mmu, backend.io.mmuContext)
+    frontend.io.itlb <> mmu.io.itlb
     frontend.io.block := backend.io.translationBlocked
     val restart = RegNext(backend.io.frontendRestart, 0.U.asTypeOf(backend.io.frontendRestart))
     frontend.io.redirect.valid := restart.valid
@@ -22,11 +25,11 @@ object BreezePipelineLink {
     // Flush translation and cancel its cache query on the same edge. Backend
     // observation remains at WB; no younger ID may issue in this restart gap.
     val sfence = RegNext(backend.io.sfence, 0.U.asTypeOf(backend.io.sfence))
-    frontend.io.sfence.valid := sfence.valid
-    frontend.io.sfence.rs1Nz := sfence.useVaddr
-    frontend.io.sfence.rs2Nz := sfence.useAsid
-    frontend.io.sfence.vaddr := sfence.vaddr
-    frontend.io.sfence.asid := sfence.asid
+    mmu.io.sfence.valid := sfence.valid
+    mmu.io.sfence.rs1Nz := sfence.useVaddr
+    mmu.io.sfence.rs2Nz := sfence.useAsid
+    mmu.io.sfence.vaddr := sfence.vaddr
+    mmu.io.sfence.asid := sfence.asid
     frontend.io.resolve <> backend.io.frontendResolve
     frontend.io.resolutionReserve.get := backend.io.frontendResolutionReserve
     backend.io.frontendResolutionAvailable := frontend.io.resolutionAvailable

@@ -35,7 +35,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   private val base = BigInt("80000000", 16)
   private case class Seen(pc: BigInt, raw: BigInt, instruction: BigInt, length: Int,
       pageFault: Boolean, accessFault: Boolean, secondFault: Boolean)
-  private class Driver(d: BreezeFrontendPipeline, start: BigInt, seed: Int = 73) {
+  private class Driver(d: BreezeFrontendMmuHarness, start: BigInt, seed: Int = 73) {
     val memory = mutable.Map.empty[BigInt, Int].withDefaultValue(0)
     val ptes = mutable.Map.empty[BigInt, BigInt].withDefaultValue(BigInt(0))
     val random = new scala.util.Random(seed)
@@ -127,7 +127,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "VIPT streams mixed RVC/RV32 through line boundaries and random consumer stalls" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base + 2)
       var address = base + 2
       val expected = (0 until 120).map { i =>
@@ -144,7 +144,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "cross-page RV32 reassembles after two real Sv39 walks" in {
     val va = BigInt("40000ffe", 16)
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, va)
       h.executableTor(base + 0x2000)
       d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
@@ -160,7 +160,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "PMP allows a final RVC but faults the second parcel of a straddling RV32" in {
     for (compressed <- Seq(true, false)) {
-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
         val h = new Driver(d, base + 2)
         h.executableTor(base + 4)
         if (compressed) h.put16(base + 2, 1) else h.put32(base + 2, BigInt("12300193", 16))
@@ -175,7 +175,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "redirect drains a killed refill and same-address reuse returns fresh data" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("11100193", 16)); h.put16(base + 4, 1)
       while (h.refills.isEmpty) h.tick()
@@ -189,7 +189,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "F2 direct call and return use instruction length and speculative RAS" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("040000ef", 16)) // jal ra,+64
       h.put16(base + 4, 1); h.put16(base + 6, 1)
@@ -201,7 +201,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "F2 repairs missing NT branch history and global cancellation restores committed history" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("00001463", 16)); h.put16(base + 4, 1)
       d.io.committedBranch.valid.poke(true.B); d.io.committedBranch.bits.poke(true.B)
@@ -250,7 +250,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "warm RV32 hits accept a new fetch window every cycle" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       for (i <- 0 until 100) h.put32(base + i * 4, 0x13)
       h.collect(64)
@@ -265,7 +265,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "missing second page faults the original straddling instruction precisely" in {
     val va = BigInt("40000ffe", 16)
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, va)
       h.executableTor(base + 0x2000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
       h.mapPage(va, base); h.put16(base + 0xffe, 0x193)
@@ -276,7 +276,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "resolution overrides younger decode and restores before-history plus actual direction" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("04000063", 16)); h.put16(base + 4, 1); h.put16(base + 64, 1)
       assert(h.collect(1).head.pc == base)
@@ -295,7 +295,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "stale BTB at a RV32 head is invalidated without losing its second parcel" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       d.io.block.poke(true.B)
       d.io.resolve.bits.eventPc.poke(base.U); d.io.resolve.bits.kind.poke(2.U)
@@ -312,7 +312,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "RAS recovery includes the resolving call before a new return uses it" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("040000ef", 16)); h.put16(base + 4, 1)
       h.put32(base + 64, BigInt("00008067", 16)); h.put32(base + 128, BigInt("00008067", 16))
@@ -331,7 +331,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "sfence remapping preserves VIPT index but compares the new physical tag" in {
     val va = BigInt("40000000", 16)
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, va)
       h.executableTor(base + 0x3000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
       h.mapPage(va, base)
@@ -354,7 +354,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   "a high physical alias faults before using a low-address cached instruction" in {
     val va = BigInt("40000000", 16)
     val high = base + (BigInt(1) << geometry.paddrBits)
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, va)
       h.executableTor(high + 0x1000)
       d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
@@ -378,7 +378,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   "2 MiB and 1 GiB leaves participate in parallel fetch PMP comparisons" in {
     val va = BigInt("40000002", 16)
     for (level <- Seq(1, 2)) {
-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
         val h = new Driver(d, va)
         h.executableTor(base + 0x2000); d.io.context.satp.poke(((BigInt(8) << 60) | 1).U)
         val leaf = ((base >> 12) << 10) | 0x4b
@@ -395,7 +395,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "taken prediction on a missed group discards its deferred sequential request" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       d.io.block.poke(true.B)
       d.io.resolve.bits.eventPc.poke((base + 2).U); d.io.resolve.bits.kind.poke(2.U)
@@ -410,7 +410,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "instruction output remains stable while stalled and resumes in order" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       for (i <- 0 until 32) h.put16(base + i * 2, 1)
       d.io.instruction.ready.poke(false.B)
@@ -427,7 +427,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "permission CSR restart drops all previously authorized queued instructions" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.executableTor(base + 0x1000)
       for (i <- 0 until 32) h.put32(base + i * 4, 0x13)
@@ -447,7 +447,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "refill errors return a precise fault and do not install an executable line" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       h.put32(base, BigInt("12300193", 16)); h.refillError = true
       val fault = h.collect(1).head
@@ -463,7 +463,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "two RVC branches select NT-shifted history and discard the younger slot after T" in {
     for (firstTaken <- Seq(false, true)) {
-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
         val h = new Driver(d, base)
         d.io.block.poke(true.B)
         def train(pc: BigInt, before: Int, taken: Boolean, target: BigInt): Unit = {
@@ -515,7 +515,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "compressed JALR, JR and J predecode alongside expansion and preserve return length" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       d.io.block.poke(true.B)
       d.io.resolve.bits.eventPc.poke(base.U); d.io.resolve.bits.kind.poke(3.U)
@@ -589,7 +589,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "refill acceptance handles same-edge kill, later cancellation and fence during installation" in {
     for (mode <- 0 until 3) {
-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
         val h = new Driver(d, base)
         val old = BigInt("11100193", 16); val fresh = BigInt("22200193", 16)
         h.put32(base, old); h.put16(base + 4, 1)
@@ -651,7 +651,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "taken first-slot prefix preserves the unconsumed second-slot BTB entry" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       d.io.block.poke(true.B)
       for ((pc, target) <- Seq((base, base + 16), (base + 2, base + 66))) {
@@ -683,7 +683,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
 
   "sequential indirect misses apply both RAS hints and forward a first-slot push to a return" in {
     for (secondIsReturn <- Seq(true, false)) {
-      simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+      simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
         val h = new Driver(d, base)
         h.put16(base, 0x9502) // c.jalr a0: no target entry, predict sequentially.
         h.put16(base + 2, if (secondIsReturn) 0x8082 else 0x9502)
@@ -713,7 +713,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
   }
 
   "history survives a full two-window return queue and long consumer backpressure" in {
-    simulate(new BreezeFrontendPipeline(geometry, params)) { d =>
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
       val h = new Driver(d, base)
       d.io.block.poke(true.B)
       for (off <- 0 until 128 by 2) h.put16(base + off, 1)

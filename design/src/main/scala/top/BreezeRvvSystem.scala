@@ -10,6 +10,7 @@ import flow.interface.TracePayload
 import flow.l1d.{L1DCache, L1DEvents}
 import flow.l1i.L1IClient
 import flow.l2.{L2Events, L2Home}
+import flow.mmu.sv39.Sv39Mmu
 import flow.platform.BreezeMcuPlatform
 import flow.rvv._
 
@@ -54,7 +55,9 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
     io.backendObservation.foreach(_(h) := backend.io.observe)
     val frontend = Module(new BreezeFrontendPipeline(mem,
       BreezeFrontendPipelineParams(historyBits = coreCfg.backendCfg.ghrLength.max(2)),
-      mmuParams = cfg.mmu, backendConnected = true, predictorEnabled = coreCfg.useGShare))
+      itlbParams = cfg.mmu.itlb, backendConnected = true, predictorEnabled = coreCfg.useGShare))
+    val mmu = Module(new Sv39Mmu(cfg.mmu, withPmpCandidate = true,
+      withFetchCandidates = true, pipelinedFetchKill = true))
     val l1d = Module(new L1DCache(mem, withPmpCandidate = true, writeThrough = true, withEarlyCancel = true))
     l1d.earlyCancel.get := backend.io.cacheEarlyCancel
     val l1i = Module(new L1IClient(mem))
@@ -68,11 +71,11 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
     backend.io.externalInterrupts := io.externalInterrupts(h)
     backend.io.supervisorExternalInterrupt := io.supervisorExternalInterrupts(h)
     backend.io.l1d <> l1d.io.core
-    backend.io.mmuIdle := frontend.io.mmuIdle && vectorTranslation.io.idle
-    BreezePipelineLink(backend, frontend)
+    backend.io.mmuIdle := mmu.io.idle && vectorTranslation.io.idle
+    BreezePipelineLink(backend, frontend, mmu)
 
     val context = backend.io.mmuContext
-    dtlbArb.io.tlb <> frontend.io.dtlb.get
+    dtlbArb.io.tlb <> mmu.io.dtlb
     dtlbArb.io.scalar <> l1d.io.tlb
     dtlbArb.io.scalarWants := l1d.tlbWants.get
     dtlbArb.io.vector <> vectorTranslation.io.tlb
@@ -99,7 +102,7 @@ class BreezeRvvSystem(val cfg: BreezeClusterConfig, enableTandem: Boolean = fals
     va.r.bits.resp := fa.r.bits.resp; va.r.bits.last := fa.r.bits.last
     va.b.valid := fa.b.valid; fa.b.ready := va.b.ready
     va.b.bits.id := fa.b.bits.id; va.b.bits.resp := fa.b.bits.resp
-    l1d.io.ptw <> frontend.io.ptwMem
+    l1d.io.ptw <> mmu.io.ptwMem
     l1i.io.demand <> frontend.io.refillReq
     frontend.io.refillRsp <> l1i.io.demandRsp
     // No prefetch trigger or installation contract exists in the frontend.

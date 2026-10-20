@@ -1,0 +1,248 @@
+riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+make: Entering directory '/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/tests/cluster'
+mkdir -p build
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/fencei_smc.elf fencei_smc.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/sv39_basic.elf sv39_basic.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/sv39_ptw_cache.elf sv39_ptw_cache.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/trap_misc.elf trap_misc.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/mmio_console.elf mmio_console.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/timer_irq.elf timer_irq.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=1 -o build/lrsc_amo_single.elf lrsc_amo_single.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_amo_lock_2.elf mh_amo_lock.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_lrsc_counter_2.elf mh_lrsc_counter.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_message_pass_2.elf mh_message_pass.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_ipi_2.elf mh_ipi.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_sv39_2.elf mh_sv39.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=2 -o build/mh_fencei_2.elf mh_fencei.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_amo_lock_4.elf mh_amo_lock.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_lrsc_counter_4.elf mh_lrsc_counter.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_message_pass_4.elf mh_message_pass.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_ipi_4.elf mh_ipi.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_sv39_4.elf mh_sv39.S
+riscv64-unknown-elf-gcc -march=rv64ima_zicsr_zifencei -mabi=lp64 -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -DNHARTS=4 -o build/mh_fencei_4.elf mh_fencei.S
+riscv64-unknown-elf-objdump -d build/fencei_smc.elf > build/fencei_smc.dump
+riscv64-unknown-elf-objdump -d build/sv39_basic.elf > build/sv39_basic.dump
+riscv64-unknown-elf-objdump -d build/sv39_ptw_cache.elf > build/sv39_ptw_cache.dump
+riscv64-unknown-elf-objdump -d build/trap_misc.elf > build/trap_misc.dump
+riscv64-unknown-elf-objdump -d build/mmio_console.elf > build/mmio_console.dump
+riscv64-unknown-elf-objdump -d build/timer_irq.elf > build/timer_irq.dump
+riscv64-unknown-elf-objdump -d build/lrsc_amo_single.elf > build/lrsc_amo_single.dump
+riscv64-unknown-elf-objdump -d build/mh_amo_lock_2.elf > build/mh_amo_lock_2.dump
+riscv64-unknown-elf-objdump -d build/mh_lrsc_counter_2.elf > build/mh_lrsc_counter_2.dump
+riscv64-unknown-elf-objdump -d build/mh_message_pass_2.elf > build/mh_message_pass_2.dump
+riscv64-unknown-elf-objdump -d build/mh_ipi_2.elf > build/mh_ipi_2.dump
+riscv64-unknown-elf-objdump -d build/mh_sv39_2.elf > build/mh_sv39_2.dump
+riscv64-unknown-elf-objdump -d build/mh_fencei_2.elf > build/mh_fencei_2.dump
+riscv64-unknown-elf-objdump -d build/mh_amo_lock_4.elf > build/mh_amo_lock_4.dump
+riscv64-unknown-elf-objdump -d build/mh_lrsc_counter_4.elf > build/mh_lrsc_counter_4.dump
+riscv64-unknown-elf-objdump -d build/mh_message_pass_4.elf > build/mh_message_pass_4.dump
+riscv64-unknown-elf-objdump -d build/mh_ipi_4.elf > build/mh_ipi_4.dump
+riscv64-unknown-elf-objdump -d build/mh_sv39_4.elf > build/mh_sv39_4.dump
+riscv64-unknown-elf-objdump -d build/mh_fencei_4.elf > build/mh_fencei_4.dump
+make: Leaving directory '/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/tests/cluster'
+make: Entering directory '/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/tests/cluster'
+riscv64-unknown-elf-gcc -mcmodel=medany -fno-pic -fno-pie -static -nostdlib -nostartfiles -no-pie -Wl,--build-id=none -Wl,--no-relax -T link.ld -I. -march=rv64gc_zve32f -mabi=lp64d -o build/zve_smoke.elf zve_smoke.S
+make: Leaving directory '/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/tests/cluster'
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/design/)
+[info] Defining Test / parallelExecution
+[info] The new value will be used by Test / test / testExecution, Test / testOnly / testExecution, Test / testQuick / testExecution
+[info] Reapplying settings...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-mmu-extraction-20261019-f058e3b/design/)
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] ClusterProgramSpec:
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - single-hart system programs, single core, Linux profile
+[info]   + fencei_smc: PASS cycles=3176 retired=350 h0=pass fencei_smc.elf: all 1 hart(s) passed at cycle 3175
+[info] sv39_basic: PASS cycles=4825 retired=778 h0=pass sv39_basic.elf: all 1 hart(s) passed at cycle 4824
+[info] sv39_ptw_cache: PASS cycles=6164 retired=869 h0=pass sv39_ptw_cache.elf: all 1 hart(s) passed at cycle 6163
+[info] trap_misc: PASS cycles=9620 retired=2092 h0=pass trap_misc.elf: all 1 hart(s) passed at cycle 9619
+[info] mmio_console: PASS cycles=14307 retired=4258 h0=pass mmio_console.elf: all 1 hart(s) passed at cycle 14306
+[info] timer_irq: PASS cycles=4798 retired=856 h0=pass timer_irq.elf: all 1 hart(s) passed at cycle 4797
+[info] lrsc_amo_single: PASS cycles=6369 retired=1127 h0=pass lrsc_amo_single.elf: all 1 hart(s) passed at cycle 6368 
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - single-hart SFENCE system programs with AXI backpressure
+[info]   + sv39_basic: PASS cycles=6003 retired=778 h0=pass sv39_basic.elf: all 1 hart(s) passed at cycle 6002
+[info] sv39_ptw_cache: PASS cycles=6908 retired=869 h0=pass sv39_ptw_cache.elf: all 1 hart(s) passed at cycle 6907 
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - multi-hart programs, dual (2 harts), Linux profile
+[info]   + mh_amo_lock_2: PASS cycles=35012 retired=3815/4616 h0=pass h1=pass mh_amo_lock_2.elf: all 2 hart(s) passed at cycle 35011
+[info] mh_lrsc_counter_2: PASS cycles=14036 retired=1282/1276 h0=pass h1=pass mh_lrsc_counter_2.elf: all 2 hart(s) passed at cycle 14035
+[info] mh_message_pass_2: PASS cycles=14949 retired=3279/2755 h0=pass h1=pass mh_message_pass_2.elf: all 2 hart(s) passed at cycle 14948
+[info] mh_ipi_2: PASS cycles=3526 retired=748/550 h0=pass h1=pass mh_ipi_2.elf: all 2 hart(s) passed at cycle 3525
+[info] mh_sv39_2: PASS cycles=5002 retired=575/534 h0=pass h1=pass mh_sv39_2.elf: all 2 hart(s) passed at cycle 5001
+[info] mh_fencei_2: PASS cycles=2772 retired=339/311 h0=pass h1=pass mh_fencei_2.elf: all 2 hart(s) passed at cycle 2771 
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - multi-hart programs, small (4 harts), Linux profile
+[info]   + mh_amo_lock_4: PASS cycles=104309 retired=20357/11080/7536/14200 h0=pass h1=pass h2=pass h3=pass mh_amo_lock_4.elf: all 4 hart(s) passed at cycle 104308
+[info] mh_lrsc_counter_4: PASS cycles=27276 retired=1302/1292/1296/1276 h0=pass h1=pass h2=pass h3=pass mh_lrsc_counter_4.elf: all 4 hart(s) passed at cycle 27275
+[info] mh_message_pass_4: PASS cycles=19799 retired=3363/3519/3637/3160 h0=pass h1=pass h2=pass h3=pass mh_message_pass_4.elf: all 4 hart(s) passed at cycle 19798
+[info] mh_ipi_4: PASS cycles=8721 retired=2020/550/550/550 h0=pass h1=pass h2=pass h3=pass mh_ipi_4.elf: all 4 hart(s) passed at cycle 8720
+[info] mh_sv39_4: PASS cycles=8267 retired=605/526/534/550 h0=pass h1=pass h2=pass h3=pass mh_sv39_4.elf: all 4 hart(s) passed at cycle 8266
+[info] mh_fencei_4: PASS cycles=3723 retired=363/423/395/315 h0=pass h1=pass h2=pass h3=pass mh_fencei_4.elf: all 4 hart(s) passed at cycle 3722 
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - multi-hart programs, small (4 harts), AXI backpressure
+[info]   + mh_amo_lock_4: PASS cycles=104620 retired=20351/11080/7538/14200 h0=pass h1=pass h2=pass h3=pass mh_amo_lock_4.elf: all 4 hart(s) passed at cycle 104619
+[info] mh_lrsc_counter_4: PASS cycles=27566 retired=1298/1284/1288/1276 h0=pass h1=pass h2=pass h3=pass mh_lrsc_counter_4.elf: all 4 hart(s) passed at cycle 27565
+[info] mh_message_pass_4: PASS cycles=20003 retired=3283/3655/3311/3019 h0=pass h1=pass h2=pass h3=pass mh_message_pass_4.elf: all 4 hart(s) passed at cycle 20002
+[info] mh_ipi_4: PASS cycles=9421 retired=2112/550/550/550 h0=pass h1=pass h2=pass h3=pass mh_ipi_4.elf: all 4 hart(s) passed at cycle 9420
+[info] mh_sv39_4: PASS cycles=8827 retired=617/546/558/566 h0=pass h1=pass h2=pass h3=pass mh_sv39_4.elf: all 4 hart(s) passed at cycle 8826
+[info] mh_fencei_4: PASS cycles=4070 retired=351/427/387/307 h0=pass h1=pass h2=pass h3=pass mh_fencei_4.elf: all 4 hart(s) passed at cycle 4069 
+[info] ZveSystemSmokeSpec:
+[warn] src/main/scala/l2/L2Home.scala 187:40: [W001] Casting non-literal UInt to flow.coherence.DirState. You can use flow.coherence.DirState.safe to cast without this warning.
+[warn]   val metaRead = meta.io.rdata.asTypeOf(metaType)
+[warn]                                        ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 5 warning(s) during hardware elaboration.
+[info] - single-zve32f runs the vector smoke and unchanged scalar programs
+[info]   + zve_smoke.elf: PASS cycles=6881 replay=0,0,0,13,0,0,0 tohost=ArraySeq(Some(1)) zve_smoke.elf: all 1 hart(s) passed at cycle 6880
+[info] fencei_smc.elf: PASS cycles=3176 replay=1,0,2,5,0,0,0 tohost=ArraySeq(Some(1)) fencei_smc.elf: all 1 hart(s) passed at cycle 3175
+[info] sv39_basic.elf: PASS cycles=4825 replay=2,13,6,4,0,0,0 tohost=ArraySeq(Some(1)) sv39_basic.elf: all 1 hart(s) passed at cycle 4824
+[info] sv39_ptw_cache.elf: PASS cycles=6164 replay=16,21,2,25,0,0,0 tohost=ArraySeq(Some(1)) sv39_ptw_cache.elf: all 1 hart(s) passed at cycle 6163
+[info] trap_misc.elf: PASS cycles=9620 replay=0,0,5,2,0,0,0 tohost=ArraySeq(Some(1)) trap_misc.elf: all 1 hart(s) passed at cycle 9619
+[info] lrsc_amo_single.elf: PASS cycles=6369 replay=0,0,3,2,0,1,0 tohost=ArraySeq(Some(1)) lrsc_amo_single.elf: all 1 hart(s) passed at cycle 6368
+[info] rv64ui-p-add: PASS cycles=2236 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-add: all 1 hart(s) passed at cycle 2235
+[info] rv64ui-p-ld: PASS cycles=2106 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-ld: all 1 hart(s) passed at cycle 2105
+[info] rv64ui-p-sd: PASS cycles=2788 replay=0,0,2,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-sd: all 1 hart(s) passed at cycle 2787
+[info] rv64ui-p-sb: PASS cycles=2175 replay=0,0,1,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-sb: all 1 hart(s) passed at cycle 2174
+[info] rv64ui-p-lbu: PASS cycles=1509 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ui-p-lbu: all 1 hart(s) passed at cycle 1508
+[info] rv64um-p-mul: PASS cycles=2213 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64um-p-mul: all 1 hart(s) passed at cycle 2212
+[info] rv64um-p-div: PASS cycles=1070 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64um-p-div: all 1 hart(s) passed at cycle 1069
+[info] rv64ua-p-amoadd_d: PASS cycles=900 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ua-p-amoadd_d: all 1 hart(s) passed at cycle 899
+[info] rv64ua-p-lrsc: PASS cycles=19463 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ua-p-lrsc: all 1 hart(s) passed at cycle 19462
+[info] rv64uf-p-fadd: PASS cycles=1381 replay=0,0,5,0,0,0,0 tohost=ArraySeq(Some(1)) rv64uf-p-fadd: all 1 hart(s) passed at cycle 1380
+[info] rv64ud-p-fmadd: PASS cycles=1633 replay=0,0,12,0,0,0,0 tohost=ArraySeq(Some(1)) rv64ud-p-fmadd: all 1 hart(s) passed at cycle 1632
+[info] rv64si-p-csr: PASS cycles=1270 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64si-p-csr: all 1 hart(s) passed at cycle 1269
+[info] rv64mi-p-csr: PASS cycles=1686 replay=0,0,0,0,0,0,0 tohost=ArraySeq(Some(1)) rv64mi-p-csr: all 1 hart(s) passed at cycle 1685 
+[info] RvvSystemSpec:
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 266:28: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.eventPc := parcelPc(offset + (length === 2.U).asUInt)
+[warn]                            ^
+[warn] src/main/scala/frontend/BreezeFrontendPipeline.scala 265:23: [W005] Dynamic index with width 2 is too narrow for Vec of size 5 (expected index width 3).
+[warn]     out.pc := parcelPc(offset)
+[warn]                       ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.BreezeAmoFunc. You can use flow.interface.BreezeAmoFunc.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] src/main/scala/l1d/L1DCache.scala 202:17: [W001] Casting non-literal UInt to flow.interface.L1DOp. You can use flow.interface.L1DOp.safe to cast without this warning.
+[warn]   s0Req := Mux1H(chosen.asBools, candidates)
+[warn]                 ^
+[warn] There were 4 warning(s) during hardware elaboration.
+[info] - RVV system retains the minimum scalar ISA signatures and executes the vector memory smoke
+[info]   + rv64ui-p-add: tohost=1 cycles=1863 retired=509 
+[info]   + rv64ui-p-lw: tohost=1 cycles=1305 retired=322 
+[info]   + rv64ui-p-sw: tohost=1 cycles=2375 retired=553 
+[info]   + rv64ui-p-beq: tohost=1 cycles=1379 retired=330 
+[info]   + rv64um-p-mul: tohost=1 cycles=1827 retired=499 
+[info]   + rv64um-p-div: tohost=1 cycles=830 retired=148 
+[info]   + rv64ua-p-amoadd_d: tohost=1 cycles=708 retired=108 
+[info]   + rv64ua-p-lrsc: tohost=1 cycles=38647 retired=6282 
+[info]   + rv64uc-p-rvc: tohost=1 cycles=1324 retired=299 
+[info]   + rv64mi-p-csr: tohost=1 cycles=1439 retired=278 
+[info]   + rv64uf-p-ldst: tohost=1 cycles=673 retired=110 
+[info]   + rv64uf-p-fadd: tohost=1 cycles=1136 retired=214 
+[info]   + rv64ud-p-ldst: tohost=1 cycles=753 retired=129 
+[info]   + rv64ud-p-fadd: tohost=1 cycles=1280 retired=214 
+[info]   + rvv_memory: tohost=1 cycles=2051 retired=107 
+[info]   + rvv_memory_sv39: tohost=1 cycles=2259 retired=129 
+[info]   + rvv_arithmetic: tohost=1 cycles=2007 retired=275 
+[info] Run completed in 8 minutes, 17 seconds.
+[info] Total number of tests run: 7
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 7, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 498 s (08:18), completed Oct 19, 2026, 10:16:11 PM

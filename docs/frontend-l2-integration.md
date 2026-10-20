@@ -1,5 +1,7 @@
 # 新前端与 L2 的集成边界
 
+2026-10-19 MMU 独立迁移：生产 `BreezeCluster`/`BreezeRvvSystem` 和独立 `BreezeFrontendL2System` 均由每核集成层实例化 `Sv39Mmu`；`BreezeFrontendPipeline` 只提供 iTLB 请求/返回及候选旁带。CSR、sfence、dTLB、PTW、MMU idle 在集成层连接，预取继续关闭。迁移范围与验证状态见 [MMU 独立迁移](tasks/MMU-extraction-20261019.md)。下文“前端内 MMU”描述历史快照。
+
 2026-10-12 生产路径更新：`BreezeCluster` 和 `BreezeRvvSystem` 已接入 `BreezeFrontendPipeline` 与 BE2-P `BreezeBackend`。每核共享前端内的真实 Sv39Mmu，dTLB 接 L1D（RVV 配置经翻译仲裁器），PTW 经 L1D，EX 解析使用 ID 预留的四项反馈容量。生产生成入口为 `flow.top.GenerateBreezeCluster`；旧阻塞前端及其 realigner/translator/cache/predictor 已删除。详见 [新前端接入报告](tasks/BE2-new-frontend-integration-20261012.md)。下文保留 2026-10-11 独立 `BreezeFrontendL2System` 的历史阶段边界；其中“生产顶层仍是历史路径”仅描述该日快照。
 
 2026-10-11，按用户要求先完成新前端与真实 L2 的 RTL 连接，不以旧后端适配或仿真通过作为本阶段前提。实现为 [BreezeFrontendL2System](../design/src/main/scala/top/BreezeFrontendL2System.scala)。本页规定此次接线边界；前端命中流水、权限、取消规则仍以 [frontend-pipeline-design.md](frontend-pipeline-design.md) 为准。

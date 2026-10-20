@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
 class BreezeResolutionReservationSpec extends AnyFreeSpec with ChiselSim {
   for (enabled <- Seq(true, false)) {
     s"reserved EX feedback never waits for training and global restart releases only unfilled records ($enabled)" in {
-      simulate(new BreezeFrontendPipeline(backendConnected = true, predictorEnabled = enabled)) { d =>
+      simulate(new BreezeFrontendMmuHarness(backendConnected = true, predictorEnabled = enabled)) { d =>
         d.io.resetPc.poke(0x80000000L.U)
         d.io.context.poke(0.U.asTypeOf(d.io.context))
         d.io.context.privilege.poke(3.U); d.io.context.mpp.poke(3.U)
