@@ -55,6 +55,8 @@ class Stage(val cfg: BackendConfig) extends Bundle {
   val vectorType = cfg.rvv.map(_ => UInt(64.W))
   val predictionMiss = Bool()
   val branchTaken = Bool()
+  val observeDirectionWrong = Bool(); val observeTargetWrong = Bool(); val observeReturn = Bool()
+  val observeEarlyAvailable = Bool(); val observeEarlyDirectionWrong = Bool(); val observeEarlyTargetWrong = Bool()
 }
 
 /** Five-stage backend: ID/EX/MEM/PERM/WB. EX accepts, WB commits, W2/lateReg write the RFs. */
@@ -852,6 +854,13 @@ class BreezeBackend(
       mem.rs2 := ex.rs2_addr
       mem.predictionMiss := redirected
       mem.branchTaken := taken
+      mem.observeDirectionWrong := taken =/= ex.pred.predTaken
+      mem.observeTargetWrong := taken && (!ex.pred.predTaken || jau.io.jmp_addr =/= ex.pred.predPc)
+      mem.observeReturn := ex.inst(6,0) === OPCODE.JALR && ex.inst(11,7) === 0.U &&
+        (ex.inst(19,15) === 1.U || ex.inst(19,15) === 5.U) && ex.inst(31,20) === 0.U
+      mem.observeEarlyAvailable := ex.pred.earlyTargetAvailable
+      mem.observeEarlyDirectionWrong := taken =/= ex.pred.earlyTaken
+      mem.observeEarlyTargetWrong := taken && ex.pred.earlyTaken && jau.io.jmp_addr =/= ex.pred.earlyTarget
       perm := mem
       when(!downHold) { wb := perm }
       when(!downHold && perm.valid && perm.csrCmd =/= CSR_CMD.NOP.U) {
@@ -883,6 +892,67 @@ class BreezeBackend(
   io.backendEvents.wbPortConflict := writeback.io.conflict
   for(i <- 0 until 7) io.backendEvents.replay(i) := wbReplay &&
     Mux(wb.copro, 6.U, io.l1d.resp.bits.replayReason) === i.U
+  val observeLocal = Wire(new flow.observe.BreezeObserveEvents)
+  observeLocal := 0.U.asTypeOf(observeLocal)
+  val observeActive = !reset.asBool && !sleeping && !stopped && !io.hartFatal
+  // Structural eligibility deliberately excludes operands/decoder bits of an
+  // invalid ID payload. It estimates supply loss, not counterfactual issue of
+  // an unknown instruction (which might itself have a dependency).
+  val structuralReady = exAdvance && !slowRedirectGap && !killD && !serialInFlight &&
+    !soloInFlight && !writeback.io.idStarve && !branchRedirect && !wbKill && !csrFile.io.interruptPending
+  val starved = observeActive && !io.fetchBuffer.valid && structuralReady
+  observeLocal("active_cycles") := observeActive.asUInt
+  observeLocal("instructions") := wbCommit.asUInt
+  observeLocal("frontend_starved") := starved.asUInt
+  observeLocal("frontend_backpressure") := (observeActive && io.fetchBuffer.valid && !io.fetchBuffer.ready).asUInt
+  observeLocal("both_blocked") := (observeActive && !io.fetchBuffer.valid && !structuralReady).asUInt
+  observeLocal("frontend_issued") := (observeActive && idLeave).asUInt
+  val conditional = wbCommit && wb.inst(6,0) === OPCODE.BRANCH
+  val jal = wbCommit && wb.inst(6,0) === OPCODE.JAL
+  val jalr = wbCommit && wb.inst(6,0) === OPCODE.JALR
+  val returning = jalr && wb.observeReturn
+  observeLocal("conditional_retired") := conditional.asUInt
+  observeLocal("conditional_direction_wrong") := (conditional && wb.observeDirectionWrong).asUInt
+  observeLocal("jal_retired") := jal.asUInt
+  observeLocal("jalr_retired") := (jalr && !returning).asUInt
+  observeLocal("return_retired") := returning.asUInt
+  observeLocal("jalr_target_wrong") := (jalr && !returning && wb.observeTargetWrong).asUInt
+  observeLocal("return_target_wrong") := (returning && wb.observeTargetWrong).asUInt
+  val takenControl = (conditional || jal || jalr) && wb.branchTaken
+  observeLocal("taken_cfi") := takenControl.asUInt
+  observeLocal("early_target_missing") := (takenControl && !wb.observeEarlyAvailable).asUInt
+  observeLocal("early_direction_wrong") := (conditional && wb.observeEarlyDirectionWrong).asUInt
+  observeLocal("early_target_wrong") := (takenControl && wb.observeEarlyTargetWrong).asUInt
+  observeLocal("backend_branch_redirect") := branchRedirect.asUInt
+  val blocked = observeActive && io.fetchBuffer.valid && !io.fetchBuffer.ready
+  val fpWait = scoreboard.io.sourceStall(LongSource.FPU)
+  val lsuWait = resourceWait || io.l1d.s2Hold
+  val serialWait = csrStateHazard || csrRegHazard || serialInFlight || soloInFlight || serialIdWait || soloIdWait
+  observeLocal("backend_fp_wait") := (blocked && fpWait).asUInt
+  observeLocal("backend_lsu_wait") := (blocked && lsuWait).asUInt
+  observeLocal("backend_serial_wait") := (blocked && serialWait).asUInt
+  observeLocal("backend_feedback_wait") := (blocked && feedbackWait).asUInt
+  observeLocal("backend_other_wait") := (blocked && !fpWait && !lsuWait && !serialWait && !feedbackWait).asUInt
+  // Match observation capture plus the cluster HPM boundary.
+  val observeCaptured = RegNext(observeLocal, 0.U.asTypeOf(observeLocal))
+  val observeDelayed = RegNext(observeCaptured, 0.U.asTypeOf(observeCaptured))
+  io.backendEvents.observationPrivilege := RegNext(RegNext(csrFile.io.current_privilege, PRIV_MODE.M.U), PRIV_MODE.M.U)
+  for(i <- 0 until flow.observe.BreezeObserveEvent.count) {
+    io.backendEvents.observation.delta(i) := io.hpmEvents.observation.delta(i) + observeDelayed.delta(i)
+  }
+  for(name <- Seq("queue_empty", "queue_low", "queue_high", "queue_full")) {
+    io.backendEvents.observation(name) := Mux(observeDelayed("active_cycles") =/= 0.U,
+      io.hpmEvents.observation(name), 0.U)
+  }
+  val starvedDelayed = observeDelayed("frontend_starved") =/= 0.U
+  val waitI = io.hpmEvents.observation("fe_wait_itlb") =/= 0.U
+  val waitC = io.hpmEvents.observation("fe_wait_icache") =/= 0.U
+  val waitR = io.hpmEvents.observation("fe_wait_recovery") =/= 0.U
+  // Mutually exclusive diagnostic priority: translation, refill, recovery, other.
+  io.backendEvents.observation("fe_wait_itlb") := (starvedDelayed && waitI).asUInt
+  io.backendEvents.observation("fe_wait_icache") := (starvedDelayed && !waitI && waitC).asUInt
+  io.backendEvents.observation("fe_wait_recovery") := (starvedDelayed && !waitI && !waitC && waitR).asUInt
+  io.backendEvents.observation("fe_wait_other") := (starvedDelayed && !waitI && !waitC && !waitR).asUInt
   csrFile.io.hpmEvents := io.backendEvents
 
   io.observe := 0.U.asTypeOf(io.observe)

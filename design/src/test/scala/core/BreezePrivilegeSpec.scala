@@ -20,6 +20,10 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.fp_commit_valid.poke(false.B)
     dut.io.fp_flags.poke(0.U)
     dut.io.retire_valid.poke(false.B)
+    dut.io.hpmEvents.observation.poke(0.U.asTypeOf(dut.io.hpmEvents.observation))
+    dut.io.hpmEvents.cachePrivilege.poke(3.U)
+    dut.io.hpmEvents.observationPrivilege.poke(3.U)
+    dut.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(dut.io.hpmEvents.instructionTrace))
     dut.io.hpmEvents.controlRetired.poke(false.B)
     dut.io.hpmEvents.controlTaken.poke(false.B)
     dut.io.hpmEvents.predictionMiss.poke(false.B)
@@ -150,7 +154,7 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
         CSRMAP.mcycle, CSRMAP.minstret, CSRMAP.cycle, CSRMAP.time, CSRMAP.instret,
         CSRMAP.mcountinhibit, CSRMAP.menvcfg, CSRMAP.pmpcfg0, CSRMAP.pmpcfg2,
         CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2
-      ) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
+      ) ++ (0x7d0 to 0x7d5) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
         (0 until 8).flatMap(index => Seq(
           CSRMAP.mhpmcounter3 + index,
           CSRMAP.hpmcounter3 + index,
@@ -186,8 +190,8 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
         CSRMAP.pmpcfg2, CSRMAP.tselect, CSRMAP.tdata1, CSRMAP.tdata2,
         CSRMAP.sstatus, CSRMAP.sie, CSRMAP.stvec, CSRMAP.scounteren,
         CSRMAP.sscratch, CSRMAP.sepc, CSRMAP.scause, CSRMAP.stval, CSRMAP.sip,
-        CSRMAP.stimecmp, CSRMAP.satp
-      ) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
+        CSRMAP.stimecmp, CSRMAP.satp, CSRMAP.scountovf
+      ) ++ (0x7d0 to 0x7d5) ++ (0 until 16).map(CSRMAP.pmpaddr0 + _) ++
         (0 until 8).flatMap(index => Seq(
           CSRMAP.mhpmcounter3 + index,
           CSRMAP.hpmcounter3 + index,
@@ -197,7 +201,7 @@ class BreezePrivilegeSpec extends AnyFreeSpec with Matchers with ChiselSim {
       // zero reads and ignored writes. Other trigger CSRs remain illegal.
       val openSbiProbes = Seq(
         (0xfb0, "mtopi/Smaia", true),
-        (0xda0, "scountovf/Sscofpmf", true),
+        (0xda0, "scountovf/Sscofpmf", false),
         (0x30c, "mstateen0/Smstateen", true),
         (0x10c, "sstateen0/Ssstateen", true),
         (0x321, "mcyclecfg/Smcntrpmf", true),

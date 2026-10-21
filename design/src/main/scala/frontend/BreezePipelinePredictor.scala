@@ -110,6 +110,7 @@ class BreezeBankedBtb(p: BreezeFrontendPipelineParams) extends Module {
     val result = Output(Vec(2, new PipelineBtbHit))
     val update = Flipped(Decoupled(new PipelineBtbUpdate))
     val repair = Flipped(Valid(new PipelineBtbUpdate))
+    val allocated = Output(Bool()); val evicted = Output(Bool())
   })
   val ram = Seq.fill(2, p.btbWays)(SyncReadMem(p.btbSets, new Entry))
   val valid = RegInit(VecInit(Seq.fill(2)(VecInit(Seq.fill(p.btbSets)(0.U(p.btbWays.W))))))
@@ -147,6 +148,8 @@ class BreezeBankedBtb(p: BreezeFrontendPipelineParams) extends Module {
   val empty = ~updateValid
   val victim = Mux(matches.asUInt.orR, PriorityEncoder(matches),
     Mux(empty.orR, PriorityEncoder(empty), rr(update.pc(1))(set(update.pc))))
+  io.allocated := active && !update.invalidate && !matches.asUInt.orR
+  io.evicted := io.allocated && !empty.orR
   val value = Wire(new Entry)
   value.tag := tag(update.pc); value.target := update.target; value.kind := update.kind
   when(active) {
@@ -184,6 +187,7 @@ class BreezePipelinePredictor(p: BreezeFrontendPipelineParams) extends Module {
     val phtUpdate = Flipped(Decoupled(new PipelinePhtUpdate(p.historyBits)))
     val btbUpdate = Flipped(Decoupled(new PipelineBtbUpdate))
     val btbRepair = Flipped(Valid(new PipelineBtbUpdate))
+    val btbAllocated = Output(Bool()); val btbEvicted = Output(Bool())
   })
   val pht = Module(new BreezeBankedPht(p))
   val btb = Module(new BreezeBankedBtb(p))
@@ -197,5 +201,6 @@ class BreezePipelinePredictor(p: BreezeFrontendPipelineParams) extends Module {
   io.result.index := RegEnable(indices, io.query.valid)
   io.result.available := pht.io.available; io.result.taken := pht.io.taken
   io.result.btb := btb.io.result
+  io.btbAllocated := btb.io.allocated; io.btbEvicted := btb.io.evicted
   pht.io.train <> io.phtUpdate; btb.io.update <> io.btbUpdate; btb.io.repair <> io.btbRepair
 }

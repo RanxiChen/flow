@@ -15,6 +15,7 @@ class PipelineInstruction(p: BreezeFrontendPipelineParams) extends Bundle {
   val kind = UInt(2.W); val predictedTaken = Bool(); val predictedTarget = UInt(64.W)
   val historyBefore = UInt(p.historyBits.W); val phtIndex = UInt(p.historyBits.W)
   val rasPush = Bool(); val rasPop = Bool()
+  val earlyTaken = Bool(); val earlyTarget = UInt(64.W); val earlyTargetAvailable = Bool()
 }
 class PipelineResolution(p: BreezeFrontendPipelineParams) extends Bundle {
   val eventPc = UInt(64.W); val target = UInt(64.W); val nextPc = UInt(64.W)
@@ -32,6 +33,7 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
     val deq = Decoupled(new PipelineInstruction(p))
     val clear = Input(Bool())
     val empty = Output(Bool())
+    val occupancy = Output(UInt(log2Ceil(p.instructionSlots + 1).W))
   })
   val ptrBits = log2Ceil(p.instructionSlots)
   // Consecutive lane addresses have opposite parity. Select a lane once
@@ -58,6 +60,7 @@ class PipelineInstructionQueue(p: BreezeFrontendPipelineParams) extends Module {
   count := count + Mux(io.enq.fire, io.enq.bits.count, 0.U) - io.deq.fire.asUInt
   when(io.clear) { head := 0.U; tail := 0.U; count := 0.U }
   io.empty := count === 0.U
+  io.occupancy := count
   assert(count <= p.instructionSlots.U)
 }
 
@@ -302,6 +305,11 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
     val jalrImm = Mux(out.compressed, 0.U(64.W), Cat(Fill(52, raw(31)), raw(31, 20)))
     val returnTarget = (groupStacks(lane)((groupPtrs(lane) - 1.U)(rasPtrBits - 1, 0)) + jalrImm) & ~1.U(64.W)
     val rasPredict = predictorEnabled.B && out.rasPop && groupCounts(lane) =/= 0.U
+    val earlyIndex = Mux(!slot, 0.U, Mux(w.prediction.btb(0).hit &&
+      w.prediction.btb(0).kind === 1.U && !w.prediction.taken(0), 2.U, 1.U))
+    out.earlyTaken := btb.hit && (btb.kind >= 2.U || (btb.kind === 1.U && w.prediction.taken(earlyIndex)))
+    out.earlyTarget := btb.target
+    out.earlyTargetAvailable := btb.hit && btb.kind === out.kind && safe
     out.predictedTaken := safe && ((branch && direction) || jal ||
       (jalr && (rasPredict || (btb.hit && btb.kind === 3.U))))
     out.predictedTarget := Mux(branch, out.pc + branchImm,
@@ -417,6 +425,42 @@ class BreezeFrontendPipeline(g: BreezeMemGeometry = BreezeMemGeometry(nCores = 1
   // Local frontend drain only; the integration layer observes MMU idle separately.
   io.idle := cache.io.idle && queue.io.empty && !carryValid
   io.hpm := 0.U.asTypeOf(io.hpm)
+  val observation = Wire(new flow.observe.BreezeObserveEvents)
+  observation := 0.U.asTypeOf(observation)
+  observation("btb_alloc") := predictor.io.btbAllocated.asUInt
+  observation("btb_evict") := predictor.io.btbEvicted.asUInt
+  observation("queue_empty") := queue.io.empty.asUInt
+  observation("queue_low") := (queue.io.occupancy > 0.U && queue.io.occupancy <= 2.U).asUInt
+  observation("queue_high") := (queue.io.occupancy > 2.U && queue.io.occupancy < p.instructionSlots.U).asUInt
+  observation("queue_full") := (queue.io.occupancy === p.instructionSlots.U).asUInt
+  val targetFix = actualNext =/= predictedNext
+  val historyFix = w.prediction.history =/= specHistory || actualHistory =/= predictedHistory
+  observation("f2_target_correction") := (f2Fire && !hasFault && targetFix).asUInt
+  observation("f2_history_correction") := (f2Fire && !hasFault && historyFix).asUInt
+  observation("ras_underflow") := Mux(f2Fire, PopCount((0 until 2).map(i =>
+    validOutput(i) && outputs(i).rasPop && groupCounts(i) === 0.U)), 0.U)
+  observation("ras_overflow") := Mux(f2Fire, PopCount((0 until 2).map(i =>
+    validOutput(i) && outputs(i).rasPush && !outputs(i).rasPop && groupCounts(i) === p.rasDepth.U)), 0.U)
+  val recoveryObserve = Module(new flow.observe.BreezeFrontendRecoveryObservation)
+  recoveryObserve.io.sample.resolvedRedirect := resolvedRedirect
+  recoveryObserve.io.sample.globalCancel := globalCancel
+  recoveryObserve.io.sample.olderCancel := olderCancel
+  recoveryObserve.io.sample.instructionValid := io.instruction.valid
+  recoveryObserve.io.sample.f2Redirect := f2Redirect
+  recoveryObserve.io.sample.hasFault := hasFault
+  recoveryObserve.io.sample.actualNext := actualNext
+  recoveryObserve.io.sample.f1Valid := cache.io.f1.valid
+  recoveryObserve.io.sample.f1Pc := cache.io.f1.bits.pc
+  // Wait flags are qualified with the aligned backend structural-starvation
+  // event in integration, so hidden latency is not reported as exposed loss.
+  observation("fe_wait_itlb") := cache.io.waitItlb.asUInt
+  observation("fe_wait_icache") := cache.io.waitRefill.asUInt
+  val delayedObservation = RegNext(observation, 0.U.asTypeOf(observation))
+  for(i <- 0 until flow.observe.BreezeObserveEvent.count) {
+    io.hpm.observation.delta(i) := delayedObservation.delta(i) + cache.io.observation.delta(i) + recoveryObserve.io.events.delta(i)
+  }
+  io.hpm.observationPrivilege := RegNext(io.context.privilege, 3.U)
+  io.hpm.instructionTrace := cache.io.observationTrace
   io.hpm.icacheAccess := cache.io.request.fire
   io.hpm.icacheMiss := cache.io.refillReq.req
   io.debug.f0Fire := cache.io.request.fire; io.debug.f0Pc := pc

@@ -9,7 +9,9 @@ class HpmSpec extends AnyFreeSpec with Matchers with ChiselSim {
   "S16_HPM13_bank_count_write_priority_and_selector_bound" in {
     simulate(new BreezePerformanceCounters) { d =>
       d.io.write.poke(false.B); d.io.address.poke(0.U); d.io.data.poke(0.U); d.io.retire.poke(false.B)
+      d.io.privilege.poke(3.U)
       val e=d.io.events
+      e.poke(0.U.asTypeOf(e))
       Seq(e.controlRetired,e.controlTaken,e.predictionMiss,e.icacheAccess,e.icacheMiss,
         e.dcacheAccess,e.dcacheMiss,e.dcacheUncached,e.memStallCycle,e.loadUseStall,
         e.mulSourceStall,e.divSourceStall).foreach(_.poke(false.B))

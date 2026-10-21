@@ -95,9 +95,22 @@ class BreezeCluster(val cfg: BreezeClusterConfig, enableTandem: Boolean = false,
     mmio.io.clients(h) <> l1d.io.mmio
     val hpmEvents = Wire(chiselTypeOf(frontend.io.hpm))
     hpmEvents := frontend.io.hpm
+    hpmEvents.cachePrivilege := backend.io.mmuContext.privilege
+    hpmEvents.observationPrivilege := RegNext(backend.io.mmuContext.privilege, 3.U)
     hpmEvents.dcacheAccess := l1d.io.events.load_access || l1d.io.events.store_access
     hpmEvents.dcacheMiss := l1d.io.events.load_miss || l1d.io.events.store_miss
     hpmEvents.dcacheUncached := l1d.io.events.mmio_read || l1d.io.events.mmio_write
+    val mmuObservation = RegNext(mmu.io.observation, 0.U.asTypeOf(mmu.io.observation))
+    for(i <- 0 until flow.observe.BreezeObserveEvent.count) {
+      hpmEvents.observation.delta(i) := frontend.io.hpm.observation.delta(i) + mmuObservation.delta(i)
+    }
+    hpmEvents.observation("il2_request_wait") := RegNext((l1i.io.coh.req.valid && !l1i.io.coh.req.ready).asUInt, 0.U)
+    hpmEvents.observation("il2_request") := RegNext(l2.io.events.req(p.nCores + h).asUInt, 0.U)
+    hpmEvents.observation("il2_hit") := RegNext(l2.io.events.hit(p.nCores + h).asUInt, 0.U)
+    hpmEvents.observation("il2_miss") := RegNext(l2.io.events.miss(p.nCores + h).asUInt, 0.U)
+    hpmEvents.observation("il2_probe") := RegNext(l2.io.events.needProbe(p.nCores + h).asUInt, 0.U)
+    hpmEvents.observation("il2_slot_wait") := RegNext(l2.io.events.slotFullStall(p.nCores + h).asUInt, 0.U)
+    hpmEvents.observation("il2_set_wait") := RegNext(l2.io.events.setWait(p.nCores + h).asUInt, 0.U)
     backend.io.hpmEvents := RegNext(hpmEvents, 0.U.asTypeOf(hpmEvents))
     io.l1dEvents(h) := l1d.io.events
     io.hartFatal(h) := backend.io.hartFatal

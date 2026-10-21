@@ -444,3 +444,7 @@ L1D CPU 与内部完成流水均为 S0 接收、S1 捕获翻译及同步阵列�
 L1I 在已选定返回数据/地址/权限错误与 realigner 之间增加两项无 flow/pipe 返回队列，命中与 refill/error 响应都多一拍；accepted-undelivered 请求共最多两项并提前预留返回容量。背压不丢失/重复返回；flush 取消旧返回及信用，旧 miss 的迟到数据不得重新输出。BTB 仍全相联、容量/最低索引 winner/替换/查找拍数不变，按四项局部一热收束；walk-cache 仍按原 set/way/ASID/PLRU/全局规则，每 set 静态局部 PPN 选择，lookup miss 输出 0。PTW sLookup→内存请求拍数不变。
 
 SOC-3e 返回边界配套：非压缩 frontend 以两项预测上下文队列保留每个已接受 PC 的 GHR/预测目标/类型/PHT index，不能在旧字返回前覆写 S2。队列与 redirect/flush 同拍取消；旧 cache 返回在无主或 PC 不符时排空。阻塞式 FetchTranslator 仅同 PC 返回可供当前请求，live 返回遵从 inRsp.ready，取消后的旧返回在 Idle/Translate 或新 CacheWait 中排空，不可泄漏给新 owner、堵塞返回信用。压缩 realigner 的既有单 owner 与错 PC 丢弃规则不变。
+
+### 2026-10-20 iTLB PLRU 物理写回隔离
+
+用户授权的单核perf时序R1仅对`instruction && pipelinedFetchKill`延后命中PLRU的物理写回。响应仍按原拍、同拍kill规则输出；命中set/way与有效许可锁存后一拍写回，替换选择从含pending touch的逻辑视图读取。连续命中顺序、refill同set覆盖同拍命中touch、已成立touch不被下一拍kill撤回、sfence不恢复valid，均保持原规则。dTLB和默认模式不变。验证与源码边界见[实施记录](tasks/perf-timing-r1-20261020.md)，未用此条声明时序已通过。

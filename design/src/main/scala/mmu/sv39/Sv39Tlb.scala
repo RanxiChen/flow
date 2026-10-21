@@ -13,6 +13,8 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
     val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
     val miss = Output(new TlbMiss); val grant = Input(Bool())
     val done = Flipped(Valid(new PtwDone)); val idle = Output(Bool())
+    val observation = Output(new flow.observe.BreezeObserveEvents)
+    val walkKilled = Output(Bool())
   })
   private val setBits = log2Ceil(p.sets)
   def index(vpn: UInt): UInt = if (p.sets == 1) 0.U else vpn(setBits - 1, 0)
@@ -30,6 +32,30 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   val basePlru = RegInit(VecInit(Seq.fill(p.sets)(0.U((p.ways - 1).W))))
   val sp = RegInit(VecInit(Seq.fill(p.superpages)(0.U.asTypeOf(new SuperEntry))))
   val spPlru = RegInit(0.U((p.superpages - 1).W))
+  // A late F2 kill qualifies just one pending-valid bit, rather than every
+  // PLRU register CE. Forward this touch to replacement selection so the
+  // logical state is identical to the original same-edge hit update.
+  private val deferHitTouch = instruction && pipelinedFetchKill
+  val touchPending = RegInit(false.B)
+  val touchBase = Reg(Bool())
+  val touchSet = Reg(UInt(setBits.max(1).W))
+  val touchWay = Reg(UInt(log2Ceil(p.ways.max(p.superpages)).max(1).W))
+  val visibleBasePlru = Wire(chiselTypeOf(basePlru))
+  val visibleSpPlru = Wire(chiselTypeOf(spPlru))
+  visibleBasePlru := basePlru
+  visibleSpPlru := spPlru
+  if (deferHitTouch) {
+    for (s <- 0 until p.sets) {
+      when(touchPending && touchBase && touchSet === s.U) {
+        visibleBasePlru(s) := TreePlru.touch(basePlru(s), touchWay, p.ways)
+        basePlru(s) := visibleBasePlru(s)
+      }
+    }
+    when(touchPending && !touchBase) {
+      visibleSpPlru := TreePlru.touch(spPlru, touchWay, p.superpages)
+      spPlru := visibleSpPlru
+    }
+  }
   val s1Valid = RegInit(false.B)
   val s1Vaddr = Reg(UInt(64.W)); val s1Cmd = Reg(MmuCmd())
   val s1FromFault = Reg(Bool()); val s1FaultIsAccess = Reg(Bool())
@@ -97,6 +123,18 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   }.elsewhen(!anyHit) { io.port.resp.bits.miss := true.B
   }.elsewhen(permFail) { io.port.resp.bits.pageFault := true.B
   }.otherwise { io.port.resp.bits.hit := true.B; io.port.resp.bits.paddr := pa }
+  io.observation := 0.U.asTypeOf(io.observation)
+  io.walkKilled := missKilled || io.port.kill
+  if (instruction) {
+    val live = s1Valid && !io.port.kill && !s1FromFault
+    io.observation("itlb_tag_hit") := (live && translate && canonical && anyHit).asUInt
+    io.observation("itlb_tag_miss") := (live && translate && canonical && !anyHit).asUInt
+    io.observation("itlb_bypass") := (live && !translate).asUInt
+    io.observation("itlb_fault") := (io.port.resp.valid &&
+      (io.port.resp.bits.pageFault || io.port.resp.bits.accessFault)).asUInt
+    io.observation("itlb_killed") := (s1Valid && io.port.kill).asUInt
+    io.observation("itlb_pending") := missValid.asUInt
+  }
   val dropS1Next = s1Valid && io.port.resp.bits.miss
   s1Valid := io.port.req.fire && !dropS1Next
   when(io.port.req.fire) {
@@ -108,9 +146,12 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
     if (instruction) assert(io.port.req.bits.cmd === MmuCmd.Fetch, "iTLB requires Fetch")
     else assert(io.port.req.bits.cmd =/= MmuCmd.Fetch, "dTLB rejects Fetch")
   }
-  when(io.port.resp.valid && io.port.resp.bits.hit && translate) {
-    when(baseHit.asUInt.orR) { basePlru(set) := TreePlru.touch(basePlru(set), PriorityEncoder(baseHit), p.ways)
-    }.otherwise { spPlru := TreePlru.touch(spPlru, PriorityEncoder(superHit), p.superpages) }
+  val hitTouch = io.port.resp.valid && io.port.resp.bits.hit && translate
+  if (!deferHitTouch) {
+    when(hitTouch) {
+      when(baseHit.asUInt.orR) { basePlru(set) := TreePlru.touch(basePlru(set), PriorityEncoder(baseHit), p.ways)
+      }.otherwise { spPlru := TreePlru.touch(spPlru, PriorityEncoder(superHit), p.superpages) }
+    }
   }
   when(io.port.resp.valid && io.port.resp.bits.miss) {
     missValid := true.B; missGranted := false.B; missKilled := false.B
@@ -135,9 +176,19 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
   val baseWrite = refill && io.done.bits.refill.level === 0.U
   val refillEntry = io.done.bits.refill
   val refillSet = index(refillEntry.vpn)
+  if (deferHitTouch) {
+    val base = baseHit.asUInt.orR
+    // Original last-connect order gives a same-set refill precedence over
+    // the current hit. A previous pending touch is already in the view.
+    val overwritten = refill && Mux(base, baseWrite && refillSet === set, !baseWrite)
+    touchPending := hitTouch && !overwritten
+    touchBase := base
+    touchSet := set
+    touchWay := Mux(base, PriorityEncoder(baseHit), PriorityEncoder(superHit))
+  }
   val refillInvalid = VecInit(baseValid(refillSet).map(v => !v))
   val refillVictim = Mux(refillInvalid.asUInt.orR, PriorityEncoder(refillInvalid),
-    TreePlru.victim(basePlru(refillSet), p.ways))
+    TreePlru.victim(visibleBasePlru(refillSet), p.ways))
   val refillValue = Wire(new BaseEntry(27 - setBits))
   refillValue.assignPage(refillEntry); refillValue.tag := tag(refillEntry.vpn)
   for (b <- 0 until banks; w <- 0 until p.ways) {
@@ -149,16 +200,16 @@ class Sv39Tlb(p: Sv39TlbParams, instruction: Boolean,
     for (s <- 0 until p.sets; w <- 0 until p.ways) {
       when(refillSet === s.U && refillVictim === w.U) { baseValid(s)(w) := true.B }
     }
-    basePlru(refillSet) := TreePlru.touch(basePlru(refillSet), refillVictim, p.ways)
+    basePlru(refillSet) := TreePlru.touch(visibleBasePlru(refillSet), refillVictim, p.ways)
   }
   when(refill && !baseWrite) {
     val invalid = VecInit(sp.map(e => !e.valid))
-    val victim = Mux(invalid.asUInt.orR, PriorityEncoder(invalid), TreePlru.victim(spPlru, p.superpages))
+    val victim = Mux(invalid.asUInt.orR, PriorityEncoder(invalid), TreePlru.victim(visibleSpPlru, p.superpages))
     val target = if (p.superpages == 1) sp(0) else sp(victim)
     target.assignPage(io.done.bits.refill)
     target.vpn := io.done.bits.refill.vpn; target.level := io.done.bits.refill.level
     target.valid := true.B
-    spPlru := TreePlru.touch(spPlru, victim, p.superpages)
+    spPlru := TreePlru.touch(visibleSpPlru, victim, p.superpages)
   }
   sfS1Valid := sfRead
   when(sfRead) { sfVaddr := io.sfence.vaddr; sfRs2Nz := io.sfence.rs2Nz; sfAsid := io.sfence.asid }

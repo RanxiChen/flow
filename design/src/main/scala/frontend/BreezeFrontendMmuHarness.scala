@@ -57,6 +57,10 @@ class BreezeFrontendMmuHarness(g: BreezeMemGeometry = BreezeMemGeometry(nCores =
     mmu.io.dtlb.kill := false.B
   }
   io.ptwMem <> mmu.io.ptwMem
+  val mmuObservation = RegNext(mmu.io.observation, 0.U.asTypeOf(mmu.io.observation))
+  for(i <- 0 until flow.observe.BreezeObserveEvent.count) {
+    io.hpm.observation.delta(i) := frontend.io.hpm.observation.delta(i) + mmuObservation.delta(i)
+  }
   io.mmuIdle := mmu.io.idle
   io.idle := frontend.io.idle && mmu.io.idle
 }

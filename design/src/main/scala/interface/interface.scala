@@ -143,6 +143,9 @@ class FrontendPredInfo(val VLEN: Int = 64, val ghrLength: Int = 0) extends Bundl
     val historyBefore = UInt(ghrLength.max(2).W)
     val rasPush = Bool()
     val rasPop = Bool()
+    val earlyTaken = Bool()
+    val earlyTarget = UInt(VLEN.W)
+    val earlyTargetAvailable = Bool()
 }
 
 class BreezePHTPredictReq(val vlen: Int, val ghrLength: Int) extends Bundle {
@@ -360,6 +363,11 @@ class BreezeTranslationPort(val XLEN: Int = 64) extends Bundle {
 
 /** One-cycle occurrence pulses plus per-cycle stall levels consumed by HPM. */
 class BreezeHpmEvents extends Bundle {
+    // Captured with their source groups before upstream event registers.
+    val cachePrivilege = UInt(PRIV_MODE.width.W)
+    val observationPrivilege = UInt(PRIV_MODE.width.W)
+    val observation = new flow.observe.BreezeObserveEvents
+    val instructionTrace = Valid(new flow.observe.BreezeObserveTrace)
     val controlRetired = Bool()
     val controlTaken = Bool()
     val predictionMiss = Bool()

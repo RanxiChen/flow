@@ -40,6 +40,9 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
     val refillReq = new L1CacheMissReqIO(64)
     val refillRsp = new L1CacheMissRespIO(g.lineBytes * 8)
     val idle = Output(Bool())
+    val observation = Output(new flow.observe.BreezeObserveEvents)
+    val observationTrace = Valid(new flow.observe.BreezeObserveTrace)
+    val waitItlb = Output(Bool()); val waitRefill = Output(Bool())
   })
   val offBits = log2Ceil(g.lineBytes)
   val setBits = log2Ceil(g.l1Sets)
@@ -95,6 +98,12 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   io.tlb.kill := cancel
   io.request.ready := arrayAllowed && freshAllowed && io.tlb.req.ready
   val query = io.tlb.req.fire
+  val retryCacheSeen = RegInit(false.B)
+  val qCacheSeen = RegEnable(retryValid && retryCacheSeen, query)
+  val qRetry = RegEnable(replay, query)
+  val qSatp = RegEnable(io.context.satp, query)
+  val qPriv = RegEnable(io.context.privilege, query)
+  val observeClock = RegInit(0.U(64.W)); observeClock := observeClock + 1.U
   io.predictorQuery.valid := query
   io.predictorQuery.bits := selected
   val rawTags = VecInit(tags.map(_.read(set(selected.pc), query)))
@@ -177,10 +186,17 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
   }
   when(failedQuery) {
     retryValid := true.B; retry := q
+    retryCacheSeen := qCacheSeen || cacheMiss
     when(io.request.fire) { deferredValid := true.B; deferred := io.request.bits }
   }
   io.refillReq.req := cacheMiss && !cancel
   io.refillReq.paddr := pa & (~(g.lineBytes - 1).U(64.W))
+  val victimLine = Reg(UInt((g.paddrBits - offBits).W))
+  val selectedWay = Mux(!qMeta.andR, PriorityEncoder(~qMeta), rr(set(q.pc)))
+  // Only observation consumes this victim snapshot. Capture its payload
+  // unconditionally, then qualify its owner on the following edge.
+  val victimCandidate = RegNext(if(setBits == 0) rawTags(selectedWay) else Cat(rawTags(selectedWay), set(q.pc)))
+  when(RegNext(io.refillReq.req, false.B)) { victimLine := victimCandidate }
   when(io.refillReq.req) {
     assert(!waiting, "two ICache refill owners")
     waiting := true.B; killedRefill := false.B
@@ -227,6 +243,36 @@ class BreezeViptICache(g: BreezeMemGeometry, p: BreezeFrontendPipelineParams,
     when(waiting) { killedRefill := true.B }
   }
   when(io.fenceI) { valid := VecInit(Seq.fill(g.l1Sets)(0.U(g.l1iWays.W))) }
+  val authorized = qValid && io.tlb.resp.valid && io.tlb.resp.bits.hit && !protectionFault && !cancel
+  val firstDecision = authorized && !qCacheSeen
+  val cacheHit = hits.asUInt.orR
+  val observe = Module(new flow.observe.BreezeIcacheObservation(g))
+  observe.io.sample.demand.valid := firstDecision
+  observe.io.sample.demand.bits.line := pa(g.paddrBits - 1, offBits)
+  observe.io.sample.demand.bits.miss := !cacheHit
+  observe.io.sample.lookupRetry := authorized && qCacheSeen
+  observe.io.sample.tlbRetry := query && replay && !cancel
+  observe.io.sample.refillStart := io.refillReq.req
+  observe.io.sample.refillWaiting := waiting
+  observe.io.sample.refillReturned := io.refillRsp.vld && waiting
+  observe.io.sample.refillCancelled := killedRefill || cancel
+  observe.io.sample.refillError := io.refillRsp.error
+  observe.io.sample.fence := io.fenceI
+  observe.io.sample.install.valid := install && !io.fenceI
+  observe.io.sample.install.bits.line := refillPa(g.paddrBits - 1, offBits)
+  observe.io.sample.install.bits.way := refillWay
+  observe.io.sample.install.bits.evicted := valid(refillSet)(refillWay)
+  observe.io.sample.install.bits.victim := victimLine
+  observe.io.sample.trace.cycle := observeClock
+  observe.io.sample.trace.pc := q.pc
+  observe.io.sample.trace.vaddr := q.pc
+  observe.io.sample.trace.paddr := pa
+  observe.io.sample.trace.satp := qSatp
+  observe.io.sample.trace.flags := Cat(0.U(60.W), qPriv, qRetry, !cacheHit)
+  io.observation := observe.io.events
+  io.observationTrace := observe.io.trace
+  io.waitItlb := retryValid && !io.tlb.canAccept && !waiting
+  io.waitRefill := waiting || refillWrite
   io.idle := reserved === 0.U && !waiting && !refillWrite && !qValid && !retryValid && !deferredValid
   when(qValid && !cancel) {
     assert(io.tlb.resp.valid, "iTLB must return F1 for every live F0")

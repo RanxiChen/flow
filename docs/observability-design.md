@@ -130,3 +130,7 @@
 | JTAG 读取路径 | 经 LiteX 外壳访问集群 `perf` 从口，不需要 CPU 参与 | 用 LiteX JTAGBone，还是扩展现有 FASE JTAG（目前 FASE 只支持单 hart，两者可能争用同一 BSCAN 通道，需核实） |
 | 地址映射 | `perf` 为只读寄存器区域 | 在 LiteX MMIO 窗口中的具体地址与 PMA 表项 |
 | 飞行记录器多核化 | 新事件定义见第 4 节 | FASE 记录器扩展到 4 核的存储预算 |
+
+## 2026-10-20 前端诊断实现
+
+本轮按用户要求先增加前端诊断事件，保留旧 HPM 编号。当前实现使用每核常开48-bit计数bank和M-mode索引CSR读出；本文件上文的独立AXI-Lite perf从口/JTAG访问仍未实现，不能把设计方向当作已有接口。事件源、局部性tag观察器、受限行采样、原始F1预测随指令携带和具体验证见 [前端观察实施合同](tasks/frontend-observe-20261020.md)。预取、stream buffer、victim cache 仍留后续。按用户追加要求实现的标准PMU溢出中断、权限过滤和perf采样验证，单列于 [Sscofpmf实施记录](tasks/perf-sampling-20261020.md)，不与常开观察bank混用验证结论。

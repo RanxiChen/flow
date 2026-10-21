@@ -1,0 +1,763 @@
+{
+  "passed": true,
+  "base_sha": "678b6961437b6e0e7a626f2f30c16f697aec6054",
+  "source_scope": "uncommitted perf and R1 timing overlay",
+  "total": {
+    "tests": 124,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "test_executions": 157,
+  "report_headers": [
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.backend.BackendContractSpec.xml",
+      "name": "flow.backend.BackendContractSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.backend.HpmSpec.xml",
+      "name": "flow.backend.HpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.core.BreezeCsrPipelineSpec.xml",
+      "name": "flow.core.BreezeCsrPipelineSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.core.BreezePrivilegeSpec.xml",
+      "name": "flow.core.BreezePrivilegeSpec",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.core.BreezeSscofpmfCsrSpec.xml",
+      "name": "flow.core.BreezeSscofpmfCsrSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.core.BreezeSscofpmfSpec.xml",
+      "name": "flow.core.BreezeSscofpmfSpec",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.frontend.BreezeFrontendPipelineSpec.xml",
+      "name": "flow.frontend.BreezeFrontendPipelineSpec",
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.mmu.sv39.Sv39DeferredPlruSpec.xml",
+      "name": "flow.mmu.sv39.Sv39DeferredPlruSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.mmu.sv39.Sv39MmuSpec.xml",
+      "name": "flow.mmu.sv39.Sv39MmuSpec",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.mmu.sv39.Sv39StructuresSpec.xml",
+      "name": "flow.mmu.sv39.Sv39StructuresSpec",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.observe.BreezeIcacheObservationSpec.xml",
+      "name": "flow.observe.BreezeIcacheObservationSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.observe.BreezeObserveHpmSpec.xml",
+      "name": "flow.observe.BreezeObserveHpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/focused-test-reports/TEST-flow.observe.BreezeObserveSpec.xml",
+      "name": "flow.observe.BreezeObserveSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.backend.BackendContractSpec.xml",
+      "name": "flow.backend.BackendContractSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.backend.HpmSpec.xml",
+      "name": "flow.backend.HpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.cluster.ClusterProgramSpec.xml",
+      "name": "flow.cluster.ClusterProgramSpec",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.cluster.RvvSystemSpec.xml",
+      "name": "flow.cluster.RvvSystemSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.cluster.ZveSystemSmokeSpec.xml",
+      "name": "flow.cluster.ZveSystemSmokeSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.BreezeCsrPipelineSpec.xml",
+      "name": "flow.core.BreezeCsrPipelineSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.BreezePrivilegeSpec.xml",
+      "name": "flow.core.BreezePrivilegeSpec",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.BreezeSscofpmfCsrSpec.xml",
+      "name": "flow.core.BreezeSscofpmfCsrSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.BreezeSscofpmfSpec.xml",
+      "name": "flow.core.BreezeSscofpmfSpec",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.CSRFileSpec.xml",
+      "name": "flow.core.CSRFileSpec",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.core.RegFileSpec.xml",
+      "name": "flow.core.RegFileSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.frontend.BreezeFrontendPipelineSpec.xml",
+      "name": "flow.frontend.BreezeFrontendPipelineSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.mmu.sv39.Sv39DeferredPlruSpec.xml",
+      "name": "flow.mmu.sv39.Sv39DeferredPlruSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.mmu.sv39.Sv39MmuSpec.xml",
+      "name": "flow.mmu.sv39.Sv39MmuSpec",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.mmu.sv39.Sv39StructuresSpec.xml",
+      "name": "flow.mmu.sv39.Sv39StructuresSpec",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.observe.BreezeFrontendRecoveryObservationSpec.xml",
+      "name": "flow.observe.BreezeFrontendRecoveryObservationSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.observe.BreezeIcacheObservationSpec.xml",
+      "name": "flow.observe.BreezeIcacheObservationSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.observe.BreezeObserveHpmSpec.xml",
+      "name": "flow.observe.BreezeObserveHpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.observe.BreezeObserveSpec.xml",
+      "name": "flow.observe.BreezeObserveSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/test-reports/TEST-flow.top.MmuExtractionElabSpec.xml",
+      "name": "flow.top.MmuExtractionElabSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/frontend-final-test-reports/TEST-flow.frontend.BreezeFrontendPipelineSpec.xml",
+      "name": "flow.frontend.BreezeFrontendPipelineSpec",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "suites": [
+    {
+      "name": "flow.backend.BackendContractSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.backend.HpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.cluster.ClusterProgramSpec",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.cluster.RvvSystemSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.cluster.ZveSystemSmokeSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.BreezeCsrPipelineSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.BreezePrivilegeSpec",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.BreezeSscofpmfCsrSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.BreezeSscofpmfSpec",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.CSRFileSpec",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.core.RegFileSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.frontend.BreezeFrontendPipelineSpec",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.mmu.sv39.Sv39DeferredPlruSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.mmu.sv39.Sv39MmuSpec",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.mmu.sv39.Sv39StructuresSpec",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.observe.BreezeFrontendRecoveryObservationSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.observe.BreezeIcacheObservationSpec",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.observe.BreezeObserveHpmSpec",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.observe.BreezeObserveSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "flow.top.MmuExtractionElabSpec",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "program_runs": [
+    {
+      "name": "fencei_smc",
+      "pass_": true,
+      "cycles": 3176
+    },
+    {
+      "name": "sv39_basic",
+      "pass_": true,
+      "cycles": 4825
+    },
+    {
+      "name": "sv39_ptw_cache",
+      "pass_": true,
+      "cycles": 6164
+    },
+    {
+      "name": "trap_misc",
+      "pass_": true,
+      "cycles": 9620
+    },
+    {
+      "name": "mmio_console",
+      "pass_": true,
+      "cycles": 14307
+    },
+    {
+      "name": "timer_irq",
+      "pass_": true,
+      "cycles": 4798
+    },
+    {
+      "name": "lrsc_amo_single",
+      "pass_": true,
+      "cycles": 6369
+    },
+    {
+      "name": "sv39_basic",
+      "pass_": true,
+      "cycles": 6003
+    },
+    {
+      "name": "sv39_ptw_cache",
+      "pass_": true,
+      "cycles": 6908
+    },
+    {
+      "name": "mh_amo_lock_2",
+      "pass_": true,
+      "cycles": 35012
+    },
+    {
+      "name": "mh_lrsc_counter_2",
+      "pass_": true,
+      "cycles": 14036
+    },
+    {
+      "name": "mh_message_pass_2",
+      "pass_": true,
+      "cycles": 14949
+    },
+    {
+      "name": "mh_ipi_2",
+      "pass_": true,
+      "cycles": 3526
+    },
+    {
+      "name": "mh_sv39_2",
+      "pass_": true,
+      "cycles": 5002
+    },
+    {
+      "name": "mh_fencei_2",
+      "pass_": true,
+      "cycles": 2772
+    },
+    {
+      "name": "mh_amo_lock_4",
+      "pass_": true,
+      "cycles": 104309
+    },
+    {
+      "name": "mh_lrsc_counter_4",
+      "pass_": true,
+      "cycles": 27276
+    },
+    {
+      "name": "mh_message_pass_4",
+      "pass_": true,
+      "cycles": 19799
+    },
+    {
+      "name": "mh_ipi_4",
+      "pass_": true,
+      "cycles": 8721
+    },
+    {
+      "name": "mh_sv39_4",
+      "pass_": true,
+      "cycles": 8267
+    },
+    {
+      "name": "mh_fencei_4",
+      "pass_": true,
+      "cycles": 3723
+    },
+    {
+      "name": "mh_amo_lock_4",
+      "pass_": true,
+      "cycles": 104620
+    },
+    {
+      "name": "mh_lrsc_counter_4",
+      "pass_": true,
+      "cycles": 27566
+    },
+    {
+      "name": "mh_message_pass_4",
+      "pass_": true,
+      "cycles": 20003
+    },
+    {
+      "name": "mh_ipi_4",
+      "pass_": true,
+      "cycles": 9421
+    },
+    {
+      "name": "mh_sv39_4",
+      "pass_": true,
+      "cycles": 8827
+    },
+    {
+      "name": "mh_fencei_4",
+      "pass_": true,
+      "cycles": 4070
+    },
+    {
+      "name": "zve_smoke.elf",
+      "pass_": true,
+      "cycles": 6881
+    },
+    {
+      "name": "fencei_smc.elf",
+      "pass_": true,
+      "cycles": 3176
+    },
+    {
+      "name": "sv39_basic.elf",
+      "pass_": true,
+      "cycles": 4825
+    },
+    {
+      "name": "sv39_ptw_cache.elf",
+      "pass_": true,
+      "cycles": 6164
+    },
+    {
+      "name": "trap_misc.elf",
+      "pass_": true,
+      "cycles": 9620
+    },
+    {
+      "name": "lrsc_amo_single.elf",
+      "pass_": true,
+      "cycles": 6369
+    },
+    {
+      "name": "rv64ui-p-add",
+      "pass_": true,
+      "cycles": 2236
+    },
+    {
+      "name": "rv64ui-p-ld",
+      "pass_": true,
+      "cycles": 2106
+    },
+    {
+      "name": "rv64ui-p-sd",
+      "pass_": true,
+      "cycles": 2788
+    },
+    {
+      "name": "rv64ui-p-sb",
+      "pass_": true,
+      "cycles": 2175
+    },
+    {
+      "name": "rv64ui-p-lbu",
+      "pass_": true,
+      "cycles": 1509
+    },
+    {
+      "name": "rv64um-p-mul",
+      "pass_": true,
+      "cycles": 2213
+    },
+    {
+      "name": "rv64um-p-div",
+      "pass_": true,
+      "cycles": 1070
+    },
+    {
+      "name": "rv64ua-p-amoadd_d",
+      "pass_": true,
+      "cycles": 900
+    },
+    {
+      "name": "rv64ua-p-lrsc",
+      "pass_": true,
+      "cycles": 19463
+    },
+    {
+      "name": "rv64uf-p-fadd",
+      "pass_": true,
+      "cycles": 1381
+    },
+    {
+      "name": "rv64ud-p-fmadd",
+      "pass_": true,
+      "cycles": 1633
+    },
+    {
+      "name": "rv64si-p-csr",
+      "pass_": true,
+      "cycles": 1270
+    },
+    {
+      "name": "rv64mi-p-csr",
+      "pass_": true,
+      "cycles": 1686
+    },
+    {
+      "name": "rv64ui-p-add",
+      "pass_": true,
+      "cycles": 1863
+    },
+    {
+      "name": "rv64ui-p-lw",
+      "pass_": true,
+      "cycles": 1305
+    },
+    {
+      "name": "rv64ui-p-sw",
+      "pass_": true,
+      "cycles": 2375
+    },
+    {
+      "name": "rv64ui-p-beq",
+      "pass_": true,
+      "cycles": 1379
+    },
+    {
+      "name": "rv64um-p-mul",
+      "pass_": true,
+      "cycles": 1827
+    },
+    {
+      "name": "rv64um-p-div",
+      "pass_": true,
+      "cycles": 830
+    },
+    {
+      "name": "rv64ua-p-amoadd_d",
+      "pass_": true,
+      "cycles": 708
+    },
+    {
+      "name": "rv64ua-p-lrsc",
+      "pass_": true,
+      "cycles": 38647
+    },
+    {
+      "name": "rv64uc-p-rvc",
+      "pass_": true,
+      "cycles": 1324
+    },
+    {
+      "name": "rv64mi-p-csr",
+      "pass_": true,
+      "cycles": 1439
+    },
+    {
+      "name": "rv64uf-p-ldst",
+      "pass_": true,
+      "cycles": 673
+    },
+    {
+      "name": "rv64uf-p-fadd",
+      "pass_": true,
+      "cycles": 1136
+    },
+    {
+      "name": "rv64ud-p-ldst",
+      "pass_": true,
+      "cycles": 753
+    },
+    {
+      "name": "rv64ud-p-fadd",
+      "pass_": true,
+      "cycles": 1280
+    },
+    {
+      "name": "rvv_memory",
+      "pass_": true,
+      "cycles": 2051
+    },
+    {
+      "name": "rvv_memory_sv39",
+      "pass_": true,
+      "cycles": 2259
+    },
+    {
+      "name": "rvv_arithmetic",
+      "pass_": true,
+      "cycles": 2007
+    }
+  ],
+  "exits": {
+    "focused": "0",
+    "regress": "0",
+    "frontend-final": "0"
+  },
+  "source_files_match": true,
+  "post_focused_changes": [
+    "design/src/main/scala/frontend/BreezeFrontendMmuHarness.scala",
+    "design/src/main/scala/frontend/BreezeFrontendPipeline.scala",
+    "design/src/main/scala/observe/BreezeIcacheObservation.scala",
+    "design/src/test/scala/frontend/BreezeFrontendPipelineSpec.scala",
+    "design/src/test/scala/observe/BreezeIcacheObservationSpec.scala",
+    "docs/breeze-mmu-rtl-spec.md",
+    "docs/tasks/frontend-observe-20261020.md"
+  ],
+  "baseline_elf_cycle_changes": [],
+  "integration_status": "separate background regression; check integration.exit",
+  "fpga_status": "separate background run; check fpga.exit"
+}

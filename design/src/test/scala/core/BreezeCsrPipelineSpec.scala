@@ -34,6 +34,10 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
     dut.io.trap.tval.poke(0.U)
     dut.io.mret_commit.poke(false.B)
     dut.io.sret_commit.poke(false.B)
+    dut.io.hpmEvents.cachePrivilege.poke(3.U)
+    dut.io.hpmEvents.observationPrivilege.poke(3.U)
+    dut.io.hpmEvents.observation.poke(0.U.asTypeOf(dut.io.hpmEvents.observation))
+    dut.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(dut.io.hpmEvents.instructionTrace))
     eventPorts(dut).foreach(_.poke(false.B))
     dut.io.hpmEvents.wbPortConflict.poke(0.U)
   }
@@ -56,6 +60,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       val counts = Array.fill(8)(BigInt(0))
       val delayedIncrements = Array.fill(8)(BigInt(0))
       val selectors = Array.fill(8)(0)
+      val controlFlags = Array.fill(8)(BigInt(0))
       var inhibit = BigInt(0)
       var cycle = BigInt(0)
       var instret = BigInt(0)
@@ -71,7 +76,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         for (i <- 0 until 8) {
           read(CSRMAP.mhpmcounter3 + i, counts(i))
           read(CSRMAP.hpmcounter3 + i, counts(i))
-          read(CSRMAP.mhpmevent3 + i, selectors(i))
+          read(CSRMAP.mhpmevent3 + i, controlFlags(i) | selectors(i))
         }
         read(CSRMAP.mcycle, cycle)
         read(CSRMAP.cycle, cycle)
@@ -99,9 +104,11 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
         def written(address: Int): Option[BigInt] = accepted.collect {
           case (`address`, value) => value
         }
+        val wraps = Array.fill(8)(false)
         for (i <- 0 until 8) {
-          val increment = if (selectors(i) == 13) conflict
+          val increment = if (controlFlags(i).testBit(62)) 0 else if (selectors(i) == 13) conflict
             else if (selectors(i) != 0 && (events & (1 << (selectors(i) - (if (selectors(i) >= 14) 2 else 1)))) != 0) 1 else 0
+          wraps(i) = written(CSRMAP.mhpmcounter3 + i).isEmpty && counts(i) + delayedIncrements(i) > mask
           counts(i) = written(CSRMAP.mhpmcounter3 + i).getOrElse(
             (counts(i) + delayedIncrements(i)) & mask)
           delayedIncrements(i) = if (written(CSRMAP.mhpmcounter3 + i).nonEmpty || inhibit.testBit(i + 3)) 0 else increment
@@ -111,8 +118,11 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
           (instret + (if (retire && !inhibit.testBit(2)) 1 else 0)) & mask)
         coreinst = (coreinst + (if (retire) 1 else 0)) & mask
         for (i <- 0 until 8) written(CSRMAP.mhpmevent3 + i).foreach { value =>
-          selectors(i) = if (value <= 20) value.toInt else 0
+          val event = value & ((BigInt(1) << 56) - 1)
+          selectors(i) = if (event <= 20) event.toInt else 0
+          controlFlags(i) = value & (BigInt(15) << 60)
         }
+        for (i <- 0 until 8 if wraps(i)) controlFlags(i) = controlFlags(i).setBit(63)
         written(CSRMAP.mcountinhibit).foreach(value => inhibit = value & 0x7fd)
         dut.clock.step()
         dut.io.trap.valid.poke(false.B)
@@ -162,7 +172,7 @@ class BreezeCsrPipelineSpec extends AnyFreeSpec with Matchers with ChiselSim {
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.reset.poke(false.B)
-      counts.indices.foreach(i => { counts(i) = 0; selectors(i) = 0; delayedIncrements(i) = 0 })
+      counts.indices.foreach(i => { counts(i) = 0; selectors(i) = 0; delayedIncrements(i) = 0; controlFlags(i) = 0 })
       inhibit = 0; cycle = 0; instret = 0; coreinst = 0
       check()
     }

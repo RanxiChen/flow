@@ -1,0 +1,6 @@
+config BR2_PACKAGE_FLOW_PERF
+	bool "Flow perf sampling smoke"
+	depends on BR2_riscv
+	help
+	  Self-checking scalar workloads and a hardware-event perf record/report
+	  check. Requires a CPU implementing the Flow PMU mapping and Sscofpmf.

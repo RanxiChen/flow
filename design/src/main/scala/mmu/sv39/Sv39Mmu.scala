@@ -10,6 +10,7 @@ class Sv39Mmu(p: Sv39MmuParams = Sv39MmuParams(),
     val dtlb = new TlbPortIO(withPmpCandidate)
     val csr = Input(new MmuCsrIO); val sfence = Input(new SfenceIO)
     val ptwMem = new PtwMemIO; val idle = Output(Bool())
+    val observation = Output(new flow.observe.BreezeObserveEvents)
   })
   val itlb = Module(new Sv39Tlb(p.itlb, instruction = true, withPmpCandidate = withPmpCandidate,
     withFetchCandidates = withFetchCandidates, pipelinedFetchKill = pipelinedFetchKill))
@@ -28,5 +29,9 @@ class Sv39Mmu(p: Sv39MmuParams = Sv39MmuParams(),
   wcUpper.io.flush := io.sfence.valid; wcMiddle.io.flush := io.sfence.valid
   io.ptwMem <> ptw.io.mem
   io.idle := itlb.io.idle && dtlb.io.idle && ptw.io.idle
+  for(i <- 0 until flow.observe.BreezeObserveEvent.count) {
+    io.observation.delta(i) := itlb.io.observation.delta(i) + ptw.io.observation.delta(i)
+  }
+  io.observation("iptw_killed") := (ptw.io.done.valid && !ptw.io.done.bits.side && itlb.io.walkKilled).asUInt
   when(io.sfence.valid) { assert(io.idle, "sfence requires idle MMU") }
 }

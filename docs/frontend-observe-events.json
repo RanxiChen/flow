@@ -1,0 +1,1519 @@
+{
+  "version": 1,
+  "legacy_raw_ids": "1..20 unchanged",
+  "raw_base": 4096,
+  "events": [
+    {
+      "index": 0,
+      "raw": 4096,
+      "name": "active_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 1,
+      "raw": 4097,
+      "name": "instructions",
+      "unit": "count"
+    },
+    {
+      "index": 2,
+      "raw": 4098,
+      "name": "frontend_starved",
+      "unit": "cycles"
+    },
+    {
+      "index": 3,
+      "raw": 4099,
+      "name": "frontend_backpressure",
+      "unit": "cycles"
+    },
+    {
+      "index": 4,
+      "raw": 4100,
+      "name": "both_blocked",
+      "unit": "cycles"
+    },
+    {
+      "index": 5,
+      "raw": 4101,
+      "name": "frontend_issued",
+      "unit": "count"
+    },
+    {
+      "index": 6,
+      "raw": 4102,
+      "name": "queue_empty",
+      "unit": "cycles"
+    },
+    {
+      "index": 7,
+      "raw": 4103,
+      "name": "queue_low",
+      "unit": "cycles"
+    },
+    {
+      "index": 8,
+      "raw": 4104,
+      "name": "queue_high",
+      "unit": "cycles"
+    },
+    {
+      "index": 9,
+      "raw": 4105,
+      "name": "queue_full",
+      "unit": "cycles"
+    },
+    {
+      "index": 10,
+      "raw": 4106,
+      "name": "fe_wait_itlb",
+      "unit": "cycles"
+    },
+    {
+      "index": 11,
+      "raw": 4107,
+      "name": "fe_wait_icache",
+      "unit": "cycles"
+    },
+    {
+      "index": 12,
+      "raw": 4108,
+      "name": "fe_wait_recovery",
+      "unit": "cycles"
+    },
+    {
+      "index": 13,
+      "raw": 4109,
+      "name": "fe_wait_other",
+      "unit": "cycles"
+    },
+    {
+      "index": 14,
+      "raw": 4110,
+      "name": "conditional_retired",
+      "unit": "count"
+    },
+    {
+      "index": 15,
+      "raw": 4111,
+      "name": "conditional_direction_wrong",
+      "unit": "count"
+    },
+    {
+      "index": 16,
+      "raw": 4112,
+      "name": "jal_retired",
+      "unit": "count"
+    },
+    {
+      "index": 17,
+      "raw": 4113,
+      "name": "jalr_retired",
+      "unit": "count"
+    },
+    {
+      "index": 18,
+      "raw": 4114,
+      "name": "return_retired",
+      "unit": "count"
+    },
+    {
+      "index": 19,
+      "raw": 4115,
+      "name": "jalr_target_wrong",
+      "unit": "count"
+    },
+    {
+      "index": 20,
+      "raw": 4116,
+      "name": "return_target_wrong",
+      "unit": "count"
+    },
+    {
+      "index": 21,
+      "raw": 4117,
+      "name": "taken_cfi",
+      "unit": "count"
+    },
+    {
+      "index": 22,
+      "raw": 4118,
+      "name": "early_target_missing",
+      "unit": "count"
+    },
+    {
+      "index": 23,
+      "raw": 4119,
+      "name": "early_direction_wrong",
+      "unit": "count"
+    },
+    {
+      "index": 24,
+      "raw": 4120,
+      "name": "early_target_wrong",
+      "unit": "count"
+    },
+    {
+      "index": 25,
+      "raw": 4121,
+      "name": "f2_target_correction",
+      "unit": "count"
+    },
+    {
+      "index": 26,
+      "raw": 4122,
+      "name": "f2_history_correction",
+      "unit": "count"
+    },
+    {
+      "index": 27,
+      "raw": 4123,
+      "name": "backend_branch_redirect",
+      "unit": "count"
+    },
+    {
+      "index": 28,
+      "raw": 4124,
+      "name": "recovery_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 29,
+      "raw": 4125,
+      "name": "recovery_completed",
+      "unit": "count"
+    },
+    {
+      "index": 30,
+      "raw": 4126,
+      "name": "recovery_latency",
+      "unit": "cycle_sum"
+    },
+    {
+      "index": 31,
+      "raw": 4127,
+      "name": "recovery_superseded",
+      "unit": "count"
+    },
+    {
+      "index": 32,
+      "raw": 4128,
+      "name": "itlb_tag_hit",
+      "unit": "count"
+    },
+    {
+      "index": 33,
+      "raw": 4129,
+      "name": "itlb_tag_miss",
+      "unit": "count"
+    },
+    {
+      "index": 34,
+      "raw": 4130,
+      "name": "itlb_bypass",
+      "unit": "count"
+    },
+    {
+      "index": 35,
+      "raw": 4131,
+      "name": "itlb_fault",
+      "unit": "count"
+    },
+    {
+      "index": 36,
+      "raw": 4132,
+      "name": "itlb_killed",
+      "unit": "count"
+    },
+    {
+      "index": 37,
+      "raw": 4133,
+      "name": "itlb_retry",
+      "unit": "count"
+    },
+    {
+      "index": 38,
+      "raw": 4134,
+      "name": "itlb_pending",
+      "unit": "cycles"
+    },
+    {
+      "index": 39,
+      "raw": 4135,
+      "name": "iptw_started",
+      "unit": "count"
+    },
+    {
+      "index": 40,
+      "raw": 4136,
+      "name": "iptw_completed",
+      "unit": "count"
+    },
+    {
+      "index": 41,
+      "raw": 4137,
+      "name": "iptw_fault",
+      "unit": "count"
+    },
+    {
+      "index": 42,
+      "raw": 4138,
+      "name": "iptw_killed",
+      "unit": "count"
+    },
+    {
+      "index": 43,
+      "raw": 4139,
+      "name": "iptw_queue_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 44,
+      "raw": 4140,
+      "name": "iptw_service_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 45,
+      "raw": 4141,
+      "name": "iptw_pte_reads",
+      "unit": "count"
+    },
+    {
+      "index": 46,
+      "raw": 4142,
+      "name": "iptw_mem_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 47,
+      "raw": 4143,
+      "name": "ic_demand_access",
+      "unit": "count"
+    },
+    {
+      "index": 48,
+      "raw": 4144,
+      "name": "ic_demand_miss",
+      "unit": "count"
+    },
+    {
+      "index": 49,
+      "raw": 4145,
+      "name": "ic_lookup_retry",
+      "unit": "count"
+    },
+    {
+      "index": 50,
+      "raw": 4146,
+      "name": "ic_refill_completed",
+      "unit": "count"
+    },
+    {
+      "index": 51,
+      "raw": 4147,
+      "name": "ic_refill_latency",
+      "unit": "cycle_sum"
+    },
+    {
+      "index": 52,
+      "raw": 4148,
+      "name": "ic_cancelled_refill",
+      "unit": "count"
+    },
+    {
+      "index": 53,
+      "raw": 4149,
+      "name": "ic_refill_error",
+      "unit": "count"
+    },
+    {
+      "index": 54,
+      "raw": 4150,
+      "name": "ic_valid_eviction",
+      "unit": "count"
+    },
+    {
+      "index": 55,
+      "raw": 4151,
+      "name": "fence_i",
+      "unit": "count"
+    },
+    {
+      "index": 56,
+      "raw": 4152,
+      "name": "ic_refill_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 57,
+      "raw": 4153,
+      "name": "il2_request",
+      "unit": "count"
+    },
+    {
+      "index": 58,
+      "raw": 4154,
+      "name": "il2_hit",
+      "unit": "count"
+    },
+    {
+      "index": 59,
+      "raw": 4155,
+      "name": "il2_miss",
+      "unit": "count"
+    },
+    {
+      "index": 60,
+      "raw": 4156,
+      "name": "il2_probe",
+      "unit": "count"
+    },
+    {
+      "index": 61,
+      "raw": 4157,
+      "name": "il2_slot_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 62,
+      "raw": 4158,
+      "name": "il2_set_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 63,
+      "raw": 4159,
+      "name": "il2_request_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 64,
+      "raw": 4160,
+      "name": "new_line",
+      "unit": "count"
+    },
+    {
+      "index": 65,
+      "raw": 4161,
+      "name": "sequential_line",
+      "unit": "count"
+    },
+    {
+      "index": 66,
+      "raw": 4162,
+      "name": "nonsequential_line",
+      "unit": "count"
+    },
+    {
+      "index": 67,
+      "raw": 4163,
+      "name": "next_line_resident",
+      "unit": "count"
+    },
+    {
+      "index": 68,
+      "raw": 4164,
+      "name": "next_line_nonresident",
+      "unit": "count"
+    },
+    {
+      "index": 69,
+      "raw": 4165,
+      "name": "next_line_unknown",
+      "unit": "count"
+    },
+    {
+      "index": 70,
+      "raw": 4166,
+      "name": "recent_eviction_hit_4",
+      "unit": "count"
+    },
+    {
+      "index": 71,
+      "raw": 4167,
+      "name": "recent_eviction_hit_8",
+      "unit": "count"
+    },
+    {
+      "index": 72,
+      "raw": 4168,
+      "name": "recent_eviction_hit_16",
+      "unit": "count"
+    },
+    {
+      "index": 73,
+      "raw": 4169,
+      "name": "backend_fp_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 74,
+      "raw": 4170,
+      "name": "backend_lsu_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 75,
+      "raw": 4171,
+      "name": "backend_serial_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 76,
+      "raw": 4172,
+      "name": "backend_feedback_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 77,
+      "raw": 4173,
+      "name": "backend_other_wait",
+      "unit": "cycles"
+    },
+    {
+      "index": 78,
+      "raw": 4174,
+      "name": "stream_run_1",
+      "unit": "count"
+    },
+    {
+      "index": 79,
+      "raw": 4175,
+      "name": "stream_run_2_3",
+      "unit": "count"
+    },
+    {
+      "index": 80,
+      "raw": 4176,
+      "name": "stream_run_4_15",
+      "unit": "count"
+    },
+    {
+      "index": 81,
+      "raw": 4177,
+      "name": "stream_run_16_plus",
+      "unit": "count"
+    },
+    {
+      "index": 82,
+      "raw": 4178,
+      "name": "ras_underflow",
+      "unit": "count"
+    },
+    {
+      "index": 83,
+      "raw": 4179,
+      "name": "ras_overflow",
+      "unit": "count"
+    },
+    {
+      "index": 84,
+      "raw": 4180,
+      "name": "btb_alloc",
+      "unit": "count"
+    },
+    {
+      "index": 85,
+      "raw": 4181,
+      "name": "btb_evict",
+      "unit": "count"
+    },
+    {
+      "index": 86,
+      "raw": 4182,
+      "name": "ic_refill_latency_bin_0",
+      "unit": "count"
+    },
+    {
+      "index": 87,
+      "raw": 4183,
+      "name": "ic_refill_latency_bin_1",
+      "unit": "count"
+    },
+    {
+      "index": 88,
+      "raw": 4184,
+      "name": "ic_refill_latency_bin_2",
+      "unit": "count"
+    },
+    {
+      "index": 89,
+      "raw": 4185,
+      "name": "ic_refill_latency_bin_3",
+      "unit": "count"
+    },
+    {
+      "index": 90,
+      "raw": 4186,
+      "name": "ic_refill_latency_bin_4",
+      "unit": "count"
+    },
+    {
+      "index": 91,
+      "raw": 4187,
+      "name": "ic_refill_latency_bin_5",
+      "unit": "count"
+    },
+    {
+      "index": 92,
+      "raw": 4188,
+      "name": "ic_refill_latency_bin_6",
+      "unit": "count"
+    },
+    {
+      "index": 93,
+      "raw": 4189,
+      "name": "ic_refill_latency_bin_7",
+      "unit": "count"
+    },
+    {
+      "index": 94,
+      "raw": 4190,
+      "name": "next_line_gap_bin_0",
+      "unit": "count"
+    },
+    {
+      "index": 95,
+      "raw": 4191,
+      "name": "next_line_gap_bin_1",
+      "unit": "count"
+    },
+    {
+      "index": 96,
+      "raw": 4192,
+      "name": "next_line_gap_bin_2",
+      "unit": "count"
+    },
+    {
+      "index": 97,
+      "raw": 4193,
+      "name": "next_line_gap_bin_3",
+      "unit": "count"
+    },
+    {
+      "index": 98,
+      "raw": 4194,
+      "name": "next_line_gap_bin_4",
+      "unit": "count"
+    },
+    {
+      "index": 99,
+      "raw": 4195,
+      "name": "next_line_gap_bin_5",
+      "unit": "count"
+    },
+    {
+      "index": 100,
+      "raw": 4196,
+      "name": "next_line_gap_bin_6",
+      "unit": "count"
+    },
+    {
+      "index": 101,
+      "raw": 4197,
+      "name": "next_line_gap_bin_7",
+      "unit": "count"
+    },
+    {
+      "index": 102,
+      "raw": 4198,
+      "name": "recovery_latency_bin_0",
+      "unit": "count"
+    },
+    {
+      "index": 103,
+      "raw": 4199,
+      "name": "recovery_latency_bin_1",
+      "unit": "count"
+    },
+    {
+      "index": 104,
+      "raw": 4200,
+      "name": "recovery_latency_bin_2",
+      "unit": "count"
+    },
+    {
+      "index": 105,
+      "raw": 4201,
+      "name": "recovery_latency_bin_3",
+      "unit": "count"
+    },
+    {
+      "index": 106,
+      "raw": 4202,
+      "name": "recovery_latency_bin_4",
+      "unit": "count"
+    },
+    {
+      "index": 107,
+      "raw": 4203,
+      "name": "recovery_latency_bin_5",
+      "unit": "count"
+    },
+    {
+      "index": 108,
+      "raw": 4204,
+      "name": "recovery_latency_bin_6",
+      "unit": "count"
+    },
+    {
+      "index": 109,
+      "raw": 4205,
+      "name": "recovery_latency_bin_7",
+      "unit": "count"
+    },
+    {
+      "index": 110,
+      "raw": 4206,
+      "name": "ic_set_miss_0",
+      "unit": "count"
+    },
+    {
+      "index": 111,
+      "raw": 4207,
+      "name": "ic_set_miss_1",
+      "unit": "count"
+    },
+    {
+      "index": 112,
+      "raw": 4208,
+      "name": "ic_set_miss_2",
+      "unit": "count"
+    },
+    {
+      "index": 113,
+      "raw": 4209,
+      "name": "ic_set_miss_3",
+      "unit": "count"
+    },
+    {
+      "index": 114,
+      "raw": 4210,
+      "name": "ic_set_miss_4",
+      "unit": "count"
+    },
+    {
+      "index": 115,
+      "raw": 4211,
+      "name": "ic_set_miss_5",
+      "unit": "count"
+    },
+    {
+      "index": 116,
+      "raw": 4212,
+      "name": "ic_set_miss_6",
+      "unit": "count"
+    },
+    {
+      "index": 117,
+      "raw": 4213,
+      "name": "ic_set_miss_7",
+      "unit": "count"
+    },
+    {
+      "index": 118,
+      "raw": 4214,
+      "name": "ic_set_miss_8",
+      "unit": "count"
+    },
+    {
+      "index": 119,
+      "raw": 4215,
+      "name": "ic_set_miss_9",
+      "unit": "count"
+    },
+    {
+      "index": 120,
+      "raw": 4216,
+      "name": "ic_set_miss_10",
+      "unit": "count"
+    },
+    {
+      "index": 121,
+      "raw": 4217,
+      "name": "ic_set_miss_11",
+      "unit": "count"
+    },
+    {
+      "index": 122,
+      "raw": 4218,
+      "name": "ic_set_miss_12",
+      "unit": "count"
+    },
+    {
+      "index": 123,
+      "raw": 4219,
+      "name": "ic_set_miss_13",
+      "unit": "count"
+    },
+    {
+      "index": 124,
+      "raw": 4220,
+      "name": "ic_set_miss_14",
+      "unit": "count"
+    },
+    {
+      "index": 125,
+      "raw": 4221,
+      "name": "ic_set_miss_15",
+      "unit": "count"
+    },
+    {
+      "index": 126,
+      "raw": 4222,
+      "name": "ic_set_miss_16",
+      "unit": "count"
+    },
+    {
+      "index": 127,
+      "raw": 4223,
+      "name": "ic_set_miss_17",
+      "unit": "count"
+    },
+    {
+      "index": 128,
+      "raw": 4224,
+      "name": "ic_set_miss_18",
+      "unit": "count"
+    },
+    {
+      "index": 129,
+      "raw": 4225,
+      "name": "ic_set_miss_19",
+      "unit": "count"
+    },
+    {
+      "index": 130,
+      "raw": 4226,
+      "name": "ic_set_miss_20",
+      "unit": "count"
+    },
+    {
+      "index": 131,
+      "raw": 4227,
+      "name": "ic_set_miss_21",
+      "unit": "count"
+    },
+    {
+      "index": 132,
+      "raw": 4228,
+      "name": "ic_set_miss_22",
+      "unit": "count"
+    },
+    {
+      "index": 133,
+      "raw": 4229,
+      "name": "ic_set_miss_23",
+      "unit": "count"
+    },
+    {
+      "index": 134,
+      "raw": 4230,
+      "name": "ic_set_miss_24",
+      "unit": "count"
+    },
+    {
+      "index": 135,
+      "raw": 4231,
+      "name": "ic_set_miss_25",
+      "unit": "count"
+    },
+    {
+      "index": 136,
+      "raw": 4232,
+      "name": "ic_set_miss_26",
+      "unit": "count"
+    },
+    {
+      "index": 137,
+      "raw": 4233,
+      "name": "ic_set_miss_27",
+      "unit": "count"
+    },
+    {
+      "index": 138,
+      "raw": 4234,
+      "name": "ic_set_miss_28",
+      "unit": "count"
+    },
+    {
+      "index": 139,
+      "raw": 4235,
+      "name": "ic_set_miss_29",
+      "unit": "count"
+    },
+    {
+      "index": 140,
+      "raw": 4236,
+      "name": "ic_set_miss_30",
+      "unit": "count"
+    },
+    {
+      "index": 141,
+      "raw": 4237,
+      "name": "ic_set_miss_31",
+      "unit": "count"
+    },
+    {
+      "index": 142,
+      "raw": 4238,
+      "name": "ic_set_miss_32",
+      "unit": "count"
+    },
+    {
+      "index": 143,
+      "raw": 4239,
+      "name": "ic_set_miss_33",
+      "unit": "count"
+    },
+    {
+      "index": 144,
+      "raw": 4240,
+      "name": "ic_set_miss_34",
+      "unit": "count"
+    },
+    {
+      "index": 145,
+      "raw": 4241,
+      "name": "ic_set_miss_35",
+      "unit": "count"
+    },
+    {
+      "index": 146,
+      "raw": 4242,
+      "name": "ic_set_miss_36",
+      "unit": "count"
+    },
+    {
+      "index": 147,
+      "raw": 4243,
+      "name": "ic_set_miss_37",
+      "unit": "count"
+    },
+    {
+      "index": 148,
+      "raw": 4244,
+      "name": "ic_set_miss_38",
+      "unit": "count"
+    },
+    {
+      "index": 149,
+      "raw": 4245,
+      "name": "ic_set_miss_39",
+      "unit": "count"
+    },
+    {
+      "index": 150,
+      "raw": 4246,
+      "name": "ic_set_miss_40",
+      "unit": "count"
+    },
+    {
+      "index": 151,
+      "raw": 4247,
+      "name": "ic_set_miss_41",
+      "unit": "count"
+    },
+    {
+      "index": 152,
+      "raw": 4248,
+      "name": "ic_set_miss_42",
+      "unit": "count"
+    },
+    {
+      "index": 153,
+      "raw": 4249,
+      "name": "ic_set_miss_43",
+      "unit": "count"
+    },
+    {
+      "index": 154,
+      "raw": 4250,
+      "name": "ic_set_miss_44",
+      "unit": "count"
+    },
+    {
+      "index": 155,
+      "raw": 4251,
+      "name": "ic_set_miss_45",
+      "unit": "count"
+    },
+    {
+      "index": 156,
+      "raw": 4252,
+      "name": "ic_set_miss_46",
+      "unit": "count"
+    },
+    {
+      "index": 157,
+      "raw": 4253,
+      "name": "ic_set_miss_47",
+      "unit": "count"
+    },
+    {
+      "index": 158,
+      "raw": 4254,
+      "name": "ic_set_miss_48",
+      "unit": "count"
+    },
+    {
+      "index": 159,
+      "raw": 4255,
+      "name": "ic_set_miss_49",
+      "unit": "count"
+    },
+    {
+      "index": 160,
+      "raw": 4256,
+      "name": "ic_set_miss_50",
+      "unit": "count"
+    },
+    {
+      "index": 161,
+      "raw": 4257,
+      "name": "ic_set_miss_51",
+      "unit": "count"
+    },
+    {
+      "index": 162,
+      "raw": 4258,
+      "name": "ic_set_miss_52",
+      "unit": "count"
+    },
+    {
+      "index": 163,
+      "raw": 4259,
+      "name": "ic_set_miss_53",
+      "unit": "count"
+    },
+    {
+      "index": 164,
+      "raw": 4260,
+      "name": "ic_set_miss_54",
+      "unit": "count"
+    },
+    {
+      "index": 165,
+      "raw": 4261,
+      "name": "ic_set_miss_55",
+      "unit": "count"
+    },
+    {
+      "index": 166,
+      "raw": 4262,
+      "name": "ic_set_miss_56",
+      "unit": "count"
+    },
+    {
+      "index": 167,
+      "raw": 4263,
+      "name": "ic_set_miss_57",
+      "unit": "count"
+    },
+    {
+      "index": 168,
+      "raw": 4264,
+      "name": "ic_set_miss_58",
+      "unit": "count"
+    },
+    {
+      "index": 169,
+      "raw": 4265,
+      "name": "ic_set_miss_59",
+      "unit": "count"
+    },
+    {
+      "index": 170,
+      "raw": 4266,
+      "name": "ic_set_miss_60",
+      "unit": "count"
+    },
+    {
+      "index": 171,
+      "raw": 4267,
+      "name": "ic_set_miss_61",
+      "unit": "count"
+    },
+    {
+      "index": 172,
+      "raw": 4268,
+      "name": "ic_set_miss_62",
+      "unit": "count"
+    },
+    {
+      "index": 173,
+      "raw": 4269,
+      "name": "ic_set_miss_63",
+      "unit": "count"
+    },
+    {
+      "index": 174,
+      "raw": 4270,
+      "name": "ic_set_miss_64",
+      "unit": "count"
+    },
+    {
+      "index": 175,
+      "raw": 4271,
+      "name": "ic_set_miss_65",
+      "unit": "count"
+    },
+    {
+      "index": 176,
+      "raw": 4272,
+      "name": "ic_set_miss_66",
+      "unit": "count"
+    },
+    {
+      "index": 177,
+      "raw": 4273,
+      "name": "ic_set_miss_67",
+      "unit": "count"
+    },
+    {
+      "index": 178,
+      "raw": 4274,
+      "name": "ic_set_miss_68",
+      "unit": "count"
+    },
+    {
+      "index": 179,
+      "raw": 4275,
+      "name": "ic_set_miss_69",
+      "unit": "count"
+    },
+    {
+      "index": 180,
+      "raw": 4276,
+      "name": "ic_set_miss_70",
+      "unit": "count"
+    },
+    {
+      "index": 181,
+      "raw": 4277,
+      "name": "ic_set_miss_71",
+      "unit": "count"
+    },
+    {
+      "index": 182,
+      "raw": 4278,
+      "name": "ic_set_miss_72",
+      "unit": "count"
+    },
+    {
+      "index": 183,
+      "raw": 4279,
+      "name": "ic_set_miss_73",
+      "unit": "count"
+    },
+    {
+      "index": 184,
+      "raw": 4280,
+      "name": "ic_set_miss_74",
+      "unit": "count"
+    },
+    {
+      "index": 185,
+      "raw": 4281,
+      "name": "ic_set_miss_75",
+      "unit": "count"
+    },
+    {
+      "index": 186,
+      "raw": 4282,
+      "name": "ic_set_miss_76",
+      "unit": "count"
+    },
+    {
+      "index": 187,
+      "raw": 4283,
+      "name": "ic_set_miss_77",
+      "unit": "count"
+    },
+    {
+      "index": 188,
+      "raw": 4284,
+      "name": "ic_set_miss_78",
+      "unit": "count"
+    },
+    {
+      "index": 189,
+      "raw": 4285,
+      "name": "ic_set_miss_79",
+      "unit": "count"
+    },
+    {
+      "index": 190,
+      "raw": 4286,
+      "name": "ic_set_miss_80",
+      "unit": "count"
+    },
+    {
+      "index": 191,
+      "raw": 4287,
+      "name": "ic_set_miss_81",
+      "unit": "count"
+    },
+    {
+      "index": 192,
+      "raw": 4288,
+      "name": "ic_set_miss_82",
+      "unit": "count"
+    },
+    {
+      "index": 193,
+      "raw": 4289,
+      "name": "ic_set_miss_83",
+      "unit": "count"
+    },
+    {
+      "index": 194,
+      "raw": 4290,
+      "name": "ic_set_miss_84",
+      "unit": "count"
+    },
+    {
+      "index": 195,
+      "raw": 4291,
+      "name": "ic_set_miss_85",
+      "unit": "count"
+    },
+    {
+      "index": 196,
+      "raw": 4292,
+      "name": "ic_set_miss_86",
+      "unit": "count"
+    },
+    {
+      "index": 197,
+      "raw": 4293,
+      "name": "ic_set_miss_87",
+      "unit": "count"
+    },
+    {
+      "index": 198,
+      "raw": 4294,
+      "name": "ic_set_miss_88",
+      "unit": "count"
+    },
+    {
+      "index": 199,
+      "raw": 4295,
+      "name": "ic_set_miss_89",
+      "unit": "count"
+    },
+    {
+      "index": 200,
+      "raw": 4296,
+      "name": "ic_set_miss_90",
+      "unit": "count"
+    },
+    {
+      "index": 201,
+      "raw": 4297,
+      "name": "ic_set_miss_91",
+      "unit": "count"
+    },
+    {
+      "index": 202,
+      "raw": 4298,
+      "name": "ic_set_miss_92",
+      "unit": "count"
+    },
+    {
+      "index": 203,
+      "raw": 4299,
+      "name": "ic_set_miss_93",
+      "unit": "count"
+    },
+    {
+      "index": 204,
+      "raw": 4300,
+      "name": "ic_set_miss_94",
+      "unit": "count"
+    },
+    {
+      "index": 205,
+      "raw": 4301,
+      "name": "ic_set_miss_95",
+      "unit": "count"
+    },
+    {
+      "index": 206,
+      "raw": 4302,
+      "name": "ic_set_miss_96",
+      "unit": "count"
+    },
+    {
+      "index": 207,
+      "raw": 4303,
+      "name": "ic_set_miss_97",
+      "unit": "count"
+    },
+    {
+      "index": 208,
+      "raw": 4304,
+      "name": "ic_set_miss_98",
+      "unit": "count"
+    },
+    {
+      "index": 209,
+      "raw": 4305,
+      "name": "ic_set_miss_99",
+      "unit": "count"
+    },
+    {
+      "index": 210,
+      "raw": 4306,
+      "name": "ic_set_miss_100",
+      "unit": "count"
+    },
+    {
+      "index": 211,
+      "raw": 4307,
+      "name": "ic_set_miss_101",
+      "unit": "count"
+    },
+    {
+      "index": 212,
+      "raw": 4308,
+      "name": "ic_set_miss_102",
+      "unit": "count"
+    },
+    {
+      "index": 213,
+      "raw": 4309,
+      "name": "ic_set_miss_103",
+      "unit": "count"
+    },
+    {
+      "index": 214,
+      "raw": 4310,
+      "name": "ic_set_miss_104",
+      "unit": "count"
+    },
+    {
+      "index": 215,
+      "raw": 4311,
+      "name": "ic_set_miss_105",
+      "unit": "count"
+    },
+    {
+      "index": 216,
+      "raw": 4312,
+      "name": "ic_set_miss_106",
+      "unit": "count"
+    },
+    {
+      "index": 217,
+      "raw": 4313,
+      "name": "ic_set_miss_107",
+      "unit": "count"
+    },
+    {
+      "index": 218,
+      "raw": 4314,
+      "name": "ic_set_miss_108",
+      "unit": "count"
+    },
+    {
+      "index": 219,
+      "raw": 4315,
+      "name": "ic_set_miss_109",
+      "unit": "count"
+    },
+    {
+      "index": 220,
+      "raw": 4316,
+      "name": "ic_set_miss_110",
+      "unit": "count"
+    },
+    {
+      "index": 221,
+      "raw": 4317,
+      "name": "ic_set_miss_111",
+      "unit": "count"
+    },
+    {
+      "index": 222,
+      "raw": 4318,
+      "name": "ic_set_miss_112",
+      "unit": "count"
+    },
+    {
+      "index": 223,
+      "raw": 4319,
+      "name": "ic_set_miss_113",
+      "unit": "count"
+    },
+    {
+      "index": 224,
+      "raw": 4320,
+      "name": "ic_set_miss_114",
+      "unit": "count"
+    },
+    {
+      "index": 225,
+      "raw": 4321,
+      "name": "ic_set_miss_115",
+      "unit": "count"
+    },
+    {
+      "index": 226,
+      "raw": 4322,
+      "name": "ic_set_miss_116",
+      "unit": "count"
+    },
+    {
+      "index": 227,
+      "raw": 4323,
+      "name": "ic_set_miss_117",
+      "unit": "count"
+    },
+    {
+      "index": 228,
+      "raw": 4324,
+      "name": "ic_set_miss_118",
+      "unit": "count"
+    },
+    {
+      "index": 229,
+      "raw": 4325,
+      "name": "ic_set_miss_119",
+      "unit": "count"
+    },
+    {
+      "index": 230,
+      "raw": 4326,
+      "name": "ic_set_miss_120",
+      "unit": "count"
+    },
+    {
+      "index": 231,
+      "raw": 4327,
+      "name": "ic_set_miss_121",
+      "unit": "count"
+    },
+    {
+      "index": 232,
+      "raw": 4328,
+      "name": "ic_set_miss_122",
+      "unit": "count"
+    },
+    {
+      "index": 233,
+      "raw": 4329,
+      "name": "ic_set_miss_123",
+      "unit": "count"
+    },
+    {
+      "index": 234,
+      "raw": 4330,
+      "name": "ic_set_miss_124",
+      "unit": "count"
+    },
+    {
+      "index": 235,
+      "raw": 4331,
+      "name": "ic_set_miss_125",
+      "unit": "count"
+    },
+    {
+      "index": 236,
+      "raw": 4332,
+      "name": "ic_set_miss_126",
+      "unit": "count"
+    },
+    {
+      "index": 237,
+      "raw": 4333,
+      "name": "ic_set_miss_127",
+      "unit": "count"
+    },
+    {
+      "index": 238,
+      "raw": 4334,
+      "name": "ic_set_miss_overflow",
+      "unit": "count"
+    },
+    {
+      "index": 239,
+      "raw": 4335,
+      "name": "f2_recovery_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 240,
+      "raw": 4336,
+      "name": "f2_recovery_completed",
+      "unit": "count"
+    },
+    {
+      "index": 241,
+      "raw": 4337,
+      "name": "f2_recovery_latency",
+      "unit": "cycle_sum"
+    },
+    {
+      "index": 242,
+      "raw": 4338,
+      "name": "f2_recovery_latency_bin_0",
+      "unit": "count"
+    },
+    {
+      "index": 243,
+      "raw": 4339,
+      "name": "f2_recovery_latency_bin_1",
+      "unit": "count"
+    },
+    {
+      "index": 244,
+      "raw": 4340,
+      "name": "f2_recovery_latency_bin_2",
+      "unit": "count"
+    },
+    {
+      "index": 245,
+      "raw": 4341,
+      "name": "f2_recovery_latency_bin_3",
+      "unit": "count"
+    },
+    {
+      "index": 246,
+      "raw": 4342,
+      "name": "f2_recovery_latency_bin_4",
+      "unit": "count"
+    },
+    {
+      "index": 247,
+      "raw": 4343,
+      "name": "f2_recovery_latency_bin_5",
+      "unit": "count"
+    },
+    {
+      "index": 248,
+      "raw": 4344,
+      "name": "f2_recovery_latency_bin_6",
+      "unit": "count"
+    },
+    {
+      "index": 249,
+      "raw": 4345,
+      "name": "f2_recovery_latency_bin_7",
+      "unit": "count"
+    },
+    {
+      "index": 250,
+      "raw": 4346,
+      "name": "cpu_cycles",
+      "unit": "cycles"
+    },
+    {
+      "index": 251,
+      "raw": 4347,
+      "name": "retired_instructions",
+      "unit": "count"
+    }
+  ]
+}

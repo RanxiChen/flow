@@ -1,0 +1,13 @@
+{
+  "pid": 211407,
+  "started_at": "2026-10-20T21:29:14.058222+08:00",
+  "host": "Alan",
+  "cwd": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696",
+  "command": [
+    "bash",
+    "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/run-fpga.sh"
+  ],
+  "output": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/single",
+  "expected_bitstream": "/home/chen/FUN/flow-runs/perf-timing-r1-20261020-678b696/single/gateware/xilinx_kcu105.bit",
+  "scope": "R1 single scalar 100MHz no RVV, perf preserved, coherent SD DMA; firmware regression required before write_bitstream"
+}

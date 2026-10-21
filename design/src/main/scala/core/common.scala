@@ -359,7 +359,7 @@ object BREEZE_HPM_EVENT {
    val REPLAY_MMIO = 18
    val REPLAY_LR = 19
    val REPLAY_COPRO = 20
-   val MAX = REPLAY_COPRO
+   val MAX = flow.observe.BreezeObserveEvent.rawBase + flow.observe.BreezeObserveEvent.count - 1
 }
 
 object SIM_SYSTEM {
@@ -382,6 +382,7 @@ object SUPERVISOR_INTERRUPT_CAUSE {
    val SOFTWARE = 1
    val TIMER    = 5
    val EXTERNAL = 9
+   val COUNTER_OVERFLOW = 13
 }
 
 object MACHINE_INTERRUPT_CAUSE {

@@ -57,5 +57,8 @@ object BreezePipelineLink {
     in.bits.pred.eventPc := out.bits.eventPc
     in.bits.pred.rasPush := out.bits.rasPush
     in.bits.pred.rasPop := out.bits.rasPop
+    in.bits.pred.earlyTaken := out.bits.earlyTaken
+    in.bits.pred.earlyTarget := out.bits.earlyTarget
+    in.bits.pred.earlyTargetAvailable := out.bits.earlyTargetAvailable
   }
 }

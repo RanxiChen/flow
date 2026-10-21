@@ -107,6 +107,8 @@ class ClusterMmio(axi: Axi4LiteMasterIO, nHarts: Int, timerDivider: Int, rng: Ra
   val MtimeOff: BigInt = BigInt("bff8", 16)
   val ConsoleBase: BigInt = BigInt("12000000", 16)
   val ConsoleSize: BigInt = BigInt("1000", 16)
+  // Real OpenSBI's LiteUART console (the old soc_ctrl console remains).
+  val LiteUartBase: BigInt = BigInt("12001000",16)
 
   val msip: Array[Boolean] = Array.fill(nHarts)(false)
   val mtimecmp: Array[BigInt] = Array.fill(nHarts)(mask(64))
@@ -138,6 +140,10 @@ class ClusterMmio(axi: Axi4LiteMasterIO, nHarts: Int, timerDivider: Int, rng: Ra
         if (off < MtimeOff && h < nHarts) mtimecmp(h) else { unmapped += s"R ${hex(a)} (CLINT hole)"; BigInt(0) }
       }
     } else if (base >= ConsoleBase && base < ConsoleBase + ConsoleSize) BigInt(0)
+    else if (base >= LiteUartBase && base < LiteUartBase+0x100) {
+      // TXFULL @+4 is zero; RXEMPTY @+8 is one. Values occupy AXI lanes.
+      if(base == LiteUartBase+8) BigInt(1) else BigInt(0)
+    }
     else { unmapped += s"R ${hex(a)}"; BigInt(0) }
   }
 
@@ -162,6 +168,8 @@ class ClusterMmio(axi: Axi4LiteMasterIO, nHarts: Int, timerDivider: Int, rng: Ra
       }
     } else if (base >= ConsoleBase && base < ConsoleBase + ConsoleSize) {
       for (i <- 0 until 8 if ((strb >> i) & 1) == 1) console += ((d >> (8 * i)) & 0xff).toChar
+    } else if(base == LiteUartBase && (strb & 1) != 0) {
+      console += (d & 0xff).toChar
     } else unmapped += s"W ${hex(a)} = ${hex(d)} strb ${strb.toHexString}"
   }
 

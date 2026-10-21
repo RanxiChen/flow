@@ -63,7 +63,12 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
   var faultCause = 13
   var softwareInterrupt = false
   var timerInterrupt = false
+  var observeCounters = false
+  val observed = mutable.Map.empty[String,BigInt].withDefaultValue(BigInt(0))
   var predictionTaken = false
+  var earlyPredictionTaken = false
+  var earlyPredictionTarget = BigInt(0)
+  var earlyPredictionAvailable = false
   var predictionTarget: Option[BigInt] = None
   var predictionIndex = 0
   var instructionAccessFault = false
@@ -91,6 +96,8 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     d.io.time.poke(0.U); d.io.externalInterrupts.poke(0.U); d.io.supervisorExternalInterrupt.poke(false.B)
     d.io.frontendResolutionAvailable.poke(true.B); d.io.frontendResolve.ready.poke(true.B)
     d.io.fetchBuffer.valid.poke(false.B)
+    d.io.hpmEvents.observation.poke(0.U.asTypeOf(d.io.hpmEvents.observation))
+    d.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(d.io.hpmEvents.instructionTrace))
     d.io.hpmEvents.controlRetired.poke(false.B); d.io.hpmEvents.controlTaken.poke(false.B)
     d.io.hpmEvents.predictionMiss.poke(false.B); d.io.hpmEvents.icacheAccess.poke(false.B)
     d.io.hpmEvents.icacheMiss.poke(false.B); d.io.hpmEvents.dcacheAccess.poke(false.B)
@@ -124,6 +131,9 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
         d.io.fetchBuffer.bits.pred.predPc.poke(predictionTarget.getOrElse(p+4).U); d.io.fetchBuffer.bits.pred.phtIdx.poke(predictionIndex.U)
         d.io.fetchBuffer.bits.pred.eventPc.poke((p+2).U)
         d.io.fetchBuffer.bits.pred.historyBefore.poke(0.U)
+        d.io.fetchBuffer.bits.pred.earlyTaken.poke(earlyPredictionTaken.B)
+        d.io.fetchBuffer.bits.pred.earlyTarget.poke(earlyPredictionTarget.U)
+        d.io.fetchBuffer.bits.pred.earlyTargetAvailable.poke(earlyPredictionAvailable.B)
         d.io.fetchBuffer.bits.pred.rasPush.poke(false.B); d.io.fetchBuffer.bits.pred.rasPop.poke(false.B)
       case None => d.io.frontendResolutionAvailable.poke(true.B); d.io.frontendResolve.ready.poke(true.B)
     d.io.fetchBuffer.valid.poke(false.B)
@@ -227,6 +237,15 @@ private[backend] class Environment(val d: BreezeBackend, val seed: Int = 0xB01) 
     if(bool(d.io.sfence.valid)) record("sfence")
     if(bool(d.io.frontendRedirect.valid)) record("redirect",data=uint(d.io.frontendRedirect.target))
     if(bool(d.io.frontendRedirect.cacheFlush)) record("icacheFlush")
+    if(observeCounters) {
+      val counters = d.io.backendEvents.observation
+      val names = Seq("active_cycles", "frontend_issued", "frontend_starved", "frontend_backpressure", "both_blocked",
+        "fe_wait_itlb", "fe_wait_icache", "fe_wait_recovery", "fe_wait_other", "conditional_retired",
+        "conditional_direction_wrong", "early_direction_wrong", "early_target_missing")
+      for(name <- names) observed(name) += uint(counters(name))
+      assert(Seq("frontend_issued","frontend_starved","frontend_backpressure","both_blocked").map(n=>uint(counters(n))).sum == uint(counters("active_cycles")))
+      assert(Seq("fe_wait_itlb","fe_wait_icache","fe_wait_recovery","fe_wait_other").map(n=>uint(counters(n))).sum == uint(counters("frontend_starved")))
+    }
     val conflicts = uint(d.io.backendEvents.wbPortConflict).toInt
     for(_ <- 0 until conflicts) record("conflict")
     if(bool(d.io.translationBlocked)) record("xlatBlock")
@@ -680,6 +699,22 @@ class BackendContractSpec extends AnyFreeSpec with Matchers with BreezeFpChiselS
     m.writes(1) mustBe empty; m.writes(2) mustBe empty
     m.d.io.debug.get.csrMcause.expect(13.U)
     m.d.io.observe.gprBusy.expect(0.U)
+  }}
+
+  "observation separates original early prediction from final retired prediction and partitions supply cycles" in { check() { m =>
+    m.observeCounters=true
+    for(_ <- 0 until 8) m.step()
+    m.predictionTaken=true; m.predictionTarget=Some(m.pc+8)
+    m.earlyPredictionTaken=false; m.earlyPredictionAvailable=false
+    val branch=m.issue(BigInt(0x463))
+    m.pc=branch+8; m.predictionTaken=false; m.predictionTarget=None
+    for(_ <- 0 until 12) m.issue(nop)
+    for(_ <- 0 until 8) m.step()
+    m.observed("conditional_retired") mustBe 1
+    m.observed("conditional_direction_wrong") mustBe 0
+    m.observed("early_direction_wrong") mustBe 1
+    m.observed("early_target_missing") mustBe 1
+    m.observed("frontend_starved") must be > BigInt(0)
   }}
 
 }

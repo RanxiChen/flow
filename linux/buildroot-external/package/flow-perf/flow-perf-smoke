@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+out=${1:-/tmp/flow-perf}
+mkdir -p "$out"
+perf version > "$out/version.txt"
+uname -a > "$out/uname.txt"
+cat /proc/cpuinfo > "$out/cpuinfo.txt"
+flow-perf-workload
+flow-perf-workload --icache
+perf stat -o "$out/stat.txt" -e cycles,instructions -- flow-perf-workload
+for event in cycles instructions; do
+    perf record -o "$out/$event.data" -e "$event:u" -c 100000 \
+        --call-graph fp -- flow-perf-workload
+    perf report --stdio -i "$out/$event.data" --sort symbol > "$out/$event.report.txt"
+    perf script -i "$out/$event.data" > "$out/$event.samples.txt"
+    test -s "$out/$event.samples.txt"
+    grep -Eq 'hot_integer|hot_branch' "$out/$event.report.txt"
+done
+# Schema v1 ic_demand_miss raw 0x1030. Dedicated text sweep provides misses.
+perf record -o "$out/icache.data" -e r1030:u -c 128 -- flow-perf-workload --icache
+perf report --stdio -i "$out/icache.data" --sort symbol > "$out/icache.report.txt"
+perf script -i "$out/icache.data" > "$out/icache.samples.txt"
+test -s "$out/icache.samples.txt"
+grep -q flow_perf_icache_hot "$out/icache.report.txt"
+echo "FLOW_PERF_SAMPLING_PASS $out"

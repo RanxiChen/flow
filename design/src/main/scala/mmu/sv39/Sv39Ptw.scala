@@ -9,6 +9,7 @@ class Sv39Ptw extends Module {
     val iGrant = Output(Bool()); val dGrant = Output(Bool()); val done = Valid(new PtwDone)
     val upper = Flipped(new WalkCachePort(9)); val middle = Flipped(new WalkCachePort(18))
     val mem = new PtwMemIO; val idle = Output(Bool())
+    val observation = Output(new flow.observe.BreezeObserveEvents)
   })
   object State extends ChiselEnum { val sIdle, sLookup, sReq, sWait, sCheck = Value }
   val state = RegInit(State.sIdle)
@@ -75,6 +76,15 @@ class Sv39Ptw extends Module {
       }
     }
   }
+  io.observation := 0.U.asTypeOf(io.observation)
+  io.observation("iptw_started") := io.iGrant.asUInt
+  io.observation("iptw_completed") := (io.done.valid && !wSide).asUInt
+  io.observation("iptw_fault") := (io.done.valid && !wSide &&
+    (io.done.bits.pageFault || io.done.bits.accessFault)).asUInt
+  io.observation("iptw_queue_cycles") := (io.iMiss.valid && !io.iMiss.granted && !io.iGrant).asUInt
+  io.observation("iptw_service_cycles") := (state =/= State.sIdle && !wSide).asUInt
+  io.observation("iptw_pte_reads") := (io.mem.req.fire && !wSide).asUInt
+  io.observation("iptw_mem_wait") := (state === State.sWait && !wSide).asUInt
   when(io.mem.resp.valid) { assert(state === State.sWait, "PTW response outside sWait") }
   val stalled = RegNext(io.mem.req.valid && !io.mem.req.ready, false.B)
   val previousAddress = RegNext(io.mem.req.bits.paddr)

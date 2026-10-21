@@ -49,6 +49,8 @@ class RegFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
 class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
     private def clearHpmEvents(dut: CSRFile): Unit = {
+        dut.io.hpmEvents.observation.poke(0.U.asTypeOf(dut.io.hpmEvents.observation))
+        dut.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(dut.io.hpmEvents.instructionTrace))
         dut.io.hpmEvents.controlRetired.poke(false.B)
         dut.io.hpmEvents.controlTaken.poke(false.B)
         dut.io.hpmEvents.predictionMiss.poke(false.B)
@@ -380,6 +382,8 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
 
             dut.io.hpmEvents.controlRetired.poke(true.B)
             dut.clock.step(3)
+            dut.io.hpmEvents.observation.poke(0.U.asTypeOf(dut.io.hpmEvents.observation))
+            dut.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(dut.io.hpmEvents.instructionTrace))
             dut.io.hpmEvents.controlRetired.poke(false.B)
             dut.io.csr_old_data.expect(2.U)
 
@@ -392,6 +396,8 @@ class CSRFileSpec extends AnyFreeSpec with Matchers with ChiselSim {
             dut.io.commit_write_en.poke(false.B)
             dut.io.hpmEvents.controlRetired.poke(true.B)
             dut.clock.step(2)
+            dut.io.hpmEvents.observation.poke(0.U.asTypeOf(dut.io.hpmEvents.observation))
+            dut.io.hpmEvents.instructionTrace.poke(0.U.asTypeOf(dut.io.hpmEvents.instructionTrace))
             dut.io.hpmEvents.controlRetired.poke(false.B)
             dut.io.csr_old_data.expect(3.U)
 

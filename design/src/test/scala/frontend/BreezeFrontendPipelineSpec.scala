@@ -44,6 +44,10 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
     var ptw: Option[(Int, BigInt)] = None
     var refills = Vector.empty[BigInt]
     var ptwReads = 0
+    val observed = mutable.Map.empty[String,BigInt].withDefaultValue(BigInt(0))
+    private val observedNames = Seq("ic_demand_access", "ic_demand_miss", "ic_lookup_retry",
+      "itlb_tag_hit", "itlb_tag_miss", "itlb_bypass", "iptw_started", "iptw_completed",
+      "ic_refill_completed", "ic_cancelled_refill", "ic_valid_eviction")
     var f0Run = 0; var longestF0Run = 0
     var refillError = false
     d.io.resetPc.poke(start.U)
@@ -111,6 +115,7 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
       }
       if (d.io.debug.f0Fire.peek().litToBoolean) f0Run += 1 else f0Run = 0
       longestF0Run = longestF0Run.max(f0Run)
+      for(name <- observedNames) observed(name) += d.io.hpm.observation(name).peek().litValue
       d.clock.step(); cycle += 1
       seen
     }
@@ -123,6 +128,34 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
       }
       assert(result.size == n, s"frontend stopped at ${result.size}/$n after $cycle cycles")
       result.toVector
+    }
+  }
+
+  "observation retains the source privilege across the extra capture edge" in {
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+      val h = new Driver(d, base)
+      d.io.block.poke(true.B)
+      for(priv <- Seq(3, 1, 0, 3, 0, 1)) {
+        val before = d.io.hpm.observationPrivilege.peek().litValue
+        d.io.context.privilege.poke(priv.U)
+        d.io.hpm.observationPrivilege.expect(before.U)
+        h.tick()
+        d.io.hpm.observationPrivilege.expect(priv.U)
+      }
+    }
+  }
+
+  "observation counts one demand miss per owner and does not count refill retries as new accesses" in {
+    simulate(new BreezeFrontendMmuHarness(geometry, params)) { d =>
+      val h = new Driver(d, base)
+      for(i <- 0 until 256) h.put32(base+4*i,0x13)
+      val got = h.collect(48,randomStalls=true)
+      assert(got.map(_.pc) == (0 until 48).map(i => base+4*i))
+      assert(h.observed("ic_demand_miss") == h.refills.size)
+      assert(h.observed("ic_lookup_retry") > 0)
+      assert(h.observed("itlb_tag_hit") == 0 && h.observed("itlb_tag_miss") == 0)
+      assert(h.observed("itlb_bypass") > 0)
+      assert(h.observed("ic_demand_access") >= 48 && h.observed("ic_demand_access") <= 60)
     }
   }
 
@@ -155,6 +188,10 @@ class BreezeFrontendPipelineSpec extends AnyFreeSpec with ChiselSim {
       assert(got(0) == Seen(va, BigInt("12300193", 16), BigInt("12300193", 16), 4, false, false, false))
       assert(got(1).pc == va + 4 && got(1).instruction == 0x13)
       assert(h.ptwReads >= 4, "both pages must be translated")
+      assert(h.observed("itlb_tag_miss") == 2)
+      assert(h.observed("itlb_bypass") == 0)
+      assert(h.observed("iptw_started") == 2 && h.observed("iptw_completed") == 2)
+      assert(h.observed("ic_demand_miss") == 2)
     }
   }
 

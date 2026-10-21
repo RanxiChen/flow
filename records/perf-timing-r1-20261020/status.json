@@ -1,0 +1,29 @@
+{
+  "host": "Alan",
+  "base_sha": "678b6961437b6e0e7a626f2f30c16f697aec6054",
+  "source_scope": "uncommitted perf plus R1 frozen overlay",
+  "finished_at": "2026-10-20T22:03:05+08:00",
+  "fpga_exit": 0,
+  "integration_exit": 0,
+  "frequency_mhz": 100,
+  "rvv": false,
+  "cores": 1,
+  "wns_ns": 0.002,
+  "tns_ns": 0,
+  "setup_failing_endpoints": 0,
+  "whs_ns": 0.03,
+  "wpws_ns": 0.103,
+  "bitstream_sha256": "0e35af7db0eb1072613914ea22c054a01f055ece70b9fe92c62efaa7b3c49789",
+  "bitstream_bytes": 16007026,
+  "real_opensbi_test": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "samples": 18,
+    "cycles": 6486240,
+    "retired": 4823022
+  },
+  "board_programmed": false,
+  "committed": false
+}
