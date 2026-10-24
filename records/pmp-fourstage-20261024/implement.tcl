@@ -5,8 +5,7 @@ set part xcku040-ffva1156-2-e
 create_project -in_memory -part $part
 set_property verilog_define SYNTHESIS [current_fileset]
 read_verilog -sv [lsort [glob $rtl_dir/*.sv]]
-create_clock -name experiment_clk -period 5.000 [get_ports clock]
-set_clock_uncertainty 0.100 [get_clocks experiment_clk]
+read_xdc $common_dir/synth.xdc
 synth_design -top BreezePmpFourStageHarness -mode out_of_context -part $part -flatten_hierarchy rebuilt
 set bufgs [get_cells -hierarchical -filter {REF_NAME == BUFGCE}]
 if {[llength $bufgs] != 1} {error "expected one BUFGCE"}
