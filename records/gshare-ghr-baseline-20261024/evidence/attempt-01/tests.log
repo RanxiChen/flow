@@ -1,0 +1,24 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/)
+[info] compiling 146 Scala sources to /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/target/scala-2.13/classes ...
+[info] done compiling
+[info] compiling 121 Scala sources to /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/target/scala-2.13/test-classes ...
+[warn] /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/src/test/scala/cluster/ClusterIsaSpec.scala:59:28: The outer reference in this type test cannot be checked at run time.
+[warn]   private final case class Planned(name: String, label: String, run: Option[ClusterRunConfig])
+[warn]                            ^
+[warn] one warning found
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] BreezeGshareHistoryTimingSpec:
+GSHARE_HISTORY checked=2769 denied=1377 q2Used=42
+[info] - three banked queries and continuous speculative history match an integer oracle
+[info] Run completed in 6 seconds, 27 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 36 s, completed Oct 24, 2026, 7:45:07 PM

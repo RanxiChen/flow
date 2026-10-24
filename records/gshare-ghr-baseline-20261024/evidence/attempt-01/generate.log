@@ -1,0 +1,8 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/source-r1/design/)
+[info] running flow.frontend.experiment.GenerateBreezeGshareHistoryTimingHarness --target-dir /home/chen/FUN/flow-runs/gshare-ghr-baseline-20261024/attempt-01/rtl
+[success] Total time: 1 s, completed Oct 24, 2026, 7:45:10 PM

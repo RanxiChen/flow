@@ -1,0 +1,9 @@
+{
+  "head": "4d3eb94f535f70f12959640b1a4821e646b9914d",
+  "local_original_source_hashes": {
+    "design/src/main/scala/frontend/BreezePipelinePredictor.scala": "ee07a01200f72fa10d5b62c4170c6e435dcf383b42176ee42655e9fc8d081d90",
+    "design/src/main/scala/frontend/BreezeFrontendPipeline.scala": "17250f99104b614e206451440a2d8e931f6bc8dea1e13424fe5cc22d8a51d181",
+    "design/src/main/scala/frontend/BreezeViptICache.scala": "06a68fe072e32807ba1a0a2d8a93ab780248b970597531314f9d47a1c83fd620"
+  },
+  "note": "Frontend working tree has unrelated sign-extension changes; extracted preview and history selection are unchanged. PHT is instantiated from production source."
+}

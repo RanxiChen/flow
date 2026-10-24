@@ -1,0 +1,33 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Sat Oct 24 19:47:23 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_ram_utilization -file ram-route.rpt
+| Design       : BreezeGshareHistoryTimingHarness
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+------------------------------------------------------------------------------------
+
+RAM Usage Information
+
+Table of Contents
+-----------------
+1. Summary
+
+1. Summary
+----------
+
++--------------------------+------------+-----------+-------+-----------+
+| Memory Type              | Total Used | Available | Util% | Inferred% |
++--------------------------+------------+-----------+-------+-----------+
+| BlockRAM                 |          0 |       600 |  0.00 |      0.00 |
+| LUTMs as Distributed RAM |         72 |    112800 |  0.06 |    100.00 |
+|  LUTMs as RAM32M16       |          8 |           |       |    100.00 |
+|  LUTMs as RAM256X1D      |         64 |           |       |    100.00 |
++--------------------------+------------+-----------+-------+-----------+
+*  Each RAMB18 is calculated as 0.5 BlockRAM
+**  Tables 2, 3, 4 and 5 cover RAMs inferred by Vivado Synthesis using XPMs or RTL inference
+***  XRAMs are not reported for detailed tables
+
+

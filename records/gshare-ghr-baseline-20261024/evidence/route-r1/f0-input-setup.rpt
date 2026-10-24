@@ -1,0 +1,2018 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sat Oct 24 19:47:25 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from reset -to [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] -delay_type max -max_paths 30 -path_type full_clock_expanded -file f0-input-setup.rpt
+| Design            : BreezeGshareHistoryTimingHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             1.284ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/init_2_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.584ns  (logic 1.058ns (29.520%)  route 2.526ns (70.480%))
+  Logic Levels:           8  (LUT2=1 LUT6=5 MUXF7=2)
+  Clock Path Skew:        -0.057ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.558ns = ( 7.558 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.558ns (routing 1.322ns, distribution 1.236ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.464     3.854    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y209        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.173     4.027 r  core/pht/ram_2_ext/init_2_i_368/O
+                         net (fo=64, routed)          0.670     4.697    core/pht/ram_2_ext/init_2_i_368_n_0
+    SLICE_X84Y212        LUT6 (Prop_E6LUT_SLICEL_I2_O)
+                                                      0.069     4.766 r  core/pht/ram_2_ext/init_2_i_280/O
+                         net (fo=1, routed)           0.315     5.081    core/pht/ram_2_ext/init_2_i_280_n_0
+    SLICE_X83Y217        LUT6 (Prop_D6LUT_SLICEL_I3_O)
+                                                      0.132     5.213 r  core/pht/ram_2_ext/init_2_i_88/O
+                         net (fo=1, routed)           0.000     5.213    core/pht/ram_2_ext/init_2_i_88_n_0
+    SLICE_X83Y217        MUXF7 (Prop_F7MUX_CD_SLICEL_I0_O)
+                                                      0.067     5.280 r  core/pht/ram_2_ext/init_2_reg_i_35/O
+                         net (fo=1, routed)           0.300     5.580    core/pht/ram_2_ext/init_2_reg_i_35_n_0
+    SLICE_X80Y216        LUT6 (Prop_G6LUT_SLICEL_I1_O)
+                                                      0.172     5.752 r  core/pht/ram_2_ext/init_2_i_11/O
+                         net (fo=1, routed)           0.000     5.752    core/pht/ram_2_ext/init_2_i_11_n_0
+    SLICE_X80Y216        MUXF7 (Prop_F7MUX_GH_SLICEL_I1_O)
+                                                      0.067     5.819 r  core/pht/ram_2_ext/init_2_reg_i_4/O
+                         net (fo=1, routed)           0.522     6.341    core/pht/ram_2_ext/init_2_reg_i_4_n_0
+    SLICE_X82Y208        LUT6 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.072     6.413 r  core/pht/ram_2_ext/init_2_i_1/O
+                         net (fo=1, routed)           0.022     6.435    core/pht/init_20
+    SLICE_X82Y208        FDRE                                         r  core/pht/init_2_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.558     7.558    core/pht/_globalClock_out
+    SLICE_X82Y208        FDRE                                         r  core/pht/init_2_reg/C
+                         clock pessimism              0.236     7.794    
+                         clock uncertainty           -0.135     7.659    
+    SLICE_X82Y208        FDRE (Setup_EFF_SLICEM_C_D)
+                                                      0.060     7.719    core/pht/init_2_reg
+  -------------------------------------------------------------------
+                         required time                          7.719    
+                         arrival time                          -6.435    
+  -------------------------------------------------------------------
+                         slack                                  1.284    
+
+Slack (MET) :             1.289ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/available_1_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.595ns  (logic 1.283ns (35.688%)  route 2.312ns (64.312%))
+  Logic Levels:           7  (LUT2=2 LUT5=1 LUT6=4)
+  Clock Path Skew:        -0.039ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.576ns = ( 7.576 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.576ns (routing 1.322ns, distribution 1.254ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 r  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.371     5.270    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X82Y199        LUT6 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.193     5.463 r  core/pht/ram_2_ext/_R0_addr_d0[3]_i_2__0/O
+                         net (fo=3, routed)           0.219     5.682    core/pht/ram_2_ext/core_io_query_bits_REG_pc_reg[6]_2
+    SLICE_X83Y201        LUT6 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.115     5.797 f  core/pht/ram_2_ext/available_1_i_8/O
+                         net (fo=1, routed)           0.202     5.999    core/pht/ram_2_ext/available_1_i_8_n_0
+    SLICE_X83Y200        LUT5 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.174     6.173 r  core/pht/ram_2_ext/available_1_i_2/O
+                         net (fo=1, routed)           0.135     6.308    core/pht/ram_2_ext/available_1_i_2_n_0
+    SLICE_X83Y201        LUT6 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.115     6.423 r  core/pht/ram_2_ext/available_1_i_1/O
+                         net (fo=1, routed)           0.023     6.446    core/pht/ram_2_ext_n_62
+    SLICE_X83Y201        FDRE                                         r  core/pht/available_1_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.576     7.576    core/pht/_globalClock_out
+    SLICE_X83Y201        FDRE                                         r  core/pht/available_1_reg/C
+                         clock pessimism              0.236     7.812    
+                         clock uncertainty           -0.135     7.676    
+    SLICE_X83Y201        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.735    core/pht/available_1_reg
+  -------------------------------------------------------------------
+                         required time                          7.735    
+                         arrival time                          -6.446    
+  -------------------------------------------------------------------
+                         slack                                  1.289    
+
+Slack (MET) :             1.345ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/available_2_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.540ns  (logic 1.039ns (29.350%)  route 2.501ns (70.650%))
+  Logic Levels:           7  (LUT2=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.038ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.577ns = ( 7.577 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.577ns (routing 1.322ns, distribution 1.255ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 r  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.287     5.164    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X85Y201        LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.132     5.296 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_2/O
+                         net (fo=4, routed)           0.250     5.546    core/pht/ram_2_ext/forecastHistory_reg[9]_0
+    SLICE_X84Y202        LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.132     5.678 f  core/pht/ram_2_ext/available_2_i_11/O
+                         net (fo=1, routed)           0.223     5.901    core/pht/ram_2_ext/available_2_i_11_n_0
+    SLICE_X84Y202        LUT6 (Prop_E6LUT_SLICEL_I5_O)
+                                                      0.040     5.941 r  core/pht/ram_2_ext/available_2_i_4/O
+                         net (fo=1, routed)           0.356     6.297    core/pht/ram_2_ext/available_2_i_4_n_0
+    SLICE_X83Y200        LUT6 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.071     6.368 r  core/pht/ram_2_ext/available_2_i_1/O
+                         net (fo=1, routed)           0.023     6.391    core/pht/ram_2_ext_n_61
+    SLICE_X83Y200        FDRE                                         r  core/pht/available_2_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.577     7.577    core/pht/_globalClock_out
+    SLICE_X83Y200        FDRE                                         r  core/pht/available_2_reg/C
+                         clock pessimism              0.236     7.813    
+                         clock uncertainty           -0.135     7.677    
+    SLICE_X83Y200        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.736    core/pht/available_2_reg
+  -------------------------------------------------------------------
+                         required time                          7.736    
+                         arrival time                          -6.391    
+  -------------------------------------------------------------------
+                         slack                                  1.345    
+
+Slack (MET) :             1.350ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/init_1_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.436ns  (logic 1.310ns (38.126%)  route 2.126ns (61.874%))
+  Logic Levels:           8  (LUT2=1 LUT3=1 LUT6=5 MUXF7=1)
+  Clock Path Skew:        -0.138ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.539ns = ( 7.539 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.174ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.539ns (routing 1.322ns, distribution 1.217ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.442     3.832    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.185     4.017 r  core/pht/ram_2_ext/init_1_i_376/O
+                         net (fo=64, routed)          0.555     4.572    core/pht/ram_2_ext/init_1_i_376_n_0
+    SLICE_X78Y201        LUT6 (Prop_H6LUT_SLICEM_I2_O)
+                                                      0.120     4.692 r  core/pht/ram_2_ext/init_1_i_208/O
+                         net (fo=1, routed)           0.231     4.923    core/pht/ram_2_ext/init_1_i_208_n_0
+    SLICE_X78Y203        LUT6 (Prop_D6LUT_SLICEM_I3_O)
+                                                      0.191     5.114 r  core/pht/ram_2_ext/init_1_i_76/O
+                         net (fo=1, routed)           0.000     5.114    core/pht/ram_2_ext/init_1_i_76_n_0
+    SLICE_X78Y203        MUXF7 (Prop_F7MUX_CD_SLICEM_I0_O)
+                                                      0.067     5.181 r  core/pht/ram_2_ext/init_1_reg_i_33/O
+                         net (fo=1, routed)           0.403     5.584    core/pht/ram_2_ext/init_1_reg_i_33_n_0
+    SLICE_X79Y207        LUT3 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.134     5.718 r  core/pht/ram_2_ext/init_1_i_11/O
+                         net (fo=1, routed)           0.169     5.887    core/pht/ram_2_ext/init_1_i_11_n_0
+    SLICE_X79Y209        LUT6 (Prop_D6LUT_SLICEM_I1_O)
+                                                      0.191     6.078 r  core/pht/ram_2_ext/init_1_i_3/O
+                         net (fo=1, routed)           0.067     6.145    core/pht/ram_2_ext/init_1_i_3_n_0
+    SLICE_X79Y209        LUT6 (Prop_G6LUT_SLICEM_I1_O)
+                                                      0.116     6.261 r  core/pht/ram_2_ext/init_1_i_1/O
+                         net (fo=1, routed)           0.026     6.287    core/pht/init_10
+    SLICE_X79Y209        FDRE                                         r  core/pht/init_1_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.539     7.539    core/pht/_globalClock_out
+    SLICE_X79Y209        FDRE                                         r  core/pht/init_1_reg/C
+                         clock pessimism              0.174     7.713    
+                         clock uncertainty           -0.135     7.577    
+    SLICE_X79Y209        FDRE (Setup_GFF_SLICEM_C_D)
+                                                      0.060     7.637    core/pht/init_1_reg
+  -------------------------------------------------------------------
+                         required time                          7.637    
+                         arrival time                          -6.287    
+  -------------------------------------------------------------------
+                         slack                                  1.350    
+
+Slack (MET) :             1.458ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.430ns  (logic 0.949ns (27.668%)  route 2.481ns (72.332%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.036ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.579ns = ( 7.579 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.579ns (routing 1.322ns, distribution 1.257ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.371     5.270    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X82Y199        LUT6 (Prop_G6LUT_SLICEM_I4_O)
+                                                      0.193     5.463 f  core/pht/ram_2_ext/_R0_addr_d0[3]_i_2__0/O
+                         net (fo=3, routed)           0.281     5.744    core/pht/updates/ram_ext/_R0_addr_d0_reg[3]
+    SLICE_X83Y202        LUT5 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     5.814 r  core/pht/updates/ram_ext/_R0_addr_d0[3]_i_1/O
+                         net (fo=1, routed)           0.467     6.281    core/pht/ram_0_ext/R0_addr0[3]
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.579     7.579    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[3]/C
+                         clock pessimism              0.236     7.815    
+                         clock uncertainty           -0.135     7.679    
+    SLICE_X83Y202        FDRE (Setup_EFF_SLICEL_C_D)
+                                                      0.060     7.739    core/pht/ram_0_ext/_R0_addr_d0_reg[3]
+  -------------------------------------------------------------------
+                         required time                          7.739    
+                         arrival time                          -6.281    
+  -------------------------------------------------------------------
+                         slack                                  1.458    
+
+Slack (MET) :             1.478ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/init_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.382ns  (logic 0.973ns (28.770%)  route 2.409ns (71.230%))
+  Logic Levels:           7  (LUT3=1 LUT6=5 MUXF7=1)
+  Clock Path Skew:        -0.064ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.548ns = ( 7.548 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.770ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.770ns (routing 1.439ns, distribution 1.331ns)
+  Clock Net Delay (Destination): 2.548ns (routing 1.322ns, distribution 1.226ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.770     2.770    _globalClock_out
+    SLICE_X73Y206        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X73Y206        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.884 r  core_io_query_bits_REG_pc_reg[1]/Q
+                         net (fo=8, routed)           0.715     3.599    core/pht/ram_2_ext/Q[0]
+    SLICE_X80Y207        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.786 r  core/pht/ram_2_ext/init_i_377/O
+                         net (fo=64, routed)          0.559     4.345    core/pht/ram_2_ext/init_i_377_n_0
+    SLICE_X80Y194        LUT6 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.116     4.461 r  core/pht/ram_2_ext/init_i_229/O
+                         net (fo=1, routed)           0.408     4.869    core/pht/ram_2_ext/init_i_229_n_0
+    SLICE_X80Y200        LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.130     4.999 r  core/pht/ram_2_ext/init_i_81/O
+                         net (fo=1, routed)           0.000     4.999    core/pht/ram_2_ext/init_i_81_n_0
+    SLICE_X80Y200        MUXF7 (Prop_F7MUX_CD_SLICEL_I1_O)
+                                                      0.067     5.066 r  core/pht/ram_2_ext/init_reg_i_35/O
+                         net (fo=1, routed)           0.189     5.255    core/pht/ram_2_ext/init_reg_i_35_n_0
+    SLICE_X80Y200        LUT3 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.172     5.427 r  core/pht/ram_2_ext/init_i_12/O
+                         net (fo=1, routed)           0.306     5.733    core/pht/ram_2_ext/init_i_12_n_0
+    SLICE_X80Y206        LUT6 (Prop_F6LUT_SLICEL_I3_O)
+                                                      0.072     5.805 r  core/pht/ram_2_ext/init_i_3/O
+                         net (fo=1, routed)           0.209     6.014    core/pht/ram_2_ext/init_i_3_n_0
+    SLICE_X81Y207        LUT6 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.115     6.129 r  core/pht/ram_2_ext/init_i_1/O
+                         net (fo=1, routed)           0.023     6.152    core/pht/init0
+    SLICE_X81Y207        FDRE                                         r  core/pht/init_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.548     7.548    core/pht/_globalClock_out
+    SLICE_X81Y207        FDRE                                         r  core/pht/init_reg/C
+                         clock pessimism              0.158     7.706    
+                         clock uncertainty           -0.135     7.571    
+    SLICE_X81Y207        FDRE (Setup_AFF_SLICEM_C_D)
+                                                      0.059     7.630    core/pht/init_reg
+  -------------------------------------------------------------------
+                         required time                          7.630    
+                         arrival time                          -6.152    
+  -------------------------------------------------------------------
+                         slack                                  1.478    
+
+Slack (MET) :             1.665ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/bypass_2_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.037ns  (logic 0.991ns (32.631%)  route 2.046ns (67.369%))
+  Logic Levels:           6  (LUT4=2 LUT5=3 LUT6=1)
+  Clock Path Skew:        -0.222ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.473ns = ( 7.473 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.853ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.853ns (routing 1.439ns, distribution 1.414ns)
+  Clock Net Delay (Destination): 2.473ns (routing 1.322ns, distribution 1.151ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.853     2.853    _globalClock_out
+    SLICE_X83Y208        FDRE                                         r  core_io_query_bits_REG_pc_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y208        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.967 r  core_io_query_bits_REG_pc_reg[2]/Q
+                         net (fo=13, routed)          0.315     3.282    core/pht/ram_2_ext/Q[1]
+    SLICE_X84Y206        LUT5 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.205     3.487 r  core/pht/ram_2_ext/r_1[6]_i_2/O
+                         net (fo=6, routed)           0.579     4.066    core/pht/ram_2_ext/r_1[6]_i_2_n_0
+    SLICE_X81Y197        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.177     4.243 r  core/pht/ram_2_ext/r_1[8]_i_2/O
+                         net (fo=2, routed)           0.152     4.395    core/pht/ram_2_ext/r_1[8]_i_2_n_0
+    SLICE_X80Y197        LUT4 (Prop_B6LUT_SLICEL_I3_O)
+                                                      0.071     4.466 f  core/pht/ram_2_ext/r_2[8]_i_1/O
+                         net (fo=13, routed)          0.636     5.102    core/pht/ram_2_ext/forecastHistory_reg[7]_0
+    SLICE_X73Y206        LUT4 (Prop_H5LUT_SLICEL_I3_O)
+                                                      0.134     5.236 f  core/pht/ram_2_ext/bypass_2_i_5/O
+                         net (fo=1, routed)           0.114     5.350    core/pht/ram_2_ext/bypass_2_i_5_n_0
+    SLICE_X73Y206        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.115     5.465 f  core/pht/ram_2_ext/bypass_2_i_3/O
+                         net (fo=1, routed)           0.223     5.688    core/pht/ram_2_ext/bypass_2_i_3_n_0
+    SLICE_X73Y206        LUT5 (Prop_D6LUT_SLICEL_I3_O)
+                                                      0.175     5.863 r  core/pht/ram_2_ext/bypass_2_i_1/O
+                         net (fo=1, routed)           0.027     5.890    core/pht/bypass_20
+    SLICE_X73Y206        FDRE                                         r  core/pht/bypass_2_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.473     7.473    core/pht/_globalClock_out
+    SLICE_X73Y206        FDRE                                         r  core/pht/bypass_2_reg/C
+                         clock pessimism              0.158     7.631    
+                         clock uncertainty           -0.135     7.496    
+    SLICE_X73Y206        FDRE (Setup_DFF_SLICEL_C_D)
+                                                      0.059     7.555    core/pht/bypass_2_reg
+  -------------------------------------------------------------------
+                         required time                          7.555    
+                         arrival time                          -5.890    
+  -------------------------------------------------------------------
+                         slack                                  1.665    
+
+Slack (MET) :             1.696ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[2]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.193ns  (logic 1.065ns (33.354%)  route 2.128ns (66.646%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.034ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.581ns = ( 7.581 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.581ns (routing 1.322ns, distribution 1.259ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.373     5.272    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X82Y199        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.191     5.463 f  core/pht/ram_2_ext/_R0_addr_d0[2]_i_2__0/O
+                         net (fo=3, routed)           0.366     5.829    core/pht/updates/ram_ext/_R0_addr_d0_reg[2]
+    SLICE_X83Y202        LUT5 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.188     6.017 r  core/pht/updates/ram_ext/_R0_addr_d0[2]_i_1/O
+                         net (fo=1, routed)           0.027     6.044    core/pht/ram_0_ext/R0_addr0[2]
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.581     7.581    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[2]/C
+                         clock pessimism              0.236     7.817    
+                         clock uncertainty           -0.135     7.681    
+    SLICE_X83Y202        FDRE (Setup_DFF_SLICEL_C_D)
+                                                      0.059     7.740    core/pht/ram_0_ext/_R0_addr_d0_reg[2]
+  -------------------------------------------------------------------
+                         required time                          7.740    
+                         arrival time                          -6.044    
+  -------------------------------------------------------------------
+                         slack                                  1.696    
+
+Slack (MET) :             1.817ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        3.071ns  (logic 0.933ns (30.381%)  route 2.138ns (69.619%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.036ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.579ns = ( 7.579 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.579ns (routing 1.322ns, distribution 1.257ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.143     5.042    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X84Y200        LUT6 (Prop_D6LUT_SLICEL_I4_O)
+                                                      0.132     5.174 f  core/pht/ram_2_ext/_R0_addr_d0[0]_i_2__0/O
+                         net (fo=3, routed)           0.292     5.466    core/pht/updates/ram_ext/_R0_addr_d0_reg[0]
+    SLICE_X83Y200        LUT5 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.115     5.581 r  core/pht/updates/ram_ext/_R0_addr_d0[0]_i_1/O
+                         net (fo=1, routed)           0.341     5.922    core/pht/ram_0_ext/R0_addr0[0]
+    SLICE_X82Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.579     7.579    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X82Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[0]/C
+                         clock pessimism              0.236     7.815    
+                         clock uncertainty           -0.135     7.679    
+    SLICE_X82Y202        FDRE (Setup_HFF_SLICEM_C_D)
+                                                      0.060     7.739    core/pht/ram_0_ext/_R0_addr_d0_reg[0]
+  -------------------------------------------------------------------
+                         required time                          7.739    
+                         arrival time                          -5.922    
+  -------------------------------------------------------------------
+                         slack                                  1.817    
+
+Slack (MET) :             1.829ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/bypass_1_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.874ns  (logic 1.057ns (36.778%)  route 1.817ns (63.222%))
+  Logic Levels:           6  (LUT4=1 LUT5=4 LUT6=1)
+  Clock Path Skew:        -0.225ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.470ns = ( 7.470 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.853ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.853ns (routing 1.439ns, distribution 1.414ns)
+  Clock Net Delay (Destination): 2.470ns (routing 1.322ns, distribution 1.148ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.853     2.853    _globalClock_out
+    SLICE_X83Y208        FDRE                                         r  core_io_query_bits_REG_pc_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y208        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.967 r  core_io_query_bits_REG_pc_reg[2]/Q
+                         net (fo=13, routed)          0.315     3.282    core/pht/ram_2_ext/Q[1]
+    SLICE_X84Y206        LUT5 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.205     3.487 r  core/pht/ram_2_ext/r_1[6]_i_2/O
+                         net (fo=6, routed)           0.579     4.066    core/pht/ram_2_ext/r_1[6]_i_2_n_0
+    SLICE_X81Y197        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.177     4.243 r  core/pht/ram_2_ext/r_1[8]_i_2/O
+                         net (fo=2, routed)           0.154     4.397    core/pht/ram_2_ext/r_1[8]_i_2_n_0
+    SLICE_X80Y197        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.115     4.512 r  core/pht/ram_2_ext/r_1[8]_i_1/O
+                         net (fo=12, routed)          0.392     4.904    core/pht/ram_2_ext/forecastHistory_reg[8]_1
+    SLICE_X76Y200        LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.074     4.978 f  core/pht/ram_2_ext/bypass_1_i_6/O
+                         net (fo=1, routed)           0.160     5.138    core/pht/ram_2_ext/bypass_1_i_6_n_0
+    SLICE_X76Y201        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.178     5.316 f  core/pht/ram_2_ext/bypass_1_i_4/O
+                         net (fo=1, routed)           0.182     5.498    core/pht/ram_2_ext/bypass_1_i_4_n_0
+    SLICE_X75Y201        LUT5 (Prop_D5LUT_SLICEM_I4_O)
+                                                      0.194     5.692 r  core/pht/ram_2_ext/bypass_1_i_1/O
+                         net (fo=1, routed)           0.035     5.727    core/pht/bypass_10
+    SLICE_X75Y201        FDRE                                         r  core/pht/bypass_1_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.470     7.470    core/pht/_globalClock_out
+    SLICE_X75Y201        FDRE                                         r  core/pht/bypass_1_reg/C
+                         clock pessimism              0.158     7.628    
+                         clock uncertainty           -0.135     7.493    
+    SLICE_X75Y201        FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.063     7.556    core/pht/bypass_1_reg
+  -------------------------------------------------------------------
+                         required time                          7.556    
+                         arrival time                          -5.727    
+  -------------------------------------------------------------------
+                         slack                                  1.829    
+
+Slack (MET) :             1.901ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[2]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.898ns  (logic 0.958ns (33.057%)  route 1.940ns (66.943%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.125ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.553ns = ( 7.553 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.173ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.553ns (routing 1.322ns, distribution 1.231ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.211     5.088    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X85Y200        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.116     5.204 r  core/pht/ram_2_ext/_R0_addr_d0[2]_i_2/O
+                         net (fo=2, routed)           0.344     5.548    core/pht/updates/ram_ext/_R0_addr_d0_reg[2]_2
+    SLICE_X81Y203        LUT5 (Prop_F6LUT_SLICEM_I4_O)
+                                                      0.178     5.726 r  core/pht/updates/ram_ext/_R0_addr_d0[2]_i_1__2/O
+                         net (fo=1, routed)           0.023     5.749    core/pht/ram_1_ext/R0_addr0[2]
+    SLICE_X81Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.553     7.553    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X81Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[2]/C
+                         clock pessimism              0.173     7.726    
+                         clock uncertainty           -0.135     7.591    
+    SLICE_X81Y203        FDRE (Setup_FFF_SLICEM_C_D)
+                                                      0.059     7.650    core/pht/ram_1_ext/_R0_addr_d0_reg[2]
+  -------------------------------------------------------------------
+                         required time                          7.650    
+                         arrival time                          -5.749    
+  -------------------------------------------------------------------
+                         slack                                  1.901    
+
+Slack (MET) :             1.950ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.850ns  (logic 0.892ns (31.298%)  route 1.958ns (68.702%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.125ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.553ns = ( 7.553 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.173ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.553ns (routing 1.322ns, distribution 1.231ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.256     5.133    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X84Y201        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.188     5.321 r  core/pht/ram_2_ext/_R0_addr_d0[3]_i_2/O
+                         net (fo=3, routed)           0.318     5.639    core/pht/updates/ram_ext/_R0_addr_d0_reg[3]_3
+    SLICE_X81Y203        LUT5 (Prop_E6LUT_SLICEM_I4_O)
+                                                      0.040     5.679 r  core/pht/updates/ram_ext/_R0_addr_d0[3]_i_1__2/O
+                         net (fo=1, routed)           0.022     5.701    core/pht/ram_1_ext/R0_addr0[3]
+    SLICE_X81Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.553     7.553    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X81Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[3]/C
+                         clock pessimism              0.173     7.726    
+                         clock uncertainty           -0.135     7.591    
+    SLICE_X81Y203        FDRE (Setup_EFF_SLICEM_C_D)
+                                                      0.060     7.651    core/pht/ram_1_ext/_R0_addr_d0_reg[3]
+  -------------------------------------------------------------------
+                         required time                          7.651    
+                         arrival time                          -5.701    
+  -------------------------------------------------------------------
+                         slack                                  1.950    
+
+Slack (MET) :             1.962ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.926ns  (logic 0.957ns (32.707%)  route 1.969ns (67.293%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.039ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.576ns = ( 7.576 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.576ns (routing 1.322ns, distribution 1.254ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.371     5.270    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X82Y199        LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.176     5.446 f  core/pht/ram_2_ext/_R0_addr_d0[1]_i_2__0/O
+                         net (fo=3, routed)           0.201     5.647    core/pht/updates/ram_ext/_R0_addr_d0_reg[1]
+    SLICE_X82Y200        LUT5 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.095     5.742 r  core/pht/updates/ram_ext/_R0_addr_d0[1]_i_1/O
+                         net (fo=1, routed)           0.035     5.777    core/pht/ram_0_ext/R0_addr0[1]
+    SLICE_X82Y200        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.576     7.576    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X82Y200        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[1]/C
+                         clock pessimism              0.236     7.812    
+                         clock uncertainty           -0.135     7.676    
+    SLICE_X82Y200        FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.063     7.739    core/pht/ram_0_ext/_R0_addr_d0_reg[1]
+  -------------------------------------------------------------------
+                         required time                          7.739    
+                         arrival time                          -5.777    
+  -------------------------------------------------------------------
+                         slack                                  1.962    
+
+Slack (MET) :             1.992ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.891ns  (logic 1.043ns (36.077%)  route 1.848ns (63.923%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.039ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.576ns = ( 7.576 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.576ns (routing 1.322ns, distribution 1.254ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.595     4.608    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y201        LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.781 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_3__2/O
+                         net (fo=9, routed)           0.321     5.102    core/pht/ram_2_ext/_R0_addr_d0[7]_i_3__2_n_0
+    SLICE_X84Y200        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.188     5.290 f  core/pht/ram_2_ext/_R0_addr_d0[6]_i_2/O
+                         net (fo=4, routed)           0.235     5.525    core/pht/updates/ram_ext/_R0_addr_d0_reg[6]_2
+    SLICE_X82Y200        LUT5 (Prop_B6LUT_SLICEM_I1_O)
+                                                      0.191     5.716 r  core/pht/updates/ram_ext/_R0_addr_d0[6]_i_1__2/O
+                         net (fo=1, routed)           0.026     5.742    core/pht/ram_1_ext/R0_addr0[6]
+    SLICE_X82Y200        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.576     7.576    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X82Y200        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[6]/C
+                         clock pessimism              0.236     7.812    
+                         clock uncertainty           -0.135     7.676    
+    SLICE_X82Y200        FDRE (Setup_BFF_SLICEM_C_D)
+                                                      0.058     7.734    core/pht/ram_1_ext/_R0_addr_d0_reg[6]
+  -------------------------------------------------------------------
+                         required time                          7.734    
+                         arrival time                          -5.742    
+  -------------------------------------------------------------------
+                         slack                                  1.992    
+
+Slack (MET) :             2.050ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.832ns  (logic 0.834ns (29.449%)  route 1.998ns (70.551%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.041ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.574ns = ( 7.574 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.574ns (routing 1.322ns, distribution 1.252ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.384     5.261    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X85Y202        LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.040     5.301 f  core/pht/ram_2_ext/_R0_addr_d0[0]_i_2/O
+                         net (fo=3, routed)           0.223     5.524    core/pht/updates/ram_ext/_R0_addr_d0_reg[0]_2
+    SLICE_X83Y203        LUT5 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.130     5.654 r  core/pht/updates/ram_ext/_R0_addr_d0[0]_i_1__2/O
+                         net (fo=1, routed)           0.029     5.683    core/pht/ram_1_ext/R0_addr0[0]
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.574     7.574    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[0]/C
+                         clock pessimism              0.236     7.810    
+                         clock uncertainty           -0.135     7.674    
+    SLICE_X83Y203        FDRE (Setup_CFF_SLICEL_C_D)
+                                                      0.059     7.733    core/pht/ram_1_ext/_R0_addr_d0_reg[0]
+  -------------------------------------------------------------------
+                         required time                          7.733    
+                         arrival time                          -5.683    
+  -------------------------------------------------------------------
+                         slack                                  2.050    
+
+Slack (MET) :             2.061ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_3_ext/_R0_addr_d0_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.755ns  (logic 0.863ns (31.325%)  route 1.892ns (68.675%))
+  Logic Levels:           4  (LUT3=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.109ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.575ns = ( 7.575 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.857ns
+    Clock Pessimism Removal (CPR):    0.173ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.857ns (routing 1.439ns, distribution 1.418ns)
+  Clock Net Delay (Destination): 2.575ns (routing 1.322ns, distribution 1.253ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.857     2.857    _globalClock_out
+    SLICE_X84Y207        FDRE                                         r  core_io_query_bits_REG_pc_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X84Y207        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.971 r  core_io_query_bits_REG_pc_reg[3]/Q
+                         net (fo=8, routed)           0.357     3.328    core/pht/ram_2_ext/Q[2]
+    SLICE_X82Y209        LUT3 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.177     3.505 r  core/pht/ram_2_ext/r_2[2]_i_2/O
+                         net (fo=1, routed)           0.322     3.827    core/pht/ram_2_ext/r_2[2]_i_2_n_0
+    SLICE_X79Y209        LUT6 (Prop_E6LUT_SLICEM_I5_O)
+                                                      0.191     4.018 r  core/pht/ram_2_ext/r_2[2]_i_1/O
+                         net (fo=74, routed)          0.511     4.529    core/pht/ram_2_ext/forecastHistory_reg[1]_0
+    SLICE_X81Y203        LUT6 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.191     4.720 f  core/pht/ram_2_ext/_R0_addr_d0[0]_i_2__1/O
+                         net (fo=3, routed)           0.328     5.048    core/pht/updates/ram_ext/_R0_addr_d0_reg[0]_1
+    SLICE_X83Y205        LUT5 (Prop_H5LUT_SLICEL_I1_O)
+                                                      0.190     5.238 r  core/pht/updates/ram_ext/_R0_addr_d0[0]_i_1__1/O
+                         net (fo=1, routed)           0.374     5.612    core/pht/ram_3_ext/R0_addr0[0]
+    SLICE_X82Y205        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.575     7.575    core/pht/ram_3_ext/_globalClock_out
+    SLICE_X82Y205        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[0]/C
+                         clock pessimism              0.173     7.748    
+                         clock uncertainty           -0.135     7.613    
+    SLICE_X82Y205        FDRE (Setup_HFF_SLICEM_C_D)
+                                                      0.060     7.673    core/pht/ram_3_ext/_R0_addr_d0_reg[0]
+  -------------------------------------------------------------------
+                         required time                          7.673    
+                         arrival time                          -5.612    
+  -------------------------------------------------------------------
+                         slack                                  2.061    
+
+Slack (MET) :             2.081ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.807ns  (logic 0.989ns (35.233%)  route 1.818ns (64.767%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.034ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.581ns = ( 7.581 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.581ns (routing 1.322ns, distribution 1.259ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.143     5.042    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X84Y200        LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.130     5.172 f  core/pht/ram_2_ext/_R0_addr_d0[5]_i_2__0/O
+                         net (fo=3, routed)           0.287     5.459    core/pht/updates/ram_ext/_R0_addr_d0_reg[5]
+    SLICE_X83Y202        LUT5 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.173     5.632 r  core/pht/updates/ram_ext/_R0_addr_d0[5]_i_1/O
+                         net (fo=1, routed)           0.026     5.658    core/pht/ram_0_ext/R0_addr0[5]
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.581     7.581    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[5]/C
+                         clock pessimism              0.236     7.817    
+                         clock uncertainty           -0.135     7.681    
+    SLICE_X83Y202        FDRE (Setup_BFF_SLICEL_C_D)
+                                                      0.058     7.739    core/pht/ram_0_ext/_R0_addr_d0_reg[5]
+  -------------------------------------------------------------------
+                         required time                          7.739    
+                         arrival time                          -5.658    
+  -------------------------------------------------------------------
+                         slack                                  2.081    
+
+Slack (MET) :             2.108ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[4]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.773ns  (logic 0.953ns (34.367%)  route 1.820ns (65.633%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.043ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.572ns = ( 7.572 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.572ns (routing 1.322ns, distribution 1.250ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.213     5.090    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X84Y202        LUT6 (Prop_D6LUT_SLICEL_I5_O)
+                                                      0.115     5.205 r  core/pht/ram_2_ext/_R0_addr_d0[4]_i_2/O
+                         net (fo=3, routed)           0.223     5.428    core/pht/updates/ram_ext/_R0_addr_d0_reg[4]_2
+    SLICE_X83Y203        LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.174     5.602 r  core/pht/updates/ram_ext/_R0_addr_d0[4]_i_1__2/O
+                         net (fo=1, routed)           0.022     5.624    core/pht/ram_1_ext/R0_addr0[4]
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.572     7.572    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[4]/C
+                         clock pessimism              0.236     7.808    
+                         clock uncertainty           -0.135     7.673    
+    SLICE_X83Y203        FDRE (Setup_FFF_SLICEL_C_D)
+                                                      0.059     7.732    core/pht/ram_1_ext/_R0_addr_d0_reg[4]
+  -------------------------------------------------------------------
+                         required time                          7.732    
+                         arrival time                          -5.624    
+  -------------------------------------------------------------------
+                         slack                                  2.108    
+
+Slack (MET) :             2.112ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.770ns  (logic 0.850ns (30.686%)  route 1.920ns (69.314%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.043ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.572ns = ( 7.572 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.572ns (routing 1.322ns, distribution 1.250ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.319     5.196    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X85Y202        LUT6 (Prop_G6LUT_SLICEL_I3_O)
+                                                      0.116     5.312 f  core/pht/ram_2_ext/_R0_addr_d0[1]_i_2/O
+                         net (fo=2, routed)           0.212     5.524    core/pht/updates/ram_ext/_R0_addr_d0_reg[1]_2
+    SLICE_X83Y203        LUT5 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.070     5.594 r  core/pht/updates/ram_ext/_R0_addr_d0[1]_i_1__2/O
+                         net (fo=1, routed)           0.027     5.621    core/pht/ram_1_ext/R0_addr0[1]
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.572     7.572    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[1]/C
+                         clock pessimism              0.236     7.808    
+                         clock uncertainty           -0.135     7.673    
+    SLICE_X83Y203        FDRE (Setup_HFF_SLICEL_C_D)
+                                                      0.060     7.733    core/pht/ram_1_ext/_R0_addr_d0_reg[1]
+  -------------------------------------------------------------------
+                         required time                          7.733    
+                         arrival time                          -5.621    
+  -------------------------------------------------------------------
+                         slack                                  2.112    
+
+Slack (MET) :             2.112ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_0_ext/_R0_addr_d0_reg[4]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.777ns  (logic 1.004ns (36.154%)  route 1.773ns (63.846%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.034ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.581ns = ( 7.581 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.581ns (routing 1.322ns, distribution 1.259ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 f  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT2 (Prop_E5LUT_SLICEL_I0_O)
+                                                      0.195     4.899 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1/O
+                         net (fo=8, routed)           0.228     5.127    core/pht/ram_2_ext/_R0_addr_d0[7]_i_5__1_n_0
+    SLICE_X83Y200        LUT6 (Prop_H6LUT_SLICEL_I4_O)
+                                                      0.188     5.315 f  core/pht/ram_2_ext/_R0_addr_d0[4]_i_2__0/O
+                         net (fo=3, routed)           0.154     5.469    core/pht/updates/ram_ext/_R0_addr_d0_reg[4]
+    SLICE_X83Y202        LUT5 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.130     5.599 r  core/pht/updates/ram_ext/_R0_addr_d0[4]_i_1/O
+                         net (fo=1, routed)           0.029     5.628    core/pht/ram_0_ext/R0_addr0[4]
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.581     7.581    core/pht/ram_0_ext/_globalClock_out
+    SLICE_X83Y202        FDRE                                         r  core/pht/ram_0_ext/_R0_addr_d0_reg[4]/C
+                         clock pessimism              0.236     7.817    
+                         clock uncertainty           -0.135     7.681    
+    SLICE_X83Y202        FDRE (Setup_CFF_SLICEL_C_D)
+                                                      0.059     7.740    core/pht/ram_0_ext/_R0_addr_d0_reg[4]
+  -------------------------------------------------------------------
+                         required time                          7.740    
+                         arrival time                          -5.628    
+  -------------------------------------------------------------------
+                         slack                                  2.112    
+
+Slack (MET) :             2.132ns  (required time - arrival time)
+  Source:                 core_io_query_valid_REG_reg/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/r_0_reg[3]/CE
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.452ns  (logic 0.114ns (4.649%)  route 2.338ns (95.351%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.231ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.462ns = ( 7.462 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.462ns (routing 1.322ns, distribution 1.140ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X78Y196        FDRE                                         r  core_io_query_valid_REG_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X78Y196        FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     2.965 r  core_io_query_valid_REG_reg/Q
+                         net (fo=68, routed)          2.338     5.303    core/core_io_query_valid_REG
+    SLICE_X73Y221        FDRE                                         r  core/r_0_reg[3]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.462     7.462    core/_globalClock_out
+    SLICE_X73Y221        FDRE                                         r  core/r_0_reg[3]/C
+                         clock pessimism              0.158     7.620    
+                         clock uncertainty           -0.135     7.485    
+    SLICE_X73Y221        FDRE (Setup_HFF2_SLICEL_C_CE)
+                                                     -0.050     7.435    core/r_0_reg[3]
+  -------------------------------------------------------------------
+                         required time                          7.435    
+                         arrival time                          -5.303    
+  -------------------------------------------------------------------
+                         slack                                  2.132    
+
+Slack (MET) :             2.132ns  (required time - arrival time)
+  Source:                 core_io_query_valid_REG_reg/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/r_0_reg[4]/CE
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.452ns  (logic 0.114ns (4.649%)  route 2.338ns (95.351%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.231ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.462ns = ( 7.462 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.462ns (routing 1.322ns, distribution 1.140ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X78Y196        FDRE                                         r  core_io_query_valid_REG_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X78Y196        FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     2.965 r  core_io_query_valid_REG_reg/Q
+                         net (fo=68, routed)          2.338     5.303    core/core_io_query_valid_REG
+    SLICE_X73Y221        FDRE                                         r  core/r_0_reg[4]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.462     7.462    core/_globalClock_out
+    SLICE_X73Y221        FDRE                                         r  core/r_0_reg[4]/C
+                         clock pessimism              0.158     7.620    
+                         clock uncertainty           -0.135     7.485    
+    SLICE_X73Y221        FDRE (Setup_GFF2_SLICEL_C_CE)
+                                                     -0.050     7.435    core/r_0_reg[4]
+  -------------------------------------------------------------------
+                         required time                          7.435    
+                         arrival time                          -5.303    
+  -------------------------------------------------------------------
+                         slack                                  2.132    
+
+Slack (MET) :             2.132ns  (required time - arrival time)
+  Source:                 core_io_query_valid_REG_reg/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/r_2_reg[5]/CE
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.452ns  (logic 0.114ns (4.649%)  route 2.338ns (95.351%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.231ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.462ns = ( 7.462 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.158ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.462ns (routing 1.322ns, distribution 1.140ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X78Y196        FDRE                                         r  core_io_query_valid_REG_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X78Y196        FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.114     2.965 r  core_io_query_valid_REG_reg/Q
+                         net (fo=68, routed)          2.338     5.303    core/core_io_query_valid_REG
+    SLICE_X73Y221        FDRE                                         r  core/r_2_reg[5]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.462     7.462    core/_globalClock_out
+    SLICE_X73Y221        FDRE                                         r  core/r_2_reg[5]/C
+                         clock pessimism              0.158     7.620    
+                         clock uncertainty           -0.135     7.485    
+    SLICE_X73Y221        FDRE (Setup_FFF2_SLICEL_C_CE)
+                                                     -0.050     7.435    core/r_2_reg[5]
+  -------------------------------------------------------------------
+                         required time                          7.435    
+                         arrival time                          -5.303    
+  -------------------------------------------------------------------
+                         slack                                  2.132    
+
+Slack (MET) :             2.137ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_3_ext/_R0_addr_d0_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.731ns  (logic 0.954ns (34.932%)  route 1.777ns (65.068%))
+  Logic Levels:           5  (LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.056ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.561ns = ( 7.561 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.853ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.853ns (routing 1.439ns, distribution 1.414ns)
+  Clock Net Delay (Destination): 2.561ns (routing 1.322ns, distribution 1.239ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.853     2.853    _globalClock_out
+    SLICE_X83Y208        FDRE                                         r  core_io_query_bits_REG_pc_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y208        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.967 r  core_io_query_bits_REG_pc_reg[2]/Q
+                         net (fo=13, routed)          0.315     3.282    core/pht/ram_2_ext/Q[1]
+    SLICE_X84Y206        LUT5 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.205     3.487 r  core/pht/ram_2_ext/r_1[6]_i_2/O
+                         net (fo=6, routed)           0.577     4.064    core/pht/ram_2_ext/r_1[6]_i_2_n_0
+    SLICE_X81Y197        LUT6 (Prop_G6LUT_SLICEM_I3_O)
+                                                      0.133     4.197 r  core/pht/ram_2_ext/r_1[9]_i_2/O
+                         net (fo=2, routed)           0.240     4.437    core/pht/ram_2_ext/r_1[9]_i_2_n_0
+    SLICE_X82Y197        LUT4 (Prop_E6LUT_SLICEM_I3_O)
+                                                      0.191     4.628 r  core/pht/ram_2_ext/r_1[9]_i_1/O
+                         net (fo=12, routed)          0.238     4.866    core/pht/ram_2_ext/forecastHistory_reg[9]
+    SLICE_X82Y200        LUT6 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.193     5.059 r  core/pht/ram_2_ext/_R0_addr_d0[7]_i_2__1/O
+                         net (fo=4, routed)           0.380     5.439    core/pht/updates/ram_ext/_R0_addr_d0_reg[7]_1
+    SLICE_X82Y207        LUT5 (Prop_D6LUT_SLICEM_I4_O)
+                                                      0.118     5.557 r  core/pht/updates/ram_ext/_R0_addr_d0[7]_i_1__1/O
+                         net (fo=1, routed)           0.027     5.584    core/pht/ram_3_ext/R0_addr0[7]
+    SLICE_X82Y207        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.561     7.561    core/pht/ram_3_ext/_globalClock_out
+    SLICE_X82Y207        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[7]/C
+                         clock pessimism              0.236     7.797    
+                         clock uncertainty           -0.135     7.662    
+    SLICE_X82Y207        FDRE (Setup_DFF_SLICEM_C_D)
+                                                      0.059     7.721    core/pht/ram_3_ext/_R0_addr_d0_reg[7]
+  -------------------------------------------------------------------
+                         required time                          7.721    
+                         arrival time                          -5.584    
+  -------------------------------------------------------------------
+                         slack                                  2.137    
+
+Slack (MET) :             2.145ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.737ns  (logic 0.836ns (30.544%)  route 1.901ns (69.456%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.041ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.574ns = ( 7.574 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.574ns (routing 1.322ns, distribution 1.252ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.287     5.164    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X85Y201        LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.132     5.296 r  core/pht/ram_2_ext/_R0_addr_d0[7]_i_2/O
+                         net (fo=4, routed)           0.229     5.525    core/pht/updates/ram_ext/_R0_addr_d0_reg[7]_2
+    SLICE_X83Y203        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.040     5.565 r  core/pht/updates/ram_ext/_R0_addr_d0[7]_i_1__2/O
+                         net (fo=1, routed)           0.023     5.588    core/pht/ram_1_ext/R0_addr0[7]
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.574     7.574    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[7]/C
+                         clock pessimism              0.236     7.810    
+                         clock uncertainty           -0.135     7.674    
+    SLICE_X83Y203        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.733    core/pht/ram_1_ext/_R0_addr_d0_reg[7]
+  -------------------------------------------------------------------
+                         required time                          7.733    
+                         arrival time                          -5.588    
+  -------------------------------------------------------------------
+                         slack                                  2.145    
+
+Slack (MET) :             2.159ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_3_ext/_R0_addr_d0_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.725ns  (logic 0.721ns (26.459%)  route 2.004ns (73.541%))
+  Logic Levels:           5  (LUT2=2 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.040ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.575ns = ( 7.575 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.575ns (routing 1.322ns, distribution 1.253ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.335     4.348    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X81Y203        LUT2 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     4.388 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__1/O
+                         net (fo=8, routed)           0.393     4.781    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__1_n_0
+    SLICE_X83Y203        LUT6 (Prop_D6LUT_SLICEL_I4_O)
+                                                      0.071     4.852 f  core/pht/ram_2_ext/_R0_addr_d0[3]_i_2__1/O
+                         net (fo=3, routed)           0.231     5.083    core/pht/updates/ram_ext/_R0_addr_d0_reg[3]_2
+    SLICE_X81Y203        LUT5 (Prop_B6LUT_SLICEM_I1_O)
+                                                      0.119     5.202 r  core/pht/updates/ram_ext/_R0_addr_d0[3]_i_1__1/O
+                         net (fo=1, routed)           0.374     5.576    core/pht/ram_3_ext/R0_addr0[3]
+    SLICE_X83Y205        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.575     7.575    core/pht/ram_3_ext/_globalClock_out
+    SLICE_X83Y205        FDRE                                         r  core/pht/ram_3_ext/_R0_addr_d0_reg[3]/C
+                         clock pessimism              0.236     7.811    
+                         clock uncertainty           -0.135     7.675    
+    SLICE_X83Y205        FDRE (Setup_HFF2_SLICEL_C_D)
+                                                      0.060     7.735    core/pht/ram_3_ext/_R0_addr_d0_reg[3]
+  -------------------------------------------------------------------
+                         required time                          7.735    
+                         arrival time                          -5.576    
+  -------------------------------------------------------------------
+                         slack                                  2.159    
+
+Slack (MET) :             2.164ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[6]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_2_ext/_R0_addr_d0_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.621ns  (logic 0.520ns (19.840%)  route 2.101ns (80.160%))
+  Logic Levels:           4  (LUT5=1 LUT6=3)
+  Clock Path Skew:        -0.138ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.572ns = ( 7.572 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.883ns
+    Clock Pessimism Removal (CPR):    0.173ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.883ns (routing 1.439ns, distribution 1.444ns)
+  Clock Net Delay (Destination): 2.572ns (routing 1.322ns, distribution 1.250ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.883     2.883    _globalClock_out
+    SLICE_X80Y199        FDRE                                         r  core_io_query_bits_REG_pc_reg[6]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X80Y199        FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     2.997 r  core_io_query_bits_REG_pc_reg[6]/Q
+                         net (fo=8, routed)           0.637     3.634    core/pht/ram_2_ext/Q[5]
+    SLICE_X84Y204        LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.115     3.749 r  core/pht/ram_2_ext/r_1[7]_i_2/O
+                         net (fo=2, routed)           0.574     4.323    core/pht/ram_2_ext/r_1[7]_i_2_n_0
+    SLICE_X81Y197        LUT6 (Prop_F6LUT_SLICEM_I4_O)
+                                                      0.119     4.442 r  core/pht/ram_2_ext/r_2[7]_i_1/O
+                         net (fo=15, routed)          0.572     5.014    core/pht/ram_2_ext/forecastHistory_reg[6]_0
+    SLICE_X84Y203        LUT6 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.040     5.054 f  core/pht/ram_2_ext/_R0_addr_d0[5]_i_2__2/O
+                         net (fo=3, routed)           0.292     5.346    core/pht/updates/ram_ext/_R0_addr_d0_reg[5]_0
+    SLICE_X83Y204        LUT5 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.132     5.478 r  core/pht/updates/ram_ext/_R0_addr_d0[5]_i_1__0/O
+                         net (fo=1, routed)           0.026     5.504    core/pht/ram_2_ext/R0_addr0[5]
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.572     7.572    core/pht/ram_2_ext/_globalClock_out
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[5]/C
+                         clock pessimism              0.173     7.745    
+                         clock uncertainty           -0.135     7.610    
+    SLICE_X83Y204        FDRE (Setup_BFF_SLICEL_C_D)
+                                                      0.058     7.668    core/pht/ram_2_ext/_R0_addr_d0_reg[5]
+  -------------------------------------------------------------------
+                         required time                          7.668    
+                         arrival time                          -5.504    
+  -------------------------------------------------------------------
+                         slack                                  2.164    
+
+Slack (MET) :             2.173ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_2_ext/_R0_addr_d0_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.705ns  (logic 0.901ns (33.309%)  route 1.804ns (66.691%))
+  Logic Levels:           5  (LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.047ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.570ns = ( 7.570 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.853ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.853ns (routing 1.439ns, distribution 1.414ns)
+  Clock Net Delay (Destination): 2.570ns (routing 1.322ns, distribution 1.248ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.853     2.853    _globalClock_out
+    SLICE_X83Y208        FDRE                                         r  core_io_query_bits_REG_pc_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y208        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.967 r  core_io_query_bits_REG_pc_reg[2]/Q
+                         net (fo=13, routed)          0.315     3.282    core/pht/ram_2_ext/Q[1]
+    SLICE_X84Y206        LUT5 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.205     3.487 r  core/pht/ram_2_ext/r_1[6]_i_2/O
+                         net (fo=6, routed)           0.577     4.064    core/pht/ram_2_ext/r_1[6]_i_2_n_0
+    SLICE_X81Y197        LUT6 (Prop_G6LUT_SLICEM_I3_O)
+                                                      0.133     4.197 r  core/pht/ram_2_ext/r_1[9]_i_2/O
+                         net (fo=2, routed)           0.240     4.437    core/pht/ram_2_ext/r_1[9]_i_2_n_0
+    SLICE_X82Y197        LUT4 (Prop_E6LUT_SLICEM_I3_O)
+                                                      0.191     4.628 r  core/pht/ram_2_ext/r_1[9]_i_1/O
+                         net (fo=12, routed)          0.441     5.069    core/pht/ram_2_ext/forecastHistory_reg[9]
+    SLICE_X85Y203        LUT6 (Prop_G6LUT_SLICEL_I5_O)
+                                                      0.189     5.258 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_2__2/O
+                         net (fo=3, routed)           0.208     5.466    core/pht/updates/ram_ext/_R0_addr_d0_reg[7]_0
+    SLICE_X83Y204        LUT5 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.069     5.535 r  core/pht/updates/ram_ext/_R0_addr_d0[7]_i_1__0/O
+                         net (fo=1, routed)           0.023     5.558    core/pht/ram_2_ext/R0_addr0[7]
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.570     7.570    core/pht/ram_2_ext/_globalClock_out
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[7]/C
+                         clock pessimism              0.236     7.806    
+                         clock uncertainty           -0.135     7.671    
+    SLICE_X83Y204        FDRE (Setup_EFF_SLICEL_C_D)
+                                                      0.060     7.731    core/pht/ram_2_ext/_R0_addr_d0_reg[7]
+  -------------------------------------------------------------------
+                         required time                          7.731    
+                         arrival time                          -5.558    
+  -------------------------------------------------------------------
+                         slack                                  2.173    
+
+Slack (MET) :             2.195ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[1]_rep/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_1_ext/_R0_addr_d0_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.686ns  (logic 0.775ns (28.853%)  route 1.911ns (71.147%))
+  Logic Levels:           5  (LUT2=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.041ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.574ns = ( 7.574 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.851ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.851ns (routing 1.439ns, distribution 1.412ns)
+  Clock Net Delay (Destination): 2.574ns (routing 1.322ns, distribution 1.252ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.851     2.851    _globalClock_out
+    SLICE_X83Y209        FDRE                                         r  core_io_query_bits_REG_pc_reg[1]_rep/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y209        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.965 r  core_io_query_bits_REG_pc_reg[1]_rep/Q
+                         net (fo=93, routed)          0.233     3.198    core/pht/ram_2_ext/r_2_reg[2]
+    SLICE_X82Y208        LUT2 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.192     3.390 r  core/pht/ram_2_ext/index_2[1]_i_2/O
+                         net (fo=10, routed)          0.438     3.828    core/pht/ram_2_ext/index_2[1]_i_2_n_0
+    SLICE_X80Y205        LUT6 (Prop_F6LUT_SLICEL_I5_O)
+                                                      0.185     4.013 r  core/pht/ram_2_ext/index_1[1]_i_1/O
+                         net (fo=19, routed)          0.691     4.704    core/pht/ram_2_ext/forecastHistory_reg[1]
+    SLICE_X84Y200        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.173     4.877 f  core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2/O
+                         net (fo=12, routed)          0.223     5.100    core/pht/ram_2_ext/_R0_addr_d0[7]_i_4__2_n_0
+    SLICE_X84Y202        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.040     5.140 r  core/pht/ram_2_ext/_R0_addr_d0[5]_i_2/O
+                         net (fo=3, routed)           0.300     5.440    core/pht/updates/ram_ext/_R0_addr_d0_reg[5]_2
+    SLICE_X83Y203        LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.071     5.511 r  core/pht/updates/ram_ext/_R0_addr_d0[5]_i_1__2/O
+                         net (fo=1, routed)           0.026     5.537    core/pht/ram_1_ext/R0_addr0[5]
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.574     7.574    core/pht/ram_1_ext/_globalClock_out
+    SLICE_X83Y203        FDRE                                         r  core/pht/ram_1_ext/_R0_addr_d0_reg[5]/C
+                         clock pessimism              0.236     7.810    
+                         clock uncertainty           -0.135     7.674    
+    SLICE_X83Y203        FDRE (Setup_BFF_SLICEL_C_D)
+                                                      0.058     7.732    core/pht/ram_1_ext/_R0_addr_d0_reg[5]
+  -------------------------------------------------------------------
+                         required time                          7.732    
+                         arrival time                          -5.537    
+  -------------------------------------------------------------------
+                         slack                                  2.195    
+
+Slack (MET) :             2.238ns  (required time - arrival time)
+  Source:                 core_io_query_bits_REG_pc_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            core/pht/ram_2_ext/_R0_addr_d0_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        2.640ns  (logic 0.854ns (32.348%)  route 1.786ns (67.652%))
+  Logic Levels:           5  (LUT4=1 LUT5=3 LUT6=1)
+  Clock Path Skew:        -0.045ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.572ns = ( 7.572 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.853ns
+    Clock Pessimism Removal (CPR):    0.236ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.853ns (routing 1.439ns, distribution 1.414ns)
+  Clock Net Delay (Destination): 2.572ns (routing 1.322ns, distribution 1.250ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.853     2.853    _globalClock_out
+    SLICE_X83Y208        FDRE                                         r  core_io_query_bits_REG_pc_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X83Y208        FDRE (Prop_EFF_SLICEL_C_Q)
+                                                      0.114     2.967 r  core_io_query_bits_REG_pc_reg[2]/Q
+                         net (fo=13, routed)          0.315     3.282    core/pht/ram_2_ext/Q[1]
+    SLICE_X84Y206        LUT5 (Prop_D5LUT_SLICEL_I2_O)
+                                                      0.205     3.487 r  core/pht/ram_2_ext/r_1[6]_i_2/O
+                         net (fo=6, routed)           0.579     4.066    core/pht/ram_2_ext/r_1[6]_i_2_n_0
+    SLICE_X81Y197        LUT5 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.177     4.243 r  core/pht/ram_2_ext/r_1[8]_i_2/O
+                         net (fo=2, routed)           0.152     4.395    core/pht/ram_2_ext/r_1[8]_i_2_n_0
+    SLICE_X80Y197        LUT4 (Prop_B6LUT_SLICEL_I3_O)
+                                                      0.071     4.466 r  core/pht/ram_2_ext/r_2[8]_i_1/O
+                         net (fo=13, routed)          0.572     5.038    core/pht/ram_2_ext/forecastHistory_reg[7]_0
+    SLICE_X84Y204        LUT6 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.172     5.210 r  core/pht/ram_2_ext/_R0_addr_d0[6]_i_2__2/O
+                         net (fo=3, routed)           0.145     5.355    core/pht/updates/ram_ext/_R0_addr_d0_reg[6]_0
+    SLICE_X83Y204        LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.115     5.470 r  core/pht/updates/ram_ext/_R0_addr_d0[6]_i_1__0/O
+                         net (fo=1, routed)           0.023     5.493    core/pht/ram_2_ext/R0_addr0[6]
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X2Y3 (CLOCK_ROOT)    net (fo=1387, routed)        2.572     7.572    core/pht/ram_2_ext/_globalClock_out
+    SLICE_X83Y204        FDRE                                         r  core/pht/ram_2_ext/_R0_addr_d0_reg[6]/C
+                         clock pessimism              0.236     7.808    
+                         clock uncertainty           -0.135     7.672    
+    SLICE_X83Y204        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.731    core/pht/ram_2_ext/_R0_addr_d0_reg[6]
+  -------------------------------------------------------------------
+                         required time                          7.731    
+                         arrival time                          -5.493    
+  -------------------------------------------------------------------
+                         slack                                  2.238    
+
+
+
+

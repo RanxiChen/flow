@@ -1,0 +1,42 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Sat Oct 24 19:47:23 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_utilization -hierarchical -file utilization-route.rpt
+| Design       : BreezeGshareHistoryTimingHarness
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Routed
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------------------+--------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+|               Instance               |          Module          | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | URAM | DSP Blocks |
++--------------------------------------+--------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+| BreezeGshareHistoryTimingHarness     |                    (top) |       2692 |       2620 |      72 |    0 | 1307 |      0 |      0 |    0 |          0 |
+|   (BreezeGshareHistoryTimingHarness) |                    (top) |          0 |          0 |       0 |    0 |   97 |      0 |      0 |    0 |          0 |
+|   core                               |  BreezeGshareHistoryCore |       2692 |       2620 |      72 |    0 | 1210 |      0 |      0 |    0 |          0 |
+|     (core)                           |  BreezeGshareHistoryCore |          1 |          1 |       0 |    0 |   56 |      0 |      0 |    0 |          0 |
+|     pht                              |          BreezeBankedPht |       2691 |       2619 |      72 |    0 | 1154 |      0 |      0 |    0 |          0 |
+|       (pht)                          |          BreezeBankedPht |       1087 |       1087 |       0 |    0 | 1117 |      0 |      0 |    0 |          0 |
+|       ram_0_ext                      |                ram_256x2 |         18 |          2 |      16 |    0 |    8 |      0 |      0 |    0 |          0 |
+|       ram_1_ext                      |              ram_256x2_0 |         17 |          1 |      16 |    0 |    8 |      0 |      0 |    0 |          0 |
+|       ram_2_ext                      |              ram_256x2_1 |       1234 |       1218 |      16 |    0 |    8 |      0 |      0 |    0 |          0 |
+|       ram_3_ext                      |              ram_256x2_2 |         19 |          3 |      16 |    0 |    8 |      0 |      0 |    0 |          0 |
+|       updates                        | Queue4_PipelinePhtUpdate |        319 |        311 |       8 |    0 |    5 |      0 |      0 |    0 |          0 |
+|         (updates)                    | Queue4_PipelinePhtUpdate |          3 |          3 |       0 |    0 |    5 |      0 |      0 |    0 |          0 |
+|         ram_ext                      |                 ram_4x11 |        316 |        308 |       8 |    0 |    0 |      0 |      0 |    0 |          0 |
+|   globalClock                        |   HistoryExperimentClock |          0 |          0 |       0 |    0 |    0 |      0 |      0 |    0 |          0 |
++--------------------------------------+--------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+
