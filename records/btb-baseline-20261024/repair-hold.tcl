@@ -17,4 +17,5 @@ check_timing -verbose -file check-timing.rpt
 report_drc -file drc.rpt
 # Reopen the output DCP with the same independent endpoint-based audit.
 set argv [list [file normalize route.dcp]]
+close_design
 source $common_dir/audit-checkpoint.tcl
