@@ -44,8 +44,9 @@ set seq [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}]
 report_timing -from $seq -to $seq -delay_type max -max_paths 50 -path_type full_clock_expanded -file internal-setup.rpt
 report_timing -from $seq -to $seq -delay_type min -max_paths 30 -path_type full_clock_expanded -file internal-hold.rpt
 # Query result endpoints are fixture registers, not the external ports.
-set results [filter $seq {NAME =~ *io_result_*}]
-if {[llength $results] == 0} {error "query-result capture registers missing"}
+set result_ports [get_ports -filter {DIRECTION == OUT && NAME =~ io_result*}]
+set results [lsort -unique [get_cells -quiet -of_objects [all_fanin -flat -startpoints_only -to $result_ports] -filter {IS_SEQUENTIAL == 1}]]
+if {[llength $results] < 130} {error "query-result capture registers missing or incomplete"}
 report_timing -to $results -delay_type max -max_paths 30 -path_type full_clock_expanded -file query-result-setup.rpt
 report_timing -from $seq -to $seq -delay_type max -max_paths 300 -path_type summary -file internal-top300.rpt
 set f [open sequential-cells.txt w]
