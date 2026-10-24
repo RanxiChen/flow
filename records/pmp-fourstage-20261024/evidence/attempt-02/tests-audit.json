@@ -1,0 +1,11 @@
+{
+  "tests": 3,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "cases": [
+    "CSR predecode publishes legal ranges and predecessors, including TOR neighbour locks",
+    "four stages sustain II=1 and agree with integer intervals for boundaries and random accesses",
+    "cancel and CSR commits discard every in-flight age without stale response or mixed rules"
+  ]
+}

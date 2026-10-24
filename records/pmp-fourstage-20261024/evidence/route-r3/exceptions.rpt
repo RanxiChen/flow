@@ -1,0 +1,16 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sat Oct 24 16:51:16 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_exceptions -file exceptions.rpt
+| Design            : BreezePmpFourStageHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-----------------------------------------------------------------------------------------
+
+Exceptions Report
+
+No valid timing exceptions found.
+

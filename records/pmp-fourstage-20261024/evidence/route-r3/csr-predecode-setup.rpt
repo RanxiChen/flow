@@ -1,0 +1,1819 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sat Oct 24 16:51:18 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from [filter [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] {NAME =~ *experiment/csr/*}] -to [filter [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] {NAME =~ *experiment/csr/*}] -delay_type max -max_paths 20 -path_type full_clock_expanded -file csr-predecode-setup.rpt
+| Design            : BreezePmpFourStageHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.166ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.670ns  (logic 2.142ns (45.867%)  route 2.528ns (54.133%))
+  Logic Levels:           14  (CARRY8=8 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.088ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.466ns = ( 7.466 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.466ns (routing 1.264ns, distribution 1.202ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.547 r  experiment/csr/ranges_0_upper_reg[24]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.574    experiment/csr/ranges_0_upper_reg[24]_i_2_n_0
+    SLICE_X21Y95         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.593 r  experiment/csr/ranges_0_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.620    experiment/csr/ranges_0_upper_reg[32]_i_2_n_0
+    SLICE_X21Y96         CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174     5.794 r  experiment/csr/ranges_0_upper_reg[40]_i_2/O[5]
+                         net (fo=3, routed)           0.394     6.188    experiment/csr/ranges_0_upper1[38]
+    SLICE_X20Y96         LUT5 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.040     6.228 r  experiment/csr/ranges_0_upper[38]_i_1/O
+                         net (fo=3, routed)           0.328     6.556    experiment/csr/ranges_0_upper[38]_i_1_n_0
+    SLICE_X19Y101        LUT4 (Prop_C5LUT_SLICEL_I0_O)
+                                                      0.150     6.706 r  experiment/csr/ranges_0_nonempty_i_17/O
+                         net (fo=1, routed)           0.000     6.706    experiment/csr/ranges_0_nonempty_i_17_n_0
+    SLICE_X19Y101        CARRY8 (Prop_CARRY8_SLICEL_DI[2]_CO[7])
+                                                      0.340     7.046 r  experiment/csr/ranges_0_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     7.073    experiment/csr/ranges_0_nonempty_reg_i_3_n_0
+    SLICE_X19Y102        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[3])
+                                                      0.073     7.146 r  experiment/csr/ranges_0_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.181     7.327    experiment/csr/ranges_0_nonempty1
+    SLICE_X19Y103        LUT3 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     7.367 r  experiment/csr/ranges_0_nonempty_i_1/O
+                         net (fo=1, routed)           0.023     7.390    experiment/csr/ranges_0_nonempty0
+    SLICE_X19Y103        FDRE                                         r  experiment/csr/ranges_0_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.466     7.466    experiment/csr/_globalClock_out
+    SLICE_X19Y103        FDRE                                         r  experiment/csr/ranges_0_nonempty_reg/C
+                         clock pessimism              0.166     7.632    
+                         clock uncertainty           -0.135     7.497    
+    SLICE_X19Y103        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.556    experiment/csr/ranges_0_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.556    
+                         arrival time                          -7.390    
+  -------------------------------------------------------------------
+                         slack                                  0.166    
+
+Slack (MET) :             0.379ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_1_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.346ns  (logic 2.175ns (50.046%)  route 2.171ns (49.954%))
+  Logic Levels:           14  (CARRY8=8 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.198ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.363ns = ( 7.363 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.159ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.363ns (routing 1.264ns, distribution 1.099ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.363     3.200    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X22Y102        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.387 r  experiment/csr/address_1[53]_i_3/O
+                         net (fo=109, routed)         0.164     3.551    experiment/csr/address_1[53]_i_3_n_0
+    SLICE_X22Y103        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.132     3.683 r  experiment/csr/ranges_1_lower[2]_i_2/O
+                         net (fo=2, routed)           0.315     3.998    experiment/csr/ranges_1_lower2[0]
+    SLICE_X25Y104        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.379     4.377 r  experiment/csr/ranges_1_lower_reg[10]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.404    experiment/csr/ranges_1_lower_reg[10]_i_4_n_0
+    SLICE_X25Y105        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     4.423 r  experiment/csr/ranges_1_lower_reg[18]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.450    experiment/csr/ranges_1_lower_reg[18]_i_4_n_0
+    SLICE_X25Y106        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     4.469 r  experiment/csr/ranges_1_lower_reg[26]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.496    experiment/csr/ranges_1_lower_reg[26]_i_4_n_0
+    SLICE_X25Y107        CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174     4.670 r  experiment/csr/ranges_1_lower_reg[34]_i_4/O[5]
+                         net (fo=2, routed)           0.483     5.153    experiment/csr/ranges_1_lower5[30]
+    SLICE_X26Y106        LUT5 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.073     5.226 r  experiment/csr/ranges_1_upper[32]_i_3/O
+                         net (fo=1, routed)           0.000     5.226    experiment/csr/ranges_1_upper2[32]
+    SLICE_X26Y106        CARRY8 (Prop_CARRY8_SLICEM_S[7]_CO[7])
+                                                      0.176     5.402 r  experiment/csr/ranges_1_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.429    experiment/csr/ranges_1_upper_reg[32]_i_2_n_0
+    SLICE_X26Y107        CARRY8 (Prop_CARRY8_SLICEM_CI_O[2])
+                                                      0.089     5.518 r  experiment/csr/ranges_1_upper_reg[40]_i_2/O[2]
+                         net (fo=3, routed)           0.280     5.798    experiment/csr/ranges_1_upper1[35]
+    SLICE_X26Y111        LUT5 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.117     5.915 r  experiment/csr/ranges_1_upper[35]_i_1/O
+                         net (fo=3, routed)           0.224     6.139    experiment/csr/ranges_1_upper[35]_i_1_n_0
+    SLICE_X26Y114        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.176     6.315 r  experiment/csr/ranges_1_nonempty_i_27/O
+                         net (fo=1, routed)           0.000     6.315    experiment/csr/ranges_1_nonempty_i_27_n_0
+    SLICE_X26Y114        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     6.719 r  experiment/csr/ranges_1_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.746    experiment/csr/ranges_1_nonempty_reg_i_3_n_0
+    SLICE_X26Y115        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[3])
+                                                      0.073     6.819 r  experiment/csr/ranges_1_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.184     7.003    experiment/csr/ranges_1_nonempty1
+    SLICE_X26Y116        LUT3 (Prop_A6LUT_SLICEM_I2_O)
+                                                      0.040     7.043 r  experiment/csr/ranges_1_nonempty_i_1/O
+                         net (fo=1, routed)           0.023     7.066    experiment/csr/ranges_1_nonempty0
+    SLICE_X26Y116        FDRE                                         r  experiment/csr/ranges_1_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.363     7.363    experiment/csr/_globalClock_out
+    SLICE_X26Y116        FDRE                                         r  experiment/csr/ranges_1_nonempty_reg/C
+                         clock pessimism              0.159     7.522    
+                         clock uncertainty           -0.135     7.386    
+    SLICE_X26Y116        FDRE (Setup_AFF_SLICEM_C_D)
+                                                      0.059     7.445    experiment/csr/ranges_1_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.445    
+                         arrival time                          -7.066    
+  -------------------------------------------------------------------
+                         slack                                  0.379    
+
+Slack (MET) :             0.387ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_4_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_3_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.514ns  (logic 2.231ns (49.424%)  route 2.283ns (50.576%))
+  Logic Levels:           13  (CARRY8=7 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.024ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.469ns = ( 7.469 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.723ns
+    Clock Pessimism Removal (CPR):    0.230ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.723ns (routing 1.380ns, distribution 1.343ns)
+  Clock Net Delay (Destination): 2.469ns (routing 1.264ns, distribution 1.205ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.723     2.723    experiment/csr/_globalClock_out
+    SLICE_X20Y94         FDRE                                         r  experiment/csr/cfg_4_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X20Y94         FDRE (Prop_HFF2_SLICEM_C_Q)
+                                                      0.117     2.840 f  experiment/csr/cfg_4_reg[3]/Q
+                         net (fo=2, routed)           0.386     3.226    experiment/csr/cfg_4_reg_n_0_[3]
+    SLICE_X21Y105        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.188     3.414 r  experiment/csr/address_3[53]_i_3/O
+                         net (fo=109, routed)         0.153     3.567    experiment/csr/address_3[53]_i_3_n_0
+    SLICE_X20Y105        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.176     3.743 r  experiment/csr/ranges_3_lower[10]_i_11/O
+                         net (fo=1, routed)           0.342     4.085    experiment/csr/ranges_3_lower[10]_i_11_n_0
+    SLICE_X21Y108        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.435 r  experiment/csr/ranges_3_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.462    experiment/csr/ranges_3_lower_reg[10]_i_3_n_0
+    SLICE_X21Y109        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.561 r  experiment/csr/ranges_3_lower_reg[18]_i_3/O[0]
+                         net (fo=2, routed)           0.364     4.925    experiment/csr/ranges_3_lower5[9]
+    SLICE_X22Y110        LUT5 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.070     4.995 r  experiment/csr/ranges_3_upper[16]_i_8/O
+                         net (fo=1, routed)           0.000     4.995    experiment/csr/ranges_3_upper2[11]
+    SLICE_X22Y110        CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.344     5.339 r  experiment/csr/ranges_3_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.366    experiment/csr/ranges_3_upper_reg[16]_i_2_n_0
+    SLICE_X22Y111        CARRY8 (Prop_CARRY8_SLICEL_CI_O[6])
+                                                      0.136     5.502 r  experiment/csr/ranges_3_upper_reg[24]_i_2/O[6]
+                         net (fo=3, routed)           0.513     6.015    experiment/csr/ranges_3_upper1[23]
+    SLICE_X20Y116        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     6.090 r  experiment/csr/ranges_3_upper[23]_i_1/O
+                         net (fo=3, routed)           0.211     6.301    experiment/csr/ranges_3_upper[23]_i_1_n_0
+    SLICE_X21Y116        LUT4 (Prop_C5LUT_SLICEL_I3_O)
+                                                      0.204     6.505 r  experiment/csr/ranges_3_nonempty_i_34/O
+                         net (fo=1, routed)           0.000     6.505    experiment/csr/ranges_3_nonempty_i_34_n_0
+    SLICE_X21Y116        CARRY8 (Prop_CARRY8_SLICEL_DI[2]_CO[7])
+                                                      0.340     6.845 r  experiment/csr/ranges_3_nonempty_reg_i_11/CO[7]
+                         net (fo=1, routed)           0.027     6.872    experiment/csr/ranges_3_nonempty_reg_i_11_n_0
+    SLICE_X21Y117        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.891 r  experiment/csr/ranges_3_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.918    experiment/csr/ranges_3_nonempty_reg_i_3_n_0
+    SLICE_X21Y118        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[3])
+                                                      0.073     6.991 r  experiment/csr/ranges_3_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.180     7.171    experiment/csr/ranges_3_nonempty1
+    SLICE_X21Y118        LUT3 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.040     7.211 r  experiment/csr/ranges_3_nonempty_i_1/O
+                         net (fo=1, routed)           0.026     7.237    experiment/csr/ranges_3_nonempty0
+    SLICE_X21Y118        FDRE                                         r  experiment/csr/ranges_3_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.469     7.469    experiment/csr/_globalClock_out
+    SLICE_X21Y118        FDRE                                         r  experiment/csr/ranges_3_nonempty_reg/C
+                         clock pessimism              0.230     7.699    
+                         clock uncertainty           -0.135     7.564    
+    SLICE_X21Y118        FDRE (Setup_GFF_SLICEL_C_D)
+                                                      0.060     7.624    experiment/csr/ranges_3_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.624    
+                         arrival time                          -7.237    
+  -------------------------------------------------------------------
+                         slack                                  0.387    
+
+Slack (MET) :             0.396ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_5_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_4_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.402ns  (logic 2.214ns (50.295%)  route 2.188ns (49.705%))
+  Logic Levels:           13  (CARRY8=7 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.126ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.490ns = ( 7.490 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.781ns
+    Clock Pessimism Removal (CPR):    0.165ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.781ns (routing 1.380ns, distribution 1.401ns)
+  Clock Net Delay (Destination): 2.490ns (routing 1.264ns, distribution 1.226ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.781     2.781    experiment/csr/_globalClock_out
+    SLICE_X15Y95         FDRE                                         r  experiment/csr/cfg_5_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X15Y95         FDRE (Prop_HFF2_SLICEM_C_Q)
+                                                      0.117     2.898 f  experiment/csr/cfg_5_reg[3]/Q
+                         net (fo=2, routed)           0.421     3.319    experiment/csr/cfg_5_reg_n_0_[3]
+    SLICE_X15Y101        LUT6 (Prop_A6LUT_SLICEM_I3_O)
+                                                      0.176     3.495 r  experiment/csr/address_4[53]_i_3/O
+                         net (fo=109, routed)         0.081     3.576    experiment/csr/address_4[53]_i_3_n_0
+    SLICE_X15Y101        LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.713 r  experiment/csr/ranges_4_lower[10]_i_11/O
+                         net (fo=1, routed)           0.341     4.054    experiment/csr/ranges_4_lower[10]_i_11_n_0
+    SLICE_X15Y104        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.350     4.404 r  experiment/csr/ranges_4_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.431    experiment/csr/ranges_4_lower_reg[10]_i_3_n_0
+    SLICE_X15Y105        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     4.450 r  experiment/csr/ranges_4_lower_reg[18]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.477    experiment/csr/ranges_4_lower_reg[18]_i_3_n_0
+    SLICE_X15Y106        CARRY8 (Prop_CARRY8_SLICEM_CI_O[6])
+                                                      0.136     4.613 r  experiment/csr/ranges_4_lower_reg[26]_i_3/O[6]
+                         net (fo=2, routed)           0.279     4.892    experiment/csr/ranges_4_lower5[23]
+    SLICE_X16Y108        LUT5 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.115     5.007 r  experiment/csr/ranges_4_upper[32]_i_10/O
+                         net (fo=1, routed)           0.000     5.007    experiment/csr/ranges_4_upper2[25]
+    SLICE_X16Y108        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     5.411 r  experiment/csr/ranges_4_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.438    experiment/csr/ranges_4_upper_reg[32]_i_2_n_0
+    SLICE_X16Y109        CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174     5.612 r  experiment/csr/ranges_4_upper_reg[40]_i_2/O[5]
+                         net (fo=3, routed)           0.351     5.963    experiment/csr/ranges_4_upper1[38]
+    SLICE_X11Y108        LUT5 (Prop_E6LUT_SLICEM_I0_O)
+                                                      0.040     6.003 r  experiment/csr/ranges_4_upper[38]_i_1/O
+                         net (fo=3, routed)           0.403     6.406    experiment/csr/ranges_4_upper[38]_i_1_n_0
+    SLICE_X12Y109        LUT4 (Prop_C5LUT_SLICEL_I1_O)
+                                                      0.093     6.499 r  experiment/csr/ranges_4_nonempty_i_17/O
+                         net (fo=1, routed)           0.000     6.499    experiment/csr/ranges_4_nonempty_i_17_n_0
+    SLICE_X12Y109        CARRY8 (Prop_CARRY8_SLICEL_DI[2]_CO[7])
+                                                      0.340     6.839 r  experiment/csr/ranges_4_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.866    experiment/csr/ranges_4_nonempty_reg_i_3_n_0
+    SLICE_X12Y110        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[3])
+                                                      0.073     6.939 r  experiment/csr/ranges_4_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.181     7.120    experiment/csr/ranges_4_nonempty1
+    SLICE_X12Y111        LUT3 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.040     7.160 r  experiment/csr/ranges_4_nonempty_i_1/O
+                         net (fo=1, routed)           0.023     7.183    experiment/csr/ranges_4_nonempty0
+    SLICE_X12Y111        FDRE                                         r  experiment/csr/ranges_4_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.490     7.490    experiment/csr/_globalClock_out
+    SLICE_X12Y111        FDRE                                         r  experiment/csr/ranges_4_nonempty_reg/C
+                         clock pessimism              0.165     7.655    
+                         clock uncertainty           -0.135     7.520    
+    SLICE_X12Y111        FDRE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.579    experiment/csr/ranges_4_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.579    
+                         arrival time                          -7.183    
+  -------------------------------------------------------------------
+                         slack                                  0.396    
+
+Slack (MET) :             0.452ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_2_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_2_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.256ns  (logic 2.298ns (53.994%)  route 1.958ns (46.006%))
+  Logic Levels:           13  (CARRY8=7 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.216ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.347ns = ( 7.347 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.722ns
+    Clock Pessimism Removal (CPR):    0.159ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.722ns (routing 1.380ns, distribution 1.342ns)
+  Clock Net Delay (Destination): 2.347ns (routing 1.264ns, distribution 1.083ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.722     2.722    experiment/csr/_globalClock_out
+    SLICE_X23Y101        FDRE                                         r  experiment/csr/cfg_2_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y101        FDRE (Prop_FFF_SLICEM_C_Q)
+                                                      0.114     2.836 f  experiment/csr/cfg_2_reg[7]/Q
+                         net (fo=7, routed)           0.268     3.104    experiment/csr/_csr_io_cfg_2[7]
+    SLICE_X22Y102        LUT6 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.185     3.289 r  experiment/csr/address_2[53]_i_3/O
+                         net (fo=109, routed)         0.328     3.617    experiment/csr/address_2[53]_i_3_n_0
+    SLICE_X23Y101        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.040     3.657 r  experiment/csr/ranges_2_lower[2]_i_2/O
+                         net (fo=2, routed)           0.212     3.869    experiment/csr/p_1_in11_in[2]
+    SLICE_X23Y102        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.379     4.248 r  experiment/csr/ranges_2_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.275    experiment/csr/ranges_2_lower_reg[10]_i_3_n_0
+    SLICE_X23Y103        CARRY8 (Prop_CARRY8_SLICEM_CI_O[6])
+                                                      0.136     4.411 r  experiment/csr/ranges_2_lower_reg[18]_i_3/O[6]
+                         net (fo=2, routed)           0.231     4.642    experiment/csr/ranges_2_lower5[15]
+    SLICE_X24Y103        LUT5 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.132     4.774 r  experiment/csr/ranges_2_upper[24]_i_10/O
+                         net (fo=1, routed)           0.000     4.774    experiment/csr/ranges_2_upper2[17]
+    SLICE_X24Y103        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     5.178 r  experiment/csr/ranges_2_upper_reg[24]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.205    experiment/csr/ranges_2_upper_reg[24]_i_2_n_0
+    SLICE_X24Y104        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     5.224 r  experiment/csr/ranges_2_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.251    experiment/csr/ranges_2_upper_reg[32]_i_2_n_0
+    SLICE_X24Y105        CARRY8 (Prop_CARRY8_SLICEM_CI_O[7])
+                                                      0.186     5.437 r  experiment/csr/ranges_2_upper_reg[40]_i_2/O[7]
+                         net (fo=3, routed)           0.433     5.870    experiment/csr/ranges_2_upper1[40]
+    SLICE_X24Y113        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.043     5.913 r  experiment/csr/ranges_2_upper[40]_i_1/O
+                         net (fo=3, routed)           0.169     6.082    experiment/csr/ranges_2_upper[40]_i_1_n_0
+    SLICE_X24Y112        LUT4 (Prop_D5LUT_SLICEM_I1_O)
+                                                      0.210     6.292 r  experiment/csr/ranges_2_nonempty_i_16/O
+                         net (fo=1, routed)           0.000     6.292    experiment/csr/ranges_2_nonempty_i_16_n_0
+    SLICE_X24Y112        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.337     6.629 r  experiment/csr/ranges_2_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.656    experiment/csr/ranges_2_nonempty_reg_i_3_n_0
+    SLICE_X24Y113        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[3])
+                                                      0.073     6.729 r  experiment/csr/ranges_2_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.183     6.912    experiment/csr/ranges_2_nonempty1
+    SLICE_X24Y113        LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     6.952 r  experiment/csr/ranges_2_nonempty_i_1/O
+                         net (fo=1, routed)           0.026     6.978    experiment/csr/ranges_2_nonempty0
+    SLICE_X24Y113        FDRE                                         r  experiment/csr/ranges_2_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.347     7.347    experiment/csr/_globalClock_out
+    SLICE_X24Y113        FDRE                                         r  experiment/csr/ranges_2_nonempty_reg/C
+                         clock pessimism              0.159     7.506    
+                         clock uncertainty           -0.135     7.370    
+    SLICE_X24Y113        FDRE (Setup_GFF_SLICEM_C_D)
+                                                      0.060     7.430    experiment/csr/ranges_2_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.430    
+                         arrival time                          -6.978    
+  -------------------------------------------------------------------
+                         slack                                  0.452    
+
+Slack (MET) :             0.478ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_6_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_5_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.329ns  (logic 1.961ns (45.299%)  route 2.368ns (54.701%))
+  Logic Levels:           15  (CARRY8=9 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.118ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.484ns = ( 7.484 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.767ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.767ns (routing 1.380ns, distribution 1.387ns)
+  Clock Net Delay (Destination): 2.484ns (routing 1.264ns, distribution 1.220ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.767     2.767    experiment/csr/_globalClock_out
+    SLICE_X16Y97         FDRE                                         r  experiment/csr/cfg_6_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X16Y97         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.114     2.881 f  experiment/csr/cfg_6_reg[3]/Q
+                         net (fo=2, routed)           0.213     3.094    experiment/csr/cfg_6_reg_n_0_[3]
+    SLICE_X16Y97         LUT6 (Prop_H6LUT_SLICEL_I3_O)
+                                                      0.172     3.266 r  experiment/csr/address_5[53]_i_3/O
+                         net (fo=109, routed)         0.321     3.587    experiment/csr/address_5[53]_i_3_n_0
+    SLICE_X16Y104        LUT6 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.070     3.657 r  experiment/csr/ranges_5_lower[10]_i_11/O
+                         net (fo=1, routed)           0.398     4.055    experiment/csr/ranges_5_lower[10]_i_11_n_0
+    SLICE_X16Y112        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.405 r  experiment/csr/ranges_5_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.432    experiment/csr/ranges_5_lower_reg[10]_i_3_n_0
+    SLICE_X16Y113        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     4.451 r  experiment/csr/ranges_5_lower_reg[18]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.478    experiment/csr/ranges_5_lower_reg[18]_i_3_n_0
+    SLICE_X16Y114        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     4.497 r  experiment/csr/ranges_5_lower_reg[26]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.524    experiment/csr/ranges_5_lower_reg[26]_i_3_n_0
+    SLICE_X16Y115        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     4.543 r  experiment/csr/ranges_5_lower_reg[34]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.570    experiment/csr/ranges_5_lower_reg[34]_i_3_n_0
+    SLICE_X16Y116        CARRY8 (Prop_CARRY8_SLICEL_CI_O[3])
+                                                      0.138     4.708 r  experiment/csr/ranges_5_lower_reg[42]_i_3/O[3]
+                         net (fo=2, routed)           0.418     5.126    experiment/csr/ranges_5_lower5[36]
+    SLICE_X15Y115        LUT5 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.075     5.201 r  experiment/csr/ranges_5_upper[40]_i_5/O
+                         net (fo=1, routed)           0.000     5.201    experiment/csr/ranges_5_upper2[38]
+    SLICE_X15Y115        CARRY8 (Prop_CARRY8_SLICEM_S[5]_CO[7])
+                                                      0.253     5.454 r  experiment/csr/ranges_5_upper_reg[40]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.481    experiment/csr/ranges_5_upper_reg[40]_i_2_n_0
+    SLICE_X15Y116        CARRY8 (Prop_CARRY8_SLICEM_CI_O[1])
+                                                      0.133     5.614 r  experiment/csr/ranges_5_upper_reg[48]_i_2/O[1]
+                         net (fo=3, routed)           0.266     5.880    experiment/csr/ranges_5_upper1[42]
+    SLICE_X13Y117        LUT5 (Prop_G6LUT_SLICEM_I0_O)
+                                                      0.116     5.996 r  experiment/csr/ranges_5_upper[42]_i_1/O
+                         net (fo=3, routed)           0.384     6.380    experiment/csr/ranges_5_upper[42]_i_1_n_0
+    SLICE_X14Y111        LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.115     6.495 r  experiment/csr/ranges_5_nonempty_i_23/O
+                         net (fo=1, routed)           0.000     6.495    experiment/csr/ranges_5_nonempty_i_23_n_0
+    SLICE_X14Y111        CARRY8 (Prop_CARRY8_SLICEL_S[4]_CO[7])
+                                                      0.255     6.750 r  experiment/csr/ranges_5_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.777    experiment/csr/ranges_5_nonempty_reg_i_3_n_0
+    SLICE_X14Y112        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[3])
+                                                      0.073     6.850 r  experiment/csr/ranges_5_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.180     7.030    experiment/csr/ranges_5_nonempty1
+    SLICE_X14Y112        LUT3 (Prop_G6LUT_SLICEL_I2_O)
+                                                      0.040     7.070 r  experiment/csr/ranges_5_nonempty_i_1/O
+                         net (fo=1, routed)           0.026     7.096    experiment/csr/ranges_5_nonempty0
+    SLICE_X14Y112        FDRE                                         r  experiment/csr/ranges_5_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.484     7.484    experiment/csr/_globalClock_out
+    SLICE_X14Y112        FDRE                                         r  experiment/csr/ranges_5_nonempty_reg/C
+                         clock pessimism              0.166     7.650    
+                         clock uncertainty           -0.135     7.514    
+    SLICE_X14Y112        FDRE (Setup_GFF_SLICEL_C_D)
+                                                      0.060     7.574    experiment/csr/ranges_5_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.574    
+                         arrival time                          -7.096    
+  -------------------------------------------------------------------
+                         slack                                  0.478    
+
+Slack (MET) :             0.524ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[55]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.283ns  (logic 1.815ns (42.377%)  route 2.468ns (57.623%))
+  Logic Levels:           14  (CARRY8=10 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.116ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.438ns = ( 7.438 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.438ns (routing 1.264ns, distribution 1.174ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.547 r  experiment/csr/ranges_0_upper_reg[24]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.574    experiment/csr/ranges_0_upper_reg[24]_i_2_n_0
+    SLICE_X21Y95         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.593 r  experiment/csr/ranges_0_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.620    experiment/csr/ranges_0_upper_reg[32]_i_2_n_0
+    SLICE_X21Y96         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.639 r  experiment/csr/ranges_0_upper_reg[40]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.666    experiment/csr/ranges_0_upper_reg[40]_i_2_n_0
+    SLICE_X21Y97         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.685 r  experiment/csr/ranges_0_upper_reg[48]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.712    experiment/csr/ranges_0_upper_reg[48]_i_2_n_0
+    SLICE_X21Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_O[6])
+                                                      0.136     5.848 r  experiment/csr/ranges_0_upper_reg[56]_i_3/O[6]
+                         net (fo=3, routed)           0.369     6.217    experiment/csr/ranges_0_upper1[55]
+    SLICE_X19Y102        LUT5 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.040     6.257 r  experiment/csr/ranges_0_upperBlockPrevious[48]_i_2/O
+                         net (fo=1, routed)           0.402     6.659    experiment/csr/ranges_0_upperBlockPrevious[48]_i_2_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_DI[7]_CO[7])
+                                                      0.143     6.802 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.829    experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1_n_0
+    SLICE_X22Y101        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     6.962 r  experiment/csr/ranges_0_upperBlockPrevious_reg[55]_i_1/O[1]
+                         net (fo=1, routed)           0.041     7.003    experiment/csr/ranges_0_upperBlockPrevious0[55]
+    SLICE_X22Y101        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[55]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.438     7.438    experiment/csr/_globalClock_out
+    SLICE_X22Y101        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[55]/C
+                         clock pessimism              0.166     7.604    
+                         clock uncertainty           -0.135     7.469    
+    SLICE_X22Y101        FDSE (Setup_BFF_SLICEL_C_D)
+                                                      0.058     7.527    experiment/csr/ranges_0_upperBlockPrevious_reg[55]
+  -------------------------------------------------------------------
+                         required time                          7.527    
+                         arrival time                          -7.003    
+  -------------------------------------------------------------------
+                         slack                                  0.524    
+
+Slack (MET) :             0.546ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_6_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_6_nonempty_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.278ns  (logic 2.125ns (49.673%)  route 2.153ns (50.327%))
+  Logic Levels:           14  (CARRY8=8 LUT3=1 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.101ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.461ns = ( 7.461 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.728ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.728ns (routing 1.380ns, distribution 1.348ns)
+  Clock Net Delay (Destination): 2.461ns (routing 1.264ns, distribution 1.197ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.728     2.728    experiment/csr/_globalClock_out
+    SLICE_X19Y96         FDRE                                         r  experiment/csr/cfg_6_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X19Y96         FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.117     2.845 f  experiment/csr/cfg_6_reg[7]/Q
+                         net (fo=7, routed)           0.174     3.019    experiment/csr/_csr_io_cfg_6[7]
+    SLICE_X19Y98         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.185     3.204 r  experiment/csr/address_6[53]_i_3/O
+                         net (fo=108, routed)         0.350     3.554    experiment/csr/address_6[53]_i_3_n_0
+    SLICE_X19Y106        LUT6 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.070     3.624 r  experiment/csr/ranges_6_lower[10]_i_11/O
+                         net (fo=1, routed)           0.215     3.839    experiment/csr/ranges_6_lower[10]_i_11_n_0
+    SLICE_X19Y108        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.189 r  experiment/csr/ranges_6_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.216    experiment/csr/ranges_6_lower_reg[10]_i_3_n_0
+    SLICE_X19Y109        CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174     4.390 r  experiment/csr/ranges_6_lower_reg[18]_i_3/O[5]
+                         net (fo=2, routed)           0.360     4.750    experiment/csr/ranges_6_lower5[14]
+    SLICE_X18Y108        LUT5 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.177     4.927 r  experiment/csr/ranges_6_upper[16]_i_3/O
+                         net (fo=1, routed)           0.000     4.927    experiment/csr/ranges_6_upper2[16]
+    SLICE_X18Y108        CARRY8 (Prop_CARRY8_SLICEM_S[7]_CO[7])
+                                                      0.176     5.103 r  experiment/csr/ranges_6_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.130    experiment/csr/ranges_6_upper_reg[16]_i_2_n_0
+    SLICE_X18Y109        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     5.149 r  experiment/csr/ranges_6_upper_reg[24]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.176    experiment/csr/ranges_6_upper_reg[24]_i_2_n_0
+    SLICE_X18Y110        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     5.195 r  experiment/csr/ranges_6_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.222    experiment/csr/ranges_6_upper_reg[32]_i_2_n_0
+    SLICE_X18Y111        CARRY8 (Prop_CARRY8_SLICEM_CI_O[2])
+                                                      0.089     5.311 r  experiment/csr/ranges_6_upper_reg[40]_i_2/O[2]
+                         net (fo=3, routed)           0.338     5.649    experiment/csr/ranges_6_upper1[35]
+    SLICE_X20Y112        LUT5 (Prop_B6LUT_SLICEM_I0_O)
+                                                      0.042     5.691 r  experiment/csr/ranges_6_upper[35]_i_1/O
+                         net (fo=3, routed)           0.372     6.063    experiment/csr/ranges_6_upper[35]_i_1_n_0
+    SLICE_X17Y107        LUT4 (Prop_A6LUT_SLICEM_I1_O)
+                                                      0.190     6.253 r  experiment/csr/ranges_6_nonempty_i_27/O
+                         net (fo=1, routed)           0.000     6.253    experiment/csr/ranges_6_nonempty_i_27_n_0
+    SLICE_X17Y107        CARRY8 (Prop_CARRY8_SLICEM_S[0]_CO[7])
+                                                      0.404     6.657 r  experiment/csr/ranges_6_nonempty_reg_i_3/CO[7]
+                         net (fo=1, routed)           0.027     6.684    experiment/csr/ranges_6_nonempty_reg_i_3_n_0
+    SLICE_X17Y108        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[3])
+                                                      0.073     6.757 r  experiment/csr/ranges_6_nonempty_reg_i_2/CO[3]
+                         net (fo=1, routed)           0.183     6.940    experiment/csr/ranges_6_nonempty1
+    SLICE_X17Y108        LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.040     6.980 r  experiment/csr/ranges_6_nonempty_i_1/O
+                         net (fo=1, routed)           0.026     7.006    experiment/csr/ranges_6_nonempty0
+    SLICE_X17Y108        FDRE                                         r  experiment/csr/ranges_6_nonempty_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.461     7.461    experiment/csr/_globalClock_out
+    SLICE_X17Y108        FDRE                                         r  experiment/csr/ranges_6_nonempty_reg/C
+                         clock pessimism              0.166     7.627    
+                         clock uncertainty           -0.135     7.492    
+    SLICE_X17Y108        FDRE (Setup_GFF_SLICEM_C_D)
+                                                      0.060     7.552    experiment/csr/ranges_6_nonempty_reg
+  -------------------------------------------------------------------
+                         required time                          7.552    
+                         arrival time                          -7.006    
+  -------------------------------------------------------------------
+                         slack                                  0.546    
+
+Slack (MET) :             0.549ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[48]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.257ns  (logic 2.172ns (51.022%)  route 2.085ns (48.978%))
+  Logic Levels:           12  (CARRY8=8 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.119ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.435ns = ( 7.435 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.435ns (routing 1.264ns, distribution 1.171ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     5.714 f  experiment/csr/ranges_0_upper_reg[24]_i_2/O[7]
+                         net (fo=3, routed)           0.442     6.156    experiment/csr/ranges_0_upper1[24]
+    SLICE_X22Y97         LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.071     6.227 r  experiment/csr/ranges_0_upperBlockPrevious[24]_i_17/O
+                         net (fo=1, routed)           0.000     6.227    experiment/csr/ranges_0_upperBlockPrevious[24]_i_17_n_0
+    SLICE_X22Y97         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     6.631 r  experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.658    experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X22Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.677 r  experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.704    experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X22Y99         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.723 r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.750    experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     6.936 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/O[7]
+                         net (fo=1, routed)           0.041     6.977    experiment/csr/ranges_0_upperBlockPrevious0[48]
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.435     7.435    experiment/csr/_globalClock_out
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]/C
+                         clock pessimism              0.166     7.601    
+                         clock uncertainty           -0.135     7.466    
+    SLICE_X22Y100        FDSE (Setup_HFF_SLICEL_C_D)
+                                                      0.060     7.526    experiment/csr/ranges_0_upperBlockPrevious_reg[48]
+  -------------------------------------------------------------------
+                         required time                          7.526    
+                         arrival time                          -6.977    
+  -------------------------------------------------------------------
+                         slack                                  0.549    
+
+Slack (MET) :             0.553ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_1_lowerBlockPrevious_reg[48]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.183ns  (logic 1.762ns (42.123%)  route 2.421ns (57.877%))
+  Logic Levels:           12  (CARRY8=8 LUT1=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.189ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.415ns = ( 7.415 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.415ns (routing 1.264ns, distribution 1.151ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.363     3.200    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X22Y102        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.387 r  experiment/csr/address_1[53]_i_3/O
+                         net (fo=109, routed)         0.164     3.551    experiment/csr/address_1[53]_i_3_n_0
+    SLICE_X22Y103        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.132     3.683 r  experiment/csr/ranges_1_lower[2]_i_2/O
+                         net (fo=2, routed)           0.315     3.998    experiment/csr/ranges_1_lower2[0]
+    SLICE_X25Y104        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.379     4.377 r  experiment/csr/ranges_1_lower_reg[10]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.404    experiment/csr/ranges_1_lower_reg[10]_i_4_n_0
+    SLICE_X25Y105        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.503 f  experiment/csr/ranges_1_lower_reg[18]_i_4/O[0]
+                         net (fo=2, routed)           0.498     5.001    experiment/csr/ranges_1_lower5[9]
+    SLICE_X27Y98         LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.071     5.072 f  experiment/csr/ranges_1_lower[11]_i_1/O
+                         net (fo=5, routed)           0.878     5.950    experiment/csr/p_1_in__0[11]
+    SLICE_X30Y121        LUT1 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.191     6.141 r  experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6/O
+                         net (fo=1, routed)           0.000     6.141    experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6_n_0
+    SLICE_X30Y121        CARRY8 (Prop_CARRY8_SLICEM_S[3]_CO[7])
+                                                      0.324     6.465 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.492    experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X30Y122        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.511 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.538    experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X30Y123        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.557 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.584    experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X30Y124        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.603 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.630    experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X30Y125        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.649 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.676    experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X30Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_O[7])
+                                                      0.186     6.862 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]_i_1/O[7]
+                         net (fo=1, routed)           0.041     6.903    experiment/csr/ranges_1_lowerBlockPrevious0[48]
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.415     7.415    experiment/csr/_globalClock_out
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]/C
+                         clock pessimism              0.116     7.531    
+                         clock uncertainty           -0.135     7.396    
+    SLICE_X30Y126        FDSE (Setup_HFF_SLICEM_C_D)
+                                                      0.060     7.456    experiment/csr/ranges_1_lowerBlockPrevious_reg[48]
+  -------------------------------------------------------------------
+                         required time                          7.456    
+                         arrival time                          -6.903    
+  -------------------------------------------------------------------
+                         slack                                  0.553    
+
+Slack (MET) :             0.563ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[49]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.245ns  (logic 1.781ns (41.955%)  route 2.464ns (58.045%))
+  Logic Levels:           14  (CARRY8=10 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.116ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.438ns = ( 7.438 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.438ns (routing 1.264ns, distribution 1.174ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.547 r  experiment/csr/ranges_0_upper_reg[24]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.574    experiment/csr/ranges_0_upper_reg[24]_i_2_n_0
+    SLICE_X21Y95         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.593 r  experiment/csr/ranges_0_upper_reg[32]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.620    experiment/csr/ranges_0_upper_reg[32]_i_2_n_0
+    SLICE_X21Y96         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.639 r  experiment/csr/ranges_0_upper_reg[40]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.666    experiment/csr/ranges_0_upper_reg[40]_i_2_n_0
+    SLICE_X21Y97         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     5.685 r  experiment/csr/ranges_0_upper_reg[48]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.712    experiment/csr/ranges_0_upper_reg[48]_i_2_n_0
+    SLICE_X21Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_O[6])
+                                                      0.136     5.848 r  experiment/csr/ranges_0_upper_reg[56]_i_3/O[6]
+                         net (fo=3, routed)           0.369     6.217    experiment/csr/ranges_0_upper1[55]
+    SLICE_X19Y102        LUT5 (Prop_H6LUT_SLICEL_I0_O)
+                                                      0.040     6.257 r  experiment/csr/ranges_0_upperBlockPrevious[48]_i_2/O
+                         net (fo=1, routed)           0.402     6.659    experiment/csr/ranges_0_upperBlockPrevious[48]_i_2_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_DI[7]_CO[7])
+                                                      0.143     6.802 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.829    experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1_n_0
+    SLICE_X22Y101        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     6.928 r  experiment/csr/ranges_0_upperBlockPrevious_reg[55]_i_1/O[0]
+                         net (fo=1, routed)           0.037     6.965    experiment/csr/ranges_0_upperBlockPrevious0[49]
+    SLICE_X22Y101        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[49]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.438     7.438    experiment/csr/_globalClock_out
+    SLICE_X22Y101        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[49]/C
+                         clock pessimism              0.166     7.604    
+                         clock uncertainty           -0.135     7.469    
+    SLICE_X22Y101        FDSE (Setup_AFF_SLICEL_C_D)
+                                                      0.059     7.528    experiment/csr/ranges_0_upperBlockPrevious_reg[49]
+  -------------------------------------------------------------------
+                         required time                          7.528    
+                         arrival time                          -6.965    
+  -------------------------------------------------------------------
+                         slack                                  0.563    
+
+Slack (MET) :             0.563ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[46]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.242ns  (logic 2.160ns (50.919%)  route 2.082ns (49.081%))
+  Logic Levels:           12  (CARRY8=8 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.119ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.435ns = ( 7.435 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.435ns (routing 1.264ns, distribution 1.171ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     5.714 f  experiment/csr/ranges_0_upper_reg[24]_i_2/O[7]
+                         net (fo=3, routed)           0.442     6.156    experiment/csr/ranges_0_upper1[24]
+    SLICE_X22Y97         LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.071     6.227 r  experiment/csr/ranges_0_upperBlockPrevious[24]_i_17/O
+                         net (fo=1, routed)           0.000     6.227    experiment/csr/ranges_0_upperBlockPrevious[24]_i_17_n_0
+    SLICE_X22Y97         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     6.631 r  experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.658    experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X22Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.677 r  experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.704    experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X22Y99         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.723 r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.750    experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[5])
+                                                      0.174     6.924 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/O[5]
+                         net (fo=1, routed)           0.038     6.962    experiment/csr/ranges_0_upperBlockPrevious0[46]
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[46]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.435     7.435    experiment/csr/_globalClock_out
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[46]/C
+                         clock pessimism              0.166     7.601    
+                         clock uncertainty           -0.135     7.466    
+    SLICE_X22Y100        FDSE (Setup_FFF_SLICEL_C_D)
+                                                      0.059     7.525    experiment/csr/ranges_0_upperBlockPrevious_reg[46]
+  -------------------------------------------------------------------
+                         required time                          7.525    
+                         arrival time                          -6.962    
+  -------------------------------------------------------------------
+                         slack                                  0.563    
+
+Slack (MET) :             0.567ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_1_lowerBlockPrevious_reg[46]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.168ns  (logic 1.750ns (41.987%)  route 2.418ns (58.013%))
+  Logic Levels:           12  (CARRY8=8 LUT1=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.189ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.415ns = ( 7.415 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.415ns (routing 1.264ns, distribution 1.151ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.363     3.200    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X22Y102        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.387 r  experiment/csr/address_1[53]_i_3/O
+                         net (fo=109, routed)         0.164     3.551    experiment/csr/address_1[53]_i_3_n_0
+    SLICE_X22Y103        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.132     3.683 r  experiment/csr/ranges_1_lower[2]_i_2/O
+                         net (fo=2, routed)           0.315     3.998    experiment/csr/ranges_1_lower2[0]
+    SLICE_X25Y104        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.379     4.377 r  experiment/csr/ranges_1_lower_reg[10]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.404    experiment/csr/ranges_1_lower_reg[10]_i_4_n_0
+    SLICE_X25Y105        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.503 f  experiment/csr/ranges_1_lower_reg[18]_i_4/O[0]
+                         net (fo=2, routed)           0.498     5.001    experiment/csr/ranges_1_lower5[9]
+    SLICE_X27Y98         LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.071     5.072 f  experiment/csr/ranges_1_lower[11]_i_1/O
+                         net (fo=5, routed)           0.878     5.950    experiment/csr/p_1_in__0[11]
+    SLICE_X30Y121        LUT1 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.191     6.141 r  experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6/O
+                         net (fo=1, routed)           0.000     6.141    experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6_n_0
+    SLICE_X30Y121        CARRY8 (Prop_CARRY8_SLICEM_S[3]_CO[7])
+                                                      0.324     6.465 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.492    experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X30Y122        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.511 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.538    experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X30Y123        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.557 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.584    experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X30Y124        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.603 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.630    experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X30Y125        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.649 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.676    experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X30Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_O[5])
+                                                      0.174     6.850 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]_i_1/O[5]
+                         net (fo=1, routed)           0.038     6.888    experiment/csr/ranges_1_lowerBlockPrevious0[46]
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[46]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.415     7.415    experiment/csr/_globalClock_out
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[46]/C
+                         clock pessimism              0.116     7.531    
+                         clock uncertainty           -0.135     7.396    
+    SLICE_X30Y126        FDSE (Setup_FFF_SLICEM_C_D)
+                                                      0.059     7.455    experiment/csr/ranges_1_lowerBlockPrevious_reg[46]
+  -------------------------------------------------------------------
+                         required time                          7.455    
+                         arrival time                          -6.888    
+  -------------------------------------------------------------------
+                         slack                                  0.567    
+
+Slack (MET) :             0.573ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_4_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_3_lowerBlockPrevious_reg[48]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.242ns  (logic 1.653ns (38.967%)  route 2.589ns (61.033%))
+  Logic Levels:           11  (CARRY8=8 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.110ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.497ns = ( 7.497 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.723ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.723ns (routing 1.380ns, distribution 1.343ns)
+  Clock Net Delay (Destination): 2.497ns (routing 1.264ns, distribution 1.233ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.723     2.723    experiment/csr/_globalClock_out
+    SLICE_X20Y94         FDRE                                         r  experiment/csr/cfg_4_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X20Y94         FDRE (Prop_HFF2_SLICEM_C_Q)
+                                                      0.117     2.840 f  experiment/csr/cfg_4_reg[3]/Q
+                         net (fo=2, routed)           0.386     3.226    experiment/csr/cfg_4_reg_n_0_[3]
+    SLICE_X21Y105        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.188     3.414 r  experiment/csr/address_3[53]_i_3/O
+                         net (fo=109, routed)         0.153     3.567    experiment/csr/address_3[53]_i_3_n_0
+    SLICE_X20Y105        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.176     3.743 r  experiment/csr/ranges_3_lower[10]_i_11/O
+                         net (fo=1, routed)           0.342     4.085    experiment/csr/ranges_3_lower[10]_i_11_n_0
+    SLICE_X21Y108        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.435 r  experiment/csr/ranges_3_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.462    experiment/csr/ranges_3_lower_reg[10]_i_3_n_0
+    SLICE_X21Y109        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.561 r  experiment/csr/ranges_3_lower_reg[18]_i_3/O[0]
+                         net (fo=2, routed)           0.648     5.209    experiment/csr/ranges_3_lower5[9]
+    SLICE_X26Y99         LUT5 (Prop_B6LUT_SLICEM_I4_O)
+                                                      0.119     5.328 r  experiment/csr/ranges_3_lower[11]_i_1/O
+                         net (fo=5, routed)           0.857     6.185    experiment/csr/ranges_3_lower0[11]
+    SLICE_X20Y125        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.342     6.527 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.554    experiment/csr/ranges_3_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X20Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.573 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.600    experiment/csr/ranges_3_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X20Y127        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.619 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.646    experiment/csr/ranges_3_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X20Y128        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.665 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.692    experiment/csr/ranges_3_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X20Y129        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.711 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.738    experiment/csr/ranges_3_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X20Y130        CARRY8 (Prop_CARRY8_SLICEM_CI_O[7])
+                                                      0.186     6.924 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[48]_i_1/O[7]
+                         net (fo=1, routed)           0.041     6.965    experiment/csr/ranges_3_lowerBlockPrevious0[48]
+    SLICE_X20Y130        FDSE                                         r  experiment/csr/ranges_3_lowerBlockPrevious_reg[48]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.497     7.497    experiment/csr/_globalClock_out
+    SLICE_X20Y130        FDSE                                         r  experiment/csr/ranges_3_lowerBlockPrevious_reg[48]/C
+                         clock pessimism              0.116     7.613    
+                         clock uncertainty           -0.135     7.478    
+    SLICE_X20Y130        FDSE (Setup_HFF_SLICEM_C_D)
+                                                      0.060     7.538    experiment/csr/ranges_3_lowerBlockPrevious_reg[48]
+  -------------------------------------------------------------------
+                         required time                          7.538    
+                         arrival time                          -6.965    
+  -------------------------------------------------------------------
+                         slack                                  0.573    
+
+Slack (MET) :             0.587ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_4_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_3_lowerBlockPrevious_reg[46]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.227ns  (logic 1.641ns (38.822%)  route 2.586ns (61.178%))
+  Logic Levels:           11  (CARRY8=8 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.110ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.497ns = ( 7.497 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.723ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.723ns (routing 1.380ns, distribution 1.343ns)
+  Clock Net Delay (Destination): 2.497ns (routing 1.264ns, distribution 1.233ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.723     2.723    experiment/csr/_globalClock_out
+    SLICE_X20Y94         FDRE                                         r  experiment/csr/cfg_4_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X20Y94         FDRE (Prop_HFF2_SLICEM_C_Q)
+                                                      0.117     2.840 f  experiment/csr/cfg_4_reg[3]/Q
+                         net (fo=2, routed)           0.386     3.226    experiment/csr/cfg_4_reg_n_0_[3]
+    SLICE_X21Y105        LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.188     3.414 r  experiment/csr/address_3[53]_i_3/O
+                         net (fo=109, routed)         0.153     3.567    experiment/csr/address_3[53]_i_3_n_0
+    SLICE_X20Y105        LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.176     3.743 r  experiment/csr/ranges_3_lower[10]_i_11/O
+                         net (fo=1, routed)           0.342     4.085    experiment/csr/ranges_3_lower[10]_i_11_n_0
+    SLICE_X21Y108        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.435 r  experiment/csr/ranges_3_lower_reg[10]_i_3/CO[7]
+                         net (fo=1, routed)           0.027     4.462    experiment/csr/ranges_3_lower_reg[10]_i_3_n_0
+    SLICE_X21Y109        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.561 r  experiment/csr/ranges_3_lower_reg[18]_i_3/O[0]
+                         net (fo=2, routed)           0.648     5.209    experiment/csr/ranges_3_lower5[9]
+    SLICE_X26Y99         LUT5 (Prop_B6LUT_SLICEM_I4_O)
+                                                      0.119     5.328 r  experiment/csr/ranges_3_lower[11]_i_1/O
+                         net (fo=5, routed)           0.857     6.185    experiment/csr/ranges_3_lower0[11]
+    SLICE_X20Y125        CARRY8 (Prop_CARRY8_SLICEM_DI[3]_CO[7])
+                                                      0.342     6.527 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.554    experiment/csr/ranges_3_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X20Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.573 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.600    experiment/csr/ranges_3_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X20Y127        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.619 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.646    experiment/csr/ranges_3_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X20Y128        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.665 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.692    experiment/csr/ranges_3_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X20Y129        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.711 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.738    experiment/csr/ranges_3_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X20Y130        CARRY8 (Prop_CARRY8_SLICEM_CI_O[5])
+                                                      0.174     6.912 r  experiment/csr/ranges_3_lowerBlockPrevious_reg[48]_i_1/O[5]
+                         net (fo=1, routed)           0.038     6.950    experiment/csr/ranges_3_lowerBlockPrevious0[46]
+    SLICE_X20Y130        FDSE                                         r  experiment/csr/ranges_3_lowerBlockPrevious_reg[46]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.497     7.497    experiment/csr/_globalClock_out
+    SLICE_X20Y130        FDSE                                         r  experiment/csr/ranges_3_lowerBlockPrevious_reg[46]/C
+                         clock pessimism              0.116     7.613    
+                         clock uncertainty           -0.135     7.478    
+    SLICE_X20Y130        FDSE (Setup_FFF_SLICEM_C_D)
+                                                      0.059     7.537    experiment/csr/ranges_3_lowerBlockPrevious_reg[46]
+  -------------------------------------------------------------------
+                         required time                          7.537    
+                         arrival time                          -6.950    
+  -------------------------------------------------------------------
+                         slack                                  0.587    
+
+Slack (MET) :             0.594ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[40]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.211ns  (logic 2.153ns (51.128%)  route 2.058ns (48.872%))
+  Logic Levels:           11  (CARRY8=7 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.120ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.434ns = ( 7.434 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.434ns (routing 1.264ns, distribution 1.170ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     5.714 f  experiment/csr/ranges_0_upper_reg[24]_i_2/O[7]
+                         net (fo=3, routed)           0.442     6.156    experiment/csr/ranges_0_upper1[24]
+    SLICE_X22Y97         LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.071     6.227 r  experiment/csr/ranges_0_upperBlockPrevious[24]_i_17/O
+                         net (fo=1, routed)           0.000     6.227    experiment/csr/ranges_0_upperBlockPrevious[24]_i_17_n_0
+    SLICE_X22Y97         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     6.631 r  experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.658    experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X22Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.677 r  experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.704    experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X22Y99         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     6.890 r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1/O[7]
+                         net (fo=1, routed)           0.041     6.931    experiment/csr/ranges_0_upperBlockPrevious0[40]
+    SLICE_X22Y99         FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.434     7.434    experiment/csr/_globalClock_out
+    SLICE_X22Y99         FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]/C
+                         clock pessimism              0.166     7.600    
+                         clock uncertainty           -0.135     7.465    
+    SLICE_X22Y99         FDSE (Setup_HFF_SLICEL_C_D)
+                                                      0.060     7.525    experiment/csr/ranges_0_upperBlockPrevious_reg[40]
+  -------------------------------------------------------------------
+                         required time                          7.525    
+                         arrival time                          -6.931    
+  -------------------------------------------------------------------
+                         slack                                  0.594    
+
+Slack (MET) :             0.597ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_1_lowerBlockPrevious_reg[55]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.138ns  (logic 1.694ns (40.938%)  route 2.444ns (59.062%))
+  Logic Levels:           13  (CARRY8=9 LUT1=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.189ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.415ns = ( 7.415 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.415ns (routing 1.264ns, distribution 1.151ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.363     3.200    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X22Y102        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.387 r  experiment/csr/address_1[53]_i_3/O
+                         net (fo=109, routed)         0.164     3.551    experiment/csr/address_1[53]_i_3_n_0
+    SLICE_X22Y103        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.132     3.683 r  experiment/csr/ranges_1_lower[2]_i_2/O
+                         net (fo=2, routed)           0.315     3.998    experiment/csr/ranges_1_lower2[0]
+    SLICE_X25Y104        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.379     4.377 r  experiment/csr/ranges_1_lower_reg[10]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.404    experiment/csr/ranges_1_lower_reg[10]_i_4_n_0
+    SLICE_X25Y105        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.503 f  experiment/csr/ranges_1_lower_reg[18]_i_4/O[0]
+                         net (fo=2, routed)           0.498     5.001    experiment/csr/ranges_1_lower5[9]
+    SLICE_X27Y98         LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.071     5.072 f  experiment/csr/ranges_1_lower[11]_i_1/O
+                         net (fo=5, routed)           0.878     5.950    experiment/csr/p_1_in__0[11]
+    SLICE_X30Y121        LUT1 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.191     6.141 r  experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6/O
+                         net (fo=1, routed)           0.000     6.141    experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6_n_0
+    SLICE_X30Y121        CARRY8 (Prop_CARRY8_SLICEM_S[3]_CO[7])
+                                                      0.324     6.465 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.492    experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X30Y122        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.511 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.538    experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X30Y123        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.557 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.584    experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X30Y124        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.603 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.630    experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X30Y125        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.649 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.676    experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X30Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.695 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.722    experiment/csr/ranges_1_lowerBlockPrevious_reg[48]_i_1_n_0
+    SLICE_X30Y127        CARRY8 (Prop_CARRY8_SLICEM_CI_O[0])
+                                                      0.099     6.821 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[55]_i_1/O[0]
+                         net (fo=1, routed)           0.037     6.858    experiment/csr/ranges_1_lowerBlockPrevious0[55]
+    SLICE_X30Y127        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[55]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.415     7.415    experiment/csr/_globalClock_out
+    SLICE_X30Y127        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[55]/C
+                         clock pessimism              0.116     7.531    
+                         clock uncertainty           -0.135     7.396    
+    SLICE_X30Y127        FDSE (Setup_AFF_SLICEM_C_D)
+                                                      0.059     7.455    experiment/csr/ranges_1_lowerBlockPrevious_reg[55]
+  -------------------------------------------------------------------
+                         required time                          7.455    
+                         arrival time                          -6.858    
+  -------------------------------------------------------------------
+                         slack                                  0.597    
+
+Slack (MET) :             0.598ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[44]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.209ns  (logic 2.124ns (50.463%)  route 2.085ns (49.537%))
+  Logic Levels:           12  (CARRY8=8 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.117ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.437ns = ( 7.437 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.437ns (routing 1.264ns, distribution 1.173ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     5.714 f  experiment/csr/ranges_0_upper_reg[24]_i_2/O[7]
+                         net (fo=3, routed)           0.442     6.156    experiment/csr/ranges_0_upper1[24]
+    SLICE_X22Y97         LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.071     6.227 r  experiment/csr/ranges_0_upperBlockPrevious[24]_i_17/O
+                         net (fo=1, routed)           0.000     6.227    experiment/csr/ranges_0_upperBlockPrevious[24]_i_17_n_0
+    SLICE_X22Y97         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     6.631 r  experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.658    experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X22Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.677 r  experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.704    experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X22Y99         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.723 r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.750    experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[3])
+                                                      0.138     6.888 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/O[3]
+                         net (fo=1, routed)           0.041     6.929    experiment/csr/ranges_0_upperBlockPrevious0[44]
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[44]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.437     7.437    experiment/csr/_globalClock_out
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[44]/C
+                         clock pessimism              0.166     7.603    
+                         clock uncertainty           -0.135     7.468    
+    SLICE_X22Y100        FDSE (Setup_DFF_SLICEL_C_D)
+                                                      0.059     7.527    experiment/csr/ranges_0_upperBlockPrevious_reg[44]
+  -------------------------------------------------------------------
+                         required time                          7.527    
+                         arrival time                          -6.929    
+  -------------------------------------------------------------------
+                         slack                                  0.598    
+
+Slack (MET) :             0.600ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_0_upperBlockPrevious_reg[45]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.206ns  (logic 2.127ns (50.571%)  route 2.079ns (49.429%))
+  Logic Levels:           12  (CARRY8=8 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.119ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.435ns = ( 7.435 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.166ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.435ns (routing 1.264ns, distribution 1.171ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.347     3.184    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X19Y96         LUT6 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.185     3.369 r  experiment/csr/address_0[53]_i_3/O
+                         net (fo=107, routed)         0.168     3.537    experiment/csr/address_0[53]_i_3_n_0
+    SLICE_X20Y96         LUT6 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.137     3.674 r  experiment/csr/ranges_0_lower[10]_i_11/O
+                         net (fo=1, routed)           0.414     4.088    experiment/csr/ranges_0_lower[10]_i_11_n_0
+    SLICE_X21Y99         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.350     4.438 r  experiment/csr/ranges_0_lower_reg[10]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     4.465    experiment/csr/ranges_0_lower_reg[10]_i_2_n_0
+    SLICE_X21Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[1])
+                                                      0.133     4.598 r  experiment/csr/ranges_0_lower_reg[18]_i_2/O[1]
+                         net (fo=3, routed)           0.538     5.136    experiment/csr/ranges_0_lower5[10]
+    SLICE_X21Y93         LUT5 (Prop_D6LUT_SLICEL_I0_O)
+                                                      0.041     5.177 r  experiment/csr/ranges_0_upper[16]_i_7/O
+                         net (fo=1, routed)           0.000     5.177    experiment/csr/ranges_0_upper2[12]
+    SLICE_X21Y93         CARRY8 (Prop_CARRY8_SLICEL_S[3]_CO[7])
+                                                      0.324     5.501 r  experiment/csr/ranges_0_upper_reg[16]_i_2/CO[7]
+                         net (fo=1, routed)           0.027     5.528    experiment/csr/ranges_0_upper_reg[16]_i_2_n_0
+    SLICE_X21Y94         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.186     5.714 f  experiment/csr/ranges_0_upper_reg[24]_i_2/O[7]
+                         net (fo=3, routed)           0.442     6.156    experiment/csr/ranges_0_upper1[24]
+    SLICE_X22Y97         LUT5 (Prop_A6LUT_SLICEL_I4_O)
+                                                      0.071     6.227 r  experiment/csr/ranges_0_upperBlockPrevious[24]_i_17/O
+                         net (fo=1, routed)           0.000     6.227    experiment/csr/ranges_0_upperBlockPrevious[24]_i_17_n_0
+    SLICE_X22Y97         CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.404     6.631 r  experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.658    experiment/csr/ranges_0_upperBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X22Y98         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.677 r  experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.704    experiment/csr/ranges_0_upperBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X22Y99         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.019     6.723 r  experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.750    experiment/csr/ranges_0_upperBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X22Y100        CARRY8 (Prop_CARRY8_SLICEL_CI_O[4])
+                                                      0.141     6.891 r  experiment/csr/ranges_0_upperBlockPrevious_reg[48]_i_1/O[4]
+                         net (fo=1, routed)           0.035     6.926    experiment/csr/ranges_0_upperBlockPrevious0[45]
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[45]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.435     7.435    experiment/csr/_globalClock_out
+    SLICE_X22Y100        FDSE                                         r  experiment/csr/ranges_0_upperBlockPrevious_reg[45]/C
+                         clock pessimism              0.166     7.601    
+                         clock uncertainty           -0.135     7.466    
+    SLICE_X22Y100        FDSE (Setup_EFF_SLICEL_C_D)
+                                                      0.060     7.526    experiment/csr/ranges_0_upperBlockPrevious_reg[45]
+  -------------------------------------------------------------------
+                         required time                          7.526    
+                         arrival time                          -6.926    
+  -------------------------------------------------------------------
+                         slack                                  0.600    
+
+Slack (MET) :             0.601ns  (required time - arrival time)
+  Source:                 experiment/csr/cfg_1_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/csr/ranges_1_lowerBlockPrevious_reg[44]/D
+                            (rising edge-triggered cell FDSE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (experiment_clk rise@5.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        4.135ns  (logic 1.714ns (41.451%)  route 2.421ns (58.549%))
+  Logic Levels:           12  (CARRY8=8 LUT1=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.188ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.416ns = ( 7.416 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.720ns
+    Clock Pessimism Removal (CPR):    0.116ns
+  Clock Uncertainty:      0.135ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      2.720ns (routing 1.380ns, distribution 1.340ns)
+  Clock Net Delay (Destination): 2.416ns (routing 1.264ns, distribution 1.152ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.720     2.720    experiment/csr/_globalClock_out
+    SLICE_X23Y96         FDRE                                         r  experiment/csr/cfg_1_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y96         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.117     2.837 f  experiment/csr/cfg_1_reg[7]/Q
+                         net (fo=7, routed)           0.363     3.200    experiment/csr/_csr_io_cfg_1[7]
+    SLICE_X22Y102        LUT6 (Prop_B6LUT_SLICEL_I0_O)
+                                                      0.187     3.387 r  experiment/csr/address_1[53]_i_3/O
+                         net (fo=109, routed)         0.164     3.551    experiment/csr/address_1[53]_i_3_n_0
+    SLICE_X22Y103        LUT6 (Prop_H6LUT_SLICEL_I1_O)
+                                                      0.132     3.683 r  experiment/csr/ranges_1_lower[2]_i_2/O
+                         net (fo=2, routed)           0.315     3.998    experiment/csr/ranges_1_lower2[0]
+    SLICE_X25Y104        CARRY8 (Prop_CARRY8_SLICEL_CI_CO[7])
+                                                      0.379     4.377 r  experiment/csr/ranges_1_lower_reg[10]_i_4/CO[7]
+                         net (fo=1, routed)           0.027     4.404    experiment/csr/ranges_1_lower_reg[10]_i_4_n_0
+    SLICE_X25Y105        CARRY8 (Prop_CARRY8_SLICEL_CI_O[0])
+                                                      0.099     4.503 f  experiment/csr/ranges_1_lower_reg[18]_i_4/O[0]
+                         net (fo=2, routed)           0.498     5.001    experiment/csr/ranges_1_lower5[9]
+    SLICE_X27Y98         LUT5 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.071     5.072 f  experiment/csr/ranges_1_lower[11]_i_1/O
+                         net (fo=5, routed)           0.878     5.950    experiment/csr/p_1_in__0[11]
+    SLICE_X30Y121        LUT1 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.191     6.141 r  experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6/O
+                         net (fo=1, routed)           0.000     6.141    experiment/csr/ranges_1_lowerBlockPrevious[8]_i_6_n_0
+    SLICE_X30Y121        CARRY8 (Prop_CARRY8_SLICEM_S[3]_CO[7])
+                                                      0.324     6.465 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.492    experiment/csr/ranges_1_lowerBlockPrevious_reg[8]_i_1_n_0
+    SLICE_X30Y122        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.511 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.538    experiment/csr/ranges_1_lowerBlockPrevious_reg[16]_i_1_n_0
+    SLICE_X30Y123        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.557 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.584    experiment/csr/ranges_1_lowerBlockPrevious_reg[24]_i_1_n_0
+    SLICE_X30Y124        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.603 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.630    experiment/csr/ranges_1_lowerBlockPrevious_reg[32]_i_1_n_0
+    SLICE_X30Y125        CARRY8 (Prop_CARRY8_SLICEM_CI_CO[7])
+                                                      0.019     6.649 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1/CO[7]
+                         net (fo=1, routed)           0.027     6.676    experiment/csr/ranges_1_lowerBlockPrevious_reg[40]_i_1_n_0
+    SLICE_X30Y126        CARRY8 (Prop_CARRY8_SLICEM_CI_O[3])
+                                                      0.138     6.814 r  experiment/csr/ranges_1_lowerBlockPrevious_reg[48]_i_1/O[3]
+                         net (fo=1, routed)           0.041     6.855    experiment/csr/ranges_1_lowerBlockPrevious0[44]
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[44]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      5.000     5.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     5.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        2.416     7.416    experiment/csr/_globalClock_out
+    SLICE_X30Y126        FDSE                                         r  experiment/csr/ranges_1_lowerBlockPrevious_reg[44]/C
+                         clock pessimism              0.116     7.532    
+                         clock uncertainty           -0.135     7.397    
+    SLICE_X30Y126        FDSE (Setup_DFF_SLICEM_C_D)
+                                                      0.059     7.456    experiment/csr/ranges_1_lowerBlockPrevious_reg[44]
+  -------------------------------------------------------------------
+                         required time                          7.456    
+                         arrival time                          -6.855    
+  -------------------------------------------------------------------
+                         slack                                  0.601    
+
+
+
+

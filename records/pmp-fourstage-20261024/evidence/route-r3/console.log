@@ -1,0 +1,337 @@
+
+****** Vivado v2022.2 (64-bit)
+  **** SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+  **** IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r4/records/pmp-fourstage-20261024/repair-hold.tcl -notrace
+Command: open_checkpoint /home/chen/FUN/flow-runs/pmp-fourstage-20261024/route-r2/route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 1693.609 ; gain = 0.000 ; free physical = 15425 ; free virtual = 52939
+INFO: [Device 21-403] Loading part xcku040-ffva1156-2-e
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2315.840 ; gain = 0.000 ; free physical = 14772 ; free virtual = 52286
+INFO: [Netlist 29-17] Analyzing 482 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.31 ; elapsed = 00:00:00.32 . Memory (MB): peak = 2698.754 ; gain = 38.750 ; free physical = 14490 ; free virtual = 52004
+Restored from archive | CPU: 0.320000 secs | Memory: 12.391975 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.31 ; elapsed = 00:00:00.33 . Memory (MB): peak = 2698.754 ; gain = 38.750 ; free physical = 14490 ; free virtual = 52004
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2811.652 ; gain = 0.000 ; free physical = 14392 ; free virtual = 51906
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: b11ee21f
+----- Checksum: PlaceDB: 4dd8f3df ShapeSum: 5e0e4cac RouteDB: 0537a194 
+open_checkpoint: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2811.652 ; gain = 1118.043 ; free physical = 14392 ; free virtual = 51906
+Command: phys_opt_design -aggressive_hold_fix
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Vivado_Tcl 4-241] Physical synthesis in post route mode ( 100.0% nets are fully routed)
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 3632.863 ; gain = 813.207 ; free physical = 13786 ; free virtual = 51300
+INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. Skipping all physical synthesis optimizations.
+INFO: [Vivado_Tcl 4-1435] PhysOpt_Tcl_Interface Runtime Before Starting Physical Synthesis Task | CPU: 11.84s |  WALL: 10.74s
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3632.863 ; gain = 0.000 ; free physical = 13786 ; free virtual = 51300
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.096 | TNS=0.000 | WHS=-0.170 | THS=-7.938 |
+Phase 1 Physical Synthesis Initialization | Checksum: 12af8a6f2
+
+Time (s): cpu = 00:00:00.24 ; elapsed = 00:00:00.2 . Memory (MB): peak = 3656.875 ; gain = 24.012 ; free physical = 13791 ; free virtual = 51305
+
+Phase 2 Hold Fix Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.096 | TNS=0.000 | WHS=-0.170 | THS=-7.938 |
+INFO: [Physopt 32-66] No high hold slack nets found for hold slack optimization.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=0.096 | TNS=0.000 | WHS=-0.170 | THS=-7.938 |
+Phase 2 Hold Fix Optimization | Checksum: 12af8a6f2
+
+Time (s): cpu = 00:00:00.86 ; elapsed = 00:00:00.53 . Memory (MB): peak = 3680.887 ; gain = 48.023 ; free physical = 13790 ; free virtual = 51304
+INFO: [Physopt 32-715] Performed route finalization on the design.
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3691.902 ; gain = 0.000 ; free physical = 13586 ; free virtual = 51100
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=0.096 | TNS=0.000 | WHS=-0.170 | THS=-7.938 |
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+Summary of Hold Fix Optimizations
+=================================
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization               |  WHS Gain (ns)  |  THS Gain (ns)  |  Added LUTs  |  Added FFs  |  Optimized Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT1 and ZHOLD Insertion   |          0.000  |          0.000  |           0  |          0  |               0  |           0  |           0  |  00:00:00  |
+|  Total                      |          0.000  |          0.000  |           0  |          0  |               0  |           0  |           0  |  00:00:00  |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3691.902 ; gain = 0.000 ; free physical = 13586 ; free virtual = 51100
+Ending Physical Synthesis Task | Checksum: 12af8a6f2
+
+Time (s): cpu = 00:00:47 ; elapsed = 00:00:41 . Memory (MB): peak = 3691.902 ; gain = 59.039 ; free physical = 13587 ; free virtual = 51100
+INFO: [Common 17-83] Releasing license: Implementation
+23 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:00:58 ; elapsed = 00:00:52 . Memory (MB): peak = 3691.902 ; gain = 880.250 ; free physical = 13762 ; free virtual = 51276
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+Command: route_design -directive NoTimingRelaxation
+Attempting to get a license for feature 'Implementation' and/or device 'xcku040'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xcku040'
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'NoTimingRelaxation'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 4 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 4dd8f3df ConstDB: 0 ShapeSum: 4f71d8e1 RouteDB: 537a194
+WARNING: [Route 35-197] Clock port "clock" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+Post Restoration Checksum: NetGraph: 53a1bbe2 NumContArr: bf968d66 Constraints: 0 Timing: 0
+Phase 1 Build RT Design | Checksum: 113384948
+
+Time (s): cpu = 00:00:47 ; elapsed = 00:00:41 . Memory (MB): peak = 3694.914 ; gain = 3.012 ; free physical = 13618 ; free virtual = 51132
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 113384948
+
+Time (s): cpu = 00:00:47 ; elapsed = 00:00:41 . Memory (MB): peak = 3694.914 ; gain = 3.012 ; free physical = 13588 ; free virtual = 51102
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 113384948
+
+Time (s): cpu = 00:00:47 ; elapsed = 00:00:41 . Memory (MB): peak = 3694.914 ; gain = 3.012 ; free physical = 13588 ; free virtual = 51102
+
+Phase 2.3 Timing Verification
+
+Phase 2.3.1 Update Timing
+Phase 2.3.1 Update Timing | Checksum: 1756ab028
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:00:42 . Memory (MB): peak = 3709.773 ; gain = 17.871 ; free physical = 13534 ; free virtual = 51048
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.096  | TNS=0.000  | WHS=-0.289 | THS=-13.047|
+
+Phase 2.3 Timing Verification | Checksum: 1756ab028
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:00:42 . Memory (MB): peak = 3709.773 ; gain = 17.871 ; free physical = 13534 ; free virtual = 51048
+
+Phase 2.4 Global Clock Net Routing
+Phase 2.4 Global Clock Net Routing | Checksum: 1756ab028
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:00:42 . Memory (MB): peak = 3709.773 ; gain = 17.871 ; free physical = 13543 ; free virtual = 51057
+
+Phase 2.5 Update Timing
+Phase 2.5 Update Timing | Checksum: 1d805cd15
+
+Time (s): cpu = 00:00:50 ; elapsed = 00:00:43 . Memory (MB): peak = 3709.773 ; gain = 17.871 ; free physical = 13538 ; free virtual = 51051
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.095  | TNS=0.000  | WHS=-0.155 | THS=-11.851|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0.691035 %
+  Global Horizontal Routing Utilization  = 0.592503 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 1482b4387
+
+Time (s): cpu = 00:00:52 ; elapsed = 00:00:44 . Memory (MB): peak = 3727.633 ; gain = 35.730 ; free physical = 13570 ; free virtual = 51084
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: 1482b4387
+
+Time (s): cpu = 00:00:52 ; elapsed = 00:00:44 . Memory (MB): peak = 3727.633 ; gain = 35.730 ; free physical = 13570 ; free virtual = 51084
+Phase 3 Initial Routing | Checksum: 7e1c925f
+
+Time (s): cpu = 00:00:57 ; elapsed = 00:00:46 . Memory (MB): peak = 3727.633 ; gain = 35.730 ; free physical = 13516 ; free virtual = 51030
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 459
+ Number of Nodes with overlaps = 158
+ Number of Nodes with overlaps = 41
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.002  | TNS=0.000  | WHS=-0.183 | THS=-3.881 |
+
+Phase 4.1 Global Iteration 0 | Checksum: 116ad149e
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13506 ; free virtual = 51019
+
+Phase 4.2 Additional Iteration for Hold
+Phase 4.2 Additional Iteration for Hold | Checksum: 167a776ed
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13506 ; free virtual = 51019
+Phase 4 Rip-up And Reroute | Checksum: 167a776ed
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13506 ; free virtual = 51019
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 Delay CleanUp
+
+Phase 5.1.1 Update Timing
+Phase 5.1.1 Update Timing | Checksum: 17e786680
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13501 ; free virtual = 51015
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.002  | TNS=0.000  | WHS=-0.183 | THS=-3.881 |
+
+Phase 5.1 Delay CleanUp | Checksum: 17e786680
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13501 ; free virtual = 51015
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 17e786680
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13501 ; free virtual = 51015
+Phase 5 Delay and Skew Optimization | Checksum: 17e786680
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13501 ; free virtual = 51015
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 1aefcd6fc
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13531 ; free virtual = 51045
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.002  | TNS=0.000  | WHS=-0.183 | THS=-3.881 |
+
+Phase 6.1 Hold Fix Iter | Checksum: 18d030b3d
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13531 ; free virtual = 51045
+Phase 6 Post Hold Fix | Checksum: 19ef97984
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:01:04 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13531 ; free virtual = 51045
+
+Phase 7 Timing Verification
+
+Phase 7.1 Update Timing
+Phase 7.1 Update Timing | Checksum: 189830aeb
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:01:05 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13531 ; free virtual = 51045
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.002  | TNS=0.000  | WHS=-0.183 | THS=-3.881 |
+
+Phase 7 Timing Verification | Checksum: 189830aeb
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:01:05 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13531 ; free virtual = 51045
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0.688841 %
+  Global Horizontal Routing Utilization  = 0.596709 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 8 Route finalize | Checksum: 1d9f750ce
+
+Time (s): cpu = 00:01:21 ; elapsed = 00:01:05 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13559 ; free virtual = 51073
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 1d9f750ce
+
+Time (s): cpu = 00:01:21 ; elapsed = 00:01:05 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13559 ; free virtual = 51073
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 1d9f750ce
+
+Time (s): cpu = 00:01:22 ; elapsed = 00:01:06 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13559 ; free virtual = 51073
+
+Phase 11 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=0.005  | TNS=0.000  | WHS=-0.170 | THS=-7.938 |
+
+Phase 11 Post Router Timing | Checksum: 205bfd08b
+
+Time (s): cpu = 00:01:23 ; elapsed = 00:01:06 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13573 ; free virtual = 51087
+CRITICAL WARNING: [Route 35-39] The design did not meet timing requirements. Please run report_timing_summary for detailed reports. Note: this situation might be resolved in the second pass of route design.
+Resolution: Verify that the timing was met or had small violations at all previous steps (synthesis, placement, power_opt, and phys_opt). Run report_timing_summary and analyze individual timing paths.
+INFO: [Route 35-253] TNS is the sum of the worst slack violation on every endpoint in the design. Review the paths with the biggest WNS violations in the timing reports and modify your constraints or your design to improve both WNS and TNS.
+INFO: [Route 35-16] Router Completed Successfully
+
+Time (s): cpu = 00:01:24 ; elapsed = 00:01:06 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13813 ; free virtual = 51327
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+40 Infos, 1 Warnings, 1 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:01:25 ; elapsed = 00:01:07 . Memory (MB): peak = 3795.633 ; gain = 103.730 ; free physical = 13813 ; free virtual = 51327
+INFO: [Common 17-600] The following parameters have non-default value.
+general.maxThreads
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Write XDEF Complete: Time (s): cpu = 00:00:00.67 ; elapsed = 00:00:00.28 . Memory (MB): peak = 3843.656 ; gain = 40.020 ; free physical = 13804 ; free virtual = 51332
+INFO: [Common 17-1381] The checkpoint '/home/chen/FUN/flow-runs/pmp-fourstage-20261024/route-r3/route.dcp' has been generated.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 30 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 30 -nworst 1 -delay_type min -sort_by slack.
+Command: report_drc -file drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/chen/Tool/FPGA/Vivado/2022.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/chen/FUN/flow-runs/pmp-fourstage-20261024/route-r3/drc.rpt.
+report_drc completed successfully
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -from_pins  -to_pins  -max_paths 30 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -from_pins  -to_pins  -max_paths 30 -nworst 1 -delay_type min -sort_by slack.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -from_pins  -to_pins  -max_paths 20 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -to_pins  -max_paths 30 -nworst 1 -delay_type max -sort_by slack.
+MEASUREMENT_COMPLETE WNS=0.005 WHS=-0.170
+INFO: [Common 17-206] Exiting Vivado at Sat Oct 24 16:51:18 2026...

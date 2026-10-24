@@ -1,0 +1,35 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Sat Oct 24 16:48:03 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_utilization -hierarchical -file utilization-route.rpt
+| Design       : BreezePmpFourStageHarness
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Routed
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------+------------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+|            Instance           |            Module            | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | URAM | DSP Blocks |
++-------------------------------+------------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+| BreezePmpFourStageHarness     |                        (top) |       5725 |       5708 |       0 |   17 | 3079 |      0 |      0 |    0 |          0 |
+|   (BreezePmpFourStageHarness) |                        (top) |          2 |          2 |       0 |    0 |  164 |      0 |      0 |    0 |          0 |
+|   experiment                  | BreezePmpFourStageExperiment |       5723 |       5706 |       0 |   17 | 2915 |      0 |      0 |    0 |          0 |
+|     (experiment)              | BreezePmpFourStageExperiment |          1 |          1 |       0 |    0 |    0 |      0 |      0 |    0 |          0 |
+|     checker_0                 |           BreezePmpFourStage |       1198 |       1181 |       0 |   17 |  731 |      0 |      0 |    0 |          0 |
+|     csr                       |        BreezePmpCsrPredecode |       5317 |       5317 |       0 |    0 | 2184 |      0 |      0 |    0 |          0 |
+|   globalClock                 |           PmpExperimentClock |          0 |          0 |       0 |    0 |    0 |      0 |      0 |    0 |          0 |
++-------------------------------+------------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+

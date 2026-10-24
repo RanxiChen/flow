@@ -1,0 +1,28 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4
+[info] welcome to sbt 1.9.7 (Ubuntu Java 11.0.32.1)
+[info] loading global plugins from /home/chen/.sbt/1.0/plugins
+[info] loading project definition from /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to flow (in build file:/home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/)
+[info] compiling 147 Scala sources to /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/target/scala-2.13/classes ...
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala:134:7: private class PmpLowMeta escapes its defining scope as part of type flow.mmu.experiment.PmpLowMeta
+[error]   val lowMeta = Wire(new PmpLowMeta(entries))
+[error]       ^
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala:155:7: private class PmpLowMeta escapes its defining scope as part of type flow.mmu.experiment.PmpLowMeta
+[error]   val p0 = RegNext(lowMeta)
+[error]       ^
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala:159:7: private class PmpChunkCompare escapes its defining scope as part of type chisel3.Vec[chisel3.Vec[chisel3.Vec[flow.mmu.experiment.PmpChunkCompare]]]
+[error]   val chunkValues = Wire(Vec(entries, Vec(4, Vec(chunkCount, new PmpChunkCompare))))
+[error]       ^
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala:172:7: private class PmpChunkCompare escapes its defining scope as part of type chisel3.Vec[chisel3.Vec[chisel3.Vec[flow.mmu.experiment.PmpChunkCompare]]]
+[error]   val p1Chunks = RegNext(chunkValues)
+[error]       ^
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala:173:7: private class PmpLowMeta escapes its defining scope as part of type flow.mmu.experiment.PmpLowMeta
+[error]   val p1 = RegNext(p0)
+[error]       ^
+[error] /home/chen/FUN/flow-runs/pmp-fourstage-20261024/source-r1/design/src/main/scala/mmu/experiment/BreezePmpFourStageHarness.scala:31:7: private class PmpExperimentClock escapes its defining scope as part of type flow.mmu.experiment.PmpExperimentClock
+[error]   val globalClock = Module(new PmpExperimentClock)
+[error]       ^
+[error] 6 errors found
+[error] (Compile / compileIncremental) Compilation failed
+[error] Total time: 8 s, completed Oct 24, 2026, 4:39:44 PM

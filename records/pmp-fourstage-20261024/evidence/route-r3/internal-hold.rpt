@@ -1,0 +1,1613 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sat Oct 24 16:51:17 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] -to [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] -delay_type min -max_paths 30 -path_type full_clock_expanded -file internal-hold.rpt
+| Design            : BreezePmpFourStageHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.016ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[0]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.216ns  (logic 0.204ns (94.444%)  route 0.012ns (5.556%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[0]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_A6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.398 r  experiment/checker_0/p2Epoch_reg[0]_srl3/Q
+                         net (fo=1, routed)           0.012     1.410    experiment/checker_0/p2Epoch_reg[0]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[0]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.410    
+  -------------------------------------------------------------------
+                         slack                                  0.016    
+
+Slack (MET) :             0.017ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[6]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.215ns  (logic 0.201ns (93.488%)  route 0.014ns (6.512%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.396ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.396ns (routing 0.735ns, distribution 0.661ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[6]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_G6LUT_SLICEM_CLK_Q)
+                                                      0.201     1.395 r  experiment/checker_0/p2Epoch_reg[6]_srl3/Q
+                         net (fo=1, routed)           0.014     1.409    experiment/checker_0/p2Epoch_reg[6]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.396     1.396    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[6]/C
+                         clock pessimism             -0.160     1.236    
+                         clock uncertainty            0.100     1.336    
+    SLICE_X32Y94         FDRE (Hold_GFF_SLICEM_C_D)
+                                                      0.056     1.392    experiment/checker_0/io_response_bits_REG_epoch_reg[6]
+  -------------------------------------------------------------------
+                         required time                         -1.392    
+                         arrival time                           1.409    
+  -------------------------------------------------------------------
+                         slack                                  0.017    
+
+Slack (MET) :             0.018ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[4]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[4]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.216ns  (logic 0.204ns (94.444%)  route 0.012ns (5.556%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.396ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.396ns (routing 0.735ns, distribution 0.661ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[4]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_E6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.398 r  experiment/checker_0/p2Epoch_reg[4]_srl3/Q
+                         net (fo=1, routed)           0.012     1.410    experiment/checker_0/p2Epoch_reg[4]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.396     1.396    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[4]/C
+                         clock pessimism             -0.160     1.236    
+                         clock uncertainty            0.100     1.336    
+    SLICE_X32Y94         FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.392    experiment/checker_0/io_response_bits_REG_epoch_reg[4]
+  -------------------------------------------------------------------
+                         required time                         -1.392    
+                         arrival time                           1.410    
+  -------------------------------------------------------------------
+                         slack                                  0.018    
+
+Slack (MET) :             0.019ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[5]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.217ns  (logic 0.205ns (94.470%)  route 0.012ns (5.530%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.396ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.396ns (routing 0.735ns, distribution 0.661ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[5]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_F6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.399 r  experiment/checker_0/p2Epoch_reg[5]_srl3/Q
+                         net (fo=1, routed)           0.012     1.411    experiment/checker_0/p2Epoch_reg[5]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.396     1.396    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[5]/C
+                         clock pessimism             -0.160     1.236    
+                         clock uncertainty            0.100     1.336    
+    SLICE_X32Y94         FDRE (Hold_FFF_SLICEM_C_D)
+                                                      0.056     1.392    experiment/checker_0/io_response_bits_REG_epoch_reg[5]
+  -------------------------------------------------------------------
+                         required time                         -1.392    
+                         arrival time                           1.411    
+  -------------------------------------------------------------------
+                         slack                                  0.019    
+
+Slack (MET) :             0.020ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[1]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.205ns (93.182%)  route 0.015ns (6.818%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[1]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_B6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.399 r  experiment/checker_0/p2Epoch_reg[1]_srl3/Q
+                         net (fo=1, routed)           0.015     1.414    experiment/checker_0/p2Epoch_reg[1]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[1]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_BFF_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[1]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.414    
+  -------------------------------------------------------------------
+                         slack                                  0.020    
+
+Slack (MET) :             0.020ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[2]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[2]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.204ns (92.727%)  route 0.016ns (7.273%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[2]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_C6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.398 r  experiment/checker_0/p2Epoch_reg[2]_srl3/Q
+                         net (fo=1, routed)           0.016     1.414    experiment/checker_0/p2Epoch_reg[2]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[2]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_CFF_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[2]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.414    
+  -------------------------------------------------------------------
+                         slack                                  0.020    
+
+Slack (MET) :             0.020ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[3]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.204ns (92.727%)  route 0.016ns (7.273%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[3]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_D6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.398 r  experiment/checker_0/p2Epoch_reg[3]_srl3/Q
+                         net (fo=1, routed)           0.016     1.414    experiment/checker_0/p2Epoch_reg[3]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[3]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[3]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.414    
+  -------------------------------------------------------------------
+                         slack                                  0.020    
+
+Slack (MET) :             0.023ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[7]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.221ns  (logic 0.205ns (92.760%)  route 0.016ns (7.240%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.396ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.396ns (routing 0.735ns, distribution 0.661ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[7]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_H6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.399 r  experiment/checker_0/p2Epoch_reg[7]_srl3/Q
+                         net (fo=1, routed)           0.016     1.415    experiment/checker_0/p2Epoch_reg[7]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.396     1.396    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[7]/C
+                         clock pessimism             -0.160     1.236    
+                         clock uncertainty            0.100     1.336    
+    SLICE_X32Y94         FDRE (Hold_HFF_SLICEM_C_D)
+                                                      0.056     1.392    experiment/checker_0/io_response_bits_REG_epoch_reg[7]
+  -------------------------------------------------------------------
+                         required time                         -1.392    
+                         arrival time                           1.415    
+  -------------------------------------------------------------------
+                         slack                                  0.023    
+
+Slack (MET) :             0.025ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[0]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.216ns  (logic 0.204ns (94.444%)  route 0.012ns (5.556%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.577ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.577ns (routing 0.735ns, distribution 0.842ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[0]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_A6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.565 r  experiment/checker_0/p2Id_reg[0]_srl3/Q
+                         net (fo=1, routed)           0.012     1.577    experiment/checker_0/p2Id_reg[0]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.577     1.577    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[0]/C
+                         clock pessimism             -0.181     1.396    
+                         clock uncertainty            0.100     1.496    
+    SLICE_X52Y150        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.552    experiment/checker_0/io_response_bits_REG_id_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -1.552    
+                         arrival time                           1.577    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.025ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p1_machine_reg_srl2/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p2Machine_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.216ns  (logic 0.204ns (94.444%)  route 0.012ns (5.556%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.355ns
+    Source Clock Delay      (SCD):    1.161ns
+    Clock Pessimism Removal (CPR):    0.159ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.161ns (routing 0.660ns, distribution 0.501ns)
+  Clock Net Delay (Destination): 1.355ns (routing 0.735ns, distribution 0.620ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.161     1.161    experiment/checker_0/_globalClock_out
+    SLICE_X26Y87         SRL16E                                       r  experiment/checker_0/p1_machine_reg_srl2/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X26Y87         SRL16E (Prop_A6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.365 r  experiment/checker_0/p1_machine_reg_srl2/Q
+                         net (fo=1, routed)           0.012     1.377    experiment/checker_0/p1_machine_reg_srl2_n_0
+    SLICE_X26Y87         FDRE                                         r  experiment/checker_0/p2Machine_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.355     1.355    experiment/checker_0/_globalClock_out
+    SLICE_X26Y87         FDRE                                         r  experiment/checker_0/p2Machine_reg/C
+                         clock pessimism             -0.159     1.196    
+                         clock uncertainty            0.100     1.296    
+    SLICE_X26Y87         FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.352    experiment/checker_0/p2Machine_reg
+  -------------------------------------------------------------------
+                         required time                         -1.352    
+                         arrival time                           1.377    
+  -------------------------------------------------------------------
+                         slack                                  0.025    
+
+Slack (MET) :             0.026ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[6]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.215ns  (logic 0.201ns (93.488%)  route 0.014ns (6.512%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.575ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.575ns (routing 0.735ns, distribution 0.840ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[6]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_G6LUT_SLICEM_CLK_Q)
+                                                      0.201     1.562 r  experiment/checker_0/p2Id_reg[6]_srl3/Q
+                         net (fo=1, routed)           0.014     1.576    experiment/checker_0/p2Id_reg[6]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.575     1.575    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[6]/C
+                         clock pessimism             -0.181     1.394    
+                         clock uncertainty            0.100     1.494    
+    SLICE_X52Y150        FDRE (Hold_GFF_SLICEM_C_D)
+                                                      0.056     1.550    experiment/checker_0/io_response_bits_REG_id_reg[6]
+  -------------------------------------------------------------------
+                         required time                         -1.550    
+                         arrival time                           1.576    
+  -------------------------------------------------------------------
+                         slack                                  0.026    
+
+Slack (MET) :             0.027ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[4]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[4]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.216ns  (logic 0.204ns (94.444%)  route 0.012ns (5.556%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.575ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.575ns (routing 0.735ns, distribution 0.840ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[4]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_E6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.565 r  experiment/checker_0/p2Id_reg[4]_srl3/Q
+                         net (fo=1, routed)           0.012     1.577    experiment/checker_0/p2Id_reg[4]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.575     1.575    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[4]/C
+                         clock pessimism             -0.181     1.394    
+                         clock uncertainty            0.100     1.494    
+    SLICE_X52Y150        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.550    experiment/checker_0/io_response_bits_REG_id_reg[4]
+  -------------------------------------------------------------------
+                         required time                         -1.550    
+                         arrival time                           1.577    
+  -------------------------------------------------------------------
+                         slack                                  0.027    
+
+Slack (MET) :             0.028ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[5]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.217ns  (logic 0.205ns (94.470%)  route 0.012ns (5.530%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.575ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.575ns (routing 0.735ns, distribution 0.840ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[5]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_F6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.566 r  experiment/checker_0/p2Id_reg[5]_srl3/Q
+                         net (fo=1, routed)           0.012     1.578    experiment/checker_0/p2Id_reg[5]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.575     1.575    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[5]/C
+                         clock pessimism             -0.181     1.394    
+                         clock uncertainty            0.100     1.494    
+    SLICE_X52Y150        FDRE (Hold_FFF_SLICEM_C_D)
+                                                      0.056     1.550    experiment/checker_0/io_response_bits_REG_id_reg[5]
+  -------------------------------------------------------------------
+                         required time                         -1.550    
+                         arrival time                           1.578    
+  -------------------------------------------------------------------
+                         slack                                  0.028    
+
+Slack (MET) :             0.028ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[10]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[10]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.228ns  (logic 0.217ns (95.175%)  route 0.011ns (4.825%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[10]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_C5LUT_SLICEM_CLK_Q)
+                                                      0.217     1.411 r  experiment/checker_0/p2Epoch_reg[10]_srl3/Q
+                         net (fo=1, routed)           0.011     1.422    experiment/checker_0/p2Epoch_reg[10]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[10]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[10]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_CFF2_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[10]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.422    
+  -------------------------------------------------------------------
+                         slack                                  0.028    
+
+Slack (MET) :             0.029ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[1]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.205ns (93.182%)  route 0.015ns (6.818%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.577ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.577ns (routing 0.735ns, distribution 0.842ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[1]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_B6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.566 r  experiment/checker_0/p2Id_reg[1]_srl3/Q
+                         net (fo=1, routed)           0.015     1.581    experiment/checker_0/p2Id_reg[1]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.577     1.577    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[1]/C
+                         clock pessimism             -0.181     1.396    
+                         clock uncertainty            0.100     1.496    
+    SLICE_X52Y150        FDRE (Hold_BFF_SLICEM_C_D)
+                                                      0.056     1.552    experiment/checker_0/io_response_bits_REG_id_reg[1]
+  -------------------------------------------------------------------
+                         required time                         -1.552    
+                         arrival time                           1.581    
+  -------------------------------------------------------------------
+                         slack                                  0.029    
+
+Slack (MET) :             0.029ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[2]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[2]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.204ns (92.727%)  route 0.016ns (7.273%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.577ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.577ns (routing 0.735ns, distribution 0.842ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[2]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_C6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.565 r  experiment/checker_0/p2Id_reg[2]_srl3/Q
+                         net (fo=1, routed)           0.016     1.581    experiment/checker_0/p2Id_reg[2]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.577     1.577    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[2]/C
+                         clock pessimism             -0.181     1.396    
+                         clock uncertainty            0.100     1.496    
+    SLICE_X52Y150        FDRE (Hold_CFF_SLICEM_C_D)
+                                                      0.056     1.552    experiment/checker_0/io_response_bits_REG_id_reg[2]
+  -------------------------------------------------------------------
+                         required time                         -1.552    
+                         arrival time                           1.581    
+  -------------------------------------------------------------------
+                         slack                                  0.029    
+
+Slack (MET) :             0.029ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[3]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.204ns (92.727%)  route 0.016ns (7.273%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.577ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.577ns (routing 0.735ns, distribution 0.842ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[3]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_D6LUT_SLICEM_CLK_Q)
+                                                      0.204     1.565 r  experiment/checker_0/p2Id_reg[3]_srl3/Q
+                         net (fo=1, routed)           0.016     1.581    experiment/checker_0/p2Id_reg[3]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.577     1.577    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[3]/C
+                         clock pessimism             -0.181     1.396    
+                         clock uncertainty            0.100     1.496    
+    SLICE_X52Y150        FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.552    experiment/checker_0/io_response_bits_REG_id_reg[3]
+  -------------------------------------------------------------------
+                         required time                         -1.552    
+                         arrival time                           1.581    
+  -------------------------------------------------------------------
+                         slack                                  0.029    
+
+Slack (MET) :             0.030ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_6_lower_reg[12]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_6_0_0_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.263ns  (logic 0.097ns (36.882%)  route 0.166ns (63.118%))
+  Logic Levels:           2  (LUT4=2)
+  Clock Path Skew:        0.077ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.421ns
+    Source Clock Delay      (SCD):    1.220ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.220ns (routing 0.660ns, distribution 0.560ns)
+  Clock Net Delay (Destination): 1.421ns (routing 0.735ns, distribution 0.686ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.220     1.220    experiment/csr/_globalClock_out
+    SLICE_X18Y84         FDRE                                         r  experiment/csr/ranges_6_lower_reg[12]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X18Y84         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.049     1.269 r  experiment/csr/ranges_6_lower_reg[12]/Q
+                         net (fo=4, routed)           0.090     1.359    experiment/csr/ranges_6_lower_reg[55]_0[5]
+    SLICE_X17Y84         LUT4 (Prop_F6LUT_SLICEM_I0_O)
+                                                      0.016     1.375 r  experiment/csr/p1Chunks_6_0_0_eq_i_5/O
+                         net (fo=1, routed)           0.060     1.435    experiment/csr/p1Chunks_6_0_0_eq_i_5_n_0
+    SLICE_X17Y84         LUT4 (Prop_H6LUT_SLICEM_I3_O)
+                                                      0.032     1.467 r  experiment/csr/p1Chunks_6_0_0_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.483    experiment/checker_0/p1Chunks_6_0_0_eq0
+    SLICE_X17Y84         FDRE                                         r  experiment/checker_0/p1Chunks_6_0_0_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.421     1.421    experiment/checker_0/_globalClock_out
+    SLICE_X17Y84         FDRE                                         r  experiment/checker_0/p1Chunks_6_0_0_eq_reg/C
+                         clock pessimism             -0.124     1.297    
+                         clock uncertainty            0.100     1.397    
+    SLICE_X17Y84         FDRE (Hold_HFF_SLICEM_C_D)
+                                                      0.056     1.453    experiment/checker_0/p1Chunks_6_0_0_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.453    
+                         arrival time                           1.483    
+  -------------------------------------------------------------------
+                         slack                                  0.030    
+
+Slack (MET) :             0.030ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[11]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[11]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.230ns  (logic 0.218ns (94.783%)  route 0.012ns (5.217%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[11]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_D5LUT_SLICEM_CLK_Q)
+                                                      0.218     1.412 r  experiment/checker_0/p2Epoch_reg[11]_srl3/Q
+                         net (fo=1, routed)           0.012     1.424    experiment/checker_0/p2Epoch_reg[11]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[11]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[11]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_DFF2_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[11]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.424    
+  -------------------------------------------------------------------
+                         slack                                  0.030    
+
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p0_low_7_0_reg/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1_low_7_0_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.264ns  (logic 0.049ns (18.561%)  route 0.215ns (81.439%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.077ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.413ns
+    Source Clock Delay      (SCD):    1.212ns
+    Clock Pessimism Removal (CPR):    0.124ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.212ns (routing 0.660ns, distribution 0.552ns)
+  Clock Net Delay (Destination): 1.413ns (routing 0.735ns, distribution 0.678ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.212     1.212    experiment/checker_0/_globalClock_out
+    SLICE_X18Y91         FDRE                                         r  experiment/checker_0/p0_low_7_0_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X18Y91         FDRE (Prop_DFF_SLICEM_C_Q)
+                                                      0.049     1.261 r  experiment/checker_0/p0_low_7_0_reg/Q
+                         net (fo=1, routed)           0.215     1.476    experiment/checker_0/p0_low_7_0
+    SLICE_X14Y91         FDRE                                         r  experiment/checker_0/p1_low_7_0_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.413     1.413    experiment/checker_0/_globalClock_out
+    SLICE_X14Y91         FDRE                                         r  experiment/checker_0/p1_low_7_0_reg/C
+                         clock pessimism             -0.124     1.289    
+                         clock uncertainty            0.100     1.389    
+    SLICE_X14Y91         FDRE (Hold_EFF_SLICEL_C_D)
+                                                      0.056     1.445    experiment/checker_0/p1_low_7_0_reg
+  -------------------------------------------------------------------
+                         required time                         -1.445    
+                         arrival time                           1.476    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_1_upper_reg[36]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_1_1_3_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.233ns  (logic 0.146ns (62.661%)  route 0.087ns (37.339%))
+  Logic Levels:           2  (LUT4=2)
+  Clock Path Skew:        0.046ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.375ns
+    Source Clock Delay      (SCD):    1.179ns
+    Clock Pessimism Removal (CPR):    0.150ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.179ns (routing 0.660ns, distribution 0.519ns)
+  Clock Net Delay (Destination): 1.375ns (routing 0.735ns, distribution 0.640ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.179     1.179    experiment/csr/_globalClock_out
+    SLICE_X28Y114        FDRE                                         r  experiment/csr/ranges_1_upper_reg[36]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X28Y114        FDRE (Prop_EFF2_SLICEL_C_Q)
+                                                      0.048     1.227 r  experiment/csr/ranges_1_upper_reg[36]/Q
+                         net (fo=4, routed)           0.039     1.266    experiment/csr/ranges_1_upper_reg[56]_1[29]
+    SLICE_X28Y115        LUT4 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.053     1.319 r  experiment/csr/p1Chunks_1_1_3_eq_i_5/O
+                         net (fo=1, routed)           0.032     1.351    experiment/csr/p1Chunks_1_1_3_eq_i_5_n_0
+    SLICE_X28Y115        LUT4 (Prop_D6LUT_SLICEL_I3_O)
+                                                      0.045     1.396 r  experiment/csr/p1Chunks_1_1_3_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.412    experiment/checker_0/p1Chunks_1_1_3_eq0
+    SLICE_X28Y115        FDRE                                         r  experiment/checker_0/p1Chunks_1_1_3_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.375     1.375    experiment/checker_0/_globalClock_out
+    SLICE_X28Y115        FDRE                                         r  experiment/checker_0/p1Chunks_1_1_3_eq_reg/C
+                         clock pessimism             -0.150     1.225    
+                         clock uncertainty            0.100     1.325    
+    SLICE_X28Y115        FDRE (Hold_DFF_SLICEL_C_D)
+                                                      0.056     1.381    experiment/checker_0/p1Chunks_1_1_3_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.381    
+                         arrival time                           1.412    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[9]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[9]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.231ns  (logic 0.218ns (94.372%)  route 0.013ns (5.628%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[9]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_B5LUT_SLICEM_CLK_Q)
+                                                      0.218     1.412 r  experiment/checker_0/p2Epoch_reg[9]_srl3/Q
+                         net (fo=1, routed)           0.013     1.425    experiment/checker_0/p2Epoch_reg[9]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[9]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[9]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_BFF2_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[9]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.425    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 experiment_io_request_valid_REG_reg/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/valid_0_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.220ns  (logic 0.080ns (36.364%)  route 0.140ns (63.636%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.417ns
+    Source Clock Delay      (SCD):    1.217ns
+    Clock Pessimism Removal (CPR):    0.167ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.217ns (routing 0.660ns, distribution 0.557ns)
+  Clock Net Delay (Destination): 1.417ns (routing 0.735ns, distribution 0.682ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.217     1.217    _globalClock_out
+    SLICE_X17Y91         FDRE                                         r  experiment_io_request_valid_REG_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X17Y91         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.049     1.266 r  experiment_io_request_valid_REG_reg/Q
+                         net (fo=2, routed)           0.124     1.390    experiment/checker_0/io_request_valid
+    SLICE_X17Y91         LUT3 (Prop_D6LUT_SLICEM_I2_O)
+                                                      0.031     1.421 r  experiment/checker_0/valid_0_i_1/O
+                         net (fo=1, routed)           0.016     1.437    experiment/checker_0/valid_00
+    SLICE_X17Y91         FDRE                                         r  experiment/checker_0/valid_0_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.417     1.417    experiment/checker_0/_globalClock_out
+    SLICE_X17Y91         FDRE                                         r  experiment/checker_0/valid_0_reg/C
+                         clock pessimism             -0.167     1.250    
+                         clock uncertainty            0.100     1.350    
+    SLICE_X17Y91         FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.406    experiment/checker_0/valid_0_reg
+  -------------------------------------------------------------------
+                         required time                         -1.406    
+                         arrival time                           1.437    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_7_upper_reg[50]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_7_1_5_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.244ns  (logic 0.094ns (38.525%)  route 0.150ns (61.475%))
+  Logic Levels:           2  (LUT4=2)
+  Clock Path Skew:        0.057ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.439ns
+    Source Clock Delay      (SCD):    1.228ns
+    Clock Pessimism Removal (CPR):    0.154ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.228ns (routing 0.660ns, distribution 0.568ns)
+  Clock Net Delay (Destination): 1.439ns (routing 0.735ns, distribution 0.704ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.228     1.228    experiment/csr/_globalClock_out
+    SLICE_X21Y106        FDRE                                         r  experiment/csr/ranges_7_upper_reg[50]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y106        FDRE (Prop_FFF2_SLICEL_C_Q)
+                                                      0.048     1.276 r  experiment/csr/ranges_7_upper_reg[50]/Q
+                         net (fo=4, routed)           0.033     1.309    experiment/csr/ranges_7_upper_reg[56]_1[43]
+    SLICE_X21Y106        LUT4 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.030     1.339 r  experiment/csr/p1Chunks_7_1_5_eq_i_2/O
+                         net (fo=1, routed)           0.101     1.440    experiment/csr/p1Chunks_7_1_5_eq_i_2_n_0
+    SLICE_X20Y107        LUT4 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.016     1.456 r  experiment/csr/p1Chunks_7_1_5_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.472    experiment/checker_0/p1Chunks_7_1_5_eq0
+    SLICE_X20Y107        FDRE                                         r  experiment/checker_0/p1Chunks_7_1_5_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.439     1.439    experiment/checker_0/_globalClock_out
+    SLICE_X20Y107        FDRE                                         r  experiment/checker_0/p1Chunks_7_1_5_eq_reg/C
+                         clock pessimism             -0.154     1.285    
+                         clock uncertainty            0.100     1.385    
+    SLICE_X20Y107        FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.441    experiment/checker_0/p1Chunks_7_1_5_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.441    
+                         arrival time                           1.472    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_3_lower_reg[55]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_3_0_6_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.269ns  (logic 0.080ns (29.740%)  route 0.189ns (70.260%))
+  Logic Levels:           1  (LUT3=1)
+  Clock Path Skew:        0.081ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.461ns
+    Source Clock Delay      (SCD):    1.254ns
+    Clock Pessimism Removal (CPR):    0.126ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.254ns (routing 0.660ns, distribution 0.594ns)
+  Clock Net Delay (Destination): 1.461ns (routing 0.735ns, distribution 0.726ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.254     1.254    experiment/csr/_globalClock_out
+    SLICE_X21Y129        FDRE                                         r  experiment/csr/ranges_3_lower_reg[55]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X21Y129        FDRE (Prop_EFF2_SLICEL_C_Q)
+                                                      0.048     1.302 r  experiment/csr/ranges_3_lower_reg[55]/Q
+                         net (fo=4, routed)           0.173     1.475    experiment/checker_0/p1Chunks_3_0_6_eq_reg_0[48]
+    SLICE_X18Y129        LUT3 (Prop_H6LUT_SLICEM_I1_O)
+                                                      0.032     1.507 r  experiment/checker_0/p1Chunks_3_0_6_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.523    experiment/checker_0/p1Chunks_3_0_6_eq_i_1_n_0
+    SLICE_X18Y129        FDRE                                         r  experiment/checker_0/p1Chunks_3_0_6_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.461     1.461    experiment/checker_0/_globalClock_out
+    SLICE_X18Y129        FDRE                                         r  experiment/checker_0/p1Chunks_3_0_6_eq_reg/C
+                         clock pessimism             -0.126     1.335    
+                         clock uncertainty            0.100     1.435    
+    SLICE_X18Y129        FDRE (Hold_HFF_SLICEM_C_D)
+                                                      0.056     1.491    experiment/checker_0/p1Chunks_3_0_6_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.491    
+                         arrival time                           1.523    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_7_upper_reg[13]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_7_1_0_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.230ns  (logic 0.123ns (53.478%)  route 0.107ns (46.522%))
+  Logic Levels:           2  (LUT4=2)
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.451ns
+    Source Clock Delay      (SCD):    1.241ns
+    Clock Pessimism Removal (CPR):    0.168ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.241ns (routing 0.660ns, distribution 0.581ns)
+  Clock Net Delay (Destination): 1.451ns (routing 0.735ns, distribution 0.716ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.241     1.241    experiment/csr/_globalClock_out
+    SLICE_X14Y99         FDRE                                         r  experiment/csr/ranges_7_upper_reg[13]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X14Y99         FDRE (Prop_FFF2_SLICEL_C_Q)
+                                                      0.048     1.289 r  experiment/csr/ranges_7_upper_reg[13]/Q
+                         net (fo=4, routed)           0.033     1.322    experiment/csr/ranges_7_upper_reg[56]_1[6]
+    SLICE_X14Y99         LUT4 (Prop_F6LUT_SLICEL_I2_O)
+                                                      0.030     1.352 r  experiment/csr/p1Chunks_7_1_0_eq_i_4/O
+                         net (fo=1, routed)           0.058     1.410    experiment/csr/p1Chunks_7_1_0_eq_i_4_n_0
+    SLICE_X14Y99         LUT4 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.045     1.455 r  experiment/csr/p1Chunks_7_1_0_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.471    experiment/checker_0/p1Chunks_7_1_0_eq0
+    SLICE_X14Y99         FDRE                                         r  experiment/checker_0/p1Chunks_7_1_0_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.451     1.451    experiment/checker_0/_globalClock_out
+    SLICE_X14Y99         FDRE                                         r  experiment/checker_0/p1Chunks_7_1_0_eq_reg/C
+                         clock pessimism             -0.168     1.283    
+                         clock uncertainty            0.100     1.383    
+    SLICE_X14Y99         FDRE (Hold_DFF_SLICEL_C_D)
+                                                      0.056     1.439    experiment/checker_0/p1Chunks_7_1_0_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.439    
+                         arrival time                           1.471    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Id_reg[7]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_id_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.221ns  (logic 0.205ns (92.760%)  route 0.016ns (7.240%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.575ns
+    Source Clock Delay      (SCD):    1.361ns
+    Clock Pessimism Removal (CPR):    0.181ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.361ns (routing 0.660ns, distribution 0.701ns)
+  Clock Net Delay (Destination): 1.575ns (routing 0.735ns, distribution 0.840ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.361     1.361    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        SRL16E                                       r  experiment/checker_0/p2Id_reg[7]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y150        SRL16E (Prop_H6LUT_SLICEM_CLK_Q)
+                                                      0.205     1.566 r  experiment/checker_0/p2Id_reg[7]_srl3/Q
+                         net (fo=1, routed)           0.016     1.582    experiment/checker_0/p2Id_reg[7]_srl3_n_0
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.575     1.575    experiment/checker_0/_globalClock_out
+    SLICE_X52Y150        FDRE                                         r  experiment/checker_0/io_response_bits_REG_id_reg[7]/C
+                         clock pessimism             -0.181     1.394    
+                         clock uncertainty            0.100     1.494    
+    SLICE_X52Y150        FDRE (Hold_HFF_SLICEM_C_D)
+                                                      0.056     1.550    experiment/checker_0/io_response_bits_REG_id_reg[7]
+  -------------------------------------------------------------------
+                         required time                         -1.550    
+                         arrival time                           1.582    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[8]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[8]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.232ns  (logic 0.218ns (93.965%)  route 0.014ns (6.034%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.044ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.398ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.398ns (routing 0.735ns, distribution 0.663ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[8]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_A5LUT_SLICEM_CLK_Q)
+                                                      0.218     1.412 r  experiment/checker_0/p2Epoch_reg[8]_srl3/Q
+                         net (fo=1, routed)           0.014     1.426    experiment/checker_0/p2Epoch_reg[8]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.398     1.398    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[8]/C
+                         clock pessimism             -0.160     1.238    
+                         clock uncertainty            0.100     1.338    
+    SLICE_X32Y94         FDRE (Hold_AFF2_SLICEM_C_D)
+                                                      0.056     1.394    experiment/checker_0/io_response_bits_REG_epoch_reg[8]
+  -------------------------------------------------------------------
+                         required time                         -1.394    
+                         arrival time                           1.426    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/csr/ranges_3_upper_reg[42]/C
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/p1Chunks_3_1_4_eq_reg/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.246ns  (logic 0.118ns (47.967%)  route 0.128ns (52.032%))
+  Logic Levels:           2  (LUT4=2)
+  Clock Path Skew:        0.058ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.382ns
+    Source Clock Delay      (SCD):    1.176ns
+    Clock Pessimism Removal (CPR):    0.148ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.176ns (routing 0.660ns, distribution 0.516ns)
+  Clock Net Delay (Destination): 1.382ns (routing 0.735ns, distribution 0.647ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.176     1.176    experiment/csr/_globalClock_out
+    SLICE_X24Y118        FDRE                                         r  experiment/csr/ranges_3_upper_reg[42]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X24Y118        FDRE (Prop_EFF2_SLICEM_C_Q)
+                                                      0.048     1.224 r  experiment/csr/ranges_3_upper_reg[42]/Q
+                         net (fo=4, routed)           0.074     1.298    experiment/csr/ranges_3_upper_reg[56]_1[35]
+    SLICE_X24Y119        LUT4 (Prop_H6LUT_SLICEM_I0_O)
+                                                      0.016     1.314 r  experiment/csr/p1Chunks_3_1_4_eq_i_2/O
+                         net (fo=1, routed)           0.038     1.352    experiment/csr/p1Chunks_3_1_4_eq_i_2_n_0
+    SLICE_X24Y119        LUT4 (Prop_D6LUT_SLICEM_I0_O)
+                                                      0.054     1.406 r  experiment/csr/p1Chunks_3_1_4_eq_i_1/O
+                         net (fo=1, routed)           0.016     1.422    experiment/checker_0/p1Chunks_3_1_4_eq0
+    SLICE_X24Y119        FDRE                                         r  experiment/checker_0/p1Chunks_3_1_4_eq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.382     1.382    experiment/checker_0/_globalClock_out
+    SLICE_X24Y119        FDRE                                         r  experiment/checker_0/p1Chunks_3_1_4_eq_reg/C
+                         clock pessimism             -0.148     1.234    
+                         clock uncertainty            0.100     1.334    
+    SLICE_X24Y119        FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.390    experiment/checker_0/p1Chunks_3_1_4_eq_reg
+  -------------------------------------------------------------------
+                         required time                         -1.390    
+                         arrival time                           1.422    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+Slack (MET) :             0.032ns  (arrival time - required time)
+  Source:                 experiment/checker_0/p2Epoch_reg[14]_srl3/CLK
+                            (rising edge-triggered cell SRL16E clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            experiment/checker_0/io_response_bits_REG_epoch_reg[14]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.230ns  (logic 0.217ns (94.348%)  route 0.013ns (5.652%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.042ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.396ns
+    Source Clock Delay      (SCD):    1.194ns
+    Clock Pessimism Removal (CPR):    0.160ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.194ns (routing 0.660ns, distribution 0.534ns)
+  Clock Net Delay (Destination): 1.396ns (routing 0.735ns, distribution 0.661ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.194     1.194    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         SRL16E                                       r  experiment/checker_0/p2Epoch_reg[14]_srl3/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X32Y94         SRL16E (Prop_G5LUT_SLICEM_CLK_Q)
+                                                      0.217     1.411 r  experiment/checker_0/p2Epoch_reg[14]_srl3/Q
+                         net (fo=1, routed)           0.013     1.424    experiment/checker_0/p2Epoch_reg[14]_srl3_n_0
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[14]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X1Y1 (CLOCK_ROOT)    net (fo=3112, routed)        1.396     1.396    experiment/checker_0/_globalClock_out
+    SLICE_X32Y94         FDRE                                         r  experiment/checker_0/io_response_bits_REG_epoch_reg[14]/C
+                         clock pessimism             -0.160     1.236    
+                         clock uncertainty            0.100     1.336    
+    SLICE_X32Y94         FDRE (Hold_GFF2_SLICEM_C_D)
+                                                      0.056     1.392    experiment/checker_0/io_response_bits_REG_epoch_reg[14]
+  -------------------------------------------------------------------
+                         required time                         -1.392    
+                         arrival time                           1.424    
+  -------------------------------------------------------------------
+                         slack                                  0.032    
+
+
+
+

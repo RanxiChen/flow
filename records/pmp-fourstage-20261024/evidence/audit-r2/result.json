@@ -1,0 +1,1 @@
+{"part":"xcku040-ffva1156-2-e","period_ns":5.0,"uncertainty_ns":0.1,"wns_ns":0.096,"whs_ns":-0.170,"internal_wns_ns":0.096,"internal_whs_ns":0.016,"csr_registers":2184,"checker_registers":764,"stage":"route_design NoTimingRelaxation","fixture":"BUFG output clock, 0.5/0.2 ns boundary-clock-referenced IO; physical virtual pins"}

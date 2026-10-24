@@ -1,0 +1,22 @@
+{
+  "hardware_and_test_sha": "751af023aeea747a90ecd40a472962bd464d49dd",
+  "route_r2_script_sha": "9588d59d2e1a89a9bafb14fa51a1a8fa31e94e19",
+  "audit_and_hold_repair_script_sha": "1567e02aa94951e5f7d19b12c73fcc7899b6298b",
+  "host": "Alan (chen@localhost:2286 via clawbot)",
+  "remote_root": "/home/chen/FUN/flow-runs/pmp-fourstage-20261024",
+  "selected_route": "route-r2/route.dcp",
+  "selected_checkpoint_sha256": "f9077053944c2fdd999b35e6b6afaa7d9085fc62e76a11dac8ce3fb37b456168",
+  "functional_tests": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "pipeline_responses_checked": 4991
+  },
+  "module_internal_200mhz_pass": true,
+  "full_fixture_timing_pass": false,
+  "files": {
+    "design/src/main/scala/mmu/experiment/BreezePmpFourStage.scala": "6168936a3442249a7ea520d10bc0e96e5c77cd35a7db9691fcd1691945dbc4ee",
+    "design/src/main/scala/mmu/experiment/BreezePmpFourStageHarness.scala": "e8ecadeb79a7a3783cf562806cf41c3c03d87baaa369724930850f1740eb8b10",
+    "design/src/test/scala/mmu/experiment/BreezePmpFourStageSpec.scala": "f8c5943b144b1a747e60464e1cccfa94b67192c72ef5c5b738f6ebb7ac7f2861"
+  }
+}
