@@ -1,0 +1,17 @@
+{
+  "configuration": "docs/cross-project/simulation-host.md",
+  "primary": "cloud_chen@47.96.71.231:22",
+  "primary_result": "SSH connection timeout with 8 s timeout, including escalated retry",
+  "execution_host": "Alan via clawbot -> chen@localhost:2286",
+  "hostname": "chen-System-Product-Name",
+  "environment": "/home/chen/miniforge3/bin/activate flow",
+  "java": "11.0.32.1",
+  "verilator": "5.028",
+  "vivado": "2022.2",
+  "available_disk": "56G",
+  "available_memory": "57Gi",
+  "proxy_check": "http://127.0.0.1:18897 -> GitHub HTTP 301",
+  "existing_alan_checkout": "8fcf4869caff358706b024d40aa6962a43c61265, clean; left unchanged",
+  "existing_hardware_jobs": "none observed in preflight",
+  "task_source": "a55bc20a1e0d50e9a1cffc5df4a08e5916496842"
+}

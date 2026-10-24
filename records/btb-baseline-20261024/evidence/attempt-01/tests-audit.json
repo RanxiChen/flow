@@ -1,0 +1,11 @@
+{
+  "tests": 3,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "cases": [
+    "current BTB preserves slot order, tag boundaries, both ways and replacement under II=1 queries",
+    "BTB update read/write conflicts deny only their own bank and queued updates are not lost",
+    "registered timing fixture preserves two-slot results with exact latency and II=1"
+  ]
+}

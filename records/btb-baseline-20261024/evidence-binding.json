@@ -1,0 +1,69 @@
+{
+  "hardware_source_sha": "a55bc20a1e0d50e9a1cffc5df4a08e5916496842",
+  "baseline_script_sha": "a55bc20a1e0d50e9a1cffc5df4a08e5916496842",
+  "baseline_audit_script_sha": "dba372a81a09b2a80963c23cf2976f4507221d0d",
+  "repair_script_sha": "14d04cb15f1756f7ca0a0084414e4a9d6f70e0e5",
+  "production_btb_unchanged": true,
+  "files": {
+    "design/src/main/scala/frontend/BreezePipelinePredictor.scala": "ee07a01200f72fa10d5b62c4170c6e435dcf383b42176ee42655e9fc8d081d90",
+    "design/src/main/scala/frontend/experiment/BreezeBtbTimingHarness.scala": "cfdad82c96fafdd44af0ac222c7e81328ace27a8d18f190c13dc9722830a15dc",
+    "design/src/test/scala/frontend/experiment/BreezeBtbTimingSpec.scala": "ba2fced124b5cf827caeafc8ad1537d4997de332981b37378e6aed0b0ea9ca2e"
+  },
+  "execution_host": "Alan",
+  "remote_root": "/home/chen/FUN/flow-runs/btb-baseline-20261024",
+  "functional_tests": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "core_checked_slots": 2858,
+    "fixture_checked_slots": 438,
+    "pressure_updates_accepted": 48,
+    "bank_conflict_misses": 96
+  },
+  "baseline_checkpoint": "route-r1/route.dcp",
+  "baseline_5ns_setup_pass": true,
+  "baseline_complete_timing_pass": false,
+  "baseline_internal_wns_ns": 0.251,
+  "baseline_internal_whs_ns": -0.032,
+  "notes": [
+    "No original BTB or production frontend source edited. New harness and tests only.",
+    "Initial routed reports completed; script exit 1 from missing query endpoint name filter. Independent checkpoint audit exit 0 finds all 135 result endpoints.",
+    "Only scripts change after hardware SHA; no function/generation rerun required."
+  ],
+  "checkpoints": {
+    "route-r1/route.dcp": "3f73e3a78cd5ef3b5e56bae753bf0d1303b6ad2f6d5c6749ff569f2217a8a551",
+    "route-r2/route.dcp": "fbe24add5308aa6692f2f4dc3258b20008807916d4482080af5e0f44cb12ee87"
+  },
+  "selected_run": "route-r2",
+  "final_query_setup_200mhz_pass": true,
+  "final_complete_timing_pass": false,
+  "final_result": {
+    "part": "xcku040-ffva1156-2-e",
+    "period_ns": 5.0,
+    "uncertainty_ns": 0.1,
+    "wns_ns": 0.251,
+    "whs_ns": -0.032,
+    "internal_wns_ns": 0.251,
+    "internal_whs_ns": -0.032,
+    "query_f0_wns_ns": 2.365,
+    "query_result_wns_ns": 0.251,
+    "update_state_wns_ns": 0.459,
+    "result_registers": 135,
+    "query_input_registers": 65,
+    "update_registers": 479,
+    "checkpoint": "/home/chen/FUN/flow-runs/btb-baseline-20261024/route-r2/route.dcp",
+    "fixture_io_max_ns": 0.5,
+    "fixture_io_min_ns": 0.5
+  },
+  "hold_repair": "123 candidates identified, 0 nets optimized, 0 buffers/delays inserted. No improvement after reroute; RTL unchanged.",
+  "resources": {
+    "total_LUT": 1469,
+    "logic_LUT": 1105,
+    "LUTRAM": 364,
+    "btb_FF": 420,
+    "fixture_FF": 469,
+    "total_FF": 889,
+    "BRAM": 0,
+    "DSP": 0
+  }
+}

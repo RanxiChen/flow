@@ -1,0 +1,39 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date         : Sat Oct 24 18:53:22 2026
+| Host         : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_utilization -hierarchical -file utilization-synth.rpt
+| Design       : BreezeBtbTimingHarness
+| Device       : xcku040-ffva1156-2-e
+| Speed File   : -2
+| Design State : Synthesized
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++----------------------------+--------------------------+------------+------------+---------+------+-----+--------+--------+------+------------+
+|          Instance          |          Module          | Total LUTs | Logic LUTs | LUTRAMs | SRLs | FFs | RAMB36 | RAMB18 | URAM | DSP Blocks |
++----------------------------+--------------------------+------------+------------+---------+------+-----+--------+--------+------+------------+
+| BreezeBtbTimingHarness     |                    (top) |       1470 |       1106 |     364 |    0 | 889 |      0 |      0 |    0 |          0 |
+|   (BreezeBtbTimingHarness) |                    (top) |          0 |          0 |       0 |    0 | 469 |      0 |      0 |    0 |          0 |
+|   btb                      |          BreezeBankedBtb |       1470 |       1106 |     364 |    0 | 420 |      0 |      0 |    0 |          0 |
+|     (btb)                  |          BreezeBankedBtb |        344 |        344 |       0 |    0 | 395 |      0 |      0 |    0 |          0 |
+|     ram_0_0_ext            |               ram_32x123 |        381 |        309 |      72 |    0 |  10 |      0 |      0 |    0 |          0 |
+|     ram_0_1_ext            |             ram_32x123_0 |        316 |        244 |      72 |    0 |   0 |      0 |      0 |    0 |          0 |
+|     ram_1_0_ext            |             ram_32x123_1 |         73 |          1 |      72 |    0 |  10 |      0 |      0 |    0 |          0 |
+|     ram_1_1_ext            |             ram_32x123_2 |        153 |         81 |      72 |    0 |   0 |      0 |      0 |    0 |          0 |
+|     writes                 | Queue4_PipelineBtbUpdate |        203 |        127 |      76 |    0 |   5 |      0 |      0 |    0 |          0 |
+|       (writes)             | Queue4_PipelineBtbUpdate |          6 |          6 |       0 |    0 |   5 |      0 |      0 |    0 |          0 |
+|       ram_ext              |                ram_4x131 |        197 |        121 |      76 |    0 |   0 |      0 |      0 |    0 |          0 |
+|   globalClock              |       BtbExperimentClock |          0 |          0 |       0 |    0 |   0 |      0 |      0 |    0 |          0 |
++----------------------------+--------------------------+------------+------------+---------+------+-----+--------+--------+------+------------+
+
+

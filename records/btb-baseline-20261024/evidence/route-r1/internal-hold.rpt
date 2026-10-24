@@ -1,0 +1,1577 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
+| Date              : Sat Oct 24 18:54:30 2026
+| Host              : chen-System-Product-Name running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] -to [get_cells -hierarchical -filter {IS_SEQUENTIAL == 1}] -delay_type min -max_paths 30 -path_type full_clock_expanded -file internal-hold.rpt
+| Design            : BreezeBtbTimingHarness
+| Device            : xcku040-ffva1156
+| Speed File        : -2  PRODUCTION 1.25 12-04-2018
+| Temperature Grade : E
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -0.032ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[46]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.617 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.629    btb/io_deq_bits_pc[46]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[46]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[46]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[46]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.629    
+  -------------------------------------------------------------------
+                         slack                                 -0.032    
+
+Slack (VIOLATED) :        -0.032ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[26]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.632    btb/io_deq_bits_target[26]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[26]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[26]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[26]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.032    
+
+Slack (VIOLATED) :        -0.030ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[54]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.696ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.696ns (routing 0.991ns, distribution 0.705ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.617 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.629    btb/io_deq_bits_pc[54]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[54]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.696     1.696    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[54]/C
+                         clock pessimism             -0.193     1.503    
+                         clock uncertainty            0.100     1.603    
+    SLICE_X64Y141        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.659    btb/update_pc_reg[54]
+  -------------------------------------------------------------------
+                         required time                         -1.659    
+                         arrival time                           1.629    
+  -------------------------------------------------------------------
+                         slack                                 -0.030    
+
+Slack (VIOLATED) :        -0.030ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[60]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.695ns
+    Source Clock Delay      (SCD):    1.465ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.465ns (routing 0.889ns, distribution 0.576ns)
+  Clock Net Delay (Destination): 1.695ns (routing 0.991ns, distribution 0.704ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.465     1.465    btb/writes/ram_ext/Memory_reg_0_3_126_130/WCLK
+    SLICE_X64Y142        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y142        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.616 r  btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.628    btb/io_deq_bits_pc[60]
+    SLICE_X64Y142        FDRE                                         r  btb/update_pc_reg[60]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.695     1.695    btb/_globalClock_out
+    SLICE_X64Y142        FDRE                                         r  btb/update_pc_reg[60]/C
+                         clock pessimism             -0.193     1.502    
+                         clock uncertainty            0.100     1.602    
+    SLICE_X64Y142        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.658    btb/update_pc_reg[60]
+  -------------------------------------------------------------------
+                         required time                         -1.658    
+                         arrival time                           1.628    
+  -------------------------------------------------------------------
+                         slack                                 -0.030    
+
+Slack (VIOLATED) :        -0.030ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[34]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.632    btb/io_deq_bits_target[34]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[34]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[34]/C
+                         clock pessimism             -0.192     1.506    
+                         clock uncertainty            0.100     1.606    
+    SLICE_X69Y145        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.662    btb/update_target_reg[34]
+  -------------------------------------------------------------------
+                         required time                         -1.662    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.030    
+
+Slack (VIOLATED) :        -0.030ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMG_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[58]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.149ns (91.411%)  route 0.014ns (8.589%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.696ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.696ns (routing 0.991ns, distribution 0.705ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMG_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_G6LUT_SLICEM_CLK_O)
+                                                      0.149     1.615 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMG_D1/O
+                         net (fo=1, routed)           0.014     1.629    btb/io_deq_bits_pc[58]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[58]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.696     1.696    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[58]/C
+                         clock pessimism             -0.193     1.503    
+                         clock uncertainty            0.100     1.603    
+    SLICE_X64Y141        FDRE (Hold_GFF_SLICEM_C_D)
+                                                      0.056     1.659    btb/update_pc_reg[58]
+  -------------------------------------------------------------------
+                         required time                         -1.659    
+                         arrival time                           1.629    
+  -------------------------------------------------------------------
+                         slack                                 -0.030    
+
+Slack (VIOLATED) :        -0.030ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMG_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[38]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.149ns (91.411%)  route 0.014ns (8.589%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMG_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_G6LUT_SLICEM_CLK_O)
+                                                      0.149     1.618 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMG_D1/O
+                         net (fo=1, routed)           0.014     1.632    btb/io_deq_bits_target[38]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[38]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[38]/C
+                         clock pessimism             -0.192     1.506    
+                         clock uncertainty            0.100     1.606    
+    SLICE_X69Y145        FDRE (Hold_GFF_SLICEM_C_D)
+                                                      0.056     1.662    btb/update_target_reg[38]
+  -------------------------------------------------------------------
+                         required time                         -1.662    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.030    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMB_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[48]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.166ns  (logic 0.151ns (90.964%)  route 0.015ns (9.036%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMB_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_B6LUT_SLICEM_CLK_O)
+                                                      0.151     1.617 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMB_D1/O
+                         net (fo=1, routed)           0.015     1.632    btb/io_deq_bits_pc[48]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[48]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[48]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_BFF_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[48]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[50]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.166ns  (logic 0.150ns (90.361%)  route 0.016ns (9.639%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_C6LUT_SLICEM_CLK_O)
+                                                      0.150     1.616 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC_D1/O
+                         net (fo=1, routed)           0.016     1.632    btb/io_deq_bits_pc[50]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[50]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[50]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_CFF_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[50]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMB_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[28]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.166ns  (logic 0.151ns (90.964%)  route 0.015ns (9.036%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMB_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_B6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMB_D1/O
+                         net (fo=1, routed)           0.015     1.635    btb/io_deq_bits_target[28]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[28]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[28]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_BFF_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[28]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.635    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[30]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.166ns  (logic 0.150ns (90.361%)  route 0.016ns (9.639%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_C6LUT_SLICEM_CLK_O)
+                                                      0.150     1.619 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC_D1/O
+                         net (fo=1, routed)           0.016     1.635    btb/io_deq_bits_target[30]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[30]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[30]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_CFF_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[30]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.635    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMF_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[56]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.164ns  (logic 0.152ns (92.683%)  route 0.012ns (7.317%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.696ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.696ns (routing 0.991ns, distribution 0.705ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMF_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_F6LUT_SLICEM_CLK_O)
+                                                      0.152     1.618 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMF_D1/O
+                         net (fo=1, routed)           0.012     1.630    btb/io_deq_bits_pc[56]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[56]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.696     1.696    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[56]/C
+                         clock pessimism             -0.193     1.503    
+                         clock uncertainty            0.100     1.603    
+    SLICE_X64Y141        FDRE (Hold_FFF_SLICEM_C_D)
+                                                      0.056     1.659    btb/update_pc_reg[56]
+  -------------------------------------------------------------------
+                         required time                         -1.659    
+                         arrival time                           1.630    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMB_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[62]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.164ns  (logic 0.152ns (92.683%)  route 0.012ns (7.317%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.695ns
+    Source Clock Delay      (SCD):    1.465ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.465ns (routing 0.889ns, distribution 0.576ns)
+  Clock Net Delay (Destination): 1.695ns (routing 0.991ns, distribution 0.704ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.465     1.465    btb/writes/ram_ext/Memory_reg_0_3_126_130/WCLK
+    SLICE_X64Y142        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMB_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y142        RAMD32 (Prop_F6LUT_SLICEM_CLK_O)
+                                                      0.152     1.617 r  btb/writes/ram_ext/Memory_reg_0_3_126_130/RAMB_D1/O
+                         net (fo=1, routed)           0.012     1.629    btb/io_deq_bits_pc[62]
+    SLICE_X64Y142        FDRE                                         r  btb/update_pc_reg[62]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.695     1.695    btb/_globalClock_out
+    SLICE_X64Y142        FDRE                                         r  btb/update_pc_reg[62]/C
+                         clock pessimism             -0.193     1.502    
+                         clock uncertainty            0.100     1.602    
+    SLICE_X64Y142        FDRE (Hold_FFF_SLICEM_C_D)
+                                                      0.056     1.658    btb/update_pc_reg[62]
+  -------------------------------------------------------------------
+                         required time                         -1.658    
+                         arrival time                           1.629    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.029ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMF_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[36]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.164ns  (logic 0.152ns (92.683%)  route 0.012ns (7.317%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.037ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMF_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_F6LUT_SLICEM_CLK_O)
+                                                      0.152     1.621 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMF_D1/O
+                         net (fo=1, routed)           0.012     1.633    btb/io_deq_bits_target[36]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[36]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[36]/C
+                         clock pessimism             -0.192     1.506    
+                         clock uncertainty            0.100     1.606    
+    SLICE_X69Y145        FDRE (Hold_FFF_SLICEM_C_D)
+                                                      0.056     1.662    btb/update_target_reg[36]
+  -------------------------------------------------------------------
+                         required time                         -1.662    
+                         arrival time                           1.633    
+  -------------------------------------------------------------------
+                         slack                                 -0.029    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[49]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.167ns  (logic 0.156ns (93.413%)  route 0.011ns (6.587%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_C5LUT_SLICEM_CLK_O)
+                                                      0.156     1.622 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMC/O
+                         net (fo=1, routed)           0.011     1.633    btb/io_deq_bits_pc[49]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[49]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[49]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_CFF2_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[49]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.633    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[52]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.167ns  (logic 0.151ns (90.419%)  route 0.016ns (9.581%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_D6LUT_SLICEM_CLK_O)
+                                                      0.151     1.617 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD_D1/O
+                         net (fo=1, routed)           0.016     1.633    btb/io_deq_bits_pc[52]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[52]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[52]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[52]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.633    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[29]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.167ns  (logic 0.156ns (93.413%)  route 0.011ns (6.587%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_C5LUT_SLICEM_CLK_O)
+                                                      0.156     1.625 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMC/O
+                         net (fo=1, routed)           0.011     1.636    btb/io_deq_bits_target[29]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[29]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[29]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_CFF2_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[29]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.636    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[32]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.167ns  (logic 0.151ns (90.419%)  route 0.016ns (9.581%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_D6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD_D1/O
+                         net (fo=1, routed)           0.016     1.636    btb/io_deq_bits_target[32]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[32]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[32]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_DFF_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[32]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.636    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_kind_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.696ns
+    Source Clock Delay      (SCD):    1.467ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.467ns (routing 0.889ns, distribution 0.578ns)
+  Clock Net Delay (Destination): 1.696ns (routing 0.991ns, distribution 0.705ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.467     1.467    btb/writes/ram_ext/Memory_reg_0_3_0_13/WCLK
+    SLICE_X71Y143        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X71Y143        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.618 r  btb/writes/ram_ext/Memory_reg_0_3_0_13/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.630    btb/io_deq_bits_kind[0]
+    SLICE_X71Y143        FDRE                                         r  btb/update_kind_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.696     1.696    btb/_globalClock_out
+    SLICE_X71Y143        FDRE                                         r  btb/update_kind_reg[0]/C
+                         clock pessimism             -0.194     1.502    
+                         clock uncertainty            0.100     1.602    
+    SLICE_X71Y143        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.658    btb/update_kind_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -1.658    
+                         arrival time                           1.630    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_84_97/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[18]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.703ns
+    Source Clock Delay      (SCD):    1.472ns
+    Clock Pessimism Removal (CPR):    0.196ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.472ns (routing 0.889ns, distribution 0.583ns)
+  Clock Net Delay (Destination): 1.703ns (routing 0.991ns, distribution 0.712ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.472     1.472    btb/writes/ram_ext/Memory_reg_0_3_84_97/WCLK
+    SLICE_X66Y127        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_84_97/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X66Y127        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.623 r  btb/writes/ram_ext/Memory_reg_0_3_84_97/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.635    btb/io_deq_bits_pc[18]
+    SLICE_X66Y127        FDRE                                         r  btb/update_pc_reg[18]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.703     1.703    btb/_globalClock_out
+    SLICE_X66Y127        FDRE                                         r  btb/update_pc_reg[18]/C
+                         clock pessimism             -0.196     1.507    
+                         clock uncertainty            0.100     1.607    
+    SLICE_X66Y127        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.663    btb/update_pc_reg[18]
+  -------------------------------------------------------------------
+                         required time                         -1.663    
+                         arrival time                           1.635    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_98_111/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[32]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_98_111/WCLK
+    SLICE_X64Y132        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_98_111/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y132        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_98_111/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.632    btb/io_deq_bits_pc[32]
+    SLICE_X64Y132        FDRE                                         r  btb/update_pc_reg[32]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y132        FDRE                                         r  btb/update_pc_reg[32]/C
+                         clock pessimism             -0.194     1.504    
+                         clock uncertainty            0.100     1.604    
+    SLICE_X64Y132        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.660    btb/update_pc_reg[32]
+  -------------------------------------------------------------------
+                         required time                         -1.660    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_14_27/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[12]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.690ns
+    Source Clock Delay      (SCD):    1.461ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.461ns (routing 0.889ns, distribution 0.572ns)
+  Clock Net Delay (Destination): 1.690ns (routing 0.991ns, distribution 0.699ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.461     1.461    btb/writes/ram_ext/Memory_reg_0_3_14_27/WCLK
+    SLICE_X66Y144        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_14_27/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X66Y144        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.612 r  btb/writes/ram_ext/Memory_reg_0_3_14_27/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.624    btb/io_deq_bits_target[12]
+    SLICE_X66Y144        FDRE                                         r  btb/update_target_reg[12]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.690     1.690    btb/_globalClock_out
+    SLICE_X66Y144        FDRE                                         r  btb/update_target_reg[12]/C
+                         clock pessimism             -0.194     1.496    
+                         clock uncertainty            0.100     1.596    
+    SLICE_X66Y144        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.652    btb/update_target_reg[12]
+  -------------------------------------------------------------------
+                         required time                         -1.652    
+                         arrival time                           1.624    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_42_55/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[40]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.697ns
+    Source Clock Delay      (SCD):    1.468ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.468ns (routing 0.889ns, distribution 0.579ns)
+  Clock Net Delay (Destination): 1.697ns (routing 0.991ns, distribution 0.706ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.468     1.468    btb/writes/ram_ext/Memory_reg_0_3_42_55/WCLK
+    SLICE_X71Y142        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_42_55/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X71Y142        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.619 r  btb/writes/ram_ext/Memory_reg_0_3_42_55/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.631    btb/io_deq_bits_target[40]
+    SLICE_X71Y142        FDRE                                         r  btb/update_target_reg[40]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.697     1.697    btb/_globalClock_out
+    SLICE_X71Y142        FDRE                                         r  btb/update_target_reg[40]/C
+                         clock pessimism             -0.194     1.503    
+                         clock uncertainty            0.100     1.603    
+    SLICE_X71Y142        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.659    btb/update_target_reg[40]
+  -------------------------------------------------------------------
+                         required time                         -1.659    
+                         arrival time                           1.631    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.028ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_56_69/RAMA_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[54]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.035ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.707ns
+    Source Clock Delay      (SCD):    1.477ns
+    Clock Pessimism Removal (CPR):    0.195ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.477ns (routing 0.889ns, distribution 0.588ns)
+  Clock Net Delay (Destination): 1.707ns (routing 0.991ns, distribution 0.716ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.477     1.477    btb/writes/ram_ext/Memory_reg_0_3_56_69/WCLK
+    SLICE_X71Y128        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_56_69/RAMA_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X71Y128        RAMD32 (Prop_A6LUT_SLICEM_CLK_O)
+                                                      0.151     1.628 r  btb/writes/ram_ext/Memory_reg_0_3_56_69/RAMA_D1/O
+                         net (fo=1, routed)           0.012     1.640    btb/io_deq_bits_target[54]
+    SLICE_X71Y128        FDRE                                         r  btb/update_target_reg[54]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.707     1.707    btb/_globalClock_out
+    SLICE_X71Y128        FDRE                                         r  btb/update_target_reg[54]/C
+                         clock pessimism             -0.195     1.512    
+                         clock uncertainty            0.100     1.612    
+    SLICE_X71Y128        FDRE (Hold_AFF_SLICEM_C_D)
+                                                      0.056     1.668    btb/update_target_reg[54]
+  -------------------------------------------------------------------
+                         required time                         -1.668    
+                         arrival time                           1.640    
+  -------------------------------------------------------------------
+                         slack                                 -0.028    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[51]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.169ns  (logic 0.157ns (92.899%)  route 0.012ns (7.101%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.698ns
+    Source Clock Delay      (SCD):    1.466ns
+    Clock Pessimism Removal (CPR):    0.193ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.466ns (routing 0.889ns, distribution 0.577ns)
+  Clock Net Delay (Destination): 1.698ns (routing 0.991ns, distribution 0.707ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.466     1.466    btb/writes/ram_ext/Memory_reg_0_3_112_125/WCLK
+    SLICE_X64Y141        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y141        RAMD32 (Prop_D5LUT_SLICEM_CLK_O)
+                                                      0.157     1.623 r  btb/writes/ram_ext/Memory_reg_0_3_112_125/RAMD/O
+                         net (fo=1, routed)           0.012     1.635    btb/io_deq_bits_pc[51]
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[51]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.698     1.698    btb/_globalClock_out
+    SLICE_X64Y141        FDRE                                         r  btb/update_pc_reg[51]/C
+                         clock pessimism             -0.193     1.505    
+                         clock uncertainty            0.100     1.605    
+    SLICE_X64Y141        FDRE (Hold_DFF2_SLICEM_C_D)
+                                                      0.056     1.661    btb/update_pc_reg[51]
+  -------------------------------------------------------------------
+                         required time                         -1.661    
+                         arrival time                           1.635    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[31]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.169ns  (logic 0.157ns (92.899%)  route 0.012ns (7.101%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.039ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.700ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.192ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.700ns (routing 0.991ns, distribution 0.709ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_28_41/WCLK
+    SLICE_X69Y145        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X69Y145        RAMD32 (Prop_D5LUT_SLICEM_CLK_O)
+                                                      0.157     1.626 r  btb/writes/ram_ext/Memory_reg_0_3_28_41/RAMD/O
+                         net (fo=1, routed)           0.012     1.638    btb/io_deq_bits_target[31]
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[31]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.700     1.700    btb/_globalClock_out
+    SLICE_X69Y145        FDRE                                         r  btb/update_target_reg[31]/C
+                         clock pessimism             -0.192     1.508    
+                         clock uncertainty            0.100     1.608    
+    SLICE_X69Y145        FDRE (Hold_DFF2_SLICEM_C_D)
+                                                      0.056     1.664    btb/update_target_reg[31]
+  -------------------------------------------------------------------
+                         required time                         -1.664    
+                         arrival time                           1.638    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_70_83/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[12]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.701ns
+    Source Clock Delay      (SCD):    1.473ns
+    Clock Pessimism Removal (CPR):    0.195ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.473ns (routing 0.889ns, distribution 0.584ns)
+  Clock Net Delay (Destination): 1.701ns (routing 0.991ns, distribution 0.710ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.473     1.473    btb/writes/ram_ext/Memory_reg_0_3_70_83/WCLK
+    SLICE_X66Y126        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_70_83/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X66Y126        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.624 r  btb/writes/ram_ext/Memory_reg_0_3_70_83/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.636    btb/io_deq_bits_pc[12]
+    SLICE_X66Y126        FDRE                                         r  btb/update_pc_reg[12]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.701     1.701    btb/_globalClock_out
+    SLICE_X66Y126        FDRE                                         r  btb/update_pc_reg[12]/C
+                         clock pessimism             -0.195     1.506    
+                         clock uncertainty            0.100     1.606    
+    SLICE_X66Y126        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.662    btb/update_pc_reg[12]
+  -------------------------------------------------------------------
+                         required time                         -1.662    
+                         arrival time                           1.636    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_98_111/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_pc_reg[40]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.696ns
+    Source Clock Delay      (SCD):    1.469ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.469ns (routing 0.889ns, distribution 0.580ns)
+  Clock Net Delay (Destination): 1.696ns (routing 0.991ns, distribution 0.705ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.469     1.469    btb/writes/ram_ext/Memory_reg_0_3_98_111/WCLK
+    SLICE_X64Y132        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_98_111/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X64Y132        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.620 r  btb/writes/ram_ext/Memory_reg_0_3_98_111/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.632    btb/io_deq_bits_pc[40]
+    SLICE_X64Y132        FDRE                                         r  btb/update_pc_reg[40]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.696     1.696    btb/_globalClock_out
+    SLICE_X64Y132        FDRE                                         r  btb/update_pc_reg[40]/C
+                         clock pessimism             -0.194     1.502    
+                         clock uncertainty            0.100     1.602    
+    SLICE_X64Y132        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.658    btb/update_pc_reg[40]
+  -------------------------------------------------------------------
+                         required time                         -1.658    
+                         arrival time                           1.632    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_14_27/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[20]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.688ns
+    Source Clock Delay      (SCD):    1.461ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.461ns (routing 0.889ns, distribution 0.572ns)
+  Clock Net Delay (Destination): 1.688ns (routing 0.991ns, distribution 0.697ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.461     1.461    btb/writes/ram_ext/Memory_reg_0_3_14_27/WCLK
+    SLICE_X66Y144        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_14_27/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X66Y144        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.612 r  btb/writes/ram_ext/Memory_reg_0_3_14_27/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.624    btb/io_deq_bits_target[20]
+    SLICE_X66Y144        FDRE                                         r  btb/update_target_reg[20]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.688     1.688    btb/_globalClock_out
+    SLICE_X66Y144        FDRE                                         r  btb/update_target_reg[20]/C
+                         clock pessimism             -0.194     1.494    
+                         clock uncertainty            0.100     1.594    
+    SLICE_X66Y144        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.650    btb/update_target_reg[20]
+  -------------------------------------------------------------------
+                         required time                         -1.650    
+                         arrival time                           1.624    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+Slack (VIOLATED) :        -0.026ns  (arrival time - required time)
+  Source:                 btb/writes/ram_ext/Memory_reg_0_3_42_55/RAME_D1/CLK
+                            (rising edge-triggered cell RAMD32 clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            btb/update_target_reg[48]/D
+                            (rising edge-triggered cell FDRE clocked by experiment_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             experiment_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (experiment_clk rise@0.000ns - experiment_clk rise@0.000ns)
+  Data Path Delay:        0.163ns  (logic 0.151ns (92.638%)  route 0.012ns (7.362%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.033ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.695ns
+    Source Clock Delay      (SCD):    1.468ns
+    Clock Pessimism Removal (CPR):    0.194ns
+  Clock Uncertainty:      0.100ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.000ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.100ns
+  Clock Net Delay (Source):      1.468ns (routing 0.889ns, distribution 0.579ns)
+  Clock Net Delay (Destination): 1.695ns (routing 0.991ns, distribution 0.704ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.468     1.468    btb/writes/ram_ext/Memory_reg_0_3_42_55/WCLK
+    SLICE_X71Y142        RAMD32                                       r  btb/writes/ram_ext/Memory_reg_0_3_42_55/RAME_D1/CLK
+  -------------------------------------------------------------------    -------------------
+    SLICE_X71Y142        RAMD32 (Prop_E6LUT_SLICEM_CLK_O)
+                                                      0.151     1.619 r  btb/writes/ram_ext/Memory_reg_0_3_42_55/RAME_D1/O
+                         net (fo=1, routed)           0.012     1.631    btb/io_deq_bits_target[48]
+    SLICE_X71Y142        FDRE                                         r  btb/update_target_reg[48]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock experiment_clk rise edge)
+                                                      0.000     0.000 r  
+    BUFGCE_X0Y96         BUFGCE                       0.000     0.000 r  globalClock/clock_buffer/O
+    X2Y1 (CLOCK_ROOT)    net (fo=1617, routed)        1.695     1.695    btb/_globalClock_out
+    SLICE_X71Y142        FDRE                                         r  btb/update_target_reg[48]/C
+                         clock pessimism             -0.194     1.501    
+                         clock uncertainty            0.100     1.601    
+    SLICE_X71Y142        FDRE (Hold_EFF_SLICEM_C_D)
+                                                      0.056     1.657    btb/update_target_reg[48]
+  -------------------------------------------------------------------
+                         required time                         -1.657    
+                         arrival time                           1.631    
+  -------------------------------------------------------------------
+                         slack                                 -0.026    
+
+
+
+
