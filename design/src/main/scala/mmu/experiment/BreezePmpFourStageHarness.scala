@@ -28,7 +28,7 @@ class BreezePmpFourStageHarness extends Module {
     val accepted = Output(Bool())
     val response = Valid(new PmpPipelineResponse(8))
   })
-  val globalClock = Module(new PmpExperimentClock)
+  private val globalClock = Module(new PmpExperimentClock)
   globalClock.io.in := clock
   withClock(globalClock.io.out) {
     val experiment = Module(new BreezePmpFourStageExperiment)

@@ -131,7 +131,7 @@ class BreezePmpFourStage(val entries: Int = 8) extends Module {
 
   val low = io.request.bits.address(6, 0)
   val end = BreezePmpDecode.accessEnd(low, io.request.bits.sizeLog2)
-  val lowMeta = Wire(new PmpLowMeta(entries))
+  private val lowMeta = Wire(new PmpLowMeta(entries))
   lowMeta.id := io.request.bits.id
   lowMeta.epoch := io.epoch
   lowMeta.machine := io.request.bits.privilege === 3.U
@@ -152,11 +152,11 @@ class BreezePmpFourStage(val entries: Int = 8) extends Module {
     lowMeta.permission(i) := (lowMeta.machine && !io.cfg(i)(7)) || rwx
   }
   // Payloads are not reset or valid-gated: validity owns all observable effects.
-  val p0 = RegNext(lowMeta)
+  private val p0 = RegNext(lowMeta)
   val p0High = RegNext(Cat(0.U(1.W), io.request.bits.address(63, 7)))
 
   val chunkCount = 8 // 58-bit high part split into 7x8 + 2 bits
-  val chunkValues = Wire(Vec(entries, Vec(4, Vec(chunkCount, new PmpChunkCompare))))
+  private val chunkValues = Wire(Vec(entries, Vec(4, Vec(chunkCount, new PmpChunkCompare))))
   for (i <- 0 until entries) {
     val r = io.ranges(i)
     val bounds = Seq(r.lower(64, 7), r.upper(64, 7),
@@ -169,8 +169,8 @@ class BreezePmpFourStage(val entries: Int = 8) extends Module {
       chunkValues(i)(b)(c).eq := a === z
     }
   }
-  val p1Chunks = RegNext(chunkValues)
-  val p1 = RegNext(p0)
+  private val p1Chunks = RegNext(chunkValues)
+  private val p1 = RegNext(p0)
 
   def merge(parts: Seq[(Bool, Bool)]): (Bool, Bool) = {
     if (parts.size == 1) parts.head else {
